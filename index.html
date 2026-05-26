@@ -8689,7 +8689,7 @@ if(typeof window.calcKoreanAge !== 'function'){
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
-        <div class="hub-card" onclick="if(typeof openBrandModal==='function')openBrandModal()">
+        <div class="hub-card" onclick="if(typeof goTo==='function')goTo('content-studio')">
           <div class="hub-card-icon">✏️</div>
           <div class="hub-card-body">
             <div class="hub-card-name">콘텐츠</div>
@@ -9068,6 +9068,675 @@ document.addEventListener('keydown',function(e){
       </div>
     </div>
   </div>
+
+
+
+
+
+
+
+
+<!-- ★ 콘텐츠실 화면 -->
+<div class="scr" id="content-studio" style="display:none;min-height:100vh;background:#F7F6FF;font-family:'Noto Sans KR',sans-serif;">
+<style>
+#content-studio{--cp:#4A3F7A;--cp2:#8B7AB8;--cplt:#F0EEFF;--bdr:#E4E1F5;--txt:#1A1730;--txt2:#7C7A8E;}
+#content-studio *{box-sizing:border-box;}
+/* 레이아웃 */
+.cs-layout{display:flex;min-height:100vh;}
+.cs-sidebar{width:190px;flex-shrink:0;background:#1E1B3A;display:flex;flex-direction:column;}
+@media(max-width:640px){.cs-sidebar{width:52px;}.cs-mlabel,.cs-msub,.cs-topname,.cs-sectitle{display:none!important;}}
+.cs-topbar{padding:14px 13px 11px;border-bottom:1px solid rgba(255,255,255,.08);}
+.cs-topbrand{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);font-weight:600;}
+.cs-topname{font-size:13px;font-weight:700;color:#fff;margin-top:2px;}
+.cs-backbtn{display:flex;align-items:center;gap:5px;width:100%;padding:7px 13px;border:none;background:none;color:rgba(255,255,255,.38);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;line-height:1;}
+.cs-backbtn:hover{color:#fff;}
+.cs-sec{padding:5px 0;}
+.cs-sectitle{font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.25);padding:5px 13px 2px;}
+.cs-mitem{display:flex;align-items:center;gap:8px;width:100%;padding:9px 13px;border:none;border-left:2px solid transparent;background:none;color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;font-family:inherit;text-align:left;transition:all .12s;}
+.cs-mitem:hover{background:rgba(255,255,255,.06);color:#fff;}
+.cs-mitem.on{background:rgba(139,122,184,.2);color:#C4B5F0;border-left-color:#8B7AB8;}
+.cs-micon{width:25px;height:25px;border-radius:7px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cs-mitem.on .cs-micon{background:rgba(139,122,184,.3);}
+.cs-mlabel{font-size:12px;font-weight:500;line-height:1.3;}
+.cs-msub{font-size:10px;color:rgba(255,255,255,.28);margin-top:1px;}
+.cs-main{flex:1;min-width:0;padding:20px;overflow-y:auto;}
+.cs-panel{display:none;}
+.cs-panel.on{display:block;}
+.cs-ph{margin-bottom:16px;}
+.cs-ph-title{font-size:17px;font-weight:700;color:var(--txt);}
+.cs-ph-sub{font-size:12px;color:var(--txt2);margin-top:2px;}
+/* 채널 현황 카드 */
+.cs-ch-top{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+@media(max-width:520px){.cs-ch-top{grid-template-columns:1fr;}}
+.cs-scard{background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:12px;}
+.cs-sicon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;margin-bottom:6px;}
+.cs-slabel{font-size:9px;color:var(--txt2);font-weight:700;letter-spacing:.5px;margin-bottom:1px;}
+.cs-sval{font-size:18px;font-weight:700;color:var(--cp);}
+.cs-sdesc{font-size:10px;color:var(--txt2);margin-top:1px;}
+.cs-sedit{font-size:10px;color:var(--cp2);font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;padding:0;margin-top:3px;display:block;}
+.cs-ytbtn{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;background:var(--cplt);border:1px solid var(--bdr);border-radius:7px;font-size:11px;font-weight:700;color:var(--cp);cursor:pointer;margin-top:7px;width:100%;text-decoration:none;}
+.cs-pbar{height:3px;background:var(--bdr);border-radius:2px;margin-top:4px;}
+.cs-pfill{height:3px;background:linear-gradient(90deg,var(--cp),var(--cp2));border-radius:2px;transition:width .4s;}
+/* 영상 목록 */
+.cs-vwrap{background:#fff;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.cs-vhd{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-bottom:1px solid var(--bdr);}
+.cs-vhd-t{font-size:12px;font-weight:700;color:var(--txt);}
+.cs-vadd{font-size:10px;font-weight:700;background:var(--cplt);border:1px solid var(--bdr);border-radius:6px;padding:3px 9px;cursor:pointer;color:var(--cp);font-family:inherit;}
+.cs-vrow{display:grid;grid-template-columns:1fr 65px 55px 65px 50px;gap:5px;align-items:center;padding:7px 13px;border-bottom:1px solid #F5F4FC;font-size:11px;}
+.cs-vrow:last-child{border-bottom:none;}
+.cs-vrow.vh{background:#F8F7FF;font-size:9px;font-weight:700;color:var(--txt2);letter-spacing:.5px;}
+.cs-vc{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--txt);font-weight:500;}
+.cs-vn{text-align:right;color:var(--cp);font-weight:700;}
+.cs-vd{text-align:right;color:var(--txt2);}
+.cs-vl{text-align:right;}
+.cs-vl a{font-size:10px;color:var(--cp2);font-weight:700;text-decoration:none;}
+.cs-vempty{padding:16px;text-align:center;font-size:12px;color:var(--txt2);}
+
+/* ━━━ 3달 플랜보드 ━━━ */
+.cpb-outer{background:#EDE8FF;border-radius:14px;padding:18px;}
+.cpb-top-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.cpb-main-title{background:#FFF9C4;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;color:#4A3F7A;white-space:nowrap;}
+.cpb-legend{display:flex;gap:8px;flex-wrap:wrap;}
+.cpb-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
+.cpb-leg-dot{width:8px;height:8px;border-radius:50%;}
+
+/* 채널 테이블 */
+.cpb-ch-block{background:#fff;border-radius:12px;margin-bottom:0;overflow:hidden;box-shadow:0 1px 4px rgba(74,63,122,.07);}
+@media(max-width:720px){#cs-planboard-inner>div{grid-template-columns:1fr!important;}}
+.cpb-ch-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--bdr);}
+.cpb-ch-hd-left{display:flex;align-items:center;gap:8px;}
+.cpb-ch-badge{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cpb-ch-name{font-size:15px;font-weight:800;color:#111827;}
+.cpb-ch-goal{font-size:12px;color:#4B5563;font-weight:600;}
+
+/* 플랜 표 */
+.cpb-table{width:100%;border-collapse:collapse;font-size:13px;}
+.cpb-table th{background:#EEEAF8;padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#4A3F7A;letter-spacing:.5px;border-bottom:2px solid #D4CBF0;}
+.cpb-table td{padding:9px 12px;border-bottom:1px solid #EEEAF8;vertical-align:middle;}
+.cpb-table tr:last-child td{border-bottom:none;}
+.cpb-table tr:hover td{background:#F5F2FF;}
+.cpb-week-cell{white-space:nowrap;color:#4A3F7A;font-weight:800;font-size:12px;width:70px;}
+.cpb-title-cell{color:#111827;font-weight:600;line-height:1.5;cursor:pointer;}
+.cpb-title-cell:hover{color:#4A3F7A;text-decoration:underline;}
+.cpb-title-empty{color:#9CA3AF;font-style:italic;cursor:pointer;font-weight:500;}
+.cpb-title-empty:hover{color:#6B7280;}
+.cpb-stages-cell{width:120px;}
+.cpb-month-sep td{padding:0;}
+.cpb-month-inner{display:flex;align-items:center;gap:8px;padding:7px 12px;}
+.cpb-month-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cpb-month-name{font-size:12px;font-weight:800;letter-spacing:.5px;}
+.cpb-month-theme{font-size:11px;font-weight:600;opacity:.85;}
+.cpb-dd{font-size:12px;font-weight:600;border:1.5px solid #D1D5DB;border-radius:7px;padding:4px 7px;font-family:inherit;cursor:pointer;color:#6B7280;outline:none;background:#F9FAFB;transition:all .15s;width:100%;}
+.cpb-dd.s-기획{border-color:#F59E0B;color:#92400E;background:#FFFBEB;font-weight:700;}
+.cpb-dd.s-촬영{border-color:#3B82F6;color:#1D4ED8;background:#EFF6FF;font-weight:700;}
+.cpb-dd.s-편집{border-color:#22C55E;color:#166534;background:#F0FDF4;font-weight:700;}
+.cpb-dd.s-업로드{border-color:#7C3AED;color:#4C1D95;background:#F5F3FF;font-weight:700;}
+.cpb-add-row td{padding:6px 12px;text-align:center;}
+.cpb-add-btn{font-size:10px;color:var(--cp2);background:none;border:1px dashed var(--bdr);border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit;font-weight:600;width:100%;}
+.cpb-add-btn:hover{border-color:var(--cp2);background:var(--cplt);}
+
+/* ━━━ 상세 팝업 모달 ━━━ */
+.cs-detail-modal{display:none;position:fixed;inset:0;background:rgba(10,8,32,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.cs-detail-modal.on{display:flex;}
+.cs-detail-box{background:#fff;border-radius:16px;width:100%;max-width:660px;margin:auto;overflow:hidden;}
+.cs-dbox-hd{background:linear-gradient(135deg,#4A3F7A,#2D3561);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.cs-dbox-ch{font-size:10px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:1px;}
+.cs-dbox-htitle{font-size:14px;font-weight:700;color:#fff;margin-top:2px;}
+.cs-dbox-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cs-dbox-body{padding:18px 20px;max-height:78vh;overflow-y:auto;}
+.cs-dfield{margin-bottom:13px;}
+.cs-dfield label{display:block;font-size:10px;font-weight:700;color:var(--txt2);letter-spacing:.5px;margin-bottom:4px;}
+.cs-dinp{width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--txt);outline:none;transition:border-color .15s;resize:none;}
+.cs-dinp:focus{border-color:var(--cp);}
+.cs-d2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* 단계 날짜 테이블 */
+.cs-stage-table{width:100%;border-collapse:collapse;margin-bottom:13px;}
+.cs-stage-table th{background:#F8F7FF;padding:6px 10px;font-size:9px;font-weight:700;color:var(--txt2);letter-spacing:.5px;text-align:left;border-bottom:1px solid var(--bdr);}
+.cs-stage-table td{padding:7px 10px;border-bottom:1px solid #F5F4FC;font-size:11px;}
+.cs-stage-table tr:last-child td{border-bottom:none;}
+.cs-stage-name{font-weight:700;font-size:11px;}
+.cs-stage-toggle{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;border:1.5px solid;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;background:#fff;transition:all .15s;}
+.cs-stage-toggle.off{border-color:#E4E1F5;color:#C0BDDA;}
+.cs-stage-toggle.on-기획{background:#FFF7ED;border-color:#F59E0B;color:#92400E;}
+.cs-stage-toggle.on-촬영{background:#EFF6FF;border-color:#3B82F6;color:#1E40AF;}
+.cs-stage-toggle.on-편집{background:#F0FDF4;border-color:#22C55E;color:#14532D;}
+.cs-stage-toggle.on-업로드{background:#F5F3FF;border-color:#8B7AB8;color:#4A3F7A;}
+.cs-date-inp{border:1.5px solid var(--bdr);border-radius:6px;padding:4px 7px;font-size:11px;font-family:inherit;color:var(--txt);outline:none;transition:border-color .15s;width:130px;}
+.cs-date-inp:focus{border-color:var(--cp);}
+/* 쇼츠 테이블 */
+.cs-shorts-table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+.cs-shorts-table th{background:#F8F7FF;padding:6px 10px;font-size:9px;font-weight:700;color:var(--txt2);letter-spacing:.5px;text-align:left;border-bottom:1px solid var(--bdr);}
+.cs-shorts-table td{padding:5px 8px;border-bottom:1px solid #F5F4FC;}
+.cs-shorts-table tr:last-child td{border-bottom:none;}
+.cs-short-num{font-size:10px;font-weight:700;color:var(--cp2);width:44px;}
+.cs-short-inp{width:100%;border:1.5px solid var(--bdr);border-radius:6px;padding:5px 8px;font-size:11px;font-family:inherit;color:var(--txt);outline:none;transition:border-color .15s;}
+.cs-short-inp:focus{border-color:var(--cp);}
+.cs-short-del{width:24px;height:24px;border:none;background:none;cursor:pointer;color:#C0BDDA;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:4px;}
+.cs-short-del:hover{color:#E24B4A;background:#FEF2F2;}
+.cs-add-short-btn{font-size:11px;color:var(--cp2);font-weight:700;background:none;border:1px dashed var(--bdr);border-radius:6px;padding:5px 14px;cursor:pointer;font-family:inherit;width:100%;transition:all .15s;margin-top:4px;}
+.cs-add-short-btn:hover{border-color:var(--cp2);background:var(--cplt);}
+/* 저장 버튼 */
+.cs-dbox-ft{padding:14px 20px;border-top:1px solid var(--bdr);display:flex;gap:8px;justify-content:flex-end;}
+.cs-dbtn-c{padding:8px 18px;border:1.5px solid var(--bdr);border-radius:8px;background:#fff;color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.cs-dbtn-s{padding:8px 22px;border:none;border-radius:8px;background:var(--cp);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+/* 소형 모달 (수치입력/영상추가) */
+.cs-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;align-items:center;justify-content:center;padding:16px;}
+.cs-modal.on{display:flex;}
+.cs-mbox{background:#fff;border-radius:13px;width:100%;max-width:360px;padding:18px;}
+.cs-mtitle{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px;}
+.cs-inp{width:100%;border:1.5px solid var(--bdr);border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;color:var(--txt);outline:none;margin-bottom:7px;transition:border-color .15s;}
+.cs-inp:focus{border-color:var(--cp);}
+.cs-inp2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.cs-mbtns{display:flex;gap:7px;margin-top:3px;}
+.cs-mbc{flex:1;padding:8px;border:1.5px solid var(--bdr);border-radius:7px;background:#fff;color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.cs-mbs{flex:1;padding:8px;border:none;border-radius:7px;background:var(--cp);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.cs-divider{font-size:10px;font-weight:700;color:var(--txt2);letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr);}
+</style>
+
+<div class="cs-layout">
+<!-- 사이드바 -->
+<div class="cs-sidebar">
+  <div class="cs-topbar">
+    <div class="cs-topbrand">WD WAVE</div>
+    <div class="cs-topname">콘텐츠실</div>
+  </div>
+  <button class="cs-backbtn" onclick="if(typeof goTo==='function')goTo('home')">← 메인홈</button>
+  <div class="cs-sec">
+    <div class="cs-sectitle">기획</div>
+    <button class="cs-mitem on" id="csmb-plan" onclick="csGo('plan')">
+      <span class="cs-micon">📊</span>
+      <div><div class="cs-mlabel">3달 플랜표</div><div class="cs-msub">채널별 기획</div></div>
+    </button>
+  </div>
+  <div class="cs-sec" style="border-top:1px solid rgba(255,255,255,.07);">
+    <div class="cs-sectitle">채널</div>
+    <button class="cs-mitem" id="csmb-new" onclick="csGo('new')">
+      <span class="cs-micon">✨</span>
+      <div><div class="cs-mlabel">WD WAVE</div><div class="cs-msub">1인사업자·AI</div></div>
+    </button>
+    <button class="cs-mitem" id="csmb-sara" onclick="csGo('sara')">
+      <span class="cs-micon">👩</span>
+      <div><div class="cs-mlabel">사라언니TV</div><div class="cs-msub">위로·공감</div></div>
+    </button>
+    <button class="cs-mitem" id="csmb-insur" onclick="csGo('insur')">
+      <span class="cs-micon">🛡</span>
+      <div><div class="cs-mlabel">우리동네보험</div><div class="cs-msub">보험유치원</div></div>
+    </button>
+  </div>
+</div>
+
+<div class="cs-main">
+
+  <!-- ① 3달 플랜표 -->
+  <div class="cs-panel on" id="csp-plan">
+    <div class="cs-ph"><div class="cs-ph-title">3달 플랜표</div><div class="cs-ph-sub">2026년 6·7·8월 — 영상 클릭하면 상세 기획 입력 가능</div></div>
+    <div class="cpb-outer">
+      <div class="cpb-top-row">
+        <div class="cpb-main-title">📋 3달<br>플랜표</div>
+        <div class="cpb-legend">
+          <div class="cpb-leg-item"><div class="cpb-leg-dot" style="background:#F59E0B;"></div>기획</div>
+          <div class="cpb-leg-item"><div class="cpb-leg-dot" style="background:#3B82F6;"></div>촬영</div>
+          <div class="cpb-leg-item"><div class="cpb-leg-dot" style="background:#22C55E;"></div>편집</div>
+          <div class="cpb-leg-item"><div class="cpb-leg-dot" style="background:#8B7AB8;"></div>업로드</div>
+        </div>
+      </div>
+      <div id="cs-planboard-inner"></div>
+    </div>
+  </div>
+
+  <!-- ② WD WAVE 채널 -->
+  <div class="cs-panel" id="csp-new">
+    <div class="cs-ph"><div class="cs-ph-title">WD WAVE 채널</div><div class="cs-ph-sub">1인사업자 · AI활용 · 수익화 · 6월 오픈 예정</div></div>
+    <div class="cs-ch-top">
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#FFF7ED;">✨</div>
+        <div class="cs-slabel">구독자</div><div class="cs-sval" id="new-subs">—</div>
+        <div class="cs-sdesc">목표: 1,000명 (2026)</div>
+        <button class="cs-sedit" onclick="csStatOpen('new')">수치 입력</button>
+        <div class="cs-pbar"><div class="cs-pfill" id="new-sbar" style="width:0%"></div></div>
+      </div>
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#F0FDF4;">📹</div>
+        <div class="cs-slabel">영상 수</div><div class="cs-sval" id="new-vcnt">0</div>
+        <div class="cs-sdesc">이번 달 목표: 4개</div>
+        <div class="cs-pbar" style="margin-top:7px;"><div class="cs-pfill" id="new-mbar" style="width:0%"></div></div>
+      </div>
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#EEEDFE;">📅</div>
+        <div class="cs-slabel">오픈 예정</div><div class="cs-sval" style="font-size:15px;">2026.06</div>
+        <div class="cs-sdesc">채널명 확정 전</div>
+        <button class="cs-ytbtn">▶ 채널 바로가기</button>
+      </div>
+    </div>
+    <div class="cs-vwrap">
+      <div class="cs-vhd"><span class="cs-vhd-t">업로드 영상 목록</span><button class="cs-vadd" onclick="csVopen('new')">+ 영상 추가</button></div>
+      <div class="cs-vrow vh"><div>제목</div><div style="text-align:right">조회수</div><div style="text-align:right">좋아요</div><div style="text-align:right">날짜</div><div style="text-align:right">링크</div></div>
+      <div id="cs-vlist-new"></div>
+    </div>
+  </div>
+
+  <!-- ③ 사라언니TV -->
+  <div class="cs-panel" id="csp-sara">
+    <div class="cs-ph"><div class="cs-ph-title">사라언니TV</div><div class="cs-ph-sub">위로 · 공감 · 삶의 기준 · 3040 여성</div></div>
+    <div class="cs-ch-top">
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#FEF3C7;">👩</div>
+        <div class="cs-slabel">구독자</div><div class="cs-sval" id="sara-subs">—</div>
+        <div class="cs-sdesc">목표: 5,000명 (2026)</div>
+        <button class="cs-sedit" onclick="csStatOpen('sara')">수치 입력</button>
+        <div class="cs-pbar"><div class="cs-pfill" id="sara-sbar" style="width:0%"></div></div>
+      </div>
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#FFF7ED;">📹</div>
+        <div class="cs-slabel">영상 수</div><div class="cs-sval" id="sara-vcnt">0</div>
+        <div class="cs-sdesc">이번 달 목표: 1~2개</div>
+        <div class="cs-pbar" style="margin-top:7px;"><div class="cs-pfill" id="sara-mbar" style="width:0%"></div></div>
+      </div>
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#FEF9EE;">👁</div>
+        <div class="cs-slabel">총 조회수</div><div class="cs-sval" id="sara-views">—</div>
+        <div class="cs-sdesc">누적 조회</div>
+        <a href="https://www.youtube.com/@사라언니TV" target="_blank" class="cs-ytbtn">▶ 채널 바로가기</a>
+      </div>
+    </div>
+    <div class="cs-vwrap">
+      <div class="cs-vhd"><span class="cs-vhd-t">업로드 영상 목록</span><button class="cs-vadd" onclick="csVopen('sara')">+ 영상 추가</button></div>
+      <div class="cs-vrow vh"><div>제목</div><div style="text-align:right">조회수</div><div style="text-align:right">좋아요</div><div style="text-align:right">날짜</div><div style="text-align:right">링크</div></div>
+      <div id="cs-vlist-sara"></div>
+    </div>
+  </div>
+
+  <!-- ④ 우리동네보험 -->
+  <div class="cs-panel" id="csp-insur">
+    <div class="cs-ph"><div class="cs-ph-title">우리동네보험지킴이</div><div class="cs-ph-sub">보험유치원 · 쇼츠 위주 · 친근하게</div></div>
+    <div class="cs-ch-top">
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#F5F3FF;">🛡</div>
+        <div class="cs-slabel">구독자</div><div class="cs-sval" id="insur-subs">—</div>
+        <div class="cs-sdesc">목표: 1,000명 (2026)</div>
+        <button class="cs-sedit" onclick="csStatOpen('insur')">수치 입력</button>
+        <div class="cs-pbar"><div class="cs-pfill" id="insur-sbar" style="width:0%"></div></div>
+      </div>
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#EEF2FF;">📹</div>
+        <div class="cs-slabel">영상 수</div><div class="cs-sval" id="insur-vcnt">0</div>
+        <div class="cs-sdesc">이번 달 목표: 1~2개</div>
+        <div class="cs-pbar" style="margin-top:7px;"><div class="cs-pfill" id="insur-mbar" style="width:0%"></div></div>
+      </div>
+      <div class="cs-scard">
+        <div class="cs-sicon" style="background:#F0FDF4;">👁</div>
+        <div class="cs-slabel">총 조회수</div><div class="cs-sval" id="insur-views">—</div>
+        <div class="cs-sdesc">누적 조회</div>
+        <a href="https://www.youtube.com" target="_blank" class="cs-ytbtn" id="insur-ytlink">▶ 채널 바로가기</a>
+      </div>
+    </div>
+    <div class="cs-vwrap">
+      <div class="cs-vhd"><span class="cs-vhd-t">업로드 영상 목록</span><button class="cs-vadd" onclick="csVopen('insur')">+ 영상 추가</button></div>
+      <div class="cs-vrow vh"><div>제목</div><div style="text-align:right">조회수</div><div style="text-align:right">좋아요</div><div style="text-align:right">날짜</div><div style="text-align:right">링크</div></div>
+      <div id="cs-vlist-insur"></div>
+    </div>
+  </div>
+
+</div><!-- /cs-main -->
+</div><!-- /cs-layout -->
+
+<!-- ★ 상세 기획 팝업 -->
+<div class="cs-detail-modal" id="cs-detail-modal">
+  <div class="cs-detail-box">
+    <div class="cs-dbox-hd">
+      <div>
+        <div class="cs-dbox-ch" id="d-ch-label">채널</div>
+        <div class="cs-dbox-htitle" id="d-week-label">주차</div>
+      </div>
+      <button class="cs-dbox-close" onclick="document.getElementById('cs-detail-modal').classList.remove('on')">✕</button>
+    </div>
+    <div class="cs-dbox-body">
+      <div class="cs-dfield">
+        <label>영상 제목</label>
+        <input class="cs-dinp" id="d-title" placeholder="영상 제목을 입력하세요">
+      </div>
+      <div class="cs-d2col">
+        <div class="cs-dfield">
+          <label>썸네일 제목 (후킹 문구)</label>
+          <input class="cs-dinp" id="d-thumb" placeholder="썸네일에 들어갈 짧은 문구">
+        </div>
+        <div class="cs-dfield">
+          <label>타겟</label>
+          <input class="cs-dinp" id="d-target" placeholder="예: 1인사업자 40대 여성">
+        </div>
+      </div>
+      <div class="cs-dfield">
+        <label>동영상 설명</label>
+        <textarea class="cs-dinp" id="d-desc" rows="2" placeholder="유튜브 설명란에 들어갈 내용"></textarea>
+      </div>
+      <div class="cs-dfield">
+        <label>내용 요약</label>
+        <textarea class="cs-dinp" id="d-summary" rows="3" placeholder="영상에서 다룰 핵심 내용 요약 (촬영 전 구성용)"></textarea>
+      </div>
+
+      <div class="cs-divider">진행 단계 & 날짜</div>
+      <table class="cs-stage-table">
+        <thead><tr><th>단계</th><th>완료 여부</th><th>날짜</th></tr></thead>
+        <tbody id="d-stage-tbody"></tbody>
+      </table>
+
+      <div class="cs-divider">쇼츠 목록</div>
+      <table class="cs-shorts-table" id="d-shorts-table">
+        <thead><tr><th style="width:44px">번호</th><th>쇼츠 제목</th><th style="width:30px"></th></tr></thead>
+        <tbody id="d-shorts-tbody"></tbody>
+      </table>
+      <button class="cs-add-short-btn" onclick="csAddShort()">+ 쇼츠 추가</button>
+    </div>
+    <div class="cs-dbox-ft">
+      <button class="cs-dbtn-c" onclick="document.getElementById('cs-detail-modal').classList.remove('on')">닫기</button>
+      <button class="cs-dbtn-s" onclick="csDetailSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 영상 추가 모달 -->
+<div class="cs-modal" id="cs-vadd-modal">
+  <div class="cs-mbox">
+    <div class="cs-mtitle">영상 추가</div>
+    <input class="cs-inp" id="csv-title" placeholder="영상 제목">
+    <div class="cs-inp2"><input class="cs-inp" id="csv-views" placeholder="조회수" type="number"><input class="cs-inp" id="csv-likes" placeholder="좋아요" type="number"></div>
+    <input class="cs-inp" id="csv-date" type="date">
+    <input class="cs-inp" id="csv-url" placeholder="YouTube URL">
+    <div class="cs-mbtns">
+      <button class="cs-mbc" onclick="document.getElementById('cs-vadd-modal').classList.remove('on')">취소</button>
+      <button class="cs-mbs" onclick="csVsave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 수치 입력 모달 -->
+<div class="cs-modal" id="cs-stat-modal">
+  <div class="cs-mbox">
+    <div class="cs-mtitle">채널 수치 입력</div>
+    <input class="cs-inp" id="css-subs" placeholder="구독자 수" type="number">
+    <div class="cs-inp2"><input class="cs-inp" id="css-vcnt" placeholder="영상 수" type="number"><input class="cs-inp" id="css-views" placeholder="총 조회수" type="number"></div>
+    <div class="cs-mbtns">
+      <button class="cs-mbc" onclick="document.getElementById('cs-stat-modal').classList.remove('on')">취소</button>
+      <button class="cs-mbs" onclick="csStatSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+var KEY='wd_cs4_v1';var D={};
+var STAGES=['기획','촬영','편집','업로드'];
+
+function ld(){
+  try{D=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){D={}}
+  if(!D.details)D.details={};
+  if(!D.s)D.s={};
+  if(!D.v)D.v={new:[],sara:[],insur:[]};
+}
+function sv(){localStorage.setItem(KEY,JSON.stringify(D));}
+
+/* ─── 플랜보드 데이터 ─── */
+var CHANNELS=[
+  {
+    id:'insur',name:'우리동네보험지킴이',icon:'🛡',goal:'달에 1~2개',
+    hdbg:'#4A3F7A',
+    months:[
+      {m:'6월',mc:'#4A3F7A',theme:'보험유치원 오픈',tcolor:'#EDE8FF',titletxt:'#2D1F7A',items:[
+        {wl:'1~2주차',title:''},
+        {wl:'3~4주차',title:''}
+      ]},
+      {m:'7월',mc:'#0369A1',theme:'실전 정보 · 검색 유입',tcolor:'#EFF6FF',titletxt:'#1E3A5F',items:[
+        {wl:'1~2주차',title:''},
+        {wl:'3~4주차',title:''}
+      ]},
+      {m:'8월',mc:'#059669',theme:'신뢰 구축 · 상담 문의',tcolor:'#ECFDF5',titletxt:'#065F46',items:[
+        {wl:'1~2주차',title:''},
+        {wl:'3~4주차',title:''}
+      ]}
+    ]
+  },
+  {
+    id:'sara',name:'사라언니TV',icon:'👩',goal:'달에 1~2개',
+    hdbg:'#D97706',
+    months:[
+      {m:'6월',mc:'#D97706',theme:'채널 시작 · 공감 쌓기',tcolor:'#FFFBEB',titletxt:'#92400E',items:[
+        {wl:'1~2주차',title:''},
+        {wl:'3~4주차',title:''}
+      ]},
+      {m:'7월',mc:'#BE185D',theme:'공감 심화 · 팬덤 형성',tcolor:'#FDF2F8',titletxt:'#831843',items:[
+        {wl:'1~2주차',title:''},
+        {wl:'3~4주차',title:''}
+      ]},
+      {m:'8월',mc:'#7C3AED',theme:'코칭 씨앗 · 2027 전환',tcolor:'#F5F3FF',titletxt:'#4C1D95',items:[
+        {wl:'1~2주차',title:''},
+        {wl:'3~4주차',title:''}
+      ]}
+    ]
+  },
+  {
+    id:'new',name:'WD WAVE',icon:'✨',goal:'달에 4개',
+    hdbg:'#1E1B3A',
+    months:[
+      {m:'6월',mc:'#4A3F7A',theme:'전문가 인식 심기 · 정보 전달',tcolor:'#EDE8FF',titletxt:'#2D1F7A',items:[
+        {wl:'1주차',title:'AI 하나만 쓰세요? 그래서 효과 없는 겁니다'},
+        {wl:'2주차',title:'아직도 고객관리 엑셀로 하세요?'},
+        {wl:'3주차',title:'블로그 마케팅 필요 없다구요? 과연 그럴까요?'},
+        {wl:'4주차',title:'레드오션 시대, 나를 어디에 위치시킬 것인가'}
+      ]},
+      {m:'7월',mc:'#16A34A',theme:'실력 증명 · 케이스 공개',tcolor:'#F0FDF4',titletxt:'#14532D',items:[
+        {wl:'1주차',title:'유사랑 케이스 1편 — 무료 강의만 하던 사람이 바뀐 과정'},
+        {wl:'2주차',title:'유사랑 케이스 2편 — 블로그와 포지셔닝 전후 비교'},
+        {wl:'3주차',title:'1인사업자가 AI로 하루 시간을 줄이는 법'},
+        {wl:'4주차',title:'혼자 일해도 시스템이 있어야 하는 이유'}
+      ]},
+      {m:'8월',mc:'#D97706',theme:'전환 만들기 · 의뢰 유도',tcolor:'#FFFBEB',titletxt:'#92400E',items:[
+        {wl:'1주차',title:'나의 강점으로 수익화 구조 만드는 법'},
+        {wl:'2주차',title:'블로그, 인스타, 유튜브 역할을 나누는 법'},
+        {wl:'3주차',title:'AI로 콘텐츠 한 달치 기획하는 법'},
+        {wl:'4주차',title:'WD WAVE가 도와줄 수 있는 사람들'}
+      ]}
+    ]
+  }
+];
+
+/* ─── 플랜보드 렌더 ─── */
+function rpPlanBoard(){
+  var el=document.getElementById('cs-planboard-inner');if(!el)return;
+  var html='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start;">';
+  CHANNELS.forEach(function(ch){
+    html+='<div class="cpb-ch-block">'
+      +'<div class="cpb-ch-hd" style="background:'+ch.hdbg+';border-bottom:none;"><div class="cpb-ch-hd-left">'
+      +'<div class="cpb-ch-badge" style="background:rgba(255,255,255,.15);">'+ch.icon+'</div>'
+      +'<div><div class="cpb-ch-name" style="color:#fff;">'+ch.name+'</div><div class="cpb-ch-goal" style="color:rgba(255,255,255,.8);">업로드 목표: '+ch.goal+'</div></div>'
+      +'</div></div>'
+      +'<table class="cpb-table"><thead><tr>'
+      +'<th style="width:60px;">주차</th><th>영상 제목</th><th style="width:190px;">진행 단계</th>'
+      +'</tr></thead><tbody>';
+
+    ch.months.forEach(function(mo){
+      html+='<tr class="cpb-month-sep"><td colspan="3"><div class="cpb-month-inner" style="background:'+mo.tcolor+';border-left:4px solid '+mo.mc+';">'
+        +'<div class="cpb-month-dot" style="background:'+mo.mc+';"></div>'
+        +'<span class="cpb-month-name" style="color:'+mo.titletxt+';">'+mo.m+'</span>'
+        +'<span class="cpb-month-theme" style="color:'+mo.titletxt+';">— '+mo.theme+'</span>'
+        +'</div></td></tr>';
+      mo.items.forEach(function(item,idx){
+        var dkey=ch.id+'_'+mo.m+'_'+idx;
+        var det=D.details[dkey]||{};
+        var displayTitle=det.title||item.title;
+        var curStage=det.curStage||'';
+        var ddCls=curStage?'cpb-dd s-'+curStage:'cpb-dd';
+        var stagesHtml='<select class="'+ddCls+'" onchange="event.stopPropagation();csDDChange(\''+dkey+'\',this)">'
+          +'<option value="">— 단계 선택</option>'
+          +['기획','촬영','편집','업로드'].map(function(s){
+            return '<option value="'+s+'"'+(curStage===s?' selected':'')+'>'+s+' 완료</option>';
+          }).join('')
+          +'</select>';
+
+        var titleHtml=displayTitle
+          ?'<span class="cpb-title-cell" onclick="csDetailOpen(\''+ch.id+'\',\''+ch.name+'\',\''+mo.m+' '+item.wl+'\',\''+dkey+'\')">'+displayTitle+'</span>'
+          :'<span class="cpb-title-empty" onclick="csDetailOpen(\''+ch.id+'\',\''+ch.name+'\',\''+mo.m+' '+item.wl+'\',\''+dkey+'\')">+ 기획 입력</span>';
+
+        html+='<tr>'
+          +'<td class="cpb-week-cell">'+item.wl+'</td>'
+          +'<td>'+titleHtml+'</td>'
+          +'<td class="cpb-stages-cell">'+stagesHtml+'</td>'
+          +'</tr>';
+      });
+    });
+    html+='</tbody></table></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* 드롭다운 단계 변경 */
+window.csDDChange=function(dkey,sel){
+  ld();
+  if(!D.details[dkey])D.details[dkey]={};
+  D.details[dkey].curStage=sel.value;
+  sv();
+  sel.className=sel.value?'cpb-dd s-'+sel.value:'cpb-dd';
+};
+
+/* ─── 상세 팝업 ─── */
+var _curDkey='';var _curShorts=[];
+
+window.csDetailOpen=function(chId,chName,weekLabel,dkey){
+  ld();
+  _curDkey=dkey;
+  var det=D.details[dkey]||{};
+  document.getElementById('d-ch-label').textContent=chName;
+  document.getElementById('d-week-label').textContent=weekLabel;
+  document.getElementById('d-title').value=det.title||'';
+  document.getElementById('d-thumb').value=det.thumb||'';
+  document.getElementById('d-target').value=det.target||'';
+  document.getElementById('d-desc').value=det.desc||'';
+  document.getElementById('d-summary').value=det.summary||'';
+  // 단계 테이블
+  var stages=det.stages||{};
+  var dates=det.dates||{};
+  var tbody=document.getElementById('d-stage-tbody');
+  tbody.innerHTML=STAGES.map(function(s){
+    var isDone=!!stages[s];
+    var cls='cs-stage-toggle '+(isDone?'on-'+s:'off');
+    return '<tr>'
+      +'<td class="cs-stage-name">'+s+'</td>'
+      +'<td><button class="'+cls+'" onclick="csDStageToggle(\''+s+'\',this)">'+( isDone?'✓ 완료':'미완료' )+'</button></td>'
+      +'<td><input class="cs-date-inp" id="ddate-'+s+'" type="date" value="'+(dates[s]||'')+'" placeholder="날짜 선택"></td>'
+      +'</tr>';
+  }).join('');
+  // 쇼츠
+  _curShorts=(det.shorts||[]).slice();
+  rpShorts();
+  document.getElementById('cs-detail-modal').classList.add('on');
+};
+
+window.csDStageToggle=function(stage,btn){
+  var isDone=btn.classList.contains('on-'+stage);
+  if(isDone){
+    btn.className='cs-stage-toggle off';
+    btn.textContent='미완료';
+  } else {
+    btn.className='cs-stage-toggle on-'+stage;
+    btn.textContent='✓ 완료';
+  }
+};
+
+function rpShorts(){
+  var tbody=document.getElementById('d-shorts-tbody');
+  tbody.innerHTML=_curShorts.map(function(s,i){
+    return '<tr>'
+      +'<td class="cs-short-num">쇼츠'+(i+1)+'</td>'
+      +'<td><input class="cs-short-inp" id="short-'+i+'" value="'+(s||'')+'" placeholder="쇼츠 제목"></td>'
+      +'<td><button class="cs-short-del" onclick="csDel('+i+')">×</button></td>'
+      +'</tr>';
+  }).join('');
+}
+window.csAddShort=function(){_curShorts.push('');rpShorts();var inputs=document.querySelectorAll('#d-shorts-tbody .cs-short-inp');if(inputs.length)inputs[inputs.length-1].focus();};
+window.csDel=function(i){_curShorts.splice(i,1);rpShorts();};
+
+window.csDetailSave=function(){
+  ld();
+  if(!D.details[_curDkey])D.details[_curDkey]={};
+  var det=D.details[_curDkey];
+  det.title=document.getElementById('d-title').value;
+  det.thumb=document.getElementById('d-thumb').value;
+  det.target=document.getElementById('d-target').value;
+  det.desc=document.getElementById('d-desc').value;
+  det.summary=document.getElementById('d-summary').value;
+  // 단계
+  if(!det.stages)det.stages={};
+  if(!det.dates)det.dates={};
+  STAGES.forEach(function(s){
+    var btn=document.querySelector('#d-stage-tbody .on-'+s);
+    det.stages[s]=!!btn;
+    var di=document.getElementById('ddate-'+s);
+    if(di)det.dates[s]=di.value;
+  });
+  // 쇼츠
+  var inputs=document.querySelectorAll('#d-shorts-tbody .cs-short-inp');
+  det.shorts=Array.from(inputs).map(function(inp){return inp.value;});
+  sv();
+  document.getElementById('cs-detail-modal').classList.remove('on');
+  rpPlanBoard();
+};
+
+/* ─── 탭 전환 ─── */
+window.csGo=function(tab){
+  document.querySelectorAll('#content-studio .cs-panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('#content-studio .cs-mitem').forEach(function(b){b.classList.remove('on');});
+  var p=document.getElementById('csp-'+tab),b=document.getElementById('csmb-'+tab);
+  if(p)p.classList.add('on');if(b)b.classList.add('on');
+};
+
+/* ─── 채널 통계 ─── */
+function rpStat(ch){
+  var s=(D.s||{})[ch]||{};var subs=s.subs||0;
+  var goal={new:1000,sara:5000,insur:1000}[ch];
+  var pct=subs?Math.min(100,Math.round(subs/goal*100)):0;
+  function fmt(n){return n>9999?(n/1000).toFixed(1)+'K':n||'—';}
+  var vlist=(D.v||{})[ch]||[];var now=new Date();
+  var mv=vlist.filter(function(v){var d=new Date(v.date||'');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).length;
+  var e;
+  e=document.getElementById(ch+'-subs');if(e)e.textContent=fmt(subs);
+  e=document.getElementById(ch+'-sbar');if(e)e.style.width=pct+'%';
+  e=document.getElementById(ch+'-vcnt');if(e)e.textContent=s.vcnt||'0';
+  e=document.getElementById(ch+'-mbar');if(e)e.style.width=Math.min(100,mv*25)+'%';
+  e=document.getElementById(ch+'-views');if(e)e.textContent=fmt(s.views);
+}
+var _sc='new';
+window.csStatOpen=function(ch){_sc=ch;ld();var s=(D.s||{})[ch]||{};
+  document.getElementById('css-subs').value=s.subs||'';document.getElementById('css-vcnt').value=s.vcnt||'';document.getElementById('css-views').value=s.views||'';
+  document.getElementById('cs-stat-modal').classList.add('on');};
+window.csStatSave=function(){ld();if(!D.s)D.s={};
+  D.s[_sc]={subs:parseInt(document.getElementById('css-subs').value)||0,vcnt:parseInt(document.getElementById('css-vcnt').value)||0,views:parseInt(document.getElementById('css-views').value)||0};
+  sv();rpStat(_sc);document.getElementById('cs-stat-modal').classList.remove('on');};
+
+/* ─── 영상 목록 ─── */
+function rpVids(ch){
+  var el=document.getElementById('cs-vlist-'+ch);if(!el)return;
+  var list=(D.v||{})[ch]||[];
+  if(!list.length){el.innerHTML='<div class="cs-vempty">아직 영상이 없어요.</div>';return;}
+  el.innerHTML=list.slice().reverse().map(function(v){
+    return '<div class="cs-vrow"><div class="cs-vc" title="'+v.title+'">'+v.title+'</div><div class="cs-vn">'+(v.views||'—')+'</div><div class="cs-vn">'+(v.likes||'—')+'</div><div class="cs-vd">'+(v.date||'—')+'</div><div class="cs-vl">'+(v.url?'<a href="'+v.url+'" target="_blank">▶</a>':'—')+'</div></div>';
+  }).join('');
+}
+var _vc='new';
+window.csVopen=function(ch){_vc=ch;['csv-title','csv-views','csv-likes','csv-url'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('csv-date').value='';document.getElementById('cs-vadd-modal').classList.add('on');};
+window.csVsave=function(){ld();if(!D.v[_vc])D.v[_vc]=[];
+  D.v[_vc].push({title:document.getElementById('csv-title').value||'제목없음',views:document.getElementById('csv-views').value,likes:document.getElementById('csv-likes').value,date:document.getElementById('csv-date').value,url:document.getElementById('csv-url').value});
+  sv();rpVids(_vc);document.getElementById('cs-vadd-modal').classList.remove('on');};
+
+/* ─── 초기화 ─── */
+window.contentStudioInit=function(){
+  ld();
+  rpPlanBoard();
+  ['new','sara','insur'].forEach(function(ch){rpStat(ch);rpVids(ch);});
+};
+})();
+</script>
+</div>
+<!-- /★ 콘텐츠실 화면 -->
 
   <!-- 모바일 반응형 -->
   <style>
@@ -34357,6 +35026,11 @@ function appRefresh(){
 window.appRefresh = appRefresh;
 
 function goTo(id){
+  document.body.classList.toggle('wd-main-home-active', id==='home');
+  if(id!=='home'){
+    var _rbm=document.getElementById('wd-remodel-board-modal-safe4');
+    if(_rbm){ _rbm.classList.remove('on'); _rbm.setAttribute('aria-hidden','true'); }
+  }
   if(id==='knowledge'){
     setTimeout(function(){
       if(typeof initCoverageLabKnowledge==='function') initCoverageLabKnowledge();
@@ -34381,6 +35055,9 @@ function goTo(id){
     }, 120);
   }
   // 설계취합/보험사선정 화면
+  if(id==='content-studio'){
+    if(typeof window.contentStudioInit==='function') setTimeout(window.contentStudioInit, 80);
+  }
   if(id==='design-collect'){ mnMenuDesignCollect(); return; }
   if(id==='insurer-select'){
     if(typeof CID==='undefined'||!CID){
@@ -64865,14 +65542,16 @@ function pgP10_Closing(ctx){
   return pgWrapPage(10, ctx.total, '10 마지막 페이지', body, ctx.fpName, ctx.fpPhone, true);
 }
 
-// [v67] 마무리 멘트 다듬기
+// [v67→v77] 마무리 멘트 다듬기
 async function pgPolishClosing(){
   var ta = document.getElementById('p10_closing');
-  if(!ta) return;
+  if(!ta){ if(typeof showT==='function') showT('입력창을 찾지 못했습니다'); return; }
   var raw = ta.value.trim();
   var key = (typeof getApiKey==='function'?getApiKey():'')||window._apiKey||window.WD_API_KEY||'';
-  if(!key){ if(typeof showT==='function') showT('API Key가 없어요'); return; }
+  if(!key){ if(typeof showT==='function') showT('API Key가 없어요. 설정에서 저장해주세요'); return; }
   window.WD_API_KEY = key;
+  var orig = ta.value;
+  ta.value = '✨ 다듬는 중...'; ta.disabled = true;
   if(typeof showT==='function') showT('✨ 마무리 멘트 다듬는 중...');
   try{
     var prompt = '보험 설계사가 고객에게 전달하는 제안서 마지막 페이지 마무리 멘트를 자연스럽고 따뜻하게 다듬어 주세요.'
@@ -64880,20 +65559,27 @@ async function pgPolishClosing(){
       +'\n\n조건: 2~3문장, 진심 어린 톤, 설계사 본인 시점, 고객명 미포함, 마케팅 표현 금지. 결과만 출력.';
     var res = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,
         messages:[{role:'user',content:prompt}]})
     });
+    if(!res.ok){ ta.value=orig; ta.disabled=false; if(typeof showT==='function') showT('다듬기 실패('+res.status+') — API Key 확인해주세요'); return; }
     var data = await res.json();
-    var result = (data.content&&data.content[0]&&data.content[0].text)||'';
+    var result = ((data.content&&data.content.find&&data.content.find(function(c){return c.type==='text';})||{}).text||'').trim();
     if(result){
-      ta.value = result.trim();
-      // editTexts에도 반영
-      if(_pg.editTexts) _pg.editTexts.end_comment = ta.value;
-      pgRenderPreview();
+      ta.value = result;
+      if(_pg && _pg.editTexts) _pg.editTexts.end_comment = result;
+      if(typeof _pgDraft!=='undefined') _pgDraft['p10_closing'] = result;
+      if(typeof pgRenderPreview==='function') pgRenderPreview();
       if(typeof showT==='function') showT('✅ 마무리 멘트 다듬기 완료');
-    }
-  }catch(e){ if(typeof showT==='function') showT('다듬기 오류: '+e.message); }
+    } else { ta.value = orig; if(typeof showT==='function') showT('결과가 없어요. 다시 시도해주세요.'); }
+  }catch(e){ ta.value=orig; if(typeof showT==='function') showT('다듬기 오류: '+e.message); }
+  ta.disabled = false;
 }
 window.pgPolishClosing = pgPolishClosing;
 
@@ -80200,12 +80886,12 @@ function ccGoHome(){
 }
 </script>
 
-<div class="cc-header">
+<div class="cc-header" style="flex-direction:column;align-items:flex-start;gap:10px;">
+  <button onclick="if(typeof goTo==='function')goTo('home');else ccGoHome();" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">🏠 메인홈</button>
   <div>
     <div class="cc-header-title">🏛 컨설팅센터</div>
     <div class="cc-header-sub">케어 · 코칭 · 계약 이후 관리</div>
   </div>
-  <button onclick="ccGoHome()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🏠 홈</button>
 </div>
 
 <div class="cc-body">
@@ -90044,8 +90730,11 @@ function tc_escape(s){
     border:1px solid rgba(74,63,122,.22);background:#fff;color:#4A3F7A;
     border-radius:999px;padding:9px 13px;font-family:'Noto Sans KR',sans-serif;
     font-size:12px;font-weight:900;box-shadow:0 8px 22px rgba(26,26,46,.14);
-    cursor:pointer;line-height:1;display:flex;align-items:center;gap:6px;
+    cursor:pointer;line-height:1;display:none;align-items:center;gap:6px;
   }
+  body.wd-main-home-active #wd-remodel-board-btn-safe4{display:flex;}
+  body:not(.wd-main-home-active) #wd-remodel-board-btn-safe4,
+  body:not(.wd-main-home-active) #wd-remodel-board-modal-safe4{display:none !important;}
   #wd-remodel-board-btn-safe4:hover{background:#f5f3ff;border-color:#8B7AB8;}
   #wd-remodel-board-modal-safe4{
     display:none;position:fixed;inset:0;z-index:2147482100;background:rgba(15,23,42,.52);
@@ -90114,8 +90803,8 @@ function tc_escape(s){
     </div>
     <div class="wd-rb-body-safe4">
       <div class="wd-rb-file-safe4">
-        <div class="wd-rb-stat-safe4"><span>현재 파일</span><b>WD_WAVE_260526_v70.html</b></div>
-        <div class="wd-rb-stat-safe4"><span>기준 파일</span><b>WD_WAVE_260526_v69.html</b></div>
+        <div class="wd-rb-stat-safe4"><span>현재 파일</span><b>WD_79_SAFE_6.html</b></div>
+        <div class="wd-rb-stat-safe4"><span>기준 파일</span><b>WD_79_SAFE_5.html</b></div>
         <div class="wd-rb-stat-safe4"><span>원본 보존</span><b>WD_WAVE_260520_v79.html</b></div>
         <div class="wd-rb-stat-safe4"><span>참고 파일</span><b>WD_WAVE_v96_clean.html</b></div>
       </div>
@@ -90222,8 +90911,8 @@ function tc_escape(s){
           <div class="wd-rb-card-safe4"><span class="wd-rb-badge-safe4 plan">작업 원칙</span><b>한 번에 한 영역만</b><p>기준 파일명, 출력 파일명, 수정 위치, 검증 기준을 남기고 SAFE 버전으로 작게 이동합니다.</p></div>
         </div>
       </section>
-      <div class="wd-rb-note-safe4">v70 작업 기록: 고객자료실 Storage 전환(STEP 1~3), 작성 버튼 연결(v69), 리모델링 작업실 이식(v70) 완료.</div>
-      <div class="wd-rb-mini-safe4">비교 기준: v79 원본은 보존용, v96-clean은 참고용입니다. 실제 수정 기준은 WD_WAVE_260526_v69.html → 출력 WD_WAVE_260526_v70.html입니다.</div>
+      <div class="wd-rb-note-safe4">SAFE_6 작업 기록: 리모델링 작업실을 v8 기준 분류로 정리했습니다. 실제 기능 추가, 함수 삭제, Supabase/localStorage 저장구조 변경은 하지 않았습니다.</div>
+      <div class="wd-rb-mini-safe4">비교 기준: v79 원본은 보존용, v96-clean은 참고용입니다. 실제 수정 기준은 WD_79_SAFE_5.html → 출력 WD_79_SAFE_6.html입니다.</div>
     </div>
   </div>
 </div>
