@@ -285,6 +285,7 @@ input,select,textarea{font-family:inherit;}
   .cd-grid-2{grid-template-columns:1fr;}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -587,12 +588,45 @@ input,select,textarea{font-family:inherit;}
 const DB_KEY = 'wd_consulting_center_v1';
 let DB = { customers:[], tasks:[], quotes:[], contracts:[], files:[], seq:{c:0,t:0,q:0,k:0} };
 
-function load(){
-  try{ const r = localStorage.getItem(DB_KEY); if(r) DB = JSON.parse(r); }catch(e){}
-  if(!DB.seq) DB.seq = {c:0,t:0,q:0,k:0};
-  if(!DB.files) DB.files = [];
+/* Supabase 연결 (큰 전산과 동일 프로젝트) */
+const SB_URL='https://mzftzadtoepcrwhnwdmn.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16ZnR6YWR0b2VwY3J3aG53ZG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTM1NDYsImV4cCI6MjA5MDA2OTU0Nn0.sH9hjlp_RnjDCbdwo00-NQG5MxdqIgY8FtpEGKtnFF8';
+const TBL={customers:'consult_customers',tasks:'consult_tasks',quotes:'consult_quotes',contracts:'consult_contracts',files:'consult_files'};
+let sb=null;
+try{ if(window.supabase&&supabase.createClient) sb=supabase.createClient(SB_URL,SB_KEY); }catch(e){ console.warn('Supabase init 실패',e); }
+
+/* camelCase ↔ snake_case 변환 (DB 컬럼은 snake) */
+const _sn=s=>s.replace(/[A-Z]/g,m=>'_'+m.toLowerCase());
+const _cm=s=>s.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
+function toRow(o){ const r={}; for(const k in o){ if(k==='seq')continue; r[_sn(k)]=o[k]; } return r; }
+function fromRow(o){ const r={}; for(const k in o) r[_cm(k)]=o[k]; return r; }
+
+/* 전체 로드 (Supabase 우선, 실패 시 로컬 백업) */
+async function loadAll(){
+  if(!sb){ try{ const r=localStorage.getItem(DB_KEY); if(r) DB=JSON.parse(r); }catch(e){} if(!DB.seq)DB.seq={c:0,t:0,q:0,k:0}; if(!DB.files)DB.files=[]; return; }
+  try{
+    const [c,t,q,k,f]=await Promise.all([
+      sb.from(TBL.customers).select('*'),
+      sb.from(TBL.tasks).select('*'),
+      sb.from(TBL.quotes).select('*'),
+      sb.from(TBL.contracts).select('*'),
+      sb.from(TBL.files).select('*')
+    ]);
+    if(c.error||t.error||q.error||k.error||f.error){ console.error(c.error||t.error||q.error||k.error||f.error); toast('⚠️ 데이터 불러오기 오류'); }
+    DB.customers=(c.data||[]).map(fromRow);
+    DB.tasks=(t.data||[]).map(fromRow);
+    DB.quotes=(q.data||[]).map(fromRow);
+    DB.contracts=(k.data||[]).map(fromRow);
+    DB.files=(f.data||[]).map(fromRow);
+    DB.seq={c:0,t:0,q:0,k:0};
+    DB.seq.q=DB.quotes.reduce((m,x)=>Math.max(m,parseInt(String(x.no||'').split('-').pop())||0),0);
+    DB.seq.k=DB.contracts.reduce((m,x)=>Math.max(m,parseInt(String(x.no||'').split('-').pop())||0),0);
+  }catch(e){ console.error('Supabase load 실패',e); toast('⚠️ 데이터 불러오기 실패'); }
 }
-function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){ toast('⚠️ 저장 실패 — 시크릿 모드에서는 저장이 안 됩니다'); } }
+function load(){ /* 호환용 (실제 로드는 loadAll) */ }
+function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){} } /* 로컬 백업 */
+function sbUpsert(tbl,obj){ if(!sb||!obj)return; sb.from(tbl).upsert(toRow(obj)).then(r=>{ if(r.error){console.error('upsert',tbl,r.error); toast('⚠️ 저장 실패');} }).catch(e=>console.error(e)); }
+function sbDelete(tbl,id){ if(!sb)return; sb.from(tbl).delete().eq('id',id).then(r=>{ if(r.error)console.error('delete',tbl,r.error); }).catch(e=>console.error(e)); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
 /* ====================== 유틸 ====================== */
@@ -728,13 +762,13 @@ function saveCust(){
     status:$('f-cust-status').value, source:$('f-cust-source').value, memo:$('f-cust-memo').value.trim()};
   if(id){ Object.assign(DB.customers.find(x=>x.id===id), data); toast('✅ 수정되었습니다'); }
   else{ data.id=uid(); data.createdAt=Date.now(); data.dateStr=todayStr(); DB.customers.push(data); toast('✅ 고객이 등록되었습니다'); }
-  save(); closeModal('m-cust'); renderCustomers(); updateNavCounts(); refreshDetail();
+  sbUpsert(TBL.customers, id?DB.customers.find(x=>x.id===id):data); save(); closeModal('m-cust'); renderCustomers(); updateNavCounts(); refreshDetail();
 }
 function delCust(id){
   const c=DB.customers.find(x=>x.id===id);
   const linked=DB.tasks.filter(t=>t.customerId===id).length+DB.quotes.filter(q=>q.customerId===id).length+DB.contracts.filter(k=>k.customerId===id).length;
   if(!confirm(`'${c.name}' 고객을 삭제하시겠습니까?`+(linked?`\n\n연결된 업무·견적·계약 ${linked}건은 '(삭제된 고객)'으로 표시됩니다.`:''))) return;
-  DB.customers=DB.customers.filter(x=>x.id!==id); save(); toast('🗑️ 삭제되었습니다');
+  DB.customers=DB.customers.filter(x=>x.id!==id); sbDelete(TBL.customers,id); save(); toast('🗑️ 삭제되었습니다');
   if(cdOn()){ nav('customers'); } else { renderCustomers(); }
 }
 
@@ -767,7 +801,7 @@ function taskCard(t){
 }
 function moveTask(id,dir){
   const t=DB.tasks.find(x=>x.id===id); const idx=STAGES.findIndex(s=>s[0]===t.stage);
-  const ni=idx+dir; if(ni<0||ni>3)return; t.stage=STAGES[ni][0]; save(); renderTasks();
+  const ni=idx+dir; if(ni<0||ni>3)return; t.stage=STAGES[ni][0]; sbUpsert(TBL.tasks,t); save(); renderTasks();
 }
 function openTask(id,opt){
   fillCustSelect('f-task-cust');
@@ -790,9 +824,9 @@ function saveTask(){
   const data={customerId:$('f-task-cust').value, title, stage:$('f-task-stage').value, due:$('f-task-due').value, memo:$('f-task-memo').value.trim()};
   if(id){ Object.assign(DB.tasks.find(x=>x.id===id),data); toast('✅ 수정되었습니다'); }
   else{ data.id=uid(); data.createdAt=Date.now(); DB.tasks.push(data); toast('✅ 업무가 추가되었습니다'); }
-  save(); closeModal('m-task'); renderTasks(); refreshDetail();
+  sbUpsert(TBL.tasks, id?DB.tasks.find(x=>x.id===id):data); save(); closeModal('m-task'); renderTasks(); refreshDetail();
 }
-function delTask(id){ if(!confirm('이 업무를 삭제하시겠습니까?'))return; DB.tasks=DB.tasks.filter(x=>x.id!==id); save(); renderTasks(); refreshDetail(); toast('🗑️ 삭제'); }
+function delTask(id){ if(!confirm('이 업무를 삭제하시겠습니까?'))return; DB.tasks=DB.tasks.filter(x=>x.id!==id); sbDelete(TBL.tasks,id); save(); renderTasks(); refreshDetail(); toast('🗑️ 삭제'); }
 
 function fillCustSelect(selId,selectedId,withNone){
   const sel=$(selId);
@@ -930,10 +964,10 @@ function saveFile(){
   if(!title){ toast('⚠️ 자료명을 입력하세요'); return; }
   let url=$('f-file-url').value.trim();
   if(url && !/^https?:\/\//i.test(url)) url='https://'+url;
-  DB.files.push({id:uid(), customerId:$('f-file-cust').value, title, url, memo:$('f-file-memo').value.trim(), createdAt:Date.now()});
+  const _f={id:uid(), customerId:$('f-file-cust').value, title, url, memo:$('f-file-memo').value.trim(), createdAt:Date.now()}; DB.files.push(_f); sbUpsert(TBL.files,_f);
   save(); closeModal('m-file'); refreshDetail(); toast('✅ 자료가 추가되었습니다');
 }
-function delFile(id){ if(!confirm('이 자료를 삭제하시겠습니까?'))return; DB.files=DB.files.filter(x=>x.id!==id); save(); refreshDetail(); toast('🗑️ 삭제'); }
+function delFile(id){ if(!confirm('이 자료를 삭제하시겠습니까?'))return; DB.files=DB.files.filter(x=>x.id!==id); sbDelete(TBL.files,id); save(); refreshDetail(); toast('🗑️ 삭제'); }
 
 
 /* ====================== 견적서 ====================== */
@@ -963,7 +997,7 @@ function renderQuotes(){
 function toggleQuoteSent(id){
   const q=DB.quotes.find(x=>x.id===id);
   q.sent = (q.sent==='전달완료') ? '미전달' : '전달완료';
-  save(); renderQuotes(); refreshDetail();
+  sbUpsert(TBL.quotes,q); save(); renderQuotes(); refreshDetail();
 }
 function downloadQuote(id){ openQuote(id); setTimeout(printQuote, 350); }
 /* 공급자(WD) 고정 정보 — 변경 시 이 부분만 수정 */
@@ -1090,9 +1124,9 @@ function saveQuoteFromEditor(){
   if(id){ Object.assign(DB.quotes.find(x=>x.id===id),data); toast('✅ 저장되었습니다'); }
   else{ data.id=uid(); data.createdAt=Date.now(); data.sent='미전달'; DB.seq.q++; data.no='Q-'+new Date().getFullYear()+'-'+String(DB.seq.q).padStart(3,'0');
     DB.quotes.push(data); $('qe-id').value=data.id; $('qe-title').textContent='견적서 수정 · '+data.no; toast('✅ 견적서가 저장되었습니다'); }
-  save(); renderQuotes(); updateNavCounts(); refreshDetail();
+  sbUpsert(TBL.quotes, id?DB.quotes.find(x=>x.id===id):data); save(); renderQuotes(); updateNavCounts(); refreshDetail();
 }
-function delQuote(id){ if(!confirm('이 견적서를 삭제하시겠습니까?'))return; DB.quotes=DB.quotes.filter(x=>x.id!==id); save(); renderQuotes(); refreshDetail(); toast('🗑️ 삭제'); }
+function delQuote(id){ if(!confirm('이 견적서를 삭제하시겠습니까?'))return; DB.quotes=DB.quotes.filter(x=>x.id!==id); sbDelete(TBL.quotes,id); save(); renderQuotes(); refreshDetail(); toast('🗑️ 삭제'); }
 
 function printQuote(){ document.body.classList.add('q-print'); window.print(); }
 window.addEventListener('afterprint',()=>document.body.classList.remove('q-print'));
@@ -1183,9 +1217,9 @@ function saveContract(){
     scope:$('f-contract-scope').value.trim(), terms:$('f-contract-terms').value.trim()};
   if(id){ Object.assign(DB.contracts.find(x=>x.id===id),data); toast('✅ 수정되었습니다'); }
   else{ data.id=uid(); data.createdAt=Date.now(); DB.seq.k++; data.no='C-'+new Date().getFullYear()+'-'+String(DB.seq.k).padStart(3,'0'); DB.contracts.push(data); toast('✅ 계약서가 저장되었습니다'); }
-  save(); closeModal('m-contract'); renderContracts(); refreshDetail();
+  sbUpsert(TBL.contracts, id?DB.contracts.find(x=>x.id===id):data); save(); closeModal('m-contract'); renderContracts(); refreshDetail();
 }
-function delContract(id){ if(!confirm('이 계약서를 삭제하시겠습니까?'))return; DB.contracts=DB.contracts.filter(x=>x.id!==id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제'); }
+function delContract(id){ if(!confirm('이 계약서를 삭제하시겠습니까?'))return; DB.contracts=DB.contracts.filter(x=>x.id!==id); sbDelete(TBL.contracts,id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제'); }
 
 function previewContract(id){
   const k=DB.contracts.find(x=>x.id===id);
@@ -1273,11 +1307,11 @@ function seedDemo(){
     {id:uid(),customerId:c2,title:'인스타 채널 세팅',stage:'대기',due:'',memo:'',createdAt:now}
   );
   DB.seq.q++; DB.quotes.push({id:uid(),customerId:c2,no:'Q-'+new Date().getFullYear()+'-'+String(DB.seq.q).padStart(3,'0'),date:todayStr(),company:'예시 — 이도윤',manager:'',contact:'010-2222-3333',valid:'견적일로부터 10일',work:'발주일로부터 1개월',vat:true,items:[{name:'홈페이지 제작',detail:'반응형 5페이지',cost:'1500000'},{name:'카드뉴스 제작',detail:'월 4건',cost:'800000'}],createdAt:now});
-  save(); renderDash(); renderCustomers(); updateNavCounts(); toast('✅ 예시 데이터를 채웠습니다');
+  DB.customers.forEach(x=>sbUpsert(TBL.customers,x)); DB.tasks.forEach(x=>sbUpsert(TBL.tasks,x)); DB.quotes.forEach(x=>sbUpsert(TBL.quotes,x)); save(); renderDash(); renderCustomers(); updateNavCounts(); toast('✅ 예시 데이터를 채웠습니다');
 }
 
 /* ====================== 초기화 ====================== */
-load(); renderDash(); updateNavCounts();
+(async()=>{ await loadAll(); renderDash(); if(typeof renderCustomers==='function')renderCustomers(); updateNavCounts(); })();
 </script>
 </body>
 </html>
