@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WD 컨설팅센터 — 브랜딩 고객관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== 전산 동일 디자인 토큰 ===== */
+:root{
+  --p:#6d28d9;--pl:#8b5cf6;--p-soft:#f5f3ff;--p-line:#e9e3fb;
+  --em:#10b981;--em50:#ecfdf5;--em200:#a7f3d0;--em700:#047857;
+  --sk:#0ea5e9;--sk50:#f0f9ff;--sk200:#bae6fd;--sk700:#0369a1;
+  --am:#f59e0b;--am50:#fffbeb;--am200:#fde68a;--am700:#b45309;
+  --rs50:#fff1f2;--rs200:#fecdd3;--rs700:#be123c;
+  --s50:#f8fafc;--s100:#f1f5f9;--s200:#e2e8f0;--s300:#cbd5e1;
+  --s400:#94a3b8;--s500:#64748b;--s600:#475569;--s700:#334155;
+  --s800:#1e293b;--s900:#0f172a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--s100);color:var(--s900);font-size:14px;line-height:1.6;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+/* ===== 레이아웃 ===== */
+.wrap{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+
+/* 사이드바 */
+.side{background:linear-gradient(180deg,#2e1065,#4c1d95);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;}
+.side-brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;padding:0 4px;}
+.side-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--pl),#a78bfa);display:flex;align-items:center;justify-content:center;font-family:'Montserrat';font-weight:800;font-size:16px;}
+.side-brand h1{font-size:15px;font-weight:800;letter-spacing:.3px;}
+.side-brand p{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;color:rgba(255,255,255,.72);font-size:13.5px;font-weight:600;border:none;background:none;width:100%;text-align:left;margin-bottom:3px;transition:all .15s;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-item.on{background:rgba(255,255,255,.16);color:#fff;font-weight:700;}
+.nav-item .ic{font-size:16px;width:20px;text-align:center;}
+.nav-item .cnt{margin-left:auto;font-size:10px;background:rgba(255,255,255,.18);padding:1px 7px;border-radius:9px;font-weight:700;}
+.side-foot{margin-top:auto;font-size:10px;color:rgba(255,255,255,.4);padding:0 4px;line-height:1.7;}
+
+/* 메인 */
+.main{padding:28px 32px 60px;overflow-x:hidden;}
+.view{display:none;animation:fade .25s ease;}
+.view.on{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.page-head h2{font-size:22px;font-weight:800;color:var(--s900);letter-spacing:-.4px;}
+.page-head p{font-size:12.5px;color:var(--s500);margin-top:2px;}
+
+/* 버튼 */
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;transition:all .15s;}
+.btn-p{background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;box-shadow:0 3px 10px rgba(109,40,217,.25);}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(109,40,217,.35);}
+.btn-g{background:#fff;color:var(--s600);border:1px solid var(--s200);}
+.btn-g:hover{border-color:var(--pl);color:var(--p);}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+.btn-danger{background:var(--rs50);color:var(--rs700);border:1px solid var(--rs200);}
+
+/* 카드/통계 */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat{background:#fff;border:1px solid var(--s200);border-radius:14px;padding:18px 20px;}
+.stat .lbl{font-size:12px;color:var(--s500);font-weight:600;display:flex;align-items:center;gap:6px;}
+.stat .num{font-size:28px;font-weight:800;color:var(--s900);margin-top:6px;font-family:'Montserrat';}
+.stat .sub{font-size:11px;color:var(--s400);margin-top:2px;}
+.card{background:#fff;border:1px solid var(--s200);border-radius:14px;padding:20px;}
+.card-title{font-size:14px;font-weight:800;color:var(--s800);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+
+/* 테이블 */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:var(--s500);border-bottom:2px solid var(--s100);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.tbl td{padding:12px;border-bottom:1px solid var(--s100);vertical-align:middle;}
+.tbl tr:hover td{background:var(--s50);}
+.tbl .nm{font-weight:700;color:var(--s800);}
+.empty{text-align:center;padding:48px 20px;color:var(--s400);}
+.empty .ic{font-size:40px;margin-bottom:10px;opacity:.5;}
+
+/* 뱃지 */
+.bdg{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;white-space:nowrap;}
+.bdg-svc{background:var(--p-soft);color:var(--p);}
+.b-new{background:var(--sk50);color:var(--sk700);}
+.b-consult{background:var(--am50);color:var(--am700);}
+.b-proposal{background:#fdf4ff;color:#a21caf;}
+.b-contract{background:var(--em50);color:var(--em700);}
+.b-progress{background:#eef2ff;color:#4338ca;}
+.b-done{background:var(--s100);color:var(--s600);}
+.b-hold{background:var(--rs50);color:var(--rs700);}
+
+/* 검색바 */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.search{flex:1;min-width:200px;position:relative;}
+.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--s200);border-radius:10px;font-size:13px;background:#fff;}
+.search input:focus{outline:none;border-color:var(--pl);}
+.search::before{content:"🔍";position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5;}
+.filter-sel{padding:9px 12px;border:1px solid var(--s200);border-radius:10px;font-size:13px;background:#fff;color:var(--s700);}
+
+/* 칸반(업무 진행도) */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.kcol{background:var(--s50);border-radius:14px;padding:14px 12px;min-height:200px;}
+.kcol-head{font-size:12px;font-weight:800;color:var(--s700);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;padding:0 2px;}
+.kcol-head .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;}
+.ktask{background:#fff;border:1px solid var(--s200);border-radius:11px;padding:12px;margin-bottom:9px;}
+.ktask .t{font-size:13px;font-weight:700;color:var(--s800);margin-bottom:5px;}
+.ktask .c{font-size:11px;color:var(--p);font-weight:600;margin-bottom:4px;}
+.ktask .d{font-size:10.5px;color:var(--s400);}
+.ktask-actions{display:flex;gap:5px;margin-top:9px;}
+.ktask-actions button{flex:1;font-size:10px;padding:5px 4px;border-radius:7px;border:1px solid var(--s200);background:#fff;color:var(--s600);font-weight:600;}
+.ktask-actions button:hover{border-color:var(--pl);color:var(--p);}
+
+/* 모달 */
+.modal{display:none;position:fixed;inset:0;background:rgba(15,8,40,.5);z-index:1000;justify-content:center;align-items:flex-start;padding:40px 20px;overflow-y:auto;}
+.modal.show{display:flex;}
+.modal-box{background:#fff;border-radius:18px;width:100%;max-width:540px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.25);animation:fade .25s ease;}
+.modal-box.wide{max-width:920px;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-head h3{font-size:17px;font-weight:800;color:var(--s900);}
+.modal-x{background:var(--s100);border:none;width:30px;height:30px;border-radius:9px;font-size:16px;color:var(--s500);}
+.modal-x:hover{background:var(--s200);}
+.form-row{margin-bottom:13px;}
+.form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.form-row label{display:block;font-size:11.5px;font-weight:600;color:var(--s500);margin-bottom:5px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:9px 11px;border:1px solid var(--s200);border-radius:9px;font-size:13px;color:var(--s800);background:#fff;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3px rgba(139,92,246,.12);}
+.form-row textarea{resize:vertical;min-height:64px;}
+.chk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.chk-item{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--s200);border-radius:9px;font-size:12.5px;cursor:pointer;background:#fff;transition:all .15s;user-select:none;}
+.chk-item:hover{border-color:var(--pl);}
+.chk-item input{width:auto;margin:0;}
+.chk-item.checked{background:var(--p-soft);border-color:var(--pl);color:var(--p);font-weight:700;}
+.modal-foot{display:flex;gap:10px;margin-top:8px;}
+.modal-foot .btn{flex:1;padding:11px;}
+
+/* 견적/계약 항목 입력 */
+.item-grid{display:grid;grid-template-columns:1fr 1fr 110px 30px;gap:7px;margin-bottom:7px;align-items:center;}
+.item-grid input{padding:8px 9px;font-size:12.5px;border:1px solid var(--s200);border-radius:8px;}
+.item-grid .x{background:var(--rs50);color:var(--rs700);border:none;height:34px;border-radius:8px;font-size:15px;}
+.item-head-grid{display:grid;grid-template-columns:1fr 1fr 110px 30px;gap:7px;font-size:10.5px;font-weight:700;color:var(--s400);margin-bottom:5px;padding-left:2px;}
+
+/* A4 문서 미리보기 */
+.doc-wrap{display:none;}
+.doc-toolbar{display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+.a4{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:18mm 16mm;box-shadow:0 8px 40px rgba(0,0,0,.16);position:relative;}
+.a4-corner{position:absolute;top:0;left:0;width:0;height:0;border-top:22mm solid var(--s900);border-right:22mm solid transparent;}
+.doc-title{text-align:center;font-size:30px;font-weight:900;color:var(--s900);letter-spacing:.05em;margin:6mm 0 8mm;}
+.doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8mm;margin-bottom:6mm;align-items:start;}
+.itbl{width:100%;border-collapse:collapse;font-size:11.5px;}
+.itbl td{padding:7px 9px;}
+.doc-box{border:1.5px solid var(--p-line);border-radius:9px;overflow:hidden;}
+.doc-box.supplier{border-color:var(--s300);}
+.doc-box-head{font-size:10.5px;font-weight:800;padding:7px 10px;letter-spacing:.1em;text-align:center;color:#fff;background:var(--p);}
+.doc-box.supplier .doc-box-head{background:var(--s900);}
+.doc-box .itbl td{border-bottom:1px solid #eee;}
+.doc-box .itbl tr:last-child td{border-bottom:none;}
+.doc-box .itbl .l{background:var(--p-soft);color:var(--p);font-weight:700;text-align:center;width:74px;white-space:nowrap;vertical-align:middle;}
+.doc-box.supplier .itbl .l{background:var(--s100);color:var(--s700);}
+.doc-box .itbl .amt{font-size:16px;font-weight:900;color:var(--s900);}
+.doc-date{text-align:center;font-size:13px;letter-spacing:.3em;color:#444;margin:7mm 0 5mm;}
+.doc-recipient{text-align:center;font-size:19px;font-weight:800;color:var(--s900);margin-bottom:7mm;}
+.qtbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.qtbl th{padding:11px 10px;color:#fff;font-weight:700;}
+.qtbl th.c1{background:var(--p);}
+.qtbl th.c2,.qtbl th.c3{background:var(--s900);}
+.qtbl th.c3{text-align:right;padding-right:14px;}
+.qtbl td{padding:11px 10px;border-bottom:1px solid #e6e6e6;text-align:center;}
+.qtbl td.cost{text-align:right;padding-right:14px;font-variant-numeric:tabular-nums;}
+.qtbl tr.sum .lc{background:var(--s900);color:#fff;font-weight:800;}
+.qtbl tr.total .lc{background:var(--p);color:#fff;font-weight:800;}
+.qtbl tr.total td{font-size:15px;font-weight:900;}
+.qtbl .cost,.qtbl td{vertical-align:middle;}
+.doc-notes{margin-top:9mm;font-size:10.5px;color:#555;line-height:1.9;}
+.doc-notes b{color:var(--p);}
+/* 계약서 본문 */
+.contract-body{font-size:12.5px;line-height:2;color:#333;}
+.contract-body h4{font-size:13px;font-weight:800;color:var(--p);margin:6mm 0 2mm;padding-left:9px;border-left:3px solid var(--p);}
+.contract-overview{margin-bottom:7mm;}
+.contract-sign{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:12mm;}
+.contract-sign .box{border:1px solid var(--p-line);border-radius:9px;padding:14px 16px;}
+.contract-sign .box.supplier{border-color:var(--s300);}
+.contract-sign .box .h{font-size:11px;font-weight:800;color:var(--p);margin-bottom:10px;letter-spacing:.08em;}
+.contract-sign .box.supplier .h{color:var(--s700);}
+.contract-sign .box .r{margin-bottom:7px;font-size:12px;color:#333;}
+
+/* 견적 편집 (좌우 분할) */
+.qe-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.qe-toolbar .ttl{font-size:18px;font-weight:800;color:var(--s900);}
+.qe-toolbar .btns{display:flex;gap:8px;}
+.qe-split{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;}
+.qe-form{background:#fff;border:1px solid var(--s200);border-radius:14px;padding:20px;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;}
+.qe-preview{overflow:auto;display:flex;justify-content:center;background:var(--s200);border-radius:14px;padding:22px;}
+.qe-preview .a4{flex-shrink:0;}
+
+/* 인쇄 */
+@page{size:A4;margin:0;}
+@media print{
+  body{background:#fff;}
+  .side,.page-head,.doc-toolbar,.nav-item,.qe-toolbar{display:none !important;}
+  .wrap{display:block;}
+  .main{padding:0;}
+  .view{display:none !important;}
+  .doc-wrap.print-on{display:block !important;}
+  .a4{box-shadow:none;margin:0;width:210mm;}
+  /* 견적 편집화면 인쇄: 미리보기 A4만 */
+  body.q-print #view-qedit{display:block !important;}
+  body.q-print .qe-form{display:none !important;}
+  body.q-print .qe-split{display:block !important;}
+  body.q-print .qe-preview{padding:0;background:none;display:block !important;overflow:visible;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+
+/* 고객 상세 페이지 */
+.cd-back{background:none;border:none;color:var(--s500);font-size:13px;font-weight:600;padding:0;margin-bottom:14px;display:flex;align-items:center;gap:5px;}
+.cd-back:hover{color:var(--p);}
+.cd-header{background:linear-gradient(135deg,#2e1065,#5b21b6);color:#fff;border-radius:16px;padding:24px 26px;margin-bottom:18px;position:relative;}
+.cd-name{font-size:24px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap;letter-spacing:-.4px;}
+.cd-name .bdg{font-size:12px;}
+.cd-meta{font-size:13px;color:rgba(255,255,255,.82);margin-top:12px;display:flex;gap:20px;flex-wrap:wrap;}
+.cd-agency{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;}
+.cd-agency .tag{background:rgba(255,255,255,.18);padding:4px 11px;border-radius:8px;font-size:11.5px;font-weight:600;}
+.cd-header-btns{position:absolute;top:22px;right:22px;display:flex;gap:7px;}
+.cd-header-btns button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 13px;border-radius:9px;font-size:12px;font-weight:700;}
+.cd-header-btns button:hover{background:rgba(255,255,255,.28);}
+.cd-progress-card{background:#fff;border:1.5px solid var(--em200);border-radius:14px;padding:18px 22px;margin-bottom:18px;}
+.cd-progress-card .top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;}
+.cd-progress-card .label{font-size:12px;font-weight:700;color:var(--em700);display:flex;align-items:center;gap:6px;}
+.cd-progress-card .svc{font-size:16px;font-weight:800;color:var(--s900);margin-top:5px;}
+.cd-progress-card .amt{font-size:15px;font-weight:800;color:var(--s700);}
+.prog-bar{height:11px;background:var(--s100);border-radius:6px;overflow:hidden;margin-top:14px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--pl));border-radius:6px;transition:width .5s ease;}
+.prog-text{font-size:12px;color:var(--s500);margin-top:7px;font-weight:600;}
+.cd-section{background:#fff;border:1px solid var(--s200);border-radius:14px;padding:18px 20px;margin-bottom:16px;}
+.cd-sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.cd-sec-head h4{font-size:14px;font-weight:800;color:var(--s800);display:flex;align-items:center;gap:7px;}
+.cd-stagegroup{margin-bottom:12px;}
+.cd-stagegroup:last-child{margin-bottom:0;}
+.cd-stage-label{font-size:11px;font-weight:800;color:var(--s500);margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.cd-stage-label .dot{width:8px;height:8px;border-radius:50%;}
+.cd-tk{display:flex;justify-content:space-between;align-items:center;background:var(--s50);border:1px solid var(--s200);border-radius:10px;padding:10px 13px;margin-bottom:6px;}
+.cd-tk .tt{font-size:13px;font-weight:600;color:var(--s800);}
+.cd-tk .td{font-size:11px;color:var(--s400);margin-top:2px;}
+.cd-tk-btns{display:flex;gap:5px;flex-shrink:0;}
+.cd-tk-btns button{font-size:10.5px;padding:5px 9px;border-radius:7px;border:1px solid var(--s200);background:#fff;color:var(--s600);font-weight:600;}
+.cd-tk-btns button:hover{border-color:var(--pl);color:var(--p);}
+.cd-mini{width:100%;border-collapse:collapse;font-size:12.5px;}
+.cd-mini td{padding:9px 8px;border-bottom:1px solid var(--s100);}
+.cd-mini .nm{font-weight:700;color:var(--s800);}
+.cd-memo{font-size:13px;color:var(--s600);line-height:1.8;white-space:pre-wrap;}
+.cd-empty{font-size:12px;color:var(--s400);text-align:center;padding:16px;}
+.cd-grid-2{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch;margin-bottom:16px;}
+.cd-left{display:flex;flex-direction:column;}
+.cd-left>.cd-section{flex:1;margin-bottom:0;}
+.cd-col-right{display:flex;flex-direction:column;gap:16px;min-width:0;}
+.cd-col-right>.cd-section{margin-bottom:0;}
+.cd-file{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;background:var(--s50);border:1px solid var(--s200);border-radius:10px;margin-bottom:6px;}
+.cd-file .fi{min-width:0;}
+.cd-file .ft{font-size:12.5px;font-weight:600;color:var(--s800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cd-file .fm{font-size:11px;color:var(--s400);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cd-file-btns{display:flex;gap:4px;flex-shrink:0;}
+.cd-file-btns a,.cd-file-btns button{font-size:10.5px;padding:5px 9px;border-radius:7px;border:1px solid var(--s200);background:#fff;color:var(--s600);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;}
+.cd-file-btns a:hover,.cd-file-btns button:hover{border-color:var(--pl);color:var(--p);}
+/* 계약서 종류 선택 */
+.ct-group{font-size:11px;font-weight:800;color:var(--p);margin:16px 0 8px;letter-spacing:.04em;}
+.ct-sub{padding-left:10px;}
+.ct-item{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border:1px solid var(--s200);border-radius:11px;margin-bottom:8px;transition:all .15s;}
+.ct-item.ready{cursor:pointer;}
+.ct-item.ready:hover{border-color:var(--pl);background:var(--p-soft);transform:translateY(-1px);}
+.ct-item.soon{opacity:.65;background:var(--s50);}
+.ct-item .nm{font-size:13.5px;font-weight:700;color:var(--s800);}
+.ct-item .badge-soon{font-size:10px;background:var(--s200);color:var(--s500);padding:3px 9px;border-radius:7px;font-weight:700;}
+.ct-item .badge-go{font-size:10px;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;padding:3px 10px;border-radius:7px;font-weight:700;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--s900);color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:2000;opacity:0;transition:all .3s;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+@media(max-width:920px){
+  .wrap{grid-template-columns:1fr;}
+  .side{position:relative;height:auto;flex-direction:row;flex-wrap:wrap;gap:4px;}
+  .side-brand{width:100%;margin-bottom:12px;}
+  .nav-item{width:auto;margin-bottom:0;}
+  .nav-item .cnt{display:none;}
+  .side-foot{display:none;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .kanban{grid-template-columns:1fr 1fr;}
+  .cd-grid-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 사이드바 ===== -->
+  <aside class="side">
+    <div class="side-brand">
+      <div class="side-logo">WD</div>
+      <div>
+        <h1>컨설팅센터</h1>
+        <p>퍼스널브랜딩 관리</p>
+      </div>
+    </div>
+    <button class="nav-item on" data-view="dash" onclick="nav('dash')"><span class="ic">📊</span>대시보드</button>
+    <button class="nav-item" data-view="customers" onclick="nav('customers')"><span class="ic">👥</span>고객관리<span class="cnt" id="nav-cust">0</span></button>
+    <button class="nav-item" data-view="tasks" onclick="nav('tasks')"><span class="ic">🗂</span>업무관리<span class="cnt" id="nav-task">0</span></button>
+    <button class="nav-item" data-view="quotes" onclick="nav('quotes')"><span class="ic">🧾</span>견적서<span class="cnt" id="nav-quote">0</span></button>
+    <button class="nav-item" data-view="contracts" onclick="nav('contracts')"><span class="ic">📄</span>계약서<span class="cnt" id="nav-contract">0</span></button>
+    <div class="side-foot">
+      WD WAVE · 1인 시스템<br>
+      데이터는 이 브라우저에 저장됩니다.<br>
+      <span id="ver">v0.1</span>
+    </div>
+  </aside>
+
+  <!-- ===== 메인 ===== -->
+  <main class="main">
+
+    <!-- ── 대시보드 ── -->
+    <section class="view on" id="view-dash">
+      <div class="page-head">
+        <div><h2>대시보드</h2><p>한눈에 보는 브랜딩 업무 현황</p></div>
+        <button class="btn btn-g btn-sm" onclick="seedDemo()">예시 데이터 채우기</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="lbl">👥 전체 고객</div><div class="num" id="s-cust">0</div><div class="sub" id="s-cust-sub">신규 0 · 진행 0</div></div>
+        <div class="stat"><div class="lbl">🗂 진행 중 업무</div><div class="num" id="s-task">0</div><div class="sub" id="s-task-sub">완료 0건</div></div>
+        <div class="stat"><div class="lbl">🧾 발행 견적</div><div class="num" id="s-quote">0</div><div class="sub" id="s-quote-sub">합계 0원</div></div>
+        <div class="stat"><div class="lbl">📄 체결 계약</div><div class="num" id="s-contract">0</div><div class="sub" id="s-contract-sub">계약금액 0원</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-title">🔔 최근 고객</div>
+          <div id="dash-recent-cust"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⏳ 마감 임박 업무</div>
+          <div id="dash-due-task"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 고객관리 ── -->
+    <section class="view" id="view-customers">
+      <div class="page-head">
+        <div><h2>고객관리</h2><p>고객 정보가 견적·계약·업무의 기준이 됩니다</p></div>
+        <button class="btn btn-p" onclick="openCust()">+ 고객 등록</button>
+      </div>
+      <div class="toolbar">
+        <div class="search"><input id="cust-search" placeholder="이름·연락처 검색" oninput="renderCustomers()"></div>
+        <select class="filter-sel" id="cust-filter-svc" onchange="renderCustomers()">
+          <option value="">전체 서비스</option>
+          <option>퍼스널브랜딩 컨설팅</option><option>코칭</option><option>대행</option><option>AI·디지털 리터러시</option>
+        </select>
+        <select class="filter-sel" id="cust-filter-status" onchange="renderCustomers()">
+          <option value="">전체 상태</option>
+          <option>신규문의</option><option>상담중</option><option>제안완료</option><option>계약</option><option>진행중</option><option>완료</option><option>보류</option>
+        </select>
+      </div>
+      <div class="card" style="padding:6px 8px;">
+        <table class="tbl">
+          <thead><tr><th>고객명</th><th>연락처</th><th>서비스</th><th>상태</th><th>유입</th><th>등록일</th><th></th></tr></thead>
+          <tbody id="cust-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 업무관리 (진행도) ── -->
+    <section class="view" id="view-tasks">
+      <div class="page-head">
+        <div><h2>업무관리</h2><p>고객별 업무 진행 상태 · 단계 이동으로 관리</p></div>
+        <button class="btn btn-p" onclick="openTask()">+ 업무 추가</button>
+      </div>
+      <div class="kanban" id="kanban"></div>
+    </section>
+
+    <!-- ── 견적서 ── -->
+    <section class="view" id="view-quotes">
+      <div class="page-head">
+        <div><h2>견적서</h2><p>고객 선택 → 항목 작성 → A4 인쇄·PDF 저장</p></div>
+        <button class="btn btn-p" onclick="openQuoteType()">+ 견적서 작성</button>
+      </div>
+      <div class="card" style="padding:6px 8px;">
+        <table class="tbl">
+          <thead><tr><th>고객명</th><th>작성일</th><th>금액(부가세포함)</th><th>전달상태</th><th></th></tr></thead>
+          <tbody id="quote-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 계약서 ── -->
+    <section class="view" id="view-contracts">
+      <div class="page-head">
+        <div><h2>계약서</h2><p>퍼스널브랜딩 서비스 계약 작성·관리</p></div>
+        <button class="btn btn-p" onclick="openContractType()">+ 계약서 작성</button>
+      </div>
+      <div class="card" style="padding:6px 8px;">
+        <table class="tbl">
+          <thead><tr><th>계약번호</th><th>고객</th><th>서비스</th><th>계약금액</th><th>상태</th><th>작성일</th><th></th></tr></thead>
+          <tbody id="contract-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 고객 상세 (개인 페이지) ── -->
+    <section class="view" id="view-cdetail">
+      <button class="cd-back" onclick="nav('customers')">← 고객 목록으로</button>
+      <div id="cd-content"></div>
+    </section>
+
+    <!-- ── 견적서 편집 (좌: 작성 / 우: A4 미리보기) ── -->
+    <section class="view" id="view-qedit">
+      <div class="qe-toolbar">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <button class="cd-back" style="margin:0;" onclick="closeQedit()">← 견적서 목록</button>
+          <span class="ttl" id="qe-title">견적서 작성</span>
+        </div>
+        <div class="btns">
+          <button class="btn btn-g" onclick="saveQuoteFromEditor()">저장</button>
+          <button class="btn btn-p" onclick="printQuote()">🖨️ 인쇄 / PDF</button>
+        </div>
+      </div>
+      <div class="qe-split">
+        <div class="qe-form">
+          <input type="hidden" id="qe-id">
+          <input type="hidden" id="qe-svc">
+          <div class="form-row"><label>견적 종류</label>
+            <div id="qe-svc-label" style="padding:9px 11px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--p);min-height:38px;display:flex;align-items:center;">미지정</div>
+          </div>
+          <div class="form-row"><label>고객 등록 <span style="color:var(--s400);font-weight:400;">· 이 견적을 연결할 고객</span></label><select id="qe-custid"></select></div>
+          <div class="form-row"><label>작성일</label><input id="qe-date" placeholder="2026. 06. 08" oninput="renderQePreview()"></div>
+          <div class="form-row"><label>회사명 / 고객 <span style="color:var(--s400);font-weight:400;">· 견적서에 표시</span></label><input id="qe-company" placeholder="견적 요청 회사·고객명" oninput="renderQePreview()"></div>
+          <div class="form-row two">
+            <div><label>담당자</label><input id="qe-manager" placeholder="담당자명" oninput="renderQePreview()"></div>
+            <div><label>연락처</label><input id="qe-contact" placeholder="010-0000-0000" oninput="renderQePreview()"></div>
+          </div>
+          <div class="form-row two">
+            <div><label>작업기간</label><input id="qe-work" placeholder="발주일로부터 1개월" oninput="renderQePreview()"></div>
+            <div><label>유효기간</label><input id="qe-valid" placeholder="견적일로부터 10일" oninput="renderQePreview()"></div>
+          </div>
+          <div class="form-row">
+            <label>견적 항목</label>
+            <div class="item-head-grid"><span>구성</span><span>세부항목</span><span>비용(원)</span><span></span></div>
+            <div id="qe-items"></div>
+            <button class="btn btn-g btn-sm" style="margin-top:5px;" onclick="addQuoteItem()">+ 항목 추가</button>
+          </div>
+          <div class="form-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="qe-vat" checked style="width:auto;" onchange="renderQePreview()"> 최종금액에 부가세(10%) 포함
+            </label>
+          </div>
+        </div>
+        <div class="qe-preview"><div id="qe-a4"></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== 고객 모달 ===== -->
+<div class="modal" id="m-cust">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="m-cust-title">고객 등록</h3><button class="modal-x" onclick="closeModal('m-cust')">×</button></div>
+    <input type="hidden" id="f-cust-id">
+    <div class="form-row two">
+      <div><label>고객명 *</label><input id="f-cust-name" placeholder="홍길동"></div>
+      <div><label>연락처</label><input id="f-cust-phone" placeholder="010-0000-0000"></div>
+    </div>
+    <div class="form-row two">
+      <div><label>관심 서비스</label>
+        <select id="f-cust-svc" onchange="toggleAgency()"><option>퍼스널브랜딩 컨설팅</option><option>코칭</option><option>대행</option><option>AI·디지털 리터러시</option></select>
+      </div>
+      <div><label>진행 상태</label>
+        <select id="f-cust-status"><option>신규문의</option><option>상담중</option><option>제안완료</option><option>계약</option><option>진행중</option><option>완료</option><option>보류</option></select>
+      </div>
+    </div>
+    <div class="form-row" id="agency-box" style="display:none;">
+      <label>대행 종류 <span style="color:var(--s400);font-weight:400;">(복수 선택 가능)</span></label>
+      <div class="chk-grid" id="agency-types"></div>
+    </div>
+    <div class="form-row two">
+      <div><label>업종</label><input id="f-cust-industry" placeholder="예: 요식업 · 학원 · 1인 강사"></div>
+      <div><label>유입 경로</label>
+        <select id="f-cust-source">
+          <option value="">선택 안 함</option>
+          <option>유튜브</option><option>인스타그램</option><option>블로그</option><option>네이버 검색</option>
+          <option>지인 소개</option><option>기존 고객</option><option>카카오톡</option><option>오프라인</option><option>기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row"><label>메모</label><textarea id="f-cust-memo" placeholder="상담 내용, 특이사항 등"></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal('m-cust')">취소</button>
+      <button class="btn btn-p" onclick="saveCust()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 업무 모달 ===== -->
+<div class="modal" id="m-task">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="m-task-title">업무 추가</h3><button class="modal-x" onclick="closeModal('m-task')">×</button></div>
+    <input type="hidden" id="f-task-id">
+    <div class="form-row"><label>고객 *</label><select id="f-task-cust"></select></div>
+    <div class="form-row"><label>업무 내용 *</label><input id="f-task-title" placeholder="예: 브랜드 컨셉 초안 작성"></div>
+    <div class="form-row two">
+      <div><label>단계</label>
+        <select id="f-task-stage"><option value="대기">대기</option><option value="진행중">진행중</option><option value="검토">검토</option><option value="완료">완료</option></select>
+      </div>
+      <div><label>마감일</label><input type="date" id="f-task-due"></div>
+    </div>
+    <div class="form-row"><label>메모</label><textarea id="f-task-memo"></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal('m-task')">취소</button>
+      <button class="btn btn-p" onclick="saveTask()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 종류 선택 모달 (견적/계약 공용) ===== -->
+<div class="modal" id="m-ctype">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="ctype-title">종류 선택</h3><button class="modal-x" onclick="closeModal('m-ctype')">×</button></div>
+    <input type="hidden" id="ctype-cust">
+    <input type="hidden" id="ctype-mode">
+    <div id="ctype-list"></div>
+  </div>
+</div>
+
+<!-- ===== 계약 모달 ===== -->
+<div class="modal" id="m-contract">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3 id="m-contract-title">계약서 작성</h3><button class="modal-x" onclick="closeModal('m-contract')">×</button></div>
+    <input type="hidden" id="f-contract-id">
+    <div class="form-row two">
+      <div><label>고객 *</label><select id="f-contract-cust"></select></div>
+      <div><label>작성일</label><input id="f-contract-date" placeholder="2026. 06. 08"></div>
+    </div>
+    <div class="form-row two">
+      <div><label>계약 종류</label>
+        <div id="f-contract-svc-label" style="padding:9px 11px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--p);min-height:38px;display:flex;align-items:center;">미지정</div>
+        <input type="hidden" id="f-contract-svc">
+      </div>
+      <div><label>계약 상태</label>
+        <select id="f-contract-status"><option>작성중</option><option>발송</option><option>체결</option><option>종료</option></select>
+      </div>
+    </div>
+    <div class="form-row two">
+      <div><label>계약금액(원)</label><input id="f-contract-amount" inputmode="numeric" placeholder="0"></div>
+      <div><label>계약 기간</label><input id="f-contract-period" placeholder="2026.06.10 ~ 2026.07.10"></div>
+    </div>
+    <div class="form-row"><label>용역 범위</label><textarea id="f-contract-scope" placeholder="제공할 서비스의 구체적 범위"></textarea></div>
+    <div class="form-row"><label>특약 / 기타 조건</label><textarea id="f-contract-terms" placeholder="대금 지급 조건, 산출물 권리, 비밀유지 등"></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal('m-contract')">취소</button>
+      <button class="btn btn-p" onclick="saveContract()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 자료 모달 ===== -->
+<div class="modal" id="m-file">
+  <div class="modal-box">
+    <div class="modal-head"><h3>자료 추가</h3><button class="modal-x" onclick="closeModal('m-file')">×</button></div>
+    <input type="hidden" id="f-file-cust">
+    <div class="form-row"><label>자료명 *</label><input id="f-file-title" placeholder="예: 브랜드 컨셉 시안 v1"></div>
+    <div class="form-row"><label>링크 (드라이브·노션 등, 선택)</label><input id="f-file-url" placeholder="https://"></div>
+    <div class="form-row"><label>메모 (선택)</label><input id="f-file-memo" placeholder="간단한 설명"></div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal('m-file')">취소</button>
+      <button class="btn btn-p" onclick="saveFile()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== A4 문서 출력 영역 (견적/계약 공용) ===== -->
+<div class="doc-wrap" id="doc-wrap">
+  <div class="doc-toolbar">
+    <button class="btn btn-g" onclick="closeDoc()">← 목록으로</button>
+    <button class="btn btn-p" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+  </div>
+  <div id="doc-a4"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====================== 데이터 레이어 (localStorage) ====================== */
+/* 이식 시: store.load/save 부분만 Supabase _sbSelect/_sbInsert/_sbUpdate/_sbDelete로 교체 */
+const DB_KEY = 'wd_consulting_center_v1';
+let DB = { customers:[], tasks:[], quotes:[], contracts:[], files:[], seq:{c:0,t:0,q:0,k:0} };
+
+function load(){
+  try{ const r = localStorage.getItem(DB_KEY); if(r) DB = JSON.parse(r); }catch(e){}
+  if(!DB.seq) DB.seq = {c:0,t:0,q:0,k:0};
+  if(!DB.files) DB.files = [];
+}
+function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){ toast('⚠️ 저장 실패 — 시크릿 모드에서는 저장이 안 됩니다'); } }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+/* ====================== 유틸 ====================== */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function digits(s){ return (s+'').replace(/[^\d]/g,''); }
+function comma(n){ if(n===''||n==null||isNaN(n))return '0'; return Number(n).toLocaleString('ko-KR'); }
+/* 비용 셀 표시: 숫자면 천단위 콤마, 한글 등 텍스트면 그대로, 빈값은 '-' */
+function costDisplay(cost){
+  const c=(cost||'').trim();
+  if(c==='') return '-';
+  if(/^[\d,]+$/.test(c)) return comma(digits(c));
+  return esc(c);
+}
+function todayStr(){ const d=new Date(); return d.getFullYear()+'. '+String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getDate()).padStart(2,'0'); }
+function custName(id){ const c=DB.customers.find(x=>x.id===id); return c?c.name:'(삭제된 고객)'; }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
+
+const STATUS_CLASS = {'신규문의':'b-new','상담중':'b-consult','제안완료':'b-proposal','계약':'b-contract','진행중':'b-progress','완료':'b-done','보류':'b-hold'};
+function statusBadge(s){ return `<span class="bdg ${STATUS_CLASS[s]||'b-done'}">${esc(s)}</span>`; }
+
+/* ====================== 네비게이션 ====================== */
+function nav(view){
+  closeDoc();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('view-'+view).classList.add('on');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('on', n.dataset.view===view));
+  if(view==='dash') renderDash();
+  if(view==='customers') renderCustomers();
+  if(view==='tasks') renderTasks();
+  if(view==='quotes') renderQuotes();
+  if(view==='contracts') renderContracts();
+}
+
+/* ====================== 대시보드 ====================== */
+function renderDash(){
+  const cs=DB.customers, ts=DB.tasks, qs=DB.quotes, ks=DB.contracts;
+  $('s-cust').textContent=cs.length;
+  $('s-cust-sub').textContent=`신규 ${cs.filter(c=>c.status==='신규문의').length} · 진행 ${cs.filter(c=>c.status==='진행중').length}`;
+  const taskOpen=ts.filter(t=>t.stage!=='완료').length, taskDone=ts.filter(t=>t.stage==='완료').length;
+  $('s-task').textContent=taskOpen; $('s-task-sub').textContent=`완료 ${taskDone}건`;
+  const qSum=qs.reduce((a,q)=>a+quoteTotal(q),0);
+  $('s-quote').textContent=qs.length; $('s-quote-sub').textContent=`합계 ${comma(qSum)}원`;
+  const kSigned=ks.filter(k=>k.status==='체결'); const kSum=kSigned.reduce((a,k)=>a+Number(digits(k.amount)),0);
+  $('s-contract').textContent=kSigned.length; $('s-contract-sub').textContent=`계약금액 ${comma(kSum)}원`;
+
+  const recent=[...cs].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
+  $('dash-recent-cust').innerHTML = recent.length? recent.map(c=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--s100);">
+      <span class="nm">${esc(c.name)}</span>
+      <span style="display:flex;gap:7px;align-items:center;"><span class="bdg bdg-svc">${esc(c.service)}</span>${statusBadge(c.status)}</span>
+    </div>`).join('') : emptyMini('등록된 고객이 없습니다');
+
+  const due=ts.filter(t=>t.stage!=='완료'&&t.due).sort((a,b)=>(a.due>b.due?1:-1)).slice(0,5);
+  $('dash-due-task').innerHTML = due.length? due.map(t=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--s100);">
+      <span><span class="nm">${esc(t.title)}</span><br><span style="font-size:11px;color:var(--p);">${esc(custName(t.customerId))}</span></span>
+      <span style="font-size:11px;color:var(--s400);">${esc(t.due)}</span>
+    </div>`).join('') : emptyMini('마감 임박 업무가 없습니다');
+  updateNavCounts();
+}
+function emptyMini(msg){ return `<div style="padding:20px;text-align:center;color:var(--s400);font-size:12px;">${msg}</div>`; }
+function updateNavCounts(){
+  $('nav-cust').textContent=DB.customers.length;
+  $('nav-task').textContent=DB.tasks.filter(t=>t.stage!=='완료').length;
+  $('nav-quote').textContent=DB.quotes.length;
+  $('nav-contract').textContent=DB.contracts.length;
+}
+
+/* ====================== 고객관리 ====================== */
+const AGENCY_TYPES=['기본 셋업','홈페이지 제작','앱 제작','문서 제작','카드뉴스 제작','X배너 디자인','현수막 디자인'];
+function renderAgencyTypes(selected){
+  selected=selected||[];
+  $('agency-types').innerHTML=AGENCY_TYPES.map(t=>`
+    <label class="chk-item ${selected.includes(t)?'checked':''}">
+      <input type="checkbox" value="${t}" ${selected.includes(t)?'checked':''} onchange="this.closest('.chk-item').classList.toggle('checked',this.checked)">${t}
+    </label>`).join('');
+}
+function toggleAgency(){ $('agency-box').style.display = $('f-cust-svc').value==='대행' ? 'block' : 'none'; }
+function getAgencyTypes(){ return [...document.querySelectorAll('#agency-types input:checked')].map(i=>i.value); }
+
+function renderCustomers(){
+  const q=($('cust-search').value||'').toLowerCase();
+  const fSvc=$('cust-filter-svc').value, fSt=$('cust-filter-status').value;
+  let list=DB.customers.filter(c=>{
+    const m=(c.name+c.phone).toLowerCase().includes(q);
+    return m && (!fSvc||c.service===fSvc) && (!fSt||c.status===fSt);
+  }).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const tb=$('cust-tbody');
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ic">👥</div>고객이 없습니다. 우측 상단 <b>+ 고객 등록</b>으로 추가하세요.</div></td></tr>`; updateNavCounts(); return; }
+  tb.innerHTML=list.map(c=>`
+    <tr>
+      <td class="nm" style="cursor:pointer;color:var(--p);" onclick="showCustDetail('${c.id}')">${esc(c.name)}${c.industry?`<br><span style="font-size:11px;color:var(--s400);font-weight:400;">${esc(c.industry)}</span>`:''}</td>
+      <td>${esc(c.phone)||'-'}</td>
+      <td><span class="bdg bdg-svc">${esc(c.service)}</span>${c.service==='대행'&&c.agencyTypes&&c.agencyTypes.length?`<br><span style="font-size:10.5px;color:var(--s500);line-height:1.5;display:inline-block;margin-top:3px;">${c.agencyTypes.map(esc).join(' · ')}</span>`:''}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td style="color:var(--s500);font-size:12px;">${esc(c.source)||'-'}</td>
+      <td style="color:var(--s400);font-size:12px;">${esc(c.dateStr||'')}</td>
+      <td style="white-space:nowrap;text-align:right;">
+        <button class="btn btn-p btn-sm" onclick="showCustDetail('${c.id}')">상세</button>
+        <button class="btn btn-g btn-sm" onclick="openCust('${c.id}')">수정</button>
+        <button class="btn btn-danger btn-sm" onclick="delCust('${c.id}')">삭제</button>
+      </td>
+    </tr>`).join('');
+  updateNavCounts();
+}
+function openCust(id){
+  $('f-cust-id').value=id||'';
+  if(id){
+    const c=DB.customers.find(x=>x.id===id);
+    $('m-cust-title').textContent='고객 수정';
+    $('f-cust-name').value=c.name; $('f-cust-phone').value=c.phone;
+    $('f-cust-svc').value=c.service; $('f-cust-status').value=c.status;
+    $('f-cust-industry').value=c.industry||''; $('f-cust-source').value=c.source||''; $('f-cust-memo').value=c.memo;
+    renderAgencyTypes(c.agencyTypes||[]);
+  }else{
+    $('m-cust-title').textContent='고객 등록';
+    ['f-cust-name','f-cust-phone','f-cust-industry','f-cust-memo'].forEach(i=>$(i).value='');
+    $('f-cust-svc').selectedIndex=0; $('f-cust-status').selectedIndex=0; $('f-cust-source').value='';
+    renderAgencyTypes([]);
+  }
+  toggleAgency();
+  showModal('m-cust');
+}
+function saveCust(){
+  const name=$('f-cust-name').value.trim();
+  if(!name){ toast('⚠️ 고객명을 입력하세요'); return; }
+  const id=$('f-cust-id').value;
+  const service=$('f-cust-svc').value;
+  const data={name, phone:$('f-cust-phone').value.trim(),
+    service, agencyTypes: service==='대행'?getAgencyTypes():[],
+    industry:$('f-cust-industry').value.trim(),
+    status:$('f-cust-status').value, source:$('f-cust-source').value, memo:$('f-cust-memo').value.trim()};
+  if(id){ Object.assign(DB.customers.find(x=>x.id===id), data); toast('✅ 수정되었습니다'); }
+  else{ data.id=uid(); data.createdAt=Date.now(); data.dateStr=todayStr(); DB.customers.push(data); toast('✅ 고객이 등록되었습니다'); }
+  save(); closeModal('m-cust'); renderCustomers(); updateNavCounts(); refreshDetail();
+}
+function delCust(id){
+  const c=DB.customers.find(x=>x.id===id);
+  const linked=DB.tasks.filter(t=>t.customerId===id).length+DB.quotes.filter(q=>q.customerId===id).length+DB.contracts.filter(k=>k.customerId===id).length;
+  if(!confirm(`'${c.name}' 고객을 삭제하시겠습니까?`+(linked?`\n\n연결된 업무·견적·계약 ${linked}건은 '(삭제된 고객)'으로 표시됩니다.`:''))) return;
+  DB.customers=DB.customers.filter(x=>x.id!==id); save(); toast('🗑️ 삭제되었습니다');
+  if(cdOn()){ nav('customers'); } else { renderCustomers(); }
+}
+
+/* ====================== 업무관리 (칸반) ====================== */
+const STAGES=[['대기','#94a3b8'],['진행중','#8b5cf6'],['검토','#f59e0b'],['완료','#10b981']];
+function renderTasks(){
+  const kb=$('kanban');
+  kb.innerHTML=STAGES.map(([st,color])=>{
+    const items=DB.tasks.filter(t=>t.stage===st);
+    return `<div class="kcol">
+      <div class="kcol-head"><span><span class="dot" style="background:${color}"></span>${st}</span><span>${items.length}</span></div>
+      ${items.map(t=>taskCard(t)).join('')||'<div style="font-size:11px;color:var(--s300);text-align:center;padding:18px 0;">없음</div>'}
+    </div>`;
+  }).join('');
+  updateNavCounts();
+}
+function taskCard(t){
+  const idx=STAGES.findIndex(s=>s[0]===t.stage);
+  return `<div class="ktask">
+    <div class="t">${esc(t.title)}</div>
+    <div class="c">👤 ${esc(custName(t.customerId))}</div>
+    ${t.due?`<div class="d">📅 ${esc(t.due)}</div>`:''}
+    <div class="ktask-actions">
+      ${idx>0?`<button onclick="moveTask('${t.id}',-1)">◀ 이전</button>`:''}
+      ${idx<3?`<button onclick="moveTask('${t.id}',1)">다음 ▶</button>`:''}
+      <button onclick="openTask('${t.id}')">수정</button>
+      <button onclick="delTask('${t.id}')">삭제</button>
+    </div>
+  </div>`;
+}
+function moveTask(id,dir){
+  const t=DB.tasks.find(x=>x.id===id); const idx=STAGES.findIndex(s=>s[0]===t.stage);
+  const ni=idx+dir; if(ni<0||ni>3)return; t.stage=STAGES[ni][0]; save(); renderTasks();
+}
+function openTask(id,opt){
+  fillCustSelect('f-task-cust');
+  $('f-task-id').value=id||'';
+  if(id){ const t=DB.tasks.find(x=>x.id===id);
+    $('m-task-title').textContent='업무 수정';
+    $('f-task-cust').value=t.customerId; $('f-task-title').value=t.title; $('f-task-stage').value=t.stage; $('f-task-due').value=t.due; $('f-task-memo').value=t.memo;
+  }else{
+    if(!DB.customers.length){ toast('⚠️ 먼저 고객을 등록하세요'); return; }
+    $('m-task-title').textContent='업무 추가';
+    $('f-task-title').value=''; $('f-task-stage').selectedIndex=0; $('f-task-due').value=''; $('f-task-memo').value='';
+    if(opt&&opt.cust) $('f-task-cust').value=opt.cust;
+  }
+  showModal('m-task');
+}
+function saveTask(){
+  const title=$('f-task-title').value.trim();
+  if(!title){ toast('⚠️ 업무 내용을 입력하세요'); return; }
+  const id=$('f-task-id').value;
+  const data={customerId:$('f-task-cust').value, title, stage:$('f-task-stage').value, due:$('f-task-due').value, memo:$('f-task-memo').value.trim()};
+  if(id){ Object.assign(DB.tasks.find(x=>x.id===id),data); toast('✅ 수정되었습니다'); }
+  else{ data.id=uid(); data.createdAt=Date.now(); DB.tasks.push(data); toast('✅ 업무가 추가되었습니다'); }
+  save(); closeModal('m-task'); renderTasks(); refreshDetail();
+}
+function delTask(id){ if(!confirm('이 업무를 삭제하시겠습니까?'))return; DB.tasks=DB.tasks.filter(x=>x.id!==id); save(); renderTasks(); refreshDetail(); toast('🗑️ 삭제'); }
+
+function fillCustSelect(selId,selectedId,withNone){
+  const sel=$(selId);
+  let opts = withNone ? `<option value="">선택 안 함</option>` : '';
+  opts += DB.customers.map(c=>`<option value="${c.id}">${esc(c.name)} · ${esc(c.service)}</option>`).join('');
+  sel.innerHTML=opts;
+  sel.value=selectedId||'';
+}
+
+/* ====================== 고객 상세 (개인 페이지) ====================== */
+let _cdId=null;
+function cdOn(){ return $('view-cdetail').classList.contains('on'); }
+function refreshDetail(){ if(_cdId && cdOn()) showCustDetail(_cdId); }
+function cdMove(id,dir){ moveTask(id,dir); refreshDetail(); }
+
+function showCustDetail(id){
+  const c=DB.customers.find(x=>x.id===id);
+  if(!c){ nav('customers'); return; }
+  _cdId=id;
+  const tasks=DB.tasks.filter(t=>t.customerId===id);
+  const quotes=DB.quotes.filter(q=>q.customerId===id);
+  const contracts=DB.contracts.filter(k=>k.customerId===id);
+  const hasContract = contracts.length>0 || ['계약','진행중','완료'].includes(c.status);
+  const done=tasks.filter(t=>t.stage==='완료').length;
+  const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+
+  let html=`<div class="cd-header">
+    <div class="cd-header-btns">
+      <button onclick="openCust('${id}')">수정</button>
+      <button onclick="delCust('${id}')">삭제</button>
+    </div>
+    <div class="cd-name">${esc(c.name)} <span class="bdg bdg-svc">${esc(c.service)}</span> ${statusBadge(c.status)}</div>
+    <div class="cd-meta">
+      <span>📞 ${esc(c.phone)||'미입력'}</span>
+      <span>🏷 ${esc(c.industry)||'업종 미입력'}</span>
+      <span>📍 ${esc(c.source)||'유입 미입력'}</span>
+      <span>🗓 ${esc(c.dateStr||'')}</span>
+    </div>
+    ${c.service==='대행'&&c.agencyTypes&&c.agencyTypes.length?`<div class="cd-agency">${c.agencyTypes.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+  </div>`;
+
+  if(hasContract){
+    const k=contracts[0];
+    html+=`<div class="cd-progress-card">
+      <div class="top">
+        <div>
+          <div class="label">✅ 계약 진행 중</div>
+          <div class="svc">${k?esc(k.service):esc(c.service)}${k&&k.no?` · ${esc(k.no)}`:''}</div>
+        </div>
+        ${k?`<div class="amt">₩${comma(digits(k.amount))}</div>`:''}
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="prog-text">작업 진행률 ${pct}% · 완료 ${done} / 전체 ${tasks.length}건${k&&k.period?` · 기간 ${esc(k.period)}`:''}</div>
+    </div>`;
+  }
+
+  html+=`<div class="cd-grid-2"><div class="cd-left"><div class="cd-section">
+    <div class="cd-sec-head"><h4>🗂 작업 진행도</h4><button class="btn btn-p btn-sm" onclick="openTask('',{cust:'${id}'})">+ 업무 추가</button></div>`;
+  if(!tasks.length){
+    html+=`<div class="cd-empty">아직 등록된 업무가 없습니다.${hasContract?' 진행할 작업을 추가하세요.':' 계약 후 진행 작업이 여기에 표시됩니다.'}</div>`;
+  }else{
+    STAGES.forEach(([st,color])=>{
+      const grp=tasks.filter(t=>t.stage===st);
+      if(!grp.length) return;
+      html+=`<div class="cd-stagegroup">
+        <div class="cd-stage-label"><span class="dot" style="background:${color}"></span>${st} (${grp.length})</div>
+        ${grp.map(t=>{ const idx=STAGES.findIndex(s=>s[0]===t.stage); return `<div class="cd-tk">
+          <div><div class="tt">${esc(t.title)}</div>${t.due?`<div class="td">📅 ${esc(t.due)}</div>`:''}</div>
+          <div class="cd-tk-btns">
+            ${idx>0?`<button onclick="cdMove('${t.id}',-1)" title="이전 단계">◀</button>`:''}
+            ${idx<3?`<button onclick="cdMove('${t.id}',1)" title="다음 단계">▶</button>`:''}
+            <button onclick="openTask('${t.id}')">수정</button>
+          </div>
+        </div>`;}).join('')}
+      </div>`;
+    });
+  }
+  html+=`</div></div><div class="cd-col-right">`;
+
+  html+=`<div class="cd-section">
+    <div class="cd-sec-head"><h4>🧾 견적 내역</h4><button class="btn btn-g btn-sm" onclick="openQuoteType('${id}')">+ 견적 작성</button></div>`;
+  html+= quotes.length
+    ? `<table class="cd-mini"><tbody>${quotes.map(q=>`<tr>
+        <td class="nm">${esc(q.no)}</td><td style="color:var(--s500);">${esc(q.date)}</td>
+        <td class="nm" style="text-align:right;">${comma(quoteTotal(q))}원</td>
+        <td style="text-align:right;white-space:nowrap;"><button class="btn btn-g btn-sm" onclick="openQuote('${q.id}')">열기</button></td></tr>`).join('')}</tbody></table>`
+    : `<div class="cd-empty">견적 내역이 없습니다.</div>`;
+  html+=`</div>`;
+
+  html+=`<div class="cd-section">
+    <div class="cd-sec-head"><h4>📄 계약 내역</h4><button class="btn btn-g btn-sm" onclick="openContractType('${id}')">+ 계약 작성</button></div>`;
+  html+= contracts.length
+    ? `<table class="cd-mini"><tbody>${contracts.map(k=>`<tr>
+        <td class="nm">${esc(k.no)}</td><td>${statusBadge(k.status)}</td>
+        <td class="nm" style="text-align:right;">${comma(digits(k.amount))}원</td>
+        <td style="text-align:right;white-space:nowrap;"><button class="btn btn-g btn-sm" onclick="previewContract('${k.id}')">보기</button></td></tr>`).join('')}</tbody></table>`
+    : `<div class="cd-empty">계약 내역이 없습니다.</div>`;
+  html+=`</div>`;
+
+  const files=DB.files.filter(f=>f.customerId===id);
+  html+=`<div class="cd-section">
+    <div class="cd-sec-head"><h4>📁 자료실</h4><button class="btn btn-g btn-sm" onclick="openFile('',{cust:'${id}'})">+ 자료 추가</button></div>`;
+  html+= files.length
+    ? files.map(f=>`<div class="cd-file">
+        <div class="fi"><div class="ft">${esc(f.title)}</div>${f.memo?`<div class="fm">${esc(f.memo)}</div>`:''}</div>
+        <div class="cd-file-btns">
+          ${f.url?`<a href="${esc(f.url)}" target="_blank" rel="noopener">열기</a>`:''}
+          <button onclick="delFile('${f.id}')">삭제</button>
+        </div>
+      </div>`).join('')
+    : `<div class="cd-empty">등록된 자료가 없습니다.<br>드라이브·노션 링크 등을 보관하세요.</div>`;
+  html+=`</div>`;
+
+  html+=`</div></div>`;
+
+  if(c.memo){
+    html+=`<div class="cd-section"><div class="cd-sec-head"><h4>📝 메모 / 상담 기록</h4></div><div class="cd-memo">${esc(c.memo)}</div></div>`;
+  }
+
+  $('cd-content').innerHTML=html;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('view-cdetail').classList.add('on');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  window.scrollTo(0,0);
+}
+
+/* 자료실 */
+function openFile(id,opt){
+  $('f-file-cust').value = (opt&&opt.cust) ? opt.cust : '';
+  $('f-file-title').value=''; $('f-file-url').value=''; $('f-file-memo').value='';
+  showModal('m-file');
+}
+function saveFile(){
+  const title=$('f-file-title').value.trim();
+  if(!title){ toast('⚠️ 자료명을 입력하세요'); return; }
+  let url=$('f-file-url').value.trim();
+  if(url && !/^https?:\/\//i.test(url)) url='https://'+url;
+  DB.files.push({id:uid(), customerId:$('f-file-cust').value, title, url, memo:$('f-file-memo').value.trim(), createdAt:Date.now()});
+  save(); closeModal('m-file'); refreshDetail(); toast('✅ 자료가 추가되었습니다');
+}
+function delFile(id){ if(!confirm('이 자료를 삭제하시겠습니까?'))return; DB.files=DB.files.filter(x=>x.id!==id); save(); refreshDetail(); toast('🗑️ 삭제'); }
+
+
+/* ====================== 견적서 ====================== */
+let quoteItems=[];
+function quoteTotal(q){ const sub=q.items.reduce((a,it)=>a+Number(digits(it.cost)),0); return q.vat?Math.round(sub*1.1):sub; }
+function renderQuotes(){
+  const tb=$('quote-tbody');
+  const list=[...DB.quotes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="5"><div class="empty"><div class="ic">🧾</div>견적서가 없습니다. <b>+ 견적서 작성</b>으로 추가하세요.</div></td></tr>`; updateNavCounts(); return; }
+  tb.innerHTML=list.map(q=>{
+    const who = q.customerId ? custName(q.customerId) : (q.company||'-');
+    const sent = q.sent||'미전달';
+    return `<tr>
+      <td class="nm">${esc(who)}<br><span style="font-size:10.5px;color:var(--s400);font-weight:400;">${esc(q.no)}</span></td>
+      <td style="color:var(--s500);">${esc(q.date)}</td>
+      <td class="nm" style="font-variant-numeric:tabular-nums;">${comma(quoteTotal(q))}원</td>
+      <td><span class="bdg ${sent==='전달완료'?'b-contract':'b-done'}" style="cursor:pointer;" onclick="toggleQuoteSent('${q.id}')" title="클릭하여 상태 변경">${sent}</span></td>
+      <td style="white-space:nowrap;text-align:right;">
+        <button class="btn btn-g btn-sm" onclick="downloadQuote('${q.id}')">다운로드</button>
+        <button class="btn btn-g btn-sm" onclick="openQuote('${q.id}')">열기</button>
+        <button class="btn btn-danger btn-sm" onclick="delQuote('${q.id}')">삭제</button>
+      </td>
+    </tr>`;
+  }).join('');
+  updateNavCounts();
+}
+function toggleQuoteSent(id){
+  const q=DB.quotes.find(x=>x.id===id);
+  q.sent = (q.sent==='전달완료') ? '미전달' : '전달완료';
+  save(); renderQuotes(); refreshDetail();
+}
+function downloadQuote(id){ openQuote(id); setTimeout(printQuote, 350); }
+/* 공급자(WD) 고정 정보 — 변경 시 이 부분만 수정 */
+const SUPPLIER = { name:'더블유디 웨이브 (WD Wave)', ceo:'최윤경', biz:'799-75-00447', tel:'010-6396-9896' };
+
+/* 종류별 견적 기본 구성 — 작성 시작 시 자동으로 채워지며 추가·삭제 가능 */
+const QUOTE_PRESETS = {
+  '퍼스널 브랜딩 대행비 · 홈페이지 제작': ['PC버전','모바일버전','추가기능','SEO최적화','도메인 및 호스팅비용','관리비'],
+};
+function presetItems(svc){
+  const p=QUOTE_PRESETS[svc];
+  return p ? p.map(n=>({name:n,detail:'',cost:''})) : [{name:'',detail:'',cost:''}];
+}
+
+function openQuote(id,opt){
+  $('qe-id').value=id||'';
+  if(id){ const q=DB.quotes.find(x=>x.id===id);
+    $('qe-title').textContent='견적서 수정 · '+esc(q.no);
+    setQuoteSvc(q.svc||''); fillCustSelect('qe-custid', q.customerId||'', true);
+    $('qe-date').value=q.date; $('qe-company').value=q.company||''; $('qe-manager').value=q.manager||''; $('qe-contact').value=q.contact||'';
+    $('qe-work').value=q.work; $('qe-valid').value=q.valid; $('qe-vat').checked=q.vat;
+    quoteItems=JSON.parse(JSON.stringify(q.items));
+  }else{
+    $('qe-title').textContent='견적서 작성';
+    const _svc=opt&&opt.svc?opt.svc:'';
+    setQuoteSvc(_svc);
+    fillCustSelect('qe-custid', (opt&&opt.cust)||'', true);
+    $('qe-date').value=todayStr(); $('qe-valid').value='견적일로부터 10일'; $('qe-work').value='';
+    $('qe-company').value=''; $('qe-manager').value=''; $('qe-contact').value=''; $('qe-vat').checked=true;
+    quoteItems=presetItems(_svc);
+  }
+  drawQuoteItems(); renderQePreview();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('view-qedit').classList.add('on');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('on', n.dataset.view==='quotes'));
+  window.scrollTo(0,0);
+}
+function closeQedit(){ nav('quotes'); }
+function setQuoteSvc(svc){ $('qe-svc').value=svc||''; $('qe-svc-label').textContent=svc||'미지정'; }
+
+function drawQuoteItems(){
+  $('qe-items').innerHTML=quoteItems.map((it,i)=>`
+    <div class="item-grid">
+      <input placeholder="구성" value="${esc(it.name)}" oninput="quoteItems[${i}].name=this.value;renderQePreview()">
+      <input placeholder="세부항목" value="${esc(it.detail)}" oninput="quoteItems[${i}].detail=this.value;renderQePreview()">
+      <input placeholder="비용 또는 메모" value="${esc(it.cost)}" oninput="quoteItems[${i}].cost=this.value;renderQePreview()">
+      <button class="x" onclick="quoteItems.splice(${i},1);drawQuoteItems();renderQePreview()">×</button>
+    </div>`).join('');
+}
+function addQuoteItem(){ quoteItems.push({name:'',detail:'',cost:''}); drawQuoteItems(); renderQePreview(); }
+
+function readQuoteForm(){
+  return { customerId:$('qe-custid').value, svc:$('qe-svc').value, date:$('qe-date').value.trim(), company:$('qe-company').value.trim(),
+    manager:$('qe-manager').value.trim(), contact:$('qe-contact').value.trim(),
+    work:$('qe-work').value.trim(), valid:$('qe-valid').value.trim(), vat:$('qe-vat').checked, items:quoteItems };
+}
+function quoteTitle(svc){
+  if(!svc) return '견 적 서';
+  const last = svc.includes('·') ? svc.split('·').pop().trim() : svc.trim();
+  return last+' 견적서';
+}
+function buildQuoteA4(q){
+  const sub=q.items.reduce((a,it)=>a+Number(digits(it.cost)),0);
+  const total=q.vat?Math.round(sub*1.1):sub;
+  const rows=q.items.length
+    ? q.items.map(it=>`<tr><td>${esc(it.name)||'&nbsp;'}</td><td>${esc(it.detail)||'&nbsp;'}</td><td class="cost">${costDisplay(it.cost)}</td></tr>`).join('')
+    : `<tr><td colspan="3" style="color:#bbb;padding:18px;">항목을 입력하세요</td></tr>`;
+  return `<div class="a4"><div class="a4-corner"></div>
+      <div class="doc-title">${esc(quoteTitle(q.svc))}</div>
+      ${q.svc?`<div style="text-align:center;font-size:13px;font-weight:700;color:var(--p);margin:-4mm 0 6mm;">${esc(q.svc)}</div>`:''}
+      <div class="doc-grid">
+        <div class="doc-box"><div class="doc-box-head">신청 회사 (수신)</div>
+          <table class="itbl">
+            <tr><td class="l">회사명</td><td>${esc(q.company)}</td></tr>
+            <tr><td class="l">담당자</td><td>${esc(q.manager)}</td></tr>
+            <tr><td class="l">연락처</td><td>${esc(q.contact)}</td></tr>
+            <tr><td class="l">작업기간</td><td>${esc(q.work)}</td></tr>
+            <tr><td class="l">유효기간</td><td>${esc(q.valid)}</td></tr>
+            <tr><td class="l">견적금액</td><td class="amt">₩${comma(total)}</td></tr>
+          </table>
+        </div>
+        <div class="doc-box supplier"><div class="doc-box-head">공급자</div>
+          <table class="itbl">
+            <tr><td class="l">공급자</td><td>${SUPPLIER.name}</td></tr>
+            <tr><td class="l">대표자</td><td>${SUPPLIER.ceo}</td></tr>
+            <tr><td class="l">사업자번호</td><td>${SUPPLIER.biz}</td></tr>
+            <tr><td class="l">연락처</td><td>${SUPPLIER.tel}</td></tr>
+          </table>
+        </div>
+      </div>
+      <table class="qtbl">
+        <thead><tr><th class="c1">구성</th><th class="c2">세부항목</th><th class="c3">비용</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr class="sum"><td class="lc" colspan="2">견적금액</td><td class="cost">${comma(sub)}</td></tr>
+          <tr class="total"><td class="lc" colspan="2">최종제안금액 (${q.vat?'부가세포함':'부가세 별도'})</td><td class="cost">${comma(total)}</td></tr>
+        </tfoot>
+      </table>
+      <div class="doc-notes"><b>안내사항</b><br>
+        1. 위 견적은 VAT 별도 가격이며, 최종제안금액은 ${q.vat?'부가세 포함':'부가세 별도'} 금액입니다.<br>
+        2. 견적 금액은 작업 범위 및 일정 조정에 따라 변동될 수 있습니다.<br>
+        3. 본 견적서의 유효기간은 ${esc(q.valid)||'견적일로부터 10일'}입니다.</div>
+      <div class="doc-date" style="margin-top:10mm;">${esc(q.date)}</div>
+      <div class="doc-recipient">${esc(q.company)||'○○○'} 귀중</div>
+    </div>`;
+}
+function renderQePreview(){ $('qe-a4').innerHTML=buildQuoteA4(readQuoteForm()); }
+
+function saveQuoteFromEditor(){
+  const d=readQuoteForm();
+  const items=d.items.filter(it=>it.name.trim()||it.cost.trim());
+  if(!items.length){ toast('⚠️ 견적 항목을 1개 이상 입력하세요'); return; }
+  const id=$('qe-id').value;
+  const data={...d, items:JSON.parse(JSON.stringify(items))};
+  if(id){ Object.assign(DB.quotes.find(x=>x.id===id),data); toast('✅ 저장되었습니다'); }
+  else{ data.id=uid(); data.createdAt=Date.now(); data.sent='미전달'; DB.seq.q++; data.no='Q-'+new Date().getFullYear()+'-'+String(DB.seq.q).padStart(3,'0');
+    DB.quotes.push(data); $('qe-id').value=data.id; $('qe-title').textContent='견적서 수정 · '+data.no; toast('✅ 견적서가 저장되었습니다'); }
+  save(); renderQuotes(); updateNavCounts(); refreshDetail();
+}
+function delQuote(id){ if(!confirm('이 견적서를 삭제하시겠습니까?'))return; DB.quotes=DB.quotes.filter(x=>x.id!==id); save(); renderQuotes(); refreshDetail(); toast('🗑️ 삭제'); }
+
+function printQuote(){ document.body.classList.add('q-print'); window.print(); }
+window.addEventListener('afterprint',()=>document.body.classList.remove('q-print'));
+
+/* ====================== 계약서 ====================== */
+function renderContracts(){
+  const tb=$('contract-tbody');
+  const list=[...DB.contracts].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ic">📄</div>계약서가 없습니다. <b>+ 계약서 작성</b>으로 추가하세요.</div></td></tr>`; updateNavCounts(); return; }
+  tb.innerHTML=list.map(k=>`
+    <tr>
+      <td class="nm">${esc(k.no)}</td>
+      <td>${esc(custName(k.customerId))}</td>
+      <td><span class="bdg bdg-svc">${esc(k.service)}</span></td>
+      <td class="nm" style="font-variant-numeric:tabular-nums;">${comma(digits(k.amount))}원</td>
+      <td>${statusBadge(k.status)}</td>
+      <td style="color:var(--s400);font-size:12px;">${esc(k.date)}</td>
+      <td style="white-space:nowrap;text-align:right;">
+        <button class="btn btn-g btn-sm" onclick="previewContract('${k.id}')">🖨 보기</button>
+        <button class="btn btn-g btn-sm" onclick="openContract('${k.id}')">수정</button>
+        <button class="btn btn-danger btn-sm" onclick="delContract('${k.id}')">삭제</button>
+      </td>
+    </tr>`).join('');
+  updateNavCounts();
+}
+/* 계약서 종류 — ready:true 만 작성 가능, 나머지는 준비중 */
+const CONTRACT_TYPES=[
+  {label:'퍼스널 브랜딩 상담비', svc:'퍼스널 브랜딩 상담비', ready:false},
+  {label:'퍼스널 브랜딩 코칭비', svc:'퍼스널 브랜딩 코칭비', ready:false},
+  {group:'퍼스널 브랜딩 대행비 (제작)', items:[
+    {label:'홈페이지 제작', svc:'퍼스널 브랜딩 대행비 · 홈페이지 제작', ready:true},
+    {label:'앱 제작', svc:'퍼스널 브랜딩 대행비 · 앱 제작', ready:false},
+    {label:'문서 제작', svc:'퍼스널 브랜딩 대행비 · 문서 제작', ready:false},
+    {label:'카드뉴스 제작', svc:'퍼스널 브랜딩 대행비 · 카드뉴스 제작', ready:false},
+    {label:'X배너 디자인', svc:'퍼스널 브랜딩 대행비 · X배너 디자인', ready:false},
+    {label:'현수막 디자인', svc:'퍼스널 브랜딩 대행비 · 현수막 디자인', ready:false},
+  ]},
+];
+function openTypePicker(mode,custId){
+  $('ctype-cust').value=custId||'';
+  $('ctype-mode').value=mode;
+  $('ctype-title').textContent = mode==='quote' ? '견적서 종류 선택' : '계약서 종류 선택';
+  let html='';
+  CONTRACT_TYPES.forEach(t=>{
+    if(t.group){ html+=`<div class="ct-group">${esc(t.group)}</div><div class="ct-sub">`+t.items.map(ctItem).join('')+`</div>`; }
+    else html+=ctItem(t);
+  });
+  $('ctype-list').innerHTML=html;
+  showModal('m-ctype');
+}
+function openContractType(custId){ if(!DB.customers.length){ toast('⚠️ 먼저 고객을 등록하세요'); return; } openTypePicker('contract',custId); }
+function openQuoteType(custId){ openTypePicker('quote',custId); }
+function ctItem(it){
+  return it.ready
+    ? `<div class="ct-item ready" onclick="pickType('${esc(it.svc)}')"><span class="nm">${esc(it.label)}</span><span class="badge-go">작성하기</span></div>`
+    : `<div class="ct-item soon"><span class="nm">${esc(it.label)}</span><span class="badge-soon">준비중</span></div>`;
+}
+function pickType(svc){
+  const cust=$('ctype-cust').value, mode=$('ctype-mode').value;
+  closeModal('m-ctype');
+  if(mode==='quote') openQuote('',{cust,svc}); else openContract('',{cust,svc});
+}
+function setContractSvc(svc){ $('f-contract-svc').value=svc||''; $('f-contract-svc-label').textContent=svc||'미지정'; }
+
+function openContract(id,opt){
+  if(!DB.customers.length){ toast('⚠️ 먼저 고객을 등록하세요'); return; }
+  fillCustSelect('f-contract-cust');
+  $('f-contract-id').value=id||'';
+  if(id){ const k=DB.contracts.find(x=>x.id===id);
+    $('m-contract-title').textContent='계약서 수정';
+    $('f-contract-cust').value=k.customerId; $('f-contract-date').value=k.date;
+    setContractSvc(k.service); $('f-contract-status').value=k.status;
+    $('f-contract-amount').value=k.amount; $('f-contract-period').value=k.period;
+    $('f-contract-scope').value=k.scope; $('f-contract-terms').value=k.terms;
+  }else{
+    $('m-contract-title').textContent='계약서 작성';
+    $('f-contract-date').value=todayStr(); $('f-contract-status').selectedIndex=0;
+    setContractSvc(opt&&opt.svc?opt.svc:'');
+    ['f-contract-amount','f-contract-period','f-contract-scope','f-contract-terms'].forEach(i=>$(i).value='');
+    if(opt&&opt.cust) $('f-contract-cust').value=opt.cust;
+  }
+  showModal('m-contract');
+}
+function saveContract(){
+  const id=$('f-contract-id').value;
+  const data={customerId:$('f-contract-cust').value, date:$('f-contract-date').value, service:$('f-contract-svc').value,
+    status:$('f-contract-status').value, amount:$('f-contract-amount').value.trim(), period:$('f-contract-period').value.trim(),
+    scope:$('f-contract-scope').value.trim(), terms:$('f-contract-terms').value.trim()};
+  if(id){ Object.assign(DB.contracts.find(x=>x.id===id),data); toast('✅ 수정되었습니다'); }
+  else{ data.id=uid(); data.createdAt=Date.now(); DB.seq.k++; data.no='C-'+new Date().getFullYear()+'-'+String(DB.seq.k).padStart(3,'0'); DB.contracts.push(data); toast('✅ 계약서가 저장되었습니다'); }
+  save(); closeModal('m-contract'); renderContracts(); refreshDetail();
+}
+function delContract(id){ if(!confirm('이 계약서를 삭제하시겠습니까?'))return; DB.contracts=DB.contracts.filter(x=>x.id!==id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제'); }
+
+function previewContract(id){
+  const k=DB.contracts.find(x=>x.id===id);
+  const c=DB.customers.find(x=>x.id===k.customerId);
+  const cname=c?c.name:''; const cphone=c?c.phone:'';
+  const amt=comma(digits(k.amount));
+  $('doc-a4').innerHTML=`
+    <div class="a4"><div class="a4-corner"></div>
+      <div class="doc-title">계 약 서</div>
+      ${k.service?`<div style="text-align:center;font-size:13px;font-weight:700;color:var(--p);margin:-4mm 0 4mm;">${esc(k.service)}</div>`:''}
+      <div style="text-align:center;font-size:11px;color:var(--s400);margin-bottom:7mm;">계약번호 ${esc(k.no)}</div>
+      <div class="doc-grid">
+        <div class="doc-box supplier"><div class="doc-box-head">공급자 (갑)</div>
+          <table class="itbl">
+            <tr><td class="l">상호</td><td>${SUPPLIER.name}</td></tr>
+            <tr><td class="l">대표자</td><td>${SUPPLIER.ceo}</td></tr>
+            <tr><td class="l">사업자번호</td><td>${SUPPLIER.biz}</td></tr>
+            <tr><td class="l">연락처</td><td>${SUPPLIER.tel}</td></tr>
+          </table>
+        </div>
+        <div class="doc-box"><div class="doc-box-head">계약자 (을)</div>
+          <table class="itbl">
+            <tr><td class="l">성명</td><td>${esc(cname)}</td></tr>
+            <tr><td class="l">연락처</td><td>${esc(cphone)}</td></tr>
+            <tr><td class="l">계약상태</td><td>${esc(k.status)}</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="doc-box contract-overview"><div class="doc-box-head">계약 개요</div>
+        <table class="itbl">
+          <tr><td class="l">계약 종류</td><td colspan="3">${esc(k.service)}</td></tr>
+          <tr><td class="l">계약금액</td><td class="amt">₩${amt} <span style="font-size:11px;font-weight:600;color:var(--s500);">(부가세 별도)</span></td><td class="l">계약기간</td><td>${esc(k.period)}</td></tr>
+        </table>
+      </div>
+      <div class="contract-body">
+        <p>공급자 <b>${SUPPLIER.name}</b>(이하 "갑")와 계약자 <b>${esc(cname)}</b>(이하 "을")은 아래와 같이 용역 계약을 체결한다.</p>
+        <h4>제1조 (목적)</h4>
+        본 계약은 "갑"이 "을"에게 제공하는 <b>${esc(k.service)}</b>의 범위와 조건을 정함을 목적으로 한다.
+        <h4>제2조 (용역 범위)</h4>
+        ${esc(k.scope).replace(/\n/g,'<br>')||'별도 협의'}
+        <h4>제3조 (계약금액 및 지급)</h4>
+        계약금액은 <b>₩${amt}</b> (부가세 별도)으로 하며, 지급 조건은 양 당사자의 협의에 따른다.
+        <h4>제4조 (계약기간)</h4>
+        ${esc(k.period)||'별도 협의'}
+        <h4>제5조 (특약 및 기타)</h4>
+        ${esc(k.terms).replace(/\n/g,'<br>')||'기재 사항 없음'}
+      </div>
+      <div class="doc-date" style="margin-top:10mm;">${esc(k.date)}</div>
+      <div class="contract-sign">
+        <div class="box supplier"><div class="h">공급자 (갑)</div><div class="r">상호 : ${SUPPLIER.name}</div><div class="r">대표 : ${SUPPLIER.ceo}　(인)</div></div>
+        <div class="box"><div class="h">계약자 (을)</div><div class="r">성명 : ${esc(cname)}</div><div class="r">서명 : ＿＿＿＿＿＿＿　(인)</div></div>
+      </div>
+    </div>`;
+  showDoc();
+}
+
+/* ====================== 문서 출력 토글 ====================== */
+function showDoc(){
+  document.querySelectorAll('.view').forEach(v=>v.style.display='none');
+  const dw=$('doc-wrap'); dw.style.display='block'; dw.classList.add('print-on'); window.scrollTo(0,0);
+}
+function closeDoc(){
+  const dw=$('doc-wrap'); dw.style.display='none'; dw.classList.remove('print-on');
+  document.querySelectorAll('.view').forEach(v=>v.style.display='');
+}
+
+/* ====================== 모달 토글 ====================== */
+function showModal(id){ $(id).classList.add('show'); }
+function closeModal(id){ $(id).classList.remove('show'); }
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }));
+
+/* ====================== 예시 데이터 ====================== */
+function seedDemo(){
+  if(DB.customers.length && !confirm('예시 데이터를 추가합니다. 계속할까요?')) return;
+  const c1=uid(),c2=uid(),c3=uid();
+  const now=Date.now();
+  DB.customers.push(
+    {id:c1,name:'예시 — 김민서',phone:'010-1234-5678',email:'',service:'퍼스널브랜딩 컨설팅',agencyTypes:[],industry:'1인 강사',status:'상담중',source:'유튜브',memo:'1인 강사, 브랜드 방향 고민',createdAt:now,dateStr:todayStr()},
+    {id:c2,name:'예시 — 이도윤',phone:'010-2222-3333',email:'',service:'대행',agencyTypes:['홈페이지 제작','카드뉴스 제작'],industry:'요식업',status:'계약',source:'지인 소개',memo:'홈페이지+카드뉴스 운영 대행 희망',createdAt:now-86400000,dateStr:todayStr()},
+    {id:c3,name:'예시 — 박서연',phone:'',email:'',service:'AI·디지털 리터러시',agencyTypes:[],industry:'학원',status:'신규문의',source:'인스타그램',memo:'AI 도구 입문 튜터링 문의',createdAt:now-172800000,dateStr:todayStr()}
+  );
+  DB.tasks.push(
+    {id:uid(),customerId:c1,title:'브랜드 컨셉 초안',stage:'진행중',due:'',memo:'',createdAt:now},
+    {id:uid(),customerId:c2,title:'홈페이지 구조 설계',stage:'검토',due:'',memo:'',createdAt:now},
+    {id:uid(),customerId:c2,title:'인스타 채널 세팅',stage:'대기',due:'',memo:'',createdAt:now}
+  );
+  DB.seq.q++; DB.quotes.push({id:uid(),customerId:c2,no:'Q-'+new Date().getFullYear()+'-'+String(DB.seq.q).padStart(3,'0'),date:todayStr(),company:'예시 — 이도윤',manager:'',contact:'010-2222-3333',valid:'견적일로부터 10일',work:'발주일로부터 1개월',vat:true,items:[{name:'홈페이지 제작',detail:'반응형 5페이지',cost:'1500000'},{name:'카드뉴스 제작',detail:'월 4건',cost:'800000'}],createdAt:now});
+  save(); renderDash(); renderCustomers(); updateNavCounts(); toast('✅ 예시 데이터를 채웠습니다');
+}
+
+/* ====================== 초기화 ====================== */
+load(); renderDash(); updateNavCounts();
+</script>
+</body>
+</html>
