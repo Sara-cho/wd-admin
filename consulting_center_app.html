@@ -138,23 +138,27 @@ input,select,textarea{font-family:inherit;}
 /* A4 문서 미리보기 */
 .doc-wrap{display:none;}
 .doc-toolbar{display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
-.a4{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:18mm 16mm;box-shadow:0 8px 40px rgba(0,0,0,.16);position:relative;}
+.a4{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:14mm 16mm;box-shadow:0 8px 40px rgba(0,0,0,.16);position:relative;}
 .a4-corner{position:absolute;top:0;left:0;width:0;height:0;border-top:22mm solid var(--s900);border-right:22mm solid transparent;}
 .doc-title{text-align:center;font-size:30px;font-weight:900;color:var(--s900);letter-spacing:.05em;margin:6mm 0 8mm;}
+/* 견적서 상단 헤더 (검은 바 + 깎인 코너 + 흰 제목 카드) */
+.doc-head{position:relative;margin:-14mm -16mm 10mm -16mm;height:34mm;}
+.doc-head-bar{position:absolute;top:0;left:0;right:0;height:23mm;background:linear-gradient(120deg,#15152b 0%,#2b2150 100%);}
+.doc-head-card{position:absolute;left:24mm;right:24mm;top:11mm;background:#fff;border-radius:12px;box-shadow:0 8px 26px rgba(20,20,45,.18);padding:13px 0;text-align:center;font-size:24px;font-weight:900;color:#15152b;letter-spacing:.06em;}
 .doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8mm;margin-bottom:6mm;align-items:start;}
-.itbl{width:100%;border-collapse:collapse;font-size:11.5px;}
+.itbl{width:100%;border-collapse:collapse;font-size:12.5px;}
 .itbl td{padding:7px 9px;}
 .doc-box{border:1.5px solid var(--p-line);border-radius:9px;overflow:hidden;}
 .doc-box.supplier{border-color:var(--s300);}
-.doc-box-head{font-size:10.5px;font-weight:800;padding:7px 10px;letter-spacing:.1em;text-align:center;color:#fff;background:var(--p);}
+.doc-box-head{font-size:13.5px;font-weight:800;padding:7px 10px;letter-spacing:.1em;text-align:center;color:#fff;background:var(--p);}
 .doc-box.supplier .doc-box-head{background:var(--s900);}
 .doc-box .itbl td{border-bottom:1px solid #eee;}
 .doc-box .itbl tr:last-child td{border-bottom:none;}
 .doc-box .itbl .l{background:var(--p-soft);color:var(--p);font-weight:700;text-align:center;width:74px;white-space:nowrap;vertical-align:middle;}
 .doc-box.supplier .itbl .l{background:var(--s100);color:var(--s700);}
 .doc-box .itbl .amt{font-size:16px;font-weight:900;color:var(--s900);}
-.doc-date{text-align:center;font-size:13px;letter-spacing:.3em;color:#444;margin:7mm 0 5mm;}
-.doc-recipient{text-align:center;font-size:19px;font-weight:800;color:var(--s900);margin-bottom:7mm;}
+.doc-date{text-align:center;font-size:18px;letter-spacing:.3em;color:#444;margin:8mm 0 6mm;}
+.doc-recipient{text-align:center;font-size:28px;font-weight:800;color:var(--s900);margin-bottom:6mm;}
 .qtbl{width:100%;border-collapse:collapse;font-size:12.5px;}
 .qtbl th{padding:11px 10px;color:#fff;font-weight:700;}
 .qtbl th.c1{background:var(--p);}
@@ -166,7 +170,7 @@ input,select,textarea{font-family:inherit;}
 .qtbl tr.total .lc{background:var(--p);color:#fff;font-weight:800;}
 .qtbl tr.total td{font-size:15px;font-weight:900;}
 .qtbl .cost,.qtbl td{vertical-align:middle;}
-.doc-notes{margin-top:9mm;font-size:10.5px;color:#555;line-height:1.9;}
+.doc-notes{margin-top:6mm;font-size:10.5px;color:#555;line-height:1.9;}
 .doc-notes b{color:var(--p);}
 /* 계약서 본문 */
 .contract-body{font-size:12.5px;line-height:2;color:#333;}
@@ -197,7 +201,7 @@ input,select,textarea{font-family:inherit;}
   .main{padding:0;}
   .view{display:none !important;}
   .doc-wrap.print-on{display:block !important;}
-  .a4{box-shadow:none;margin:0;width:210mm;}
+  .a4{box-shadow:none;margin:0;width:210mm;min-height:auto;page-break-inside:avoid;}
   /* 견적 편집화면 인쇄: 미리보기 A4만 */
   body.q-print #view-qedit{display:block !important;}
   body.q-print .qe-form{display:none !important;}
@@ -420,7 +424,7 @@ input,select,textarea{font-family:inherit;}
           <div class="form-row"><label>견적 종류</label>
             <div id="qe-svc-label" style="padding:9px 11px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--p);min-height:38px;display:flex;align-items:center;">미지정</div>
           </div>
-          <div class="form-row"><label>고객 등록 <span style="color:var(--s400);font-weight:400;">· 이 견적을 연결할 고객</span></label><select id="qe-custid"></select></div>
+          <div class="form-row"><label>고객 등록 <span style="color:var(--s400);font-weight:400;">· 이 견적을 연결할 고객</span></label><select id="qe-custid" onchange="quoteFillFromCust()"></select></div>
           <div class="form-row"><label>작성일</label><input id="qe-date" placeholder="2026. 06. 08" oninput="renderQePreview()"></div>
           <div class="form-row"><label>회사명 / 고객 <span style="color:var(--s400);font-weight:400;">· 견적서에 표시</span></label><input id="qe-company" placeholder="견적 요청 회사·고객명" oninput="renderQePreview()"></div>
           <div class="form-row two">
@@ -1011,6 +1015,17 @@ function drawQuoteItems(){
 }
 function addQuoteItem(){ quoteItems.push({name:'',detail:'',cost:''}); drawQuoteItems(); renderQePreview(); }
 
+/* 고객 선택 시 담당자·연락처 자동 채움 */
+function quoteFillFromCust(){
+  const id=$('qe-custid').value;
+  if(!id) return;
+  const c=DB.customers.find(x=>x.id===id);
+  if(!c) return;
+  $('qe-manager').value = c.name || '';
+  $('qe-contact').value = c.phone || '';
+  if(!$('qe-company').value.trim()) $('qe-company').value = c.name || '';
+  renderQePreview();
+}
 function readQuoteForm(){
   return { customerId:$('qe-custid').value, svc:$('qe-svc').value, date:$('qe-date').value.trim(), company:$('qe-company').value.trim(),
     manager:$('qe-manager').value.trim(), contact:$('qe-contact').value.trim(),
@@ -1027,11 +1042,10 @@ function buildQuoteA4(q){
   const rows=q.items.length
     ? q.items.map(it=>`<tr><td>${esc(it.name)||'&nbsp;'}</td><td>${esc(it.detail)||'&nbsp;'}</td><td class="cost">${costDisplay(it.cost)}</td></tr>`).join('')
     : `<tr><td colspan="3" style="color:#bbb;padding:18px;">항목을 입력하세요</td></tr>`;
-  return `<div class="a4"><div class="a4-corner"></div>
-      <div class="doc-title">${esc(quoteTitle(q.svc))}</div>
-      ${q.svc?`<div style="text-align:center;font-size:13px;font-weight:700;color:var(--p);margin:-4mm 0 6mm;">${esc(q.svc)}</div>`:''}
+  return `<div class="a4">
+      <div class="doc-head"><div class="doc-head-bar"></div><div class="doc-head-card">${esc(quoteTitle(q.svc))}</div></div>
       <div class="doc-grid">
-        <div class="doc-box"><div class="doc-box-head">신청 회사 (수신)</div>
+        <div class="doc-box"><div class="doc-box-head">의뢰인 (수신)</div>
           <table class="itbl">
             <tr><td class="l">회사명</td><td>${esc(q.company)}</td></tr>
             <tr><td class="l">담당자</td><td>${esc(q.manager)}</td></tr>
@@ -1060,9 +1074,8 @@ function buildQuoteA4(q){
       </table>
       <div class="doc-notes"><b>안내사항</b><br>
         1. 위 견적은 VAT 별도 가격이며, 최종제안금액은 ${q.vat?'부가세 포함':'부가세 별도'} 금액입니다.<br>
-        2. 견적 금액은 작업 범위 및 일정 조정에 따라 변동될 수 있습니다.<br>
-        3. 본 견적서의 유효기간은 ${esc(q.valid)||'견적일로부터 10일'}입니다.</div>
-      <div class="doc-date" style="margin-top:10mm;">${esc(q.date)}</div>
+        2. 견적 금액은 작업 범위 및 일정 조정에 따라 변동될 수 있습니다.</div>
+      <div class="doc-date">${esc(q.date)}</div>
       <div class="doc-recipient">${esc(q.company)||'○○○'} 귀중</div>
     </div>`;
 }
