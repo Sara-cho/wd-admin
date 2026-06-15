@@ -638,6 +638,20 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--s100);color:var(--s9
 .mn-content{padding:14px;display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:12px;align-items:start;}
 @media(max-width:900px){.mn-content{grid-template-columns:1fr 1fr;}.mn-col3{display:none;}}
 @media(max-width:600px){.mn-sidebar{width:96px;}.mn-content{grid-template-columns:1fr;}.mn-tab{padding:11px 8px;font-size:12px;}}
+/* ── [v33] 보험메인페이지(#section) 모바일 보강 — #section 스코프 한정 ── */
+@media(max-width:600px){
+  #section .mn-main{overflow-x:hidden;}
+  #section .mn-content{padding:12px;grid-template-columns:1fr;}
+  #section .mn-card{width:100%;}
+  #section .mn-card-hd{word-break:keep-all;line-height:1.4;}
+  #section .mn-card-row{min-height:44px;}
+  #section .mn-side-btn{min-height:40px;}
+}
+@media(max-width:400px){
+  #section .mn-content{padding:10px;}
+  #section .mn-sidebar{width:84px;padding:12px 6px;}
+  #section .mn-side-btn{font-size:11px;padding:9px 5px;}
+}
 .mn-card{background:#fff;border:1.5px solid var(--wd-border);border-radius:14px;overflow:hidden;}
 .mn-card-hd{padding:11px 14px 9px;border-bottom:1px solid var(--wd-border);font-size:13px;font-weight:800;color:var(--wd-text);}
 .mn-card-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #f4f4f8;cursor:pointer;transition:background .12s;}
@@ -23478,6 +23492,21 @@ document.addEventListener('click', function(e){
 })();
 </script>
 
+<style id="v34-insur-detail-mobile">
+/* ── [v34] 보험세부메뉴페이지 모바일 — 넓은 표/그리드 영역 내 가로 스크롤 (ID/클래스 스코프 한정) ── */
+@media(max-width:600px){
+  /* 고객목록 13컬럼: 내부 overflow:hidden 클립 해제 → #custlist-list-area 영역 내 좌우 스크롤 */
+  #custlist-list-area{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  #custlist-list-area div[style*="background:#4A3F7A"]{overflow:visible !important;width:max-content;min-width:100%;}
+  #cgrid{overflow:visible !important;width:max-content;min-width:100%;}
+  /* 보장분석/설계분석 본문: 넓은 콘텐츠 영역 내 스크롤 (대부분 1fr 가변열이라 안전) */
+  #cva-body,#da-body{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* 비교표: 래퍼는 이미 overflow-x:auto → 표 최소폭으로 찌그러짐 방지 + 영역 내 스크롤 */
+  #ct-table-wrap>table{min-width:560px;}
+  /* 클래스형 모달: 화면 안 + 내부 스크롤 */
+  .wdj-modal{max-height:90vh;overflow-y:auto;}
+}
+</style>
 <div class="scr" id="custlist" style="background:var(--wd-bg,#F7F8FB);">
 
   <!-- 헤더 -->
@@ -80301,6 +80330,18 @@ function pfSave(){
 /* ── 선택 화면 ── */
 .cc-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:720px;margin:0 auto;}
 @media(max-width:600px){.cc-choice-grid{grid-template-columns:1fr;}}
+/* ── [v35] 컨설팅센터메인(진입화면 #cc-view-home) 모바일 보강 — 진입 카드 전용 스코프 ── */
+@media(max-width:600px){
+  #cc-view-home{overflow-x:hidden;}
+  .cc-choice-grid{padding:0 4px;}
+  .cc-choice-card{padding:24px 20px;width:100%;}
+  .cc-choice-title{font-size:16px;word-break:keep-all;}
+  .cc-choice-desc{line-height:1.6;word-break:keep-all;}
+}
+@media(max-width:400px){
+  .cc-choice-card{padding:20px 16px;gap:10px;}
+  #consulting-center .cc-header-title{font-size:14px;}
+}
 .cc-choice-card{background:#fff;border:1.5px solid rgba(74,63,122,.15);border-radius:18px;padding:32px 28px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px;}
 .cc-choice-card:hover{border-color:#4A3F7A;box-shadow:0 8px 28px rgba(74,63,122,.13);transform:translateY(-2px);}
 .cc-choice-icon{font-size:32px;}
