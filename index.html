@@ -90202,10 +90202,8 @@ window.openDocGen = function(){
 
       <!-- 종류 탭바 -->
       <div id="ac-filter-bar" style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px;gap:0;">
-        <button onclick="acSetFilter('전체')" id="ac-filter-전체"
-          style="padding:10px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">전체</button>
         <button onclick="acSetFilter('업무계정')" id="ac-filter-업무계정"
-          style="padding:10px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">🗂 업무계정</button>
+          style="padding:10px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">🗂 업무계정</button>
         <button onclick="acSetFilter('전산세트')" id="ac-filter-전산세트"
           style="padding:10px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">🖥 전산세트</button>
         <button onclick="acSetFilter('API키')" id="ac-filter-API키"
@@ -90223,7 +90221,7 @@ window.openDocGen = function(){
 
     <!-- ── 계정 상세 보기 모달 ── -->
     <div id="ac-detail-overlay" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
-      <div id="ac-detail-box" style="background:#fff;border-radius:20px;padding:28px 26px;width:100%;max-width:520px;margin:20px;box-shadow:0 12px 48px rgba(0,0,0,.22);max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+      <div id="ac-detail-box" style="background:#fff;border-radius:20px;padding:28px 32px;width:100%;max-width:720px;margin:20px;box-shadow:0 12px 48px rgba(0,0,0,.22);max-height:90vh;overflow-y:auto;box-sizing:border-box;">
         <!-- 헤더 -->
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
           <div>
@@ -90319,13 +90317,16 @@ window.openDocGen = function(){
           </div>
           <div style="margin-bottom:11px;">
             <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">전산연결계정</div>
-            <input id="ac-jeon-account" type="text" placeholder="예: GitHub 로그인 이메일, Supabase 로그인 이메일"
+            <input id="ac-jeon-account" type="text" placeholder="예: kfcyk20@gmail.com"
               style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
           </div>
+          <!-- 포함된 데이터 — 동적 추가 -->
           <div style="margin-bottom:11px;">
-            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">포함된 데이터</div>
-            <input id="ac-jeon-data" type="text" placeholder="예: 전산페이지, 고객용 홈페이지, 사라언니 보험데이터"
-              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;">포함된 데이터 <span style="font-size:10px;font-weight:500;color:#94a3b8;">(이름 + 도메인 URL)</span></div>
+              <button type="button" onclick="acJeonAddRow()" style="padding:3px 10px;border:1.5px solid #FBBF24;border-radius:6px;background:#FFFBEB;color:#1C1917;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">+ 추가</button>
+            </div>
+            <div id="ac-jeon-data-list" style="display:flex;flex-direction:column;gap:6px;"></div>
           </div>
           <div style="margin-bottom:18px;">
             <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">기타메모 <span style="font-size:10px;font-weight:500;color:#94a3b8;">(Supabase URL·anon key·비밀번호 등)</span></div>
@@ -90639,7 +90640,7 @@ window.tx_init = function(){
 
 /* ══════ 계정관리 (kit_accounts) ══════ */
 var _AC_LIST   = [];
-var _AC_FILTER = '전체';   // 현재 필터 상태
+var _AC_FILTER = '업무계정';   // 현재 필터 상태
 
 function acUid(){
   return (typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID) ? _CURRENT_UID : 'sara';
@@ -90658,7 +90659,7 @@ async function acLoad(){
 function acSetFilter(val){
   _AC_FILTER = val;
   // 탭바 active 스타일 토글
-  ['전체','업무계정','전산세트','API키'].forEach(function(k){
+  ['업무계정','전산세트','API키'].forEach(function(k){
     var btn=document.getElementById('ac-filter-'+k);
     if(!btn) return;
     var active=(k===val);
@@ -90691,14 +90692,15 @@ async function acSave(){
     var jName=(document.getElementById('ac-jeon-name').value||'').trim();
     if(!jName){ if(typeof showT==='function') showT('전산이름을 입력해 주세요'); return; }
     var jAcc =(document.getElementById('ac-jeon-account').value||'').trim();
-    var jData=(document.getElementById('ac-jeon-data').value||'').trim();
+    var jDataArr=acJeonGetRows();
     var jMemo=(document.getElementById('ac-jeon-memo').value||'').trim();
+    var jDataStr=JSON.stringify(jDataArr);
     Object.assign(row,{
       service_name:jName,
       url:'',
       account_id:jAcc,
       pw:'',
-      memo:jData&&jMemo?jData+'\n---\n'+jMemo:(jData||jMemo),
+      memo:jDataStr+'\n---\n'+jMemo,
       link_url:''
     });
   } else {
@@ -90782,7 +90784,7 @@ function acRender(){
 
   // 종류 필터 + 검색 동시 적용
   var list = _AC_LIST.filter(function(r){
-    var typeOk = (_AC_FILTER==='전체') || ((r.account_type||'업무계정')===_AC_FILTER);
+    var typeOk = ((r.account_type||'업무계정')===_AC_FILTER);
     if(!typeOk) return false;
     if(!q) return true;
     return [r.account_type,r.service_name,r.memo,r.url,r.account_id,r.link_url]
@@ -90799,13 +90801,22 @@ function acRender(){
     return;
   }
 
-  // ── 테이블 헤더 ──
-  var cols=[
+  // ── 테이블 헤더 ── (전산세트는 컬럼 축소)
+  var isJeon=(_AC_FILTER==='전산세트');
+  var cols= isJeon ? [
+    {label:'종류',          px:'60px'},
+    {label:'서비스명',      px:'110px'},
+    {label:'계정정보',      px:'220px'},
+    {label:'아이디/이메일', px:'210px'},
+    {label:'기타메모',      px:'180px'},
+    {label:'수정일',        px:'75px'},
+    {label:'관리',          px:'55px'}
+  ] : [
     {label:'종류',          px:'60px'},
     {label:'서비스명',      px:'70px'},
     {label:'계정정보',      px:'175px'},
     {label:'로그인방법',    px:'65px'},
-    {label:'아이디/이메일', px:'155px'},
+    {label:'아이디/이메일', px:'185px'},
     {label:'비밀번호/API키',px:'105px'},
     {label:'연결URL',       px:'85px'},
     {label:'기타메모',      px:'130px'},
@@ -90833,26 +90844,51 @@ function acRender(){
     var linkVal = r.link_url||'';
     var linkShort = linkVal.length>30 ? linkVal.slice(0,28)+'…' : linkVal;
 
-    tbody+='<tr data-view-id="'+r.id+'" style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">'
-      // 1. 종류
-      +'<td style="padding:10px 10px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>'
-      // 2. 서비스명
-      +'<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>'
-      // 3. 계정정보
-      +'<td style="padding:10px 10px;font-size:12px;color:#334155;vertical-align:middle;">'
-        +'<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">'+escHtml(memoInfo||'-')+'</div>'
-      +'</td>'
-      // 4. 로그인방법
-      +'<td style="padding:10px 10px;font-size:12px;color:#64748b;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:86px;">'+escHtml(r.url||'-')+'</td>'
-      // 5. 아이디/이메일
-      +'<td style="padding:10px 10px;vertical-align:middle;">'
-        +'<div style="display:flex;align-items:center;gap:4px;">'
-        +'<span style="font-size:12px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:125px;">'+escHtml(r.account_id||'-')+'</span>'
-        +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation()">복사</button>':'')
-        +'</div>'
-      +'</td>'
-      // 6. 비밀번호/API키
-      +'<td style="padding:10px 10px;vertical-align:middle;">'
+    // 전산세트: 계정정보 칸에 포함데이터 텍스트 줄지어 표시
+    var memoInfoCell='';
+    if(acType==='전산세트'){
+      try{
+        var jArr=JSON.parse(memoInfo);
+        if(Array.isArray(jArr)&&jArr.length>0){
+          memoInfoCell=jArr.map(function(item){
+            return '<div style="font-size:12px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(item.name||'')+'</div>';
+          }).join('');
+        } else {
+          memoInfoCell='<span style="font-size:12px;color:#94a3b8;">-</span>';
+        }
+      }catch(e2){
+        memoInfoCell='<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;font-size:12px;color:#334155;">'+escHtml(memoInfo||'-')+'</div>';
+      }
+    } else {
+      memoInfoCell='<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">'+escHtml(memoInfo||'-')+'</div>';
+    }
+
+    var tdCommon='<tr data-view-id="'+r.id+'" style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">';
+    var tdType='<td style="padding:10px 10px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>';
+    var tdName='<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>';
+    var tdMemoInfo='<td style="padding:10px 10px;font-size:12px;color:#334155;vertical-align:middle;">'+memoInfoCell+'</td>';
+    var tdId='<td style="padding:10px 10px;vertical-align:middle;max-width:0;">'
+      +'<div style="display:flex;align-items:center;gap:5px;min-width:0;">'
+      +'<span style="font-size:12px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">'+escHtml(r.account_id||'-')+'</span>'
+      +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation()">복사</button>':'')
+      +'</div></td>';
+    var tdMemoEtc='<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;max-width:0;">'
+      +'<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(memoEtc||'-')+'</div>'
+      +'</td>';
+    var tdDate='<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;white-space:nowrap;">'+acFmtDate(r.pw_updated_at||r.created_at)+'</td>';
+    var tdMgmt='<td style="padding:10px 10px;vertical-align:middle;white-space:nowrap;">'
+      +'<div style="display:flex;gap:4px;">'
+      +'<button data-edit-id="'+r.id+'" style="padding:4px 8px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">✏️</button>'
+      +'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>'
+      +'</div></td>';
+
+    if(isJeon){
+      // 전산세트: 종류·서비스명·계정정보·아이디/이메일·기타메모·수정일·관리
+      tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdId+tdMemoEtc+tdDate+tdMgmt+'</tr>';
+    } else {
+      // 전체/업무계정/API키: 10컬럼
+      var tdUrl='<td style="padding:10px 10px;font-size:12px;color:#64748b;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:86px;">'+escHtml(r.url||'-')+'</td>';
+      var tdPw='<td style="padding:10px 10px;vertical-align:middle;">'
         +(r.pw
           ?'<div style="display:flex;align-items:center;gap:4px;">'
             +'<span style="font-size:12px;color:#334155;letter-spacing:2px;white-space:nowrap;">••••••</span>'
@@ -90860,30 +90896,17 @@ function acRender(){
             +'<button data-copy="'+escHtml(r.pw)+'" data-copy-label="'+pwLabel+'" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation()">복사</button>'
             +'</div>'
           :'<span style="font-size:12px;color:#cbd5e1;">-</span>')
-      +'</td>'
-      // 7. 연결URL
-      +'<td style="padding:10px 10px;vertical-align:middle;">'
+        +'</td>';
+      var tdLink='<td style="padding:10px 10px;vertical-align:middle;">'
         +(linkVal
           ?'<div style="display:flex;align-items:center;gap:4px;">'
             +'<span style="font-size:11px;color:#2563eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;" title="'+escHtml(linkVal)+'">'+escHtml(linkShort)+'</span>'
             +'<button data-copy="'+escHtml(linkVal)+'" data-copy-label="URL" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;flex-shrink:0;white-space:nowrap;" onclick="event.stopPropagation()">복사</button>'
             +'</div>'
           :'<span style="font-size:12px;color:#cbd5e1;">-</span>')
-      +'</td>'
-      // 8. 기타메모
-      +'<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;">'
-        +'<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">'+escHtml(memoEtc||'-')+'</div>'
-      +'</td>'
-      // 9. 수정일
-      +'<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;white-space:nowrap;">'+acFmtDate(r.pw_updated_at||r.created_at)+'</td>'
-      // 10. 관리
-      +'<td style="padding:10px 10px;vertical-align:middle;white-space:nowrap;">'
-        +'<div style="display:flex;gap:4px;">'
-        +'<button data-edit-id="'+r.id+'" style="padding:4px 8px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">✏️</button>'
-        +'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>'
-        +'</div>'
-      +'</td>'
-      +'</tr>';
+        +'</td>';
+      tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdUrl+tdId+tdPw+tdLink+tdMemoEtc+tdDate+tdMgmt+'</tr>';
+    }
   });
   tbody+='</tbody>';
 
@@ -90921,10 +90944,11 @@ function acOpenModal(editId){
 
   // 전체 필드 초기화
   ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info',
-   'ac-jeon-name','ac-jeon-account','ac-jeon-data','ac-jeon-memo',
+   'ac-jeon-name','ac-jeon-account','ac-jeon-memo',
    'ac-api-name','ac-api-key','ac-api-url','ac-api-memo'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.value='';
   });
+  var jList0=document.getElementById('ac-jeon-data-list'); if(jList0) jList0.innerHTML='';
   var selEl=document.getElementById('ac-url');     if(selEl) selEl.value='';
   var etcEl=document.getElementById('ac-url-etc'); if(etcEl){ etcEl.value=''; etcEl.style.display='none'; }
   var pwInp=document.getElementById('ac-pw');      if(pwInp) pwInp.type='password';
@@ -90967,7 +90991,12 @@ function acOpenModal(editId){
     } else if(t==='전산세트'){
       var jn=document.getElementById('ac-jeon-name');    if(jn) jn.value=rec.service_name||'';
       var ja=document.getElementById('ac-jeon-account'); if(ja) ja.value=rec.account_id||'';
-      var jd=document.getElementById('ac-jeon-data');    if(jd) jd.value=mPart1;
+      // mPart1: JSON 배열 파싱해서 rows 복원
+      var jDataArr0=[];
+      try{ var parsed0=JSON.parse(mPart1); if(Array.isArray(parsed0)) jDataArr0=parsed0; }catch(e){ if(mPart1) jDataArr0=[{name:mPart1,url:''}]; }
+      var jList1=document.getElementById('ac-jeon-data-list'); if(jList1) jList1.innerHTML='';
+      jDataArr0.forEach(function(item){ acJeonAddRow(item.name||'',item.url||''); });
+      if(jDataArr0.length===0) acJeonAddRow();
       var jm=document.getElementById('ac-jeon-memo');    if(jm) jm.value=mPart2;
     } else {
       // API키
@@ -90988,10 +91017,11 @@ function acOpenModal(editId){
 function acCloseModal(){
   var ov=document.getElementById('ac-modal-overlay'); if(ov) ov.style.display='none';
   ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info',
-   'ac-jeon-name','ac-jeon-account','ac-jeon-data','ac-jeon-memo',
+   'ac-jeon-name','ac-jeon-account','ac-jeon-memo',
    'ac-api-name','ac-api-key','ac-api-url','ac-api-memo'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.value='';
   });
+  var jList2=document.getElementById('ac-jeon-data-list'); if(jList2) jList2.innerHTML='';
   var selEl=document.getElementById('ac-url');     if(selEl) selEl.value='';
   var etcEl=document.getElementById('ac-url-etc'); if(etcEl){ etcEl.value=''; etcEl.style.display='none'; }
   var hidId=document.getElementById('ac-modal-edit-id'); if(hidId) hidId.value='';
@@ -91022,14 +91052,14 @@ async function acModalSave(){
     var jName2=(document.getElementById('ac-jeon-name').value||'').trim();
     if(!jName2){ if(typeof showT==='function') showT('전산이름을 입력해 주세요'); return; }
     var jAcc2 =(document.getElementById('ac-jeon-account').value||'').trim();
-    var jData2=(document.getElementById('ac-jeon-data').value||'').trim();
+    var jDataArr2=acJeonGetRows();
     var jMemo2=(document.getElementById('ac-jeon-memo').value||'').trim();
     Object.assign(payload,{
       service_name:jName2,
       url:'',
       account_id:jAcc2,
       pw:'',
-      memo:jData2&&jMemo2?jData2+'\n---\n'+jMemo2:(jData2||jMemo2),
+      memo:JSON.stringify(jDataArr2)+'\n---\n'+jMemo2,
       link_url:''
     });
   } else {
@@ -91070,6 +91100,11 @@ function acTypeChange(){
   if(blockWork) blockWork.style.display=(t==='업무계정')?'block':'none';
   if(blockJeon) blockJeon.style.display=(t==='전산세트')?'block':'none';
   if(blockApi)  blockApi.style.display =(t==='API키')   ?'block':'none';
+  // 전산세트 선택 시 rows가 비어있으면 기본 1개 추가
+  if(t==='전산세트'){
+    var jl=document.getElementById('ac-jeon-data-list');
+    if(jl&&jl.children.length===0) acJeonAddRow();
+  }
 }
 
 /* ── API키 눈 아이콘 ── */
@@ -91078,6 +91113,33 @@ function acToggleApiKey(){
   if(!inp) return;
   inp.type=inp.type==='password'?'text':'password';
 }
+
+/* ── 전산세트 포함 데이터 rows 헬퍼 ── */
+function acJeonAddRow(name, url){
+  var list=document.getElementById('ac-jeon-data-list'); if(!list) return;
+  var idx=list.children.length;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;align-items:center;';
+  row.innerHTML=
+    '<input type="text" placeholder="이름 (예: 고객용 홈페이지)" value="'+escHtml(name||'')+'" '
+      +'style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:\'Noto Sans KR\',sans-serif;box-sizing:border-box;" class="jeon-data-name">'
+    +'<input type="text" placeholder="도메인 URL (예: https://wdwave.kr)" value="'+escHtml(url||'')+'" '
+      +'style="flex:1.4;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:\'Noto Sans KR\',sans-serif;box-sizing:border-box;" class="jeon-data-url">'
+    +'<button type="button" onclick="this.parentNode.remove()" style="padding:6px 9px;border:1px solid #fca5a5;border-radius:7px;background:#fff;color:#dc2626;font-size:12px;cursor:pointer;flex-shrink:0;">✕</button>';
+  list.appendChild(row);
+}
+function acJeonGetRows(){
+  var list=document.getElementById('ac-jeon-data-list'); if(!list) return [];
+  var rows=[];
+  list.querySelectorAll('div').forEach(function(row){
+    var n=(row.querySelector('.jeon-data-name')||{}).value||'';
+    var u=(row.querySelector('.jeon-data-url')||{}).value||'';
+    if(n||u) rows.push({name:n.trim(),url:u.trim()});
+  });
+  return rows;
+}
+window.acJeonAddRow=acJeonAddRow;
+window.acJeonGetRows=acJeonGetRows;
 
 /* ── 로그인방법 드롭다운 헬퍼 ── */
 function acGetUrl(){
@@ -91146,8 +91208,28 @@ function acViewDetail(id){
     bodyHtml+=dRow('기타메모', memoEtc);
   } else if(acType==='전산세트'){
     bodyHtml+=dRow('전산연결계정', r.account_id, true);
-    bodyHtml+=dRow('포함된 데이터', memoInfo);
-    bodyHtml+=dRow('기타메모', memoEtc);
+    // 포함된 데이터 — JSON 파싱해서 카드형으로 표시
+    var jArrV=[];
+    try{ var pv=JSON.parse(memoInfo); if(Array.isArray(pv)) jArrV=pv; }catch(e3){ if(memoInfo) jArrV=[{name:memoInfo,url:''}]; }
+    if(jArrV.length>0){
+      var jCardsHtml='<div style="display:flex;flex-direction:column;gap:6px;">';
+      jArrV.forEach(function(item){
+        jCardsHtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;gap:8px;">'
+          +'<span style="font-size:13px;font-weight:700;color:#15803D;">'+escHtml(item.name||'')+'</span>'
+          +(item.url
+            ?'<div style="display:flex;align-items:center;gap:6px;">'
+              +'<a href="'+escHtml(item.url)+'" target="_blank" style="font-size:11px;color:#2563eb;text-decoration:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+escHtml(item.url)+'">'+escHtml(item.url)+'</a>'
+              +'<button data-copy-detail="'+escHtml(item.url)+'" data-copy-label="URL" style="padding:2px 7px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;">복사</button>'
+              +'</div>'
+            :'')
+          +'</div>';
+      });
+      jCardsHtml+='</div>';
+      bodyHtml+='<div style="padding:11px 0;border-bottom:1px solid #f1f5f9;">'
+        +'<div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px;">포함된 데이터</div>'
+        +jCardsHtml+'</div>';
+    }
+    if(memoEtc) bodyHtml+=dRow('기타메모', memoEtc);
   } else {
     bodyHtml+=dRow('API키', r.pw, false, true);
     bodyHtml+=dRow('API 관리 URL', r.link_url, true);
