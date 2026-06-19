@@ -90652,6 +90652,7 @@ async function acLoad(){
     var r = await _sbSelect('kit_accounts','*',{eq:{user_id:acUid()},order:'created_at',asc:false});
     _AC_LIST = r.data || [];
   }catch(e){ console.warn('[acLoad]',e.message); _AC_LIST=[]; }
+  _AC_LIST.sort(function(a,b){ return (a.service_name||'').localeCompare(b.service_name||'','ko'); });
   acRender();
 }
 
@@ -90722,6 +90723,7 @@ async function acSave(){
     var r=await _sbInsert('kit_accounts', row, {returning:true});
     if(r.data) _AC_LIST.unshift(r.data);
     else{ var r2=await _sbSelect('kit_accounts','*',{eq:{user_id:acUid()},order:'created_at',asc:false}); _AC_LIST=r2.data||[]; }
+    _AC_LIST.sort(function(a,b){ return (a.service_name||'').localeCompare(b.service_name||'','ko'); });
     if(typeof showT==='function') showT('✅ 저장됐습니다');
     acCloseModal();
     acRender();
@@ -90818,7 +90820,7 @@ function acRender(){
     {label:'로그인방법',    px:'65px'},
     {label:'아이디/이메일', px:'185px'},
     {label:'비밀번호/API키',px:'105px'},
-    {label:'연결URL',       px:'85px'},
+    ...(_AC_FILTER==='API키'?[{label:'연결URL', px:'85px'}]:[]),
     {label:'기타메모',      px:'130px'},
     {label:'수정일',        px:'70px'},
     {label:'관리',          px:'50px'}
@@ -90850,8 +90852,8 @@ function acRender(){
       try{
         var jArr=JSON.parse(memoInfo);
         if(Array.isArray(jArr)&&jArr.length>0){
-          memoInfoCell=jArr.map(function(item){
-            return '<div style="font-size:12px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(item.name||'')+'</div>';
+          memoInfoCell=jArr.map(function(item,i){
+            return '<div style="font-size:12px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(i+1)+'. '+escHtml(item.name||'')+'</div>';
           }).join('');
         } else {
           memoInfoCell='<span style="font-size:12px;color:#94a3b8;">-</span>';
@@ -90870,7 +90872,6 @@ function acRender(){
     var tdId='<td style="padding:10px 10px;vertical-align:middle;max-width:0;">'
       +'<div style="display:flex;align-items:center;gap:5px;min-width:0;">'
       +'<span style="font-size:12px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">'+escHtml(r.account_id||'-')+'</span>'
-      +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation()">복사</button>':'')
       +'</div></td>';
     var tdMemoEtc='<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;max-width:0;">'
       +'<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(memoEtc||'-')+'</div>'
@@ -90905,7 +90906,7 @@ function acRender(){
             +'</div>'
           :'<span style="font-size:12px;color:#cbd5e1;">-</span>')
         +'</td>';
-      tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdUrl+tdId+tdPw+tdLink+tdMemoEtc+tdDate+tdMgmt+'</tr>';
+      tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdUrl+tdId+tdPw+(_AC_FILTER==='API키'?tdLink:'')+tdMemoEtc+tdDate+tdMgmt+'</tr>';
     }
   });
   tbody+='</tbody>';
@@ -91080,6 +91081,7 @@ async function acModalSave(){
     await _sbUpdate('kit_accounts', payload, 'id', editId);
     var idx=_AC_LIST.findIndex(function(r){return r.id===editId;});
     if(idx>=0) _AC_LIST[idx]=Object.assign({},_AC_LIST[idx],payload);
+    _AC_LIST.sort(function(a,b){ return (a.service_name||'').localeCompare(b.service_name||'','ko'); });
     if(typeof showT==='function') showT('✅ 수정됐습니다');
     acCloseModal(); acRender();
   }catch(e){ console.error('[acModalSave-update]',e); if(typeof showT==='function') showT('수정 실패: '+e.message); }
