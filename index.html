@@ -8602,33 +8602,10 @@ if(typeof window.calcKoreanAge !== 'function'){
       <div class="hub-header-divider"></div>
       <div><span class="hub-status-dot"></span><span class="hub-status-text">최윤경 대표 · WORKSPACE</span></div>
     </div>
-    <div class="hub-header-right" style="display:flex;align-items:center;gap:6px;">
-      <!-- 외부 링크 드롭다운 -->
-      <div style="position:relative;" id="ext-link-wrap">
-        <button onclick="document.getElementById('ext-link-menu').classList.toggle('open')" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#334155;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">🔗 바로가기 <span style="font-size:10px;">▾</span></button>
-        <div id="ext-link-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:200px;z-index:999;overflow:hidden;">
-          <div style="padding:8px 14px;font-size:10px;font-weight:800;color:#94a3b8;letter-spacing:.5px;border-bottom:1px solid #f1f5f9;">외부 사이트 열기</div>
-          <a href="https://wdwave.kr" target="_blank" onclick="document.getElementById('ext-link-menu').classList.remove('open')" style="display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:#334155;text-decoration:none;border-bottom:1px solid #f8fafc;">
-            <span style="font-size:16px;">🏠</span><span><b>보험 고객용 홈페이지</b><br><span style="font-size:11px;color:#94a3b8;">wdwave.kr</span></span>
-          </a>
-          <a href="https://branding.wdwave.kr" target="_blank" onclick="document.getElementById('ext-link-menu').classList.remove('open')" style="display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:#334155;text-decoration:none;border-bottom:1px solid #f8fafc;">
-            <span style="font-size:16px;">✨</span><span><b>브랜딩 고객용 홈페이지</b><br><span style="font-size:11px;color:#94a3b8;">branding.wdwave.kr</span></span>
-          </a>
-          <a href="https://pro.wdwave.kr" target="_blank" onclick="document.getElementById('ext-link-menu').classList.remove('open')" style="display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:#334155;text-decoration:none;">
-            <span style="font-size:16px;">👤</span><span><b>설계사 전산</b><br><span style="font-size:11px;color:#94a3b8;">pro.wdwave.kr</span></span>
-          </a>
-        </div>
-      </div>
+    <div class="hub-header-right">
       <button class="hub-logout" onclick="if(typeof goTo==='function')goTo('settings')" style="margin-right:6px;">⚙️ 설정</button>
       <button class="hub-logout" onclick="if(typeof lockLogout==='function')lockLogout()">로그아웃</button>
     </div>
-    <script>
-    document.addEventListener('click',function(e){
-      var w=document.getElementById('ext-link-wrap');
-      var m=document.getElementById('ext-link-menu');
-      if(w&&m&&!w.contains(e.target)) m.classList.remove('open');
-    });
-    </script>
   </header>
 
   <!-- 허브 콘텐츠 -->
@@ -89416,6 +89393,11 @@ window.openDocGen = function(){
       <button onclick="wcnTabSwitch('tax')" id="wcn-tab-tax" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
         <span style="font-size:16px;">📊</span><span style="font-size:13px;font-weight:700;color:#78716C;">세무업무</span>
       </button>
+      <div style="border-top:2px solid #E5E0D5;margin:14px 12px 12px;"></div>
+      <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">보안</div>
+      <button onclick="wcnTabSwitch('accounts')" id="wcn-tab-accounts" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">🔑</span><span style="font-size:13px;font-weight:700;color:#78716C;">계정관리</span>
+      </button>
     </div><!-- /사이드바 -->
 
     <!-- 오른쪽 콘텐츠 영역 -->
@@ -90181,6 +90163,50 @@ window.openDocGen = function(){
       </div>
     </div><!-- /wcn-panel-tax -->
 
+    <!-- ── 계정관리 탭 ── -->
+    <div id="wcn-panel-accounts" class="wcn-tab-content" style="display:none;">
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:18px;margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:800;color:#1C1917;margin-bottom:4px;">🔑 계정관리</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;">서비스별 아이디·비밀번호를 안전하게 보관합니다. Supabase에 저장됩니다.</div>
+
+        <!-- 추가 폼 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">서비스명 *</div>
+          <input id="ac-service" type="text" placeholder="예: Supabase, GitHub, 보험사 전산" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">계정정보</div>
+          <textarea id="ac-memo" placeholder="예: 회사 공용 계정, 2FA 사용 중, 갱신 주기 3개월, URL..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;min-height:60px;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">로그인 방법</div>
+          <input id="ac-url" type="text" placeholder="예: 구글 로그인 / 이메일+비번 / GitHub 연동" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">아이디 / 이메일</div>
+            <input id="ac-id" type="text" placeholder="아이디 또는 이메일" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">비밀번호</div>
+            <div style="display:flex;gap:6px;">
+              <input id="ac-pw" type="password" placeholder="비밀번호" style="flex:1;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+              <button onclick="acTogglePw()" id="ac-pw-toggle" style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:12px;">👁</button>
+            </div>
+          </div>
+        </div>
+        <button onclick="acSave()" style="width:100%;padding:10px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;">+ 저장</button>
+      </div>
+
+      <!-- 검색 -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="ac-search" type="text" placeholder="서비스명 검색..." oninput="acRender()" style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;">
+      </div>
+
+      <!-- 목록 -->
+      <div id="ac-list"><div style="text-align:center;padding:28px;color:#94a3b8;font-size:13px;">불러오는 중...</div></div>
+    </div><!-- /wcn-panel-accounts -->
+
 
 
 
@@ -90449,11 +90475,186 @@ window.tx_init = function(){
   }
 };
 
+/* ══════ 계정관리 (kit_accounts) ══════ */
+var _AC_LIST = [];
+
+function acUid(){
+  return (typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID) ? _CURRENT_UID : 'sara';
+}
+
+async function acLoad(){
+  try{
+    var r = await _sbSelect('kit_accounts','*',{eq:{user_id:acUid()},order:'created_at',asc:false});
+    _AC_LIST = r.data || [];
+  }catch(e){ console.warn('[acLoad]',e.message); _AC_LIST=[]; }
+  acRender();
+}
+
+async function acSave(){
+  var svc = (document.getElementById('ac-service').value||'').trim();
+  if(!svc){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
+  var row = {
+    user_id: acUid(),
+    service_name: svc,
+    url: (document.getElementById('ac-url').value||'').trim(),
+    account_id: (document.getElementById('ac-id').value||'').trim(),
+    pw: (document.getElementById('ac-pw').value||'').trim(),
+    memo: (document.getElementById('ac-memo').value||'').trim(),
+    pw_updated_at: new Date().toISOString()
+  };
+  try{
+    var r = await _sbInsert('kit_accounts', row, {returning:true});
+    if(r.data) _AC_LIST.unshift(r.data);
+    else { var r2=await _sbSelect('kit_accounts','*',{eq:{user_id:acUid()},order:'created_at',asc:false}); _AC_LIST=r2.data||[]; }
+    ['ac-service','ac-url','ac-id','ac-pw','ac-memo'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+    if(typeof showT==='function') showT('✅ 저장됐습니다');
+    acRender();
+  }catch(e){ console.error('[acSave]',e); if(typeof showT==='function') showT('저장 실패: '+e.message); }
+}
+
+async function acUpdate(id){
+  var svc=(document.getElementById('ac-edit-service-'+id).value||'').trim();
+  if(!svc){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
+  var payload={
+    service_name:svc,
+    url:(document.getElementById('ac-edit-url-'+id).value||'').trim(),
+    account_id:(document.getElementById('ac-edit-id-'+id).value||'').trim(),
+    pw:(document.getElementById('ac-edit-pw-'+id).value||'').trim(),
+    memo:(document.getElementById('ac-edit-memo-'+id).value||'').trim(),
+    pw_updated_at:new Date().toISOString()
+  };
+  try{
+    await _sbUpdate('kit_accounts', payload, 'id', id);
+    var idx=_AC_LIST.findIndex(function(r){return r.id===id;});
+    if(idx>=0) _AC_LIST[idx]=Object.assign({},_AC_LIST[idx],payload);
+    if(typeof showT==='function') showT('✅ 수정됐습니다');
+    acRender();
+  }catch(e){ console.error('[acUpdate]',e); if(typeof showT==='function') showT('수정 실패: '+e.message); }
+}
+
+async function acDelete(id){
+  if(!confirm('이 계정 정보를 삭제할까요?')) return;
+  try{
+    await _sbDelete('kit_accounts','id',id);
+    _AC_LIST=_AC_LIST.filter(function(r){return r.id!==id;});
+    if(typeof showT==='function') showT('삭제됐습니다');
+    acRender();
+  }catch(e){ console.error('[acDelete]',e); if(typeof showT==='function') showT('삭제 실패'); }
+}
+
+function acTogglePw(){
+  var inp = document.getElementById('ac-pw');
+  if(!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function acToggleRowPw(id){
+  var el=document.getElementById('ac-pw-'+id); if(!el) return;
+  var btn=document.getElementById('ac-pw-btn-'+id);
+  if(el.getAttribute('data-show')==='1'){
+    el.textContent='••••••••'; el.setAttribute('data-show','0'); if(btn) btn.textContent='👁';
+  } else {
+    el.textContent=el.getAttribute('data-pw')||''; el.setAttribute('data-show','1'); if(btn) btn.textContent='🙈';
+  }
+}
+
+function acCopy(text, label){
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ if(typeof showT==='function') showT('📋 '+label+' 복사됨'); }); }
+  else { var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t); if(typeof showT==='function') showT('📋 '+label+' 복사됨'); }
+}
+
+function acFmtDate(iso){
+  if(!iso) return '-';
+  var d = new Date(iso);
+  return d.getFullYear()+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.'+d.getDate().toString().padStart(2,'0');
+}
+
+function acRender(){
+  var box = document.getElementById('ac-list'); if(!box) return;
+  var q = (document.getElementById('ac-search')&&document.getElementById('ac-search').value||'').toLowerCase();
+  var list = q ? _AC_LIST.filter(function(r){ return (r.service_name||'').toLowerCase().indexOf(q)>=0||(r.memo||'').toLowerCase().indexOf(q)>=0; }) : _AC_LIST;
+  if(!list.length){ box.innerHTML='<div style="text-align:center;padding:28px;color:#94a3b8;font-size:13px;">저장된 계정이 없습니다</div>'; return; }
+  var frag = list.map(function(r){
+    var div = document.createElement('div');
+    div.style.cssText='background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:10px;';
+    div.innerHTML=''
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+      +'<div style="font-size:14px;font-weight:800;color:#1C1917;">'+escHtml(r.service_name||'')+'</div>'
+      +'<div style="display:flex;gap:5px;">'
+      +'<button data-edit-id="'+r.id+'" style="padding:4px 10px;border:1px solid #bfdbfe;border-radius:7px;background:#fff;color:#2563eb;font-size:11px;cursor:pointer;">✏️ 수정</button>'
+      +'<button data-del-id="'+r.id+'" style="padding:4px 10px;border:1px solid #fca5a5;border-radius:7px;background:#fff;color:#dc2626;font-size:11px;cursor:pointer;">삭제</button>'
+      +'</div>'
+      +'</div>'
+      // 수정 폼 (기본 숨김)
+      +'<div id="ac-edit-form-'+r.id+'" style="display:none;background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:10px;">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'
+      +'<div><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">서비스명 *</div><input id="ac-edit-service-'+r.id+'" type="text" value="'+escHtml(r.service_name||'')+'" style="width:100%;padding:7px 9px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;"></div>'
+      +'<div><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">로그인방법</div><input id="ac-edit-url-'+r.id+'" type="text" value="'+escHtml(r.url||'')+'" style="width:100%;padding:7px 9px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;"></div>'
+      +'<div><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">아이디/이메일</div><input id="ac-edit-id-'+r.id+'" type="text" value="'+escHtml(r.account_id||'')+'" style="width:100%;padding:7px 9px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;"></div>'
+      +'<div><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">비밀번호</div><input id="ac-edit-pw-'+r.id+'" type="text" value="'+escHtml(r.pw||'')+'" style="width:100%;padding:7px 9px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;box-sizing:border-box;"></div>'
+      +'</div>'
+      +'<div style="margin-bottom:8px;"><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">계정정보</div><textarea id="ac-edit-memo-'+r.id+'" style="width:100%;padding:7px 9px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;min-height:50px;box-sizing:border-box;">'+escHtml(r.memo||'')+'</textarea></div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button data-save-id="'+r.id+'" style="flex:1;padding:8px;background:#FBBF24;color:#1C1917;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;">저장</button>'
+      +'<button data-cancel-id="'+r.id+'" style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">취소</button>'
+      +'</div></div>'
+      +(r.url?'<div style="font-size:11px;color:#64748b;margin-bottom:6px;">🔐 로그인방법: <b>'+escHtml(r.url)+'</b></div>':'')
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'
+      +'<div><div style="font-size:10px;color:#94a3b8;font-weight:700;margin-bottom:2px;">아이디</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;">'
+      +'<span style="font-size:13px;color:#334155;">'+escHtml(r.account_id||'-')+'</span>'
+      +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:2px 7px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:10px;cursor:pointer;">복사</button>':'')
+      +'</div></div>'
+      +'<div><div style="font-size:10px;color:#94a3b8;font-weight:700;margin-bottom:2px;">비밀번호</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;">'
+      +'<span id="ac-pw-'+r.id+'" data-show="0" data-pw="'+escHtml(r.pw||'')+'" style="font-size:13px;color:#334155;letter-spacing:2px;">••••••••</span>'
+      +'<button data-toggle-pw="'+r.id+'" id="ac-pw-btn-'+r.id+'" style="padding:2px 7px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:10px;cursor:pointer;">👁</button>'
+      +(r.pw?'<button data-copy="'+escHtml(r.pw)+'" data-copy-label="비밀번호" style="padding:2px 7px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:10px;cursor:pointer;">복사</button>':'')
+      +'</div></div></div>'
+      +(r.memo?'<div style="font-size:12px;color:#64748b;background:#f8fafc;border-radius:8px;padding:8px 10px;margin-bottom:8px;"><span style="font-size:10px;font-weight:700;color:#94a3b8;display:block;margin-bottom:2px;">계정정보</span>'+escHtml(r.memo)+'</div>':'')
+      +'<div style="font-size:10px;color:#94a3b8;margin-top:6px;">🔑 비밀번호 최신 업데이트: <b>'+acFmtDate(r.pw_updated_at)+'</b> · 등록일: '+acFmtDate(r.created_at)+'</div>';
+    // 이벤트 위임
+    div.querySelectorAll('[data-del-id]').forEach(function(btn){
+      btn.addEventListener('click',function(){acDelete(this.getAttribute('data-del-id'));});
+    });
+    div.querySelectorAll('[data-edit-id]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=this.getAttribute('data-edit-id');
+        var form=document.getElementById('ac-edit-form-'+id);
+        if(form) form.style.display=form.style.display==='none'?'block':'none';
+      });
+    });
+    div.querySelectorAll('[data-save-id]').forEach(function(btn){
+      btn.addEventListener('click',function(){acUpdate(this.getAttribute('data-save-id'));});
+    });
+    div.querySelectorAll('[data-cancel-id]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var form=document.getElementById('ac-edit-form-'+this.getAttribute('data-cancel-id'));
+        if(form) form.style.display='none';
+      });
+    });
+    div.querySelectorAll('[data-copy]').forEach(function(btn){
+      btn.addEventListener('click',function(){acCopy(this.getAttribute('data-copy'),this.getAttribute('data-copy-label'));});
+    });
+    div.querySelectorAll('[data-toggle-pw]').forEach(function(btn){
+      btn.addEventListener('click',function(){acToggleRowPw(this.getAttribute('data-toggle-pw'));});
+    });
+    return div;
+  });
+  box.innerHTML='';
+  frag.forEach(function(el){box.appendChild(el);});
+}
+
+function escHtml(s){ return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
 /* ── wcnTabSwitch 래핑: tax 탭 진입 시 KST 현재 월로 리셋 후 tx_init ── */
 (function(){
   var _prev = window.wcnTabSwitch;
   window.wcnTabSwitch = function(tab){
     if(typeof _prev==='function')_prev(tab);
+    if(tab==='accounts'){
+      acLoad();
+    }
     if(tab==='tax'){
       /* [v65] 항상 KST 현재 연/월로 초기화 */
       var kst = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
