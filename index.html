@@ -90221,6 +90221,28 @@ window.openDocGen = function(){
       <div id="ac-list"><div style="text-align:center;padding:28px;color:#94a3b8;font-size:13px;">불러오는 중...</div></div>
     </div><!-- /wcn-panel-accounts -->
 
+    <!-- ── 계정 상세 보기 모달 ── -->
+    <div id="ac-detail-overlay" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
+      <div id="ac-detail-box" style="background:#fff;border-radius:20px;padding:28px 26px;width:100%;max-width:520px;margin:20px;box-shadow:0 12px 48px rgba(0,0,0,.22);max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+        <!-- 헤더 -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+          <div>
+            <div id="ac-detail-badge" style="margin-bottom:6px;"></div>
+            <div id="ac-detail-title" style="font-size:18px;font-weight:900;color:#1C1917;"></div>
+          </div>
+          <button onclick="acCloseDetail()" style="border:none;background:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1;flex-shrink:0;margin-left:12px;">✕</button>
+        </div>
+        <!-- 상세 내용 -->
+        <div id="ac-detail-body" style="margin-bottom:22px;"></div>
+        <!-- 액션 버튼 -->
+        <div style="display:flex;gap:8px;padding-top:18px;border-top:1.5px solid #f1f5f9;">
+          <button id="ac-detail-edit-btn" onclick="" style="flex:1;padding:11px;background:#EFF6FF;color:#2563EB;border:1.5px solid #BFDBFE;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">✏️ 수정하기</button>
+          <button id="ac-detail-del-btn" onclick="" style="padding:11px 18px;background:#FEF2F2;color:#DC2626;border:1.5px solid #FECACA;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑️ 삭제</button>
+          <button onclick="acCloseDetail()" style="padding:11px 18px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">닫기</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── 계정 추가/수정 모달 ── -->
     <div id="ac-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
       <div style="background:#fff;border-radius:18px;padding:24px 22px;width:100%;max-width:440px;margin:20px;box-shadow:0 8px 40px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto;box-sizing:border-box;">
@@ -90779,20 +90801,20 @@ function acRender(){
 
   // ── 테이블 헤더 ──
   var cols=[
-    {label:'종류',          px:'90px'},
-    {label:'서비스명',      px:'120px'},
-    {label:'계정정보',      px:'170px'},
-    {label:'로그인방법',    px:'110px'},
-    {label:'아이디/이메일', px:'150px'},
-    {label:'비밀번호/API키',px:'150px'},
-    {label:'연결페이지/URL',px:'170px'},
-    {label:'기타메모',      px:'170px'},
-    {label:'최근수정일',    px:'100px'},
-    {label:'관리',          px:'90px'}
+    {label:'종류',          px:'60px'},
+    {label:'서비스명',      px:'70px'},
+    {label:'계정정보',      px:'175px'},
+    {label:'로그인방법',    px:'65px'},
+    {label:'아이디/이메일', px:'155px'},
+    {label:'비밀번호/API키',px:'105px'},
+    {label:'연결URL',       px:'85px'},
+    {label:'기타메모',      px:'130px'},
+    {label:'수정일',        px:'70px'},
+    {label:'관리',          px:'50px'}
   ];
   var thead='<thead><tr style="background:#F8FAFC;">';
   cols.forEach(function(c){
-    thead+='<th style="padding:13px 14px;text-align:left;font-size:13px;font-weight:700;color:#64748b;border-bottom:1.5px solid #e2e8f0;white-space:nowrap;min-width:'+c.px+';width:'+c.px+';">'+c.label+'</th>';
+    thead+='<th style="padding:9px 10px;text-align:left;font-size:12px;font-weight:700;color:#64748b;border-bottom:1.5px solid #e2e8f0;white-space:nowrap;min-width:'+c.px+';width:'+c.px+';">'+c.label+'</th>';
   });
   thead+='</tr></thead>';
 
@@ -90811,52 +90833,54 @@ function acRender(){
     var linkVal = r.link_url||'';
     var linkShort = linkVal.length>30 ? linkVal.slice(0,28)+'…' : linkVal;
 
-    tbody+='<tr style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">'
+    tbody+='<tr data-view-id="'+r.id+'" style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">'
       // 1. 종류
-      +'<td style="padding:15px 14px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>'
+      +'<td style="padding:10px 10px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>'
       // 2. 서비스명
-      +'<td style="padding:15px 14px;font-size:15px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>'
+      +'<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>'
       // 3. 계정정보
-      +'<td style="padding:15px 14px;font-size:14px;color:#334155;vertical-align:middle;">'
-        +'<div style="white-space:pre-wrap;word-break:break-word;max-height:52px;overflow:hidden;line-height:1.5;">'+escHtml(memoInfo||'-')+'</div>'
+      +'<td style="padding:10px 10px;font-size:12px;color:#334155;vertical-align:middle;">'
+        +'<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">'+escHtml(memoInfo||'-')+'</div>'
       +'</td>'
       // 4. 로그인방법
-      +'<td style="padding:15px 14px;font-size:13px;color:#64748b;vertical-align:middle;word-break:break-word;">'+escHtml(r.url||'-')+'</td>'
+      +'<td style="padding:10px 10px;font-size:12px;color:#64748b;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:86px;">'+escHtml(r.url||'-')+'</td>'
       // 5. 아이디/이메일
-      +'<td style="padding:15px 14px;vertical-align:middle;">'
-        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
-        +'<span style="font-size:14px;color:#334155;word-break:break-all;">'+escHtml(r.account_id||'-')+'</span>'
-        +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;">복사</button>':'')
+      +'<td style="padding:10px 10px;vertical-align:middle;">'
+        +'<div style="display:flex;align-items:center;gap:4px;">'
+        +'<span style="font-size:12px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:125px;">'+escHtml(r.account_id||'-')+'</span>'
+        +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation()">복사</button>':'')
         +'</div>'
       +'</td>'
       // 6. 비밀번호/API키
-      +'<td style="padding:15px 14px;vertical-align:middle;">'
-        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
-        +'<span id="ac-pw-'+r.id+'" data-show="0" data-pw="'+escHtml(r.pw||'')+'" style="font-size:14px;color:#334155;letter-spacing:2px;">••••••</span>'
-        +'<button data-toggle-pw="'+r.id+'" id="ac-pw-btn-'+r.id+'" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:12px;cursor:pointer;flex-shrink:0;">👁</button>'
-        +(r.pw?'<button data-copy="'+escHtml(r.pw)+'" data-copy-label="'+pwLabel+'" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;">복사</button>':'')
-        +'</div>'
-      +'</td>'
-      // 7. 연결페이지/URL
-      +'<td style="padding:15px 14px;vertical-align:middle;">'
-        +(linkVal
-          ?'<div style="display:flex;align-items:flex-start;gap:6px;">'
-            +'<span style="font-size:12px;color:#2563eb;word-break:break-all;line-height:1.5;" title="'+escHtml(linkVal)+'">'+escHtml(linkShort)+'</span>'
-            +'<button data-copy="'+escHtml(linkVal)+'" data-copy-label="URL" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:11px;cursor:pointer;flex-shrink:0;white-space:nowrap;">복사</button>'
+      +'<td style="padding:10px 10px;vertical-align:middle;">'
+        +(r.pw
+          ?'<div style="display:flex;align-items:center;gap:4px;">'
+            +'<span style="font-size:12px;color:#334155;letter-spacing:2px;white-space:nowrap;">••••••</span>'
+            +'<button style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;flex-shrink:0;white-space:nowrap;" onclick="event.stopPropagation();acViewDetail(\''+r.id+'\')">👁 보기</button>'
+            +'<button data-copy="'+escHtml(r.pw)+'" data-copy-label="'+pwLabel+'" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation()">복사</button>'
             +'</div>'
-          :'<span style="font-size:13px;color:#cbd5e1;">-</span>')
+          :'<span style="font-size:12px;color:#cbd5e1;">-</span>')
+      +'</td>'
+      // 7. 연결URL
+      +'<td style="padding:10px 10px;vertical-align:middle;">'
+        +(linkVal
+          ?'<div style="display:flex;align-items:center;gap:4px;">'
+            +'<span style="font-size:11px;color:#2563eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;" title="'+escHtml(linkVal)+'">'+escHtml(linkShort)+'</span>'
+            +'<button data-copy="'+escHtml(linkVal)+'" data-copy-label="URL" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:10px;cursor:pointer;flex-shrink:0;white-space:nowrap;" onclick="event.stopPropagation()">복사</button>'
+            +'</div>'
+          :'<span style="font-size:12px;color:#cbd5e1;">-</span>')
       +'</td>'
       // 8. 기타메모
-      +'<td style="padding:15px 14px;font-size:13px;color:#94a3b8;vertical-align:middle;">'
-        +'<div style="white-space:pre-wrap;word-break:break-word;max-height:52px;overflow:hidden;line-height:1.5;">'+escHtml(memoEtc||'-')+'</div>'
+      +'<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;">'
+        +'<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">'+escHtml(memoEtc||'-')+'</div>'
       +'</td>'
-      // 9. 최근수정일
-      +'<td style="padding:15px 14px;font-size:12px;color:#94a3b8;vertical-align:middle;white-space:nowrap;">'+acFmtDate(r.pw_updated_at||r.created_at)+'</td>'
+      // 9. 수정일
+      +'<td style="padding:10px 10px;font-size:11px;color:#94a3b8;vertical-align:middle;white-space:nowrap;">'+acFmtDate(r.pw_updated_at||r.created_at)+'</td>'
       // 10. 관리
-      +'<td style="padding:15px 14px;vertical-align:middle;white-space:nowrap;">'
-        +'<div style="display:flex;gap:6px;">'
-        +'<button data-edit-id="'+r.id+'" style="padding:6px 12px;border:1px solid #bfdbfe;border-radius:7px;background:#fff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;">✏️ 수정</button>'
-        +'<button data-del-id="'+r.id+'" style="padding:6px 10px;border:1px solid #fca5a5;border-radius:7px;background:#fff;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">🗑️</button>'
+      +'<td style="padding:10px 10px;vertical-align:middle;white-space:nowrap;">'
+        +'<div style="display:flex;gap:4px;">'
+        +'<button data-edit-id="'+r.id+'" style="padding:4px 8px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">✏️</button>'
+        +'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>'
         +'</div>'
       +'</td>'
       +'</tr>';
@@ -90869,16 +90893,20 @@ function acRender(){
 
   // 이벤트 위임
   table.querySelectorAll('[data-del-id]').forEach(function(btn){
-    btn.addEventListener('click',function(){acDelete(this.getAttribute('data-del-id'));});
+    btn.addEventListener('click',function(e){ e.stopPropagation(); acDelete(this.getAttribute('data-del-id')); });
   });
   table.querySelectorAll('[data-edit-id]').forEach(function(btn){
-    btn.addEventListener('click',function(){acOpenModal(this.getAttribute('data-edit-id'));});
+    btn.addEventListener('click',function(e){ e.stopPropagation(); acOpenModal(this.getAttribute('data-edit-id')); });
   });
   table.querySelectorAll('[data-copy]').forEach(function(btn){
-    btn.addEventListener('click',function(){acCopy(this.getAttribute('data-copy'),this.getAttribute('data-copy-label'));});
+    btn.addEventListener('click',function(e){ e.stopPropagation(); acCopy(this.getAttribute('data-copy'),this.getAttribute('data-copy-label')); });
   });
   table.querySelectorAll('[data-toggle-pw]').forEach(function(btn){
-    btn.addEventListener('click',function(){acToggleRowPw(this.getAttribute('data-toggle-pw'));});
+    btn.addEventListener('click',function(e){ e.stopPropagation(); acToggleRowPw(this.getAttribute('data-toggle-pw')); });
+  });
+  // 행 클릭 → 상세 모달
+  table.querySelectorAll('[data-view-id]').forEach(function(tr){
+    tr.addEventListener('click',function(){ acViewDetail(this.getAttribute('data-view-id')); });
   });
 
   box.innerHTML='';
@@ -91071,6 +91099,90 @@ function acUrlSelectChange(){
 
 function escHtml(s){ return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
+/* ── 계정 상세 보기 모달 ── */
+function acViewDetail(id){
+  var r=_AC_LIST.filter(function(x){return x.id===id;})[0];
+  if(!r) return;
+  var ov=document.getElementById('ac-detail-overlay'); if(!ov) return;
+
+  var acType=r.account_type||'업무계정';
+  var rawM=r.memo||'';
+  var sepI=rawM.indexOf('\n---\n');
+  var memoInfo=sepI>=0?rawM.slice(0,sepI):rawM;
+  var memoEtc =sepI>=0?rawM.slice(sepI+5):'';
+  var pwLabel=acType==='API키'?'API키':acType==='전산세트'?'데이터 비밀번호':'비밀번호';
+  var idLabel=acType==='전산세트'?'전산연결계정':'아이디/이메일';
+
+  document.getElementById('ac-detail-badge').innerHTML=acTypeBadge(acType);
+  document.getElementById('ac-detail-title').textContent=r.service_name||'-';
+
+  function dRow(label, val, isCopy, isPw){
+    if(!val) return '';
+    var safeVal=String(val);
+    var valHtml='';
+    if(isPw){
+      var uid='acd-pw-'+id+'-'+label.replace(/\s/g,'');
+      valHtml='<span id="'+uid+'" data-pw="'+escHtml(safeVal)+'" style="font-size:13px;color:#334155;letter-spacing:3px;font-family:monospace;word-break:break-all;max-width:300px;display:inline-block;">••••••••</span>'
+        +'&nbsp;<button onclick="(function(){var e=document.getElementById(\''+uid+'\');if(e.dataset.show===\'1\'){e.textContent=\'••••••••\';e.style.letterSpacing=\'3px\';e.dataset.show=\'0\';this.textContent=\'👁 보기\';}else{e.textContent=e.dataset.pw;e.style.letterSpacing=\'0\';e.style.wordBreak=\'break-all\';e.dataset.show=\'1\';this.textContent=\'🙈 숨기기\';}}).call(this)" style="padding:3px 9px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:12px;cursor:pointer;white-space:nowrap;">👁 보기</button>'
+        +'&nbsp;<button data-copy-detail="'+escHtml(safeVal)+'" data-copy-label="'+escHtml(label)+'" style="padding:3px 9px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:12px;cursor:pointer;white-space:nowrap;">복사</button>';
+    } else if(isCopy){
+      valHtml='<span style="font-size:14px;color:#1C1917;word-break:break-all;line-height:1.7;">'+escHtml(safeVal)+'</span>'
+        +'&nbsp;<button data-copy-detail="'+escHtml(safeVal)+'" data-copy-label="'+escHtml(label)+'" style="padding:3px 9px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:12px;cursor:pointer;white-space:nowrap;">복사</button>';
+    } else {
+      valHtml='<span style="font-size:14px;color:#1C1917;word-break:break-all;white-space:pre-wrap;line-height:1.7;">'+escHtml(safeVal)+'</span>';
+    }
+    return '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid #f1f5f9;">'
+      +'<div style="font-size:12px;font-weight:700;color:#94a3b8;white-space:nowrap;min-width:110px;padding-top:3px;">'+escHtml(label)+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex:1;flex-wrap:wrap;justify-content:flex-end;">'+valHtml+'</div>'
+      +'</div>';
+  }
+
+  var bodyHtml='';
+  if(acType==='업무계정'){
+    bodyHtml+=dRow('계정정보', memoInfo);
+    bodyHtml+=dRow('로그인방법', r.url);
+    bodyHtml+=dRow(idLabel, r.account_id, true);
+    bodyHtml+=dRow(pwLabel, r.pw, false, true);
+    bodyHtml+=dRow('기타메모', memoEtc);
+  } else if(acType==='전산세트'){
+    bodyHtml+=dRow('전산연결계정', r.account_id, true);
+    bodyHtml+=dRow('포함된 데이터', memoInfo);
+    bodyHtml+=dRow('기타메모', memoEtc);
+  } else {
+    bodyHtml+=dRow('API키', r.pw, false, true);
+    bodyHtml+=dRow('API 관리 URL', r.link_url, true);
+    bodyHtml+=dRow('기타메모', memoEtc);
+  }
+  bodyHtml+=dRow('최근수정일', acFmtDate(r.pw_updated_at||r.created_at));
+
+  var body=document.getElementById('ac-detail-body');
+  if(body){
+    body.innerHTML=bodyHtml;
+    // 복사 버튼 이벤트 위임
+    body.querySelectorAll('[data-copy-detail]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        acCopy(this.getAttribute('data-copy-detail'),this.getAttribute('data-copy-label'));
+      });
+    });
+  }
+
+  var editBtn=document.getElementById('ac-detail-edit-btn');
+  var delBtn =document.getElementById('ac-detail-del-btn');
+  if(editBtn) editBtn.onclick=function(){ acCloseDetail(); acOpenModal(id); };
+  if(delBtn)  delBtn.onclick=function(){ acCloseDetail(); acDelete(id); };
+
+  ov.style.display='flex';
+}
+
+function acCloseDetail(){
+  var ov=document.getElementById('ac-detail-overlay'); if(ov) ov.style.display='none';
+}
+
+(function(){
+  var ov=document.getElementById('ac-detail-overlay');
+  if(ov) ov.addEventListener('click',function(e){ if(e.target===ov) acCloseDetail(); });
+})();
+
 /* ── 계정관리 함수 window 전역 연결 (inline onclick 접근용) ── */
 window.acOpenModal   = acOpenModal;
 window.acCloseModal  = acCloseModal;
@@ -91084,6 +91196,8 @@ window.acDelete      = acDelete;
 window.acTogglePw    = acTogglePw;
 window.acToggleApiKey= acToggleApiKey;
 window.acUrlSelectChange = acUrlSelectChange;
+window.acViewDetail  = acViewDetail;
+window.acCloseDetail = acCloseDetail;
 
 
 
