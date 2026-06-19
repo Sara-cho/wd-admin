@@ -90803,8 +90803,9 @@ function acRender(){
     return;
   }
 
-  // ── 테이블 헤더 ── (전산세트는 컬럼 축소)
+  // ── 테이블 헤더 ── (탭별 컬럼 분기)
   var isJeon=(_AC_FILTER==='전산세트');
+  var isApi =(_AC_FILTER==='API키');
   var cols= isJeon ? [
     {label:'종류',          px:'60px'},
     {label:'서비스명',      px:'110px'},
@@ -90813,6 +90814,12 @@ function acRender(){
     {label:'기타메모',      px:'180px'},
     {label:'수정일',        px:'75px'},
     {label:'관리',          px:'55px'}
+  ] : isApi ? [
+    {label:'종류',          px:'80px'},
+    {label:'서비스명',      px:'160px'},
+    {label:'비밀번호/API키',px:'160px'},
+    {label:'수정일',        px:'90px'},
+    {label:'관리',          px:'60px'}
   ] : [
     {label:'종류',          px:'60px'},
     {label:'서비스명',      px:'70px'},
@@ -90820,7 +90827,6 @@ function acRender(){
     {label:'로그인방법',    px:'65px'},
     {label:'아이디/이메일', px:'185px'},
     {label:'비밀번호/API키',px:'105px'},
-    ...(_AC_FILTER==='API키'?[{label:'연결URL', px:'85px'}]:[]),
     {label:'기타메모',      px:'130px'},
     {label:'수정일',        px:'70px'},
     {label:'관리',          px:'50px'}
@@ -90886,6 +90892,9 @@ function acRender(){
     if(isJeon){
       // 전산세트: 종류·서비스명·계정정보·아이디/이메일·기타메모·수정일·관리
       tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdId+tdMemoEtc+tdDate+tdMgmt+'</tr>';
+    } else if(isApi){
+      // API키: 종류·서비스명·비밀번호/API키·수정일·관리
+      tbody+=tdCommon+tdType+tdName+tdPw+tdDate+tdMgmt+'</tr>';
     } else {
       // 전체/업무계정/API키: 10컬럼
       var tdUrl='<td style="padding:10px 10px;font-size:12px;color:#64748b;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:86px;">'+escHtml(r.url||'-')+'</td>';
@@ -90906,7 +90915,7 @@ function acRender(){
             +'</div>'
           :'<span style="font-size:12px;color:#cbd5e1;">-</span>')
         +'</td>';
-      tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdUrl+tdId+tdPw+(_AC_FILTER==='API키'?tdLink:'')+tdMemoEtc+tdDate+tdMgmt+'</tr>';
+      tbody+=tdCommon+tdType+tdName+tdMemoInfo+tdUrl+tdId+tdPw+tdMemoEtc+tdDate+tdMgmt+'</tr>';
     }
   });
   tbody+='</tbody>';
