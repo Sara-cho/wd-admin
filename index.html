@@ -89358,6 +89358,15 @@ window.openDocGen = function(){
     max-width: 100%;
   }
 }
+/* ── 계정관리 전용: 전체 폭 사용 + 가로 스크롤 허용 ── */
+#wcn-panel-accounts {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+#work-center-new #wcn-content-area:has(#wcn-panel-accounts[style*="display: block"]),
+#work-center-new #wcn-content-area:has(#wcn-panel-accounts:not([style*="display: none"])) {
+  overflow-x: auto !important;
+}
 </style>
 <!-- ★ [v59실행] 신규 업무센터 (work-center-new) ══════════════════ -->
 <div class="scr" id="work-center-new" style="display:none;background:#FFFBEB;min-height:100vh;font-family:'Noto Sans KR',sans-serif;">
@@ -90191,12 +90200,16 @@ window.openDocGen = function(){
         <button onclick="acOpenModal()" style="flex-shrink:0;margin-left:12px;padding:9px 16px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 계정 추가</button>
       </div>
 
-      <!-- 종류 필터 버튼 -->
-      <div id="ac-filter-bar" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-        <button onclick="acSetFilter('전체')" id="ac-filter-전체" style="padding:6px 14px;border-radius:20px;border:1.5px solid #FBBF24;background:#FBBF24;color:#1C1917;font-size:12px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체</button>
-        <button onclick="acSetFilter('업무계정')" id="ac-filter-업무계정" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗂 업무계정</button>
-        <button onclick="acSetFilter('전산세트')" id="ac-filter-전산세트" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🖥 전산세트</button>
-        <button onclick="acSetFilter('API키')" id="ac-filter-API키" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🔑 API키</button>
+      <!-- 종류 탭바 -->
+      <div id="ac-filter-bar" style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px;gap:0;">
+        <button onclick="acSetFilter('전체')" id="ac-filter-전체"
+          style="padding:10px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">전체</button>
+        <button onclick="acSetFilter('업무계정')" id="ac-filter-업무계정"
+          style="padding:10px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">🗂 업무계정</button>
+        <button onclick="acSetFilter('전산세트')" id="ac-filter-전산세트"
+          style="padding:10px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">🖥 전산세트</button>
+        <button onclick="acSetFilter('API키')" id="ac-filter-API키"
+          style="padding:10px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">🔑 API키</button>
       </div>
 
       <!-- 검색창 -->
@@ -90218,7 +90231,7 @@ window.openDocGen = function(){
         <input type="hidden" id="ac-modal-edit-id" value="">
 
         <!-- 종류 선택 -->
-        <div style="margin-bottom:13px;">
+        <div style="margin-bottom:16px;">
           <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">종류 *</div>
           <select id="ac-type" onchange="acTypeChange()" style="width:100%;padding:9px 11px;border:1.5px solid #FBBF24;border-radius:8px;font-size:13px;font-weight:700;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#FFFBEB;color:#1C1917;appearance:auto;">
             <option value="업무계정">🗂 업무계정</option>
@@ -90227,61 +90240,106 @@ window.openDocGen = function(){
           </select>
         </div>
 
-        <!-- 서비스명 -->
-        <div style="margin-bottom:11px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">서비스명 *</div>
-          <input id="ac-service" type="text" placeholder="예: Supabase, GitHub, OpenAI" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
-        </div>
-
-        <!-- 계정정보 -->
-        <div style="margin-bottom:11px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">계정정보</div>
-          <input id="ac-memo-info" type="text" placeholder="이 계정이 무엇인지 한 줄 설명" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
-        </div>
-
-        <!-- 로그인방법 (업무계정·전산세트만) -->
-        <div id="ac-field-url" style="margin-bottom:11px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">로그인방법</div>
-          <select id="ac-url" onchange="acUrlSelectChange()" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;appearance:auto;">
-            <option value="">선택해주세요</option>
-            <option value="구글 연동">🔵 구글 연동</option>
-            <option value="카카오 연동">🟡 카카오 연동</option>
-            <option value="깃허브 연동">⚫ 깃허브 연동</option>
-            <option value="아이디">👤 아이디</option>
-            <option value="이메일">📧 이메일</option>
-            <option value="__기타__">✏️ 기타 (직접입력)</option>
-          </select>
-          <input id="ac-url-etc" type="text" placeholder="로그인 방법 직접 입력" style="display:none;width:100%;margin-top:6px;padding:9px 11px;border:1.5px solid #FBBF24;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
-        </div>
-
-        <!-- 아이디 / 비밀번호 (종류에 따라 라벨 변경) -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px;">
-          <div id="ac-field-id">
-            <div id="ac-label-id" style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">아이디/이메일</div>
-            <input id="ac-id" type="text" placeholder="아이디 또는 이메일" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+        <!-- ═══ 업무계정 전용 블록 ═══ -->
+        <div id="ac-block-work">
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">서비스명 *</div>
+            <input id="ac-service" type="text" placeholder="예: 네이버, 카카오, 보험사 전산, GitHub"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
           </div>
-          <div>
-            <div id="ac-label-pw" style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">비밀번호</div>
-            <div style="display:flex;gap:6px;">
-              <input id="ac-pw" type="password" placeholder="비밀번호" style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
-              <button onclick="acTogglePw()" id="ac-pw-toggle" style="padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;flex-shrink:0;">👁</button>
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">계정정보</div>
+            <input id="ac-memo-info" type="text" placeholder="이 계정이 무엇인지 한 줄 설명"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">로그인방법</div>
+            <select id="ac-url" onchange="acUrlSelectChange()" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;appearance:auto;">
+              <option value="">선택해주세요</option>
+              <option value="구글 연동">🔵 구글 연동</option>
+              <option value="카카오 연동">🟡 카카오 연동</option>
+              <option value="깃허브 연동">⚫ 깃허브 연동</option>
+              <option value="아이디">👤 아이디</option>
+              <option value="이메일">📧 이메일</option>
+              <option value="__기타__">✏️ 기타 (직접입력)</option>
+            </select>
+            <input id="ac-url-etc" type="text" placeholder="로그인 방법 직접 입력"
+              style="display:none;width:100%;margin-top:6px;padding:9px 11px;border:1.5px solid #FBBF24;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px;">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">아이디/이메일</div>
+              <input id="ac-id" type="text" placeholder="아이디 또는 이메일"
+                style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">비밀번호</div>
+              <div style="display:flex;gap:6px;">
+                <input id="ac-pw" type="password" placeholder="비밀번호"
+                  style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
+                <button onclick="acTogglePw()" id="ac-pw-toggle" style="padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;flex-shrink:0;">👁</button>
+              </div>
             </div>
           </div>
-        </div>
+          <div style="margin-bottom:18px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">기타메모</div>
+            <textarea id="ac-memo" placeholder="2FA 사용 여부, 갱신 주기, 비고 등"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;min-height:56px;resize:vertical;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;"></textarea>
+          </div>
+        </div><!-- /ac-block-work -->
 
-        <!-- 연결페이지/URL (전산세트·API키) -->
-        <div id="ac-field-link" style="display:none;margin-bottom:11px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">연결페이지/URL <span style="font-size:10px;font-weight:500;color:#94a3b8;">(여러 개면 줄바꿈으로 구분)</span></div>
-          <textarea id="ac-link-url" placeholder="예: https://supabase.io/project/xxx&#10;https://wdwave.kr" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;min-height:56px;resize:vertical;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;"></textarea>
-        </div>
+        <!-- ═══ 전산세트 전용 블록 ═══ -->
+        <div id="ac-block-jeon" style="display:none;">
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">전산이름 *</div>
+            <input id="ac-jeon-name" type="text" placeholder="예: 대표 전산, 사라언니 전산, 설계사 전산"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">전산연결계정</div>
+            <input id="ac-jeon-account" type="text" placeholder="예: GitHub 로그인 이메일, Supabase 로그인 이메일"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">포함된 데이터</div>
+            <input id="ac-jeon-data" type="text" placeholder="예: 전산페이지, 고객용 홈페이지, 사라언니 보험데이터"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="margin-bottom:18px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">기타메모 <span style="font-size:10px;font-weight:500;color:#94a3b8;">(Supabase URL·anon key·비밀번호 등)</span></div>
+            <textarea id="ac-jeon-memo" placeholder="GitHub 로그인:&#10;Supabase URL:&#10;anon key:&#10;데이터 비밀번호:&#10;연결페이지:&#10;비고:"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;min-height:100px;resize:vertical;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;"></textarea>
+          </div>
+        </div><!-- /ac-block-jeon -->
 
-        <!-- 기타메모 -->
-        <div style="margin-bottom:18px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">기타메모 <span style="font-size:10px;font-weight:500;color:#94a3b8;">(anon key, 갱신주기, 2FA 등 부가 정보)</span></div>
-          <textarea id="ac-memo" placeholder="예: anon key: xxx / 갱신 주기 3개월 / 2FA 사용 중" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;min-height:56px;resize:vertical;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;"></textarea>
-        </div>
+        <!-- ═══ API키 전용 블록 ═══ -->
+        <div id="ac-block-api" style="display:none;">
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">홈페이지/서비스명 *</div>
+            <input id="ac-api-name" type="text" placeholder="예: OpenAI, Kakao Developers, Naver Developers"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">API키</div>
+            <div style="display:flex;gap:6px;">
+              <input id="ac-api-key" type="password" placeholder="API 키값 입력"
+                style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
+              <button onclick="acToggleApiKey()" id="ac-api-key-toggle" style="padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;flex-shrink:0;">👁</button>
+            </div>
+          </div>
+          <div style="margin-bottom:11px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">API 관리 URL</div>
+            <input id="ac-api-url" type="text" placeholder="예: https://platform.openai.com/api-keys"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+          </div>
+          <div style="margin-bottom:18px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">기타메모</div>
+            <textarea id="ac-api-memo" placeholder="사용처, 연결 서비스, 주의사항, 갱신 주기 등"
+              style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;min-height:64px;resize:vertical;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;"></textarea>
+          </div>
+        </div><!-- /ac-block-api -->
 
-        <!-- 버튼 -->
+        <!-- 저장/취소 버튼 -->
         <div style="display:flex;gap:8px;">
           <button onclick="acModalSave()" style="flex:1;padding:11px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">저장</button>
           <button onclick="acCloseModal()" style="padding:11px 20px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">취소</button>
@@ -90577,42 +90635,69 @@ async function acLoad(){
 /* ── 필터 변경 ── */
 function acSetFilter(val){
   _AC_FILTER = val;
-  // 버튼 스타일 토글
+  // 탭바 active 스타일 토글
   ['전체','업무계정','전산세트','API키'].forEach(function(k){
     var btn=document.getElementById('ac-filter-'+k);
     if(!btn) return;
     var active=(k===val);
-    btn.style.background    = active?'#FBBF24':'#fff';
-    btn.style.color         = active?'#1C1917':'#64748b';
-    btn.style.borderColor   = active?'#FBBF24':'#e2e8f0';
-    btn.style.fontWeight    = active?'800':'700';
+    btn.style.borderBottomColor = active?'#FBBF24':'transparent';
+    btn.style.color             = active?'#1C1917':'#94a3b8';
+    btn.style.fontWeight        = active?'800':'700';
   });
   acRender();
 }
 
 /* ── 저장 (추가) ── */
 async function acSave(){
-  var svc = (document.getElementById('ac-service').value||'').trim();
-  if(!svc){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
-  var info = (document.getElementById('ac-memo-info').value||'').trim();
-  var etc  = (document.getElementById('ac-memo').value||'').trim();
-  var memoVal = info && etc ? info+'\n---\n'+etc : (info||etc);
-  var row = {
-    user_id:      acUid(),
-    account_type: (document.getElementById('ac-type').value||'업무계정'),
-    service_name: svc,
-    url:          acGetUrl(),
-    account_id:   (document.getElementById('ac-id').value||'').trim(),
-    pw:           (document.getElementById('ac-pw').value||'').trim(),
-    memo:         memoVal,
-    link_url:     (document.getElementById('ac-link-url').value||'').trim(),
-    pw_updated_at:new Date().toISOString()
-  };
+  var t=(document.getElementById('ac-type').value||'업무계정');
+  var row={user_id:acUid(), account_type:t, pw_updated_at:new Date().toISOString()};
+
+  if(t==='업무계정'){
+    var svc=(document.getElementById('ac-service').value||'').trim();
+    if(!svc){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
+    var info=(document.getElementById('ac-memo-info').value||'').trim();
+    var etc =(document.getElementById('ac-memo').value||'').trim();
+    Object.assign(row,{
+      service_name:svc,
+      url:acGetUrl(),
+      account_id:(document.getElementById('ac-id').value||'').trim(),
+      pw:(document.getElementById('ac-pw').value||'').trim(),
+      memo:info&&etc?info+'\n---\n'+etc:(info||etc),
+      link_url:''
+    });
+  } else if(t==='전산세트'){
+    var jName=(document.getElementById('ac-jeon-name').value||'').trim();
+    if(!jName){ if(typeof showT==='function') showT('전산이름을 입력해 주세요'); return; }
+    var jAcc =(document.getElementById('ac-jeon-account').value||'').trim();
+    var jData=(document.getElementById('ac-jeon-data').value||'').trim();
+    var jMemo=(document.getElementById('ac-jeon-memo').value||'').trim();
+    Object.assign(row,{
+      service_name:jName,
+      url:'',
+      account_id:jAcc,
+      pw:'',
+      memo:jData&&jMemo?jData+'\n---\n'+jMemo:(jData||jMemo),
+      link_url:''
+    });
+  } else {
+    // API키
+    var aName=(document.getElementById('ac-api-name').value||'').trim();
+    if(!aName){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
+    var aMemo=(document.getElementById('ac-api-memo').value||'').trim();
+    Object.assign(row,{
+      service_name:aName,
+      url:'',
+      account_id:'',
+      pw:(document.getElementById('ac-api-key').value||'').trim(),
+      memo:'API키\n---\n'+aMemo,
+      link_url:(document.getElementById('ac-api-url').value||'').trim()
+    });
+  }
+
   try{
-    var r = await _sbInsert('kit_accounts', row, {returning:true});
+    var r=await _sbInsert('kit_accounts', row, {returning:true});
     if(r.data) _AC_LIST.unshift(r.data);
-    else { var r2=await _sbSelect('kit_accounts','*',{eq:{user_id:acUid()},order:'created_at',asc:false}); _AC_LIST=r2.data||[]; }
-    ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info','ac-link-url'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+    else{ var r2=await _sbSelect('kit_accounts','*',{eq:{user_id:acUid()},order:'created_at',asc:false}); _AC_LIST=r2.data||[]; }
     if(typeof showT==='function') showT('✅ 저장됐습니다');
     acCloseModal();
     acRender();
@@ -90694,20 +90779,20 @@ function acRender(){
 
   // ── 테이블 헤더 ──
   var cols=[
-    {label:'종류',         w:'9%'},
-    {label:'서비스명',     w:'11%'},
-    {label:'계정정보',     w:'14%'},
-    {label:'로그인방법',   w:'10%'},
-    {label:'아이디/이메일',w:'13%'},
-    {label:'비밀번호/API키',w:'12%'},
-    {label:'연결페이지/URL',w:'12%'},
-    {label:'기타메모',     w:'10%'},
-    {label:'최근수정일',   w:'8%'},
-    {label:'관리',         w:'6%'}
+    {label:'종류',          px:'90px'},
+    {label:'서비스명',      px:'120px'},
+    {label:'계정정보',      px:'170px'},
+    {label:'로그인방법',    px:'110px'},
+    {label:'아이디/이메일', px:'150px'},
+    {label:'비밀번호/API키',px:'150px'},
+    {label:'연결페이지/URL',px:'170px'},
+    {label:'기타메모',      px:'170px'},
+    {label:'최근수정일',    px:'100px'},
+    {label:'관리',          px:'90px'}
   ];
   var thead='<thead><tr style="background:#F8FAFC;">';
   cols.forEach(function(c){
-    thead+='<th style="padding:8px 9px;text-align:left;font-size:10px;font-weight:700;color:#64748b;border-bottom:1.5px solid #e2e8f0;white-space:nowrap;width:'+c.w+';">'+c.label+'</th>';
+    thead+='<th style="padding:13px 14px;text-align:left;font-size:13px;font-weight:700;color:#64748b;border-bottom:1.5px solid #e2e8f0;white-space:nowrap;min-width:'+c.px+';width:'+c.px+';">'+c.label+'</th>';
   });
   thead+='</tr></thead>';
 
@@ -90728,50 +90813,50 @@ function acRender(){
 
     tbody+='<tr style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">'
       // 1. 종류
-      +'<td style="padding:9px 9px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>'
+      +'<td style="padding:15px 14px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>'
       // 2. 서비스명
-      +'<td style="padding:9px 9px;font-size:12px;font-weight:800;color:#1C1917;vertical-align:middle;">'+escHtml(r.service_name||'-')+'</td>'
+      +'<td style="padding:15px 14px;font-size:15px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>'
       // 3. 계정정보
-      +'<td style="padding:9px 9px;font-size:11px;color:#334155;vertical-align:middle;max-width:0;">'
-        +'<div style="white-space:pre-wrap;word-break:break-word;max-height:40px;overflow:hidden;">'+escHtml(memoInfo||'-')+'</div>'
+      +'<td style="padding:15px 14px;font-size:14px;color:#334155;vertical-align:middle;">'
+        +'<div style="white-space:pre-wrap;word-break:break-word;max-height:52px;overflow:hidden;line-height:1.5;">'+escHtml(memoInfo||'-')+'</div>'
       +'</td>'
       // 4. 로그인방법
-      +'<td style="padding:9px 9px;font-size:11px;color:#64748b;vertical-align:middle;white-space:nowrap;">'+escHtml(r.url||'-')+'</td>'
+      +'<td style="padding:15px 14px;font-size:13px;color:#64748b;vertical-align:middle;word-break:break-word;">'+escHtml(r.url||'-')+'</td>'
       // 5. 아이디/이메일
-      +'<td style="padding:9px 9px;vertical-align:middle;">'
-        +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">'
-        +'<span style="font-size:11px;color:#334155;word-break:break-all;">'+escHtml(r.account_id||'-')+'</span>'
-        +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:1px 5px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:9px;cursor:pointer;white-space:nowrap;flex-shrink:0;">복사</button>':'')
+      +'<td style="padding:15px 14px;vertical-align:middle;">'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
+        +'<span style="font-size:14px;color:#334155;word-break:break-all;">'+escHtml(r.account_id||'-')+'</span>'
+        +(r.account_id?'<button data-copy="'+escHtml(r.account_id)+'" data-copy-label="아이디" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;">복사</button>':'')
         +'</div>'
       +'</td>'
       // 6. 비밀번호/API키
-      +'<td style="padding:9px 9px;vertical-align:middle;">'
-        +'<div style="display:flex;align-items:center;gap:4px;">'
-        +'<span id="ac-pw-'+r.id+'" data-show="0" data-pw="'+escHtml(r.pw||'')+'" style="font-size:12px;color:#334155;letter-spacing:2px;">••••••</span>'
-        +'<button data-toggle-pw="'+r.id+'" id="ac-pw-btn-'+r.id+'" style="padding:1px 5px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:9px;cursor:pointer;">👁</button>'
-        +(r.pw?'<button data-copy="'+escHtml(r.pw)+'" data-copy-label="'+pwLabel+'" style="padding:1px 5px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:9px;cursor:pointer;white-space:nowrap;">복사</button>':'')
+      +'<td style="padding:15px 14px;vertical-align:middle;">'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
+        +'<span id="ac-pw-'+r.id+'" data-show="0" data-pw="'+escHtml(r.pw||'')+'" style="font-size:14px;color:#334155;letter-spacing:2px;">••••••</span>'
+        +'<button data-toggle-pw="'+r.id+'" id="ac-pw-btn-'+r.id+'" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:12px;cursor:pointer;flex-shrink:0;">👁</button>'
+        +(r.pw?'<button data-copy="'+escHtml(r.pw)+'" data-copy-label="'+pwLabel+'" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;">복사</button>':'')
         +'</div>'
       +'</td>'
       // 7. 연결페이지/URL
-      +'<td style="padding:9px 9px;vertical-align:middle;max-width:0;">'
+      +'<td style="padding:15px 14px;vertical-align:middle;">'
         +(linkVal
-          ?'<div style="display:flex;align-items:center;gap:4px;">'
-            +'<span style="font-size:10px;color:#2563eb;word-break:break-all;" title="'+escHtml(linkVal)+'">'+escHtml(linkShort)+'</span>'
-            +'<button data-copy="'+escHtml(linkVal)+'" data-copy-label="URL" style="padding:1px 5px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;font-size:9px;cursor:pointer;flex-shrink:0;white-space:nowrap;">복사</button>'
+          ?'<div style="display:flex;align-items:flex-start;gap:6px;">'
+            +'<span style="font-size:12px;color:#2563eb;word-break:break-all;line-height:1.5;" title="'+escHtml(linkVal)+'">'+escHtml(linkShort)+'</span>'
+            +'<button data-copy="'+escHtml(linkVal)+'" data-copy-label="URL" style="padding:3px 8px;border:1px solid #e2e8f0;border-radius:5px;background:#f8fafc;font-size:11px;cursor:pointer;flex-shrink:0;white-space:nowrap;">복사</button>'
             +'</div>'
-          :'<span style="font-size:11px;color:#cbd5e1;">-</span>')
+          :'<span style="font-size:13px;color:#cbd5e1;">-</span>')
       +'</td>'
       // 8. 기타메모
-      +'<td style="padding:9px 9px;font-size:10px;color:#94a3b8;vertical-align:middle;max-width:0;">'
-        +'<div style="white-space:pre-wrap;word-break:break-word;max-height:36px;overflow:hidden;">'+escHtml(memoEtc||'-')+'</div>'
+      +'<td style="padding:15px 14px;font-size:13px;color:#94a3b8;vertical-align:middle;">'
+        +'<div style="white-space:pre-wrap;word-break:break-word;max-height:52px;overflow:hidden;line-height:1.5;">'+escHtml(memoEtc||'-')+'</div>'
       +'</td>'
       // 9. 최근수정일
-      +'<td style="padding:9px 9px;font-size:10px;color:#94a3b8;vertical-align:middle;white-space:nowrap;">'+acFmtDate(r.pw_updated_at||r.created_at)+'</td>'
+      +'<td style="padding:15px 14px;font-size:12px;color:#94a3b8;vertical-align:middle;white-space:nowrap;">'+acFmtDate(r.pw_updated_at||r.created_at)+'</td>'
       // 10. 관리
-      +'<td style="padding:9px 9px;vertical-align:middle;white-space:nowrap;">'
-        +'<div style="display:flex;gap:4px;">'
-        +'<button data-edit-id="'+r.id+'" style="padding:4px 7px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:10px;cursor:pointer;">✏️</button>'
-        +'<button data-del-id="'+r.id+'" style="padding:4px 7px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:10px;cursor:pointer;">🗑️</button>'
+      +'<td style="padding:15px 14px;vertical-align:middle;white-space:nowrap;">'
+        +'<div style="display:flex;gap:6px;">'
+        +'<button data-edit-id="'+r.id+'" style="padding:6px 12px;border:1px solid #bfdbfe;border-radius:7px;background:#fff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;">✏️ 수정</button>'
+        +'<button data-del-id="'+r.id+'" style="padding:6px 10px;border:1px solid #fca5a5;border-radius:7px;background:#fff;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">🗑️</button>'
         +'</div>'
       +'</td>'
       +'</tr>';
@@ -90779,8 +90864,8 @@ function acRender(){
   tbody+='</tbody>';
 
   var table=document.createElement('div');
-  table.style.cssText='background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;overflow-x:auto;';
-  table.innerHTML='<table style="width:100%;border-collapse:collapse;min-width:760px;">'+thead+tbody+'</table>';
+  table.style.cssText='background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;overflow-x:auto;width:100%;';
+  table.innerHTML='<table style="width:100%;border-collapse:collapse;table-layout:fixed;">'+thead+tbody+'</table>';
 
   // 이벤트 위임
   table.querySelectorAll('[data-del-id]').forEach(function(btn){
@@ -90802,16 +90887,22 @@ function acRender(){
 
 /* ── 모달 열기 ── */
 function acOpenModal(editId){
-  var ov = document.getElementById('ac-modal-overlay'); if(!ov) return;
-  var titleEl = document.getElementById('ac-modal-title');
-  var hidId   = document.getElementById('ac-modal-edit-id');
-  // 초기화
-  ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info','ac-link-url'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  var ov=document.getElementById('ac-modal-overlay'); if(!ov) return;
+  var titleEl=document.getElementById('ac-modal-title');
+  var hidId  =document.getElementById('ac-modal-edit-id');
+
+  // 전체 필드 초기화
+  ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info',
+   'ac-jeon-name','ac-jeon-account','ac-jeon-data','ac-jeon-memo',
+   'ac-api-name','ac-api-key','ac-api-url','ac-api-memo'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
   var selEl=document.getElementById('ac-url');     if(selEl) selEl.value='';
   var etcEl=document.getElementById('ac-url-etc'); if(etcEl){ etcEl.value=''; etcEl.style.display='none'; }
   var pwInp=document.getElementById('ac-pw');      if(pwInp) pwInp.type='password';
+  var apiKey=document.getElementById('ac-api-key');if(apiKey) apiKey.type='password';
   var typeSel=document.getElementById('ac-type');  if(typeSel) typeSel.value='업무계정';
-  acTypeChange(); // 초기 종류 UI 적용
+  acTypeChange();
 
   if(editId){
     var rec=_AC_LIST.filter(function(r){return r.id===editId;})[0];
@@ -90819,48 +90910,45 @@ function acOpenModal(editId){
     if(titleEl) titleEl.textContent='✏️ 계정 수정';
     if(hidId)   hidId.value=editId;
 
-    // 종류 복원
-    if(typeSel) typeSel.value=rec.account_type||'업무계정';
-    acTypeChange(); // 라벨·필드 반영
+    var t=rec.account_type||'업무계정';
+    if(typeSel) typeSel.value=t;
+    acTypeChange();
 
-    // 서비스명
-    var sEl=document.getElementById('ac-service'); if(sEl) sEl.value=rec.service_name||'';
+    // memo 파싱
+    var rawM=rec.memo||'';
+    var sepI=rawM.indexOf('\n---\n');
+    var mPart1=sepI>=0?rawM.slice(0,sepI):rawM;
+    var mPart2=sepI>=0?rawM.slice(sepI+5):'';
 
-    // 로그인방법 드롭다운 복원
-    var savedUrl=rec.url||'';
-    var uSel=document.getElementById('ac-url');
-    var uEtc=document.getElementById('ac-url-etc');
-    var knownVals=['구글 연동','카카오 연동','깃허브 연동','아이디','이메일'];
-    if(uSel){
-      if(knownVals.indexOf(savedUrl)>=0){
-        uSel.value=savedUrl; if(uEtc){uEtc.value='';uEtc.style.display='none';}
-      } else if(savedUrl){
-        uSel.value='__기타__'; if(uEtc){uEtc.value=savedUrl;uEtc.style.display='block';}
-      } else {
-        uSel.value=''; if(uEtc){uEtc.value='';uEtc.style.display='none';}
+    if(t==='업무계정'){
+      var sEl=document.getElementById('ac-service');    if(sEl) sEl.value=rec.service_name||'';
+      var iEl=document.getElementById('ac-memo-info');  if(iEl) iEl.value=mPart1;
+      var mEl=document.getElementById('ac-memo');       if(mEl) mEl.value=mPart2;
+      var aEl=document.getElementById('ac-id');         if(aEl) aEl.value=rec.account_id||'';
+      var pEl=document.getElementById('ac-pw');         if(pEl) pEl.value=rec.pw||'';
+      // 로그인방법 복원
+      var savedUrl=rec.url||'';
+      var uSel=document.getElementById('ac-url');
+      var uEtc=document.getElementById('ac-url-etc');
+      var knownVals=['구글 연동','카카오 연동','깃허브 연동','아이디','이메일'];
+      if(uSel){
+        if(knownVals.indexOf(savedUrl)>=0){ uSel.value=savedUrl; if(uEtc){uEtc.value='';uEtc.style.display='none';} }
+        else if(savedUrl){ uSel.value='__기타__'; if(uEtc){uEtc.value=savedUrl;uEtc.style.display='block';} }
+        else { uSel.value=''; }
       }
-    }
-
-    // 아이디·비밀번호
-    var iEl=document.getElementById('ac-id'); if(iEl) iEl.value=rec.account_id||'';
-    var pEl=document.getElementById('ac-pw'); if(pEl) pEl.value=rec.pw||'';
-
-    // memo → 계정정보/기타메모 분리
-    var rawMemo=rec.memo||'';
-    var sepIdx=rawMemo.indexOf('\n---\n');
-    var infoEl=document.getElementById('ac-memo-info');
-    var memoEl=document.getElementById('ac-memo');
-    if(sepIdx>=0){
-      if(infoEl) infoEl.value=rawMemo.slice(0,sepIdx);
-      if(memoEl) memoEl.value=rawMemo.slice(sepIdx+5);
+    } else if(t==='전산세트'){
+      var jn=document.getElementById('ac-jeon-name');    if(jn) jn.value=rec.service_name||'';
+      var ja=document.getElementById('ac-jeon-account'); if(ja) ja.value=rec.account_id||'';
+      var jd=document.getElementById('ac-jeon-data');    if(jd) jd.value=mPart1;
+      var jm=document.getElementById('ac-jeon-memo');    if(jm) jm.value=mPart2;
     } else {
-      if(infoEl) infoEl.value=rawMemo;
-      if(memoEl) memoEl.value='';
+      // API키
+      var an=document.getElementById('ac-api-name'); if(an) an.value=rec.service_name||'';
+      var ak=document.getElementById('ac-api-key');  if(ak) ak.value=rec.pw||'';
+      var au=document.getElementById('ac-api-url');  if(au) au.value=rec.link_url||'';
+      // mPart2 = 기타메모 (mPart1은 'API키' 고정 텍스트)
+      var am=document.getElementById('ac-api-memo'); if(am) am.value=mPart2;
     }
-
-    // link_url
-    var lEl=document.getElementById('ac-link-url'); if(lEl) lEl.value=rec.link_url||'';
-
   } else {
     if(titleEl) titleEl.textContent='+ 계정 추가';
     if(hidId)   hidId.value='';
@@ -90871,7 +90959,11 @@ function acOpenModal(editId){
 /* ── 모달 닫기 ── */
 function acCloseModal(){
   var ov=document.getElementById('ac-modal-overlay'); if(ov) ov.style.display='none';
-  ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info','ac-link-url'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  ['ac-service','ac-id','ac-pw','ac-memo','ac-memo-info',
+   'ac-jeon-name','ac-jeon-account','ac-jeon-data','ac-jeon-memo',
+   'ac-api-name','ac-api-key','ac-api-url','ac-api-memo'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
   var selEl=document.getElementById('ac-url');     if(selEl) selEl.value='';
   var etcEl=document.getElementById('ac-url-etc'); if(etcEl){ etcEl.value=''; etcEl.style.display='none'; }
   var hidId=document.getElementById('ac-modal-edit-id'); if(hidId) hidId.value='';
@@ -90880,32 +90972,59 @@ function acCloseModal(){
 /* ── 모달 저장 분기 ── */
 async function acModalSave(){
   var editId=(document.getElementById('ac-modal-edit-id')||{}).value||'';
-  if(editId){
+  if(!editId){ acSave(); return; }
+
+  var t=(document.getElementById('ac-type').value||'업무계정');
+  var payload={account_type:t, pw_updated_at:new Date().toISOString()};
+
+  if(t==='업무계정'){
     var svc=(document.getElementById('ac-service').value||'').trim();
     if(!svc){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
     var info2=(document.getElementById('ac-memo-info').value||'').trim();
-    var etc2=(document.getElementById('ac-memo').value||'').trim();
-    var memoVal2=info2&&etc2?info2+'\n---\n'+etc2:(info2||etc2);
-    var payload={
-      account_type:(document.getElementById('ac-type').value||'업무계정'),
+    var etc2 =(document.getElementById('ac-memo').value||'').trim();
+    Object.assign(payload,{
       service_name:svc,
       url:acGetUrl(),
       account_id:(document.getElementById('ac-id').value||'').trim(),
       pw:(document.getElementById('ac-pw').value||'').trim(),
-      memo:memoVal2,
-      link_url:(document.getElementById('ac-link-url').value||'').trim(),
-      pw_updated_at:new Date().toISOString()
-    };
-    try{
-      await _sbUpdate('kit_accounts', payload, 'id', editId);
-      var idx=_AC_LIST.findIndex(function(r){return r.id===editId;});
-      if(idx>=0) _AC_LIST[idx]=Object.assign({},_AC_LIST[idx],payload);
-      if(typeof showT==='function') showT('✅ 수정됐습니다');
-      acCloseModal(); acRender();
-    }catch(e){ console.error('[acModalSave-update]',e); if(typeof showT==='function') showT('수정 실패: '+e.message); }
+      memo:info2&&etc2?info2+'\n---\n'+etc2:(info2||etc2),
+      link_url:''
+    });
+  } else if(t==='전산세트'){
+    var jName2=(document.getElementById('ac-jeon-name').value||'').trim();
+    if(!jName2){ if(typeof showT==='function') showT('전산이름을 입력해 주세요'); return; }
+    var jAcc2 =(document.getElementById('ac-jeon-account').value||'').trim();
+    var jData2=(document.getElementById('ac-jeon-data').value||'').trim();
+    var jMemo2=(document.getElementById('ac-jeon-memo').value||'').trim();
+    Object.assign(payload,{
+      service_name:jName2,
+      url:'',
+      account_id:jAcc2,
+      pw:'',
+      memo:jData2&&jMemo2?jData2+'\n---\n'+jMemo2:(jData2||jMemo2),
+      link_url:''
+    });
   } else {
-    acSave();
+    var aName2=(document.getElementById('ac-api-name').value||'').trim();
+    if(!aName2){ if(typeof showT==='function') showT('서비스명을 입력해 주세요'); return; }
+    var aMemo2=(document.getElementById('ac-api-memo').value||'').trim();
+    Object.assign(payload,{
+      service_name:aName2,
+      url:'',
+      account_id:'',
+      pw:(document.getElementById('ac-api-key').value||'').trim(),
+      memo:'API키\n---\n'+aMemo2,
+      link_url:(document.getElementById('ac-api-url').value||'').trim()
+    });
   }
+
+  try{
+    await _sbUpdate('kit_accounts', payload, 'id', editId);
+    var idx=_AC_LIST.findIndex(function(r){return r.id===editId;});
+    if(idx>=0) _AC_LIST[idx]=Object.assign({},_AC_LIST[idx],payload);
+    if(typeof showT==='function') showT('✅ 수정됐습니다');
+    acCloseModal(); acRender();
+  }catch(e){ console.error('[acModalSave-update]',e); if(typeof showT==='function') showT('수정 실패: '+e.message); }
 }
 
 /* ── 오버레이 클릭 닫기 ── */
@@ -90914,27 +91033,22 @@ async function acModalSave(){
   if(ov){ ov.addEventListener('click',function(e){ if(e.target===ov) acCloseModal(); }); }
 })();
 
-/* ── 종류 변경 시 라벨·필드 전환 ── */
+/* ── 종류 변경 시 전용 블록 전환 ── */
 function acTypeChange(){
   var t=(document.getElementById('ac-type')||{}).value||'업무계정';
-  // 아이디 라벨
-  var idLbl=document.getElementById('ac-label-id');
-  if(idLbl) idLbl.textContent=t==='전산세트'?'대표 로그인 이메일':'아이디/이메일';
-  // 비밀번호 라벨
-  var pwLbl=document.getElementById('ac-label-pw');
-  if(pwLbl) pwLbl.textContent=t==='API키'?'API키':t==='전산세트'?'데이터 비밀번호':'비밀번호';
-  // pw input placeholder
-  var pwInp=document.getElementById('ac-pw');
-  if(pwInp) pwInp.placeholder=t==='API키'?'API 키 값 입력':t==='전산세트'?'데이터 비밀번호':'비밀번호';
-  // id input placeholder
-  var idInp=document.getElementById('ac-id');
-  if(idInp) idInp.placeholder=t==='전산세트'?'대표 이메일 주소':'아이디 또는 이메일';
-  // 연결페이지/URL 필드 표시 (전산세트·API키)
-  var linkField=document.getElementById('ac-field-link');
-  if(linkField) linkField.style.display=(t==='전산세트'||t==='API키')?'block':'none';
-  // 로그인방법 필드 (API키는 숨김)
-  var urlField=document.getElementById('ac-field-url');
-  if(urlField) urlField.style.display=(t==='API키')?'none':'block';
+  var blockWork=document.getElementById('ac-block-work');
+  var blockJeon=document.getElementById('ac-block-jeon');
+  var blockApi =document.getElementById('ac-block-api');
+  if(blockWork) blockWork.style.display=(t==='업무계정')?'block':'none';
+  if(blockJeon) blockJeon.style.display=(t==='전산세트')?'block':'none';
+  if(blockApi)  blockApi.style.display =(t==='API키')   ?'block':'none';
+}
+
+/* ── API키 눈 아이콘 ── */
+function acToggleApiKey(){
+  var inp=document.getElementById('ac-api-key');
+  if(!inp) return;
+  inp.type=inp.type==='password'?'text':'password';
 }
 
 /* ── 로그인방법 드롭다운 헬퍼 ── */
@@ -90956,6 +91070,20 @@ function acUrlSelectChange(){
 }
 
 function escHtml(s){ return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+/* ── 계정관리 함수 window 전역 연결 (inline onclick 접근용) ── */
+window.acOpenModal   = acOpenModal;
+window.acCloseModal  = acCloseModal;
+window.acModalSave   = acModalSave;
+window.acSetFilter   = acSetFilter;
+window.acTypeChange  = acTypeChange;
+window.acRender      = acRender;
+window.acSave        = acSave;
+window.acLoad        = acLoad;
+window.acDelete      = acDelete;
+window.acTogglePw    = acTogglePw;
+window.acToggleApiKey= acToggleApiKey;
+window.acUrlSelectChange = acUrlSelectChange;
 
 
 
@@ -93109,6 +93237,10 @@ window.tx_scheduleAutoSave = function(){
   var _origAc = window.wcnTabSwitch;
   window.wcnTabSwitch = function(tab){
     if(typeof _origAc==='function') _origAc(tab);
+    // 계정관리 탭: 콘텐츠 영역 overflow-x auto (전체 폭 테이블 표시)
+    // 다른 탭: overflow-x hidden 복원
+    var ca=document.getElementById('wcn-content-area');
+    if(ca) ca.style.overflowX=(tab==='accounts')?'auto':'hidden';
     if(tab==='accounts'){
       setTimeout(function(){ if(typeof acLoad==='function') acLoad(); }, 50);
     }
