@@ -8730,6 +8730,16 @@ if(typeof window.calcKoreanAge !== 'function'){
         <span class="hub-group-label">업무전산</span>
       </div>
       <div class="hub-grid-sub" style="grid-template-columns:1fr;gap:8px;">
+        <!-- [v23] 윤경의 하루 — 업무전산 섹션 최상단 -->
+        <div onclick="goTo('work-center-new'); setTimeout(function(){ if(typeof wcnTabSwitch==='function') wcnTabSwitch('daily-haru'); }, 250);"
+          class="hub-card" style="border:1.5px solid #FDE68A;background:#FFFBEB;">
+          <div class="hub-card-icon" style="background:#FEF3C7;font-size:22px;">☀️</div>
+          <div class="hub-card-body">
+            <div class="hub-card-name" style="color:#92400E;">윤경의 하루</div>
+            <div class="hub-card-sub" style="color:#B45309;">오늘 업무 시작 · 진행 · 마감</div>
+          </div>
+          <span class="hub-card-arrow" style="color:#FBBF24;">→</span>
+        </div>
         <div class="hub-card" onclick="if(typeof goTo==='function')goTo('work-center-new')">
           <div class="hub-card-icon">🗂️</div>
           <div class="hub-card-body">
@@ -89192,7 +89202,7 @@ window.openDocGen = function(){
 
 <div id="wi-quick-panel">
   <div class="wi-qp-head">
-    <span class="wi-qp-title">💡 아이디어 빠른 입력</span>
+    <span class="wi-qp-title">💡 아이디어 빠른 등록</span>
     <button class="wi-qp-close" type="button" onclick="wiQuick_close()" title="닫기">×</button>
   </div>
   <div class="wi-qp-body">
@@ -89206,10 +89216,13 @@ window.openDocGen = function(){
     <div>
       <div class="wi-qp-label">카테고리</div>
       <div class="wi-qp-row">
-        <button type="button" data-wiqcat="보험"  class="wi-qp-btn" onclick="wiQuick_selectCategory('보험')">보험</button>
-        <button type="button" data-wiqcat="유튜브" class="wi-qp-btn" onclick="wiQuick_selectCategory('유튜브')">유튜브</button>
-        <button type="button" data-wiqcat="시스템" class="wi-qp-btn" onclick="wiQuick_selectCategory('시스템')">시스템</button>
-        <button type="button" data-wiqcat="기타"  class="wi-qp-btn" onclick="wiQuick_selectCategory('기타')">기타</button>
+        <!-- [v19] 카테고리 6개 -->
+        <button type="button" data-wiqcat="앱관리"   class="wi-qp-btn" onclick="wiQuick_selectCategory('앱관리')">앱관리</button>
+        <button type="button" data-wiqcat="디자인"   class="wi-qp-btn" onclick="wiQuick_selectCategory('디자인')">디자인</button>
+        <button type="button" data-wiqcat="콘텐츠"   class="wi-qp-btn" onclick="wiQuick_selectCategory('콘텐츠')">콘텐츠</button>
+        <button type="button" data-wiqcat="보험업무" class="wi-qp-btn" onclick="wiQuick_selectCategory('보험업무')">보험업무</button>
+        <button type="button" data-wiqcat="사무업무" class="wi-qp-btn" onclick="wiQuick_selectCategory('사무업무')">사무업무</button>
+        <button type="button" data-wiqcat="기타작성" class="wi-qp-btn" onclick="wiQuick_selectCategory('기타작성')">기타작성</button>
       </div>
     </div>
     <div>
@@ -89223,6 +89236,15 @@ window.openDocGen = function(){
     <div>
       <div class="wi-qp-label">날짜</div>
       <input id="wiq-date" type="date" class="wi-qp-input">
+      <div class="wi-qp-label" style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">상태</div>
+      <input type="hidden" id="wiq-idea-status" value="아이디어상태">
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+        <button onclick="wiqSelectStatus('아이디어상태')" id="wiq-stat-아이디어상태" style="font-size:11px;padding:4px 9px;border:1.5px solid #FBBF24;background:#FBBF24;color:#1C1917;border-radius:16px;cursor:pointer;white-space:nowrap;">아이디어상태</button>
+        <button onclick="wiqSelectStatus('업무요청')" id="wiq-stat-업무요청" style="font-size:11px;padding:4px 9px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:16px;cursor:pointer;white-space:nowrap;">업무요청</button>
+        <button onclick="wiqSelectStatus('업무진행중')" id="wiq-stat-업무진행중" style="font-size:11px;padding:4px 9px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:16px;cursor:pointer;white-space:nowrap;">업무진행중</button>
+        <button onclick="wiqSelectStatus('업무보류중')" id="wiq-stat-업무보류중" style="font-size:11px;padding:4px 9px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:16px;cursor:pointer;white-space:nowrap;">업무보류중</button>
+        <button onclick="wiqSelectStatus('업무완료')" id="wiq-stat-업무완료" style="font-size:11px;padding:4px 9px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:16px;cursor:pointer;white-space:nowrap;">업무완료</button>
+      </div>
     </div>
     <button type="button" class="wi-qp-save" onclick="wiQuick_save()">저장</button>
     <div id="wiq-status" class="wi-qp-status"></div>
@@ -89258,6 +89280,8 @@ window.openDocGen = function(){
     var d = document.getElementById('wiq-date');
     if(d && !d.value) d.value = wiq_todayStr();
     if(!_wiq_author) wiQuick_selectAuthor(wiq_getUid()==='kfcyk30' ? '박수진' : '최윤경');
+    // [v24] 상태 버튼 초기화
+    if(typeof wiqSelectStatus==='function') wiqSelectStatus('아이디어상태');
     panel.classList.add('open');
   };
 
@@ -89290,15 +89314,17 @@ window.openDocGen = function(){
     var contentEl = document.getElementById('wiq-content');
     var dateEl    = document.getElementById('wiq-date');
     var now       = new Date().toISOString();
+    var _wiqIdeaSt=(document.getElementById('wiq-idea-status')||{value:'아이디어상태'}).value||'아이디어상태';
     var payload = {
-      user_id:     wiq_getUid(),
-      author_name: _wiq_author,
-      category:    _wiq_category,
-      title:       titleEl.value.trim(),
-      content:     contentEl ? contentEl.value.trim() : '',
-      idea_date:   (dateEl && dateEl.value) ? dateEl.value : wiq_todayStr(),
-      created_at:  now,
-      updated_at:  now
+      user_id:      wiq_getUid(),
+      author_name:  _wiq_author,
+      category:     _wiq_category,
+      title:        titleEl.value.trim(),
+      content:      contentEl ? contentEl.value.trim() : '',
+      idea_date:    (dateEl && dateEl.value) ? dateEl.value : wiq_todayStr(),
+      idea_status:  _wiqIdeaSt,  // [v22] 선택값
+      created_at:   now,
+      updated_at:   now
     };
     wiq_setStatus('저장 중...', true);
     try {
@@ -89394,13 +89420,17 @@ window.openDocGen = function(){
 
       <!-- 그룹1: 일상 업무 -->
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">일상 업무</div>
-      <!-- 아이디어모음 [v4실행] -->
-      <button onclick="wcnTabSwitch('idea')" id="wcn-tab-idea" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">💡</span><span style="font-size:13px;font-weight:700;color:#78716C;">아이디어모음</span>
+      <!-- [윤경의 하루] -->
+      <button onclick="wcnTabSwitch('daily-haru')" id="wcn-tab-daily-haru" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">☀️</span><span style="font-size:13px;font-weight:700;color:#78716C;">윤경의 하루</span>
       </button>
-      <!-- 공유업무기록 -->
+      <!-- [v20] 구 아이디어모음 — 숨김 처리 (wc_ideas 기반, 미사용) -->
+      <button onclick="wcnTabSwitch('idea')" id="wcn-tab-idea" style="display:none;">
+        <span>💡</span><span>아이디어모음(구)</span>
+      </button>
+      <!-- [v20] 아이디어모음 — work_tasks 기준 -->
       <button onclick="wcnTabSwitch('share')" id="wcn-tab-share" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">📋</span><span style="font-size:13px;font-weight:700;color:#78716C;">공유업무기록</span>
+        <span style="font-size:16px;">💡</span><span style="font-size:13px;font-weight:700;color:#78716C;">아이디어모음</span>
       </button>
       <!-- [v61실행] 근무기록 → 업무일지 앞으로 이동 -->
       <button onclick="wcnTabSwitch('hours')" id="wcn-tab-hours" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
@@ -89585,138 +89615,145 @@ window.openDocGen = function(){
     </div>
 
     <!-- ── 업무공유공간 탭 [v61실행] ── -->
-    <!-- ── 아이디어모음 탭 [v4실행] ── -->
+    <!-- ── [v19실행] 아이디어모음 탭 — wc_ideas 기준, 상태별 탭 ── -->
     <div id="wcn-panel-idea" class="wcn-tab-content" style="display:none;">
 
       <!-- 상단 제목 -->
-      <div style="margin-bottom:16px;">
+      <div style="margin-bottom:14px;">
         <div style="font-size:16px;font-weight:800;color:#1C1917;">💡 아이디어모음</div>
-        <div style="font-size:12px;color:#78716C;margin-top:3px;">보험 · 유튜브 · 시스템 아이디어를 모아두는 공간</div>
+        <div style="font-size:12px;color:#78716C;margin-top:3px;">아이디어가 업무요청·진행으로 이어지는 흐름을 관리합니다</div>
       </div>
 
-      <!-- 작성 카드 -->
-      <div style="background:#fff;border:1.5px solid #E8E8F4;border-radius:14px;padding:14px;margin-bottom:16px;">
+      <!-- 등록 카드 -->
+      <div style="background:#fff;border:1.5px solid #E8E8F4;border-radius:14px;padding:14px;margin-bottom:14px;">
         <div style="font-size:14px;font-weight:800;color:#334155;margin-bottom:12px;">✏️ 아이디어 작성</div>
 
         <!-- 작성자 -->
         <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">작성자</div>
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">작성자</div>
           <div style="display:flex;gap:6px;">
-            <button id="wi-author-yoon" onclick="wi_selectAuthor('최윤경')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">최윤경</button>
-            <button id="wi-author-sujin" onclick="wi_selectAuthor('박수진')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">박수진</button>
+            <button id="wi-author-yoon" onclick="wi_selectAuthor('최윤경')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">최윤경</button>
+            <button id="wi-author-sujin" onclick="wi_selectAuthor('박수진')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">박수진</button>
           </div>
         </div>
 
         <!-- 카테고리 -->
         <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">카테고리</div>
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">카테고리</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;">
-            <button onclick="wi_selectCategory('보험')"   data-wicat="보험"   style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">보험</button>
-            <button onclick="wi_selectCategory('유튜브')" data-wicat="유튜브" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">유튜브</button>
-            <button onclick="wi_selectCategory('시스템')" data-wicat="시스템" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">시스템</button>
-            <button onclick="wi_selectCategory('기타')"   data-wicat="기타"   style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">기타</button>
+            <button onclick="wi_selectCategory('앱관리')"   data-wicat="앱관리"   style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">앱관리</button>
+            <button onclick="wi_selectCategory('디자인')"   data-wicat="디자인"   style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">디자인</button>
+            <button onclick="wi_selectCategory('콘텐츠')"   data-wicat="콘텐츠"   style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">콘텐츠</button>
+            <button onclick="wi_selectCategory('보험업무')" data-wicat="보험업무" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">보험업무</button>
+            <button onclick="wi_selectCategory('사무업무')" data-wicat="사무업무" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">사무업무</button>
+            <button onclick="wi_selectCategory('기타작성')" data-wicat="기타작성" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">기타작성</button>
           </div>
         </div>
 
         <!-- 제목 -->
         <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">제목</div>
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">제목</div>
           <input id="wi-title" type="text" placeholder="아이디어 제목을 입력해주세요."
             style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
         </div>
 
         <!-- 내용 -->
         <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">내용</div>
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">내용</div>
           <textarea id="wi-content" placeholder="아이디어 내용을 작성해주세요."
-            style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+            style="width:100%;min-height:70px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
         </div>
 
         <!-- 날짜 + 저장 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <input id="wi-date" type="date"
             style="flex:1;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;">
           <button onclick="wi_today()" style="padding:9px 12px;background:#FEF3C7;border:1.5px solid #FBBF24;border-radius:9px;font-size:13px;font-weight:700;color:#D97706;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">오늘</button>
-          <button id="wi-cancel-btn" onclick="wi_cancelEdit()" style="display:none;padding:10px 16px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;color:#64748b;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">취소</button>
+          <button id="wi-cancel-btn" onclick="wi_cancelEdit()" style="display:none;padding:9px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;color:#64748b;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">취소</button>
           <button id="wi-save-btn" onclick="wi_save()" style="padding:10px 22px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">저장</button>
         </div>
         <div id="wi-save-status" style="margin-top:8px;font-size:12px;color:#64748b;"></div>
       </div>
 
-      <!-- 카테고리별 아이디어 보드 [v5실행] -->
-      <style>
-        .wi-board-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding-bottom:24px;}
-        @media(max-width:900px){.wi-board-grid{grid-template-columns:repeat(2,1fr);}}
-        @media(max-width:520px){.wi-board-grid{grid-template-columns:1fr;}}
-        .wi-board-col{background:#fff;border:1.5px solid #E8E8F4;border-radius:14px;padding:14px;min-height:120px;}
-        .wi-board-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #FEF3C7;}
-        .wi-board-title{font-size:13px;font-weight:800;color:#1C1917;}
-        .wi-board-count{font-size:12px;font-weight:700;background:#FEF3C7;color:#D97706;padding:2px 8px;border-radius:10px;}
-        .wi-idea-card{background:#FAFAF9;border:1px solid #E5E0D5;border-radius:10px;padding:10px;margin-bottom:8px;}
-        .wi-idea-card:last-child{margin-bottom:0;}
-        .wi-idea-title{font-size:13px;font-weight:700;color:#1C1917;margin-bottom:4px;line-height:1.4;}
-        .wi-idea-content{font-size:12px;color:#64748b;line-height:1.5;margin-bottom:6px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-        .wi-idea-meta{font-size:11px;color:#94a3b8;}
-        .wi-board-empty{font-size:12px;color:#CBD5E1;text-align:center;padding:20px 0;}
-        .wi-idea-actions{display:flex;gap:5px;margin-top:8px;}
-        .wi-btn-edit{padding:3px 10px;font-size:11px;font-weight:700;border:1.5px solid #FBBF24;border-radius:8px;background:#FEF3C7;color:#D97706;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
-        .wi-btn-edit:hover{background:#FBBF24;color:#1C1917;}
-        .wi-btn-del{padding:3px 10px;font-size:11px;font-weight:700;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;color:#94a3b8;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
-        .wi-btn-del:hover{border-color:#f87171;color:#ef4444;}
-      </style>
-      <div id="wi-list" class="wi-board-grid"></div>
+      <!-- 상태별 탭 + 목록 -->
+      <div>
+        <!-- 탭 헤더 -->
+        <div id="wi-status-tabs" style="display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;">
+          <button onclick="wi_switchStatusTab('아이디어상태')" data-witab="아이디어상태"
+            style="padding:6px 12px;border:1.5px solid #FBBF24;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#FBBF24;color:#1C1917;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">아이디어상태</button>
+          <button onclick="wi_switchStatusTab('업무요청')" data-witab="업무요청"
+            style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">업무요청</button>
+          <button onclick="wi_switchStatusTab('업무진행중')" data-witab="업무진행중"
+            style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">업무진행중</button>
+          <button onclick="wi_switchStatusTab('업무보류중')" data-witab="업무보류중"
+            style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">업무보류중</button>
+          <button onclick="wi_switchStatusTab('업무완료')" data-witab="업무완료"
+            style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">업무완료</button>
+        </div>
+
+        <!-- 목록 영역 -->
+        <div id="wi-list"></div>
+      </div>
 
     </div>
-    <!-- ── 아이디어모음 탭 끝 [v4실행] ── -->
+    <!-- ── [v19실행] 아이디어모음 탭 끝 ── -->
 
     <div id="wcn-panel-share" class="wcn-tab-content" style="display:none;">
 
-      <!-- 공유업무등록 카드 -->
-      <div style="background:#fff;border:1.5px solid #E8E8F4;border-radius:14px;padding:14px;margin-bottom:16px;">
-        <div style="font-size:14px;font-weight:800;color:#334155;margin-bottom:12px;">📋 공유업무등록</div>
+      <!-- 기존 등록폼 (숨김, wt_saveTask 보존) -->
+      <div id="wt-old-form" style="display:none;">
+        <div id="wt-req-yoon-hidden" style="display:none;"></div>
+        <div id="wt-req-sujin-hidden" style="display:none;"></div>
+        <textarea id="wt-content" style="display:none;"></textarea>
+        <span id="wt-req-date" style="display:none;"></span>
+      </div>
 
-        <!-- 업무요청자 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">업무요청자</div>
-          <div style="display:flex;gap:6px;">
-            <button id="wt-req-yoon"  onclick="wt_selectRequester('최윤경')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">최윤경</button>
-            <button id="wt-req-sujin" onclick="wt_selectRequester('박수진')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">박수진</button>
-          </div>
+      <!-- ★ [v22] 아이디어모음 관리판 ★ -->
+
+      <!-- 제목 -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#1C1917;">💡 아이디어모음</div>
+          <div style="font-size:12px;color:#78716C;margin-top:2px;">아이디어가 업무요청·진행으로 이어지는 흐름을 관리합니다</div>
         </div>
+        <button onclick="wt_openRegModal()"
+          style="padding:9px 18px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;flex-shrink:0;">
+          + 아이디어 등록
+        </button>
+      </div>
 
-        <!-- 카테고리 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">카테고리</div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px;" id="wt-category-btns">
-            <button onclick="wt_selectCategory('앱관리')"   data-wtcat="앱관리"   style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">앱관리</button>
-            <button onclick="wt_selectCategory('디자인')"   data-wtcat="디자인"   style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">디자인</button>
-            <button onclick="wt_selectCategory('콘텐츠')"   data-wtcat="콘텐츠"   style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">콘텐츠</button>
-            <button onclick="wt_selectCategory('보험업무')" data-wtcat="보험업무" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">보험업무</button>
-            <button onclick="wt_selectCategory('사무업무')" data-wtcat="사무업무" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">사무업무</button>
-            <button onclick="wt_selectCategory('기타작성')" data-wtcat="기타작성" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">기타작성</button>
-          </div>
-        </div>
-
-        <!-- 업무상세내역 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">업무상세내역</div>
-          <textarea id="wt-content" placeholder="업무 내용을 상세히 작성해주세요."
-            style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
-        </div>
-
-        <!-- 요청일자 + 등록 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:13px;color:#94a3b8;">📅 <span id="wt-req-date"></span></div>
-          <button onclick="wt_saveTask()" style="padding:10px 22px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">등록</button>
+      <!-- 검색 액션 영역 -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">새로 등록하기 전에 기존 아이디어모음에서 중복을 먼저 검색하세요.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <input id="wt-search-input" type="text" placeholder="제목 · 내용 · 카테고리 · 작성자 검색..."
+            oninput="wt_searchFilter(this.value)"
+            style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+          <button onclick="wt_searchFilter(document.getElementById('wt-search-input').value)"
+            style="padding:9px 14px;background:#F1F5F9;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;color:#64748b;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">검색</button>
+          <button onclick="document.getElementById('wt-search-input').value='';wt_searchFilter('')"
+            style="padding:9px 12px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#94a3b8;cursor:pointer;">✕</button>
         </div>
       </div>
 
-      <!-- 공유업무보드 -->
-      <div style="font-size:14px;font-weight:800;color:#334155;margin-bottom:10px;">🗂️ 공유업무보드</div>
-      <div id="wt-task-list" style="display:flex;flex-direction:column;gap:10px;padding-bottom:24px;"></div>
+      <!-- 상태탭 (AI자료실 라인형) -->
+      <div id="wt-idea-tabbar" style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+        <button id="wt-itab-아이디어상태" onclick="wt_switchIdeaTab('아이디어상태')"
+          style="padding:10px 16px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">아이디어상태</button>
+        <button id="wt-itab-업무요청" onclick="wt_switchIdeaTab('업무요청')"
+          style="padding:10px 16px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">업무요청</button>
+        <button id="wt-itab-업무진행중" onclick="wt_switchIdeaTab('업무진행중')"
+          style="padding:10px 16px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">업무진행중</button>
+        <button id="wt-itab-업무보류중" onclick="wt_switchIdeaTab('업무보류중')"
+          style="padding:10px 16px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">업무보류중</button>
+        <button id="wt-itab-업무완료" onclick="wt_switchIdeaTab('업무완료')"
+          style="padding:10px 16px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">업무완료</button>
+      </div>
+
+      <!-- 목록 (테이블형) -->
+      <div id="wt-task-list" style="padding-bottom:24px;overflow-x:auto;"></div>
 
     </div>
-
 <!-- ── 급여명세서 계산기 2열 레이아웃 CSS [v37실행] ── -->
 <style>
 @media (max-width:720px){#pr-calc-grid{grid-template-columns:1fr !important;}}
@@ -90442,6 +90479,184 @@ window.openDocGen = function(){
 
       </div><!-- /aa-layout -->
     </div><!-- /wcn-panel-ai-archive -->
+
+    <!-- ★ [윤경의 하루] daily-haru 패널 ─────────────────────────── -->
+    <div id="wcn-panel-daily-haru" class="wcn-tab-content" style="display:none;">
+      <!-- 날짜 선택 바 -->
+      <div style="max-width:860px;margin:0 auto;padding:4px 14px 0;">
+        <div id="yh-datebar" style="background:#fff;border-bottom:1px solid #E8E8E8;padding:8px 0;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:10;"></div>
+      </div>
+      <!-- 본문 가운데 정렬 -->
+      <div style="max-width:860px;margin:0 auto;padding:14px;">
+        <div id="yh-header-area"></div>
+        <div id="yh-steps-area"></div>
+      </div>
+    </div><!-- /wcn-panel-daily-haru -->
+
+    <!-- ★ [v22] 아이디어 등록 모달 ─── -->
+    <div id="wt-reg-modal" style="display:none;position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:16px;padding:22px;width:92%;max-width:480px;margin:20px auto;box-shadow:0 16px 48px rgba(0,0,0,.22);max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+        <!-- 헤더 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:800;color:#1C1917;">💡 아이디어 등록</div>
+          <button onclick="wt_closeRegModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;">×</button>
+        </div>
+        <!-- 작성자 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">작성자</div>
+          <div style="display:flex;gap:6px;">
+            <button id="wtr-btn-yoon" onclick="wtr_selectAuthor('최윤경')"
+              style="flex:1;padding:8px;border:1.5px solid #FBBF24;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;background:#FBBF24;color:#1C1917;font-family:'Noto Sans KR',sans-serif;">최윤경</button>
+            <button id="wtr-btn-sujin" onclick="wtr_selectAuthor('박수진')"
+              style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">박수진</button>
+          </div>
+        </div>
+        <!-- 카테고리 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">카테고리</div>
+          <select id="wtr-category" style="width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;background:#fff;">
+            <option value="">카테고리 선택</option>
+            <option value="앱관리">앱관리</option>
+            <option value="디자인">디자인</option>
+            <option value="콘텐츠">콘텐츠</option>
+            <option value="보험업무">보험업무</option>
+            <option value="사무업무">사무업무</option>
+            <option value="기타작성">기타작성</option>
+          </select>
+        </div>
+        <!-- [v24] 상태 선택 버튼형 -->
+        <input type="hidden" id="wtr-idea-status" value="아이디어상태">
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">상태</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            <button onclick="wtrSelectStatus('아이디어상태')" id="wtr-stat-아이디어상태" style="padding:6px 11px;border:1.5px solid #FBBF24;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#FBBF24;color:#1C1917;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">아이디어상태</button>
+            <button onclick="wtrSelectStatus('업무요청')" id="wtr-stat-업무요청" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">업무요청</button>
+            <button onclick="wtrSelectStatus('업무진행중')" id="wtr-stat-업무진행중" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">업무진행중</button>
+            <button onclick="wtrSelectStatus('업무보류중')" id="wtr-stat-업무보류중" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">업무보류중</button>
+            <button onclick="wtrSelectStatus('업무완료')" id="wtr-stat-업무완료" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#64748b;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">업무완료</button>
+          </div>
+        </div>
+        <!-- 제목/요약 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">제목 / 요약</div>
+          <input id="wtr-title" type="text" placeholder="아이디어 제목 또는 요약"
+            style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <!-- 내용 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">아이디어 / 업무 내용</div>
+          <textarea id="wtr-content" rows="3" placeholder="아이디어나 업무 내용을 입력해주세요."
+            style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+        </div>
+        <!-- 날짜 -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">날짜</div>
+          <input id="wtr-date" type="date"
+            style="width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <!-- 상태 메시지 -->
+        <div id="wtr-status-msg" style="font-size:12px;min-height:16px;margin-bottom:8px;"></div>
+        <!-- 버튼 -->
+        <div style="display:flex;gap:8px;">
+          <button id="wtr-save-btn" onclick="wt_saveIdeaModal()"
+            style="flex:1;padding:11px;background:#FBBF24;color:#1C1917;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">아이디어 등록</button>
+          <button onclick="wt_closeRegModal()"
+            style="padding:11px 16px;background:#F5F5F5;color:#555;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">취소</button>
+        </div>
+      </div>
+    </div>
+    <!-- ★ [v22] 아이디어 등록 모달 끝 ─── -->
+
+    <!-- ★ [v26] 아이디어 상세 큰 모달 ─── -->
+    <div id="wt-big-modal" style="display:none;position:fixed;inset:0;z-index:9720;background:rgba(0,0,0,.5);align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
+      <div style="background:#fff;border-radius:18px;width:100%;max-width:720px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
+        <!-- 헤더 -->
+        <div style="background:#FFFBEB;border-bottom:2px solid #FDE68A;padding:20px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:#92400E;letter-spacing:1.5px;margin-bottom:6px;">💡 아이디어 상세</div>
+            <div id="wtbm-title" style="font-size:19px;font-weight:900;color:#1C1917;line-height:1.4;word-break:break-all;"></div>
+            <div id="wtbm-meta" style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:10px;"></div>
+          </div>
+          <button onclick="wt_closeDetailModal()" style="background:none;border:none;font-size:26px;color:#94a3b8;cursor:pointer;line-height:1;flex-shrink:0;padding:2px;">×</button>
+        </div>
+        <!-- 본문 -->
+        <div style="padding:22px 24px;">
+          <!-- 내용 전체 -->
+          <div style="font-size:15px;color:#334155;line-height:1.8;white-space:pre-wrap;background:#FAFAFA;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:18px;min-height:80px;" id="wtbm-body"></div>
+          <!-- 상태 변경 -->
+          <div style="margin-bottom:18px;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;">상태 변경</div>
+            <div id="wtbm-status-btns" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+          </div>
+          <!-- 수정/삭제 -->
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:20px;padding-bottom:18px;border-bottom:1.5px solid #F0F0F5;">
+            <button id="wtbm-edit-btn" style="padding:10px 22px;background:#F0ECFF;color:#7C3AED;border:1.5px solid #c4b5fd;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">✏️ 수정</button>
+            <button id="wtbm-del-btn" style="padding:10px 22px;background:#FFF5F5;color:#dc2626;border:1.5px solid #fca5a5;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>
+          </div>
+          <!-- 댓글 영역 -->
+          <div style="font-size:14px;font-weight:700;color:#64748b;margin-bottom:10px;">💬 댓글</div>
+          <div id="wtbm-comments" style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;"></div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button id="wtbm-cmt-yoon" style="flex:1;padding:9px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#4A3F7A;color:#fff;">최윤경</button>
+            <button id="wtbm-cmt-sujin" style="flex:1;padding:9px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;">박수진</button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="wtbm-cmt-input" placeholder="댓글 입력..."
+              style="flex:1;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+            <button id="wtbm-cmt-btn" style="padding:11px 20px;background:#4A3F7A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">등록</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ★ [v26] 아이디어 상세 큰 모달 끝 ─── -->
+    <!-- ★ [윤경의 하루] 보류 모달 -->
+    <!-- ★ [v14수정] 보류 → 아이디어모음 등록 모달 -->
+    <div id="yh-hold-modal" style="display:none;position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:16px;padding:20px;width:92%;max-width:460px;margin:20px auto;box-shadow:0 16px 48px rgba(0,0,0,.22);max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+        <!-- 헤더 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:800;color:#1A1A1A;">💡 아이디어모음 등록</div>
+          <button onclick="yh_closeHoldModal()" style="background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1;">×</button>
+        </div>
+        <!-- 보류 업무명 표시 -->
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;padding:9px 12px;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:2px;">보류 업무</div>
+          <div id="yh-hold-text" style="font-size:13px;color:#1A1A1A;font-weight:600;"></div>
+        </div>
+        <!-- 업무요청자 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">업무요청자</div>
+          <div style="display:flex;gap:6px;">
+            <button id="yhm-req-yoon" onclick="yhmSelectReq('최윤경')" style="flex:1;padding:8px;border:1.5px solid #FBBF24;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;background:#FBBF24;color:#1C1917;font-family:'Noto Sans KR',sans-serif;">최윤경</button>
+            <button id="yhm-req-sujin" onclick="yhmSelectReq('박수진')" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">박수진</button>
+          </div>
+        </div>
+        <!-- 카테고리 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">카테고리</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;" id="yhm-cat-wrap">
+            <button onclick="yhmSelectCat('앱관리')"   data-yhmcat="앱관리"   style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">앱관리</button>
+            <button onclick="yhmSelectCat('디자인')"   data-yhmcat="디자인"   style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">디자인</button>
+            <button onclick="yhmSelectCat('콘텐츠')"   data-yhmcat="콘텐츠"   style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">콘텐츠</button>
+            <button onclick="yhmSelectCat('보험업무')" data-yhmcat="보험업무" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">보험업무</button>
+            <button onclick="yhmSelectCat('사무업무')" data-yhmcat="사무업무" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">사무업무</button>
+            <button onclick="yhmSelectCat('기타작성')" data-yhmcat="기타작성" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#334155;font-family:'Noto Sans KR',sans-serif;">기타작성</button>
+          </div>
+        </div>
+        <!-- 업무상세내역 -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">업무상세내역</div>
+          <textarea id="yhm-content" rows="3" placeholder="업무 내용을 상세히 작성해주세요." style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+        </div>
+        <!-- 상태 메시지 -->
+        <div id="yhm-status" style="font-size:12px;min-height:16px;margin-bottom:8px;"></div>
+        <!-- 버튼 -->
+        <div style="display:flex;gap:8px;">
+          <button onclick="yhm_save()" style="flex:1;padding:11px;background:#FBBF24;color:#1C1917;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">아이디어모음에 등록</button>
+          <button onclick="yh_closeHoldModal()" style="padding:11px 16px;background:#F5F5F5;color:#555;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">취소</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── [v38실행] AI 자료실 등록/수정 모달 ── -->
     <div id="aa-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
@@ -91760,7 +91975,7 @@ window.tx_scheduleAutoSave = function(){
 
   // ── 탭 전환 ── [v51실행] 앱시트 사이드바 스타일
   window.wcnTabSwitch = function(tab){
-    ['idea','journal','hours','share','payroll','tax','accounts','agent','ai-archive'].forEach(function(t){
+    ['daily-haru','idea','journal','hours','share','payroll','tax','accounts','agent','ai-archive'].forEach(function(t){
       var panel = document.getElementById('wcn-panel-'+t);
       var btn   = document.getElementById('wcn-tab-'+t);
       var active = (t === tab);
@@ -92069,7 +92284,1133 @@ window.tx_scheduleAutoSave = function(){
 
 })();
 </script>
+<!-- ★ [윤경의 하루] JS v4 ─ v42 스타일 ─────────────────────────── -->
+<script>
+(function(){
+  'use strict';
+
+  /* ── 색상 (v42 오늘의흐름 참고) ────────────────── */
+  var C={
+    green:'#22C55E', greenSoft:'#F0FDF4', greenBorder:'#A7F3D0',
+    ink:'#1C1917',   muted:'#64748B',   gray:'#BDBDBD',
+    grayBg:'#F5F5F5', grayBorder:'#E8E8E8',
+    blue:'#3B82F6',  blueSoft:'#EFF6FF',
+    amber:'#F59E0B', amberSoft:'#FFFBEB',
+    red:'#EF4444'
+  };
+  var S={input:"width:100%;padding:9px 11px;border:1px solid #E8E8E8;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;outline:none;color:#1C1917;background:#fff;"};
+
+  /* ── 토글 상태 (메모리) ─────────────────────────── */
+  var _yh_open={};
+
+  /* ── KST 키 ─────────────────────────────────────── */
+  function yh_todayKey(){
+    var k=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+    return 'wd_yh_'+k.getFullYear()+'-'+String(k.getMonth()+1).padStart(2,'0')+'-'+String(k.getDate()).padStart(2,'0');
+  }
+  function yh_monthKey(){
+    var k=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+    return 'wd_yh_mc_'+k.getFullYear()+'-'+String(k.getMonth()+1).padStart(2,'0');
+  }
+  function yh_weekKey(){
+    var k=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+    var d=new Date(Date.UTC(k.getFullYear(),k.getMonth(),k.getDate()));
+    d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
+    var ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    var wn=Math.ceil(((d-ys)/86400000+1)/7);
+    return 'wd_yh_wc_'+d.getUTCFullYear()+'-W'+String(wn).padStart(2,'0');
+  }
+
+  /* ── localStorage ──────────────────────────────── */
+  /* 현재 보고 있는 날짜 키 (오늘 또는 과거) */
+  function yh_currentKey(){ return (_yh_viewDate && _yh_viewDate!==yh_todayStr())?'wd_yh_'+_yh_viewDate:yh_todayKey(); }
+  function yh_save(data){ try{localStorage.setItem(yh_currentKey(),JSON.stringify(data));}catch(e){} }
+  function yh_load(){
+    try{var s=localStorage.getItem(yh_currentKey());return s?JSON.parse(s):null;}catch(e){return null;}
+  }
+
+  /* ── 월초/주간 체크 ────────────────────────────── */
+  // [v14수정] 월초업무 3개 키로 변경
+  var YH_MC_DEF={tax:false,bizReport:false,monthlyResource:false,completed:false};
+  var YH_WC_DEF={idea:false,completed:false};
+  function yh_loadMC(){try{var s=localStorage.getItem(yh_monthKey());return s?JSON.parse(s):Object.assign({},YH_MC_DEF);}catch(e){return Object.assign({},YH_MC_DEF);}}
+  function yh_saveMC(mc){try{localStorage.setItem(yh_monthKey(),JSON.stringify(mc));}catch(e){}}
+  function yh_loadWC(){try{var s=localStorage.getItem(yh_weekKey());return s?JSON.parse(s):Object.assign({},YH_WC_DEF);}catch(e){return Object.assign({},YH_WC_DEF);}}
+  function yh_saveWC(wc){try{localStorage.setItem(yh_weekKey(),JSON.stringify(wc));}catch(e){}}
+  window.yh_toggleMC=function(key){var mc=yh_loadMC();mc[key]=!mc[key];yh_saveMC(mc);yh_renderHeader(yh_load()||yh_defaultData());};
+  window.yh_toggleWC=function(key){var wc=yh_loadWC();wc[key]=!wc[key];yh_saveWC(wc);yh_renderHeader(yh_load()||yh_defaultData());};
+  window.yh_completeMC=function(){
+    var mc=yh_loadMC();
+    if(!['tax','bizReport','monthlyResource'].every(function(k){return !!mc[k];})){
+      if(typeof showT==='function')showT('모든 항목을 먼저 확인해주세요.');return;
+    }
+    mc.completed=true;yh_saveMC(mc);yh_renderHeader(yh_load()||yh_defaultData());
+    if(typeof showT==='function')showT('월초 업무 점검 완료!');
+  };
+  window.yh_completeWC=function(){
+    var wc=yh_loadWC();
+    if(!wc.idea){if(typeof showT==='function')showT('아이디어모음을 먼저 확인해주세요.');return;}
+    wc.completed=true;yh_saveWC(wc);
+    yh_refreshHdr();
+    if(typeof showT==='function')showT('주간 점검 완료!');
+  };
+  window.yh_toggleWC_idea=function(){
+    var wc=yh_loadWC();wc.idea=!wc.idea;
+    if(!wc.idea)wc.completed=false;
+    yh_saveWC(wc);yh_refreshHdr();
+  };
+
+  /* ── 기본 데이터 (5단계) ───────────────────────── */
+  function yh_defaultData(){
+    return {
+      step1:{done:false,gmail:false,naver:false},
+      step2:{done:false,todos:['','','']},
+      step3:{done:false,items:[]},
+      step4:{done:false,ai:false,drive:false,aiNote:'',driveNote:'',
+             checks:{downloads:false,kakao:false,nateon:false,desktop:false,cust:false}},
+      step5:{done:false,completedAt:null}
+    };
+  }
+  function yh_esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  /* ── 현재 단계 / 토글 ──────────────────────────── */
+  function yh_currentStep(data){
+    if(!data.step1.done)return 1;if(!data.step2.done)return 2;
+    if(!data.step3.done)return 3;if(!data.step4.done)return 4;
+    if(!data.step5.done)return 5;return 6;
+  }
+  function yh_isOpen(num,cur){return(num in _yh_open)?_yh_open[num]:(num===cur);}
+  window.yh_toggleOpen=function(num){
+    var data=yh_load()||yh_defaultData();
+    var cur=yh_currentStep(data);
+    if(num>cur)return;
+    _yh_open[num]=!yh_isOpen(num,cur);
+    yh_renderSteps(data);
+  };
+
+  /* ── 메인 초기화 ─────────────────────────────── */
+  /* ── 날짜 선택 상태 ────────────────────────── */
+  var _yh_viewDate = null; // null = 오늘, 'YYYY-MM-DD' = 과거 날짜 조회
+
+  /* KST 오늘 문자열 */
+  function yh_todayStr(){
+    var kst=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+    return kst.getFullYear()+'-'+String(kst.getMonth()+1).padStart(2,'0')+'-'+String(kst.getDate()).padStart(2,'0');
+  }
+
+  /* 날짜 바 렌더 */
+  function yh_renderDateBar(){
+    var bar=document.getElementById('yh-datebar');
+    if(!bar) return;
+    var kst=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+    var today=yh_todayStr();
+    var dowNames=['일','월','화','수','목','금','토'];
+    var opts='';
+    // [v15수정] 선택된 날짜 기준으로 옵션 범위 생성 (미래 포함)
+    var _pivotDate=_yh_viewDate?new Date(_yh_viewDate.replace(/-/g,'/')):new Date(kst);
+    // 피벗 기준 앞뒤 15일 범위 (총 31일)
+    var _rangeStart=new Date(_pivotDate);_rangeStart.setDate(_pivotDate.getDate()-15);
+    for(var i=30;i>=-15;i--){
+      var d=new Date(kst); d.setDate(d.getDate()-i);
+      var y=d.getFullYear(),mo=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+      var ds=y+'-'+mo+'-'+dd;
+      var hasData=false; try{hasData=!!localStorage.getItem('wd_yh_'+ds);}catch(e){}
+      var isToday2=(ds===today);
+      var lbl=isToday2?'오늘 '+parseInt(mo)+'/'+parseInt(dd)+' ('+dowNames[d.getDay()]+')'
+                      :parseInt(mo)+'/'+parseInt(dd)+' ('+dowNames[d.getDay()]+')'+(i<0?' 🔮':'');
+      if(hasData&&!isToday2) lbl+=' ●';
+      var sel=((_yh_viewDate===null&&isToday2)||(_yh_viewDate===ds))?'selected':'';
+      opts+='<option value="'+ds+'" '+sel+'>'+lbl+'</option>';
+    }
+    var isToday=(_yh_viewDate===null);
+    // [v15수정] 레이아웃: 🌅 오늘의 흐름 → 오늘 → < > 이동 → select → 📅 달력
+    var curDateStr=_yh_viewDate||today;
+    bar.innerHTML='<span style="font-size:12px;font-weight:700;color:#555;white-space:nowrap;">🌅 오늘의 흐름</span>'
+      +'<button onclick="yh_goToday()" style="padding:5px 10px;background:'+(isToday?'#E8E8E8':'#1A1A1A')+';color:'+(isToday?'#999':'#fff')+';border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">오늘</button>'
+      +'<button onclick="yh_moveDay(-1)" style="padding:5px 9px;background:#fff;border:1px solid #D8D8D8;border-radius:8px;font-size:13px;color:#555;cursor:pointer;line-height:1;">&#9664;</button>'
+      +'<select id="yh-date-select" onchange="yh_changeDate(this.value)" style="padding:5px 8px;border:1px solid #D8D8D8;border-radius:8px;font-size:12px;background:#fff;color:#1A1A1A;cursor:pointer;outline:none;flex:1;max-width:200px;">'+opts+'</select>'
+      +'<button onclick="yh_moveDay(1)" style="padding:5px 9px;background:#fff;border:1px solid #D8D8D8;border-radius:8px;font-size:13px;color:#555;cursor:pointer;line-height:1;">&#9654;</button>'
+      +'<button onclick="yh_openCalPicker()" title="날짜 선택" style="padding:5px 9px;background:#fff;border:1px solid #D8D8D8;border-radius:8px;font-size:14px;cursor:pointer;line-height:1;">&#128197;</button>'
+      +'<input type="date" id="yh-cal-picker" value="'+curDateStr+'" onchange="yh_changeDate(this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;">';
+  }
+
+  window.yh_changeDate=function(dateStr){
+    var today=yh_todayStr();
+    _yh_viewDate=(dateStr===today)?null:dateStr;
+    _yh_open={};
+    // [v14수정] 날짜 이동 시 주간/월간 토글 상태도 초기화
+    window._yh_wc_open=false;
+    window._yh_mc_open=undefined;
+    yh_renderDateBar();
+    var data=null;
+    try{var s=localStorage.getItem('wd_yh_'+dateStr);data=s?JSON.parse(s):null;}catch(e){}
+    data=data||yh_defaultData();
+    yh_renderHeader(data);
+    yh_renderSteps(data);
+  };
+  // [v15수정] ◀ ▶ 하루씩 이동 + 달력 아이콘
+  window.yh_moveDay=function(delta){
+    var cur=_yh_viewDate||yh_todayStr();
+    var parts=cur.split('-');
+    var d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+    d.setDate(d.getDate()+delta);
+    var newStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    _yh_viewDate=(newStr===yh_todayStr())?null:newStr;
+    window._yh_wc_open=false;window._yh_mc_open=undefined;
+    yh_renderDateBar();
+    var data=null;
+    try{var s=localStorage.getItem('wd_yh_'+newStr);data=s?JSON.parse(s):null;}catch(e){}
+    data=data||yh_defaultData();
+    yh_renderHeader(data);yh_renderSteps(data);
+  };
+
+  window.yh_openCalPicker=function(){
+    var picker=document.getElementById('yh-cal-picker');
+    if(!picker) return;
+    picker.style.pointerEvents='auto';
+    picker.showPicker ? picker.showPicker() : picker.click();
+    picker.style.pointerEvents='none';
+  };
+
+  window.yh_goToday=function(){
+    _yh_viewDate=null;_yh_open={};
+    // [v14수정] 오늘 버튼 이동 시 토글 상태 초기화
+    window._yh_wc_open=false;
+    window._yh_mc_open=undefined;
+    yh_renderDateBar();
+    var data=yh_load()||yh_defaultData();
+    yh_renderHeader(data);yh_renderSteps(data);
+  };
+
+  window.yh_init=function(){
+    _yh_open={};
+    _yh_viewDate=null;
+    yh_renderDateBar();
+    var data=yh_load()||yh_defaultData();
+    yh_renderHeader(data);
+    yh_renderSteps(data);
+  };
+
+  /* ── 점검 항목 카드 헬퍼 ────────────────────── */
+  function yh_checkCard(name,desc,buttons,checkFn,isDone){
+    var circle=isDone
+      ?'<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:'+C.green+';color:#fff;font-size:11px;flex-shrink:0;">&#10003;</span>'
+      :'<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1.5px solid '+C.grayBorder+';background:'+C.grayBg+';flex-shrink:0;"></span>';
+    var btnHtml=buttons.map(function(b){
+      return b.url
+        ?'<a href="'+b.url+'" target="_blank" rel="noopener" style="padding:4px 9px;background:#fff;color:'+C.muted+';border:1px solid '+C.grayBorder+';border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap;">'+b.label+'</a>'
+        :'<button onclick="'+b.action+'" style="padding:4px 9px;background:#fff;color:'+C.muted+';border:1px solid '+C.grayBorder+';border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;white-space:nowrap;">'+b.label+'</button>';
+    }).join('');
+    var ckBtn=isDone
+      ?'<span style="font-size:11px;font-weight:700;color:'+C.green+';white-space:nowrap;">완료 &#10003;</span>'
+      :'<button onclick="'+checkFn+'" style="padding:4px 9px;background:'+C.grayBg+';color:'+C.muted+';border:1px solid '+C.grayBorder+';border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;white-space:nowrap;">확인 완료</button>';
+    return '<div style="background:'+(isDone?C.greenSoft:'#fff')+';border:1px solid '+(isDone?C.greenBorder:C.grayBorder)+';border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
+      +'<div style="display:flex;align-items:flex-start;gap:8px;">'+circle
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="font-size:12px;font-weight:700;color:'+(isDone?C.green:C.ink)+';margin-bottom:2px;">'+name+'</div>'
+      +'<div style="font-size:11px;color:'+C.muted+';margin-bottom:7px;line-height:1.4;">'+desc+'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">'+btnHtml+ckBtn+'</div>'
+      +'</div></div></div>';
+  }
+
+  /* ── 헤더 렌더 ──────────────────────────────── */
+  window.yh_renderHeader = function(data){
+    var area=document.getElementById('yh-header-area');
+    if(!area)return;
+    // [v14수정] _yh_viewDate 반영 - 선택한 날짜 기준으로 표시
+    var kst;
+    if(_yh_viewDate){
+      var _vp=_yh_viewDate.split('-');
+      kst=new Date(parseInt(_vp[0]),parseInt(_vp[1])-1,parseInt(_vp[2]));
+    }else{
+      kst=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+    }
+    var dow=kst.getDay(),dom=kst.getDate();
+    var dowNames=['일','월','화','수','목','금','토'];
+    var dateStr=kst.getFullYear()+'년 '+(kst.getMonth()+1)+'월 '+dom+'일 ('+dowNames[dow]+')';
+    var cur=yh_currentStep(data);
+    var doneCount=Math.min(cur-1,5);
+    var pct=Math.round(doneCount/5*100);
+    var allDone=(cur===6);
+
+    var html='<div style="background:#fff;border:1px solid '+C.grayBorder+';border-radius:14px;padding:16px 18px;margin-bottom:10px;">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+      +'<div><div style="font-size:10px;font-weight:700;color:#BDBDBD;letter-spacing:2px;margin-bottom:3px;">DAILY ROUTINE</div>'
+      +'<div style="font-size:15px;font-weight:800;color:'+C.ink+';letter-spacing:-.3px;">윤경의 하루</div></div>'
+      +'<div style="text-align:right;"><div style="font-size:12px;color:'+C.muted+';font-weight:600;">'+yh_esc(dateStr)+'</div>'
+      +(allDone?'<div style="font-size:11px;color:'+C.green+';font-weight:700;margin-top:2px;">오늘 완료 &#10003;</div>'
+               :'<div style="font-size:11px;color:'+C.muted+';margin-top:2px;font-weight:600;">'+doneCount+'/5 완료</div>')
+      +'</div></div>'
+      +'<div style="background:'+C.grayBg+';border-radius:4px;height:4px;overflow:hidden;">'
+      +'<div style="background:'+C.green+';height:100%;width:'+pct+'%;border-radius:4px;transition:width .4s;"></div>'
+      +'</div></div>';
+
+    /* 월요일 주간 점검 */
+    if(dow===1){
+      // [v14수정] 주간점검 재설계 — 해당 월 주차 목록 체크
+      var _wkMo=kst.getMonth()+1;
+      var _wkYear=kst.getFullYear();
+      var _wkFirstDay=new Date(_wkYear,kst.getMonth(),1).getDay();
+      var _wkNum=Math.ceil((kst.getDate()+_wkFirstDay)/7); // 오늘이 몇 주차
+      var _wkNames=['첫째주','둘째주','셋째주','넷째주','다섯째주'];
+      // 해당 월의 총 주차 수 (현재 주까지)
+      var _totalWks=_wkNum;
+      // 월별 키 (wd_yh_wm_YYYY-MM)
+      var _wmKey='wd_yh_wm_'+_wkYear+'-'+String(_wkMo).padStart(2,'0');
+      var _wmData={};
+      try{var _wms=localStorage.getItem(_wmKey);_wmData=_wms?JSON.parse(_wms):{};}catch(e){}
+      function yhwm_save(d){try{localStorage.setItem(_wmKey,JSON.stringify(d));}catch(e){}}
+      // [v17수정] 순서 강제 검증 — 이전 주차 미완료면 이후 주차 자동 초기화
+      var _needFix=false;
+      for(var vi=2;vi<=5;vi++){
+        if(!_wmData['w'+(vi-1)]&&_wmData['w'+vi]){
+          _wmData['w'+vi]=false;_needFix=true;
+        }
+      }
+      if(_needFix) yhwm_save(_wmData);
+      // 현재 주까지 모두 완료됐는지
+      var _wkAllDone=true;
+      for(var wi=1;wi<=_totalWks;wi++){if(!_wmData['w'+wi]){_wkAllDone=false;break;}}
+      var _wc_open=window._yh_wc_open||false;
+      function wcChk(isDone,locked){
+        var bg=isDone?C.green:(locked?'#F5F5F5':'#fff');
+        var bd=isDone?'transparent':(locked?'#E8E8E8':'#D8D8D8');
+        return '<div style="width:22px;height:22px;border:2px solid '+bd+';border-radius:7px;background:'+bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+          +(isDone?'<span style="color:#fff;font-size:12px;font-weight:700;">✓</span>':'')
+          +'</div>';
+      }
+      // 주차별 행 렌더
+      var _wkRows='';
+      for(var wi2=1;wi2<=_totalWks;wi2++){
+        var _wkDone=!!_wmData['w'+wi2];
+        var _wkLocked=(wi2>1&&!_wmData['w'+(wi2-1)]); // 이전 주 미완료면 잠금
+        var _wkThisLabel=_wkMo+'월 '+(_wkNames[wi2-1]||wi2+'번째주')+' 주간점검';
+        var _wkIsLast=(wi2===_totalWks);
+        _wkRows+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;'
+          +(_wkIsLast?'':'border-bottom:1px solid #F0F0F0;')
+          +(_wkLocked?'opacity:0.5;':'')+'">';
+        _wkRows+='<span style="font-size:12px;font-weight:700;color:'+(_wkDone?C.green:'#555')+';">'
+          +_wkThisLabel+'</span>';
+        _wkRows+='<div style="flex:1;"></div>';
+        // 바로가기 버튼
+        _wkRows+='<button onclick="event.stopPropagation();wcnTabSwitch(\'share\')" style="padding:4px 9px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;margin-right:6px;">아이디어</button>';
+        // 체크 (잠금이면 클릭 불가)
+        if(_wkLocked){
+          _wkRows+=wcChk(_wkDone,true);
+        }else{
+          _wkRows+='<div onclick="yh_toggleWeek('+wi2+')" style="cursor:pointer;">'+wcChk(_wkDone,false)+'</div>';
+        }
+        _wkRows+='</div>';
+      }
+      if(_wkAllDone){
+        html+='<div style="background:'+C.greenSoft+';border:1px solid '+C.greenBorder+';border-radius:12px;overflow:hidden;margin-bottom:8px;">'
+          +'<div onclick="yh_toggleHeaderCard_wc()" style="display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;">'
+          +'<span style="color:'+C.green+';font-size:14px;font-weight:700;">✓</span>'
+          +'<div style="flex:1;font-size:12px;font-weight:800;color:'+C.green+';">MON · '+_wkMo+'월 주간점검 완료</div>'
+          +'<span style="font-size:12px;color:'+C.gray+';">'+(_wc_open?'▲':'▼')+'</span>'
+          +'</div>';
+        if(_wc_open){html+='<div style="padding:0 12px 12px;">'+_wkRows+'</div>';}
+        html+='</div>';
+      }else{
+        html+='<div style="background:#fff;border:1px solid #C7D2FE;border-left:3px solid #818CF8;border-radius:12px;overflow:hidden;margin-bottom:8px;">'
+          +'<div onclick="yh_toggleHeaderCard_wc()" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;">'
+          +'<div style="flex:1;font-size:10px;font-weight:700;color:#4338CA;letter-spacing:1.5px;">MON · '+_wkMo+'월 주간점검</div>'
+          +'<span style="font-size:12px;color:'+C.gray+';">'+(_wc_open?'▲':'▼')+'</span>'
+          +'</div>';
+        if(_wc_open){html+='<div style="padding:0 12px 12px;">'+_wkRows+'</div>';}
+        html+='</div>';
+      }
+      // [v14수정] yh_toggleWeek - 전역 노출
+      window.yh_toggleWeek=function(weekNum){
+        var wms={};
+        try{var s2=localStorage.getItem(_wmKey);wms=s2?JSON.parse(s2):{};}catch(e){}
+        // 이전 주차 완료 여부 체크
+        if(weekNum>1&&!wms['w'+(weekNum-1)]){
+          if(typeof showT==='function')showT('⚠️ 이전 주차를 먼저 완료해주세요.');return;
+        }
+        wms['w'+weekNum]=!wms['w'+weekNum];
+        yhwm_save(wms);
+        var d=yh_load()||yh_defaultData();
+        yh_renderHeader(d);
+      };
+    }
+
+    /* 월초 업무 점검 (첫째 주 1~7일에만 표시) */
+    if(dom<=7){
+      var mc=yh_loadMC();
+      // [v14수정] 월초업무 3개로 변경 + 1줄 레이아웃
+      var mcItems=[
+        {name:'세무신고하기',key:'tax',url:'https://www.easyshop.co.kr/taxMain/taxMain.kicc'},
+        {name:'월간영업자료 올리기',key:'bizReport',url:'https://drive.google.com/drive/u/1/folders/1QJi3ZT20QVcAi5hMMgxUxpsCJf0Zsxrd'},
+        {name:'월간시책자료 올리기',key:'monthlyResource',url:'https://drive.google.com/drive/u/1/folders/1ow8LAx3iD07ySiONiHcnRwKNtEmxSXic'}
+      ];
+      var mcAllCheck=['tax','bizReport','monthlyResource'].every(function(k){return !!mc[k];});
+      var _mc_defaultOpen = (dom<=3);
+      var _mc_open = (window._yh_mc_open===undefined)?_mc_defaultOpen:window._yh_mc_open;
+      if(mc.completed){
+        html+='<div style="background:'+C.greenSoft+';border:1px solid '+C.greenBorder+';border-radius:12px;overflow:hidden;margin-bottom:8px;">'
+          +'<div onclick="yh_toggleHeaderCard(this);" style="display:flex;align-items:center;gap:9px;padding:12px 15px;cursor:pointer;">'
+          +'<span style="color:'+C.green+';font-size:14px;font-weight:700;">&#10003;</span>'
+          +'<div style="flex:1;"><div style="font-size:12px;font-weight:800;color:'+C.green+';">월초 업무 점검 완료</div>'
+          +'<div style="font-size:11px;color:'+C.muted+';">이달 확인 항목이 모두 완료되었습니다.</div></div>'
+          +'<span style="font-size:12px;color:'+C.gray+';">'+(_mc_open?'▲':'▼')+'</span>'
+          +'</div>';
+        if(_mc_open){
+          html+='<div style="padding:0 12px 10px;">';
+          mcItems.forEach(function(item){
+            var isDone=!!mc[item.key];
+            html+='<div style="display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid #F0F0F0;">'
+              +'<span style="flex:1;font-size:13px;font-weight:600;color:'+(isDone?C.green:'#1A1A1A')+';">'+item.name+'</span>'
+              +'<a href="'+item.url+'" target="_blank" rel="noopener" style="padding:4px 10px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;color:#555;white-space:nowrap;margin-right:4px;">바로가기</a>'
+              +'<div onclick="yh_toggleMC(\''+item.key+'\')" style="cursor:pointer;width:22px;height:22px;border:2px solid '+(isDone?'transparent':'#D8D8D8')+';border-radius:7px;background:'+(isDone?C.green:'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+              +(isDone?'<span style="color:#fff;font-size:12px;font-weight:700;">✓</span>':'')
+              +'</div></div>';
+          });
+          html+='</div>';
+        }
+        html+='</div>';
+      }else{
+        /* 미완료: 1~2일엔 펼쳐짐, 그 외엔 접힘 */
+        var _mc_title_click = 'onclick="yh_toggleHeaderCard_mc()"';
+        html+='<div style="background:#fff;border:1px solid #A7F3D0;border-radius:12px;overflow:hidden;margin-bottom:8px;">'
+          +'<div '+_mc_title_click+' style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;border-left:3px solid #34D399;">'
+          +'<div style="flex:1;font-size:10px;font-weight:700;color:#065F46;letter-spacing:1.5px;">월초 업무 점검</div>'
+          +'<span style="font-size:12px;color:'+C.gray+';">'+(_mc_open?'▲':'▼')+'</span>'
+          +'</div>';
+        if(_mc_open){
+          html+='<div style="padding:0 12px 10px;">';
+          mcItems.forEach(function(item){
+            var isDone=!!mc[item.key];
+            html+='<div style="display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid #F0F0F0;">'
+              +'<span style="flex:1;font-size:13px;font-weight:600;color:'+(isDone?C.green:'#1A1A1A')+';">'+item.name+'</span>'
+              +'<a href="'+item.url+'" target="_blank" rel="noopener" style="padding:4px 10px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;color:#555;white-space:nowrap;margin-right:4px;">바로가기</a>'
+              +'<div onclick="yh_toggleMC(\''+item.key+'\')" style="cursor:pointer;width:22px;height:22px;border:2px solid '+(isDone?'transparent':'#D8D8D8')+';border-radius:7px;background:'+(isDone?C.green:'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+              +(isDone?'<span style="color:#fff;font-size:12px;font-weight:700;">✓</span>':'')
+              +'</div></div>';
+          });
+          html+=mcAllCheck
+            ?'<button onclick="yh_completeMC()" style="width:100%;padding:9px;background:'+C.green+';color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;margin-top:8px;">월초 업무 점검 완료</button>'
+            :'<div style="font-size:11px;color:'+C.muted+';text-align:center;padding:8px 4px;">모든 항목을 확인하면 월초 업무 점검 완료를 표시할 수 있습니다.</div>';
+          html+='</div>';/* _mc_open 내부 닫기 */
+        }/* if _mc_open 닫기 */
+        html+='</div>';
+      }
+    }
+    area.innerHTML=html;
+  }
+
+  /* ── 전체 단계 렌더 ─────────────────────────── */
+  function yh_renderSteps(data){
+    var area=document.getElementById('yh-steps-area');
+    if(!area)return;
+    var cur=yh_currentStep(data);
+    var html='';
+    html+=yh_stepCard(1,cur,'STEP 01','이메일 확인',data,function(){return yh_step1Body(data);});
+    html+=yh_stepCard(2,cur,'STEP 02','오늘의 할 일 3가지',data,function(){return yh_step2Body(data);});
+    html+=yh_stepCard(3,cur,'STEP 03','오늘 진행한 일',data,function(){return yh_step3Body(data);});
+    html+=yh_stepCard(4,cur,'STEP 04','퇴근 전 루틴',data,function(){return yh_step4Body(data);});
+    html+=yh_stepCard(5,cur,'STEP 05','업무마감',data,function(){return yh_step5Body(data);});
+    area.innerHTML=html;
+  }
+
+  /* ── 단계 카드 (v42 스타일) ──────────────────── */
+  function yh_stepCard(num,cur,stepLabel,title,data,bodyFn){
+    var sd=data['step'+num]||{};
+    var isDone=!!sd.done,isActive=(num===cur),isLocked=(num>cur);
+    var isOpen=yh_isOpen(num,cur);
+    var cardBorder=isLocked?'1px solid #E8E8E8':(isDone?'1.5px solid #22C55E':(isActive?'1.5px solid #1A1A1A':'1px solid #E8E8E8'));
+    var cardShadow=isDone?'0 0 0 2px rgba(34,197,94,.1)':(isActive?'0 0 0 3px rgba(0,0,0,.06)':'none');
+    var cardBg=(isDone&&!isActive)?C.greenSoft:'#fff';
+    var cardOp=isLocked?'opacity:.42;':'';
+    var numBg=(isDone||isActive)?C.green:C.grayBg;
+    var numCol=(isDone||isActive)?'#fff':C.gray;
+    var numBrd=(isDone||isActive)?'none':'1.5px solid '+C.grayBorder;
+    var titleCol=isLocked?C.gray:C.ink;
+    var stepCol=isLocked?'#DDDDDD':(isDone?C.green:'#BDBDBD');
+    var badge=isDone
+      ?'<span style="font-size:12px;font-weight:700;color:'+C.green+';">완료 &#10003;</span>'
+      :(isActive?'<span style="background:'+C.ink+';color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.3px;">진행중</span>'
+        :(isLocked?'<span style="font-size:11px;color:#DDDDDD;">잠금</span>':''));
+    var arrowBtn=isLocked
+      ?'<span style="color:#DDD;font-size:12px;padding:2px 5px;">&#9660;</span>'
+      :'<button onclick="event.stopPropagation();yh_toggleOpen('+num+')" style="background:none;border:none;cursor:pointer;padding:2px 6px;color:'+C.gray+';font-size:13px;">'+(isOpen?'&#9650;':'&#9660;')+'</button>';
+    var head='<div onclick="'+(isLocked?'':('yh_toggleOpen('+num+')'))+'" style="display:flex;align-items:center;justify-content:space-between;'+(isLocked?'':'cursor:pointer;')+'">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:800;background:'+numBg+';color:'+numCol+';border:'+numBrd+';flex-shrink:0;">'+num+'</span>'
+      +'<div><div style="font-size:9px;font-weight:700;color:'+stepCol+';letter-spacing:1.5px;margin-bottom:1px;">'+stepLabel+'</div>'
+      +'<div style="font-size:13px;font-weight:800;color:'+titleCol+';letter-spacing:-.2px;">'+title+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;">'+badge+arrowBtn+'</div>'
+      +'</div>';
+    var body=(!isLocked&&isOpen)
+      ?'<div id="yh-step'+num+'-body" style="margin-top:14px;padding-top:14px;border-top:1px solid '+C.grayBorder+';">'+bodyFn()+'</div>'
+      :'';
+    return '<div style="background:'+cardBg+';border:'+cardBorder+';border-radius:14px;padding:16px 18px;margin-bottom:8px;box-shadow:'+cardShadow+';'+cardOp+'">'
+      +head+body+'</div>';
+  }
+
+  /* ── 1단계 ─────────────────────────────────── */
+  function yh_step1Body(data){
+    var s1=(data.step1&&data.step1.gmail)||false;
+    var s2=(data.step1&&data.step1.naver)||false;
+    function mailRow(type,label,color,url,isDone){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F9F9F9;border:1px solid #E8E8E8;border-radius:10px;margin-bottom:8px;">'
+        +'<a href="'+url+'" target="_blank" rel="noopener" style="padding:7px 13px;background:'+color+';color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0;">'+label+'</a>'
+        +'<span style="flex:1;font-size:13px;color:'+(isDone?C.green:'#555')+';">'+label.replace('열기','')+'확인 완료</span>'
+        +'<div onclick="yh_checkMail(\''+type+'\')" style="width:22px;height:22px;border:2px solid '+(isDone?'transparent':'#D8D8D8')+';border-radius:7px;background:'+(isDone?C.green:'#fff')+';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">'
+        +(isDone?'<span style="color:#fff;font-size:12px;font-weight:700;">&#10003;</span>':'')
+        +'</div>'
+        +'</div>';
+    }
+    return mailRow('gmail','G메일열기','#DB4437','https://mail.google.com/',s1)
+      +mailRow('naver','네이버메일열기','#03C75A','https://mail.naver.com/',s2)
+      +'<div style="font-size:11px;color:'+C.muted+';text-align:center;padding:4px 0;">두 메일을 모두 확인 체크하면 다음 단계가 열립니다.</div>';
+  }
+  window.yh_checkMail=function(type){
+    var data=yh_load()||yh_defaultData();
+    if(!data.step1){data.step1={done:false,gmail:false,naver:false};}
+    data.step1[type]=!data.step1[type];
+    var bothDone=data.step1.gmail&&data.step1.naver;
+    if(bothDone){
+      data.step1.done=true;
+      _yh_open[1]=false;_yh_open[2]=true;
+    }else{
+      data.step1.done=false;
+    }
+    yh_save(data);yh_renderSteps(data);
+  };
+
+  /* ── 2단계 (v42 오전/오후1/오후2 구조) ─────── */
+  function yh_step2Body(data){
+    var todos=(data.step2&&data.step2.todos)?data.step2.todos:['','',''];
+    var slots=[
+      {icon:'🌅',label:'오전업무',  ph:'오전에 할 핵심 업무...'},
+      {icon:'🕐',label:'오후1업무', ph:'오후 첫 번째 핵심 업무...'},
+      {icon:'🕔',label:'오후2업무', ph:'오후 두 번째 핵심 업무...'}
+    ];
+    var inp='width:100%;border:1.5px solid #D8D8D8;border-radius:9px;padding:10px 12px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;color:#1A1A1A;outline:none;background:#FAFAFA;box-sizing:border-box;';
+    var html='<div style="margin-bottom:4px;">';
+    slots.forEach(function(s,i){
+      html+='<div style="display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:center;margin-bottom:8px;">'
+        +'<span style="font-size:11px;font-weight:800;color:#555;background:#F5F5F3;border:1.5px solid #D8D8D8;border-radius:7px;padding:5px 6px;text-align:center;white-space:nowrap;line-height:1.4;">'+s.icon+'<br>'+s.label+'</span>'
+        +'<input type="text" id="yh-todo-'+(i+1)+'" value="'+yh_esc(todos[i]||'')+'" placeholder="'+s.ph+'"'
+        +' style="'+inp+'"'
+        +' onfocus="this.style.borderColor=\'#1A1A1A\';this.style.background=\'#fff\';"'
+        +' onblur="this.style.borderColor=\'#D8D8D8\';this.style.background=\'#FAFAFA\';"'
+        +' oninput="yh_autoSaveTodos()">'
+        +'</div>';
+    });
+    // [v14수정] step2 완료 체크박스: 현재 done 상태 확인하여 체크 표시 토글
+    var _s2Data=yh_load()||yh_defaultData();
+    var _s2Done=!!(_s2Data.step2&&_s2Data.step2.done);
+    var _s2ChkStyle=_s2Done
+      ?'width:22px;height:22px;border:2px solid transparent;border-radius:7px;background:#22C55E;flex-shrink:0;display:flex;align-items:center;justify-content:center;'
+      :'width:22px;height:22px;border:2px solid #D8D8D8;border-radius:7px;background:#fff;flex-shrink:0;';
+    var _s2ChkInner=_s2Done?'<span style="color:#fff;font-size:13px;font-weight:700;">&#10003;</span>':'';
+    var _s2BgStyle=_s2Done?'background:#F0FDF4;border:1.5px solid #A7F3D0;':'background:#F5F5F5;border:1.5px solid #D8D8D8;';
+    html+='</div>'
+      +'<div style="'+_s2BgStyle+'border-radius:10px;padding:10px 14px;margin-top:4px;cursor:pointer;" onclick="yh_toggleStep2()">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<div style="'+_s2ChkStyle+'">'+_s2ChkInner+'</div>'
+      +'<div style="font-size:13px;color:'+(_s2Done?'#22C55E':'#555')+';font-weight:700;">핵심 할 일 작성 완료 &#8594; 3단계 열기</div>'
+      +'</div></div>';
+    return html;
+  }
+
+  /* ── 3단계 ─────────────────────────────────── */
+  function yh_step3Body(data){
+    var items=(data.step3&&data.step3.items&&data.step3.items.length)?data.step3.items:yh_buildDefaultItems(data);
+    var extraItems=items.filter(function(i){return !i.isFromTodo;});
+    /* 핵심 3개 */
+    var html='<div id="yh-step3-core">';
+    items.forEach(function(item,idx_){ if(item.isFromTodo) html+=yh_step3Item(item,idx_,items); });
+    html+='</div>';
+    /* 추가 할 일 섹션 */
+    html+='<div style="margin:10px 0 6px;">';
+    if(extraItems.length>0){
+      html+='<div style="margin-bottom:8px;font-size:11px;font-weight:700;color:#BDBDBD;text-align:center;letter-spacing:.5px;">추가 할 일 ('+extraItems.length+'/5)</div>'
+        +'<div id="yh-step3-extra">';
+      items.forEach(function(item,idx_){ if(!item.isFromTodo) html+=yh_step3Item(item,idx_,items); });
+      html+='</div>';
+    }
+    if(extraItems.length<5){
+      html+='<button onclick="yh_addStep3Item()" style="width:100%;padding:9px 13px;background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:9px;font-size:12px;font-weight:700;color:#92400E;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;text-align:left;margin-top:4px;">&#128161; 그 외 업무 추가하기</button>';
+    }
+    html+='</div>'
+      +'<div style="font-size:11px;color:'+C.muted+';text-align:center;padding:4px 0 2px;">모든 업무를 처리하면 자동으로 4단계가 열립니다.</div>';
+    return html;
+  }
+
+  function yh_buildDefaultItems(data){
+    // [v14수정] 처음엔 핵심 3개만 — 추가 할일은 버튼으로만
+    var todos=(data.step2&&data.step2.todos)?data.step2.todos:['','',''];
+    return [
+      {text:todos[0]||'',status:'',note1:'',note2:'',note3:'',isFromTodo:true},
+      {text:todos[1]||'',status:'',note1:'',note2:'',note3:'',isFromTodo:true},
+      {text:todos[2]||'',status:'',note1:'',note2:'',note3:'',isFromTodo:true}
+    ];
+  }
+
+  function yh_step3Item(item,idx,allItems){
+    var st=item.status||'';
+    var isDone=(st==='done'),isTomo=(st==='tomorrow'),isHold=(st==='hold'),isDel=(st==='delete');
+    /* 오전/오후 레이블 (isFromTodo 항목만) */
+    var slotMeta=[{icon:'🌅',label:'오전'},{icon:'🕐',label:'오후1'},{icon:'🕔',label:'오후2'}];
+    /* allItems에서 isFromTodo 중 몇 번째인지 계산 */
+    var slotIdx=-1;
+    if(item.isFromTodo){
+      var cnt=0;
+      for(var i=0;i<(allItems||[]).length;i++){
+        if(allItems[i]===item){slotIdx=cnt;break;}
+        if(allItems[i].isFromTodo)cnt++;
+      }
+    }
+    var labelHtml='';
+    if(item.isFromTodo&&slotIdx>=0&&slotIdx<3){
+      var sm=slotMeta[slotIdx];
+      labelHtml='<span style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#555;background:#F5F5F3;border:1.5px solid #D8D8D8;border-radius:7px;padding:4px 6px;white-space:nowrap;line-height:1.3;flex-shrink:0;min-width:44px;text-align:center;">'+sm.icon+'<br>'+sm.label+'</span>';
+    }
+    var textCol=isDone?C.green:(isDel?C.gray:C.ink);
+    var textExtra=isDone?'background:'+C.greenSoft+';':(isDel?'text-decoration:line-through;color:#EF4444;background:#FEF2F2;':'');
+    /* 버튼 (우측 배치, 아이콘/짧은텍스트로 작게) */
+    var chips=[
+      {v:'done',   l:'완료',     on:'background:'+C.green+';color:#fff;border-color:'+C.green+';'},
+      {v:'tomorrow',l:'내일로',  on:'background:'+C.blue+';color:#fff;border-color:'+C.blue+';'},
+      {v:'hold',   l:'보류',     on:'background:'+C.amber+';color:#fff;border-color:'+C.amber+';'},
+      {v:'delete', l:(isDel?'삭제 취소':'이 업무 삭제'), on:(isDel?'background:#fff;color:'+C.red+';border-color:'+C.red+';':'background:'+C.red+';color:#fff;border-color:'+C.red+';')}
+    ];
+    var btnHtml=chips.map(function(c){
+      var isOn=(st===c.v);
+      return '<button onclick="yh_setItemStatus('+idx+',\''+c.v+'\')"'
+        +' style="padding:5px 9px;border:1px solid '+(isOn?'transparent':C.grayBorder)+';border-radius:7px;font-size:11px;font-weight:700;'+(isOn?c.on:'background:#fff;color:'+C.muted+';')+'cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;white-space:nowrap;">'+c.l+'</button>';
+    }).join('');
+    var rowBg=isDel?'#FEF2F2':(item.isFromTodo&&isDone)?C.greenSoft:(isDone?C.greenSoft:C.grayBg);
+    var rowBrd=isDel?'#FECACA':(item.isFromTodo&&isDone)?C.greenBorder:(isDone?C.greenBorder:C.grayBorder);
+    var html='<div id="yh-item-'+idx+'" style="background:'+rowBg+';border:1px solid '+rowBrd+';border-radius:10px;padding:9px 10px;margin-bottom:6px;">'
+      +'<div style="display:flex;align-items:center;gap:7px;">'
+      +labelHtml
+      +'<input type="text" id="yh-item-text-'+idx+'" value="'+yh_esc(item.text||'')+'" placeholder="진행한 일"'
+      +' style="flex:1;border:1px solid #D8D8D8;border-radius:7px;padding:7px 9px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;color:'+textCol+';'+textExtra+'outline:none;background:#fff;box-sizing:border-box;min-width:0;"'
+      +' oninput="yh_autoSaveStep3()">'
+      +'<div style="display:flex;gap:4px;flex-shrink:0;">'+btnHtml+'</div>'
+      +'</div>';
+    if(isTomo){
+      html+='<div style="margin-top:7px;display:flex;flex-direction:column;gap:4px;background:'+C.blueSoft+';padding:8px;border-radius:7px;">'
+        +'<input type="text" id="yh-item-n1-'+idx+'" value="'+yh_esc(item.note1||'')+'" placeholder="진행중인 상황 — 지금까지 어디까지 했나요?" style="'+S.input+'" oninput="yh_autoSaveStep3()">'
+        +'<input type="text" id="yh-item-n2-'+idx+'" value="'+yh_esc(item.note2||'')+'" placeholder="어디서부터 이어가야 하는지" style="'+S.input+'" oninput="yh_autoSaveStep3()">'
+        +'<input type="text" id="yh-item-n3-'+idx+'" value="'+yh_esc(item.note3||'')+'" placeholder="작업공간 (예: 클로드, GPT, 삼성업무전산 등)" style="'+S.input+'" oninput="yh_autoSaveStep3()">'
+        +'</div>';
+    }else if(isHold){
+      html+='<div style="margin-top:7px;display:flex;flex-direction:column;gap:4px;background:'+C.amberSoft+';padding:8px;border-radius:7px;">'
+        +'<input type="text" id="yh-item-n1-'+idx+'" value="'+yh_esc(item.note1||'')+'" placeholder="보류 사유" style="'+S.input+'" oninput="yh_autoSaveStep3()">'
+        +'<input type="text" id="yh-item-n2-'+idx+'" value="'+yh_esc(item.note2||'')+'" placeholder="다시 볼 시점" style="'+S.input+'" oninput="yh_autoSaveStep3()">'
+        +'</div>';
+    }
+    html+='</div>';
+    return html;
+  }
+
+  /* ── 4단계: 퇴근 전 루틴 (v42 체크리스트) ─── */
+  function yh_step4Body(data){
+    var d4=data.step4||{};
+    var ch=d4.checks||{};
+    var routines=[
+      {key:'downloads',icon:'📁',label:'다운로드폴더 정리'},
+      {key:'kakao',icon:'💬',label:'카카오톡 다운로드 정리'},
+      {key:'nateon',icon:'📶',label:'네이트온 다운로드 정리'},
+      {key:'desktop',icon:'🖥',label:'바탕화면 정리'},
+      {key:'cust',icon:'👥',label:'고객관리 정리'}
+    ];
+    var keys=['ai','drive','downloads','kakao','nateon','desktop','cust'];
+    var allChecked=!!d4.ai&&!!d4.drive&&routines.every(function(r){return !!ch[r.key];});
+
+    function chkBox(isDone){ return '<div style="width:22px;height:22px;border:2px solid '+(isDone?'transparent':'#D8D8D8')+';border-radius:7px;background:'+(isDone?C.green:'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(isDone?'<span style="color:#fff;font-size:12px;font-weight:700;">&#10003;</span>':'')+'</div>'; }
+
+    var html='<div style="background:#F9F9F9;border:1px solid #E8E8E8;border-radius:12px;overflow:hidden;margin-bottom:12px;">';
+    /* AI자료실 행 */
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #EFEFEF;">'
+      +'<span style="font-size:16px;">🤖</span>'
+      +'<span style="flex:1;font-size:13px;color:'+(d4.ai?C.green:'#1A1A1A')+';">AI자료실 등록</span>'
+      +'<button onclick="if(typeof aaOpenModal===\'function\')aaOpenModal(\'new\');else{wcnTabSwitch(\'ai-archive\');}" style="padding:5px 11px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;margin-right:6px;">등록하기</button>'
+      +'<div onclick="yh_toggleRoutine(\'ai\')" style="cursor:pointer;">'+chkBox(!!d4.ai)+'</div>'
+      +'</div>';
+    /* [v14수정] 구글드라이브 행 + 파일명 입력칸 */
+    html+='<div style="border-bottom:1px solid #EFEFEF;">'
+      +'<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;">'
+      +'<span style="font-size:16px;">📁</span>'
+      +'<span style="flex:1;font-size:13px;color:'+(d4.drive?C.green:'#1A1A1A')+';">구글드라이브 등록</span>'
+      +'<a href="https://drive.google.com/drive/u/1/folders/1JL2yPIdGdJHoGEFBJRz16otTJZAEkAiH" target="_blank" rel="noopener" style="padding:5px 11px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;color:#555;margin-right:6px;white-space:nowrap;">드라이브 열기</a>'
+      +'<div onclick="yh_toggleRoutine(\'drive\')" style="cursor:pointer;">'+chkBox(!!d4.drive)+'</div>'
+      +'</div>'
+      +'<div style="padding:0 14px 10px;">'
+      +'<input type="text" id="yh-drive-note" value="'+yh_esc(d4.driveNote||'')+'" placeholder="등록한 파일명을 적어주세요" oninput="yh_saveDriveNote(this.value)" style="width:100%;padding:7px 10px;border:1px solid #E8E8E8;border-radius:7px;font-size:12px;font-family:inherit;color:#334155;outline:none;box-sizing:border-box;background:'+(d4.drive?'#fff':'#F9F9F9')+';"'+(d4.drive?'':' disabled')+'>'
+      +'</div>'
+      +'</div>';
+    /* 루틴 체크리스트 */
+    routines.forEach(function(r,i){
+      var isDone=!!ch[r.key];
+      var isLast=(i===routines.length-1);
+      html+='<div onclick="yh_toggleRoutine(\''+r.key+'\', true)" style="display:flex;align-items:center;gap:10px;padding:11px 14px;'+(isLast?'':'border-bottom:1px solid #EFEFEF;')+'cursor:pointer;">'
+        +'<span style="font-size:16px;">'+r.icon+'</span>'
+        +'<span style="flex:1;font-size:13px;color:'+(isDone?C.green:'#1A1A1A')+';">'+r.label+'</span>'
+        +chkBox(isDone)+'</div>';
+    });
+    html+='</div>';
+    html+=allChecked
+      ?'<button onclick="yh_completeStep(4)" style="width:100%;padding:12px;background:'+C.green+';color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">&#127807; 오늘 업무 종료 &#8594; 마감 요약 확인</button>'
+      :'<div style="text-align:center;font-size:11px;color:'+C.muted+';padding:8px 4px;">모든 항목을 체크하면 완료할 수 있습니다.</div>';
+    return html;
+  }
+  // [v14수정] 드라이브 파일명 저장
+  window.yh_saveDriveNote = function(val){
+    var data=yh_load()||yh_defaultData();
+    if(!data.step4)data.step4=yh_defaultData().step4;
+    data.step4.driveNote=val||'';
+    yh_save(data);
+  };
+
+  window.yh_toggleRoutine=function(key,isCheck){
+    var data=yh_load()||yh_defaultData();
+    if(!data.step4){data.step4=yh_defaultData().step4;}
+    // [v14수정] drive 체크 시 입력칸 활성화
+    if(key==='drive'){
+      data.step4.drive=!data.step4.drive;
+      var noteEl=document.getElementById('yh-drive-note');
+      if(noteEl){noteEl.disabled=!data.step4.drive;noteEl.style.background=data.step4.drive?'#fff':'#F9F9F9';}
+      yh_save(data);
+      var b3=document.getElementById('yh-step3-body');
+      // 4단계 재렌더
+      var allOk2=!!data.step4.ai&&!!data.step4.drive&&['downloads','kakao','nateon','desktop','cust'].every(function(k){return !!(data.step4.checks&&data.step4.checks[k]);});
+      var area4=document.getElementById('yh-step4-body');
+      if(area4) area4.innerHTML=yh_step4Body(data);
+      return;
+    }
+    if(key==='ai'||key==='drive'){
+      data.step4[key]=!data.step4[key];
+    }else{
+      if(!data.step4.checks)data.step4.checks={};
+      data.step4.checks[key]=!data.step4.checks[key];
+    }
+    /* 체크 하나라도 풀리면 done 취소 */
+    var d4=data.step4,ch=d4.checks||{};
+    var allOk=!!d4.ai&&!!d4.drive&&['downloads','kakao','nateon','desktop','cust'].every(function(k){return !!ch[k];});
+    if(!allOk&&data.step4.done){
+      data.step4.done=false;
+      data.step5.done=false;
+      yh_save(data);yh_renderHeader(data);yh_renderSteps(data);return;
+    }
+    yh_save(data);
+    var body=document.getElementById('yh-step4-body');
+    if(body) body.innerHTML=yh_step4Body(data);
+  };
+
+  /* ── 5단계: 업무마감 ─────────────────────── */
+  function yh_step5Body(data){
+    var items=(data.step3&&data.step3.items)?data.step3.items:[];
+    var done=items.filter(function(i){return i.status==='done';});
+    var tomo=items.filter(function(i){return i.status==='tomorrow';});
+    var hold=items.filter(function(i){return i.status==='hold';});
+    var del=items.filter(function(i){return i.status==='delete';});
+    var d4=data.step4||{};
+    var completedTime=null;
+    if(data.step5&&data.step5.done&&data.step5.completedAt){
+      try{completedTime=new Date(data.step5.completedAt).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});}catch(e){}
+    }
+
+    function listRows(arr, color, mark){
+      if(!arr.length) return '<div style="font-size:12px;color:#BDBDBD;padding:2px 0;">없음</div>';
+      return arr.map(function(i){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed #F0F0F0;">'
+          +'<span style="font-size:12px;flex-shrink:0;">'+mark+'</span>'
+          +'<span style="font-size:13px;color:'+color+';flex:1;">'+yh_esc(i.text||'')+'</span>'
+          +(i.status==='tomorrow'&&i.note1?'<span style="font-size:11px;color:#6B7280;white-space:nowrap;">→ '+yh_esc(i.note1)+'</span>':'')
+          +'</div>';
+      }).join('');
+    }
+    function sec(icon,label,content,borderColor){
+      return '<div style="background:#fff;border:1px solid '+(borderColor||C.grayBorder)+';border-radius:11px;padding:12px 14px;margin-bottom:8px;">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">'
+        +'<span style="font-size:14px;">'+icon+'</span>'
+        +'<span style="font-size:11px;font-weight:800;color:#555;letter-spacing:.5px;">'+label+'</span>'
+        +'</div>'
+        +content+'</div>';
+    }
+
+    var html='';
+    if(completedTime){
+      html+='<div style="background:'+C.greenSoft+';border:1px solid '+C.greenBorder+';border-radius:12px;padding:16px;text-align:center;margin-bottom:12px;">'
+        +'<div style="font-size:20px;margin-bottom:5px;">&#127807;</div>'
+        +'<div style="font-size:14px;font-weight:800;color:'+C.ink+';">오늘도 수고했습니다</div>'
+        +'<div style="font-size:11px;color:'+C.green+';margin-top:3px;font-weight:600;">'+completedTime+' 업무 종료</div>'
+        +'</div>';
+    }
+
+    // [v14수정] 모든 항목 항상 표시 (없으면 '없음')
+    html+=sec('✅','오늘 완료한 일',listRows(done,C.green,'✅'),'#A7F3D0');
+    html+=sec('→','내일 넘긴 일',listRows(tomo,'#1D4ED8','→'),'#BFDBFE');
+    html+=sec('⏸','보류한 일',listRows(hold,'#92400E','⏸'),'#FDE68A');
+    html+=sec('✕','삭제한 일',listRows(del,'#BDBDBD','✕'),'#FECACA');
+
+    // [v14수정] AI자료실 + 구글드라이브 항상 표시
+    var aiContent=d4.ai
+      ?'<div style="font-size:13px;color:'+C.green+';font-weight:700;">등록 완료 ✓</div>'
+      :'<div style="font-size:12px;color:#BDBDBD;padding:2px 0;">없음</div>';
+    if(d4.ai&&d4.aiNote) aiContent+='<div style="font-size:12px;color:'+C.muted+';margin-top:3px;">'+yh_esc(d4.aiNote)+'</div>';
+    html+=sec('🤖','AI자료실',aiContent,'#DDD6FE');
+
+    var driveContent=d4.drive
+      ?'<div style="font-size:13px;color:'+C.green+';font-weight:700;">등록 완료 ✓</div>'
+      :'<div style="font-size:12px;color:#BDBDBD;padding:2px 0;">없음</div>';
+    if(d4.drive&&d4.driveNote) driveContent+='<div style="font-size:12px;color:'+C.muted+';margin-top:3px;">'+yh_esc(d4.driveNote)+'</div>';
+    html+=sec('📁','구글드라이브 등록',driveContent,'#BBDEFB');
+
+    if(!(data.step5&&data.step5.done)){
+      html+='<button onclick="yh_completeStep(5)" style="width:100%;margin-top:4px;padding:13px;background:'+C.green+';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">&#127807; 오늘 하루 완료 / 업무마감</button>';
+    }
+    return html;
+  }
+
+
+  /* ── 단계 완료 처리 ─────────────────────────── */
+  // [v14수정] STEP2 토글: 할일 1개 이상 → 완료, 이미 완료 → 해제 가능
+  window.yh_toggleStep2=function(){
+    var _t1=document.getElementById('yh-todo-1');
+    var _t2=document.getElementById('yh-todo-2');
+    var _t3=document.getElementById('yh-todo-3');
+    var data=yh_load()||yh_defaultData();
+    if(data.step2&&data.step2.done){
+      // 완료 → 진행중으로 해제
+      if(_t1) data.step2.todos[0]=_t1.value||'';
+      if(_t2) data.step2.todos[1]=_t2.value||'';
+      if(_t3) data.step2.todos[2]=_t3.value||'';
+      data.step2.done=false;
+      _yh_open[2]=true;
+      _yh_open[3]=false;
+      yh_save(data);yh_renderHeader(data);yh_renderSteps(data);
+      if(typeof showT==='function') showT('2단계가 진행중으로 변경되었습니다.');
+    }else{
+      // 진행중 → 완료: 할일 최소 1개 있어야 함
+      var hasAny=(_t1&&_t1.value.trim())||(_t2&&_t2.value.trim())||(_t3&&_t3.value.trim());
+      if(!hasAny){
+        if(typeof showT==='function') showT('⚠️ 최소 1개 이상 핵심 할 일을 입력해주세요.');
+        return;
+      }
+      yh_completeStep(2);
+    }
+  };
+
+  window.yh_completeStep=function(num){
+    var data=yh_load()||yh_defaultData();
+    if(num===2){
+      /* DOM에 있으면 최신값, 없으면 기존 저장값 유지 */
+      var _t1=document.getElementById('yh-todo-1');
+      var _t2=document.getElementById('yh-todo-2');
+      var _t3=document.getElementById('yh-todo-3');
+      if(_t1) data.step2.todos[0]=_t1.value||'';
+      if(_t2) data.step2.todos[1]=_t2.value||'';
+      if(_t3) data.step2.todos[2]=_t3.value||'';
+      var _existExtra=(data.step3.items||[]).filter(function(i){return !i.isFromTodo;});
+      /* 항상 현재 todos 기반으로 핵심 3개 재생성 */
+      data.step3.items=yh_buildDefaultItems(data).slice(0,3).concat(_existExtra);
+    }
+    if(num===3) yh_collectStep3(data);
+    if(num===4){
+      var _d4=data.step4||{},_ch=_d4.checks||{};
+      var _ok=!!_d4.ai&&!!_d4.drive&&['downloads','kakao','nateon','desktop','cust'].every(function(k){return !!_ch[k];});
+      if(!_ok){if(typeof showT==='function')showT('모든 항목을 체크해주세요.');return;}
+      data.step4=data.step4||{ai:false,drive:false};
+      data.step4.ai={
+        title:(document.getElementById('yh-ai-title')||{value:''}).value||'',
+        summary:(document.getElementById('yh-ai-summary')||{value:''}).value||'',
+        link:(document.getElementById('yh-ai-link')||{value:''}).value||''
+      };
+      data.step4.drive={
+        filename:(document.getElementById('yh-drive-file')||{value:''}).value||'',
+        location:(document.getElementById('yh-drive-loc')||{value:''}).value||''
+      };
+    }
+    if(num===5) data.step5.completedAt=new Date().toISOString();
+    data['step'+num].done=true;
+    _yh_open[num]=false;
+    if(num<5) _yh_open[num+1]=true;
+    yh_save(data);
+    yh_renderHeader(data);
+    yh_renderSteps(data);
+    if(typeof showT==='function') showT(num+'단계 완료');
+  };
+
+  /* ── 상태 설정 ──────────────────────────────── */
+  /* [v14수정] 전체 items(핵심+추가) 처리 조건으로 변경 → 자동 4단계 이동 */
+  function yh_checkStep3Auto(data){
+    var allItems=(data.step3&&data.step3.items)?data.step3.items:[];
+    // 텍스트 있는 항목만 체크 대상 (빈 추가 항목 제외)
+    var checkItems=allItems.filter(function(i){return (i.text||'').trim()!=='';});
+    var allProcessed=checkItems.length>0&&checkItems.every(function(i){return i.status&&i.status!=='';});
+    if(allProcessed&&!data.step3.done){
+      data.step3.done=true;
+      _yh_open[3]=false;_yh_open[4]=true;
+      // [v14수정] 4단계 진입 시 체크 초기화 (새로 루틴 진행)
+      if(data.step4){
+        data.step4.done=false;
+        data.step4.ai=false;data.step4.drive=false;
+        data.step4.driveNote='';
+        data.step4.checks={downloads:false,kakao:false,nateon:false,desktop:false,cust:false};
+      }
+      yh_save(data);yh_renderHeader(data);yh_renderSteps(data);
+      if(typeof showT==='function')showT('3단계 완료! 퇴근 전 루틴을 시작하세요.');
+      return true;
+    }else if(!allProcessed&&data.step3.done){
+      data.step3.done=false;
+      yh_save(data);yh_renderSteps(data);
+      return true;
+    }
+    return false;
+  }
+  window.yh_setItemStatus=function(idx,status){
+    var data=yh_load()||yh_defaultData();
+    yh_collectStep3(data);
+    var item=data.step3.items[idx];
+    if(!item) return;
+
+    /* [v16수정] 삭제: confirm 없음, status 토글 (취소선 표시) */
+    if(status==='delete'){
+      item.status=(item.status==='delete')?'':'delete';
+      yh_save(data);
+      if(!yh_checkStep3Auto(data)){
+        var body=document.getElementById('yh-step3-body');
+        if(body) body.innerHTML=yh_step3Body(data);
+      }
+      return;
+    }
+
+    /* 보류: 모달 표시 후 처리 */
+    if(status==='hold'){
+      if(item.status==='hold'){
+        /* 토글: 보류 해제 */
+        item.status='';yh_save(data);
+        if(!yh_checkStep3Auto(data)){
+          var body=document.getElementById('yh-step3-body');
+          if(body) body.innerHTML=yh_step3Body(data);
+        }
+      }else{
+        item.status='hold';yh_save(data);
+        window._yh_holdIdx=idx;
+        var tm=document.getElementById('yh-hold-text');
+        if(tm) tm.textContent=item.text||'(제목 없음)';
+        // [v14수정] 모달 초기화: 업무명 content에 기본 입력, 요청자 초기화
+        var yhmTA=document.getElementById('yhm-content');
+        if(yhmTA) yhmTA.value=item.text||'';
+        var yhmSt=document.getElementById('yhm-status');
+        if(yhmSt) yhmSt.textContent='';
+        if(typeof yhmSelectReq==='function') yhmSelectReq('최윤경');
+        // 카테고리 초기화
+        window._yhm_cat='';
+        document.querySelectorAll('[data-yhmcat]').forEach(function(b){
+          b.style.background='#fff';b.style.color='#334155';b.style.borderColor='#e2e8f0';
+        });
+        var modal=document.getElementById('yh-hold-modal');
+        if(modal){modal.style.display='flex';}
+        if(!yh_checkStep3Auto(data)){
+          var body=document.getElementById('yh-step3-body');
+          if(body) body.innerHTML=yh_step3Body(data);
+        }
+      }
+      return;
+    }
+
+    /* 내일로: 내일 날짜 todo에 추가 */
+    if(status==='tomorrow'){
+      if(item.status==='tomorrow'){
+        item.status='';
+      }else{
+        item.status='tomorrow';
+        /* 내일 날짜에 업무 추가 */
+        try{
+          var kst=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+          kst.setDate(kst.getDate()+1);
+          var tmKey='wd_yh_'+kst.getFullYear()+'-'+String(kst.getMonth()+1).padStart(2,'0')+'-'+String(kst.getDate()).padStart(2,'0');
+          var tmData=null;try{var ts=localStorage.getItem(tmKey);tmData=ts?JSON.parse(ts):null;}catch(e){}
+          if(!tmData)tmData=yh_defaultData();
+          var todos=tmData.step2.todos||['','',''];
+          for(var ti=0;ti<3;ti++){if(!todos[ti]){todos[ti]=item.text;break;}}
+          tmData.step2.todos=todos;
+          localStorage.setItem(tmKey,JSON.stringify(tmData));
+          if(typeof showT==='function')showT('내일 할 일에 추가했습니다!');
+        }catch(e){}
+      }
+    }else{
+      /* 완료/기타: 토글 */
+      item.status=(item.status===status)?'':status;
+    }
+
+    yh_save(data);
+    if(!yh_checkStep3Auto(data)){
+      var body=document.getElementById('yh-step3-body');
+      if(body) body.innerHTML=yh_step3Body(data);
+    }
+  };
+  /* ── [v14수정] 보류 모달 + 아이디어모음 등록 함수 ── */
+  var _yhm_req = '최윤경';
+  var _yhm_cat = '';
+
+  window.yh_closeHoldModal = function(){
+    var m = document.getElementById('yh-hold-modal');
+    if(m) m.style.display = 'none';
+  };
+
+  window.yhmSelectReq = function(name){
+    _yhm_req = name;
+    var yoon  = document.getElementById('yhm-req-yoon');
+    var sujin = document.getElementById('yhm-req-sujin');
+    if(!yoon || !sujin) return;
+    var isYoon = (name === '최윤경');
+    yoon.style.background  = isYoon ? '#FBBF24' : '#fff';
+    yoon.style.color       = isYoon ? '#1C1917' : '#334155';
+    yoon.style.borderColor = isYoon ? '#FBBF24' : '#e2e8f0';
+    sujin.style.background  = !isYoon ? '#FBBF24' : '#fff';
+    sujin.style.color       = !isYoon ? '#1C1917' : '#334155';
+    sujin.style.borderColor = !isYoon ? '#FBBF24' : '#e2e8f0';
+  };
+
+  window.yhmSelectCat = function(cat){
+    _yhm_cat = cat;
+    document.querySelectorAll('[data-yhmcat]').forEach(function(b){
+      var active = (b.getAttribute('data-yhmcat') === cat);
+      b.style.background  = active ? '#FBBF24' : '#fff';
+      b.style.color       = active ? '#1C1917' : '#334155';
+      b.style.borderColor = active ? '#FBBF24' : '#e2e8f0';
+    });
+  };
+
+  window.yhm_save = async function(){
+    var stEl = document.getElementById('yhm-status');
+    function setMsg(msg, ok){
+      if(!stEl) return;
+      stEl.textContent = msg;
+      stEl.style.color = ok ? '#16a34a' : '#dc2626';
+    }
+    if(!_yhm_req){ setMsg('⚠️ 업무요청자를 선택해주세요.', false); return; }
+    if(!_yhm_cat){ setMsg('⚠️ 카테고리를 선택해주세요.', false); return; }
+    var ta = document.getElementById('yhm-content');
+    if(!ta || !ta.value.trim()){ setMsg('⚠️ 업무상세내역을 입력해주세요.', false); return; }
+    if(!window._supaReady || !window._SB_URL || !window.SUPA_KEY){
+      setMsg('⚠️ Supabase 미연결 상태입니다.', false); return;
+    }
+    var uid = (typeof _CURRENT_UID !== 'undefined' && _CURRENT_UID) ? String(_CURRENT_UID) : 'guest';
+    var today = (function(){
+      var d = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    })();
+    var now = new Date().toISOString();
+    var payload = {
+      user_id: uid,
+      requester_name: _yhm_req,
+      category: _yhm_cat,
+      content: ta.value.trim(),
+      status: '요청접수',
+      request_date: today,
+      created_at: now,
+      updated_at: now
+    };
+    setMsg('등록 중...', true);
+    try {
+      var res = await fetch(window._SB_URL + '/rest/v1/work_tasks', {
+        method: 'POST',
+        headers: {
+          'apikey': window.SUPA_KEY,
+          'Authorization': 'Bearer ' + window.SUPA_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok){ var et = await res.text(); throw new Error('HTTP '+res.status+' '+et.substring(0,60)); }
+      setMsg('✅ 아이디어모음에 등록되었습니다!', true);
+      if(typeof showT === 'function') showT('💡 아이디어모음에 등록 완료!');
+      // 공유업무보드 열려있으면 새로고침
+      if(typeof wt_loadList === 'function'){
+        var sharePanel = document.getElementById('wcn-panel-share');
+        if(sharePanel && sharePanel.style.display !== 'none') wt_loadList();
+      }
+      setTimeout(function(){ yh_closeHoldModal(); }, 1200);
+    } catch(e){
+      console.error('[yhm_save]', e.message || e);
+      setMsg('❌ 등록 실패: ' + (e.message||'').substring(0,40), false);
+    }
+  };
+
+  /* 구버전 호환 (호출부 유지) */
+  window.yh_holdToIdea = function(){ yh_closeHoldModal(); };
+  window.yh_addStep3Item=function(){
+    var data=yh_load()||yh_defaultData();
+    yh_collectStep3(data);
+    if(!data.step3.items) data.step3.items=yh_buildDefaultItems(data);
+    data.step3.items.push({text:'',status:'',note1:'',note2:'',note3:'',isFromTodo:false,isNew:true});
+    yh_save(data);
+    var body=document.getElementById('yh-step3-body');
+    if(body) body.innerHTML=yh_step3Body(data);
+  };
+  function yh_collectStep3(data){
+    var items=data.step3.items||[];
+    items.forEach(function(item,idx){
+      var el=document.getElementById('yh-item-text-'+idx);
+      if(el) item.text=el.value;
+      ['n1','n2','n3'].forEach(function(n,ni){
+        var e2=document.getElementById('yh-item-'+n+'-'+idx);
+        if(e2) item['note'+(ni+1)]=e2.value;
+      });
+    });
+    data.step3.items=items;
+  }
+  window.yh_autoSaveTodos=function(){
+    var data=yh_load()||yh_defaultData();
+    data.step2.todos=[
+      (document.getElementById('yh-todo-1')||{value:''}).value||'',
+      (document.getElementById('yh-todo-2')||{value:''}).value||'',
+      (document.getElementById('yh-todo-3')||{value:''}).value||''
+    ];
+    yh_save(data);
+  };
+  window.yh_autoSaveStep3=function(){
+    var data=yh_load()||yh_defaultData();yh_collectStep3(data);yh_save(data);
+  };
+  window.yh_autoSaveStep4=function(){
+    var data=yh_load()||yh_defaultData();
+    data.step4=data.step4||{ai:{},drive:{}};
+    data.step4.ai=data.step4.ai||{};
+    data.step4.drive=data.step4.drive||{};
+    data.step4.ai.title=(document.getElementById('yh-ai-title')||{value:''}).value||'';
+    data.step4.ai.summary=(document.getElementById('yh-ai-summary')||{value:''}).value||'';
+    data.step4.ai.link=(document.getElementById('yh-ai-link')||{value:''}).value||'';
+    data.step4.drive.filename=(document.getElementById('yh-drive-file')||{value:''}).value||'';
+    data.step4.drive.location=(document.getElementById('yh-drive-loc')||{value:''}).value||'';
+    yh_save(data);
+  };
+
+  /* ── wcnTabSwitch 래핑: daily-haru 진입 시 yh_init + 배경 처리 ── */
+  /* ── 헤더 카드 토글 (전역 함수 — onclick에서 호출) ── */
+  function yh_refreshHdr(){
+    var data=null;
+    try{var k=typeof yh_currentKey==='function'?yh_currentKey():null;if(k){var s=localStorage.getItem(k);if(s)data=JSON.parse(s);}}catch(e){}
+    if(typeof window.yh_renderHeader==='function') window.yh_renderHeader(data||{step1:{},step2:{},step3:{},step4:{},step5:{}});
+  }
+  window.yh_toggleHeaderCard_wc=function(){window._yh_wc_open=!window._yh_wc_open;yh_refreshHdr();};
+  window.yh_toggleHeaderCard_mc=function(){window._yh_mc_open=!window._yh_mc_open;yh_refreshHdr();};
+  var _yhOrigSwitch=window.wcnTabSwitch;
+  window.wcnTabSwitch=function(tab){
+    if(typeof _yhOrigSwitch==='function') _yhOrigSwitch(tab);
+    /* daily-haru: 콘텐츠 영역 전체 흰색 / 다른 탭: 원복 */
+    var ca=document.getElementById('wcn-content-area');
+    if(ca) ca.style.background=(tab==='daily-haru')?'#fff':'';
+    if(tab==='daily-haru'){
+      setTimeout(function(){if(typeof window.yh_init==='function') window.yh_init();},60);
+    }
+  };
+
+})();
+</script>
 <!-- ★ [v59실행] 신규 업무센터 JS 끝 ══════════════════════════ -->
+
 
 <script>
 // ════════════════════════════════════════════════════════
@@ -92421,6 +93762,22 @@ window.tx_scheduleAutoSave = function(){
   };
 
   // ── 상태 ──
+  // ── [v21] 아이디어 상태탭 / 검색 상태 ──
+  var _wt_ideaStatus  = '아이디어상태'; // 현재 선택 탭
+  var _wt_searchQuery = '';             // 검색어
+  var _wt_allTasks    = [];             // 전체 캐시
+  var WT_IDEA_STATUS_LIST  = ['아이디어상태','업무요청','업무진행중','업무보류중','업무완료'];
+  var WT_IDEA_STATUS_COLOR = {
+    '아이디어상태':'#818CF8','업무요청':'#F59E0B',
+    '업무진행중':'#0EA5E9','업무보류중':'#D97706','업무완료':'#059669'
+  };
+  var WT_IDEA_STATUS_NEXT = {
+    '아이디어상태':['업무요청'],
+    '업무요청':    ['업무진행중'],
+    '업무진행중':  ['업무보류중','업무완료'],
+    '업무보류중':  ['업무진행중','업무완료'],
+    '업무완료':    []
+  };
   var _wt_requester = '최윤경';  // 업무요청자 기본값
   var _wt_category  = '';
   var _wt_openId    = null;      // 펼쳐진 카드 id
@@ -92483,10 +93840,11 @@ window.tx_scheduleAutoSave = function(){
     if(!wt_supaReady()){ if(typeof showT==='function') showT('⚠️ Supabase 미연결'); return; }
     var uid=wt_getUid(), now=new Date().toISOString();
     var payload={user_id:uid, requester_name:_wt_requester, category:_wt_category,
-      content:ta.value.trim(), status:'요청접수', request_date:wt_todayStr(), created_at:now, updated_at:now};
+      content:ta.value.trim(), status:'요청접수', idea_status:'아이디어상태',
+      request_date:wt_todayStr(), created_at:now, updated_at:now};
     try{
       await _sbInsert('work_tasks', payload);
-      if(typeof showT==='function') showT('📋 공유업무가 등록되었습니다.');
+      if(typeof showT==='function') showT('💡 아이디어가 등록되었습니다.');
       ta.value=''; _wt_category='';
       document.querySelectorAll('[data-wtcat]').forEach(function(b){
         b.style.background='#fff'; b.style.color='#334155'; b.style.borderColor='#e2e8f0';
@@ -92500,6 +93858,7 @@ window.tx_scheduleAutoSave = function(){
   };
 
   // ── 업무 목록 조회 ──
+  // ── [v21] wt_loadList: idea_status 탭 필터 적용 ──
   window.wt_loadList = async function(){
     var listEl=document.getElementById('wt-task-list');
     if(!listEl) return;
@@ -92507,12 +93866,14 @@ window.tx_scheduleAutoSave = function(){
     listEl.innerHTML='<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
     var uid=wt_getUid();
     try{
-      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc';
+      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)
+        +'&idea_status=eq.'+encodeURIComponent(_wt_ideaStatus)
+        +'&order=created_at.desc';
       var res=await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
       if(!res.ok){ listEl.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">조회 오류: '+res.status+'</div>'; return; }
       var tasks=await res.json();
-      if(!tasks||!tasks.length){ listEl.innerHTML='<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px;">등록된 공유업무가 없습니다.</div>'; return; }
-      wt_renderList(tasks);
+      _wt_allTasks=tasks||[];
+      wt_applyFilter();
     }catch(err){
       console.error('[wt_loadList]',err.message||err);
       listEl.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">목록 오류</div>';
@@ -92520,90 +93881,411 @@ window.tx_scheduleAutoSave = function(){
   };
 
   // ── 목록 렌더링 ──
+  // ── [v26] wt_renderList: 제목/내용 분리 + 모달 상세 + 텍스트 관리버튼 ──
+
+  // 제목/내용 파싱 (저장 형식: 제목\n\n내용)
+  function wt_parseContent(c){
+    var s=(c||''); var idx=s.indexOf('\n\n');
+    if(idx>0) return {title:s.substring(0,idx), body:s.substring(idx+2)};
+    return {title:s, body:''};
+  }
+
   function wt_renderList(tasks){
     var listEl=document.getElementById('wt-task-list');
     if(!listEl) return;
-    var html='';
+    if(!tasks||!tasks.length){
+      listEl.innerHTML='<div style="text-align:center;padding:32px 0;color:#94a3b8;font-size:14px;">'
+        +(_wt_searchQuery?'검색 결과가 없습니다.':'이 상태에 등록된 아이디어가 없습니다.')+'</div>';
+      return;
+    }
+    var ISC=WT_IDEA_STATUS_COLOR;
+    var CAT=WT_CAT_COLOR;
+    var TH='padding:12px 14px;background:#F5F5F7;font-size:12px;font-weight:800;color:#64748b;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;';
+    var TD='padding:13px 14px;font-size:13px;color:#334155;border-bottom:1px solid #F0F0F5;vertical-align:top;';
+
+    var rows='';
     tasks.forEach(function(t){
-      var catColor=WT_CAT_COLOR[t.category]||'#64748b';
-      var stColor=WT_STATUS_COLOR[t.status]||'#64748b';
-      var reqName=wt_esc(t.requester_name||'—');
-      var reqDate=(t.request_date||'').replace(/-/g,'.');
-      var summary=wt_esc((t.content||'').substring(0,45))+((t.content||'').length>45?'…':'');
-      var isOpen=(_wt_openId===t.id);
+      var isc=ISC[t.idea_status||'아이디어상태']||'#818CF8';
+      var catC=CAT[t.category]||'#64748b';
       var tid=wt_esc(t.id);
-      html+='<div style="background:#fff;border:1.5px solid #E8E8F4;border-radius:13px;overflow:hidden;" id="wt-card-'+tid+'">'
-        // 카드 헤더
-        +'<div style="padding:12px 14px;cursor:pointer;" onclick="wt_toggleCard(\''+tid+'\')">'
-        +  '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px;">'
-        +    '<span style="padding:3px 9px;background:'+catColor+';color:#fff;border-radius:10px;font-size:11px;font-weight:700;">'+wt_esc(t.category)+'</span>'
-        +    '<span style="padding:3px 9px;background:'+stColor+'22;color:'+stColor+';border:1px solid '+stColor+'44;border-radius:10px;font-size:11px;font-weight:700;">'+wt_esc(t.status)+'</span>'
-        +    '<span style="font-size:12px;font-weight:700;color:#4A3F7A;">👤 '+reqName+'</span>'
-        +    '<span style="margin-left:auto;font-size:11px;color:#94a3b8;">'+reqDate+'</span>'
-        +  '</div>'
-        +  '<div style="font-size:13px;color:#334155;">'+summary+'</div>'
-        +'</div>'
-        // 아코디언 상세
-        +'<div id="wt-detail-'+tid+'" style="display:'+(isOpen?'block':'none')+';border-top:1px solid #f1f0f7;padding:12px 14px;">'
-        // 수정 폼 영역 (숨김)
-        +  '<div id="wt-edit-'+tid+'" style="display:none;margin-bottom:12px;">'
-        +    '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;">업무요청자 수정</div>'
-        +    '<div style="display:flex;gap:5px;margin-bottom:8px;">'
-        +      '<button id="wt-edit-req-yoon-'+tid+'" onclick="wt_editReqSel(\''+tid+'\',\'최윤경\')" style="flex:1;padding:7px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:#fff;color:#334155;">최윤경</button>'
-        +      '<button id="wt-edit-req-sujin-'+tid+'" onclick="wt_editReqSel(\''+tid+'\',\'박수진\')" style="flex:1;padding:7px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:#fff;color:#334155;">박수진</button>'
-        +    '</div>'
-        +    '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;">카테고리 수정</div>'
-        +    '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">'
-        +    ['앱관리','디자인','콘텐츠','보험업무','사무업무','기타작성'].map(function(c){
-               return '<button id="wt-edit-cat-'+wt_esc(c)+'-'+tid+'" onclick="wt_editCatSel(\''+tid+'\',\''+wt_esc(c)+'\')" style="padding:5px 10px;border:1.5px solid #e2e8f0;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:#fff;color:#334155;">'+wt_esc(c)+'</button>';
-             }).join('')
-        +    '</div>'
-        +    '<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;">업무내용 수정</div>'
-        +    '<textarea id="wt-edit-content-'+tid+'" style="width:100%;min-height:70px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;resize:vertical;outline:none;box-sizing:border-box;">'+wt_esc(t.content)+'</textarea>'
-        +    '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'
-        +      '<button onclick="wt_cancelEdit(\''+tid+'\')" style="padding:7px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;color:#64748b;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">취소</button>'
-        +      '<button onclick="wt_submitEdit(\''+tid+'\')" style="padding:7px 14px;background:#4A3F7A;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">저장</button>'
-        +    '</div>'
-        +  '</div>'
-        // 업무내용 표시
-        +  '<div id="wt-content-view-'+tid+'" style="font-size:13px;color:#334155;line-height:1.6;white-space:pre-wrap;margin-bottom:12px;">'+wt_esc(t.content)+'</div>'
-        // 상태 변경
-        +  '<div style="margin-bottom:12px;">'
-        +    '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">상태 변경</div>'
-        +    '<div style="display:flex;flex-wrap:wrap;gap:4px;">'
-        +    WT_STATUS_LIST.map(function(s){
-               var active=(s===t.status), sc=WT_STATUS_COLOR[s]||'#64748b';
-               return '<button onclick="wt_updateStatus(\''+tid+'\',\''+wt_esc(s)+'\')" style="padding:5px 10px;border:1.5px solid '+(active?sc:'#e2e8f0')+';border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:'+(active?sc:'#fff')+';color:'+(active?'#fff':sc)+';">'+wt_esc(s)+'</button>';
-             }).join('')
-        +    '</div>'
-        +  '</div>'
-        // 수정/삭제 버튼
-        +  '<div style="display:flex;gap:6px;justify-content:flex-end;margin-bottom:12px;">'
-        +    '<button onclick="wt_startEdit(\''+tid+'\',\''+reqName+'\',\''+wt_esc(t.category)+'\')" style="padding:6px 12px;background:#fff;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;color:#7C3AED;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">✏️ 수정</button>'
-        +    '<button onclick="wt_deleteTask(\''+tid+'\')" style="padding:6px 12px;background:#fff;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;color:#dc2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🗑 삭제</button>'
-        +  '</div>'
-        // 댓글 영역
-        +  '<div style="border-top:1px solid #f1f0f7;padding-top:10px;">'
-        +    '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;">💬 댓글</div>'
-        +    '<div id="wt-comments-'+tid+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>'
-        // 댓글 작성자 선택
-        +    '<div style="display:flex;gap:5px;margin-bottom:6px;">'
-        +      '<button id="wt-cmt-yoon-'+tid+'" onclick="wt_selectCmtAuthor(\''+tid+'\',\'최윤경\')" style="flex:1;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:#4A3F7A;color:#fff;">최윤경</button>'
-        +      '<button id="wt-cmt-sujin-'+tid+'" onclick="wt_selectCmtAuthor(\''+tid+'\',\'박수진\')" style="flex:1;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:#fff;color:#334155;">박수진</button>'
-        +    '</div>'
-        +    '<div style="display:flex;gap:6px;">'
-        +      '<input type="text" id="wt-comment-input-'+tid+'" placeholder="댓글 입력..."'
-        +        ' onkeydown="if(event.key===\'Enter\')wt_saveComment(\''+tid+'\')"'
-        +        ' style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;outline:none;">'
-        +      '<button onclick="wt_saveComment(\''+tid+'\')" style="padding:8px 14px;background:#4A3F7A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">등록</button>'
-        +    '</div>'
-        +  '</div>'
-        +'</div>'
-        +'</div>';
+      var reqDate=(t.request_date||'').replace(/-/g,'.').substring(2);
+      var pc=wt_parseContent(t.content||'');
+      var titleHtml=wt_esc(pc.title)||'(제목 없음)';
+      var bodyHtml=pc.body?wt_esc(pc.body.substring(0,55))+(pc.body.length>55?'…':''):'';
+
+      // 상태 드롭다운
+      var stSelect='<select onchange="wt_changeIdeaStatus(\''+tid+'\',this.value)" '
+        +'style="padding:5px 8px;border:1.5px solid '+isc+';border-radius:8px;font-size:12px;font-weight:700;'
+        +'color:'+isc+';background:'+isc+'11;cursor:pointer;outline:none;font-family:\'Noto Sans KR\',sans-serif;max-width:120px;">'
+        +WT_IDEA_STATUS_LIST.map(function(s){return '<option value="'+s+'"'+(s===(t.idea_status||'아이디어상태')?' selected':'')+'>'+s+'</option>';}).join('')
+        +'</select>';
+
+      var BTNBASE='padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-bottom:4px;display:block;width:100%;text-align:center;box-sizing:border-box;';
+
+      rows+='<tr style="background:#fff;" onmouseenter="this.style.background=\'#FAFAFA\'" onmouseleave="this.style.background=\'#fff\'">'
+        // 날짜
+        +'<td style="'+TD+'color:#94a3b8;font-size:13px;white-space:nowrap;min-width:65px;">'+reqDate+'</td>'
+        // 카테고리
+        +'<td style="'+TD+'white-space:nowrap;"><span style="padding:4px 10px;background:'+catC+';color:#fff;border-radius:9px;font-size:12px;font-weight:700;">'+wt_esc(t.category)+'</span></td>'
+        // 작성자
+        +'<td style="'+TD+'white-space:nowrap;font-size:14px;font-weight:700;color:#1C1917;min-width:60px;">'+wt_esc(t.requester_name||'—')+'</td>'
+        // 제목 + 내용 요약 (가장 넓은 컬럼)
+        +'<td style="'+TD+'max-width:380px;cursor:pointer;" onclick="wt_openDetailModal(\''+tid+'\')" title="클릭하면 상세가 열립니다">'
+          +'<div style="font-size:14px;font-weight:800;color:#1C1917;line-height:1.4;margin-bottom:'+(bodyHtml?'4px':'0')+';word-break:break-all;">'+titleHtml+'</div>'
+          +(bodyHtml?'<div style="font-size:13px;color:#78716C;line-height:1.5;word-break:break-all;">'+bodyHtml+'</div>':'')
+        +'</td>'
+        // 상태
+        +'<td style="'+TD+'white-space:nowrap;min-width:130px;">'+stSelect+'</td>'
+        // 관리 버튼
+        +'<td style="'+TD+'min-width:100px;vertical-align:middle;">'
+          +'<button onclick="wt_openDetailModal(\''+tid+'\')" style="'+BTNBASE+'border:1.5px solid #818CF8;color:#818CF8;background:#fff;margin-bottom:5px;">상세보기</button>'
+          +'<button onclick="wt_openEditModal(\''+tid+'\')" style="'+BTNBASE+'border:1.5px solid #c4b5fd;color:#7C3AED;background:#fff;margin-bottom:5px;">수정</button>'
+          +'<button onclick="wt_deleteTask(\''+tid+'\')" style="'+BTNBASE+'border:1.5px solid #fca5a5;color:#dc2626;background:#fff;">삭제</button>'
+        +'</td>'
+        +'</tr>';
     });
-    listEl.innerHTML=html;
-    if(_wt_openId) wt_loadComments(_wt_openId);
+
+    listEl.innerHTML='<div style="overflow-x:auto;">'
+      +'<table style="width:100%;border-collapse:collapse;min-width:640px;font-family:\'Noto Sans KR\',sans-serif;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.07);">'
+      +'<thead><tr>'
+      +'<th style="'+TH+'">날짜</th>'
+      +'<th style="'+TH+'">카테고리</th>'
+      +'<th style="'+TH+'">작성자</th>'
+      +'<th style="'+TH+'width:40%;">아이디어 제목 / 내용</th>'
+      +'<th style="'+TH+'">상태</th>'
+      +'<th style="'+TH+'min-width:100px;">관리</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'</table></div>';
   }
+
+  // ── [v26] 상세 모달 열기 ──
+  var _wt_detailTaskId = null;
+  window.wt_openDetailModal = function(taskId){
+    _wt_detailTaskId = taskId;
+    var task=null;
+    for(var i=0;i<_wt_allTasks.length;i++){if(String(_wt_allTasks[i].id)===String(taskId)){task=_wt_allTasks[i];break;}}
+    if(!task) return;
+    var isc=WT_IDEA_STATUS_COLOR[task.idea_status||'아이디어상태']||'#818CF8';
+    var catC=WT_CAT_COLOR[task.category]||'#64748b';
+    var pc=wt_parseContent(task.content||'');
+    var reqDate=(task.request_date||'').replace(/-/g,'.');
+    var dm=document.getElementById('wt-big-modal');
+    if(!dm) return;
+    // 헤더
+    document.getElementById('wtbm-title').textContent=pc.title||'(제목 없음)';
+    // 메타
+    var metaEl=document.getElementById('wtbm-meta');
+    metaEl.innerHTML='<span style="padding:3px 10px;background:'+catC+';color:#fff;border-radius:8px;font-size:12px;font-weight:700;">'+wt_esc(task.category)+'</span>'
+      +' <span style="padding:3px 10px;background:'+isc+'22;color:'+isc+';border:1px solid '+isc+'44;border-radius:8px;font-size:12px;font-weight:700;">'+wt_esc(task.idea_status||'아이디어상태')+'</span>'
+      +' <span style="font-size:13px;font-weight:700;color:#4A3F7A;">👤 '+wt_esc(task.requester_name||'—')+'</span>'
+      +' <span style="font-size:12px;color:#94a3b8;">'+reqDate+'</span>';
+    // 내용
+    document.getElementById('wtbm-body').textContent=pc.body||pc.title||'';
+    // 상태 변경 버튼
+    var nextBtns=(WT_IDEA_STATUS_NEXT[task.idea_status||'아이디어상태']||[]).map(function(ns){
+      var nc=WT_IDEA_STATUS_COLOR[ns]||'#64748b';
+      return '<button onclick="wt_changeIdeaStatus(\''+wt_esc(task.id)+'\',\''+ns+'\');wt_openDetailModal(\''+wt_esc(task.id)+'\')" '
+        +'style="padding:6px 14px;border:1.5px solid '+nc+';border-radius:16px;font-size:13px;font-weight:700;color:'+nc+';background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">→ '+wt_esc(ns)+'</button>';
+    }).join(' ');
+    document.getElementById('wtbm-status-btns').innerHTML=nextBtns||'<span style="font-size:12px;color:#94a3b8;">최종 상태입니다</span>';
+    // 수정/삭제 버튼 연결
+    document.getElementById('wtbm-edit-btn').onclick=function(){wt_closeDetailModal();wt_openEditModal(String(task.id));};
+    document.getElementById('wtbm-del-btn').onclick=function(){wt_closeDetailModal();wt_deleteTask(String(task.id));};
+    // 댓글 초기화
+    var cmtEl=document.getElementById('wtbm-comments');
+    if(cmtEl) cmtEl.id='wt-comments-'+wt_esc(task.id);
+    var cmtInp=document.getElementById('wtbm-cmt-input');
+    if(cmtInp) cmtInp.id='wt-comment-input-'+wt_esc(task.id);
+    var cmtYoon=document.getElementById('wtbm-cmt-yoon');
+    if(cmtYoon){cmtYoon.id='wt-cmt-yoon-'+wt_esc(task.id);cmtYoon.onclick=function(){wt_selectCmtAuthor(String(task.id),'최윤경');};}
+    var cmtSujin=document.getElementById('wtbm-cmt-sujin');
+    if(cmtSujin){cmtSujin.id='wt-cmt-sujin-'+wt_esc(task.id);cmtSujin.onclick=function(){wt_selectCmtAuthor(String(task.id),'박수진');};}
+    var cmtBtn=document.getElementById('wtbm-cmt-btn');
+    if(cmtBtn) cmtBtn.onclick=function(){wt_saveComment(String(task.id));};
+    // 댓글 작성자 기본값
+    if(!_wt_cmtAuthor[String(task.id)]) _wt_cmtAuthor[String(task.id)]='최윤경';
+    wt_selectCmtAuthor(String(task.id),'최윤경');
+    // 댓글 로드
+    wt_loadComments(String(task.id));
+    dm.style.display='flex';
+  };
+  window.wt_closeDetailModal = function(){
+    var dm=document.getElementById('wt-big-modal');
+    if(dm) dm.style.display='none';
+    // ID 원복 (다음 번 열 때를 위해)
+    var cmtEl=document.querySelector('#wt-big-modal [id^="wt-comments-"]');
+    if(cmtEl) cmtEl.id='wtbm-comments';
+    var cmtInp=document.querySelector('#wt-big-modal [id^="wt-comment-input-"]');
+    if(cmtInp) cmtInp.id='wtbm-cmt-input';
+    var cmtYoon=document.querySelector('#wt-big-modal [id^="wt-cmt-yoon-"]');
+    if(cmtYoon) cmtYoon.id='wtbm-cmt-yoon';
+    var cmtSujin=document.querySelector('#wt-big-modal [id^="wt-cmt-sujin-"]');
+    if(cmtSujin) cmtSujin.id='wtbm-cmt-sujin';
+  };
+
+  // ── [v21→v23 복구] 탭 전환 / 검색 / 필터 ──
+  window.wt_switchIdeaTab = function(status){
+    _wt_ideaStatus = status;
+    _wt_searchQuery = '';
+    var inp = document.getElementById('wt-search-input');
+    if(inp) inp.value = '';
+    WT_IDEA_STATUS_LIST.forEach(function(s){
+      var btn = document.getElementById('wt-itab-'+s);
+      if(!btn) return;
+      var isActive = (s === status);
+      btn.style.borderBottom = isActive ? '3px solid #FBBF24' : '3px solid transparent';
+      btn.style.color        = isActive ? '#1C1917' : '#94a3b8';
+      btn.style.fontWeight   = isActive ? '800'     : '700';
+    });
+    wt_loadList();
+  };
+
+  // ── [v27] 검색: 검색어 있으면 전체 상태에서 통합 검색 ──
+  window.wt_searchFilter = function(q){
+    _wt_searchQuery = (q||'').trim().toLowerCase();
+    if(_wt_searchQuery){
+      wt_loadAllAndSearch();
+    }else{
+      // 검색어 없으면 현재 탭 기준 목록
+      wt_loadList();
+    }
+  };
+
+  // 전체 상태 통합 검색 (Supabase에서 idea_status 필터 없이 전체 로드)
+  window.wt_loadAllAndSearch = async function(){
+    var listEl = document.getElementById('wt-task-list');
+    if(!listEl) return;
+    if(!wt_supaReady()){
+      listEl.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Supabase 미연결</div>';
+      return;
+    }
+    listEl.innerHTML='<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">전체 검색 중...</div>';
+    var uid=wt_getUid();
+    try{
+      // idea_status 필터 없이 전체 로드
+      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc';
+      var res=await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      if(!res.ok){listEl.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">검색 오류: '+res.status+'</div>';return;}
+      var allTasks=await res.json();
+      // 클라이언트 필터링
+      var q=_wt_searchQuery;
+      var filtered=(allTasks||[]).filter(function(t){
+        var hay=[t.content||'',t.category||'',t.requester_name||'',t.request_date||'',t.idea_status||''].join(' ').toLowerCase();
+        return hay.indexOf(q)>=0;
+      });
+      if(!filtered.length){
+        listEl.innerHTML='<div style="text-align:center;padding:28px 0;">'
+          +'<div style="font-size:13px;color:#94a3b8;margin-bottom:6px;">전체 상태에서 검색 결과가 없습니다.</div>'
+          +'<div style="font-size:12px;color:#CBD5E1;">새 아이디어로 등록해도 됩니다.</div>'
+          +'</div>';
+        return;
+      }
+      // 안내 문구 추가
+      var notice='<div style="font-size:12px;color:#818CF8;background:#EEF2FF;border-radius:8px;padding:7px 12px;margin-bottom:10px;">'
+        +'🔍 <b>전체 상태</b>에서 &quot;'+wt_esc(q)+'&quot; 검색 결과 '+filtered.length+'건'
+        +'</div>';
+      // _wt_allTasks에 전체 결과 캐시 (상세 모달에서 참조)
+      _wt_allTasks = filtered;
+      // notice를 목록 위에 붙이기 위해 렌더 후 prepend
+      wt_renderList(filtered);
+      listEl.insertAdjacentHTML('afterbegin', notice);
+    }catch(err){
+      console.error('[wt_loadAllAndSearch]',err.message||err);
+      listEl.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">검색 오류</div>';
+    }
+  };
+
+  window.wt_applyFilter = function(){
+    // 현재 탭 로드 결과(_wt_allTasks) 내 클라이언트 필터 (탭 안 검색용, 현재는 전체 검색으로 대체)
+    var listEl = document.getElementById('wt-task-list');
+    if(!listEl) return;
+    var filtered = _wt_allTasks;
+    if(!filtered.length){
+      listEl.innerHTML = '<div style="text-align:center;padding:28px 0;color:#94a3b8;font-size:13px;">이 상태에 등록된 아이디어가 없습니다.</div>';
+      return;
+    }
+    wt_renderList(filtered);
+  };
+
+  // ── [v21] idea_status PATCH ──
+  window.wt_changeIdeaStatus = async function(taskId, newStatus){
+    if(!taskId||!newStatus) return;
+    if(!wt_supaReady()){ if(typeof showT==='function') showT('⚠️ Supabase 미연결'); return; }
+    try{
+      var res=await fetch(_SB_URL+'/rest/v1/work_tasks?id=eq.'+encodeURIComponent(taskId),{
+        method:'PATCH',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({idea_status:newStatus,updated_at:new Date().toISOString()})
+      });
+      if(!res.ok){var et=await res.text();throw new Error('HTTP '+res.status+' '+et.substring(0,60));}
+      if(typeof showT==='function') showT('✅ 흐름 상태: '+newStatus);
+      wt_loadList();
+    }catch(err){
+      console.error('[wt_changeIdeaStatus]',err.message||err);
+      if(typeof showT==='function') showT('❌ 상태 변경 실패');
+    }
+  };
+
+  // ── [v22] 등록 모달 함수 ──
+  var _wtr_author = '최윤경';
+
+  // ── [v24→v27 복구] 상태 버튼 선택 함수 ──
+  var IDEA_STAT_LIST=['아이디어상태','업무요청','업무진행중','업무보류중','업무완료'];
+
+  window.wtrSelectStatus = function(status){
+    var inp=document.getElementById('wtr-idea-status');
+    if(inp) inp.value=status;
+    IDEA_STAT_LIST.forEach(function(s){
+      var btn=document.getElementById('wtr-stat-'+s);
+      if(!btn) return;
+      var on=(s===status);
+      btn.style.background=on?'#FBBF24':'#fff';
+      btn.style.color=on?'#1C1917':'#64748b';
+      btn.style.borderColor=on?'#FBBF24':'#e2e8f0';
+    });
+  };
+
+  window.wiqSelectStatus = function(status){
+    var inp=document.getElementById('wiq-idea-status');
+    if(inp) inp.value=status;
+    IDEA_STAT_LIST.forEach(function(s){
+      var btn=document.getElementById('wiq-stat-'+s);
+      if(!btn) return;
+      var on=(s===status);
+      btn.style.background=on?'#FBBF24':'#fff';
+      btn.style.color=on?'#1C1917':'#64748b';
+      btn.style.borderColor=on?'#FBBF24':'#e2e8f0';
+    });
+  };
+
+  // ── [v24→v26 복구] 수정 모달 열기 + PATCH ──
+  window.wt_openEditModal = function(taskId){
+    var task=null;
+    for(var i=0;i<_wt_allTasks.length;i++){if(String(_wt_allTasks[i].id)===String(taskId)){task=_wt_allTasks[i];break;}}
+    if(!task){if(typeof showT==='function')showT('⚠️ 항목을 찾지 못했습니다.');return;}
+    var co=document.getElementById('wtr-content');
+    var da=document.getElementById('wtr-date');
+    var cat=document.getElementById('wtr-category');
+    // 제목/내용 파싱 후 폼에 채우기
+    var pc=wt_parseContent(task.content||'');
+    var ti=document.getElementById('wtr-title');
+    if(ti) ti.value=pc.title||'';
+    if(co) co.value=pc.body||'';
+    if(da) da.value=task.request_date||'';
+    if(cat) cat.value=task.category||'';
+    wtr_selectAuthor(task.requester_name||'최윤경');
+    if(typeof wtrSelectStatus==='function') wtrSelectStatus(task.idea_status||'아이디어상태');
+    var saveBtn=document.getElementById('wtr-save-btn');
+    if(saveBtn){saveBtn.textContent='수정 저장';saveBtn.onclick=function(){wt_patchIdeaModal(taskId);};}
+    var msg=document.getElementById('wtr-status-msg');
+    if(msg){msg.textContent='✏️ 수정 모드';msg.style.color='#7C3AED';}
+    wt_openRegModal();
+  };
+
+  window.wt_patchIdeaModal = async function(taskId){
+    var msgEl=document.getElementById('wtr-status-msg');
+    function setMsg(t,ok){if(msgEl){msgEl.textContent=t;msgEl.style.color=ok?'#16a34a':'#dc2626';}}
+    var cat=(document.getElementById('wtr-category')||{}).value||'';
+    if(!cat){setMsg('⚠️ 카테고리를 선택해주세요.',false);return;}
+    var titleEl=document.getElementById('wtr-title');
+    var bodyEl=document.getElementById('wtr-content');
+    var titleVal=titleEl&&titleEl.value.trim();
+    var bodyVal=bodyEl&&bodyEl.value.trim();
+    if(!titleVal&&!bodyVal){setMsg('⚠️ 제목 또는 내용을 입력해주세요.',false);return;}
+    var contentVal=(titleVal?titleVal+(bodyVal?'\n\n'+bodyVal:''):(bodyVal||''));
+    if(!wt_supaReady()){setMsg('⚠️ Supabase 미연결',false);return;}
+    var ideaStatus=(document.getElementById('wtr-idea-status')||{}).value||'아이디어상태';
+    var dateVal=(document.getElementById('wtr-date')||{}).value||wt_todayStr();
+    var author=_wtr_author||'최윤경';
+    setMsg('수정 중...',true);
+    try{
+      var res=await fetch(_SB_URL+'/rest/v1/work_tasks?id=eq.'+encodeURIComponent(taskId),{
+        method:'PATCH',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({requester_name:author,category:cat,content:contentVal,idea_status:ideaStatus,request_date:dateVal,updated_at:new Date().toISOString()})
+      });
+      if(!res.ok){var et=await res.text();throw new Error('HTTP '+res.status+' '+et.substring(0,60));}
+      setMsg('✅ 수정되었습니다!',true);
+      if(typeof showT==='function') showT('✅ 수정 완료');
+      var saveBtn=document.getElementById('wtr-save-btn');
+      if(saveBtn){saveBtn.textContent='아이디어 등록';saveBtn.onclick=function(){wt_saveIdeaModal();};}
+      setTimeout(function(){wt_closeRegModal();wt_loadList();},900);
+    }catch(err){
+      console.error('[wt_patchIdeaModal]',err.message||err);
+      setMsg('❌ 수정 실패: '+(err.message||'').substring(0,40),false);
+    }
+  };
+
+  window.wt_openRegModal = function(){
+    var d=new Date();
+    var today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var dateEl=document.getElementById('wtr-date');
+    if(dateEl&&!dateEl.value) dateEl.value=today;
+    var stEl=document.getElementById('wtr-idea-status');
+    if(stEl) stEl.value='아이디어상태';
+    // [v24] 상태 버튼 초기화
+    if(typeof wtrSelectStatus==='function') wtrSelectStatus('아이디어상태');
+    var msg=document.getElementById('wtr-status-msg');
+    if(msg) msg.textContent='';
+    wtr_selectAuthor('최윤경');
+    var m=document.getElementById('wt-reg-modal');
+    if(m) m.style.display='flex';
+  };
+
+  window.wt_closeRegModal = function(){
+    var m=document.getElementById('wt-reg-modal');
+    if(m) m.style.display='none';
+    ['wtr-title','wtr-content','wtr-date'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.value='';
+    });
+    var cat=document.getElementById('wtr-category');
+    if(cat) cat.value='';
+  };
+
+  window.wtrSelectAuthor = window.wtr_selectAuthor;
+  window.wtr_selectAuthor = function(name){
+    _wtr_author=name;
+    var yoon=document.getElementById('wtr-btn-yoon');
+    var sujin=document.getElementById('wtr-btn-sujin');
+    if(!yoon||!sujin) return;
+    var isYoon=(name==='최윤경');
+    yoon.style.background=isYoon?'#FBBF24':'#fff'; yoon.style.color=isYoon?'#1C1917':'#334155'; yoon.style.borderColor=isYoon?'#FBBF24':'#e2e8f0';
+    sujin.style.background=!isYoon?'#FBBF24':'#fff'; sujin.style.color=!isYoon?'#1C1917':'#334155'; sujin.style.borderColor=!isYoon?'#FBBF24':'#e2e8f0';
+  };
+
+  window.wt_saveIdeaModal = async function(){
+    var msgEl=document.getElementById('wtr-status-msg');
+    function setMsg(t,ok){if(msgEl){msgEl.textContent=t;msgEl.style.color=ok?'#16a34a':'#dc2626';}}
+    if(!_wtr_author){setMsg('⚠️ 작성자를 선택해주세요.',false);return;}
+    var cat=(document.getElementById('wtr-category')||{}).value||'';
+    if(!cat){setMsg('⚠️ 카테고리를 선택해주세요.',false);return;}
+    var titleEl=document.getElementById('wtr-title');
+    var bodyEl=document.getElementById('wtr-content');
+    var contentVal=((titleEl&&titleEl.value.trim())?titleEl.value.trim()+'\n\n':'')
+      +((bodyEl&&bodyEl.value.trim())?bodyEl.value.trim():'');
+    if(!contentVal.trim()){setMsg('⚠️ 제목 또는 내용을 입력해주세요.',false);return;}
+    if(!wt_supaReady()){setMsg('⚠️ Supabase 미연결',false);return;}
+    var ideaStatus=(document.getElementById('wtr-idea-status')||{}).value||'아이디어상태';
+    var dateVal=(document.getElementById('wtr-date')||{}).value||wt_todayStr();
+    var uid=wt_getUid(), now=new Date().toISOString();
+    var payload={user_id:uid,requester_name:_wtr_author,category:cat,
+      content:contentVal.trim(),status:'요청접수',idea_status:ideaStatus,
+      request_date:dateVal,created_at:now,updated_at:now};
+    setMsg('등록 중...',true);
+    try{
+      var res=await fetch(_SB_URL+'/rest/v1/work_tasks',{
+        method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(payload)});
+      if(!res.ok){var et=await res.text();throw new Error('HTTP '+res.status+' '+et.substring(0,60));}
+      setMsg('✅ 등록되었습니다!',true);
+      if(typeof showT==='function') showT('💡 아이디어가 등록되었습니다.');
+      setTimeout(function(){wt_closeRegModal();wt_switchIdeaTab(ideaStatus);},900);
+    }catch(err){
+      console.error('[wt_saveIdeaModal]',err.message||err);
+      setMsg('❌ 등록 실패: '+(err.message||'').substring(0,40),false);
+    }
+  };
 
   // ── 아코디언 토글 ──
   window.wt_toggleCard = function(taskId){
@@ -92802,10 +94484,11 @@ window.tx_scheduleAutoSave = function(){
   'use strict';
 
   // ── 상태 ──
-  var _wi_author   = '';
-  var _wi_category = '';
-  var _wi_editingId = null;  // null=신규, UUID=수정 모드
-  var _wi_items    = [];     // 마지막 로드 목록 캐시 (수정 함수에서 참조)
+  var _wi_author        = '';
+  var _wi_category      = '';
+  var _wi_editingId     = null;   // null=신규, UUID=수정 모드
+  var _wi_items         = [];     // 마지막 로드 목록 캐시
+  var _wi_currentStatus = '아이디어상태'; // [v19] 현재 선택 탭
 
   // ── 유틸 ──
   function wi_todayStr(){
@@ -92939,14 +94622,15 @@ window.tx_scheduleAutoSave = function(){
 
     // ── 신규 저장 ──
     var payload = {
-      user_id:     wi_getUid(),
-      author_name: _wi_author,
-      category:    _wi_category,
-      title:       titleEl.value.trim(),
-      content:     (contentEl ? contentEl.value.trim() : ''),
-      idea_date:   (dateEl && dateEl.value) ? dateEl.value : wi_todayStr(),
-      created_at:  now,
-      updated_at:  now
+      user_id:      wi_getUid(),
+      author_name:  _wi_author,
+      category:     _wi_category,
+      title:        titleEl.value.trim(),
+      content:      (contentEl ? contentEl.value.trim() : ''),
+      idea_date:    (dateEl && dateEl.value) ? dateEl.value : wi_todayStr(),
+      idea_status:  '아이디어상태',  // [v19] 기본값
+      created_at:   now,
+      updated_at:   now
     };
     wi_setStatus('저장 중...', true);
     try {
@@ -92981,17 +94665,19 @@ window.tx_scheduleAutoSave = function(){
     }
   };
 
-  // ── 목록 조회 ──
+  // ── [v19] 목록 조회 — 현재 상태 탭 기준 필터 ──
   window.wi_loadList = async function(){
     var listEl = document.getElementById('wi-list');
     if(!listEl) return;
     if(!wi_supaReady()){
-      listEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Supabase 미연결</div>';
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Supabase 미연결</div>';
       return;
     }
-    listEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
+    listEl.innerHTML = '<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
     var uid = wi_getUid();
+    // idea_status 필터 + 순서
     var url = _SB_URL + '/rest/v1/wc_ideas?user_id=eq.' + encodeURIComponent(uid)
+      + '&idea_status=eq.' + encodeURIComponent(_wi_currentStatus)
       + '&order=created_at.desc';
     try {
       var res = await fetch(url, {
@@ -93002,52 +94688,56 @@ window.tx_scheduleAutoSave = function(){
       wi_renderList(list || []);
     } catch(e) {
       console.error('[wi_loadList]', e.message || e);
-      listEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#f87171;font-size:13px;">조회 오류: ' + wi_esc(e.message||'') + '</div>';
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">조회 오류: ' + wi_esc(e.message||'') + '</div>';
     }
   };
 
-  // ── 목록 렌더: 1x4 카테고리 보드 [v5실행] ──
+  // ── [v19] 목록 렌더: 상태별 카드 리스트 ──
   window.wi_renderList = function(list){
     var listEl = document.getElementById('wi-list');
     if(!listEl) return;
-    _wi_items = list || [];  // 캐시 저장 [v7실행]
-    var CATS = ['보험', '유튜브', '시스템', '기타'];
-    var CAT_ICON = { '보험':'🛡️', '유튜브':'▶️', '시스템':'⚙️', '기타':'💬' };
-    var groups = {};
-    CATS.forEach(function(c){ groups[c] = []; });
-    (_wi_items).forEach(function(item){
-      var cat = item.category;
-      if(groups[cat]) groups[cat].push(item);
-      else if(groups['기타']) groups['기타'].push(item);
-    });
-    var html = CATS.map(function(cat){
-      var items = groups[cat];
-      var count = items.length;
-      var cardsHtml = count === 0
-        ? '<div class="wi-board-empty">등록된 아이디어가 없습니다.</div>'
-        : items.map(function(item){
-            var created = item.created_at ? item.created_at.substring(0,10) : '';
-            // id만 전달 — JSON.stringify 따옴표 충돌 방지 [v7실행]
-            var idSafe = String(item.id || '').replace(/'/g, '');
-            return '<div class="wi-idea-card">'
-              + '<div class="wi-idea-title">' + wi_esc(item.title) + '</div>'
-              + (item.content ? '<div class="wi-idea-content">' + wi_esc(item.content) + '</div>' : '')
-              + '<div class="wi-idea-meta">'
-              + wi_esc(item.author_name) + ' · ' + wi_esc(item.idea_date || created)
-              + '</div>'
-              + '<div class="wi-idea-actions">'
-              + '<button type="button" onclick="wi_edit(\'' + idSafe + '\')" class="wi-btn-edit">수정</button>'
-              + '<button type="button" onclick="wi_delete(\'' + idSafe + '\')" class="wi-btn-del">삭제</button>'
-              + '</div>'
-              + '</div>';
-          }).join('');
-      return '<div class="wi-board-col">'
-        + '<div class="wi-board-head">'
-        + '<span class="wi-board-title">' + CAT_ICON[cat] + ' ' + wi_esc(cat) + '</span>'
-        + '<span class="wi-board-count">' + count + '</span>'
+    _wi_items = list || [];
+    if(!_wi_items.length){
+      listEl.innerHTML = '<div style="text-align:center;padding:32px 0;color:#CBD5E1;font-size:13px;">이 상태에 등록된 아이디어가 없습니다.</div>';
+      return;
+    }
+    // 상태별 이동 가능 버튼 정의
+    var STATUS_NEXT = {
+      '아이디어상태': ['업무요청'],
+      '업무요청':     ['업무진행중'],
+      '업무진행중':   ['업무보류중','업무완료'],
+      '업무보류중':   ['업무진행중','업무완료'],
+      '업무완료':     []
+    };
+    var STATUS_COLOR = {
+      '아이디어상태':'#818CF8','업무요청':'#F59E0B',
+      '업무진행중':'#0EA5E9','업무보류중':'#D97706','업무완료':'#059669'
+    };
+    var html = _wi_items.map(function(item){
+      var st = item.idea_status || '아이디어상태';
+      var stColor = STATUS_COLOR[st] || '#64748b';
+      var idSafe = String(item.id || '').replace(/'/g,'');
+      var created = item.created_at ? item.created_at.substring(0,10) : '';
+      // 상태 이동 버튼
+      var nextBtns = (STATUS_NEXT[st] || []).map(function(ns){
+        var nc = STATUS_COLOR[ns] || '#64748b';
+        return '<button onclick="wi_changeStatus(\''+idSafe+'\',\''+ns+'\')" style="padding:3px 9px;border:1.5px solid '+nc+';border-radius:7px;font-size:11px;font-weight:700;color:'+nc+';background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;white-space:nowrap;">→ '+wi_esc(ns)+'</button>';
+      }).join('');
+      return '<div style="background:#fff;border:1.5px solid #E8E8F4;border-radius:12px;padding:12px 14px;margin-bottom:8px;">'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:7px;">'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:13px;font-weight:700;color:#1C1917;margin-bottom:3px;">' + wi_esc(item.title) + '</div>'
+        + (item.content ? '<div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + wi_esc(item.content) + '</div>' : '')
+        + '<div style="font-size:11px;color:#94a3b8;">'
+        + wi_esc(item.author_name||'—') + ' · ' + wi_esc(item.category||'—') + ' · ' + wi_esc(item.idea_date||created)
+        + '</div></div>'
+        + '<span style="padding:2px 8px;background:'+stColor+'22;color:'+stColor+';border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;">'+wi_esc(st)+'</span>'
         + '</div>'
-        + cardsHtml
-        + '</div>';
+        + '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">'
+        + nextBtns
+        + '<button onclick="wi_edit(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #FBBF24;border-radius:7px;font-size:11px;font-weight:700;color:#D97706;background:#FEF3C7;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">수정</button>'
+        + '<button onclick="wi_delete(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;color:#94a3b8;background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>'
+        + '</div></div>';
     }).join('');
     listEl.innerHTML = html;
   };
@@ -93140,6 +94830,46 @@ window.tx_scheduleAutoSave = function(){
   // ── 필터 초기화 (보드 새로고침용으로 단순화 [v5실행]) ──
   window.wi_resetFilter = function(){
     wi_loadList();
+  };
+
+  // ── [v19] 상태 탭 전환 ──
+  window.wi_switchStatusTab = function(status){
+    _wi_currentStatus = status;
+    // 탭 버튼 활성화
+    document.querySelectorAll('[data-witab]').forEach(function(btn){
+      var isActive = (btn.getAttribute('data-witab') === status);
+      btn.style.background     = isActive ? '#FBBF24' : '#fff';
+      btn.style.color          = isActive ? '#1C1917' : '#64748b';
+      btn.style.borderColor    = isActive ? '#FBBF24' : '#e2e8f0';
+    });
+    wi_loadList();
+  };
+
+  // ── [v19] 상태 변경 PATCH ──
+  window.wi_changeStatus = async function(id, newStatus){
+    if(!id || !newStatus) return;
+    if(!wi_supaReady()){ if(typeof showT==='function') showT('⚠️ Supabase 미연결'); return; }
+    try {
+      var res = await fetch(
+        _SB_URL + '/rest/v1/wc_ideas?id=eq.' + encodeURIComponent(id),
+        {
+          method: 'PATCH',
+          headers: {
+            'apikey':        SUPA_KEY,
+            'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type':  'application/json',
+            'Prefer':        'return=minimal'
+          },
+          body: JSON.stringify({ idea_status: newStatus, updated_at: new Date().toISOString() })
+        }
+      );
+      if(!res.ok){ var et=await res.text(); throw new Error('HTTP '+res.status+' '+et.substring(0,60)); }
+      if(typeof showT==='function') showT('✅ 상태 변경: '+newStatus);
+      wi_loadList();
+    } catch(e){
+      console.error('[wi_changeStatus]', e.message||e);
+      if(typeof showT==='function') showT('❌ 상태 변경 실패: '+(e.message||'').substring(0,40));
+    }
   };
 
   // ── wcnTabSwitch 래핑: idea 탭 진입 시 wi_init 호출 ──
