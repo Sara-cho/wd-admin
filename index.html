@@ -82094,10 +82094,17 @@ input,select,textarea{font-family:inherit;}
 .modal-foot .btn{flex:1;padding:11px;}
 
 /* 견적/계약 항목 입력 */
-.item-grid{display:grid;grid-template-columns:1fr 1fr 110px 30px;gap:7px;margin-bottom:7px;align-items:center;}
+.item-grid{display:grid;grid-template-columns:140px 1fr 130px 34px;gap:7px;margin-bottom:7px;align-items:center;}
 .item-grid input{padding:8px 9px;font-size:12.5px;border:1px solid var(--s200);border-radius:8px;}
 .item-grid .x{background:var(--rs50);color:var(--rs700);border:none;height:34px;border-radius:8px;font-size:15px;}
-.item-head-grid{display:grid;grid-template-columns:1fr 1fr 110px 30px;gap:7px;font-size:10.5px;font-weight:700;color:var(--s400);margin-bottom:5px;padding-left:2px;}
+.item-grid select{padding:7px 9px;font-size:12.5px;border:1px solid var(--s200);border-radius:8px;background:#fff;width:100%;height:34px;box-sizing:border-box;}
+.qe-setup-block{border:1px solid var(--s200);border-radius:8px;padding:10px 12px;margin-bottom:7px;background:var(--s50);}
+.qe-setup-block .x{background:var(--rs50);color:var(--rs700);border:none;height:28px;min-width:28px;border-radius:7px;font-size:14px;cursor:pointer;flex-shrink:0;}
+.qtbl tr.disc td{font-size:12px;color:var(--rs600);}
+.qtbl tr.disc-total td{font-size:12px;font-weight:700;color:var(--rs600);border-top:1px solid var(--rs200);}
+.qtbl tr.after-disc td{font-size:12.5px;font-weight:700;border-top:1px solid var(--s300);}
+.qtbl tr.disc-reason td{font-size:11.5px;color:var(--s500);font-style:italic;}
+.item-head-grid{display:grid;grid-template-columns:140px 1fr 130px 34px;gap:7px;font-size:10.5px;font-weight:700;color:var(--s400);margin-bottom:5px;padding-left:2px;}
 
 /* A4 문서 미리보기 */
 .doc-wrap{display:none;}
@@ -82151,7 +82158,7 @@ input,select,textarea{font-family:inherit;}
 .qe-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
 .qe-toolbar .ttl{font-size:18px;font-weight:800;color:var(--s900);}
 .qe-toolbar .btns{display:flex;gap:8px;}
-.qe-split{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;}
+.qe-split{display:grid;grid-template-columns:500px 1fr;gap:20px;align-items:start;}
 .qe-form{background:#fff;border:1px solid var(--s200);border-radius:14px;padding:20px;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;}
 .qe-preview{overflow:auto;display:flex;justify-content:center;background:var(--s200);border-radius:14px;padding:22px;}
 .qe-preview .a4{flex-shrink:0;}
@@ -82467,6 +82474,14 @@ input,select,textarea{font-family:inherit;}
             <label style=&quot;display:flex;align-items:center;gap:8px;cursor:pointer;&quot;>
               <input type=&quot;checkbox&quot; id=&quot;qe-vat&quot; checked style=&quot;width:auto;&quot; onchange=&quot;renderQePreview()&quot;> 최종금액에 부가세(10%) 포함
             </label>
+          </div>
+          <div class=&quot;form-row&quot; style=&quot;background:var(--s50);border:1px solid var(--s200);border-radius:10px;padding:10px 12px;&quot;>
+            <label>할인 <span style=&quot;color:var(--s400);font-weight:400;&quot;>· 없으면 비워두세요</span></label>
+            <div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;&quot;>
+              <div><div style=&quot;font-size:11px;color:var(--s400);margin-bottom:3px;&quot;>할인율 (%)</div><input id=&quot;qe-disc-rate&quot; type=&quot;number&quot; min=&quot;0&quot; max=&quot;100&quot; step=&quot;1&quot; placeholder=&quot;0&quot; oninput=&quot;renderQePreview()&quot;></div>
+              <div><div style=&quot;font-size:11px;color:var(--s400);margin-bottom:3px;&quot;>할인금액 (원)</div><input id=&quot;qe-disc-amt&quot; type=&quot;number&quot; min=&quot;0&quot; step=&quot;1000&quot; placeholder=&quot;0&quot; oninput=&quot;renderQePreview()&quot;></div>
+            </div>
+            <div><div style=&quot;font-size:11px;color:var(--s400);margin-bottom:3px;&quot;>할인이유</div><input id=&quot;qe-disc-reason&quot; placeholder=&quot;예: 초기 고객 특별 적용&quot; oninput=&quot;renderQePreview()&quot;></div>
           </div>
         </div>
         <div class=&quot;qe-preview&quot;><div id=&quot;qe-a4&quot;></div></div>
@@ -83269,7 +83284,18 @@ const SUPPLIER = { name:'더블유디 웨이브 (WD Wave)', ceo:'최윤경', biz
 
 /* 종류별 견적 기본 구성 — 작성 시작 시 자동으로 채워지며 추가·삭제 가능 */
 const QUOTE_PRESETS = {
-  '퍼스널 브랜딩 대행비 · 홈페이지 제작': ['PC버전','모바일버전','추가기능','SEO최적화','도메인 및 호스팅비용','관리비'],
+  'WD WAVE 브랜딩 견적서': ['PC버전','모바일버전','추가기능','SEO최적화','도메인 및 호스팅비용','관리비'],
+};
+const QUOTE_CATS=['상담·코칭','기본 셋업','홈페이지 제작','앱 제작','문서 제작','카드뉴스 제작','디자인 제작','AI 과외'];
+const QUOTE_ITEMS_MAP={
+  '상담·코칭':[{label:'유료 진단 상담',cost:'49000'},{label:'코칭 1회 + 피드백',cost:'110000'},{label:'직접입력',cost:''}],
+  '기본 셋업':[{label:'블로그 셋업',cost:''},{label:'유튜브 셋업',cost:''},{label:'당근 셋업',cost:''},{label:'카카오 셋업',cost:''},{label:'네이버/카카오 연동 가입',cost:'상담 시 안내'},{label:'고객 기존 자료 정리',cost:''},{label:'직접입력',cost:''}],
+  '홈페이지 제작':[{label:'기본 홈페이지 제작(5페이지)',cost:'300000'},{label:'모바일 홈페이지 제작',cost:''},{label:'한 페이지 추가',cost:'50000'},{label:'부가기능 추가',cost:''},{label:'SEO 최적화',cost:''},{label:'도메인',cost:'고객 별도 구매(대행 가능)'},{label:'직접입력',cost:''}],
+  '앱 제작':[{label:'기본 앱 제작',cost:'300000'},{label:'고객관리 기능',cost:''},{label:'일정관리 기능',cost:''},{label:'문서 자동화 기능',cost:''},{label:'고급 기능',cost:'추가 견적'},{label:'직접입력',cost:''}],
+  '문서 제작':[{label:'상담일지 양식',cost:'30000'},{label:'고객설문지',cost:'30000'},{label:'고객설문진단지',cost:'30000'},{label:'업무 체크리스트',cost:'30000'},{label:'안내문/설명자료',cost:'30000'},{label:'직접입력',cost:''}],
+  '카드뉴스 제작':[{label:'단순 공지형 1장',cost:'12000'},{label:'정보 제공용 6장',cost:'50000'},{label:'추가 장수',cost:''},{label:'직접입력',cost:''}],
+  '디자인 제작':[{label:'X배너 디자인',cost:'30000'},{label:'현수막 디자인',cost:'30000'},{label:'직접입력',cost:''}],
+  'AI 과외':[{label:'1인 집중 과외 1회',cost:'80000'},{label:'1인 집중 과외 4회 패키지',cost:'300000'},{label:'단체 과외 1회',cost:'60000'},{label:'단체 과외 4회 패키지',cost:'200000'},{label:'직접입력',cost:''}],
 };
 function presetItems(svc){
   const p=QUOTE_PRESETS[svc];
@@ -83283,15 +83309,17 @@ function openQuote(id,opt){
     setQuoteSvc(q.svc||''); fillCustSelect('qe-custid', q.customerId||'', true);
     $('qe-date').value=q.date; $('qe-company').value=q.company||''; $('qe-manager').value=q.manager||''; $('qe-contact').value=q.contact||'';
     $('qe-work').value=q.work; $('qe-valid').value=q.valid; $('qe-vat').checked=q.vat;
+    $('qe-disc-rate').value=q.discountRate||''; $('qe-disc-amt').value=q.discountAmount||''; $('qe-disc-reason').value=q.discountReason||'';
     quoteItems=JSON.parse(JSON.stringify(q.items));
   }else{
     $('qe-title').textContent='견적서 작성';
     const _svc=opt&amp;&amp;opt.svc?opt.svc:'';
     setQuoteSvc(_svc);
     fillCustSelect('qe-custid', (opt&amp;&amp;opt.cust)||'', true);
-    $('qe-date').value=todayStr(); $('qe-valid').value='견적일로부터 10일'; $('qe-work').value='';
+    $('qe-date').value=todayStr(); $('qe-valid').value='견적일로부터 10일'; $('qe-work').value='계약체결일로부터 2주일';
     $('qe-company').value=''; $('qe-manager').value=''; $('qe-contact').value=''; $('qe-vat').checked=true;
-    quoteItems=presetItems(_svc);
+    $('qe-disc-rate').value=''; $('qe-disc-amt').value=''; $('qe-disc-reason').value='';
+    quoteItems=[{name:'',detail:'',cost:''}];
   }
   drawQuoteItems(); renderQePreview();
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
@@ -83303,43 +83331,178 @@ function closeQedit(){ nav('quotes'); }
 function setQuoteSvc(svc){ $('qe-svc').value=svc||''; $('qe-svc-label').textContent=svc||'미지정'; }
 
 function drawQuoteItems(){
-  $('qe-items').innerHTML=quoteItems.map((it,i)=>`
-    <div class=&quot;item-grid&quot;>
-      <input placeholder=&quot;구성&quot; value=&quot;${esc(it.name)}&quot; oninput=&quot;quoteItems[${i}].name=this.value;renderQePreview()&quot;>
-      <input placeholder=&quot;세부항목&quot; value=&quot;${esc(it.detail)}&quot; oninput=&quot;quoteItems[${i}].detail=this.value;renderQePreview()&quot;>
-      <input placeholder=&quot;비용 또는 메모&quot; value=&quot;${esc(it.cost)}&quot; oninput=&quot;quoteItems[${i}].cost=this.value;renderQePreview()&quot;>
-      <button class=&quot;x&quot; onclick=&quot;quoteItems.splice(${i},1);drawQuoteItems();renderQePreview()&quot;>×</button>
-    </div>`).join('');
+  $('qe-items').innerHTML=quoteItems.map((it,i)=>{
+    const cat=it.name||'';
+    const knownCat=Object.prototype.hasOwnProperty.call(QUOTE_ITEMS_MAP,cat);
+    const catIsDirect=it._catDirect===true||(!knownCat&&cat!=='');
+    /* ── 기본 셋업: 체크박스 블록 ── */
+    if(cat==='기본 셋업'&&!catIsDirect){
+      const setupItems=['블로그 셋업','유튜브 셋업','당근 셋업','카카오 셋업'];
+      const det=it.detail||'';
+      const checks=setupItems.map(s=>{
+        const chk=det.includes(s)?'checked':'';
+        return `<label style='display:flex;align-items:center;gap:4px;font-size:12.5px;cursor:pointer;white-space:nowrap'><input type='checkbox' ${chk} onchange='onQSetupChange(${i})'> ${s}</label>`;
+      }).join('');
+      const cnt=setupItems.filter(s=>det.includes(s)).length;
+      const costDisp=cnt>0?`합계: <b>${comma(cnt*30000)}</b>원`:'항목을 선택하세요';
+      const logoMsg=cnt===4?`<div style='font-size:11px;color:var(--s400);margin-top:5px;'>4개 전체 선택 시 로고 제작 혜택이 견적서에 자동 반영됩니다.</div>`:'';
+      return `<div class='qe-setup-block'><div style='display:flex;align-items:center;gap:10px;flex-wrap:wrap'><span style='font-size:12.5px;font-weight:700;color:var(--p);min-width:62px'>기본 셋업</span><div style='display:flex;flex-wrap:wrap;gap:10px;flex:1' id='qe-setup-${i}'>${checks}</div><span style='font-size:12.5px;color:var(--s600)'>${costDisp}</span><button class='x' onclick='quoteItems.splice(${i},1);drawQuoteItems();renderQePreview()'>×</button></div>${logoMsg}</div>`;
+    }
+    /* 구성 칸 */
+    let catCell;
+    if(catIsDirect){
+      catCell=`<input id='qcat-d-${i}' placeholder='구성 직접입력' value='${esc(cat)}' oninput='quoteItems[${i}].name=this.value;renderQePreview()'>`;
+    }else{
+      const opts=QUOTE_CATS.map(c=>`<option value='${c}' ${cat===c?'selected':''}>${c}</option>`).join('');
+      catCell=`<select onchange='onQCatChange(${i},this)'><option value=''${!cat?' selected':''}>-- 구성 선택 --</option>${opts}<option value='__direct__'>직접입력</option></select>`;
+    }
+    /* 세부항목 칸 */
+    const details=knownCat?QUOTE_ITEMS_MAP[cat]:[];
+    const det=it.detail||'';
+    const knownDet=details.some(d=>d.label===det);
+    const detIsDirect=it._detDirect===true||(knownCat&&!knownDet&&det!=='');
+    let detCell;
+    if(!knownCat){
+      detCell=`<input placeholder='세부항목' value='${esc(det)}' oninput='quoteItems[${i}].detail=this.value;renderQePreview()'>`;
+    }else if(detIsDirect){
+      detCell=`<input id='qdet-d-${i}' placeholder='세부항목 직접입력' value='${esc(det)}' oninput='quoteItems[${i}].detail=this.value;renderQePreview()'>`;
+    }else{
+      const opts=details.map(d=>`<option value='${d.label}' ${det===d.label?'selected':''}>${d.label}</option>`).join('');
+      detCell=`<select onchange='onQDetChange(${i},this)'><option value=''${!det?' selected':''}>-- 세부항목 선택 --</option>${opts}</select>`;
+    }
+    return `<div class='item-grid'>${catCell}${detCell}<input placeholder='비용 또는 메모' value='${esc(it.cost)}' oninput='quoteItems[${i}].cost=this.value;renderQePreview()'><button class='x' onclick='quoteItems.splice(${i},1);drawQuoteItems();renderQePreview()'>×</button></div>`;
+  }).join('');
 }
 function addQuoteItem(){ quoteItems.push({name:'',detail:'',cost:''}); drawQuoteItems(); renderQePreview(); }
+function onQCatChange(i,sel){
+  const v=sel.value;
+  if(v==='__direct__'){
+    quoteItems[i].name=''; quoteItems[i]._catDirect=true;
+    quoteItems[i].detail=''; quoteItems[i]._detDirect=false; quoteItems[i].cost='';
+    drawQuoteItems(); renderQePreview();
+    setTimeout(()=>{ const el=document.getElementById('qcat-d-'+i); if(el) el.focus(); },0);
+    return;
+  }
+  quoteItems[i].name=v; quoteItems[i]._catDirect=false;
+  quoteItems[i].detail=''; quoteItems[i]._detDirect=false; quoteItems[i].cost='';
+  /* 홈페이지 제작: 기본 항목 자동 삽입 */
+  if(v==='홈페이지 제작'){
+    quoteItems[i].detail='기본 홈페이지 제작(5페이지)'; quoteItems[i].cost='300000';
+    quoteItems.splice(i+1,0,
+      {name:'홈페이지 제작',detail:'모바일 홈페이지 제작',cost:''},
+      {name:'홈페이지 제작',detail:'부가기능 추가()',cost:'',_detDirect:true},
+      {name:'홈페이지 제작',detail:'SEO 최적화',cost:''},
+      {name:'홈페이지 제작',detail:'도메인',cost:'고객 별도 구매(대행 가능)'}
+    );
+  }
+  drawQuoteItems(); renderQePreview();
+}
+function onQDetChange(i,sel){
+  const v=sel.value;
+  const cat=quoteItems[i].name;
+  if(v==='직접입력'||v==='부가기능 추가'){
+    quoteItems[i].detail=v==='부가기능 추가'?'부가기능 추가()':'';
+    quoteItems[i]._detDirect=true; quoteItems[i].cost='';
+    drawQuoteItems(); renderQePreview();
+    setTimeout(()=>{
+      const el=document.getElementById('qdet-d-'+i);
+      if(el){ el.focus(); if(v==='부가기능 추가') el.setSelectionRange(8,8); }
+    },0);
+    return;
+  }else if(v){
+    quoteItems[i].detail=v; quoteItems[i]._detDirect=false;
+    const found=(QUOTE_ITEMS_MAP[cat]||[]).find(d=>d.label===v);
+    if(found) quoteItems[i].cost=found.cost||'';
+    drawQuoteItems();
+  }else{ quoteItems[i].detail=''; quoteItems[i]._detDirect=false; quoteItems[i].cost=''; }
+  renderQePreview();
+}
+function onQSetupChange(i){
+  const setupItems=['블로그 셋업','유튜브 셋업','당근 셋업','카카오 셋업'];
+  const block=document.getElementById('qe-setup-'+i);
+  if(!block) return;
+  const checked=Array.from(block.querySelectorAll('input[type=checkbox]'))
+    .map((cb,si)=>cb.checked?setupItems[si]:null).filter(Boolean);
+  const cnt=checked.length;
+  quoteItems[i].cost=cnt>0?String(cnt*30000):'';
+  quoteItems[i].detail=checked.join(', ');
+  /* 4개 선택 시 로고 무료 제공 항목 삽입 / 해제 시 제거 */
+  const logoIdx=quoteItems.findIndex((it,idx)=>idx>i&&it.name==='기본 셋업'&&it.detail==='로고 제작 - 기본 셋업 전체 세트 혜택');
+  if(cnt===4&&logoIdx===-1){
+    quoteItems.splice(i+1,0,{name:'기본 셋업',detail:'로고 제작 - 기본 셋업 전체 세트 혜택',cost:'무료'});
+  }else if(cnt<4&&logoIdx>-1){
+    quoteItems.splice(logoIdx,1);
+  }
+  drawQuoteItems(); renderQePreview();
+}
 
 /* 고객 선택 시 담당자·연락처 자동 채움 */
+function isCorpName(n){
+  return /대행|학원|센터|회사|법인|스튜디오|공방|브랜드|샵|카페|교회|기관|단체|클리닉|협회|재단|병원|팀|프로젝트|Corp|Inc|Co\.|Ltd|그룹|홀딩스/.test(n||'');
+}
 function quoteFillFromCust(){
   const id=$('qe-custid').value;
   if(!id) return;
   const c=DB.customers.find(x=>x.id===id);
   if(!c) return;
-  $('qe-manager').value = c.name || '';
-  $('qe-contact').value = c.phone || '';
-  if(!$('qe-company').value.trim()) $('qe-company').value = c.name || '';
+  $('qe-manager').value=c.name||'';
+  $('qe-contact').value=c.phone||'';
+  if(!$('qe-company').value.trim()){
+    $('qe-company').value=isCorpName(c.name||'')?c.name:`개인(${c.name||''})`;
+  }
   renderQePreview();
 }
 function readQuoteForm(){
   return { customerId:$('qe-custid').value, svc:$('qe-svc').value, date:$('qe-date').value.trim(), company:$('qe-company').value.trim(),
     manager:$('qe-manager').value.trim(), contact:$('qe-contact').value.trim(),
-    work:$('qe-work').value.trim(), valid:$('qe-valid').value.trim(), vat:$('qe-vat').checked, items:quoteItems };
+    work:$('qe-work').value.trim(), valid:$('qe-valid').value.trim(), vat:$('qe-vat').checked,
+    discountRate:Number($('qe-disc-rate').value)||0,
+    discountAmount:Number($('qe-disc-amt').value)||0,
+    discountReason:($('qe-disc-reason').value||'').trim(),
+    items:quoteItems };
 }
 function quoteTitle(svc){
   if(!svc) return '견 적 서';
+  if(svc.endsWith('견적서')) return svc;
   const last = svc.includes('·') ? svc.split('·').pop().trim() : svc.trim();
   return last+' 견적서';
 }
 function buildQuoteA4(q){
   const sub=q.items.reduce((a,it)=>a+Number(digits(it.cost)),0);
-  const total=q.vat?Math.round(sub*1.1):sub;
-  const rows=q.items.length
-    ? q.items.map(it=>`<tr><td>${esc(it.name)||'&amp;nbsp;'}</td><td>${esc(it.detail)||'&amp;nbsp;'}</td><td class=&quot;cost&quot;>${costDisplay(it.cost)}</td></tr>`).join('')
-    : `<tr><td colspan=&quot;3&quot; style=&quot;color:#bbb;padding:18px;&quot;>항목을 입력하세요</td></tr>`;
+  const dRate=Number(q.discountRate)||0;
+  const dAmt=Number(q.discountAmount)||0;
+  const rateDisc=dRate>0?Math.round(sub*dRate/100):0;
+  const totalDisc=rateDisc+dAmt;
+  const afterDisc=Math.max(0,sub-totalDisc);
+  const total=q.vat?Math.round(afterDisc*1.1):afterDisc;
+  /* 할인 행 */
+  let discRows='';
+  if(totalDisc>0){
+    if(dRate>0&&dAmt>0){
+      discRows+=`<tr class=&quot;disc&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>할인율 ${dRate}% 적용</td><td class=&quot;cost&quot;>-${comma(rateDisc)}</td></tr>`;
+      discRows+=`<tr class=&quot;disc&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>추가 할인금액</td><td class=&quot;cost&quot;>-${comma(dAmt)}</td></tr>`;
+      discRows+=`<tr class=&quot;disc-total&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>총 할인금액</td><td class=&quot;cost&quot;>-${comma(totalDisc)}</td></tr>`;
+    }else if(dRate>0){
+      discRows+=`<tr class=&quot;disc&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>할인율 ${dRate}% 적용</td><td class=&quot;cost&quot;>-${comma(rateDisc)}</td></tr>`;
+    }else{
+      discRows+=`<tr class=&quot;disc&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>할인금액</td><td class=&quot;cost&quot;>-${comma(dAmt)}</td></tr>`;
+    }
+    if(q.discountReason) discRows+=`<tr class=&quot;disc-reason&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>할인이유</td><td>${esc(q.discountReason)}</td></tr>`;
+    discRows+=`<tr class=&quot;after-disc&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>할인 후 공급가액</td><td class=&quot;cost&quot;>${comma(afterDisc)}</td></tr>`;
+  }
+  let rows='',lastCat='';
+  if(q.items.length){
+    q.items.forEach(it=>{
+      const cat=it.name||'';
+      const catCell=cat!==lastCat
+        ?`<td style=&quot;font-weight:700;vertical-align:top;padding-top:10px;&quot;>${esc(cat)||'&amp;nbsp;'}</td>`
+        :`<td style=&quot;border-top:1px solid var(--s100)&quot;>&nbsp;</td>`;
+      lastCat=cat;
+      rows+=`<tr>${catCell}<td>${esc(it.detail)||'&amp;nbsp;'}</td><td class=&quot;cost&quot;>${costDisplay(it.cost)}</td></tr>`;
+    });
+  }else{
+    rows=`<tr><td colspan=&quot;3&quot; style=&quot;color:#bbb;padding:18px;&quot;>항목을 입력하세요</td></tr>`;
+  }
   return `<div class=&quot;a4&quot;>
       <div class=&quot;doc-head&quot;><div class=&quot;doc-head-bar&quot;></div><div class=&quot;doc-head-card&quot;>${esc(quoteTitle(q.svc))}</div></div>
       <div class=&quot;doc-grid&quot;>
@@ -83367,6 +83530,7 @@ function buildQuoteA4(q){
         <tbody>${rows}</tbody>
         <tfoot>
           <tr class=&quot;sum&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>견적금액</td><td class=&quot;cost&quot;>${comma(sub)}</td></tr>
+          ${discRows}
           <tr class=&quot;total&quot;><td class=&quot;lc&quot; colspan=&quot;2&quot;>최종제안금액 (${q.vat?'부가세포함':'부가세 별도'})</td><td class=&quot;cost&quot;>${comma(total)}</td></tr>
         </tfoot>
       </table>
@@ -83381,14 +83545,16 @@ function renderQePreview(){ $('qe-a4').innerHTML=buildQuoteA4(readQuoteForm()); 
 
 function saveQuoteFromEditor(){
   const d=readQuoteForm();
-  const items=d.items.filter(it=>it.name.trim()||it.cost.trim());
+  const items=d.items
+    .map(it=>({name:it.name||'',detail:it.detail||'',cost:it.cost||''}))
+    .filter(it=>it.name.trim()||it.cost.trim());
   if(!items.length){ toast('⚠️ 견적 항목을 1개 이상 입력하세요'); return; }
   const id=$('qe-id').value;
   const data={...d, items:JSON.parse(JSON.stringify(items))};
   if(id){ Object.assign(DB.quotes.find(x=>x.id===id),data); toast('✅ 저장되었습니다'); }
   else{ data.id=uid(); data.createdAt=Date.now(); data.sent='미전달'; DB.seq.q++; data.no='Q-'+new Date().getFullYear()+'-'+String(DB.seq.q).padStart(3,'0');
     DB.quotes.push(data); $('qe-id').value=data.id; $('qe-title').textContent='견적서 수정 · '+data.no; toast('✅ 견적서가 저장되었습니다'); }
-  sbUpsert(TBL.quotes, id?DB.quotes.find(x=>x.id===id):data); save(); renderQuotes(); updateNavCounts(); refreshDetail();
+  sbUpsert(TBL.quotes, (function(o){const{discountRate:_a,discountAmount:_b,discountReason:_c,...rest}=o; return rest;})(id?DB.quotes.find(x=>x.id===id):data)); save(); renderQuotes(); updateNavCounts(); refreshDetail();
 }
 function delQuote(id){ if(!confirm('이 견적서를 삭제하시겠습니까?'))return; DB.quotes=DB.quotes.filter(x=>x.id!==id); sbDelete(TBL.quotes,id); save(); renderQuotes(); refreshDetail(); toast('🗑️ 삭제'); }
 
@@ -83421,7 +83587,7 @@ const CONTRACT_TYPES=[
   {label:'퍼스널 브랜딩 상담비', svc:'퍼스널 브랜딩 상담비', ready:false},
   {label:'퍼스널 브랜딩 코칭비', svc:'퍼스널 브랜딩 코칭비', ready:false},
   {group:'퍼스널 브랜딩 대행비 (제작)', items:[
-    {label:'홈페이지 제작', svc:'퍼스널 브랜딩 대행비 · 홈페이지 제작', ready:true},
+    {label:'WD WAVE 브랜딩 견적서', svc:'WD WAVE 브랜딩 견적서', ready:true},
     {label:'앱 제작', svc:'퍼스널 브랜딩 대행비 · 앱 제작', ready:false},
     {label:'문서 제작', svc:'퍼스널 브랜딩 대행비 · 문서 제작', ready:false},
     {label:'카드뉴스 제작', svc:'퍼스널 브랜딩 대행비 · 카드뉴스 제작', ready:false},
@@ -83442,7 +83608,7 @@ function openTypePicker(mode,custId){
   showModal('m-ctype');
 }
 function openContractType(custId){ if(!DB.customers.length){ toast('⚠️ 먼저 고객을 등록하세요'); return; } openTypePicker('contract',custId); }
-function openQuoteType(custId){ openTypePicker('quote',custId); }
+function openQuoteType(custId){ openQuote('',{cust:custId||'',svc:'WD WAVE 브랜딩 견적서'}); }
 function ctItem(it){
   return it.ready
     ? `<div class=&quot;ct-item ready&quot; onclick=&quot;pickType('${esc(it.svc)}')&quot;><span class=&quot;nm&quot;>${esc(it.label)}</span><span class=&quot;badge-go&quot;>작성하기</span></div>`
