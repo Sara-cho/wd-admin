@@ -89623,7 +89623,7 @@ window.openDocGen = function(){
       </button>
       <!-- [v38실행] AI 자료실 -->
       <button onclick="wcnTabSwitch('ai-archive')" id="wcn-tab-ai-archive" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">🤖</span><span style="font-size:13px;font-weight:700;color:#78716C;">AI 자료실</span>
+        <span style="font-size:16px;">🤖</span><span style="font-size:13px;font-weight:700;color:#78716C;">자료실</span>
       </button>
       <!-- [v61실행] 구글드라이브 바로가기 - wcnTabSwitch 미연결, 외부 링크만 -->
       <a href="https://drive.google.com/drive/u/1/folders/1JL2yPIdGdJHoGEFBJRz16otTJZAEkAiH" target="_blank" rel="noopener noreferrer" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;text-decoration:none;">
@@ -90577,8 +90577,8 @@ window.openDocGen = function(){
       <!-- 헤더 -->
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
         <div>
-          <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">🤖 AI 자료실</div>
-          <div style="font-size:13px;color:#94a3b8;">프롬프트, 업무진행방식, 지침, 스킬 등 AI 활용 자료를 보관합니다.</div>
+          <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">🤖 자료실</div>
+          <div style="font-size:13px;color:#94a3b8;">프롬프트, 업무진행방식, 지침, 스킬, 서류양식 등 업무 자료를 보관합니다.</div>
         </div>
         <button onclick="aaOpenModal()" style="flex-shrink:0;padding:11px 20px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 자료 등록</button>
       </div>
@@ -90589,6 +90589,7 @@ window.openDocGen = function(){
         <button onclick="aaSetTab('업무진행방식')" id="aa-tab-업무진행방식" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">업무진행방식</button>
         <button onclick="aaSetTab('지침')"       id="aa-tab-지침"       style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">지침</button>
         <button onclick="aaSetTab('스킬')"       id="aa-tab-스킬"       style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">스킬</button>
+        <button onclick="aaSetTab('서류양식')"    id="aa-tab-서류양식"    style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">서류양식</button>
         <button onclick="aaSetTab('기타')"       id="aa-tab-기타"       style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">기타</button>
       </div>
 
@@ -90603,10 +90604,8 @@ window.openDocGen = function(){
         </select>
       </div>
 
-      <!-- 2단 레이아웃 -->
-      <div id="aa-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;min-height:400px;">
-
-        <!-- 왼쪽: 목록 테이블 -->
+      <!-- 목록 테이블 (전체폭, 상세는 모달로 오픈) -->
+      <div id="aa-layout" style="min-height:400px;">
         <div style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
@@ -90622,22 +90621,22 @@ window.openDocGen = function(){
             </tbody>
           </table>
         </div>
-        <div id="aa-detail" style="background:#F8F7F4;border-radius:14px;padding:18px;min-height:300px;">
-          <div id="aa-detail-empty" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;text-align:center;padding:20px;">
-            <div style="font-size:40px;margin-bottom:12px;">🤖</div>
-            <div style="font-size:15px;font-weight:700;margin-bottom:8px;">자료를 선택하면 여기에 표시됩니다</div>
-            <div style="font-size:13px;">왼쪽 목록에서 자료를 클릭하세요</div>
-          </div>
-          <div id="aa-detail-content" style="display:none;">
+      </div><!-- /aa-layout -->
+
+      <!-- ── 자료 상세보기 모달 ── -->
+      <div id="aa-detail-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9250;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px;box-sizing:border-box;" onclick="if(event.target===this) aaCloseDetailModal()">
+        <div style="background:#F8F7F4;border-radius:16px;padding:20px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-sizing:border-box;box-shadow:0 12px 48px rgba(0,0,0,.22);">
+          <div id="aa-detail-content">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;">
               <div style="flex:1;min-width:0;">
                 <div id="aa-det-badge" style="margin-bottom:5px;"></div>
                 <div id="aa-det-title" style="font-size:15px;font-weight:900;color:#1C1917;word-break:break-all;"></div>
               </div>
-              <div style="display:flex;gap:6px;flex-shrink:0;">
+              <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
                 <button onclick="aaCopyContent()" style="padding:5px 10px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:7px;font-size:11px;font-weight:700;color:#4338CA;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">📋 복사</button>
                 <button onclick="aaOpenModalEdit()" style="padding:5px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:11px;font-weight:700;color:#16A34A;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">✏️ 수정</button>
                 <button onclick="aaDelete()" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:7px;font-size:11px;font-weight:700;color:#DC2626;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">🗑</button>
+                <button onclick="aaCloseDetailModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;padding:0 0 0 4px;">×</button>
               </div>
             </div>
             <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;display:flex;gap:14px;">
@@ -90658,8 +90657,8 @@ window.openDocGen = function(){
             </div>
           </div>
         </div>
-
-      </div><!-- /aa-layout -->
+      </div>
+      <!-- /자료 상세보기 모달 -->
     </div><!-- /wcn-panel-ai-archive -->
 
     <!-- ★ [윤경의 하루] daily-haru 패널 ─────────────────────────── -->
@@ -90858,6 +90857,7 @@ window.openDocGen = function(){
                 <option value="업무진행방식">업무진행방식</option>
                 <option value="지침">지침</option>
                 <option value="스킬">스킬</option>
+                <option value="서류양식">서류양식</option>
                 <option value="기타">기타</option>
               </select>
             </div>
@@ -96567,6 +96567,7 @@ var _AA_BADGE = {
   '업무진행방식':'background:#F0FDF4;color:#16A34A;',
   '지침':       'background:#FFF7ED;color:#C2410C;',
   '스킬':       'background:#F0F9FF;color:#0369A1;',
+  '서류양식':   'background:#FDF4FF;color:#A21CAF;',
   '기타':       'background:#F1F5F9;color:#64748B;'
 };
 function aaBadge(type){
@@ -96639,7 +96640,7 @@ window.aaSetTab = function(type){
   _aaTab = type;
   _aaCurrent = null;  // 탭 바뀌면 상세 초기화
   // 탭 버튼 스타일 갱신
-  ['프롬프트','업무진행방식','지침','스킬','기타'].forEach(function(t){
+  ['프롬프트','업무진행방식','지침','스킬','서류양식','기타'].forEach(function(t){
     var btn = document.getElementById('aa-tab-'+t);
     if(!btn) return;
     var active = (t === type);
@@ -96648,11 +96649,8 @@ window.aaSetTab = function(type){
     btn.style.fontWeight    = active ? '800'     : '700';
     btn.style.fontSize      = '14px';
   });
-  // 상세 초기화
-  var empty   = document.getElementById('aa-detail-empty');
-  var content = document.getElementById('aa-detail-content');
-  if(empty)   empty.style.display   = 'flex';
-  if(content) content.style.display = 'none';
+  // 탭 변경 시 상세 모달 닫기
+  aaCloseDetailModal();
   aaRender();
 };
 
@@ -96674,10 +96672,6 @@ window.aaSelectRow = async function(id){
   _aaCurrent = a;
   aaRender(); // 선택 행 하이라이트
 
-  // 상세 영역 표시
-  document.getElementById('aa-detail-empty').style.display   = 'none';
-  document.getElementById('aa-detail-content').style.display = 'block';
-
   var typeEl    = document.getElementById('aa-det-badge');
   var titleEl   = document.getElementById('aa-det-title');
   var authorEl  = document.getElementById('aa-det-author');
@@ -96693,8 +96687,28 @@ window.aaSelectRow = async function(id){
   // 파일 목록
   document.getElementById('aa-file-list').innerHTML='<div style="font-size:11px;color:#94a3b8;">파일 불러오는 중...</div>';
   var fi = document.getElementById('aa-file-input'); if(fi) fi.value='';
+
+  // 상세 모달 열기
+  aaOpenDetailModal();
+
   await aaLoadFiles(id);
 };
+
+/* ── 상세 모달 열기/닫기 ── */
+window.aaOpenDetailModal = function(){
+  var ov = document.getElementById('aa-detail-modal-overlay');
+  if(ov) ov.style.display = 'flex';
+};
+window.aaCloseDetailModal = function(){
+  var ov = document.getElementById('aa-detail-modal-overlay');
+  if(ov) ov.style.display = 'none';
+};
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    var ov = document.getElementById('aa-detail-modal-overlay');
+    if(ov && ov.style.display === 'flex') aaCloseDetailModal();
+  }
+});
 
 /* ── 내용 복사 ── */
 window.aaCopyContent = function(){
@@ -96726,6 +96740,7 @@ window.aaOpenModal = function(){
 window.aaOpenModalEdit = function(){
   if(!_aaCurrent) return;
   var a=_aaCurrent;
+  aaCloseDetailModal(); // 상세 모달이 뒤에 겹쳐 보이지 않도록 먼저 닫기
   document.getElementById('aa-modal-title').textContent='AI 자료 수정';
   document.getElementById('aa-edit-id').value=a.id||'';
   var t=document.getElementById('aa-f-type');   if(t) t.value=a.data_type||'프롬프트';
@@ -96743,6 +96758,8 @@ window.aaCloseModal = function(){
   var ov=document.getElementById('aa-modal-overlay'); if(ov) ov.style.display='none';
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
   var sb=document.getElementById('aa-save-btn');if(sb){sb.disabled=false;sb.textContent='저장';}
+  // 수정 취소 시 원래 보던 상세 모달로 복귀
+  if(_aaCurrent) aaOpenDetailModal();
 };
 
 /* ── 저장 [v42] 모달 첨부파일 업로드 포함 ── */
@@ -96819,7 +96836,8 @@ window.aaSave = async function(){
     }
 
     setIdle();
-    aaCloseModal();
+    var _aaModalOv=document.getElementById('aa-modal-overlay'); if(_aaModalOv) _aaModalOv.style.display='none';
+    var _aaModalFi=document.getElementById('aa-modal-file-input'); if(_aaModalFi) _aaModalFi.value='';
     if(typeof showT==='function') showT('🤖 AI 자료 저장됨');
     // [v40] 2차 마무리 팝업
     setTimeout(function(){
@@ -96860,8 +96878,7 @@ window.aaDelete = async function(){
     });
     if(!res.ok) throw new Error('삭제 실패');
     _aaCurrent=null;
-    document.getElementById('aa-detail-empty').style.display='flex';
-    document.getElementById('aa-detail-content').style.display='none';
+    aaCloseDetailModal();
     if(typeof showT==='function') showT('🗑 AI 자료 삭제됨');
     await aaLoad();
   } catch(e){ alert('삭제 실패: '+e.message); }
