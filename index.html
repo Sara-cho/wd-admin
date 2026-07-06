@@ -80485,6 +80485,9 @@ function ccShowView(viewId){
     var el = document.getElementById(id);
     if(el) el.classList.toggle('cc-active', id === 'cc-view-'+viewId);
   });
+  /* [v37실행] work 화면은 내부 페이지 자체 헤더가 있으므로 상단 공용 헤더 중복 방지 */
+  var gh = document.getElementById('cc-global-header');
+  if(gh) gh.style.display = (viewId === 'work') ? 'none' : '';
   if(viewId === 'client' && typeof ccClientTab === 'function') ccClientTab('intro');
 }
 /* [v12실행] 소개페이지 내부 탭 전환 (소개/메뉴판/상담) — ccShowView와 별개 */
@@ -80510,7 +80513,7 @@ function ccMenuCat(cat){
 </script>
 
 <!-- 헤더 -->
-<div class="cc-header">
+<div class="cc-header" id="cc-global-header">
   <div style="display:flex;align-items:center;gap:14px;">
     <button onclick="if(typeof goTo==='function')goTo('home');else ccGoHome();" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">🏠 메인홈</button>
     <div>
