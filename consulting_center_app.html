@@ -1206,7 +1206,22 @@ async function loadAll(){
 }
 function load(){ /* 호환용 (실제 로드는 loadAll) */ }
 function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){} } /* 로컬 백업 */
-function sbUpsert(tbl,obj){ if(!sb||!obj)return; sb.from(tbl).upsert(toRow(obj)).then(r=>{ if(r.error){console.error('upsert',tbl,r.error); toast('⚠️ 저장 실패');} }).catch(e=>console.error(e)); }
+function sbUpsert(tbl,obj){
+  if(!sb||!obj)return;
+  const payload=toRow(obj);
+  sb.from(tbl).upsert(payload).then(r=>{
+    if(r.error){
+      console.error('upsert error tbl:', tbl);
+      console.error('upsert payload:', JSON.stringify(payload, null, 2));
+      console.error('contract sign request error:', r.error);
+      console.error('message:', r.error?.message);
+      console.error('details:', r.error?.details);
+      console.error('hint:', r.error?.hint);
+      console.error('code:', r.error?.code);
+      toast('⚠️ 저장에 실패했습니다. 다시 시도해 주세요.');
+    }
+  }).catch(e=>console.error('upsert catch:', e));
+}
 function sbDelete(tbl,id){ if(!sb)return; sb.from(tbl).delete().eq('id',id).then(r=>{ if(r.error)console.error('delete',tbl,r.error); }).catch(e=>console.error(e)); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
@@ -1249,6 +1264,13 @@ function requestSignature(id){
   if(!k.signToken){ k.signToken=genSignToken(); k.signTokenExpiresAt=Date.now()+SIGN_TOKEN_EXPIRE_DAYS*86400000; }
   k.contractStatus='서명요청'; k.signatureStatus='서명요청';
   sbUpsert(TBL.contracts,k); save();
+  /* file:// 로컬 환경 감지 */
+  if(location.protocol==='file:'){
+    toast('⚠️ 서명 링크는 배포 주소(https)에서만 정상 동작합니다. GitHub Pages 배포 후 테스트해 주세요.');
+    console.warn('[서명 링크] 현재 file:// 환경입니다. 배포 후 https:// 주소에서 테스트하세요.');
+    console.info('[서명 링크 미리보기]', buildSignLink(k));
+    return;
+  }
   const link=buildSignLink(k);
   copyToClipboard(link, '✅ 서명요청으로 전환되었습니다. 링크가 복사되었습니다');
   refreshDetail();
@@ -1257,6 +1279,11 @@ function requestSignature(id){
 function copySignLink(id){
   const k=DB.contracts.find(x=>x.id===id); if(!k){ toast('⚠️ 계약서 정보를 찾을 수 없습니다'); return; }
   if(!k.signToken){ requestSignature(id); return; }
+  if(location.protocol==='file:'){
+    toast('⚠️ 서명 링크는 배포 주소(https)에서만 정상 동작합니다. 배포 후 테스트해 주세요.');
+    console.info('[서명 링크 미리보기]', buildSignLink(k));
+    return;
+  }
   copyToClipboard(buildSignLink(k), '✅ 서명 링크가 복사되었습니다');
 }
 function copyToClipboard(text, okMsg){
