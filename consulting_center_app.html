@@ -1173,7 +1173,7 @@ try{ if(window.supabase&&supabase.createClient) sb=supabase.createClient(SB_URL,
 /* camelCase ↔ snake_case 변환 (DB 컬럼은 snake) */
 const _sn=s=>s.replace(/[A-Z]/g,m=>'_'+m.toLowerCase());
 const _cm=s=>s.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
-function toRow(o){ const r={}; for(const k in o){ if(k==='seq')continue; let key=_sn(k), val=o[k]; if(key==='created_at'&&typeof val==='number') val=new Date(val).toISOString(); r[key]=val; } return r; }
+function toRow(o){ const r={}; const TS_COLS=new Set(['created_at','sign_token_expires_at','signed_at']); for(const k in o){ if(k==='seq')continue; let key=_sn(k), val=o[k]; if(TS_COLS.has(key)&&typeof val==='number') val=new Date(val).toISOString(); r[key]=val; } return r; }
 function fromRow(o){ const r={}; for(const k in o){ let key=_cm(k), val=o[k]; if(k==='created_at'&&val) val=Date.parse(val); r[key]=val; } return r; }
 
 /* 전체 로드 (Supabase 우선, 실패 시 로컬 백업) */
