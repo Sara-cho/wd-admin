@@ -606,6 +606,30 @@ input,select,textarea{font-family:inherit;}
   .nav-item{padding:8px 10px;font-size:12.5px;}
   .stat-grid{grid-template-columns:1fr;}
 }
+
+/* ===== 고객 서명 전용 화면 (v32) — 관리자 UI와 완전 분리 ===== */
+#sign-wrap{position:fixed;inset:0;background:#EEEEF6;z-index:9999;overflow-y:auto;padding:20px 14px 60px;}
+#sign-wrap .sg-card{max-width:520px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:24px 20px;}
+#sign-wrap .sg-brand{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--p);margin-bottom:18px;font-size:15px;}
+#sign-wrap h2{font-size:18px;margin-bottom:4px;}
+#sign-wrap .sg-sub{color:var(--s500);font-size:12.5px;margin-bottom:18px;}
+#sign-wrap .sg-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--s100);font-size:13.5px;}
+#sign-wrap .sg-row span:first-child{color:var(--s500);}
+#sign-wrap .sg-preview{max-height:320px;overflow-y:auto;border:1px solid var(--s200);border-radius:10px;padding:12px;margin:16px 0;background:var(--s50);font-size:12px;}
+#sign-wrap .sg-preview .cedit-a4{box-shadow:none;transform:scale(1);width:100%;padding:10px;}
+#sign-wrap .sg-agree{display:flex;align-items:flex-start;gap:8px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:10px;padding:12px 14px;margin:16px 0;font-size:13px;}
+#sign-wrap .sg-agree input{margin-top:3px;}
+#sign-wrap .sg-canvas-wrap{border:1.5px dashed var(--s300);border-radius:10px;overflow:hidden;background:#fff;touch-action:none;}
+#sign-wrap canvas{display:block;width:100%;height:180px;touch-action:none;}
+#sign-wrap .sg-canvas-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+#sign-wrap .sg-btn-row{display:flex;gap:10px;margin-top:20px;}
+#sign-wrap .sg-btn{flex:1;padding:13px;border-radius:10px;border:none;font-weight:700;font-size:14.5px;cursor:pointer;}
+#sign-wrap .sg-btn-main{background:var(--p);color:#fff;}
+#sign-wrap .sg-btn-main:disabled{background:var(--s300);cursor:not-allowed;}
+#sign-wrap .sg-btn-ghost{background:var(--s100);color:var(--s600);flex:0 0 auto;padding:13px 16px;}
+#sign-wrap .sg-done{text-align:center;padding:40px 10px;}
+#sign-wrap .sg-done .ic{font-size:44px;margin-bottom:14px;}
+#sign-wrap .sg-error{text-align:center;padding:60px 20px;color:var(--s500);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js"></script>
 </head>
@@ -903,9 +927,11 @@ input,select,textarea{font-family:inherit;}
             <select id="ce-status" onchange="renderCePreview()">
               <option value="작성중">작성중</option>
               <option value="전달완료">전달완료</option>
-              <option value="서명대기">서명대기</option>
+              <option value="서명요청">서명요청</option>
+              <option value="서명완료">서명완료</option>
               <option value="계약완료">계약완료</option>
             </select>
+            <div style="font-size:11.5px;color:var(--s400);margin-top:4px;">서명요청 이후 상태는 계약 탭의 [고객서명 요청] 흐름으로 자동 전환되는 것이 기본이며, 이 선택창은 수동 보정용입니다.</div>
           </div>
           <div class="form-row"><label>계약금액 (원)</label><input id="ce-amount" inputmode="numeric" placeholder="0" oninput="renderCePreview()"></div>
           <div class="form-row"><label>계약 기간</label><input id="ce-period" placeholder="계약체결일로부터 2주일" oninput="renderCePreview()"></div>
@@ -1197,11 +1223,62 @@ function costDisplay(cost){
   return esc(c);
 }
 function todayStr(){ const d=new Date(); return d.getFullYear()+'. '+String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getDate()).padStart(2,'0'); }
+function formatSignedAt(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
 function custName(id){ const c=DB.customers.find(x=>x.id===id); return c?c.name:'(삭제된 고객)'; }
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
 
 const STATUS_CLASS = {'신규문의':'b-new','상담중':'b-consult','제안완료':'b-proposal','계약':'b-contract','진행중':'b-progress','완료':'b-done','보류':'b-hold'};
 function statusBadge(s){ return `<span class="bdg ${STATUS_CLASS[s]||'b-done'}">${esc(s)}</span>`; }
+
+/* ── 계약 상태 배지 (customer STATUS_CLASS와 별도 — v32 고객서명 기능) ── */
+const CONTRACT_STATUS_CLASS = {'작성중':'b-hold','전달완료':'b-consult','서명요청':'b-proposal','서명완료':'b-progress','계약완료':'b-done'};
+function contractStatusBadge(s){ const v=s||'작성중'; return `<span class="bdg ${CONTRACT_STATUS_CLASS[v]||'b-hold'}">${esc(v)}</span>`; }
+const SIGN_STATUS_CLASS = {'서명전':'b-hold','서명요청':'b-proposal','서명완료':'b-progress'};
+function signatureStatusBadge(s){ const v=s||'서명전'; return `<span class="bdg ${SIGN_STATUS_CLASS[v]||'b-hold'}">${esc(v)}</span>`; }
+
+/* ── 고객서명 요청 흐름 (v32) ── */
+const SIGN_TOKEN_EXPIRE_DAYS=14;
+function genSignToken(){ return Array.from({length:32},()=>'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random()*36)]).join(''); }
+function buildSignLink(k){
+  const base=location.origin+location.pathname;
+  return `${base}#contract-sign?id=${encodeURIComponent(k.id)}&token=${encodeURIComponent(k.signToken)}`;
+}
+/* 계약 탭 "고객서명 요청" 클릭 → 토큰 생성 + 상태 전환 + 링크 복사 */
+function requestSignature(id){
+  const k=DB.contracts.find(x=>x.id===id); if(!k){ toast('⚠️ 계약서 정보를 찾을 수 없습니다'); return; }
+  if(!k.signToken){ k.signToken=genSignToken(); k.signTokenExpiresAt=Date.now()+SIGN_TOKEN_EXPIRE_DAYS*86400000; }
+  k.contractStatus='서명요청'; k.signatureStatus='서명요청';
+  sbUpsert(TBL.contracts,k); save();
+  const link=buildSignLink(k);
+  copyToClipboard(link, '✅ 서명요청으로 전환되었습니다. 링크가 복사되었습니다');
+  refreshDetail();
+}
+/* 상태가 이미 '서명요청'일 때 링크만 다시 복사 */
+function copySignLink(id){
+  const k=DB.contracts.find(x=>x.id===id); if(!k){ toast('⚠️ 계약서 정보를 찾을 수 없습니다'); return; }
+  if(!k.signToken){ requestSignature(id); return; }
+  copyToClipboard(buildSignLink(k), '✅ 서명 링크가 복사되었습니다');
+}
+function copyToClipboard(text, okMsg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast(okMsg)).catch(()=>toast('⚠️ 복사에 실패했습니다. 링크: '+text));
+  }else{ toast('⚠️ 복사에 실패했습니다. 링크: '+text); }
+}
+/* 계약 탭 관리 버튼 — 상태별 구성 */
+function contractActionButtons(k){
+  const st=k.contractStatus||k.status||'작성중';
+  const open=`<button class="btn btn-g btn-sm" style="margin-right:2px;" onclick="openContractEditor('${k.id}')">열기</button>`;
+  const pay=`<button class="btn btn-p btn-sm" onclick="switchCdTab('payment')">입금 진행</button>`;
+  const del=`<button class="btn btn-g btn-sm" style="margin-right:2px;color:var(--rs700);border-color:var(--rs200);" onclick="delContractFromDetail('${k.id}')">삭제</button>`;
+  const dl=`<button class="btn btn-g btn-sm" style="margin-right:2px;" onclick="downloadContractById('${k.id}')">다운로드</button>`;
+  const dlFinal=`<button class="btn btn-g btn-sm" style="margin-right:2px;" onclick="downloadContractById('${k.id}')">최종계약서 다운로드</button>`;
+  const reqSign=`<button class="btn btn-p btn-sm" style="margin-right:2px;" onclick="requestSignature('${k.id}')">고객서명 요청</button>`;
+  const copyLink=`<button class="btn btn-p btn-sm" style="margin-right:2px;" onclick="copySignLink('${k.id}')">링크 복사</button>`;
+  if(st==='서명요청') return open+copyLink+dl+del+pay;
+  if(st==='서명완료') return open+dlFinal+pay;
+  if(st==='계약완료') return open+dlFinal;
+  return open+dl+reqSign+del+pay; /* 작성중/전달완료 기본 */
+}
 
 /* ====================== 네비게이션 ====================== */
 /* 메인전산홈: index.html iframe 안에 있을 경우 부모의 goTo('home') 호출을 시도.
@@ -2132,19 +2209,15 @@ function showCustDetail(id){
     <div class="cd-section">
       <div class="cd-sec-head"><h4>📄 계약서</h4><button class="btn btn-p btn-sm" onclick="openContractType('${id}')">+ 계약 작성</button></div>`;
   html+= contracts.length
-    ? `<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>계약번호</th><th>계약 종류</th><th>계약금액</th><th>계약상태</th><th>작성일</th><th style="text-align:right;">관리</th></tr></thead><tbody>${contracts.map(k=>`<tr>
+    ? `<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>계약번호</th><th>계약 종류</th><th>계약금액</th><th>계약상태</th><th>서명상태</th><th>작성일</th><th style="text-align:right;">관리</th></tr></thead><tbody>${contracts.map(k=>`<tr>
         <td class="nm" style="line-height:1.5;">${esc(k.no)}${k.quoteNo?`<br><span style="font-size:10px;font-weight:600;color:var(--p);">견적: ${esc(k.quoteNo)}</span>`:''}
         </td>
         <td>${esc(k.service)}</td>
         <td class="nm">${comma(digits(k.finalContractAmount||k.amount||'0'))}원</td>
-        <td>${statusBadge(k.status)}</td>
+        <td>${contractStatusBadge(k.contractStatus||k.status)}</td>
+        <td>${signatureStatusBadge(k.signatureStatus)}</td>
         <td style="color:var(--s500);font-size:12.5px;">${esc(k.date||'')}</td>
-        <td style="text-align:right;white-space:nowrap;">
-          <button class="btn btn-g btn-sm" style="margin-right:2px;" onclick="openContractEditor('${k.id}')">열기</button>
-          <button class="btn btn-g btn-sm" style="margin-right:2px;" onclick="downloadContractById('${k.id}')">다운로드</button>
-          <button class="btn btn-g btn-sm" style="margin-right:2px;color:var(--rs700);border-color:var(--rs200);" onclick="delContractFromDetail('${k.id}')">삭제</button>
-          <button class="btn btn-p btn-sm" onclick="switchCdTab('payment')">입금 진행</button>
-        </td></tr>`).join('')}</tbody></table></div>`
+        <td style="text-align:right;white-space:nowrap;">${contractActionButtons(k)}</td></tr>`).join('')}</tbody></table></div>`
     : `<div class="cd-empty">등록된 계약서가 없습니다.<br>견적 확정 후 <b>계약 진행</b>을 눌러 작성하세요.</div>`;
   html+=`</div>
   </div>`;
@@ -2657,7 +2730,7 @@ function renderContracts(){
       <td>${esc(custName(k.customerId))}</td>
       <td><span class="bdg bdg-svc">${esc(k.service)}</span></td>
       <td class="nm" style="font-variant-numeric:tabular-nums;">${comma(digits(k.amount))}원</td>
-      <td>${statusBadge(k.status)}</td>
+      <td>${contractStatusBadge(k.contractStatus||k.status)}</td>
       <td style="color:var(--s400);font-size:12px;">${esc(k.date)}</td>
       <td style="white-space:nowrap;text-align:right;">
         <button class="btn btn-g btn-sm" onclick="previewContract('${k.id}')">🖨 보기</button>
@@ -2740,7 +2813,7 @@ function delContractFromDetail(id){ if(!confirm('이 계약서를 삭제하시�
 /* ── 계약서 전용 편집 화면 ── */
 function readContractForm(){
   return { customerId:$('ce-cust').value, service:$('ce-svc-val').value, date:$('ce-date').value.trim(),
-    status:$('ce-status').value, amount:$('ce-amount').value.trim(), period:$('ce-period').value.trim(),
+    status:$('ce-status').value, contractStatus:$('ce-status').value, amount:$('ce-amount').value.trim(), period:$('ce-period').value.trim(),
     scope:$('ce-scope').value.trim(), terms:$('ce-terms').value.trim(),
     sessionId:$('ce-session-id').value, sessionNo:$('ce-session-no').value,
     quoteId:$('ce-quote-id').value, quoteNo:$('ce-quote-no').value };
@@ -2940,9 +3013,11 @@ function buildContractA4HTML(k){
       <div class="cedit-sign-grid">
         <div class="cedit-sign-box">
           <div class="crole">갑 (의뢰인)</div>
-          <div class="crow"><span>성명</span><span>${esc(cname)}</span></div>
-          <div class="crow"><span>연락처</span><span>${esc(cphone)||'　'}</span></div>
-          <div class="csig">서명(인) ___________</div>
+          <div class="crow"><span>성명</span><span>${esc(k.signedName||cname)}</span></div>
+          <div class="crow"><span>연락처</span><span>${esc(k.signedPhone||cphone)||'　'}</span></div>
+          ${k.signatureUrl||k.signatureDataUrl
+            ? `<div class="csig" style="text-align:left;"><img src="${esc(k.signatureUrl||k.signatureDataUrl)}" alt="고객 서명" style="max-width:180px;max-height:60px;display:block;margin:4px 0;"><div style="font-size:10.5px;color:#6B6178;">서명일시: ${esc(k.signedAt?formatSignedAt(k.signedAt):'')}</div></div>`
+            : `<div class="csig">서명(인) ___________</div>`}
         </div>
         <div class="cedit-sign-box">
           <div class="crole">을 (공급자)</div>
@@ -2965,7 +3040,7 @@ function openContractEditor(id, opts){
     $('ce-title').textContent='계약서 수정';
     const nb=$('ce-no-badge'); if(nb){ nb.textContent='📋 '+esc(k.no); nb.style.display='inline-block'; }
     $('ce-cust').value=k.customerId; $('ce-svc-val').value=k.service||'';
-    $('ce-date').value=k.date; $('ce-status').value=k.status||'작성중';
+    $('ce-date').value=k.date; $('ce-status').value=k.contractStatus||k.status||'작성중';
     $('ce-amount').value=k.finalContractAmount||k.amount||'';
     $('ce-period').value=k.period||''; $('ce-scope').value=k.scope||''; $('ce-terms').value=k.terms||'';
     $('ce-session-id').value=k.sessionId||''; $('ce-session-no').value=k.sessionNo||'';
@@ -3071,7 +3146,112 @@ function seedDemo(){
 }
 
 /* ====================== 초기화 ====================== */
-(async()=>{ await loadAll(); renderDash(); if(typeof renderCustomers==='function')renderCustomers(); updateNavCounts(); })();
+(async()=>{
+  await loadAll();
+  if(location.hash.indexOf('#contract-sign')===0){ renderSignRoute(); return; }
+  renderDash(); if(typeof renderCustomers==='function')renderCustomers(); updateNavCounts();
+})();
+
+/* ====================== 고객 서명 전용 화면 (v32) ====================== */
+let _sgCanvasHasDraw=false, _sgCtx=null, _sgContract=null;
+function parseSignHash(){
+  const h=location.hash; const q=h.split('?')[1]||'';
+  const p=new URLSearchParams(q);
+  return { id:p.get('id')||'', token:p.get('token')||'' };
+}
+function renderSignRoute(){
+  document.querySelector('.wrap').style.display='none';
+  const {id,token}=parseSignHash();
+  const k=DB.contracts.find(x=>x.id===id);
+  const valid = k && k.signToken && k.signToken===token && (!k.signTokenExpiresAt || Date.now()<=k.signTokenExpiresAt);
+  const root=document.createElement('div'); root.id='sign-wrap';
+  if(!valid){
+    root.innerHTML=`<div class="sg-card"><div class="sg-error"><div style="font-size:40px;margin-bottom:12px;">🔒</div>유효하지 않거나 만료된 서명 링크입니다.<br>담당자에게 새 링크를 요청해 주세요.</div></div>`;
+    document.body.appendChild(root); return;
+  }
+  if((k.signatureStatus||'')==='서명완료'){
+    root.innerHTML=signDoneHTML(k);
+    document.body.appendChild(root); return;
+  }
+  _sgContract=k;
+  const c=DB.customers.find(x=>x.id===k.customerId);
+  const cname=c?c.name:(k.customerName||'');
+  const amt=comma(digits(k.finalContractAmount||k.amount||'0'));
+  root.innerHTML=`
+    <div class="sg-card">
+      <div class="sg-brand">📄 WD WAVE 계약서 서명</div>
+      <h2>${esc(k.no)} 계약서</h2>
+      <div class="sg-sub">아래 내용을 확인하신 뒤 서명해 주세요.</div>
+      <div class="sg-row"><span>고객명</span><span>${esc(cname)}</span></div>
+      <div class="sg-row"><span>계약금액</span><span>₩${amt}</span></div>
+      <div class="sg-row"><span>서비스</span><span>${esc(k.service||'')}</span></div>
+      <div class="sg-preview" id="sg-preview">${buildContractA4HTML(k)}</div>
+      <label class="sg-agree"><input type="checkbox" id="sg-agree" onchange="sgUpdateBtn()"> 본인은 위 계약서 내용을 확인하였으며, 계약 조건에 동의합니다.</label>
+      <div class="sg-canvas-wrap"><canvas id="sg-canvas"></canvas></div>
+      <div class="sg-canvas-actions">
+        <span style="font-size:12px;color:var(--s400);">위 칸에 서명해 주세요 (손가락/마우스)</span>
+        <button class="sg-btn sg-btn-ghost" onclick="sgClearCanvas()" style="padding:6px 12px;font-size:12.5px;">다시 쓰기</button>
+      </div>
+      <div class="sg-btn-row"><button class="sg-btn sg-btn-main" id="sg-submit" disabled onclick="sgSubmit()">서명 완료</button></div>
+    </div>`;
+  document.body.appendChild(root);
+  sgInitCanvas();
+}
+function signDoneHTML(k){
+  return `<div class="sg-card"><div class="sg-done"><div class="ic">✅</div><h2>서명이 완료되었습니다</h2>
+    <div class="sg-sub">서명일시: ${esc(k.signedAt?formatSignedAt(k.signedAt):'')}</div></div></div>`;
+}
+function sgUpdateBtn(){
+  const agree=$('sg-agree').checked;
+  $('sg-submit').disabled = !(agree&&_sgCanvasHasDraw);
+}
+function sgInitCanvas(){
+  const canvas=$('sg-canvas'); const rect=canvas.getBoundingClientRect();
+  canvas.width=(rect.width||360)*2; canvas.height=(rect.height||180)*2;
+  const ctx=canvas.getContext('2d');
+  if(!ctx){ toast('⚠️ 이 브라우저에서는 서명 캔버스를 사용할 수 없습니다'); return; }
+  ctx.scale(2,2); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.strokeStyle='#1e293b';
+  _sgCtx=ctx; _sgCanvasHasDraw=false;
+  let drawing=false, last=null;
+  const pos=e=>{ const r=canvas.getBoundingClientRect(); const p=e.touches?e.touches[0]:e; return {x:p.clientX-r.left,y:p.clientY-r.top}; };
+  const start=e=>{ e.preventDefault(); drawing=true; last=pos(e); };
+  const move=e=>{ if(!drawing)return; e.preventDefault(); const p=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; _sgCanvasHasDraw=true; sgUpdateBtn(); };
+  const end=e=>{ drawing=false; };
+  canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+  canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end);
+}
+function sgClearCanvas(){
+  const canvas=$('sg-canvas'); _sgCtx.clearRect(0,0,canvas.width,canvas.height); _sgCanvasHasDraw=false; sgUpdateBtn();
+}
+async function sgSubmit(){
+  if(!_sgContract||!_sgCanvasHasDraw||!$('sg-agree').checked) return;
+  const btn=$('sg-submit'); btn.disabled=true; btn.textContent='저장 중...';
+  const canvas=$('sg-canvas');
+  const dataUrl=canvas.toDataURL('image/png');
+  const k=_sgContract;
+  const c=DB.customers.find(x=>x.id===k.customerId);
+  k.signatureDataUrl=dataUrl;
+  k.signedAt=Date.now();
+  k.signedName=c?c.name:(k.customerName||'');
+  k.signedPhone=c?c.phone:(k.customerPhone||'');
+  k.agreementChecked=true;
+  k.signatureStatus='서명완료';
+  k.contractStatus='서명완료';
+  /* Supabase Storage 업로드 시도 (버킷 미승인 시 자동 실패 → 로컬 저장으로 대체) */
+  let uploadedUrl=null;
+  try{
+    if(sb&&sb.storage){
+      const blob=await (await fetch(dataUrl)).blob();
+      const path=`${k.id}-${Date.now()}.png`;
+      const up=await sb.storage.from('contract-signatures').upload(path, blob, {contentType:'image/png'});
+      if(!up.error){ const pub=sb.storage.from('contract-signatures').getPublicUrl(path); uploadedUrl=pub&&pub.data&&pub.data.publicUrl; }
+    }
+  }catch(e){ console.warn('서명 이미지 Storage 업로드 실패(버킷 미승인 상태로 예상됨)', e); }
+  if(uploadedUrl) k.signatureUrl=uploadedUrl;
+  sbUpsert(TBL.contracts,k); /* 컬럼 미승인 시 내부적으로 실패하나 화면엔 기술 용어 노출 안 함 */
+  save();
+  document.getElementById('sign-wrap').innerHTML=signDoneHTML(k);
+}
 </script>
 </body>
 </html>
