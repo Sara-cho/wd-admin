@@ -5688,12 +5688,23 @@ function delContractFromDetail(id){ if(!confirm('이 계약서를 삭제하시�
 function readContractForm(){
   const _cid=$('ce-id').value;
   const _exist=_cid?(DB.contracts||[]).find(x=>x.id===_cid):null;
-  return { id:_cid, no:_exist?_exist.no:'', customerId:$('ce-cust').value, service:$('ce-svc-val').value, date:$('ce-date').value.trim(),
+  const d={ id:_cid, no:_exist?_exist.no:'', customerId:$('ce-cust').value, service:$('ce-svc-val').value, date:$('ce-date').value.trim(),
     status:$('ce-status').value, contractStatus:$('ce-status').value, amount:$('ce-amount').value.trim(), period:$('ce-period').value.trim(),
     scope:$('ce-scope').value.trim(), terms:$('ce-terms').value.trim(),
     sessionId:$('ce-session-id').value, sessionNo:$('ce-session-no').value,
     work:$('ce-work')?$('ce-work').value.trim():'', valid:$('ce-valid')?$('ce-valid').value.trim():'',
     quoteId:$('ce-quote-id').value, quoteNo:$('ce-quote-no').value };
+  /* [v35] DB 객체의 서명 데이터 병합 — 폼에 없는 필드 */
+  if(_exist){
+    if(_exist.signatureDataUrl) d.signatureDataUrl=_exist.signatureDataUrl;
+    if(_exist.signatureUrl) d.signatureUrl=_exist.signatureUrl;
+    if(_exist.signedAt) d.signedAt=_exist.signedAt;
+    if(_exist.signedName) d.signedName=_exist.signedName;
+    if(_exist.signedPhone) d.signedPhone=_exist.signedPhone;
+    if(_exist.signatureStatus) d.signatureStatus=_exist.signatureStatus;
+    if(_exist.finalContractAmount) d.finalContractAmount=_exist.finalContractAmount;
+  }
+  return d;
 }
 function renderCePreview(){ const d=readContractForm(); $('ce-a4').innerHTML=buildContractA4HTML(d); }
 function buildContractA4HTML(k){
@@ -6237,9 +6248,20 @@ function sgDownloadContract(){
     +`.csig{font-size:12px;color:#64748b;margin-top:6px;}`
     +`@media print{body{background:#fff;padding:0;}.wrap{box-shadow:none;border-radius:0;padding:10px;}}</style></head>`
     +`<body><div class="wrap">${body}</div></body></html>`;
-  const w=window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-  else { toast('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해 주세요.'); }
+  /* [v35] Blob으로 실제 파일 다운로드 */
+  try{
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=(k.no||'계약서')+'_계약서.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){
+    /* fallback — 새 창 열기 */
+    const w=window.open('','_blank');
+    if(w){ w.document.write(html); w.document.close(); }
+    else { toast('다운로드에 실패했습니다. 브라우저 설정을 확인해 주세요.'); }
+  }
 }
 async function sgSubmit(){
   if(!_sgContract||!_sgCanvasHasDraw||!$('sg-agree').checked) return;
