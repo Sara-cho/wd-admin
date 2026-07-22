@@ -4672,7 +4672,11 @@ function showCustDetail(id){
   </div>`;
 
   /* 탭 네비게이션 (5탭 — 업무 흐름 순서) */
-  const tabs=[['info','기본정보'],['consult',`상담${sessions.length?` (${sessions.length})`:''}`],['quote','견적'],['contract','계약'],['payment','입금현황'],['material','작업자료'],['work','작업진행']];
+  const tabs=[['info','기본정보'],['consult',`상담${sessions.length?` (${sessions.length})`:''}`],['quote','견적'],['contract','계약']];
+  if(contracts.length) tabs.push(['payment','입금현황']);
+  tabs.push(['material','작업자료']);
+  if(contracts.length) tabs.push(['work','작업진행']);
+  if(!contracts.length && (_cdTab==='payment'||_cdTab==='work')) _cdTab='info';
   html+=`<div class="cd-tabs">${tabs.map(([k,lb])=>`<button class="cd-tab-btn ${_cdTab===k?'on':''}" onclick="switchCdTab('${k}')">${lb}</button>`).join('')}</div>`;
 
   /* 1) 기본정보 — 좌: 기본정보 카드 / 우: 상담·계약·업무·자료 요약카드 4개 */
@@ -5567,8 +5571,8 @@ function saveContract(){
   else{ data.id=uid(); data.createdAt=Date.now(); DB.seq.k++; data.no='C-'+new Date().getFullYear()+'-'+String(DB.seq.k).padStart(3,'0'); DB.contracts.push(data); toast('✅ 계약서가 저장되었습니다'); }
   sbUpsert(TBL.contracts, id?DB.contracts.find(x=>x.id===id):data); save(); closeModal('m-contract'); _sessionRef={}; _contractRef={}; renderContracts(); refreshDetail();
 }
-function delContract(id){ if(!confirm('이 계약서를 삭제하시겠습니까?'))return; DB.contracts=DB.contracts.filter(x=>x.id!==id); sbDelete(TBL.contracts,id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제'); }
-function delContractFromDetail(id){ if(!confirm('이 계약서를 삭제하시겠습니까?'))return; DB.contracts=DB.contracts.filter(x=>x.id!==id); sbDelete(TBL.contracts,id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제되었습니다'); }
+function delContract(id){ if(!confirm('이 계약서를 삭제하시겠습니까?\n\n연결된 업무도 함께 삭제됩니다.'))return; DB.tasks.filter(t=>t.contractId===id).forEach(t=>sbDelete(TBL.tasks,t.id)); DB.tasks=DB.tasks.filter(t=>t.contractId!==id); DB.contracts=DB.contracts.filter(x=>x.id!==id); sbDelete(TBL.contracts,id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제'); }
+function delContractFromDetail(id){ if(!confirm('이 계약서를 삭제하시겠습니까?\n\n연결된 업무도 함께 삭제됩니다.'))return; DB.tasks.filter(t=>t.contractId===id).forEach(t=>sbDelete(TBL.tasks,t.id)); DB.tasks=DB.tasks.filter(t=>t.contractId!==id); DB.contracts=DB.contracts.filter(x=>x.id!==id); sbDelete(TBL.contracts,id); save(); renderContracts(); refreshDetail(); toast('🗑️ 삭제되었습니다'); }
 
 /* ── 계약서 전용 편집 화면 ── */
 function readContractForm(){
@@ -6013,6 +6017,12 @@ function seedDemo(){
 
 /* ====================== 초기화 ====================== */
 (async()=>{
+  /* 서명 링크로 들어온 경우: 관리자 UI를 로딩 전에 즉시 숨김 */
+  if(location.hash.indexOf('#contract-sign')===0){
+    var w=document.querySelector('.wrap'); if(w) w.style.display='none';
+    var hdr=document.getElementById('ccHeader'); if(hdr) hdr.style.display='none';
+    var sb=document.getElementById('ccSidebar'); if(sb) sb.style.display='none';
+  }
   await loadAll();
   if(location.hash.indexOf('#contract-sign')===0){ renderSignRoute(); return; }
   renderDash(); if(typeof renderCustomers==='function')renderCustomers(); updateNavCounts();
