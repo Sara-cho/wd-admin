@@ -699,7 +699,14 @@ input,select,textarea{font-family:inherit;}
 #sign-wrap .sg-preview{border:1px solid var(--s200);border-radius:12px;padding:16px 12px;margin:18px 0 8px;background:var(--s50);font-size:13px;overflow-x:auto;}
 #sign-wrap .sg-preview .cedit-a4{box-shadow:none;transform:none;width:100%;padding:14px 10px;font-size:12.5px;line-height:1.7;}
 #sign-wrap .sg-preview-label{font-size:12.5px;font-weight:700;color:var(--s500);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
-@media(max-width:600px){#sign-wrap .sg-preview{padding:10px 8px;}#sign-wrap .sg-preview .cedit-a4{padding:8px 4px;font-size:11.5px;}}
+#sign-wrap .sg-dl-btn{display:block;width:100%;padding:13px;border-radius:10px;border:1.5px solid var(--p-line);background:var(--p-soft);color:var(--p);font-weight:700;font-size:14px;cursor:pointer;text-align:center;margin:14px 0;}
+#sign-wrap .sg-dl-btn:hover{background:var(--pl);color:#fff;}
+/* PC: 전문 보이고 + 다운로드 보이고 */
+/* 모바일(720px 이하): 전문 숨기고 + 다운로드만 */
+@media(max-width:720px){
+  #sign-wrap .sg-preview,#sign-wrap .sg-preview-label{display:none!important;}
+  #sign-wrap .sg-card{max-width:100%;padding:20px 14px;}
+}
 #sign-wrap .sg-agree{display:flex;align-items:flex-start;gap:8px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:10px;padding:12px 14px;margin:16px 0;font-size:13px;}
 #sign-wrap .sg-agree input{margin-top:3px;}
 #sign-wrap .sg-canvas-wrap{border:1.5px dashed var(--s300);border-radius:10px;overflow:hidden;background:#fff;touch-action:none;}
@@ -713,16 +720,15 @@ input,select,textarea{font-family:inherit;}
 #sign-wrap .sg-done{text-align:center;padding:40px 10px;}
 #sign-wrap .sg-done .ic{font-size:44px;margin-bottom:14px;}
 #sign-wrap .sg-error{text-align:center;padding:60px 20px;color:var(--s500);}
-#sign-wrap .sg-pdf-btn{display:block;width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--s200);background:#fff;color:var(--s600);font-weight:700;font-size:13px;cursor:pointer;text-align:center;margin-bottom:14px;}
-#sign-wrap .sg-pdf-btn:hover{border-color:var(--pl);color:var(--p);}
 /* [v35] 서명 페이지 인쇄 전용 CSS */
 @media print{
   body>*:not(#sign-wrap){display:none!important;}
   #sign-wrap{position:static!important;padding:0!important;background:#fff!important;overflow:visible!important;}
   #sign-wrap .sg-card{max-width:100%!important;box-shadow:none!important;padding:10px!important;border-radius:0!important;}
-  #sign-wrap .sg-preview{border:none!important;padding:0!important;margin:10px 0!important;background:#fff!important;}
+  #sign-wrap .sg-preview{display:block!important;border:none!important;padding:0!important;margin:10px 0!important;background:#fff!important;}
+  #sign-wrap .sg-preview-label{display:none!important;}
   #sign-wrap .sg-preview .cedit-a4{padding:0!important;font-size:11px!important;}
-  #sign-wrap .sg-pdf-btn,#sign-wrap .sg-agree,#sign-wrap .sg-canvas-wrap,#sign-wrap .sg-canvas-actions,#sign-wrap .sg-btn-row,#sign-wrap .sg-brand{display:none!important;}
+  #sign-wrap .sg-dl-btn,#sign-wrap .sg-agree,#sign-wrap .sg-canvas-wrap,#sign-wrap .sg-canvas-actions,#sign-wrap .sg-btn-row,#sign-wrap .sg-brand{display:none!important;}
   #sign-wrap .sg-row{font-size:12px!important;}
 }
 </style>
@@ -866,42 +872,54 @@ body{padding-left:270px;}
 
 </style>
 <style id="wk-skin">
-/* ══ [wk] 작업진행 3층 ══ */
-#view-cdetail .wk_k{background:#fff;border:1px solid rgba(74,63,122,.12);border-radius:15px;box-shadow:0 1px 5px rgba(45,31,122,.06);margin-bottom:13px;overflow:hidden;}
-#view-cdetail .wk_k-hd{padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:13px;flex-wrap:wrap;transition:background .13s;}
-#view-cdetail .wk_k-hd:hover{background:#FBFAFE;}
-#view-cdetail .wk_k-ic{width:36px;height:36px;flex:none;border-radius:10px;background:linear-gradient(135deg,#4A3F7A,#6D5BD0);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;}
-#view-cdetail .wk_k-tx{flex:1;min-width:150px;}
-#view-cdetail .wk_k-no{font-size:11px;font-weight:800;color:#8B7AC8;letter-spacing:.05em;margin-bottom:3px;}
-#view-cdetail .wk_k-nm{font-size:15px;font-weight:800;color:#2B2545;}
-#view-cdetail .wk_k-pg{flex:none;width:168px;}
-#view-cdetail .wk_k-pg .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
-#view-cdetail .wk_k-pg .pct{font-size:18px;font-weight:900;color:#4A3F7A;}
-#view-cdetail .wk_k-pg .cnt{font-size:10.5px;font-weight:700;color:#8580A0;}
-#view-cdetail .wk_k-pg .bar{height:6px;background:#EDE9F7;border-radius:99px;overflow:hidden;}
-#view-cdetail .wk_k-pg .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8B7AC8,#4A3F7A);border-radius:99px;transition:width .3s;}
-#view-cdetail .wk_k-ar{flex:none;color:#B7A9E0;font-size:14px;transition:transform .2s;}
-#view-cdetail .wk_k.open .wk_k-ar{transform:rotate(90deg);}
-#view-cdetail .wk_k-bd{display:none;padding:0 14px 14px;}
-#view-cdetail .wk_k.open .wk_k-bd{display:block;}
-
-#view-cdetail .wk_t{border:1.5px solid #EDE9F7;border-radius:12px;margin-bottom:9px;overflow:hidden;background:#FDFCFF;}
-#view-cdetail .wk_t-hd{padding:13px 15px;cursor:pointer;display:flex;align-items:center;gap:11px;flex-wrap:wrap;transition:background .13s;}
-#view-cdetail .wk_t-hd:hover{background:#F7F5FC;}
-#view-cdetail .wk_t-e{font-size:16px;flex:none;}
-#view-cdetail .wk_t-nm{flex:1;min-width:120px;font-size:13.5px;font-weight:800;color:#2B2545;}
-#view-cdetail .wk_t-pg{flex:none;width:130px;display:flex;align-items:center;gap:8px;}
-#view-cdetail .wk_t-pg .bar{flex:1;height:5px;background:#EDE9F7;border-radius:99px;overflow:hidden;}
-#view-cdetail .wk_t-pg .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8B7AC8,#4A3F7A);border-radius:99px;transition:width .3s;}
-#view-cdetail .wk_t-pg .n{font-size:11px;font-weight:800;color:#4A3F7A;flex:none;min-width:48px;text-align:right;}
-#view-cdetail .wk_t-chip{flex:none;font-size:10.5px;font-weight:800;border-radius:20px;padding:3px 10px;}
-#view-cdetail .wk_t-ar{flex:none;color:#C4B5FD;font-size:12px;transition:transform .2s;}
-#view-cdetail .wk_t.open .wk_t-ar{transform:rotate(90deg);}
-#view-cdetail .wk_t.done{background:#F6FBF8;border-color:#CFE9DA;}
-#view-cdetail .wk_t.done .wk_t-pg .n{color:#0d7a4f;}
-#view-cdetail .wk_t-bd{display:none;padding:2px 13px 13px;background:#fff;border-top:1px solid #F0EDF8;}
-#view-cdetail .wk_t.open .wk_t-bd{display:block;}
-
+/* ══ [wk] 작업진행 좌우분할 v35 ══ */
+/* 좌우분할 컨테이너 */
+#view-cdetail .wk_split{display:grid;grid-template-columns:280px 1fr;gap:0;background:#fff;border:1px solid rgba(74,63,122,.12);border-radius:15px;box-shadow:0 1px 5px rgba(45,31,122,.06);overflow:hidden;min-height:420px;margin-bottom:13px;}
+#view-cdetail .wk_left{background:#FDFCFF;border-right:1px solid rgba(74,63,122,.12);display:flex;flex-direction:column;overflow:hidden;}
+#view-cdetail .wk_left-hd{padding:16px 14px 12px;background:linear-gradient(135deg,#4A3F7A,#6D5BD0);color:#fff;}
+#view-cdetail .wk_left-hd .kno{font-size:10.5px;font-weight:700;opacity:.8;margin-bottom:2px;}
+#view-cdetail .wk_left-hd .knm{font-size:14px;font-weight:900;}
+#view-cdetail .wk_left-pg{margin-top:10px;}
+#view-cdetail .wk_left-pg .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+#view-cdetail .wk_left-pg .pct{font-size:20px;font-weight:900;}
+#view-cdetail .wk_left-pg .cnt{font-size:10px;font-weight:700;opacity:.8;}
+#view-cdetail .wk_left-pg .bar{height:5px;background:rgba(255,255,255,.25);border-radius:99px;overflow:hidden;}
+#view-cdetail .wk_left-pg .bar i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .3s;}
+#view-cdetail .wk_left-list{flex:1;overflow-y:auto;padding:4px 0;}
+/* 작업 그룹 헤더 */
+#view-cdetail .wk_gh{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;font-size:12.5px;font-weight:800;color:#3D3855;transition:background .12s;}
+#view-cdetail .wk_gh:hover{background:#F7F5FC;}
+#view-cdetail .wk_gh .ico{font-size:14px;flex:none;}
+#view-cdetail .wk_gh .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#view-cdetail .wk_gh .gpct{font-size:10px;font-weight:800;color:#4A3F7A;flex:none;}
+#view-cdetail .wk_gh .arr{flex:none;font-size:9px;color:#C4B5FD;transition:transform .15s;}
+#view-cdetail .wk_grp.open .wk_gh .arr{transform:rotate(90deg);}
+#view-cdetail .wk_gb{display:none;padding-left:10px;}
+#view-cdetail .wk_grp.open .wk_gb{display:block;}
+/* 단계 아이템 */
+#view-cdetail .wk_si{display:flex;align-items:center;gap:7px;padding:7px 14px 7px 22px;cursor:pointer;transition:all .1s;border-left:3px solid transparent;font-size:12px;}
+#view-cdetail .wk_si:hover{background:#F7F5FC;}
+#view-cdetail .wk_si.on{background:#F0EDFF;border-left-color:#4A3F7A;}
+#view-cdetail .wk_si .dot{width:7px;height:7px;flex:none;border-radius:50%;border:2px solid #CBD5E1;background:#fff;}
+#view-cdetail .wk_si.done .dot{background:#10b981;border-color:#10b981;}
+#view-cdetail .wk_si.ing .dot{background:#f59e0b;border-color:#f59e0b;}
+#view-cdetail .wk_si .snm{flex:1;font-weight:600;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#view-cdetail .wk_si.on .snm{color:#4A3F7A;font-weight:800;}
+#view-cdetail .wk_si .scnt{flex:none;font-size:10px;font-weight:700;color:#94a3b8;}
+/* 왼쪽 하단 저장 */
+#view-cdetail .wk_left-ft{padding:8px 12px;border-top:1px solid rgba(74,63,122,.12);}
+#view-cdetail .wk_left-ft button{width:100%;padding:9px;border-radius:9px;border:none;font-weight:700;font-size:12.5px;cursor:pointer;background:linear-gradient(135deg,#4A3F7A,#6D5BD0);color:#fff;box-shadow:0 3px 10px rgba(74,63,122,.2);font-family:'Noto Sans KR',sans-serif;}
+#view-cdetail .wk_left-ft .saved{background:#EDE9F7!important;color:#8580A0!important;box-shadow:none!important;}
+/* 오른쪽 패널 */
+#view-cdetail .wk_right{padding:20px 22px;overflow-y:auto;}
+#view-cdetail .wk_right-hd{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #EDE9F7;}
+#view-cdetail .wk_right-hd .bc{font-size:10.5px;font-weight:700;color:#8B7AC8;margin-bottom:3px;}
+#view-cdetail .wk_right-hd h4{font-size:17px;font-weight:900;color:#2B2545;margin:0;}
+#view-cdetail .wk_right-hd .desc{font-size:11.5px;color:#8580A0;margin-top:3px;}
+#view-cdetail .wk_right-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid #F0EDF8;}
+#view-cdetail .wk_right-ft button{border:1.5px solid #E0D8F5;background:#fff;border-radius:9px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:#6B6878;}
+#view-cdetail .wk_right-ft .del{border-color:#fecdd3;background:#fff1f2;color:#be123c;}
+/* 기존 체크리스트 아이템 스타일 유지 */
 #view-cdetail .wk_s{margin-top:11px;}
 #view-cdetail .wk_s-t{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#4A3F7A;margin:0 0 3px;padding:0 4px;}
 #view-cdetail .wk_s-t .n{width:19px;height:19px;flex:none;border-radius:6px;background:#EDE9F7;color:#4A3F7A;font-size:10px;display:flex;align-items:center;justify-content:center;}
@@ -921,18 +939,13 @@ body{padding-left:270px;}
 #view-cdetail .wk_tag-p{background:#EDE9F7;color:#4A3F7A;}
 #view-cdetail .wk_tag-c{background:#FFF3D6;color:#9A6A00;}
 #view-cdetail .wk_tag-w{background:#FDECEC;color:#B3413E;}
-
 #view-cdetail .wk_empty{padding:22px 14px;text-align:center;color:#8580A0;font-size:12.5px;line-height:1.8;}
 #view-cdetail .wk_empty span{font-size:11.5px;color:#A8A3BC;}
-#view-cdetail .wk_foot{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #F0EDF8;flex-wrap:wrap;}
-#view-cdetail .wk_foot button{border:1.5px solid #E0D8F5;background:#fff;border-radius:9px;padding:9px 15px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:#6B6878;}
-#view-cdetail .wk_foot button:hover{border-color:#C4B5FD;}
-#view-cdetail .wk_save{margin-right:auto;color:#A8A3BC !important;}
-#view-cdetail .wk_save.on{background:linear-gradient(135deg,#4A3F7A,#6D5BD0) !important;color:#fff !important;border-color:#4A3F7A !important;box-shadow:0 3px 10px rgba(74,63,122,.25);}
-#view-cdetail .wk_del{color:#B3413E !important;}
-@media(max-width:700px){
-  #view-cdetail .wk_k-pg{width:100%;}
-  #view-cdetail .wk_t-pg{width:104px;}
+@media(max-width:768px){
+  #view-cdetail .wk_split{grid-template-columns:1fr;min-height:auto;}
+  #view-cdetail .wk_left{border-right:none;border-bottom:1px solid rgba(74,63,122,.12);}
+  #view-cdetail .wk_left-list{max-height:200px;}
+  #view-cdetail .wk_right{padding:14px 12px;}
 }
 </style>
 <style id="sb-nocnt">
@@ -4072,7 +4085,84 @@ function wkSave(taskId){
 }
 function wkFold(el){ el.parentNode.classList.toggle('open'); }
 
-/* 3층 렌더 — 계약 › 작업 › 체크리스트 */
+/* [v35] 좌우분할 렌더 — 계약 › 왼쪽(작업트리) + 오른쪽(체크리스트) */
+var _wkActiveTask=null, _wkActiveSec=0;
+function wkSelectSec(taskId,secIdx){
+  _wkActiveTask=taskId; _wkActiveSec=secIdx;
+  var wrap=document.querySelector('[data-wk-split]'); if(!wrap) return;
+  /* 왼쪽 하이라이트 */
+  wrap.querySelectorAll('.wk_si').forEach(function(el){ el.classList.remove('on'); });
+  var sel=wrap.querySelector('.wk_si[data-tid="'+taskId+'"][data-si="'+secIdx+'"]');
+  if(sel) sel.classList.add('on');
+  /* 오른쪽 체크리스트 렌더 */
+  var right=wrap.querySelector('.wk_right'); if(!right) return;
+  var t=DB.tasks.find(function(x){return x.id===taskId;}); if(!t) return;
+  var L=t.setupType?WK_LISTS[t.setupType]:null;
+  if(!L){ right.innerHTML='<div class="wk_empty">체크리스트가 연결되지 않은 작업입니다</div>'; return; }
+  var sec=L.secs[secIdx]; if(!sec){ right.innerHTML=''; return; }
+  var d=t.setupData||{};
+  var sn=0; sec.items.forEach(function(_,ii){ if(d['s'+secIdx+'i'+ii]) sn++; });
+  var items=sec.items.map(function(it,ii){
+    var key='s'+secIdx+'i'+ii;
+    return '<label class="wk_i"><input type="checkbox" '+(d[key]?'checked':'')
+      +' onchange="wkToggle(&#39;'+t.id+'&#39;,&#39;'+key+'&#39;,this);wkRefreshLeft()"><span class="bx"></span><span class="tx">'
+      +'<span class="nm">'+esc(it.n)+(it.tag?'<span class="wk_tag wk_tag-'+it.tag+'">'+WK_TAGTXT[it.tag]+'</span>':'')+'</span>'
+      +(it.h?'<span class="h">'+esc(it.h)+'</span>':'')
+      +'</span></label>';
+  }).join('');
+  right.innerHTML='<div class="wk_right-hd">'
+    +'<div class="bc">'+(L?L.icon+' ':'')+esc(t.title||'')+' → STEP '+(secIdx<9?'0':'')+(secIdx+1)+'</div>'
+    +'<h4>'+esc(sec.t)+'</h4>'
+    +'<div class="desc">'+sn+' / '+sec.items.length+' 항목 완료</div></div>'
+    +'<div>'+items+'</div>'
+    +'<div class="wk_right-ft">'
+    +'<button onclick="openTask(\''+t.id+'\')">작업 수정</button>'
+    +'<button class="del" onclick="delTask(\''+t.id+'\')">삭제</button></div>';
+}
+function wkRefreshLeft(){
+  var wrap=document.querySelector('[data-wk-split]'); if(!wrap) return;
+  /* 각 작업 그룹의 카운트 갱신 */
+  wrap.querySelectorAll('.wk_grp').forEach(function(grp){
+    var tid=grp.getAttribute('data-tid'); if(!tid) return;
+    var t=DB.tasks.find(function(x){return x.id===tid;}); if(!t||!t.setupType) return;
+    var L=WK_LISTS[t.setupType]; if(!L) return;
+    var tot=wkTotal(t.setupType), n=wkDone(t);
+    var gpctEl=grp.querySelector('.gpct'); if(gpctEl) gpctEl.textContent=n+'/'+tot;
+    var d=t.setupData||{};
+    grp.querySelectorAll('.wk_si').forEach(function(si){
+      var secIdx=parseInt(si.getAttribute('data-si')); if(isNaN(secIdx)) return;
+      var sec=L.secs[secIdx]; if(!sec) return;
+      var sn=0; sec.items.forEach(function(_,ii){ if(d['s'+secIdx+'i'+ii]) sn++; });
+      var scntEl=si.querySelector('.scnt'); if(scntEl) scntEl.textContent=sn+'/'+sec.items.length;
+      si.classList.toggle('done', sn===sec.items.length && sec.items.length>0);
+      si.classList.toggle('ing', sn>0 && sn<sec.items.length);
+    });
+  });
+  /* 계약 전체 진행률 */
+  wrap.querySelectorAll('[data-wk-k]').forEach(function(kbox){
+    var tot=0,n=0;
+    kbox.querySelectorAll('.wk_grp').forEach(function(grp){
+      var tid=grp.getAttribute('data-tid');
+      var t=DB.tasks.find(function(x){return x.id===tid;}); if(!t||!t.setupType) return;
+      tot+=wkTotal(t.setupType); n+=wkDone(t);
+    });
+    var pct=tot?Math.round(n/tot*100):0;
+    var pctEl=kbox.querySelector('.wk_left-pg .pct'); if(pctEl) pctEl.textContent=tot?pct+'%':'—';
+    var cntEl=kbox.querySelector('.wk_left-pg .cnt'); if(cntEl) cntEl.textContent=tot?(n+' / '+tot+' 완료'):'체크리스트 없음';
+    var barEl=kbox.querySelector('.wk_left-pg .bar i'); if(barEl) barEl.style.width=pct+'%';
+  });
+  /* 오른쪽도 갱신 (현재 선택된 단계) */
+  if(_wkActiveTask) wkSelectSec(_wkActiveTask, _wkActiveSec);
+}
+function wkSaveSplit(kid){
+  /* 해당 계약에 속한 모든 dirty task 일괄 저장 */
+  var saved=0;
+  DB.tasks.forEach(function(t){ if(_wkDirty[t.id]&&(t.contractId===kid||kid==='none')){
+    sbUpsert(TBL.tasks,t); delete _wkDirty[t.id]; saved++;
+  }});
+  if(saved){ save(); toast('✅ '+saved+'개 작업 저장 완료'); wkRefreshLeft(); }
+  else { toast('변경된 내용이 없습니다'); }
+}
 function wkRenderWork(custId, tasks, contracts){
   var PAID='입금완료';
   var groups=[], used={};
@@ -4091,80 +4181,56 @@ function wkRenderWork(custId, tasks, contracts){
     g.tasks.forEach(function(t){ if(t.setupType){ tot+=wkTotal(t.setupType); n+=wkDone(t); } });
     var pct=tot?Math.round(n/tot*100):0;
     var paid=k?((k.pay_status||'입금대기')===PAID):true;
-    var body='';
     if(k && !paid && !g.tasks.length){
-      body='<div class="wk_empty">💰 입금이 완료되면 작업을 추가하세요<br><span>현재 상태 · '+esc(k.pay_status||'입금대기')+'</span></div>';
-    }else if(!g.tasks.length){
-      body='<div class="wk_empty">등록된 작업이 없습니다</div>';
-    }else{
-      body=g.tasks.map(function(t){ return wkTaskBlock(t); }).join('');
+      return '<div class="wk_empty" style="margin:13px 0;">💰 입금이 완료되면 작업을 추가하세요<br><span>'+esc(k.no||'')+' · '+esc(k.pay_status||'입금대기')+'</span></div>';
     }
-    return '<div class="wk_k open" data-wk-k="'+kid+'">'
-      +'<div class="wk_k-hd" onclick="wkFold(this)">'
-        +'<span class="wk_k-ic">'+(k?'📄':'📌')+'</span>'
-        +'<div class="wk_k-tx">'
-          +'<div class="wk_k-no">'+(k?(esc(k.no||'')+' · '+esc(k.pay_status||'입금대기')):'계약 미연결')+'</div>'
-          +'<div class="wk_k-nm">'+(k?esc(k.service||'계약'):'분류되지 않은 작업')+'</div>'
+    if(!g.tasks.length){
+      return '<div class="wk_empty" style="margin:13px 0;">등록된 작업이 없습니다<br><span>'+(k?esc(k.no||''):'계약 미연결')+'</span></div>';
+    }
+    /* 왼쪽: 작업 트리 */
+    var firstTask=null, firstSec=0;
+    var leftItems=g.tasks.map(function(t){
+      var L=t.setupType?WK_LISTS[t.setupType]:null;
+      if(!L) return '';
+      if(!firstTask){ firstTask=t.id; firstSec=0; }
+      var tTot=wkTotal(t.setupType), tN=wkDone(t);
+      var d=t.setupData||{};
+      var secItems=L.secs.map(function(sec,si){
+        var sn=0; sec.items.forEach(function(_,ii){ if(d['s'+si+'i'+ii]) sn++; });
+        var cls='wk_si'+(sn===sec.items.length&&sec.items.length>0?' done':'')+(sn>0&&sn<sec.items.length?' ing':'');
+        return '<div class="'+cls+'" data-tid="'+t.id+'" data-si="'+si+'" onclick="wkSelectSec(\''+t.id+'\','+si+')">'
+          +'<span class="dot"></span><span class="snm">'+esc(sec.t)+'</span><span class="scnt">'+sn+'/'+sec.items.length+'</span></div>';
+      }).join('');
+      return '<div class="wk_grp open" data-tid="'+t.id+'"><div class="wk_gh" onclick="this.parentNode.classList.toggle(\'open\')">'
+        +'<span class="ico">'+(L?L.icon:'📋')+'</span><span class="nm">'+esc(t.title||'')+'</span>'
+        +'<span class="gpct">'+tN+'/'+tTot+'</span><span class="arr">▶</span></div>'
+        +'<div class="wk_gb">'+secItems+'</div></div>';
+    }).join('');
+    var hasDirty=g.tasks.some(function(t){return !!_wkDirty[t.id];});
+    var html='<div class="wk_split" data-wk-split data-wk-k="'+kid+'">'
+      +'<div class="wk_left">'
+        +'<div class="wk_left-hd">'
+          +'<div class="kno">'+(k?(esc(k.no||'')+' · '+esc(k.pay_status||'입금대기')):'계약 미연결')+'</div>'
+          +'<div class="knm">'+(k?esc(k.service||'계약'):'분류되지 않은 작업')+'</div>'
+          +'<div class="wk_left-pg">'
+            +'<div class="row"><span class="pct">'+(tot?pct+'%':'—')+'</span><span class="cnt">'+(tot?(n+' / '+tot+' 완료'):'체크리스트 없음')+'</span></div>'
+            +'<div class="bar"><i style="width:'+pct+'%"></i></div>'
+          +'</div>'
         +'</div>'
-        +'<div class="wk_k-pg">'
-          +'<div class="row"><span class="pct">'+(tot?pct+'%':'—')+'</span><span class="cnt">'+(tot?(n+' / '+tot):'체크리스트 없음')+'</span></div>'
-          +'<div class="bar"><i style="width:'+pct+'%"></i></div>'
-        +'</div>'
-        +'<span class="wk_k-ar">▶</span>'
+        +'<div class="wk_left-list">'+leftItems+'</div>'
+        +'<div class="wk_left-ft"><button class="'+(hasDirty?'':'saved')+'" onclick="wkSaveSplit(\''+kid+'\')">'+(hasDirty?'💾 저장하기':'저장됨')+'</button></div>'
       +'</div>'
-      +'<div class="wk_k-bd">'+body+'</div>'
+      +'<div class="wk_right"><div class="wk_empty">왼쪽에서 단계를 선택하세요</div></div>'
     +'</div>';
+    /* 첫 번째 단계 자동 선택 */
+    if(firstTask){
+      setTimeout(function(){ wkSelectSec(firstTask, firstSec); },50);
+    }
+    return html;
   }).join('');
 }
-
-/* 2층 + 3층 */
-function wkTaskBlock(t){
-  var L=t.setupType?WK_LISTS[t.setupType]:null;
-  var stObj=STAGES.find(function(s){return s[0]===t.stage;});
-  var head='<div class="wk_t-hd" onclick="wkFold(this)">'
-    +'<span class="wk_t-e">'+(L?L.icon:'📋')+'</span>'
-    +'<span class="wk_t-nm">'+esc(t.title||'')+'</span>';
-  if(L){
-    var tot=wkTotal(t.setupType), n=wkDone(t);
-    head+='<span class="wk_t-pg"><span class="bar"><i style="width:'+(tot?Math.round(n/tot*100):0)+'%"></i></span>'
-      +'<span class="n">'+n+' / '+tot+'</span></span>';
-  }else{
-    head+='<span class="wk_t-chip" style="background:'+(stObj?stObj[1]:'#94a3b8')+';color:#fff;">'+esc(cdStageLabel(t.stage))+'</span>';
-  }
-  head+='<span class="wk_t-ar">▶</span></div>';
-
-  var body='';
-  if(L){
-    var d=t.setupData||{};
-    body=L.secs.map(function(sec,si){
-      var sn=0; sec.items.forEach(function(_,ii){ if(d['s'+si+'i'+ii]) sn++; });
-      return '<div class="wk_s" data-wk-sec="'+si+'">'
-        +'<div class="wk_s-t"><span class="n">'+(si+1)+'</span>'+esc(sec.t)+'<span class="c">'+sn+'/'+sec.items.length+'</span></div>'
-        +sec.items.map(function(it,ii){
-          var key='s'+si+'i'+ii;
-          return '<label class="wk_i"><input type="checkbox" '+(d[key]?'checked':'')
-            +' onchange="wkToggle(&#39;'+t.id+'&#39;,&#39;'+key+'&#39;,this)"><span class="bx"></span><span class="tx">'
-            +'<span class="nm">'+esc(it.n)+(it.tag?'<span class="wk_tag wk_tag-'+it.tag+'">'+WK_TAGTXT[it.tag]+'</span>':'')+'</span>'
-            +(it.h?'<span class="h">'+esc(it.h)+'</span>':'')
-            +'</span></label>';
-        }).join('')
-      +'</div>';
-    }).join('');
-    body+='<div class="wk_foot">'
-      +'<button class="wk_save'+(_wkDirty[t.id]?' on':'')+'" onclick="wkSave(\''+t.id+'\')">'+(_wkDirty[t.id]?'💾 저장하기':'저장됨')+'</button>'
-      +'<button class="wk_edit" onclick="openTask(\''+t.id+'\')">작업 수정</button>'
-      +'<button class="wk_del" onclick="delTask(\''+t.id+'\')">삭제</button>'
-      +'</div>';
-  }else{
-    body='<div class="wk_empty">체크리스트가 연결되지 않은 작업입니다<br><span>「작업 수정」에서 체크리스트를 고르면 단계가 표시됩니다</span></div>'
-      +'<div class="wk_foot">'
-      +'<button class="wk_edit" onclick="openTask(\''+t.id+'\')">작업 수정</button>'
-      +'<button class="wk_del" onclick="delTask(\''+t.id+'\')">삭제</button>'
-      +'</div>';
-  }
-  var doneCls=(L&&wkTotal(t.setupType)>0&&wkDone(t)===wkTotal(t.setupType))?' done':'';
-  return '<div class="wk_t'+doneCls+'" data-wk-task="'+t.id+'">'+head+'<div class="wk_t-bd">'+body+'</div></div>';
-}
+/* wkTaskBlock — 더 이상 사용하지 않지만 호환을 위해 빈 함수 유지 */
+function wkTaskBlock(t){ return ''; }
 /* ══════════ [wk] 끝 ══════════ */
 let _taskTab='wait';
 function switchTaskTab(t){ _taskTab=t; renderTasks(); }
@@ -6085,7 +6151,7 @@ function renderSignRoute(){
       <div class="sg-row"><span>서비스</span><span>${esc(k.service||'')}</span></div>
       <div class="sg-preview-label">📋 계약서 전문</div>
       <div class="sg-preview" id="sg-preview">${buildContractA4HTML(k)}</div>
-      <button class="sg-pdf-btn" onclick="sgPrintContract()">📄 계약서를 크게 보기 (PDF 저장 가능)</button>
+      <button class="sg-dl-btn" onclick="sgDownloadContract()">📄 계약서 다운로드 (PDF)</button>
       <label class="sg-agree"><input type="checkbox" id="sg-agree" onchange="sgUpdateBtn()"> 본인은 위 계약서 내용을 모두 확인하였으며, 계약 조건에 동의합니다.</label>
       <div class="sg-canvas-wrap"><canvas id="sg-canvas"></canvas></div>
       <div class="sg-canvas-actions">
@@ -6123,8 +6189,35 @@ function sgInitCanvas(){
 function sgClearCanvas(){
   const canvas=$('sg-canvas'); _sgCtx.clearRect(0,0,canvas.width,canvas.height); _sgCanvasHasDraw=false; sgUpdateBtn();
 }
-/* [v35] 모바일 계약서 크게 보기 — window.print() → PDF 저장 가능 */
-function sgPrintContract(){ window.print(); }
+/* [v35] 계약서 다운로드 — 새 창에서 계약서 전문을 열어 PDF 저장/인쇄 가능 */
+function sgDownloadContract(){
+  if(!_sgContract) return;
+  const k=_sgContract;
+  const c=DB.customers.find(x=>x.id===k.customerId);
+  const cname=c?c.name:(k.customerName||'');
+  const body=buildContractA4HTML(k);
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(k.no)} 계약서 — ${esc(cname)}</title>`
+    +`<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">`
+    +`<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans KR',sans-serif;background:#f8f8fc;padding:20px 10px;}`
+    +`.wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);padding:24px 20px;}`
+    +`.cedit-a4{font-size:13px;line-height:1.8;color:#1e293b;}`
+    +`.cedit-a4 h2,.cedit-a4 h3{color:#4A3F7A;margin:14px 0 6px;}`
+    +`.cedit-a4 table{width:100%;border-collapse:collapse;margin:8px 0;}`
+    +`.cedit-a4 th,.cedit-a4 td{border:1px solid #e2e8f0;padding:6px 8px;font-size:12px;}`
+    +`.cedit-a4 th{background:#f5f3ff;font-weight:700;}`
+    +`.cedit-art{margin:12px 0;}.cedit-art h3{font-size:14px;}`
+    +`.cedit-sign-wrap{margin-top:18px;}.cdate{text-align:center;margin-bottom:10px;font-size:13px;}`
+    +`.cedit-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}`
+    +`.cedit-sign-box{border:1px solid #e2e8f0;border-radius:8px;padding:12px;}`
+    +`.crole{font-weight:800;font-size:13px;margin-bottom:6px;color:#4A3F7A;}`
+    +`.crow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;}`
+    +`.csig{font-size:12px;color:#64748b;margin-top:6px;}`
+    +`@media print{body{background:#fff;padding:0;}.wrap{box-shadow:none;border-radius:0;padding:10px;}}</style></head>`
+    +`<body><div class="wrap">${body}</div></body></html>`;
+  const w=window.open('','_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { toast('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해 주세요.'); }
+}
 async function sgSubmit(){
   if(!_sgContract||!_sgCanvasHasDraw||!$('sg-agree').checked) return;
   const btn=$('sg-submit'); btn.disabled=true; btn.textContent='저장 중...';
@@ -6150,7 +6243,12 @@ async function sgSubmit(){
     }
   }catch(e){ console.warn('서명 이미지 Storage 업로드 실패(버킷 미승인 상태로 예상됨)', e); }
   if(uploadedUrl) k.signatureUrl=uploadedUrl;
-  sbUpsert(TBL.contracts,k); /* 컬럼 미승인 시 내부적으로 실패하나 화면엔 기술 용어 노출 안 함 */
+  /* [v35] 서명 데이터 DB 저장 — await로 에러 확인 */
+  try{
+    const row=toRow(k);
+    const {error}=await sb.from(TBL.contracts).upsert(row);
+    if(error){ console.error('서명 DB 저장 오류:', error); toast('⚠️ 서명 저장에 문제가 발생했습니다. 관리자에게 문의해 주세요.'); }
+  }catch(e){ console.error('서명 저장 예외:', e); }
   save();
   document.getElementById('sign-wrap').innerHTML=signDoneHTML(k);
 }
