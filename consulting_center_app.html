@@ -6035,7 +6035,8 @@ function renderSignRoute(){
   document.querySelector('.wrap').style.display='none';
   const {id,token}=parseSignHash();
   const k=DB.contracts.find(x=>x.id===id);
-  const valid = k && k.signToken && k.signToken===token && (!k.signTokenExpiresAt || Date.now()<=k.signTokenExpiresAt);
+  const expiresAt = k&&k.signTokenExpiresAt ? (typeof k.signTokenExpiresAt==='number' ? k.signTokenExpiresAt : Date.parse(k.signTokenExpiresAt)) : null;
+  const valid = k && k.signToken && k.signToken===token && (!expiresAt || Date.now()<=expiresAt);
   const root=document.createElement('div'); root.id='sign-wrap';
   if(!valid){
     root.innerHTML=`<div class="sg-card"><div class="sg-error"><div style="font-size:40px;margin-bottom:12px;">🔒</div>유효하지 않거나 만료된 서명 링크입니다.<br>담당자에게 새 링크를 요청해 주세요.</div></div>`;
