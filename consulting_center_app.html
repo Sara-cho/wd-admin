@@ -713,6 +713,18 @@ input,select,textarea{font-family:inherit;}
 #sign-wrap .sg-done{text-align:center;padding:40px 10px;}
 #sign-wrap .sg-done .ic{font-size:44px;margin-bottom:14px;}
 #sign-wrap .sg-error{text-align:center;padding:60px 20px;color:var(--s500);}
+#sign-wrap .sg-pdf-btn{display:block;width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--s200);background:#fff;color:var(--s600);font-weight:700;font-size:13px;cursor:pointer;text-align:center;margin-bottom:14px;}
+#sign-wrap .sg-pdf-btn:hover{border-color:var(--pl);color:var(--p);}
+/* [v35] 서명 페이지 인쇄 전용 CSS */
+@media print{
+  body>*:not(#sign-wrap){display:none!important;}
+  #sign-wrap{position:static!important;padding:0!important;background:#fff!important;overflow:visible!important;}
+  #sign-wrap .sg-card{max-width:100%!important;box-shadow:none!important;padding:10px!important;border-radius:0!important;}
+  #sign-wrap .sg-preview{border:none!important;padding:0!important;margin:10px 0!important;background:#fff!important;}
+  #sign-wrap .sg-preview .cedit-a4{padding:0!important;font-size:11px!important;}
+  #sign-wrap .sg-pdf-btn,#sign-wrap .sg-agree,#sign-wrap .sg-canvas-wrap,#sign-wrap .sg-canvas-actions,#sign-wrap .sg-btn-row,#sign-wrap .sg-brand{display:none!important;}
+  #sign-wrap .sg-row{font-size:12px!important;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js"></script>
 <style>
@@ -3518,8 +3530,8 @@ function contractActionButtons(k){
   const reqSign=`<button class="btn btn-p btn-sm" style="margin-right:2px;" onclick="requestSignature('${k.id}')">고객서명 요청</button>`;
   const copyLink=`<button class="btn btn-p btn-sm" style="margin-right:2px;" onclick="copySignLink('${k.id}')">링크 복사</button>`;
   if(st==='서명요청') return open+copyLink+dl+del+pay;
-  if(st==='서명완료') return open+dlFinal+pay;
-  if(st==='계약완료') return open+dlFinal;
+  if(st==='서명완료') return open+dlFinal+del+pay;
+  if(st==='계약완료') return open+dlFinal+del;
   return open+dl+reqSign+del+pay; /* 작성중/전달완료 기본 */
 }
 
@@ -6073,6 +6085,7 @@ function renderSignRoute(){
       <div class="sg-row"><span>서비스</span><span>${esc(k.service||'')}</span></div>
       <div class="sg-preview-label">📋 계약서 전문</div>
       <div class="sg-preview" id="sg-preview">${buildContractA4HTML(k)}</div>
+      <button class="sg-pdf-btn" onclick="sgPrintContract()">📄 계약서를 크게 보기 (PDF 저장 가능)</button>
       <label class="sg-agree"><input type="checkbox" id="sg-agree" onchange="sgUpdateBtn()"> 본인은 위 계약서 내용을 모두 확인하였으며, 계약 조건에 동의합니다.</label>
       <div class="sg-canvas-wrap"><canvas id="sg-canvas"></canvas></div>
       <div class="sg-canvas-actions">
@@ -6110,6 +6123,8 @@ function sgInitCanvas(){
 function sgClearCanvas(){
   const canvas=$('sg-canvas'); _sgCtx.clearRect(0,0,canvas.width,canvas.height); _sgCanvasHasDraw=false; sgUpdateBtn();
 }
+/* [v35] 모바일 계약서 크게 보기 — window.print() → PDF 저장 가능 */
+function sgPrintContract(){ window.print(); }
 async function sgSubmit(){
   if(!_sgContract||!_sgCanvasHasDraw||!$('sg-agree').checked) return;
   const btn=$('sg-submit'); btn.disabled=true; btn.textContent='저장 중...';
