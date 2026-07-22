@@ -5944,7 +5944,7 @@ function buildContractA4HTML(k){
           <div class="crole">을 (공급자)</div>
           <div class="crow"><span>상호</span><span>${SUPPLIER.name}</span></div>
           <div class="crow"><span>대표자</span><span>${SUPPLIER.ceo}</span></div>
-          <div class="csig">서명(인) ___________</div>
+          <div class="csig" style="text-align:right;padding-top:4px;"><svg viewBox="0 0 90 90" width="56" height="56" style="display:inline-block;vertical-align:middle;"><circle cx="45" cy="45" r="40" fill="none" stroke="#c0392b" stroke-width="4" opacity=".82"/><circle cx="45" cy="45" r="36" fill="none" stroke="#c0392b" stroke-width="1.2" opacity=".5"/><text x="45" y="34" text-anchor="middle" fill="#c0392b" font-size="18" font-weight="900" font-family="'Noto Serif KR',serif" letter-spacing=".08em" opacity=".85">WD</text><text x="45" y="60" text-anchor="middle" fill="#c0392b" font-size="15" font-weight="900" font-family="'Noto Serif KR',serif" letter-spacing=".06em" opacity=".85">WAVE</text></svg></div>
         </div>
       </div>
     </div>
@@ -6185,7 +6185,7 @@ function renderSignRoute(){
       <div class="sg-row"><span>서비스</span><span>${esc(k.service||'')}</span></div>
       <div class="sg-preview-label">📋 계약서 전문</div>
       <div class="sg-preview" id="sg-preview">${buildContractA4HTML(k)}</div>
-      <button class="sg-dl-btn" onclick="sgDownloadContract()">📄 계약서 다운로드 (PDF)</button>
+      <button class="sg-dl-btn" onclick="sgDownloadContract()">📄 계약서 전문 보기</button>
       <label class="sg-agree"><input type="checkbox" id="sg-agree" onchange="sgUpdateBtn()"> 본인은 위 계약서 내용을 모두 확인하였으며, 계약 조건에 동의합니다.</label>
       <div class="sg-canvas-wrap"><canvas id="sg-canvas"></canvas></div>
       <div class="sg-canvas-actions">
@@ -6230,38 +6230,41 @@ function sgDownloadContract(){
   const c=DB.customers.find(x=>x.id===k.customerId);
   const cname=c?c.name:(k.customerName||'');
   const body=buildContractA4HTML(k);
-  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(k.no)} 계약서 — ${esc(cname)}</title>`
-    +`<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">`
-    +`<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans KR',sans-serif;background:#f8f8fc;padding:20px 10px;}`
-    +`.wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);padding:24px 20px;}`
-    +`.cedit-a4{font-size:13px;line-height:1.8;color:#1e293b;}`
-    +`.cedit-a4 h2,.cedit-a4 h3{color:#4A3F7A;margin:14px 0 6px;}`
-    +`.cedit-a4 table{width:100%;border-collapse:collapse;margin:8px 0;}`
-    +`.cedit-a4 th,.cedit-a4 td{border:1px solid #e2e8f0;padding:6px 8px;font-size:12px;}`
-    +`.cedit-a4 th{background:#f5f3ff;font-weight:700;}`
-    +`.cedit-art{margin:12px 0;}.cedit-art h3{font-size:14px;}`
-    +`.cedit-sign-wrap{margin-top:18px;}.cdate{text-align:center;margin-bottom:10px;font-size:13px;}`
-    +`.cedit-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}`
-    +`.cedit-sign-box{border:1px solid #e2e8f0;border-radius:8px;padding:12px;}`
-    +`.crole{font-weight:800;font-size:13px;margin-bottom:6px;color:#4A3F7A;}`
-    +`.crow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;}`
-    +`.csig{font-size:12px;color:#64748b;margin-top:6px;}`
-    +`@media print{body{background:#fff;padding:0;}.wrap{box-shadow:none;border-radius:0;padding:10px;}}</style></head>`
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=3.0"><title>${esc(k.no)} 계약서 — ${esc(cname)}</title>`
+    +`<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">`
+    +`<style>*{box-sizing:border-box;margin:0;padding:0;}`
+    +`body{font-family:'Noto Sans KR',sans-serif;background:#f5f3ff;padding:16px 8px 60px;color:#1e293b;}`
+    +`.wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:14px;box-shadow:0 2px 16px rgba(74,63,122,.1);padding:20px 16px;}`
+    +`.cedit-a4{font-size:14px;line-height:1.85;word-break:keep-all;}`
+    +`.cedit-a4 h2{font-size:18px;color:#4A3F7A;margin:18px 0 8px;text-align:center;}`
+    +`.cedit-a4 h3{font-size:15px;color:#4A3F7A;margin:16px 0 6px;}`
+    +`.cedit-a4 table{width:100%;border-collapse:collapse;margin:10px 0;}`
+    +`.cedit-a4 th,.cedit-a4 td{border:1px solid #e2e8f0;padding:8px 10px;font-size:13px;word-break:keep-all;}`
+    +`.cedit-a4 th{background:#f5f3ff;font-weight:700;white-space:nowrap;min-width:70px;}`
+    +`.cedit-art{margin:14px 0;}.cedit-art h3{font-size:15px;}`
+    +`.cedit-art p{font-size:13.5px;line-height:1.8;}`
+    +`.cedit-art ul{padding-left:18px;margin:6px 0;}.cedit-art li{font-size:13.5px;line-height:1.8;margin:3px 0;}`
+    +`.cedit-sign-wrap{margin-top:24px;}.cdate{text-align:center;margin-bottom:12px;font-size:14px;font-weight:600;}`
+    +`.cedit-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}`
+    +`.cedit-sign-box{border:1px solid #e2e8f0;border-radius:10px;padding:14px 12px;}`
+    +`.crole{font-weight:800;font-size:14px;margin-bottom:8px;color:#4A3F7A;}`
+    +`.crow{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}`
+    +`.csig{font-size:12px;color:#64748b;margin-top:8px;}`
+    +`.csig img{max-width:160px;max-height:55px;}`
+    +`@media(max-width:600px){`
+    +`body{padding:10px 4px 50px;}`
+    +`.wrap{padding:14px 10px;border-radius:10px;}`
+    +`.cedit-a4{font-size:13.5px;}`
+    +`.cedit-a4 h2{font-size:16px;}`
+    +`.cedit-a4 table{font-size:12px;display:block;overflow-x:auto;}`
+    +`.cedit-sign-grid{grid-template-columns:1fr;gap:8px;}`
+    +`}`
+    +`@media print{body{background:#fff;padding:0;}.wrap{box-shadow:none;border-radius:0;padding:8px;}.cedit-sign-grid{grid-template-columns:1fr 1fr;}}`
+    +`</style></head>`
     +`<body><div class="wrap">${body}</div></body></html>`;
-  /* [v35] Blob으로 실제 파일 다운로드 */
-  try{
-    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=(k.no||'계약서')+'_계약서.html';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }catch(e){
-    /* fallback — 새 창 열기 */
-    const w=window.open('','_blank');
-    if(w){ w.document.write(html); w.document.close(); }
-    else { toast('다운로드에 실패했습니다. 브라우저 설정을 확인해 주세요.'); }
-  }
+  const w=window.open('','_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { toast('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해 주세요.'); }
 }
 async function sgSubmit(){
   if(!_sgContract||!_sgCanvasHasDraw||!$('sg-agree').checked) return;
