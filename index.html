@@ -9,7 +9,7 @@
 // ── [v77] 캐시 무효화: 버전 변경 시 1회 자동 reload ──
 // 무한 reload 방지: localStorage에 버전 저장 후 같으면 절대 reload 안 함
 (function(){
-  var APP_VERSION = 'v4.60';
+  var APP_VERSION = 'v4.61-login-privacy';
   var LS_KEY = 'wd_wave_app_version';
   try {
     var saved = localStorage.getItem(LS_KEY);
@@ -8071,9 +8071,24 @@ if(typeof window.calcKoreanAge !== 'function'){
 <!-- ══ 로그인 화면 ══ -->
 <style>
 @media(max-width:640px){
-  #lock-brand-area{display:none !important;}
-  #lock-form-area{width:100% !important;padding:40px 24px !important;box-shadow:none !important;}
+  #lock-screen{position:relative !important;min-height:100vh;overflow:auto;flex-direction:column;}
+  #lock-brand-area{display:flex !important;width:100% !important;min-height:330px !important;padding:34px 24px !important;align-items:stretch !important;}
+  #lock-form-area{width:100% !important;padding:32px 20px 42px !important;box-shadow:none !important;}
+  .wd-login-copy h1{font-size:32px !important;}
+  .wd-login-graphic{height:92px !important;margin-top:24px !important;}
 }
+.wd-login-copy{width:100%;max-width:620px;margin:auto;}
+.wd-login-copy h1{margin:0;color:#17152a;font-size:46px;line-height:1.18;letter-spacing:-1.8px;}
+.wd-login-copy h1 span{color:#4A3F7A;}
+.wd-login-copy>p{margin:18px 0 0;color:#615c72;font-size:15px;line-height:1.8;}
+.wd-login-kicker{font-size:12px;color:#7b6bb0;font-weight:800;letter-spacing:.13em;margin-bottom:12px;}
+.wd-login-graphic{position:relative;height:150px;margin-top:42px;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.62),rgba(255,255,255,.18));border:1px solid rgba(74,63,122,.08);}
+.wd-login-graphic::before,.wd-login-graphic::after{content:"";position:absolute;border:2px solid rgba(74,63,122,.18);border-radius:999px;}
+.wd-login-graphic::before{width:210px;height:210px;left:-24px;top:34px;}
+.wd-login-graphic::after{width:170px;height:170px;right:-20px;top:-76px;}
+.wd-login-line{position:absolute;left:22%;right:22%;top:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(74,63,122,.34),transparent);transform:rotate(-8deg);}
+.wd-login-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:#8B7AB8;box-shadow:0 0 0 8px rgba(139,122,184,.1);}
+.wd-login-dot.one{left:26%;top:56%}.wd-login-dot.two{left:49%;top:43%}.wd-login-dot.three{right:24%;top:34%}
 </style>
 <div id="lock-screen" style="display:flex;position:fixed;inset:0;z-index:99999;background:#EEEAF5;font-family:'Noto Sans KR',sans-serif;">
 
@@ -8086,39 +8101,15 @@ if(typeof window.calcKoreanAge !== 'function'){
     </div>
 
     <!-- 중앙 카피 -->
-    <div>
-      <div style="font-size:13px;color:#8B7AB8;font-weight:600;letter-spacing:.08em;margin-bottom:14px;">사람을 이해해서 구조로 바꿉니다</div>
-      <div style="font-size:46px;font-weight:800;color:#1A1A2E;line-height:1.25;letter-spacing:-1.5px;">
-        한 <span style="color:#4A3F7A;">사람</span>의 삶을,<br>
-        한 <span style="color:#4A3F7A;">장</span>의 구조로
-      </div>
-
-      <!-- 그래픽 장식 -->
-      <div style="margin-top:48px;opacity:.55;">
-        <svg width="260" height="130" viewBox="0 0 260 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- 사람 아이콘들 -->
-          <circle cx="20" cy="30" r="7" fill="#8B7AB8" opacity=".6"/>
-          <circle cx="20" cy="50" fill="#8B7AB8" r="5" opacity=".4"/>
-          <circle cx="20" cy="68" r="6" fill="#8B7AB8" opacity=".5"/>
-          <circle cx="20" cy="88" r="4" fill="#8B7AB8" opacity=".35"/>
-          <circle cx="20" cy="105" r="6" fill="#8B7AB8" opacity=".45"/>
-          <!-- 연결선 -->
-          <path d="M27 30 Q90 40 118 65" stroke="#8B7AB8" stroke-width="1.2" opacity=".4" stroke-dasharray="3 3"/>
-          <path d="M25 50 Q88 52 118 65" stroke="#8B7AB8" stroke-width="1" opacity=".3" stroke-dasharray="3 3"/>
-          <path d="M26 68 Q89 66 118 65" stroke="#8B7AB8" stroke-width="1.2" opacity=".4" stroke-dasharray="3 3"/>
-          <path d="M24 88 Q88 78 118 65" stroke="#8B7AB8" stroke-width="1" opacity=".3" stroke-dasharray="3 3"/>
-          <path d="M26 105 Q90 90 118 65" stroke="#8B7AB8" stroke-width="1" opacity=".25" stroke-dasharray="3 3"/>
-          <!-- 중심 노드 -->
-          <circle cx="128" cy="65" r="9" fill="#4A3F7A" opacity=".8"/>
-          <!-- 구조 박스 -->
-          <rect x="158" y="18" width="88" height="94" rx="8" stroke="#4A3F7A" stroke-width="1.5" fill="#fff" opacity=".7"/>
-          <line x1="158" y1="65" x2="246" y2="65" stroke="#4A3F7A" stroke-width="1" opacity=".5"/>
-          <line x1="202" y1="18" x2="202" y2="112" stroke="#4A3F7A" stroke-width="1" opacity=".5"/>
-          <!-- 활성 셀 -->
-          <rect x="160" y="67" width="40" height="43" rx="4" fill="#8B7AB8" opacity=".25"/>
-          <!-- 화살표 -->
-          <path d="M137 62 L155 65 M137 68 L155 65" stroke="#4A3F7A" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
-        </svg>
+    <div class="wd-login-copy">
+      <div class="wd-login-kicker">WD WAVE · INTERNAL HUB</div>
+      <h1>한 <span>사람</span>의 삶을,<br>한 <span>장</span>의 구조로</h1>
+      <p>WD WAVE 내부 운영 시스템입니다.<br>승인된 사용자만 이용할 수 있습니다.</p>
+      <div class="wd-login-graphic" aria-hidden="true">
+        <div class="wd-login-line"></div>
+        <span class="wd-login-dot one"></span>
+        <span class="wd-login-dot two"></span>
+        <span class="wd-login-dot three"></span>
       </div>
     </div>
 
@@ -8136,7 +8127,7 @@ if(typeof window.calcKoreanAge !== 'function'){
 
       <!-- 폼 타이틀 -->
       <div style="font-size:26px;font-weight:800;color:#1A1A2E;letter-spacing:-.5px;margin-bottom:8px;">로그인</div>
-      <div style="font-size:13px;color:#94a3b8;margin-bottom:36px;">WD WAVE 운영 시스템</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:24px;">WD WAVE 내부 운영 시스템</div>
 
       <!-- 아이디 -->
       <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:7px;letter-spacing:.04em;">아이디</div>
@@ -8154,10 +8145,11 @@ if(typeof window.calcKoreanAge !== 'function'){
       <div style="position:relative;margin-bottom:6px;">
         <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;color:#94a3b8;pointer-events:none;">🔒</span>
         <input id="lock-pw-input" type="password" autocomplete="current-password" placeholder="비밀번호 입력"
-          style="width:100%;padding:14px 14px 14px 40px;background:#F8FAFC;border:1.5px solid #E8E6F0;border-radius:12px;font-size:14px;color:#1A1A2E;font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;transition:all .2s;"
+          style="width:100%;padding:14px 48px 14px 40px;background:#F8FAFC;border:1.5px solid #E8E6F0;border-radius:12px;font-size:14px;color:#1A1A2E;font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;transition:all .2s;"
           onfocus="this.style.borderColor='#8B7AB8';this.style.background='#fff';this.style.boxShadow='0 0 0 3px rgba(139,122,184,.12)'"
           onblur="this.style.borderColor='#E8E6F0';this.style.background='#F8FAFC';this.style.boxShadow='none'"
           onkeydown="if(event.key==='Enter')lockVerify()">
+        <button type="button" aria-label="비밀번호 보기" onclick="var p=document.getElementById('lock-pw-input');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'보기':'숨김';this.setAttribute('aria-label',p.type==='password'?'비밀번호 보기':'비밀번호 숨기기')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#6b6483;font-size:11px;font-weight:800;cursor:pointer;padding:6px;">보기</button>
       </div>
 
       <!-- 에러 -->
@@ -8177,14 +8169,8 @@ if(typeof window.calcKoreanAge !== 'function'){
         로그인
       </button>
 
-      <!-- 하단 링크 -->
-      <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button style="padding:10px;background:#F8FAFC;border:1px solid #E8E6F0;border-radius:9px;font-size:12px;color:#64748b;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s;"
-          onmouseover="this.style.background='#F0EEF8';this.style.color='#4A3F7A'"
-          onmouseout="this.style.background='#F8FAFC';this.style.color='#64748b'">🔐 ID/PW 찾기</button>
-        <button style="padding:10px;background:#F8FAFC;border:1px solid #E8E6F0;border-radius:9px;font-size:12px;color:#64748b;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s;"
-          onmouseover="this.style.background='#F0EEF8';this.style.color='#4A3F7A'"
-          onmouseout="this.style.background='#F8FAFC';this.style.color='#64748b'">ℹ️ 사용 안내</button>
+      <div style="margin-top:16px;padding:13px 14px;border:1px solid #e9e5f2;border-radius:10px;background:#faf9fd;">
+        <div style="font-size:11px;color:#7a7488;line-height:1.6;text-align:center;">승인된 사용자만 이용할 수 있습니다.</div>
       </div>
 
       <!-- 카피라이트 -->
@@ -8546,6 +8532,16 @@ if(typeof window.calcKoreanAge !== 'function'){
 .hub-card-blue .hub-card-name{color:#fff;}
 .hub-card-blue .hub-card-sub{color:rgba(255,255,255,.75);}
 .hub-card-blue .hub-card-arrow{color:#fff;}
+.hub-card-blue{background:#F3F4F6;border-color:#D1D5DB;cursor:default;}
+.hub-card-blue:hover{box-shadow:none;transform:none;border-color:#D1D5DB;}
+.hub-card-blue .hub-card-icon{background:#E5E7EB;}
+.hub-card-blue .hub-card-name{color:#4B5563;}
+.hub-card-blue .hub-card-sub{color:#6B7280;}
+.hub-card-blue .hub-card-arrow{display:none;}
+.hub-card-brand{background:#F5F0FF;border-color:rgba(109,40,217,.18);}
+.hub-card-brand:hover{background:#EDE9FE;border-color:rgba(109,40,217,.32);}
+.hub-card-brand .hub-card-name{color:#5B21B6;}
+.hub-card-brand .hub-card-sub{color:#7C3AED;}
 
 /* 회색 — 구보험사업부(보관용) */
 .hub-card-gray{background:linear-gradient(135deg,#F1F5F9 0%,#E2E8F0 100%);border-color:rgba(100,116,139,.3);}
@@ -8608,7 +8604,9 @@ if(typeof window.calcKoreanAge !== 'function'){
     <div class="hub-header-left">
       <div class="hub-brand">WD WAVE</div>
       <div class="hub-header-divider"></div>
-      <div><span class="hub-status-dot"></span><span class="hub-status-text">최윤경 대표 · WORKSPACE</span></div>
+      <div><span class="hub-status-dot"></span><span class="hub-status-text">현재 공간 · 본진</span></div>
+      <div class="hub-header-divider"></div>
+      <div><span class="hub-status-text">공동개발 모드</span></div>
     </div>
     <div class="hub-header-right" style="display:flex;align-items:center;gap:6px;">
       <div style="position:relative;" id="ext-link-wrap">
@@ -8641,9 +8639,9 @@ if(typeof window.calcKoreanAge !== 'function'){
     <!-- Hero -->
     <section class="hub-hero">
       <div class="hub-hero-content">
-        <div class="hub-hero-eyebrow">Workspace</div>
+        <div class="hub-hero-eyebrow">WD WAVE · 본진</div>
         <h1 class="hub-hero-title">한 <span>사람</span>의 삶을,<br>한 <span>장</span>의 구조로</h1>
-        <p class="hub-hero-sub">오늘도 차분히, 한 사람씩.<br>한 사람을 이해해서 구조로 바꿉니다.</p>
+        <p class="hub-hero-sub">오늘 해야 할 일과 WD WAVE 전체의 흐름을 확인하고<br>필요한 공간으로 바로 이동합니다.</p>
         <div class="hub-hero-meta">
           <div class="hub-hero-meta-item">
             <div class="hub-hero-meta-label">Today</div>
@@ -8658,6 +8656,11 @@ if(typeof window.calcKoreanAge !== 'function'){
           <div class="hub-hero-meta-item">
             <div class="hub-hero-meta-label">대표</div>
             <div class="hub-hero-meta-value">최윤경</div>
+          </div>
+          <div class="hub-hero-meta-divider"></div>
+          <div class="hub-hero-meta-item">
+            <div class="hub-hero-meta-label">운영 상태</div>
+            <div class="hub-hero-meta-value">공동개발 모드</div>
           </div>
         </div>
       </div>
@@ -8699,35 +8702,35 @@ if(typeof window.calcKoreanAge !== 'function'){
     <div class="hub-group">
       <div class="hub-group-head">
         <span class="hub-group-bar"></span>
-        <span class="hub-group-label">핵심 작업</span>
+        <span class="hub-group-label">핵심 공간</span>
       </div>
 
       <!-- 핵심 3축 -->
       <div class="hub-grid">
-        <div class="hub-card hub-card-featured hub-card-primary" onclick="window.location.href='https://pro.wdwave.kr/'">
-          <span class="hub-card-badge">활성</span>
-          <div class="hub-card-icon">🛡️</div>
+        <div class="hub-card hub-card-featured hub-card-brand" data-access="개발공동" onclick="if(typeof goTo==='function')goTo('content-studio')">
+          <span class="hub-card-badge">기획·제작 중</span>
+          <div class="hub-card-icon">🎨</div>
           <div class="hub-card-body">
-            <div class="hub-card-name">보험사업부</div>
-            <div class="hub-card-sub">상담 · 보장분석 · 설계 · 계약</div>
+            <div class="hub-card-name">WD 브랜딩센터</div>
+            <div class="hub-card-sub">브랜드 기준 · 디자인 · 캐릭터 · 콘텐츠 · 승인 자산</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
-        <div class="hub-card hub-card-featured" onclick="if(typeof goTo==='function')goTo('consulting-center')">
+        <div class="hub-card hub-card-featured hub-card-primary" data-access="개발공동" onclick="window.location.href='https://pro.wdwave.kr/'">
+          <span class="hub-card-badge">활성</span>
+          <div class="hub-card-icon">🛡️</div>
+          <div class="hub-card-body">
+            <div class="hub-card-name">보험사업부·설계사허브</div>
+            <div class="hub-card-sub">고객관리 · 상담 · 보장분석 · 설계 · 계약 · 청구</div>
+          </div>
+          <span class="hub-card-arrow">→</span>
+        </div>
+        <div class="hub-card hub-card-featured" data-access="개발공동" onclick="if(typeof goTo==='function')goTo('consulting-center')">
           <span class="hub-card-badge">활성</span>
           <div class="hub-card-icon">🏛</div>
           <div class="hub-card-body">
             <div class="hub-card-name">컨설팅센터</div>
-            <div class="hub-card-sub">케어 · 코칭 · 계약 이후</div>
-          </div>
-          <span class="hub-card-arrow">→</span>
-        </div>
-        <div class="hub-card hub-card-featured" onclick="if(typeof goTo==='function')goTo('content-studio')">
-          <span class="hub-card-badge">활성</span>
-          <div class="hub-card-icon">▶️</div>
-          <div class="hub-card-body">
-            <div class="hub-card-name">유튜브센터</div>
-            <div class="hub-card-sub">브랜드 채널 · 콘텐츠 관리</div>
+            <div class="hub-card-sub">진단 · 기획 · 브랜딩 · 코칭 · 계약 이후</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
@@ -8738,11 +8741,11 @@ if(typeof window.calcKoreanAge !== 'function'){
     <div class="hub-group">
       <div class="hub-group-head">
         <span class="hub-group-bar"></span>
-        <span class="hub-group-label">업무전산</span>
+        <span class="hub-group-label">오늘의 동선</span>
       </div>
-      <div class="hub-grid-sub" style="grid-template-columns:1fr;gap:8px;">
+      <div class="hub-grid-sub">
         <!-- [v23] 윤경의 하루 — 업무전산 섹션 최상단 -->
-        <div onclick="goTo('work-center-new'); setTimeout(function(){ if(typeof wcnTabSwitch==='function') wcnTabSwitch('daily-haru'); }, 250);"
+        <div data-access="대표전용 민감정보" onclick="goTo('work-center-new'); setTimeout(function(){ if(typeof wcnTabSwitch==='function') wcnTabSwitch('daily-haru'); }, 250);"
           class="hub-card" style="border:1.5px solid #FDE68A;background:#FFFBEB;">
           <div class="hub-card-icon" style="background:#FEF3C7;font-size:22px;">☀️</div>
           <div class="hub-card-body">
@@ -8752,19 +8755,19 @@ if(typeof window.calcKoreanAge !== 'function'){
           <span class="hub-card-arrow" style="color:#FBBF24;">→</span>
         </div>
         <!-- [v1실행] 사라의 집 바로가기 카드 -->
-        <div class="hub-card" onclick="window.open('https://saraunnitv-lang.github.io/Sara_House/','_blank')">
-          <div class="hub-card-icon">🏡</div>
-          <div class="hub-card-body">
-            <div class="hub-card-name">사라의 집</div>
-            <div class="hub-card-sub">사라님 개인 영적 저널링 공간</div>
-          </div>
-          <span class="hub-card-arrow">→</span>
-        </div>
-        <div class="hub-card" onclick="if(typeof goTo==='function')goTo('work-center-new')">
+        <div class="hub-card" data-access="실무공용" onclick="if(typeof goTo==='function')goTo('work-center-new')">
           <div class="hub-card-icon">🗂️</div>
           <div class="hub-card-body">
             <div class="hub-card-name">업무센터</div>
-            <div class="hub-card-sub">업무일지 · 근무기록 · 업무공유공간</div>
+            <div class="hub-card-sub">업무일지 · 근무기록 · 급여 · 세무 · 수입·지출 · 사무실 운영</div>
+          </div>
+          <span class="hub-card-arrow">→</span>
+        </div>
+        <div class="hub-card" data-access="대표전용 민감정보" onclick="window.open('https://saraunnitv-lang.github.io/Sara_House/','_blank')">
+          <div class="hub-card-icon">🏡</div>
+          <div class="hub-card-body">
+            <div class="hub-card-name">사라의 집</div>
+            <div class="hub-card-sub">삶 · 기록 · 연결 · 회복 · 0번 입주자 공간</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
@@ -8775,38 +8778,38 @@ if(typeof window.calcKoreanAge !== 'function'){
     <div class="hub-group">
       <div class="hub-group-head">
         <span class="hub-group-bar"></span>
-        <span class="hub-group-label">필수 외부</span>
+        <span class="hub-group-label">필수 외부 연결</span>
       </div>
       <div class="hub-grid">
-        <div class="hub-card hub-card-gold" onclick="window.open('https://business.kakao.com/_QHWlG/chats','_blank')">
+        <div class="hub-card hub-card-gold" data-access="실무공용" onclick="window.open('https://business.kakao.com/_QHWlG/chats','_blank')">
           <div class="hub-card-icon">💛</div>
           <div class="hub-card-body">
             <div class="hub-card-name">고객채널</div>
-            <div class="hub-card-sub">카카오 비즈</div>
+            <div class="hub-card-sub">우리동네보험지킴이 카카오채널 · 활성</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
-        <div class="hub-card hub-card-lavender" onclick="window.open('https://business.kakao.com/_xkhJgG/chats','_blank')">
+        <div class="hub-card hub-card-lavender" data-access="실무공용" onclick="window.open('https://business.kakao.com/_xkhJgG/chats','_blank')">
           <div class="hub-card-icon">🟣</div>
           <div class="hub-card-body">
             <div class="hub-card-name">업무채널</div>
-            <div class="hub-card-sub">카카오 비즈</div>
+            <div class="hub-card-sub">대전총무 · 관리설계사 · 대표 · 업무지원 · 활성</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
-        <div class="hub-card hub-card-blue" onclick="if(typeof openMobileFax==='function')openMobileFax();else if(typeof showT==='function')showT('📠 모바일팩스 앱을 실행해주세요')">
+        <div class="hub-card hub-card-blue" data-access="실무공용" aria-disabled="true">
           <div class="hub-card-icon">📠</div>
           <div class="hub-card-body">
             <div class="hub-card-name">모바일팩스</div>
-            <div class="hub-card-sub">팩스 발송</div>
+            <div class="hub-card-sub">보류·미연결 · 보험금청구·팩스 연동 준비 중</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
-        <div class="hub-card hub-card-gray" onclick="if(typeof goTo==='function')goTo('section')">
+        <div class="hub-card hub-card-gray" data-access="대표전용" onclick="if(typeof goTo==='function')goTo('section')">
           <div class="hub-card-icon">🗄️</div>
           <div class="hub-card-body">
             <div class="hub-card-name">구보험사업부</div>
-            <div class="hub-card-sub">보관용 · 기존 화면 열람</div>
+            <div class="hub-card-sub">읽기 전용 보관소 · 초기 보험사업부 참고 화면</div>
           </div>
           <span class="hub-card-arrow">→</span>
         </div>
@@ -86857,29 +86860,36 @@ window.openDocGen = function(){
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;">
                 <div>
                   <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">국민연금</div>
-                  <input id="pr-pensionManual" type="number" value="0" oninput="payroll_calc()"
+                  <input id="pr-pensionManual" type="number" value="7130" oninput="payroll_calc()"
                     style="width:100%;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
                 </div>
                 <div>
                   <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">건강보험</div>
-                  <input id="pr-healthManual" type="number" value="0" oninput="payroll_calc()"
+                  <input id="pr-healthManual" type="number" value="32490" oninput="payroll_calc()"
                     style="width:100%;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
                 </div>
                 <div>
                   <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">고용보험</div>
-                  <input id="pr-employmentManual" type="number" value="0" oninput="payroll_calc()"
+                  <input id="pr-employmentManual" type="number" value="13000" oninput="payroll_calc()"
                     style="width:100%;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
                 </div>
                 <div>
                   <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">장기요양보험</div>
-                  <input id="pr-careManual" type="number" value="0" oninput="payroll_calc()"
+                  <input id="pr-careManual" type="number" value="4260" oninput="payroll_calc()"
                     style="width:100%;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
                 </div>
               </div>
-              <div>
-                <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">소득세+지방세</div>
-                <input id="pr-incomeTax" type="number" value="0" oninput="payroll_calc()"
-                  style="width:150px;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                <div>
+                  <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">소득세</div>
+                  <input id="pr-incomeTax" type="number" value="0" readonly aria-readonly="true"
+                    style="width:100%;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
+                </div>
+                <div>
+                  <div style="font-size:11px;color:#78716C;font-weight:600;margin-bottom:4px;">지방소득세</div>
+                  <input id="pr-localIncomeTax" type="number" value="0" readonly aria-readonly="true"
+                    style="width:100%;padding:8px 10px;border:1px solid #E5E0D5;border-radius:8px;font-size:12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;outline:none;color:#1C1917;background:#FAFAF9;">
+                </div>
               </div>
 
               <!-- JS 호환용 숨김 (기존 raw_data 호환) -->
@@ -91905,6 +91915,35 @@ window.tx_scheduleAutoSave = function(){
   function prSet(id,v){ var el=document.getElementById(id); if(el) el.innerHTML=v; }
   function prSetVal(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
 
+  /* 2026.03.01 시행 근로소득 간이세액표 — 공제대상가족 1명, 원천징수 100% */
+  var _prTax2026Rows = null;
+  var _prTax2026B64 = "NzcwLDc3NSwwOzc3NSw3ODAsMDs3ODAsNzg1LDA7Nzg1LDc5MCwwOzc5MCw3OTUsMDs3OTUsODAwLDA7ODAwLDgwNSwwOzgwNSw4MTAsMDs4MTAsODE1LDA7ODE1LDgyMCwwOzgyMCw4MjUsMDs4MjUsODMwLDA7ODMwLDgzNSwwOzgzNSw4NDAsMDs4NDAsODQ1LDA7ODQ1LDg1MCwwOzg1MCw4NTUsMDs4NTUsODYwLDA7ODYwLDg2NSwwOzg2NSw4NzAsMDs4NzAsODc1LDA7ODc1LDg4MCwwOzg4MCw4ODUsMDs4ODUsODkwLDA7ODkwLDg5NSwwOzg5NSw5MDAsMDs5MDAsOTA1LDA7OTA1LDkxMCwwOzkxMCw5MTUsMDs5MTUsOTIwLDA7OTIwLDkyNSwwOzkyNSw5MzAsMDs5MzAsOTM1LDA7OTM1LDk0MCwwOzk0MCw5NDUsMDs5NDUsOTUwLDA7OTUwLDk1NSwwOzk1NSw5NjAsMDs5NjAsOTY1LDA7OTY1LDk3MCwwOzk3MCw5NzUsMDs5NzUsOTgwLDA7OTgwLDk4NSwwOzk4NSw5OTAsMDs5OTAsOTk1LDA7OTk1LDEwMDAsMDsxMDAwLDEwMDUsMDsxMDA1LDEwMTAsMDsxMDEwLDEwMTUsMDsxMDE1LDEwMjAsMDsxMDIwLDEwMjUsMDsxMDI1LDEwMzAsMDsxMDMwLDEwMzUsMDsxMDM1LDEwNDAsMDsxMDQwLDEwNDUsMDsxMDQ1LDEwNTAsMDsxMDUwLDEwNTUsMDsxMDU1LDEwNjAsMDsxMDYwLDEwNjUsMTA0MDsxMDY1LDEwNzAsMTExMDsxMDcwLDEwNzUsMTE4MDsxMDc1LDEwODAsMTI1MDsxMDgwLDEwODUsMTMyMDsxMDg1LDEwOTAsMTM5MDsxMDkwLDEwOTUsMTQ2MDsxMDk1LDExMDAsMTUzMDsxMTAwLDExMDUsMTYwMDsxMTA1LDExMTAsMTY3MDsxMTEwLDExMTUsMTc0MDsxMTE1LDExMjAsMTgxMDsxMTIwLDExMjUsMTg4MDsxMTI1LDExMzAsMTk1MDsxMTMwLDExMzUsMjAyMDsxMTM1LDExNDAsMjA5MDsxMTQwLDExNDUsMjE2MDsxMTQ1LDExNTAsMjIzMDsxMTUwLDExNTUsMjMwMDsxMTU1LDExNjAsMjM3MDsxMTYwLDExNjUsMjQ0MDsxMTY1LDExNzAsMjUwMDsxMTcwLDExNzUsMjU3MDsxMTc1LDExODAsMjY0MDsxMTgwLDExODUsMjcxMDsxMTg1LDExOTAsMjc4MDsxMTkwLDExOTUsMjg1MDsxMTk1LDEyMDAsMjkyMDsxMjAwLDEyMDUsMjk5MDsxMjA1LDEyMTAsMzA2MDsxMjEwLDEyMTUsMzEzMDsxMjE1LDEyMjAsMzIwMDsxMjIwLDEyMjUsMzI3MDsxMjI1LDEyMzAsMzM0MDsxMjMwLDEyMzUsMzQxMDsxMjM1LDEyNDAsMzQ4MDsxMjQwLDEyNDUsMzU1MDsxMjQ1LDEyNTAsMzYyMDsxMjUwLDEyNTUsMzcwMDsxMjU1LDEyNjAsMzgxMDsxMjYwLDEyNjUsMzkxMDsxMjY1LDEyNzAsNDAxMDsxMjcwLDEyNzUsNDEyMDsxMjc1LDEyODAsNDIyMDsxMjgwLDEyODUsNDMyMDsxMjg1LDEyOTAsNDQzMDsxMjkwLDEyOTUsNDUzMDsxMjk1LDEzMDAsNDYzMDsxMzAwLDEzMDUsNDc0MDsxMzA1LDEzMTAsNDg0MDsxMzEwLDEzMTUsNDk0MDsxMzE1LDEzMjAsNTA1MDsxMzIwLDEzMjUsNTE1MDsxMzI1LDEzMzAsNTI1MDsxMzMwLDEzMzUsNTM2MDsxMzM1LDEzNDAsNTQ2MDsxMzQwLDEzNDUsNTU2MDsxMzQ1LDEzNTAsNTY3MDsxMzUwLDEzNTUsNTc3MDsxMzU1LDEzNjAsNTg3MDsxMzYwLDEzNjUsNTk4MDsxMzY1LDEzNzAsNjA4MDsxMzcwLDEzNzUsNjE4MDsxMzc1LDEzODAsNjI5MDsxMzgwLDEzODUsNjM5MDsxMzg1LDEzOTAsNjQ5MDsxMzkwLDEzOTUsNjYwMDsxMzk1LDE0MDAsNjcwMDsxNDAwLDE0MDUsNjgwMDsxNDA1LDE0MTAsNjkxMDsxNDEwLDE0MTUsNzAxMDsxNDE1LDE0MjAsNzExMDsxNDIwLDE0MjUsNzIxMDsxNDI1LDE0MzAsNzMyMDsxNDMwLDE0MzUsNzQyMDsxNDM1LDE0NDAsNzUyMDsxNDQwLDE0NDUsNzYzMDsxNDQ1LDE0NTAsNzczMDsxNDUwLDE0NTUsNzgzMDsxNDU1LDE0NjAsNzk0MDsxNDYwLDE0NjUsODA0MDsxNDY1LDE0NzAsODE0MDsxNDcwLDE0NzUsODI1MDsxNDc1LDE0ODAsODM1MDsxNDgwLDE0ODUsODQ1MDsxNDg1LDE0OTAsODU2MDsxNDkwLDE0OTUsODY2MDsxNDk1LDE1MDAsODc2MDsxNTAwLDE1MTAsODkyMDsxNTEwLDE1MjAsOTEyMDsxNTIwLDE1MzAsOTMzMDsxNTMwLDE1NDAsOTU0MDsxNTQwLDE1NTAsOTc0MDsxNTUwLDE1NjAsOTk1MDsxNTYwLDE1NzAsMTAxNjA7MTU3MCwxNTgwLDEwMzYwOzE1ODAsMTU5MCwxMDU3MDsxNTkwLDE2MDAsMTA3ODA7MTYwMCwxNjEwLDEwOTgwOzE2MTAsMTYyMCwxMTE5MDsxNjIwLDE2MzAsMTE0MDA7MTYzMCwxNjQwLDExNjAwOzE2NDAsMTY1MCwxMTgxMDsxNjUwLDE2NjAsMTIwMjA7MTY2MCwxNjcwLDEyMjIwOzE2NzAsMTY4MCwxMjQzMDsxNjgwLDE2OTAsMTI2NDA7MTY5MCwxNzAwLDEyODQwOzE3MDAsMTcxMCwxMzA1MDsxNzEwLDE3MjAsMTMyNjA7MTcyMCwxNzMwLDEzNDYwOzE3MzAsMTc0MCwxMzY3MDsxNzQwLDE3NTAsMTM4ODA7MTc1MCwxNzYwLDE0MDgwOzE3NjAsMTc3MCwxNDI5MDsxNzcwLDE3ODAsMTQ1MDA7MTc4MCwxNzkwLDE0NzAwOzE3OTAsMTgwMCwxNDkxMDsxODAwLDE4MTAsMTUxMTA7MTgxMCwxODIwLDE1MzIwOzE4MjAsMTgzMCwxNTUzMDsxODMwLDE4NDAsMTU3MzA7MTg0MCwxODUwLDE1OTQwOzE4NTAsMTg2MCwxNjE1MDsxODYwLDE4NzAsMTYzNTA7MTg3MCwxODgwLDE2NTYwOzE4ODAsMTg5MCwxNjc3MDsxODkwLDE5MDAsMTY5NzA7MTkwMCwxOTEwLDE3MTgwOzE5MTAsMTkyMCwxNzM5MDsxOTIwLDE5MzAsMTc1OTA7MTkzMCwxOTQwLDE3ODAwOzE5NDAsMTk1MCwxODAxMDsxOTUwLDE5NjAsMTgyMTA7MTk2MCwxOTcwLDE4NDIwOzE5NzAsMTk4MCwxODYzMDsxOTgwLDE5OTAsMTg4ODA7MTk5MCwyMDAwLDE5MjAwOzIwMDAsMjAxMCwxOTUyMDsyMDEwLDIwMjAsMTk4NTA7MjAyMCwyMDMwLDIwMTcwOzIwMzAsMjA0MCwyMDQ5MDsyMDQwLDIwNTAsMjA4MTA7MjA1MCwyMDYwLDIxMTMwOzIwNjAsMjA3MCwyMTQ1MDsyMDcwLDIwODAsMjE3NzA7MjA4MCwyMDkwLDIyMDkwOzIwOTAsMjEwMCwyMjQyMDsyMTAwLDIxMTAsMjI3NDA7MjExMCwyMTIwLDIzMDYwOzIxMjAsMjEzMCwyMzM4MDsyMTMwLDIxNDAsMjM3MDA7MjE0MCwyMTUwLDI0MDIwOzIxNTAsMjE2MCwyNDM0MDsyMTYwLDIxNzAsMjQ2NjA7MjE3MCwyMTgwLDI0OTkwOzIxODAsMjE5MCwyNTMxMDsyMTkwLDIyMDAsMjU2MzA7MjIwMCwyMjEwLDI1OTUwOzIyMTAsMjIyMCwyNjI3MDsyMjIwLDIyMzAsMjY1OTA7MjIzMCwyMjQwLDI2OTEwOzIyNDAsMjI1MCwyNzI0MDsyMjUwLDIyNjAsMjc1NjA7MjI2MCwyMjcwLDI3ODgwOzIyNzAsMjI4MCwyODIwMDsyMjgwLDIyOTAsMjg1MjA7MjI5MCwyMzAwLDI4ODQwOzIzMDAsMjMxMCwyOTE2MDsyMzEwLDIzMjAsMjk0ODA7MjMyMCwyMzMwLDI5ODEwOzIzMzAsMjM0MCwzMDEzMDsyMzQwLDIzNTAsMzA0NTA7MjM1MCwyMzYwLDMwNzcwOzIzNjAsMjM3MCwzMTA5MDsyMzcwLDIzODAsMzE0MTA7MjM4MCwyMzkwLDMxNzMwOzIzOTAsMjQwMCwzMjA1MDsyNDAwLDI0MTAsMzIzODA7MjQxMCwyNDIwLDMyNzAwOzI0MjAsMjQzMCwzMzAyMDsyNDMwLDI0NDAsMzMzNDA7MjQ0MCwyNDUwLDMzNjYwOzI0NTAsMjQ2MCwzMzk4MDsyNDYwLDI0NzAsMzQzMDA7MjQ3MCwyNDgwLDM0NjMwOzI0ODAsMjQ5MCwzNDk1MDsyNDkwLDI1MDAsMzUyNzA7MjUwMCwyNTEwLDM1NjAwOzI1MTAsMjUyMCwzNTk0MDsyNTIwLDI1MzAsMzYyODA7MjUzMCwyNTQwLDM2NjMwOzI1NDAsMjU1MCwzNjk3MDsyNTUwLDI1NjAsMzczMTA7MjU2MCwyNTcwLDM3NjUwOzI1NzAsMjU4MCwzODAwMDsyNTgwLDI1OTAsMzgzNDA7MjU5MCwyNjAwLDM4ODMwOzI2MDAsMjYxMCwzOTY5MDsyNjEwLDI2MjAsNDA1NDA7MjYyMCwyNjMwLDQxNDAwOzI2MzAsMjY0MCw0MjI2MDsyNjQwLDI2NTAsNDMxMTA7MjY1MCwyNjYwLDQzOTcwOzI2NjAsMjY3MCw0NDgyMDsyNjcwLDI2ODAsNDU2ODA7MjY4MCwyNjkwLDQ2NTQwOzI2OTAsMjcwMCw0NzM5MDsyNzAwLDI3MTAsNDgyNTA7MjcxMCwyNzIwLDQ5MTAwOzI3MjAsMjczMCw0OTk2MDsyNzMwLDI3NDAsNTA4MTA7Mjc0MCwyNzUwLDUxNjcwOzI3NTAsMjc2MCw1MjUzMDsyNzYwLDI3NzAsNTMzODA7Mjc3MCwyNzgwLDU0MjQwOzI3ODAsMjc5MCw1NTA5MDsyNzkwLDI4MDAsNTU5NTA7MjgwMCwyODEwLDU2ODAwOzI4MTAsMjgyMCw1NzY2MDsyODIwLDI4MzAsNTg1MjA7MjgzMCwyODQwLDU5MzcwOzI4NDAsMjg1MCw2MDIzMDsyODUwLDI4NjAsNjEwODA7Mjg2MCwyODcwLDYxOTQwOzI4NzAsMjg4MCw2Mjc5MDsyODgwLDI4OTAsNjM2NTA7Mjg5MCwyOTAwLDY0NTEwOzI5MDAsMjkxMCw2NTM2MDsyOTEwLDI5MjAsNjYyMjA7MjkyMCwyOTMwLDY3MDcwOzI5MzAsMjk0MCw2NzkzMDsyOTQwLDI5NTAsNjg3ODA7Mjk1MCwyOTYwLDY5NjQwOzI5NjAsMjk3MCw3MDUwMDsyOTcwLDI5ODAsNzEzNTA7Mjk4MCwyOTkwLDcyMjEwOzI5OTAsMzAwMCw3MzA2MDszMDAwLDMwMjAsNzQzNTA7MzAyMCwzMDQwLDc2MDYwOzMwNDAsMzA2MCw3Nzc3MDszMDYwLDMwODAsNzk0ODA7MzA4MCwzMTAwLDgxMTkwOzMxMDAsMzEyMCw4MjkwMDszMTIwLDMxNDAsODQ2MjA7MzE0MCwzMTYwLDg2MzMwOzMxNjAsMzE4MCw4ODA0MDszMTgwLDMyMDAsODk3NTA7MzIwMCwzMjIwLDkxNDYwOzMyMjAsMzI0MCw5MzE3MDszMjQwLDMyNjAsOTU0MzA7MzI2MCwzMjgwLDk3ODgwOzMyODAsMzMwMCwxMDAzMjA7MzMwMCwzMzIwLDEwMjc3MDszMzIwLDMzNDAsMTA1MjEwOzMzNDAsMzM2MCwxMDc2NjA7MzM2MCwzMzgwLDExMDEwMDszMzgwLDM0MDAsMTEyNTUwOzM0MDAsMzQyMCwxMTQ5OTA7MzQyMCwzNDQwLDExNzQ0MDszNDQwLDM0NjAsMTE5ODgwOzM0NjAsMzQ4MCwxMjIzMzA7MzQ4MCwzNTAwLDEyNDc3MDszNTAwLDM1MjAsMTI3MjIwOzM1MjAsMzU0MCwxMjk2NjA7MzU0MCwzNTYwLDEzMjExMDszNTYwLDM1ODAsMTM0NTUwOzM1ODAsMzYwMCwxMzcwMDA7MzYwMCwzNjIwLDEzOTQ0MDszNjIwLDM2NDAsMTQxODkwOzM2NDAsMzY2MCwxNDQzMzA7MzY2MCwzNjgwLDE0Njc4MDszNjgwLDM3MDAsMTQ5MjIwOzM3MDAsMzcyMCwxNTE2NzA7MzcyMCwzNzQwLDE1NDExMDszNzQwLDM3NjAsMTU2NTYwOzM3NjAsMzc4MCwxNjM5MjA7Mzc4MCwzODAwLDE2NjU5MDszODAwLDM4MjAsMTY5MjYwOzM4MjAsMzg0MCwxNzE5MzA7Mzg0MCwzODYwLDE3NDYwMDszODYwLDM4ODAsMTc3MjcwOzM4ODAsMzkwMCwxNzk5NDA7MzkwMCwzOTIwLDE4MjYxMDszOTIwLDM5NDAsMTg1MjgwOzM5NDAsMzk2MCwxODc5NTA7Mzk2MCwzOTgwLDE5MDYyMDszOTgwLDQwMDAsMTkzMjkwOzQwMDAsNDAyMCwxOTU5NjA7NDAyMCw0MDQwLDE5ODYzMDs0MDQwLDQwNjAsMjAxMzAwOzQwNjAsNDA4MCwyMDM5NzA7NDA4MCw0MTAwLDIwNjY0MDs0MTAwLDQxMjAsMjA5MzEwOzQxMjAsNDE0MCwyMTE5ODA7NDE0MCw0MTYwLDIxNDY1MDs0MTYwLDQxODAsMjE3MzIwOzQxODAsNDIwMCwyMTk5OTA7NDIwMCw0MjIwLDIyMjY2MDs0MjIwLDQyNDAsMjI1MzMwOzQyNDAsNDI2MCwyMjgwMDA7NDI2MCw0MjgwLDIzMDY3MDs0MjgwLDQzMDAsMjMzMzQwOzQzMDAsNDMyMCwyMzYwMTA7NDMyMCw0MzQwLDIzODY4MDs0MzQwLDQzNjAsMjQxMzUwOzQzNjAsNDM4MCwyNDQwMjA7NDM4MCw0NDAwLDI0NjY5MDs0NDAwLDQ0MjAsMjQ5MzYwOzQ0MjAsNDQ0MCwyNTIwMzA7NDQ0MCw0NDYwLDI1NDcwMDs0NDYwLDQ0ODAsMjU3MzcwOzQ0ODAsNDUwMCwyNjAwNDA7NDUwMCw0NTIwLDI2Mjg0MDs0NTIwLDQ1NDAsMjY1NjUwOzQ1NDAsNDU2MCwyNjg0NTA7NDU2MCw0NTgwLDI3MTI2MDs0NTgwLDQ2MDAsMjc2NTYwOzQ2MDAsNDYyMCwyNzkzNzA7NDYyMCw0NjQwLDI4MjE3MDs0NjQwLDQ2NjAsMjg0OTgwOzQ2NjAsNDY4MCwyODc3ODA7NDY4MCw0NzAwLDI5MDU5MDs0NzAwLDQ3MjAsMjkzMzkwOzQ3MjAsNDc0MCwyOTYyMDA7NDc0MCw0NzYwLDI5OTAwMDs0NzYwLDQ3ODAsMzAxODEwOzQ3ODAsNDgwMCwzMDQ2MTA7NDgwMCw0ODIwLDMwNzQyMDs0ODIwLDQ4NDAsMzEwMjIwOzQ4NDAsNDg2MCwzMTMwMzA7NDg2MCw0ODgwLDMxNTgzMDs0ODgwLDQ5MDAsMzE4NjQwOzQ5MDAsNDkyMCwzMjE0NDA7NDkyMCw0OTQwLDMyNDI1MDs0OTQwLDQ5NjAsMzI3MDUwOzQ5NjAsNDk4MCwzMjk4NjA7NDk4MCw1MDAwLDMzMjY2MDs1MDAwLDUwMjAsMzM1NDcwOzUwMjAsNTA0MCwzMzgyNzA7NTA0MCw1MDYwLDM0MTA4MDs1MDYwLDUwODAsMzQzODgwOzUwODAsNTEwMCwzNDY2OTA7NTEwMCw1MTIwLDM0OTQ5MDs1MTIwLDUxNDAsMzUyMzAwOzUxNDAsNTE2MCwzNTUxMDA7NTE2MCw1MTgwLDM1NzkxMDs1MTgwLDUyMDAsMzYwNzEwOzUyMDAsNTIyMCwzNjM1MjA7NTIyMCw1MjQwLDM2NjMyMDs1MjQwLDUyNjAsMzY5MTMwOzUyNjAsNTI4MCwzNzE5MzA7NTI4MCw1MzAwLDM3NDc0MDs1MzAwLDUzMjAsMzc3NTQwOzUzMjAsNTM0MCwzODAzNTA7NTM0MCw1MzYwLDM4MzE1MDs1MzYwLDUzODAsMzg1OTYwOzUzODAsNTQwMCwzODg3NjA7NTQwMCw1NDIwLDM5MTU3MDs1NDIwLDU0NDAsMzk0MzcwOzU0NDAsNTQ2MCwzOTcxODA7NTQ2MCw1NDgwLDM5OTk4MDs1NDgwLDU1MDAsNDAyNzkwOzU1MDAsNTUyMCw0MDU1OTA7NTUyMCw1NTQwLDQwODQwMDs1NTQwLDU1NjAsNDExMjAwOzU1NjAsNTU4MCw0MTQwMTA7NTU4MCw1NjAwLDQxNjgxMDs1NjAwLDU2MjAsNDE5NjIwOzU2MjAsNTY0MCw0MjI0MjA7NTY0MCw1NjYwLDQyNTIzMDs1NjYwLDU2ODAsNDI4MDMwOzU2ODAsNTcwMCw0MzA4NDA7NTcwMCw1NzIwLDQzMzY0MDs1NzIwLDU3NDAsNDM2NDUwOzU3NDAsNTc2MCw0MzkyNTA7NTc2MCw1NzgwLDQ0MjA2MDs1NzgwLDU4MDAsNDQ0ODYwOzU4MDAsNTgyMCw0NDc2NzA7NTgyMCw1ODQwLDQ1MDQ3MDs1ODQwLDU4NjAsNDcwMzgwOzU4NjAsNTg4MCw0NzU3MjA7NTg4MCw1OTAwLDQ3ODY5MDs1OTAwLDU5MjAsNDgzMjIwOzU5MjAsNTk0MCw0ODc3NjA7NTk0MCw1OTYwLDQ5MjMwMDs1OTYwLDU5ODAsNDk2ODMwOzU5ODAsNjAwMCw1MDEzNzA7NjAwMCw2MDIwLDUwNTkwMDs2MDIwLDYwNDAsNTEwNDQwOzYwNDAsNjA2MCw1MTQ5ODA7NjA2MCw2MDgwLDUxOTUxMDs2MDgwLDYxMDAsNTI0MDUwOzYxMDAsNjEyMCw1Mjg1ODA7NjEyMCw2MTQwLDUzMzEyMDs2MTQwLDYxNjAsNTM3NjYwOzYxNjAsNjE4MCw1NDIxOTA7NjE4MCw2MjAwLDU0NjczMDs2MjAwLDYyMjAsNTUxMjYwOzYyMjAsNjI0MCw1NTU4MDA7NjI0MCw2MjYwLDU2MDM0MDs2MjYwLDYyODAsNTY0ODcwOzYyODAsNjMwMCw1Njk0MTA7NjMwMCw2MzIwLDU3Mzk0MDs2MzIwLDYzNDAsNTc4NDgwOzYzNDAsNjM2MCw1ODMwMjA7NjM2MCw2MzgwLDU4NzU1MDs2MzgwLDY0MDAsNTkyMDkwOzY0MDAsNjQyMCw1OTY2MjA7NjQyMCw2NDQwLDYwMTE2MDs2NDQwLDY0NjAsNjA1NzAwOzY0NjAsNjQ4MCw2MTAyMzA7NjQ4MCw2NTAwLDYxNDc3MDs2NTAwLDY1MjAsNjE5MzAwOzY1MjAsNjU0MCw2MjM4NDA7NjU0MCw2NTYwLDYyODM4MDs2NTYwLDY1ODAsNjMyOTEwOzY1ODAsNjYwMCw2Mzc0NTA7NjYwMCw2NjIwLDY0MTk4MDs2NjIwLDY2NDAsNjQ2NTIwOzY2NDAsNjY2MCw2NTEwNjA7NjY2MCw2NjgwLDY1NTU5MDs2NjgwLDY3MDAsNjYwMTMwOzY3MDAsNjcyMCw2NjQ2NjA7NjcyMCw2NzQwLDY2OTIwMDs2NzQwLDY3NjAsNjczNzQwOzY3NjAsNjc4MCw2NzgyNzA7Njc4MCw2ODAwLDY4MjgxMDs2ODAwLDY4MjAsNjg3MzQwOzY4MjAsNjg0MCw2OTE4ODA7Njg0MCw2ODYwLDY5NjQyMDs2ODYwLDY4ODAsNzAwOTUwOzY4ODAsNjkwMCw3MDU0OTA7NjkwMCw2OTIwLDcxMDAyMDs2OTIwLDY5NDAsNzE0NTYwOzY5NDAsNjk2MCw3MTkxMDA7Njk2MCw2OTgwLDcyMzYzMDs2OTgwLDcwMDAsNzI4MTcwOzcwMDAsNzAyMCw3MzI3MDA7NzAyMCw3MDQwLDczNzI0MDs3MDQwLDcwNjAsNzQxNzgwOzcwNjAsNzA4MCw3NDYzMTA7NzA4MCw3MTAwLDc1MDg1MDs3MTAwLDcxMjAsNzU1MzgwOzcxMjAsNzE0MCw3NTk5MjA7NzE0MCw3MTYwLDc2NDQ2MDs3MTYwLDcxODAsNzY4OTkwOzcxODAsNzIwMCw3NzM1MzA7NzIwMCw3MjIwLDc3ODA2MDs3MjIwLDcyNDAsNzgyNjAwOzcyNDAsNzI2MCw3ODcxNDA7NzI2MCw3MjgwLDc5MTY3MDs3MjgwLDczMDAsNzk2MjEwOzczMDAsNzMyMCw4MDA3NDA7NzMyMCw3MzQwLDgwNTI4MDs3MzQwLDczNjAsODA5ODIwOzczNjAsNzM4MCw4MTQzNTA7NzM4MCw3NDAwLDgxODg5MDs3NDAwLDc0MjAsODIzNDIwOzc0MjAsNzQ0MCw4Mjc5NjA7NzQ0MCw3NDYwLDgzMjUwMDs3NDYwLDc0ODAsODM3MDMwOzc0ODAsNzUwMCw4NDE1NzA7NzUwMCw3NTIwLDg0NjEwMDs3NTIwLDc1NDAsODUwNjQwOzc1NDAsNzU2MCw4NTUxODA7NzU2MCw3NTgwLDg1OTcxMDs3NTgwLDc2MDAsODY0MjUwOzc2MDAsNzYyMCw4Njg3ODA7NzYyMCw3NjQwLDg3MzMyMDs3NjQwLDc2NjAsODc3ODYwOzc2NjAsNzY4MCw4ODIzOTA7NzY4MCw3NzAwLDg4NjkzMDs3NzAwLDc3MjAsODkxNDYwOzc3MjAsNzc0MCw4OTYwMDA7Nzc0MCw3NzYwLDkwMDU0MDs3NzYwLDc3ODAsOTA1MDcwOzc3ODAsNzgwMCw5MDk2MTA7NzgwMCw3ODIwLDkxNDE0MDs3ODIwLDc4NDAsOTE4NjgwOzc4NDAsNzg2MCw5MjMyMjA7Nzg2MCw3ODgwLDkyNzc1MDs3ODgwLDc5MDAsOTMyMjkwOzc5MDAsNzkyMCw5MzY4MjA7NzkyMCw3OTQwLDk0MTM2MDs3OTQwLDc5NjAsOTQ1OTAwOzc5NjAsNzk4MCw5NTA0MzA7Nzk4MCw4MDAwLDk1NDk3MDs4MDAwLDgwMjAsOTU5NTAwOzgwMjAsODA0MCw5NjQwNDA7ODA0MCw4MDYwLDk2ODU4MDs4MDYwLDgwODAsOTczMTEwOzgwODAsODEwMCw5Nzc2NTA7ODEwMCw4MTIwLDk4MjE4MDs4MTIwLDgxNDAsOTg2NzIwOzgxNDAsODE2MCw5OTEyNjA7ODE2MCw4MTgwLDk5NTc5MDs4MTgwLDgyMDAsMTAwMDMzMDs4MjAwLDgyMjAsMTAwNDg2MDs4MjIwLDgyNDAsMTAwOTQwMDs4MjQwLDgyNjAsMTAxMzk0MDs4MjYwLDgyODAsMTAxODQ3MDs4MjgwLDgzMDAsMTAyMzAxMDs4MzAwLDgzMjAsMTAyNzU0MDs4MzIwLDgzNDAsMTAzMjA4MDs4MzQwLDgzNjAsMTAzNjc0MDs4MzYwLDgzODAsMTA0MTQyMDs4MzgwLDg0MDAsMTA0NjEwMDs4NDAwLDg0MjAsMTA1MDc4MDs4NDIwLDg0NDAsMTA1NTQ2MDs4NDQwLDg0NjAsMTA2MDE0MDs4NDYwLDg0ODAsMTA2NDgyMDs4NDgwLDg1MDAsMTA2OTUwMDs4NTAwLDg1MjAsMTA3NDE4MDs4NTIwLDg1NDAsMTA3ODg2MDs4NTQwLDg1NjAsMTA4MzU0MDs4NTYwLDg1ODAsMTA4ODIyMDs4NTgwLDg2MDAsMTA5MjkwMDs4NjAwLDg2MjAsMTA5NzU4MDs4NjIwLDg2NDAsMTEwMjI2MDs4NjQwLDg2NjAsMTEwNjk0MDs4NjYwLDg2ODAsMTExMTYyMDs4NjgwLDg3MDAsMTExNjMwMDs4NzAwLDg3MjAsMTEyMDk4MDs4NzIwLDg3NDAsMTEyNTY2MDs4NzQwLDg3NjAsMTEzMDM0MDs4NzYwLDg3ODAsMTEzNTAyMDs4NzgwLDg4MDAsMTEzOTcwMDs4ODAwLDg4MjAsMTE0NDM4MDs4ODIwLDg4NDAsMTE0OTA2MDs4ODQwLDg4NjAsMTE1Mzc0MDs4ODYwLDg4ODAsMTE1ODQyMDs4ODgwLDg5MDAsMTE2MzEwMDs4OTAwLDg5MjAsMTE2Nzc4MDs4OTIwLDg5NDAsMTE3MjQ2MDs4OTQwLDg5NjAsMTE3NzE0MDs4OTYwLDg5ODAsMTE4MTgyMDs4OTgwLDkwMDAsMTE4NjUwMDs5MDAwLDkwMjAsMTE5MTE4MDs5MDIwLDkwNDAsMTE5NTg2MDs5MDQwLDkwNjAsMTIwMDU0MDs5MDYwLDkwODAsMTIwNTIyMDs5MDgwLDkxMDAsMTIwOTkwMDs5MTAwLDkxMjAsMTIxNDU4MDs5MTIwLDkxNDAsMTIxOTI2MDs5MTQwLDkxNjAsMTIyMzk0MDs5MTYwLDkxODAsMTIyODYyMDs5MTgwLDkyMDAsMTIzMzMwMDs5MjAwLDkyMjAsMTIzNzk4MDs5MjIwLDkyNDAsMTI0NDY0MDs5MjQwLDkyNjAsMTI1MTQ3MDs5MjYwLDkyODAsMTI1ODI5MDs5MjgwLDkzMDAsMTI2NTEyMDs5MzAwLDkzMjAsMTI3MTk0MDs5MzIwLDkzNDAsMTI3ODc3MDs5MzQwLDkzNjAsMTI4NTU5MDs5MzYwLDkzODAsMTI5MjQyMDs5MzgwLDk0MDAsMTI5OTI0MDs5NDAwLDk0MjAsMTMwNjA3MDs5NDIwLDk0NDAsMTMxMjg5MDs5NDQwLDk0NjAsMTMxOTcyMDs5NDYwLDk0ODAsMTMyNjU0MDs5NDgwLDk1MDAsMTMzMzM3MDs5NTAwLDk1MjAsMTM0MDE5MDs5NTIwLDk1NDAsMTM0NzAyMDs5NTQwLDk1NjAsMTM1Mzg0MDs5NTYwLDk1ODAsMTM2MDY3MDs5NTgwLDk2MDAsMTM2NzQ5MDs5NjAwLDk2MjAsMTM3NDMyMDs5NjIwLDk2NDAsMTM4MTE0MDs5NjQwLDk2NjAsMTM4Nzk3MDs5NjYwLDk2ODAsMTM5NDc5MDs5NjgwLDk3MDAsMTQwMTYyMDs5NzAwLDk3MjAsMTQwODQ0MDs5NzIwLDk3NDAsMTQxNTI3MDs5NzQwLDk3NjAsMTQyMjA5MDs5NzYwLDk3ODAsMTQyODkyMDs5NzgwLDk4MDAsMTQzNTc0MDs5ODAwLDk4MjAsMTQ0MjU3MDs5ODIwLDk4NDAsMTQ0OTM5MDs5ODQwLDk4NjAsMTQ1NjIyMDs5ODYwLDk4ODAsMTQ2MzA0MDs5ODgwLDk5MDAsMTQ2OTg3MDs5OTAwLDk5MjAsMTQ3NjY5MDs5OTIwLDk5NDAsMTQ4MzUyMDs5OTQwLDk5NjAsMTQ5MDM0MDs5OTYwLDk5ODAsMTQ5NzE3MDs5OTgwLDEwMDAwLDE1MDM5OTA=";
+  function prIncomeTax2026(monthlyTaxable){
+    var pay = Math.max(0, Math.floor(Number(monthlyTaxable)||0));
+    if(pay < 770000) return 0;
+    if(!_prTax2026Rows){
+      _prTax2026Rows = atob(_prTax2026B64).split(';').map(function(row){
+        return row.split(',').map(Number);
+      });
+    }
+    var payK = pay / 1000;
+    if(payK < 10000){
+      for(var i=0;i<_prTax2026Rows.length;i++){
+        var r=_prTax2026Rows[i];
+        if(payK>=r[0] && payK<r[1]) return r[2];
+      }
+      return 0;
+    }
+    var base=1507400, over=payK-10000, tax;
+    if(payK<=14000) tax=base + over*1000*0.98*0.35 + 25000;
+    else if(payK<=28000) tax=base + 1397000 + (payK-14000)*1000*0.98*0.38;
+    else if(payK<=30000) tax=base + 6610600 + (payK-28000)*1000*0.98*0.40;
+    else if(payK<=45000) tax=base + 7394600 + (payK-30000)*1000*0.40;
+    else if(payK<=87000) tax=base + 13394600 + (payK-45000)*1000*0.42;
+    else tax=base + 31034600 + (payK-87000)*1000*0.45;
+    return Math.floor(tax/10)*10;
+  }
+
   /* ── 날짜 포맷: "2026-03-31" → "2026년 03월 31일" ── */
   function prFmtDate(v){
     if(!v) return '';
@@ -92043,14 +92082,17 @@ window.tx_scheduleAutoSave = function(){
     var taxable  = basePay + txExtra + otPay;  // 식대·자기개발비 비과세 제외
 
     /* 공제 계산 — 직접 입력값 사용 (사회보험 통합징수포털 고지액 기준) */
-    var pension=0, health=0, employment=0, care=0, incomeTax=0, d33=0;
+    var pension=0, health=0, employment=0, care=0, incomeTax=0, localIncomeTax=0, d33=0;
     pension    = prV('pr-pensionManual');
     health     = prV('pr-healthManual');
     employment = prV('pr-employmentManual');
     care       = prV('pr-careManual');
-    incomeTax  = prV('pr-incomeTax');
+    incomeTax = prIncomeTax2026(taxable);
+    localIncomeTax = Math.floor((incomeTax * 0.10) / 10) * 10;
+    prSetVal('pr-incomeTax', incomeTax);
+    prSetVal('pr-localIncomeTax', localIncomeTax);
 
-    var totalDed = pension + health + employment + care + incomeTax;
+    var totalDed = pension + health + employment + care + incomeTax + localIncomeTax;
     var net      = gross - totalDed;
 
     /* 결과 요약 표시 */
@@ -92063,7 +92105,7 @@ window.tx_scheduleAutoSave = function(){
     var dedList = [
       {label:'국민연금',val:pension},{label:'건강보험',val:health},
       {label:'고용보험',val:employment},{label:'장기요양',val:care},
-      {label:'소득세+지방세',val:incomeTax}
+      {label:'소득세',val:incomeTax},{label:'지방소득세',val:localIncomeTax}
     ];
     if(d33>0) dedList.push({label:'3.3% 공제',val:d33});
     var drEl = document.getElementById('pr-deductRows');
@@ -92083,7 +92125,7 @@ window.tx_scheduleAutoSave = function(){
       basePay:basePay, mealPay:mealPay, devPay:devPay, txExtra:txExtra, otPay:otPay,
       gross:gross, taxable:taxable,
       pension:pension, health:health, employment:employment, care:care,
-      incomeTax:incomeTax, d33:d33, totalDed:totalDed, net:net
+      incomeTax:incomeTax, localIncomeTax:localIncomeTax, d33:d33, totalDed:totalDed, net:net
     };
     /* 급여명세서 문서 갱신 */
     _prUpdateDoc(_prLastCalc);
@@ -92111,7 +92153,8 @@ window.tx_scheduleAutoSave = function(){
 
     /* 공제 항목 */
     var dedItems=[{n:'국민연금',v:d.pension},{n:'건강보험',v:d.health},{n:'고용보험',v:d.employment},{n:'장기요양',v:d.care}];
-    if(d.incomeTax>0) dedItems.push({n:'소득세+지방세',v:d.incomeTax});
+    if(d.incomeTax>0)      dedItems.push({n:'소득세',v:d.incomeTax});
+    if(d.localIncomeTax>0) dedItems.push({n:'지방소득세',v:d.localIncomeTax});
     if(d.d33>0)       dedItems.push({n:'3.3%공제',v:d.d33});
 
     /* 지급 테이블 렌더 */
@@ -92208,11 +92251,12 @@ window.tx_scheduleAutoSave = function(){
     prSetVal('pr-mealPay','200000');
     prSetVal('pr-devPay','50000');
     prSetVal('pr-taxableExtra','0');
-    prSetVal('pr-pensionManual','0');
-    prSetVal('pr-healthManual','0');
-    prSetVal('pr-employmentManual','0');
-    prSetVal('pr-careManual','0');
+    prSetVal('pr-pensionManual','7130');
+    prSetVal('pr-healthManual','32490');
+    prSetVal('pr-employmentManual','13000');
+    prSetVal('pr-careManual','4260');
     prSetVal('pr-incomeTax','0');
+    prSetVal('pr-localIncomeTax','0');
     window.payroll_calc();
   };
 
@@ -92286,7 +92330,8 @@ window.tx_scheduleAutoSave = function(){
       health_deduction:         _prLastCalc.health,
       employment_deduction:     _prLastCalc.employment,
       longterm_care_deduction:  _prLastCalc.care,
-      income_tax:               _prLastCalc.incomeTax,
+      // 기존 DB 필드는 합계로 유지하고, 분리값은 raw_data에도 함께 보존
+      income_tax:               _prLastCalc.incomeTax + _prLastCalc.localIncomeTax,
       extra_deduction_33:       _prLastCalc.d33,
       total_deduction:          _prLastCalc.totalDed,
       net_pay:                  _prLastCalc.net,
@@ -92390,6 +92435,18 @@ window.tx_scheduleAutoSave = function(){
       +'</tr>';
   }
 
+  function _prHistTaxRows(row){
+    var raw = {};
+    try { raw = row.raw_data ? JSON.parse(row.raw_data) : {}; } catch(e) {}
+    if(raw && raw.localIncomeTax !== undefined){
+      return _prHistRow('소득세',raw.incomeTax,'#FECACA','#DC2626')
+        + _prHistRow('지방소득세',raw.localIncomeTax,'#FECACA','#DC2626');
+    }
+    return Number(row.income_tax)>0
+      ? _prHistRow('소득세+지방소득세',row.income_tax,'#FECACA','#DC2626')
+      : '';
+  }
+
   window.payroll_showHistDetail = function(id){
     var detailEl = document.getElementById('pr-hist-detail');
     if(!detailEl) return;
@@ -92454,7 +92511,7 @@ window.tx_scheduleAutoSave = function(){
               +_prHistRow('건강보험',row.health_deduction,'#FECACA','#DC2626')
               +_prHistRow('고용보험',row.employment_deduction,'#FECACA','#DC2626')
               +_prHistRow('장기요양보험',row.longterm_care_deduction,'#FECACA','#DC2626')
-              +(Number(row.income_tax)>0?_prHistRow('소득세+지방세',row.income_tax,'#FECACA','#DC2626'):'')
+              +_prHistTaxRows(row)
               +(Number(row.extra_deduction_33)>0?_prHistRow('3.3%공제',row.extra_deduction_33,'#FECACA','#DC2626'):'')
             +'</tbody>'
             +'<tfoot><tr style="background:#FEF2F2;">'
@@ -92529,7 +92586,15 @@ window.tx_scheduleAutoSave = function(){
       prSetVal('pr-healthManual',     row.health_deduction         || 0);
       prSetVal('pr-employmentManual', row.employment_deduction     || 0);
       prSetVal('pr-careManual',       row.longterm_care_deduction  || 0);
-      prSetVal('pr-incomeTax',        row.income_tax               || 0);
+      var savedRaw = {};
+      try { savedRaw = row.raw_data ? JSON.parse(row.raw_data) : {}; } catch(e) {}
+      if(savedRaw && savedRaw.localIncomeTax !== undefined){
+        prSetVal('pr-incomeTax',      savedRaw.incomeTax      || 0);
+        prSetVal('pr-localIncomeTax', savedRaw.localIncomeTax || 0);
+      } else {
+        prSetVal('pr-incomeTax',      row.income_tax || 0);
+        prSetVal('pr-localIncomeTax', 0);
+      }
 
       // 시간외 자동/수동 판단
       var sched  = Number(row.scheduled_hours || 0);
