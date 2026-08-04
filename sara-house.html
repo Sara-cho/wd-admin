@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <title>사라의 집 · 대표 개인 작업본 · v1.36.5</title>
+  <title>사라의 집 · 대표 개인 작업본 · v1.36.6</title>
   <style>
     :root {
       --paper: #fffaf1;
@@ -1103,9 +1103,8 @@
     .person-rail-item { width:100%; min-height:64px; display:block; margin-bottom:8px; padding:12px; border:1px solid #e5dbce; border-radius:12px; color:var(--ink); background:#fffaf3; text-align:left; }
     .person-rail-item.active { border:2px solid #c89b47; background:#fff6e4; }
     .room-hero.word-room { background:radial-gradient(circle at 91% 10%,rgba(239,211,124,.42),transparent 230px),linear-gradient(135deg,#fffdf6,#eef4e8); }
-    #screen-house-map .room-tile:nth-child(3n+1) { background:#faf7fd; }
-    #screen-house-map .room-tile:nth-child(3n+2) { background:#fffaf1; }
-    #screen-house-map .room-tile:nth-child(3n+3) { background:#f2f8f0; }
+    /* v1.36.6 · 얼룩무늬(줄무늬) 배경 제거 — 방 고유 컬러는 상단 라인(--tile) 하나로만 표시해 시선을 통합합니다 */
+    #screen-house-map .room-tile { background:#fff; }
     .mobile-more { display:none; }
     [hidden] { display: none !important; }
     @media (max-width: 820px) {
@@ -2642,6 +2641,173 @@
       .message-phone-actions,.message-record-status{max-width:340px}
     }
   </style>
+  <style id="v36-6-super-readability-patch">
+    /* 
+      v1.36.6 · 초격차 가독성 및 UI 디테일 패치 
+      1. 22개 방(Room) 고유 톤앤매너(Color Palette) 깔맞춤
+      2. 핵심 모듈(Tools, Storage Map 등) 카드 레이아웃 Hover 미세 모션
+    */
+
+    /* =========================================================
+       1. 핵심 모듈 카드 Hover 미세 모션 (Micro-interactions)
+       ========================================================= */
+    .card, .room-tile, .word-card, .menu-card, .tool-card, 
+    .storage-place-card, .storage-map-item, .foyer-choice, .basket-item {
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                  box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                  border-color 0.2s ease, 
+                  background-color 0.2s ease !important;
+      will-change: transform, box-shadow;
+    }
+
+    /* 카드 호버 시 부드럽게 떠오르며 그림자 확장 */
+    .card:hover, .room-tile:hover, .word-card:hover, .menu-card:hover, 
+    .tool-card:hover, .storage-place-card:hover, .storage-map-item:hover, .basket-item:hover {
+      transform: translateY(-3px) scale(1.005);
+      box-shadow: 0 16px 36px rgba(45, 35, 25, 0.08), 0 4px 12px rgba(45, 35, 25, 0.04) !important;
+      border-color: #d1bfae !important;
+      z-index: 2;
+    }
+
+    /* 버튼류 Hover 및 Active 터치감 강화 */
+    .btn {
+      transition: all 0.2s ease;
+    }
+    .btn:active {
+      transform: scale(0.97) !important;
+    }
+
+    /* =========================================================
+       2. 22개 전체 방(Screen) 카테고리별 톤앤매너 깔맞춤
+       각 공간의 성격에 맞는 배경 그라데이션 및 카드 테두리 색상 부여
+       ========================================================= */
+    
+    /* 1) 오늘의 이야기 (Story) - Warm Linen */
+    #screen-story { background: linear-gradient(180deg, #fdfbf7 0%, #f6f2ea 100%); }
+    #screen-story .page-head { border-top: 4px solid #e0cfa4; }
+
+    /* 2) 말씀과 기도 (Scripture) - Lilac Soft */
+    #screen-scripture { background: linear-gradient(180deg, #fcfafc 0%, #f4eff5 100%); }
+    #screen-scripture .page-head { border-top: 4px solid #bba6c8; }
+
+    /* 3) 오늘 기록 확인 (Finish) - Twilight / Slate */
+    #screen-finish { background: linear-gradient(180deg, #f5f6f8 0%, #ebedf2 100%); }
+    #screen-finish .page-head { border-top: 4px solid #8ba3c5; }
+
+    /* 4) 사람 (Connections) - Soft Rose / Peach */
+    #screen-connections { background: linear-gradient(180deg, #fffaf9 0%, #f9f1ef 100%); }
+    #screen-connections .page-head { border-top: 4px solid #dca69e; }
+
+    /* 5) 몸 (Body) - Sage Green */
+    #screen-body { background: linear-gradient(180deg, #f9fbf8 0%, #f0f5ef 100%); }
+    #screen-body .page-head { border-top: 4px solid #a3b89b; }
+
+    /* 6) 일 (Work) - Soft Blue / Steel */
+    #screen-work { background: linear-gradient(180deg, #f8f9fb 0%, #eef1f6 100%); }
+    #screen-work .page-head { border-top: 4px solid #9db2cc; }
+
+    /* 7) 살림과 재정 (Money) - Gold / Sand */
+    #screen-money { background: linear-gradient(180deg, #fffcf5 0%, #f6f0e4 100%); }
+    #screen-money .page-head { border-top: 4px solid #d5bc7c; }
+
+    /* 8) 삶의 서랍 (Life Drawer) - Warm Wood */
+    #screen-life-drawer { background: linear-gradient(180deg, #fbf9f6 0%, #f2efe9 100%); }
+    #screen-life-drawer .page-head { border-top: 4px solid #c2a88e; }
+
+    /* 9) 내 삶의 시간표 (Timeline) - Cloud Blue */
+    #screen-timeline { background: linear-gradient(180deg, #fafbfc 0%, #f1f3f7 100%); }
+    #screen-timeline .page-head { border-top: 4px solid #aebed1; }
+
+    /* 10) 내 삶의 서재 (Library) - Deep Sage */
+    #screen-library { background: linear-gradient(180deg, #f7f9f6 0%, #edf1ea 100%); }
+    #screen-library .page-head { border-top: 4px solid #8e9e87; }
+
+    /* 11) 자료 보관 지도 (Storage Map) - Sky Blue / Ivory */
+    #screen-storage-map { background: linear-gradient(180deg, #f9fbfb 0%, #f0f4f6 100%); }
+    #screen-storage-map .page-head { border-top: 4px solid #9fb9c4; }
+
+    /* 12) 배움과 적용 기록 (Study) - Matcha */
+    #screen-study { background: linear-gradient(180deg, #fbfbf8 0%, #f1f4ef 100%); }
+    #screen-study .page-head { border-top: 4px solid #a8b898; }
+
+    /* 13) 일정과 이동 (Schedule) - Lemon / Vanilla */
+    #screen-schedule { background: linear-gradient(180deg, #fffdf8 0%, #f8f5eb 100%); }
+    #screen-schedule .page-head { border-top: 4px solid #d8cc88; }
+
+    /* 14) 오늘의 식탁 (Table) - Coral Soft */
+    #screen-table { background: linear-gradient(180deg, #fffbf9 0%, #f8f2ee 100%); }
+    #screen-table .page-head { border-top: 4px solid #d6a496; }
+
+    /* 15) 소리의 방 (Sound) - Muted Purple */
+    #screen-sound { background: linear-gradient(180deg, #fbfafc 0%, #f3f0f6 100%); }
+    #screen-sound .page-head { border-top: 4px solid #b6a8c4; }
+
+    /* 16) 사라의 작업실 (Workshop) - Dusty Rose */
+    #screen-workshop { background: linear-gradient(180deg, #fdfaf9 0%, #f5efe9 100%); }
+    #screen-workshop .page-head { border-top: 4px solid #c8a49c; }
+
+    /* 17) 생활도구 (Tools) - Ash Gray */
+    #screen-tools { background: linear-gradient(180deg, #fbfbfb 0%, #f1f1f1 100%); }
+    #screen-tools .page-head { border-top: 4px solid #aeb2b5; }
+
+    /* 18) 집 전체 (House Map) - Paper White */
+    #screen-house-map { background: linear-gradient(180deg, #fefefe 0%, #f5f5f5 100%); }
+    #screen-house-map .page-head { border-top: 4px solid #cfcfcf; }
+
+    /* 19) 내 정보와 기억 (Info) - Sandstone */
+    #screen-info { background: linear-gradient(180deg, #fdfcf9 0%, #f4f0e8 100%); }
+    #screen-info .page-head { border-top: 4px solid #c2b59e; }
+
+    /* 20) 이삿짐 들이기 (Import) - Clay */
+    #screen-import { background: linear-gradient(180deg, #fcfaf8 0%, #f2ede6 100%); }
+    #screen-import .page-head { border-top: 4px solid #b5a48c; }
+
+    /* 21) 설정 (Settings) - Slate Gray */
+    #screen-settings { background: linear-gradient(180deg, #f9f9fa 0%, #eff0f2 100%); }
+    #screen-settings .page-head { border-top: 4px solid #9babc0; }
+
+    /* 22) 가상 기록 검수 모드 (QA Mode) - Alert Warning */
+    #screen-qa-mode { background: linear-gradient(180deg, #fffdf5 0%, #f9f4e6 100%); }
+    #screen-qa-mode .page-head { border-top: 4px solid #d4a754; }
+
+    /* =========================================================
+       3. 가독성 초격차 향상 (타이포그래피 및 여백 정밀 튜닝)
+       ========================================================= */
+    /* 텍스트 줄간격 및 자간 최적화 */
+    p, .lead, .summary {
+      line-height: 1.75;
+      letter-spacing: -0.015em;
+      color: #3b3731; /* 순수 검은색(Ink) 대신 눈이 편안한 진회색 적용 */
+    }
+    
+    /* 입력창(Textarea, Input) 내부 가독성 및 포커스 모션 */
+    input[type="text"], textarea, select {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      background: #faf8f5;
+    }
+    input[type="text"]:focus, textarea:focus {
+      background: #ffffff;
+      border-color: var(--brand-2);
+      box-shadow: 0 0 0 4px rgba(173, 130, 69, 0.15) !important;
+    }
+
+    /* 스크롤바 미려하게 다듬기 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.02);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(130, 108, 84, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(130, 108, 84, 0.5);
+    }
+  </style>
 </head>
 <body>
 <nav class="wd-space-nav" id="wd-space-nav" aria-label="WD WAVE 공통 공간 이동">
@@ -2973,7 +3139,7 @@ async function wdSpaceLogout(){
     <div class="header-inner">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">⌂</div>
-        <div>사라의 집<small>한 번 이야기하면, 확인한 기록이 삶의 자리로 이어집니다 · v1.36.5</small></div>
+        <div>사라의 집<small>한 번 이야기하면, 확인한 기록이 삶의 자리로 이어집니다 · v1.36.6</small></div>
       </div>
       <div class="header-room">
         <button id="menu-toggle" class="menu-toggle" type="button" aria-label="전체 메뉴 열기" aria-expanded="false"><span class="hamburger-icon" aria-hidden="true"></span><span class="header-menu-label">메뉴</span></button>
@@ -5522,7 +5688,7 @@ async function wdSpaceLogout(){
         </div>
         <div class="card">
           <h3>앱 정보</h3>
-          <p>버전: <strong>1.36.5-save-safety-ui4</strong></p>
+          <p>버전: <strong>1.36.6-tone-final</strong></p>
           <p>계보: <strong>대표님 개인 확장 작업본</strong> · 0번 핵심 실험판이나 외부 서비스판으로 확정한 파일이 아닙니다.</p>
           <p>저장 호환: 기존 기록을 잃지 않도록 저장키 <strong>saraHouseZero.v1</strong>은 그대로 유지합니다.</p>
           <p>정리 방식: 한 번 연결한 Supabase 세션 자동 복구·갱신 · AI 기록 다듬기는 사용자가 누를 때만 실행</p>
@@ -6152,7 +6318,7 @@ async function wdSpaceLogout(){
     var QA_STORAGE_KEY = "saraHouseZero.qaChronology.v1";
     var QA_MODE_KEY = "saraHouseZero.qaChronology.active";
     /* v1.16.0 · 생활도구 지도 관제실 + 소리의 방 노래 흐름까지 반영한 실제 버전 */
-    var APP_VERSION = "1.36.5-save-safety-ui4";
+    var APP_VERSION = "1.36.6-tone-final";
     var WORD_LETTER_WORKSPACES = {
       hara: "https://gemini.google.com/gem/1Okq5ogzoRYfe6svjN75H-MxrZSUD5v4P?usp=sharing",
       imageStudio: "https://chatgpt.com/g/g-6a66b3317fb88191bd7d72d62ba75ea7-malsseumpyeonji-mandeulgi"
@@ -22134,6 +22300,20 @@ async function wdSpaceLogout(){
     body.has-nav .header-inner { min-height: 52px; padding: 4px 10px; gap: 10px; }
     .app-header .header-room { gap: 7px; }
   }
+</style>
+<style id="sara-v1366-storage-color-style">
+  /* v1.36.6-storage-color · 자료보관 지도 카드에 서비스별 상징색을 왼쪽 선에만 은은하게.
+     실제 마크업 기준(#screen-storage-map, .storage-place-card, data-storage-map-filter)으로 맞췄습니다.
+     border는 얇은 선(1px)이라 별도 색 지정에 !important가 필요 없습니다. */
+  #screen-storage-map .storage-place-card { border-left-width: 4px; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="google-drive"] { border-left-color: #4285F4; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="mybox"]        { border-left-color: #03C75A; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="onedrive"]     { border-left-color: #0078D4; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="pc-home"]      { border-left-color: #718096; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="pc-office"]    { border-left-color: #4A5568; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="phone"]        { border-left-color: #8A6DAE; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="other"]        { border-left-color: #B7791F; }
+  #screen-storage-map .storage-place-card[data-storage-map-filter="unknown"]      { border-left-color: #A0AEC0; }
 </style>
 </body>
 </html>
