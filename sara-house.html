@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <title>사라의 집 · v1.36.3 · 짧은 메시지 동선</title>
+  <title>사라의 집 · 대표 개인 작업본 · v1.36.5</title>
   <style>
     :root {
       --paper: #fffaf1;
@@ -2664,7 +2664,8 @@ function wdSpaceBack(){
   if(ref && !/login/i.test(ref)){history.back();return;}
   if(typeof go==='function')go('home');
 }
-function wdSpaceLogout(){
+async function wdSpaceLogout(){
+  try{if(window.SaraAI&&window.SaraAI.logout)await window.SaraAI.logout({silent:true});}catch(ignoreAiLogout){}
   try{sessionStorage.removeItem('wd_nav_session_v1');localStorage.removeItem('wd_lock_auth');localStorage.removeItem('wd_lock_user');}catch(e){}
   var local=location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
   location.href=local?'./WD본진_첫화면재배치_왕복연결_v1.0.html?logout=1':'https://admin.wdwave.kr/?logout=1';
@@ -2972,7 +2973,7 @@ function wdSpaceLogout(){
     <div class="header-inner">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">⌂</div>
-        <div>사라의 집<small>한 번 이야기하면, 확인한 기록이 삶의 자리로 이어집니다 · v1.36.3</small></div>
+        <div>사라의 집<small>한 번 이야기하면, 확인한 기록이 삶의 자리로 이어집니다 · v1.36.5</small></div>
       </div>
       <div class="header-room">
         <button id="menu-toggle" class="menu-toggle" type="button" aria-label="전체 메뉴 열기" aria-expanded="false"><span class="hamburger-icon" aria-hidden="true"></span><span class="header-menu-label">메뉴</span></button>
@@ -3464,7 +3465,7 @@ function wdSpaceLogout(){
         </div>
         <div class="simple-date-bar" aria-label="이야기를 남길 날짜">
           <button id="simple-date-prev" class="simple-date-arrow" type="button" aria-label="하루 전">‹</button>
-          <label for="simple-story-date"><span>기록할 날짜</span><input id="simple-story-date" type="date"></label>
+          <label for="simple-story-date"><span>기록할 날짜</span><input id="simple-story-date" type="date" aria-label="이야기를 남길 날짜"></label>
           <button id="simple-date-next" class="simple-date-arrow" type="button" aria-label="하루 뒤">›</button>
           <button id="simple-date-today" class="btn ghost" type="button">오늘</button>
         </div>
@@ -3477,7 +3478,7 @@ function wdSpaceLogout(){
           <div class="card">
             <div class="field">
               <label class="sr-only" for="story-text">오늘 있었던 일</label>
-              <textarea id="story-text" class="story-input" maxlength="10000" placeholder="여기에 편하게 말씀하세요.&#10;한 줄이어도 괜찮고, 순서가 뒤섞여도 괜찮아요."></textarea>
+              <textarea id="story-text" class="story-input" maxlength="10000" placeholder="여기에 편하게 말씀하세요.&#10;예) 오늘 은정이랑 점심 먹었는데 마음이 좀 무거웠다.&#10;예) 새벽에 시편 23편을 읽었다.&#10;&#10;한 줄이어도 괜찮고, 순서가 뒤섞여도 괜찮아요."></textarea>
               <div class="story-tools"><button id="voice-toggle" class="voice-button" type="button"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#function-microphone"></use></svg><span>말로 이야기하기</span></button><span id="voice-status" class="voice-status">이 기기의 브라우저가 음성 인식을 지원하면 바로 말할 수 있어요.</span></div>
             </div>
             <!-- v1.34.7 · 입력 직후 원문을 먼저 보여주고 수정·삭제·다듬기를 직접 고릅니다. -->
@@ -3512,7 +3513,10 @@ function wdSpaceLogout(){
             </div>
             <label class="check-row"><input id="story-landmark" type="checkbox"> <span>짧은 삶의 이정표로 표시하기 <span class="soft">(추가 감정 질문 없이 남깁니다)</span></span></label>
               <div id="ai-runtime" class="ai-runtime organize-status"><span class="ai-light" aria-hidden="true"></span><div class="ai-runtime-copy"><strong id="ai-runtime-title">사라의 기록 다듬기 자동 연결 확인 중</strong><small id="ai-runtime-detail">한 번 연결한 Supabase 세션을 이 브라우저에서 자동으로 이어갑니다.</small></div><button id="open-ai-settings" class="btn secondary" type="button">자동 연결 확인</button></div>
-              <span class="hint">외부 AI 기록 다듬기를 연결하고 다듬기를 누른 경우에만 선택한 이야기·짧은 확인 질문과 답·확정한 입주자 안내서의 응답 기준·사용자가 승인한 기억이 외부 AI 처리 경로로 전송됩니다. 결과는 직접 고치고 확인해야 기록이 됩니다.</span>
+              <details class="story-more-note">
+                <summary>무엇이 전송되는지 보기</summary>
+                <span class="hint">외부 AI 기록 다듬기를 연결하고 다듬기를 누른 경우에만 선택한 이야기·짧은 확인 질문과 답·확정한 입주자 안내서의 응답 기준·사용자가 승인한 기억이 외부 AI 처리 경로로 전송됩니다. 결과는 직접 고치고 확인해야 기록이 됩니다.</span>
+              </details>
                 <div class="other-block">
                   <p class="other-block-title">지난 기록이나 한 번에 남기기</p>
               <div class="actions">
@@ -3614,10 +3618,10 @@ function wdSpaceLogout(){
             <button id="toggle-draft-edit" class="btn secondary sub-action" type="button">제목과 문장 직접 고치기</button>
           </div>
           <!-- v1.34.5 · 원문 보기를 서랍 안쪽 깊은 곳이 아니라 한 장 바로 아래에 둡니다. -->
-          <details class="sheet-more">
-            <summary>내가 처음 말한 원문 보기</summary>
+          <details class="sheet-more draft-original-fold">
+            <summary>내가 작성한 원문 보기</summary>
             <div class="sheet-more-body">
-              <p class="soft">사라가 다듬기 전, 입주자님이 그대로 말씀하신 내용입니다.</p>
+              <p class="soft">사라가 다듬기 전, 입주자님이 그대로 말씀하신 내용입니다. 원문은 고쳐지거나 지워지지 않고 이대로 남아 있습니다.</p>
               <pre id="draft-original-view" class="draft-original-view"></pre>
             </div>
           </details>
@@ -4994,18 +4998,18 @@ function wdSpaceLogout(){
       <section id="screen-finish" class="screen room-story">
         <!-- v1.34.5 · 시스템 상태판을 없애고, 오늘 무엇이 남았는지 한 줄로만 말합니다. -->
         <div class="hero room-story">
-          <p class="eyebrow">오늘은 여기까지</p>
+          <p class="eyebrow">오늘의 마무리</p>
           <h2 id="finish-title">오늘은 여기까지 하셔도 괜찮아요.</h2>
           <div id="finish-summary"></div>
           <div class="actions" id="finish-actions"></div>
-          <details class="sara-drawer" style="margin-top:18px">
-            <summary class="sara-drawer-head">
-              <span class="sara-drawer-title">기록 보관 안내</span>
-              <span class="sara-drawer-mark" aria-hidden="true">〉</span>
-            </summary>
-            <div class="sara-drawer-body"><div id="finish-storage-note"></div></div>
-          </details>
         </div>
+        <details class="sara-drawer finish-storage-fold">
+          <summary class="sara-drawer-head">
+            <span class="sara-drawer-title">기록 보관 안내</span>
+            <span class="sara-drawer-mark" aria-hidden="true">〉</span>
+          </summary>
+          <div class="sara-drawer-body"><div id="finish-storage-note"></div></div>
+        </details>
       </section>
 
       <section id="screen-connections" class="screen room-people">
@@ -5391,31 +5395,7 @@ function wdSpaceLogout(){
           <h2>설정</h2>
           <p class="soft">필요한 항목만 열어 관리해요.</p>
         </div>
-
-        <!-- v1.34.5 · 노아 16-2 · 자주 쓰는 장소 -->
-        <details class="sara-drawer" id="place-fold">
-          <summary class="sara-drawer-head">
-            <span class="sara-drawer-title">자주 쓰는 장소</span>
-            <span id="place-count" class="sara-drawer-count">없음</span>
-            <span class="sara-drawer-mark" aria-hidden="true">〉</span>
-          </summary>
-          <div class="sara-drawer-body">
-            <p class="soft">집과 회사를 저장해 두시면 일정의 출발지에서 바로 고르실 수 있어요.</p>
-            <div class="actions"><button id="add-place" class="btn primary" type="button">장소 추가</button></div>
-            <div id="place-list" style="margin-top:12px"></div>
-            <details class="sara-drawer" style="margin-top:12px">
-              <summary class="sara-drawer-head"><span class="sara-drawer-title">주소는 이렇게 보호합니다</span><span class="sara-drawer-mark" aria-hidden="true">〉</span></summary>
-              <div class="sara-drawer-body"><ul class="soft">
-                <li>이 기기에만 저장합니다.</li>
-                <li>AI 기록 다듬기로 보내지 않습니다.</li>
-                <li>기록 본문에 자동으로 넣지 않습니다.</li>
-                <li>전체 내보내기에서 기본으로 뺍니다.</li>
-                <li>길찾기를 직접 누르실 때만 지도로 전달합니다.</li>
-                <li>동·호수 같은 상세 위치는 적지 않으셔도 됩니다.</li>
-              </ul></div>
-            </details>
-          </div>
-        </details>
+        <!-- v1.36.5-ui2 · 자주 쓰는 연결을 위로, 관리성 기능은 서랍으로 내렸습니다. -->
 
         <details class="sara-drawer" id="ai-connection-card">
           <summary class="sara-drawer-head">
@@ -5443,7 +5423,7 @@ function wdSpaceLogout(){
                 <div class="field"><label for="ai-email">입주자 이메일</label><input id="ai-email" type="email" autocomplete="username" placeholder="이메일"></div>
                 <div class="field"><label for="ai-password">비밀번호</label><input id="ai-password" type="password" autocomplete="current-password" placeholder="비밀번호는 저장하지 않음"></div>
               </div>
-              <div class="actions"><button id="ai-login" class="btn primary" type="button">이 기기에서 한 번 연결</button><button id="ai-logout" class="btn danger" type="button">이 기기의 자동 연결 지우기</button></div>
+              <div class="actions"><button id="ai-login" class="btn primary" type="button">이 기기에서 한 번 연결</button><button id="ai-logout" class="btn danger" type="button">이 기기에서 연결 끊기</button></div>
             </div>
           </details>
           <div id="ai-cleanup-panel" class="notice" style="margin-top:12px">
@@ -5453,17 +5433,37 @@ function wdSpaceLogout(){
           </div>
           </div>
         </details>
-        <div class="card">
-          <h3>저장 방식 안내</h3>
-          <div class="storage-notice">
-            <span>이 기기 브라우저에만 보관됩니다.</span>
-            <span>확정 기록 전체를 서버에 보관하지 않습니다. AI 정리를 누르면 선택한 이야기·짧은 확인 질문과 답·확정한 입주자 안내서의 응답 기준·사용자가 승인한 기억만 정리를 위해 전송됩니다.</span>
-            <span>브라우저 데이터를 지우면 기록이 사라질 수 있습니다.</span>
-            <span>사용자가 파일로 내보낼 수 있습니다.</span>
-            <span>개별 삭제와 전체 초기화가 가능합니다.</span>
+
+        <!-- v1.34.5 · 노아 16-2 · 자주 쓰는 장소 -->
+        <details class="sara-drawer" id="place-fold">
+          <summary class="sara-drawer-head">
+            <span class="sara-drawer-title">자주 쓰는 장소</span>
+            <span id="place-count" class="sara-drawer-count">없음</span>
+            <span class="sara-drawer-mark" aria-hidden="true">〉</span>
+          </summary>
+          <div class="sara-drawer-body">
+            <p class="soft">집과 회사를 저장해 두시면 일정의 출발지에서 바로 고르실 수 있어요.</p>
+            <div class="actions"><button id="add-place" class="btn primary" type="button">장소 추가</button></div>
+            <div id="place-list" style="margin-top:12px"></div>
+            <details class="sara-drawer" style="margin-top:12px">
+              <summary class="sara-drawer-head"><span class="sara-drawer-title">주소는 이렇게 보호합니다</span><span class="sara-drawer-mark" aria-hidden="true">〉</span></summary>
+              <div class="sara-drawer-body"><ul class="soft">
+                <li>이 기기에만 저장합니다.</li>
+                <li>AI 기록 다듬기로 보내지 않습니다.</li>
+                <li>기록 본문에 자동으로 넣지 않습니다.</li>
+                <li>전체 내보내기에서 기본으로 뺍니다.</li>
+                <li>길찾기를 직접 누르실 때만 지도로 전달합니다.</li>
+                <li>동·호수 같은 상세 위치는 적지 않으셔도 됩니다.</li>
+              </ul></div>
+            </details>
           </div>
-          <p id="storage-runtime-status" class="soft" style="margin-top:12px"></p>
-        </div>
+        </details>
+        <details class="sara-drawer settings-fold" open>
+          <summary class="sara-drawer-head">
+            <span class="sara-drawer-title">기록 백업과 저장 상태</span>
+            <span class="sara-drawer-mark" aria-hidden="true">〉</span>
+          </summary>
+          <div class="sara-drawer-body">
         <div class="card">
           <h3>전체 내보내기</h3>
           <p class="soft">입주자 안내서·사람·기억·확정 기록과 일정·빠른 메모·귀가 확인·말씀 읽기·기도·예배·식탁·소리·원석·도구·앨범 설명을 한 파일로 가져갑니다. 보호 범위를 먼저 선택합니다.</p>
@@ -5492,6 +5492,26 @@ function wdSpaceLogout(){
           </div>
         </div>
         <div class="card">
+          <h3>저장 방식 안내</h3>
+          <div class="storage-notice">
+            <span>이 기기 브라우저에만 보관됩니다.</span>
+            <span>확정 기록 전체를 서버에 보관하지 않습니다. AI 정리를 누르면 선택한 이야기·짧은 확인 질문과 답·확정한 입주자 안내서의 응답 기준·사용자가 승인한 기억만 정리를 위해 전송됩니다.</span>
+            <span>브라우저 데이터를 지우면 기록이 사라질 수 있습니다.</span>
+            <span>사용자가 파일로 내보낼 수 있습니다.</span>
+            <span>개별 삭제와 전체 초기화가 가능합니다.</span>
+          </div>
+          <p id="storage-runtime-status" class="soft" style="margin-top:12px"></p>
+        </div>
+        <div class="card"><h3>현재 저장 상태</h3><div id="collection-status" class="mini-stats"></div><p class="soft">실제 구현한 공간만 집계합니다. 준비 중 기능을 작동하는 것으로 표시하지 않습니다.</p></div>
+          </div>
+        </details>
+        <details class="sara-drawer settings-fold">
+          <summary class="sara-drawer-head">
+            <span class="sara-drawer-title">집 관리와 검수</span>
+            <span class="sara-drawer-mark" aria-hidden="true">〉</span>
+          </summary>
+          <div class="sara-drawer-body">
+        <div class="card">
           <h3>연대기 구조 검수용 가상 기록</h3>
           <p class="soft">일반 2건·보호 1건·최고 강보호 존재 표시 1건·확인 필요 1건을 실제 자료와 분리된 별도 시험 영역에서 확인합니다.</p>
           <p id="qa-mode-status" class="notice">현재 실제 자료 모드입니다. 가상 기록은 아직 만들지 않았습니다.</p>
@@ -5500,18 +5520,30 @@ function wdSpaceLogout(){
             <button id="stop-chronology-qa" class="btn danger" type="button" hidden>가상 기록 제거·실제 자료로 돌아가기</button>
           </div>
         </div>
+        <div class="card">
+          <h3>앱 정보</h3>
+          <p>버전: <strong>1.36.5-save-safety-ui4</strong></p>
+          <p>계보: <strong>대표님 개인 확장 작업본</strong> · 0번 핵심 실험판이나 외부 서비스판으로 확정한 파일이 아닙니다.</p>
+          <p>저장 호환: 기존 기록을 잃지 않도록 저장키 <strong>saraHouseZero.v1</strong>은 그대로 유지합니다.</p>
+          <p>정리 방식: 한 번 연결한 Supabase 세션 자동 복구·갱신 · AI 기록 다듬기는 사용자가 누를 때만 실행</p>
+          <p>오류 정보: <span id="error-info">이 파일 안에서 확인된 실행 오류 없음 · 실제 연결과 장시간 사용은 별도 확인 필요</span></p>
+        </div>
+          </div>
+        </details>
+        <details class="sara-drawer settings-fold settings-fold-danger">
+          <summary class="sara-drawer-head">
+            <span class="sara-drawer-title">전체 초기화</span>
+            <span class="sara-drawer-count">되돌릴 수 없음</span>
+            <span class="sara-drawer-mark" aria-hidden="true">〉</span>
+          </summary>
+          <div class="sara-drawer-body">
         <div class="card rose">
           <h3>전체 초기화</h3>
           <p>입주자 안내서, 사람, 기억, 모든 확정 기록과 연결, 일정·빠른 메모·귀가 확인과 직접 등록한 AI 작업실 정보를 삭제합니다. 집에 기본 연결된 외부 작업실 6개는 다시 표시됩니다. 복구할 수 없습니다.</p>
           <button id="reset-all" class="btn danger" type="button">전체 초기화</button>
         </div>
-        <div class="card"><h3>현재 저장 상태</h3><div id="collection-status" class="mini-stats"></div><p class="soft">실제 구현한 공간만 집계합니다. 준비 중 기능을 작동하는 것으로 표시하지 않습니다.</p></div>
-        <div class="card">
-          <h3>앱 정보</h3>
-          <p>버전: <strong>1.36.3-compact-message-flow-full</strong></p>
-          <p>정리 방식: 한 번 연결한 Supabase 세션 자동 복구·갱신 · AI 기록 다듬기는 사용자가 누를 때만 실행</p>
-          <p>오류 정보: <span id="error-info">이 파일 안에서 확인된 실행 오류 없음 · 실제 연결과 장시간 사용은 별도 확인 필요</span></p>
-        </div>
+          </div>
+        </details>
       </section>
 
       <section id="screen-record" class="screen room-timeline">
@@ -5819,13 +5851,13 @@ function wdSpaceLogout(){
     function setRuntime(kind,detail){
       var box=el('ai-runtime'),title=el('ai-runtime-title'),sub=el('ai-runtime-detail');
       if(box){box.classList.remove('connected','busy');if(kind==='connected')box.classList.add('connected');if(kind==='busy')box.classList.add('busy')}
-      if(title)title.textContent=kind==='connected'?'사라의 기록 다듬기 자동 연결됨':kind==='busy'?'사라가 읽기 좋게 다듬고 있어요':kind==='error'?'자동 연결 확인 필요':'기록 다듬기 자동 연결 확인 중';
+      if(title)title.textContent=kind==='connected'?'사라의 기록 다듬기 자동 연결됨':kind==='busy'?'사라가 읽기 좋게 다듬고 있어요':kind==='disconnected'?'이 기기의 자동 연결이 꺼졌습니다':kind==='error'?'자동 연결 확인 필요':'기록 다듬기 자동 연결 확인 중';
       if(sub)sub.textContent=detail||'한 번 연결한 Supabase 세션을 이 브라우저에서 자동으로 이어갑니다.';
       var action=el('organize-story');if(action)action.textContent=kind==='busy'?'사라가 읽기 좋게 다듬고 있어요':'사라가 읽기 좋게 다듬기';
       var open=el('open-ai-settings');if(open)open.hidden=kind==='connected'||kind==='busy';
       var retry=el('ai-reconnect');if(retry)retry.hidden=kind==='connected'||kind==='busy';
       var recovery=el('ai-recovery-card');if(recovery){recovery.hidden=kind==='connected'||kind==='busy';if(recovery.hidden)recovery.open=false}
-      var fold=el('ai-fold-state');if(fold)fold.textContent=kind==='connected'?'자동 연결됨':kind==='busy'?'다듬는 중':kind==='error'?'확인 필요':'확인 중';
+      var fold=el('ai-fold-state');if(fold)fold.textContent=kind==='connected'?'자동 연결됨':kind==='busy'?'다듬는 중':kind==='disconnected'?'연결 안 됨':kind==='error'?'확인 필요':'확인 중';
       if(detail)safeStatus(detail);
     }
     function isConnected(){return !!(session&&(session.access_token||session.refresh_token))}
@@ -5866,7 +5898,39 @@ function wdSpaceLogout(){
       var data=await res.json().catch(function(){return {}});if(!res.ok||!data.access_token)throw new Error(data.error_description||data.msg||data.message||'로그인하지 못했습니다.');
       saveSession(Object.assign({},data,{user:data.user||{email:email}}));localStorage.setItem(EMAIL_KEY,email);setRuntime('connected','연결을 이 브라우저에 이어두었습니다. 다음부터 비밀번호를 다시 입력하지 않습니다.');return session;
     }
-    function logout(){session=null;try{localStorage.removeItem(SESSION_KEY)}catch(ignoreLocal){}try{sessionStorage.removeItem(LEGACY_SESSION_KEY)}catch(ignoreLegacy){}setRuntime('error','이 기기의 자동 연결을 지웠습니다. 원문 기록과 집의 다른 기능은 그대로 사용할 수 있습니다.');}
+    /* v1.36.4 · 브라우저 토큰만 지우지 않고 현재 Supabase 세션의 refresh token 폐기를 먼저 요청합니다.
+       다른 기기까지 끊지 않도록 local scope를 명시하며, 네트워크 실패 때도 이 기기의 토큰은 반드시 제거합니다. */
+    async function logout(options){
+      options=options||{};
+      var serverRevoked=!session;
+      var detail='';
+      try{
+        if(session&&session.refresh_token&&!sessionIsFresh()){
+          try{await refreshSession()}catch(ignoreRefresh){}
+        }
+        var token=session&&session.access_token;
+        if(token){
+          var response=await fetch(AI_URL+'/auth/v1/logout?scope=local',{method:'POST',headers:{'apikey':AI_KEY,'Authorization':'Bearer '+token}});
+          serverRevoked=response.ok||response.status===401;
+          if(!serverRevoked){
+            var body=await response.json().catch(function(){return {}});
+            detail=clean(body.msg||body.message||body.error_description||('HTTP '+response.status));
+          }
+        }
+      }catch(error){
+        serverRevoked=false;
+        detail=clean(error&&error.message||error);
+      }finally{
+        session=null;
+        try{localStorage.removeItem(SESSION_KEY)}catch(ignoreLocal){}
+        try{sessionStorage.removeItem(LEGACY_SESSION_KEY)}catch(ignoreLegacy){}
+      }
+      if(!options.silent){
+        if(serverRevoked) setRuntime('disconnected','이 기기의 AI 연결을 안전하게 끊었습니다. 원문 기록과 집의 다른 기능은 그대로 사용할 수 있습니다.');
+        else setRuntime('error','이 기기에는 연결 정보가 남지 않았습니다. 다만 서버 연결 해제는 확인하지 못했습니다'+(detail?' · '+detail:'')+'. 인터넷 연결 뒤 다시 로그인하고 연결 끊기를 눌러 확인해 주세요.');
+      }
+      return {localCleared:true,serverRevoked:serverRevoked};
+    }
     function clearSavedIdentity(){
       try{localStorage.removeItem(EMAIL_KEY)}catch(ignoreEmail){}
       var email=el('ai-email'),password=el('ai-password');
@@ -6056,7 +6120,11 @@ function wdSpaceLogout(){
       var email=el('ai-email');if(email)email.value=localStorage.getItem(EMAIL_KEY)||'';
       var loginBtn=el('ai-login'),logoutBtn=el('ai-logout'),openBtn=el('open-ai-settings'),reconnectBtn=el('ai-reconnect');
       if(loginBtn)loginBtn.addEventListener('click',async function(){loginBtn.disabled=true;safeStatus('이 기기의 자동 연결을 준비하고 있습니다.');try{await login(email.value,el('ai-password').value);el('ai-password').value=''}catch(e){setRuntime('error','연결 실패: '+(e.message||e))}finally{loginBtn.disabled=false}});
-      if(logoutBtn)logoutBtn.addEventListener('click',logout);
+      if(logoutBtn)logoutBtn.addEventListener('click',async function(){
+        logoutBtn.disabled=true;
+        safeStatus('이 기기의 연결을 안전하게 끊고 있습니다.');
+        try{await logout()}finally{logoutBtn.disabled=false}
+      });
       if(reconnectBtn)reconnectBtn.addEventListener('click',async function(){reconnectBtn.disabled=true;safeStatus('저장된 연결을 다시 확인하고 있습니다.');try{await ensureSession();setRuntime('connected','자동 연결이 정상입니다. 비밀번호를 다시 입력하지 않아도 됩니다.')}catch(e){setRuntime('error',e.message||'자동 연결을 확인하지 못했습니다.')}finally{reconnectBtn.disabled=false}});
       var provSel=el('ai-provider');
       if(provSel){ provSel.value=AI_PROVIDER;
@@ -6084,7 +6152,7 @@ function wdSpaceLogout(){
     var QA_STORAGE_KEY = "saraHouseZero.qaChronology.v1";
     var QA_MODE_KEY = "saraHouseZero.qaChronology.active";
     /* v1.16.0 · 생활도구 지도 관제실 + 소리의 방 노래 흐름까지 반영한 실제 버전 */
-    var APP_VERSION = "1.36.3-compact-message-flow-full";
+    var APP_VERSION = "1.36.5-save-safety-ui4";
     var WORD_LETTER_WORKSPACES = {
       hara: "https://gemini.google.com/gem/1Okq5ogzoRYfe6svjN75H-MxrZSUD5v4P?usp=sharing",
       imageStudio: "https://chatgpt.com/g/g-6a66b3317fb88191bd7d72d62ba75ea7-malsseumpyeonji-mandeulgi"
@@ -7530,6 +7598,8 @@ function wdSpaceLogout(){
         lastError = "브라우저 보관 기능을 사용할 수 없습니다: " + error.message;
         state = qaMode ? createChronologyQaState() : createEmptyState();
       }
+      /* v1.36.5 · 이 창이 기준으로 삼는 저장소 시점을 기억해 둡니다. */
+      try { rememberStoredStamp(); } catch (ignoreStamp) {}
     }
     /* v1.9.4.3: 저장 자료 손상을 사용자에게 알리고, 덮어쓸지 여부를 직접 결정하게 한다. */
     function notifyCorruptedStorage() {
@@ -7567,9 +7637,56 @@ function wdSpaceLogout(){
         actions: [ { label: "확인", className: "primary" } ]
       });
     }
+    /* v1.36.5 · 창을 두 개 열었을 때, 나중에 저장한 창이 먼저 열린 창의 옛 상태로
+       저장소를 통째로 덮어쓰던 문제를 막습니다. 이 창이 마지막으로 읽거나 쓴 시점과
+       저장소의 현재 시점을 비교해, 다르면 저장하지 않고 이유를 알립니다. */
+    var lastKnownStoredStamp = null;
+    var otherTabNoticeShown = false;
+    var lastSaveFailedAt = 0;
+    function currentStoredStamp() {
+      try {
+        var raw = localStorage.getItem(qaMode ? QA_STORAGE_KEY : STORAGE_KEY);
+        if (!raw) return null;
+        var parsed = safeJsonParse(raw);
+        return parsed && parsed.updatedAt ? String(parsed.updatedAt) : null;
+      } catch (ignore) { return null; }
+    }
+    function rememberStoredStamp() { lastKnownStoredStamp = currentStoredStamp(); }
+    function noticeOtherTabWrote() {
+      lastSaveFailedAt = Date.now();
+      if (otherTabNoticeShown) return;
+      otherTabNoticeShown = true;
+      showModal({
+        title: "다른 창에서 먼저 저장되었습니다",
+        body: "<p>사라의 집이 다른 탭이나 창에도 열려 있습니다. <strong>이 창에서 방금 남긴 내용은 저장하지 않았습니다.</strong></p>" +
+          "<p>이 창의 내용으로 덮어쓰면 다른 창에서 남긴 기록이 사라지기 때문입니다.</p>" +
+          "<p>이 창을 새로고침해 최신 기록을 불러온 뒤 다시 남겨 주세요. 평소에는 <strong>창 하나만</strong> 열어 두시는 편이 안전합니다.</p>",
+        actions: [
+          { label: "이 창 새로고침", className: "primary", onClick: function () { try { location.reload(); } catch (ignore) {} } },
+          { label: "나중에", className: "ghost" }
+        ]
+      });
+    }
+    /* v1.36.5 · 다른 창이 저장하는 순간 바로 알아채고, 이 창의 기준 시점을 갱신하지 않습니다.
+       (갱신하면 덮어쓰기가 다시 허용되므로, 사용자가 새로고침을 선택할 때까지 그대로 둡니다) */
+    try {
+      window.addEventListener("storage", function (event) {
+        if (!event || event.key !== (qaMode ? QA_STORAGE_KEY : STORAGE_KEY)) return;
+        if (lastKnownStoredStamp === null) { rememberStoredStamp(); return; }
+        var stamp = currentStoredStamp();
+        if (stamp && stamp !== lastKnownStoredStamp) toast("다른 창에서 기록이 저장되었습니다. 이 창을 새로고침한 뒤 이어서 남겨 주세요.");
+      });
+    } catch (ignoreStorageEvent) {}
     function saveState() {
       state.updatedAt = new Date().toISOString();
-      if (!storageAvailable) { toast("현재 실행 중에만 유지됩니다. 파일로 내보내 주세요."); return false; }
+      if (!storageAvailable) { lastSaveFailedAt = Date.now(); toast("현재 실행 중에만 유지됩니다. 파일로 내보내 주세요."); return false; }
+      if (!qaMode) {
+        var storedStamp = currentStoredStamp();
+        if (lastKnownStoredStamp !== null && storedStamp !== null && storedStamp !== lastKnownStoredStamp) {
+          noticeOtherTabWrote();
+          return false;
+        }
+      }
       try {
         if (!qaMode && migrationSourceRaw && !migrationBackupReady) {
           migrationBackupKey = STORAGE_KEY + ".backup-v1.34.5-before-v1.34.6";
@@ -7579,12 +7696,15 @@ function wdSpaceLogout(){
         }
         prepareStateRecordsForStorage(state);
         localStorage.setItem(qaMode ? QA_STORAGE_KEY : STORAGE_KEY, JSON.stringify(state));
+        lastKnownStoredStamp = String(state.updatedAt || "");   /* v1.36.5 */
+        otherTabNoticeShown = false;
         return true;
       }
       catch (error) {
         /* v1.9.4.3: 한 번 실패했다고 영구 차단하지 않는다. 대신 분명히 알리고 다음 저장을 다시 시도한다. */
         var isQuota = /quota|exceeded|storage/i.test(String(error && (error.name + " " + error.message)));
         lastError = "브라우저에 저장하지 못했습니다: " + error.message;
+        lastSaveFailedAt = Date.now();   /* v1.36.5 · 아래 toast에서 거짓 성공 안내를 막는 데 씁니다 */
         updateErrorStatus();
         toast(isQuota ? "저장 공간이 부족해 이번 내용을 보관하지 못했습니다." : "브라우저 저장에 실패했습니다. 내보내기를 이용해 주세요.");
         notifyStorageFailure(isQuota, error);
@@ -7611,6 +7731,16 @@ function wdSpaceLogout(){
     }
     function toast(message) {
       var el = $("#toast");
+      /* v1.36.5 · 저장이 실패한 직후에는 "확정했습니다" 같은 성공 안내를 그대로 띄우지 않습니다.
+         화면은 남았다고 말하는데 실제로는 남지 않던 문제를 막습니다. */
+      try {
+        if (lastSaveFailedAt && Date.now() - lastSaveFailedAt < 4000) {
+          var raw = String(message || "");
+          if (/(확정했|저장했|보관했|남겼습니다|등록했|수정했|기록했)/.test(raw) && !/(못했|실패|않았|없습니다|아직)/.test(raw)) {
+            message = "아직 저장되지 않았습니다. 화면의 안내를 확인해 주세요.";
+          }
+        }
+      } catch (ignoreSaveGuard) {}
       el.textContent = message;
       /* v1.9.5: 저장·보관 완료 안내에만 사라를 함께 보여준다 */
       try {
@@ -7654,8 +7784,10 @@ function wdSpaceLogout(){
         button.className = "btn " + (item.className || "");
         button.textContent = item.label;
         button.addEventListener("click", function () {
+          /* v1.36.5 · 기존 동작(먼저 닫기)은 그대로 두고, onClick이 false를 반환할 때만 다시 엽니다.
+             검증에 걸린 입력이 안내 없이 사라지던 문제를 막습니다. */
           closeModal();
-          if (item.onClick) item.onClick();
+          if (item.onClick && item.onClick() === false) $("#modal-backdrop").classList.add("open");
         });
         actions.appendChild(button);
       });
@@ -15926,7 +16058,9 @@ function wdSpaceLogout(){
           "<button class='btn secondary' type='button' data-go='home'>현관으로 돌아가기</button>";
       } else {
         if (title) title.textContent = "아무것도 남기지 않아도 괜찮아요.";
-        box.innerHTML = stateNoteHtml("done", "오늘 담아둔 기록이 없어요.",
+        /* v1.36.5-ui2 · 남긴 것이 없는 날에는 숫자 대신 쉼을 먼저 놓습니다. */
+        box.innerHTML = "<p class='finish-rest-note'>오늘 수고 많았어요.<br>남긴 기록이 없어도 괜찮으니, 평안히 마음을 맡기고 쉬어가세요.</p>" +
+          stateNoteHtml("done", "오늘 담아둔 기록이 없어요.",
           "한 줄이어도 충분하고, 며칠 쉬어도 괜찮습니다.");
         actions.innerHTML =
           "<button class='btn primary large' type='button' data-go='story'>오늘 이야기 남기기</button>" +
@@ -17054,9 +17188,26 @@ function wdSpaceLogout(){
           { label: person ? "수정 저장" : "직접 등록", className: "primary", onClick: function () {
             var relation = $("#person-relation").value.trim();
             var alias = $("#person-alias").value.trim();
-            if (!relation && !alias) { toast("관계 또는 별칭을 하나는 적어주세요."); return; }
+            /* v1.36.5 · 검증에 걸리면 모달을 닫지 않고 그 자리에 이유를 적습니다. */
+            function personFormNotice(message) {
+              var box = $("#person-form-error");
+              if (!box) {
+                var body = $("#modal-body");
+                if (body) {
+                  box = document.createElement("p");
+                  box.id = "person-form-error";
+                  box.className = "notice warn";
+                  box.setAttribute("role", "alert");
+                  body.insertBefore(box, body.firstChild);
+                }
+              }
+              if (box) { box.hidden = false; box.textContent = message; }
+              toast(message);
+            }
+            if (!relation && !alias) { personFormNotice("관계 또는 별칭을 하나는 적어주세요. 아직 등록되지 않았습니다."); return false; }
             var duplicate = state.persons.find(function (p) { return (!person || p.id !== person.id) && (p.alias || "").toLowerCase() === (alias || relation).toLowerCase(); });
-            if (duplicate) { toast("같은 별칭의 사람이 이미 있습니다. 자동으로 합치지 않고 기존 사람을 확인해 주세요."); return; }
+            if (duplicate) { personFormNotice("같은 별칭의 사람이 이미 있습니다. 자동으로 합치지 않습니다. 기존 사람을 확인해 주세요."); return false; }
+            var errorBox = $("#person-form-error"); if (errorBox) errorBox.hidden = true;
             if (!person) {
               person = {
                 id: uid("person"), source: "manual", sourceKey: "", recordIds: [],
@@ -18299,6 +18450,26 @@ function wdSpaceLogout(){
         " · 자료 파일 자체는 포함되지 않습니다.</p>" +
         (docs.length ? docs.map(function (x) { return "<article><pre>" + escapeHtml(JSON.stringify(x, null, 2)) + "</pre></article>"; }).join("") : "<p>없음</p>") + "</section>";
     }
+    /* v1.36.4 · HTML 내보내기와 같은 범위의 후속 일·자료 참조를 Markdown에도 빠짐없이 넣습니다. */
+    function extraSectionsExportMarkdown() {
+      var followUps = followUpsForExport();
+      var docs = documentRefsForExport();
+      var mode = exportDocScope();
+      var lines = ["", "## 다음에 챙길 것 · " + followUps.length + "개", ""];
+      if (followUps.length) {
+        followUps.forEach(function (item) {
+          lines.push("```json", JSON.stringify(item, null, 2), "```");
+        });
+      } else lines.push("- 없음");
+      lines.push("", "## 자료·증빙 참조 · " + docs.length + "개", "",
+        "> 선택한 범위: " + (mode === "none" ? "자료 참조 제외" : (mode === "health" ? "건강·병원 자료까지 포함" : "일반 자료만 포함")) + " · 자료 파일 자체는 포함되지 않습니다.", "");
+      if (docs.length) {
+        docs.forEach(function (item) {
+          lines.push("```json", JSON.stringify(item, null, 2), "```");
+        });
+      } else lines.push("- 없음");
+      return lines;
+    }
     function localCollectionsExportHtml(scope) {
       var defs=[
         {key:"readingRecords",title:"읽은 말씀 기록"},{key:"prayerRecords",title:"기도 기록"},{key:"worshipRecords",title:"예배 기록"},{key:"tableRecords",title:"오늘의 식탁"},{key:"soundRecords",title:"소리의 방"},{key:"workshopRecords",title:"사라의 작업실 원석"},{key:"lifeTools",title:"생활도구 지도"},{key:"storageMapItems",title:"자료 보관 지도"},{key:"albumRecords",title:"앨범 설명"},{key:"schedules",title:"일정과 다녀오는 길"},{key:"quickMemos",title:"빠른 메모"}
@@ -18575,6 +18746,7 @@ function wdSpaceLogout(){
         lines.push("", "#### " + (draft.source || "정리 초안"), "", draft.body || "", "");
       });
       lines = lines.concat(localCollectionsExportMarkdown(scope));
+      lines = lines.concat(extraSectionsExportMarkdown());
       if (includeUiDrafts) lines = lines.concat(uiDraftsExportMarkdown());
       var suffix = scope === "highly_protected" ? "highly_protected_metadata" : scope;
       return downloadFile("sara_house_all_records_" + suffix + "_" + todayISO() + ".md", lines.join("\n"), "text/markdown");
@@ -21455,16 +21627,513 @@ function wdSpaceLogout(){
     }
   }
   function restore(){restoreHome();restoreStory();insertGuides();buildIntro()}
+  /* v1.36.5 · 이전에는 화면을 연 뒤 700ms 시점에 딱 한 번만 홈인지 확인해서,
+     입주신고를 마치고 홈으로 들어가는 첫 입주자는 사라 소개를 한 번도 보지 못했습니다.
+     이제 홈에 처음 들어오는 순간을 계속 지켜보다가 한 번만 엽니다. */
+  function maybeOpenIntro(){
+    var home=q("#screen-home");
+    if(!home||!home.classList.contains("active"))return false;
+    if(introWasSeen())return true;
+    openIntro();
+    return true;
+  }
+  function watchForHome(){
+    if(introWasSeen())return;
+    var home=q("#screen-home");if(!home||!window.MutationObserver)return;
+    var observer=new MutationObserver(function(){
+      if(introWasSeen()){observer.disconnect();return}
+      if(home.classList.contains("active")){
+        setTimeout(function(){if(maybeOpenIntro())observer.disconnect()},600);
+      }
+    });
+    observer.observe(home,{attributes:true,attributeFilter:["class"]});
+  }
   function init(){
     restore();
     setTimeout(function(){
       restore();
-      var home=q("#screen-home");
-      if(home&&home.classList.contains("active")&&!introWasSeen())openIntro();
+      maybeOpenIntro();
+      watchForHome();
     },700);
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
 </script>
+<style id="sara-v1364-required-fixes-style">
+  /* v1.36.4 · 한글은 낱글자 중간에서 끊지 않고, 긴 주소만 안전하게 줄바꿈합니다. */
+  h1,h2,h3,h4,p,li,button,summary,label,strong,small,.lead,.soft,.sara-home-caption{
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+  a,input,textarea,pre,code{overflow-wrap:anywhere}
+  input[type="file"]{display:block;width:100%;max-width:100%;box-sizing:border-box}
+  /* v1.36.5 · display:none은 일부 iOS Safari에서 파일 선택창이 열리지 않습니다.
+     같은 파일에 이미 있는 clip 방식(화면에서만 감추고 기능은 살리는 방식)을 그대로 씁니다. */
+  #import-file{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+  .screen .filter-row{flex-wrap:wrap;overflow-x:visible}
+
+  /* 사이드 메뉴는 오늘의 핵심 동선과 현재 있는 묶음만 펼칩니다. */
+  .main-nav .nav-section{margin:8px 0 0;border-top:1px solid rgba(255,255,255,.1)}
+  .main-nav .nav-section>summary{
+    display:flex;align-items:center;justify-content:space-between;min-height:44px;
+    padding:9px 10px;color:#f0d889;font-size:12px;font-weight:800;letter-spacing:.06em;
+    cursor:pointer;list-style:none;border-radius:10px
+  }
+  .main-nav .nav-section>summary::-webkit-details-marker{display:none}
+  .main-nav .nav-section>summary::after{content:"＋";font-size:17px;line-height:1;color:#cbd5e2}
+  .main-nav .nav-section[open]>summary::after{content:"−"}
+  .main-nav .nav-section>summary:focus-visible{outline:3px solid #f1d878;outline-offset:2px}
+  .main-nav .nav-section-body{display:grid;gap:2px;padding:0 0 5px}
+  .main-nav .nav-section-body>button{margin:0}
+
+  /* 긴 화면은 정보를 삭제하지 않고 한 덩어리씩 사용자가 펼쳐 봅니다. */
+  .compact-section-card{
+    margin-top:16px;border:1px solid var(--line);border-radius:var(--radius);
+    background:rgba(255,255,255,.9);box-shadow:var(--shadow-soft);overflow:hidden
+  }
+  .compact-section-card>summary{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:68px;
+    padding:16px 18px;color:var(--ink);cursor:pointer;list-style:none
+  }
+  .compact-section-card>summary::-webkit-details-marker{display:none}
+  .compact-section-card>summary strong{display:block;font-size:17px;line-height:1.4}
+  .compact-section-card>summary small{display:block;margin-top:3px;color:#665f56;font-size:13px;line-height:1.45}
+  .compact-section-card>summary::after{content:"펼치기";flex:0 0 auto;color:#31567b;font-size:13px;font-weight:800}
+  .compact-section-card[open]>summary{border-bottom:1px solid var(--line);background:#fffaf0}
+  .compact-section-card[open]>summary::after{content:"접기"}
+  .compact-section-body{padding:16px 18px 18px}
+  .compact-section-body>.page-head-row:first-child{margin-top:0}
+
+  .onboarding-quick{display:grid;gap:8px;margin:14px 0}
+  .onboarding-quick p{margin:0;padding:11px 13px;border-radius:12px;background:#f8f3e9;color:#4d5967;line-height:1.55}
+  .sara-intro-promises,.onboarding-extra{
+    margin-top:12px;border:1px solid #e6dac8;border-radius:14px;background:#fffdf8;overflow:hidden
+  }
+  .sara-intro-promises>summary,.onboarding-extra>summary{
+    display:flex;align-items:center;min-height:48px;padding:11px 14px;color:#40556d;
+    font-weight:800;cursor:pointer
+  }
+  .sara-intro-promises-body,.onboarding-extra-body{padding:0 14px 14px}
+  #screen-onboarding-intro .actions{margin-top:14px}
+
+  /* 자동 검사에서 실제로 낮았던 보조 글씨 대비를 명시적으로 보정합니다. */
+  #journey-head .eyebrow{color:#3f6f94}
+  button[data-simple-story-tab]:not(.is-active),button[data-simple-story-tab][aria-selected="false"]{color:#625a52}
+  #screen-story #story-other>summary{color:#625a52!important}
+  .opt-badge{color:#59544e!important}
+  button[data-worship-mobile-tab]:not(.is-active),button[data-worship-mobile-tab][aria-selected="false"]{color:#625a52}
+  #screen-bible-map .era-step{color:#675b4e}
+  #screen-bible-map .verdict-legend-item.blank strong{color:#625b51}
+  #screen-bible-map .journey-card .eyebrow{color:#674d8a}
+  #screen-import [data-import-method]{color:#625b52}
+  #screen-storage-map .storage-place-card small{color:#665d54}
+  #timeline-filter-summary{color:#655c52}
+
+  @media(max-width:760px){
+    /* 손가락으로 누르는 조작부는 최소 44px을 확보합니다. */
+    .screen button,.screen a[href],.screen summary,
+    .screen input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    .screen select{min-height:46px}
+    .screen button,.screen a[href],.screen summary{min-width:44px}
+    .compact-section-card>summary{padding:14px;min-height:64px}
+    .compact-section-card>summary small{font-size:12.5px}
+    .compact-section-body{padding:14px}
+    #screen-home .sara-home-caption button,.btn.sm,#simple-date-today,.timeline-filter{min-height:44px!important}
+    #draft-title{min-height:46px!important}
+    #screen-home .guided-foyer-main h3,#screen-home .sara-home-caption strong{word-break:keep-all!important}
+  }
+</style>
+<script id="sara-v1364-required-fixes-script">
+(function(){
+  "use strict";
+  function q(selector,root){return (root||document).querySelector(selector)}
+  function qa(selector,root){return Array.prototype.slice.call((root||document).querySelectorAll(selector))}
+
+  function compactSidebar(){
+    var nav=q("#main-nav");if(!nav||q(".nav-section",nav))return;
+    qa(":scope > .nav-group-label",nav).forEach(function(label){
+      var details=document.createElement("details");details.className="nav-section";
+      var summary=document.createElement("summary");summary.textContent=(label.textContent||"").trim();
+      var body=document.createElement("div");body.className="nav-section-body";
+      nav.insertBefore(details,label);details.appendChild(summary);details.appendChild(body);
+      var cursor=label.nextSibling;
+      while(cursor&&!(cursor.nodeType===1&&cursor.classList.contains("nav-group-label"))){
+        var next=cursor.nextSibling;body.appendChild(cursor);cursor=next;
+      }
+      if(summary.textContent==="오늘")details.open=true;
+      label.remove();
+    });
+    syncSidebarGroup();
+  }
+  function syncSidebarGroup(){
+    var nav=q("#main-nav");if(!nav)return;
+    var active=q("button.active",nav),group=active&&active.closest(".nav-section");
+    qa(".nav-section",nav).forEach(function(section){section.open=section===group||(!group&&q("summary",section)&&q("summary",section).textContent.trim()==="오늘")});
+  }
+
+  function turnCardIntoDetails(targetId,title,description,className){
+    var target=q("#"+targetId);if(!target)return null;
+    var card=target.closest(".card");if(!card||card.tagName==="DETAILS")return card;
+    var details=document.createElement("details");
+    details.className="compact-section-card "+(className||"");
+    var summary=document.createElement("summary");
+    var copy=document.createElement("span");
+    copy.innerHTML="<strong>"+title+"</strong><small>"+description+"</small>";
+    summary.appendChild(copy);
+    var body=document.createElement("div");body.className="compact-section-body";
+    while(card.firstChild)body.appendChild(card.firstChild);
+    details.appendChild(summary);details.appendChild(body);card.replaceWith(details);
+    return details;
+  }
+  function compactLongRooms(){
+    var toolSections=[
+      ["tool-official","바로 쓰는 외부 생활도구","필요할 때 공식 주소 목록을 펼쳐 봅니다."],
+      ["tool-ai-list","나의 AI 작업실","연결해 둔 작업실과 보낼 말 준비를 펼쳐 봅니다."],
+      ["tool-deploy-list","내가 만든 배포도구","주소와 상태를 확인하거나 등록합니다."],
+      ["tool-list","개인 추가도구","직접 등록한 생활도구를 확인합니다."]
+    ];
+    toolSections.forEach(function(item){turnCardIntoDetails(item[0],item[1],item[2],"tool-compact-section")});
+    turnCardIntoDetails("bible-era-flow","성경 역사의 흐름","읽기 기록이 있는 책과 현재 흐름을 필요할 때 펼쳐 봅니다.","bible-era-section");
+    turnCardIntoDetails("bible-journeys-featured","성경 인물의 여정","대표 인물 6명부터 보고, 필요할 때 전체 인물을 펼칩니다.","bible-journey-section");
+    var search=q("#tool-search");
+    if(search)search.addEventListener("input",function(){
+      if(search.value.trim())qa("#screen-tools .tool-compact-section").forEach(function(section){section.open=true});
+    });
+  }
+
+  function compactOnboardingIntro(){
+    var screen=q("#screen-onboarding-intro"),hero=screen&&q(".hero",screen),card=screen&&q(".sara-id-card",screen);
+    if(!hero||!card||q(".sara-intro-promises",card))return;
+    var heading=q("h2",hero);if(heading)heading.textContent="사라는 삶을 대신 판단하지 않고, 말씀 앞에서 정돈하도록 안내합니다.";
+    var quick=document.createElement("div");quick.className="onboarding-quick";
+    quick.innerHTML="<p><strong>한 번 말하면</strong> 사실·마음·해석을 섞어 단정하지 않고 한 장으로 정리합니다.</p><p><strong>필요한 연결은</strong> 먼저 제안하되, 확인한 뒤에만 남깁니다.</p><p><strong>마지막 의미와 방향은</strong> 입주자님이 말씀과 기도 안에서 확인합니다.</p>";
+    var grid=q(".sara-id-grid",card),invite=q(".sara-id-invite",card);
+    if(grid){
+      var promises=document.createElement("details");promises.className="sara-intro-promises";
+      var summary=document.createElement("summary");summary.textContent="사라가 지키는 7가지 약속 보기";
+      var body=document.createElement("div");body.className="sara-intro-promises-body";
+      promises.appendChild(summary);promises.appendChild(body);body.appendChild(grid);if(invite)body.appendChild(invite);
+      var aiDetails=q(":scope > details",card);card.insertBefore(quick,aiDetails||null);card.insertBefore(promises,aiDetails||null);
+    }
+    var leads=qa(":scope > .lead",hero),notices=qa(":scope > .notice",hero),actions=q(":scope > .actions",hero);
+    if(actions&&leads[0])hero.insertBefore(actions,leads[0].nextSibling);
+    if((leads.length>1||notices.length)&&actions){
+      var extra=document.createElement("details");extra.className="onboarding-extra";
+      var extraSummary=document.createElement("summary");extraSummary.textContent="입주신고가 지키는 기준 자세히 보기";
+      var extraBody=document.createElement("div");extraBody.className="onboarding-extra-body";
+      extra.appendChild(extraSummary);extra.appendChild(extraBody);
+      leads.slice(1).forEach(function(node){extraBody.appendChild(node)});notices.forEach(function(node){extraBody.appendChild(node)});
+      actions.insertAdjacentElement("afterend",extra);
+    }
+  }
+
+  function addAccessibleNames(){
+    var names={
+      speech_style_custom:"평소 말하는 방식 직접 적기",response_style_custom:"편안한 답변 방식 직접 적기",
+      discomfort_custom:"원하지 않는 방식 직접 적기",age_custom:"연령대 직접 적기",gender_custom:"성별 직접 적기",
+      marital_custom:"결혼과 생활 상태 직접 적기",household_custom:"함께 사는 사람 직접 적기",
+      partner_state_custom:"배우자 또는 동반자 상황 직접 적기",separate_family_custom:"따로 사는 가족 상황 직접 적기",
+      children_status_custom:"자녀 상황 직접 적기",parents_custom:"부모님과의 생활 관계 직접 적기",
+      important_people_custom:"중요한 사람 직접 적기",work_custom:"현재 하는 일 직접 적기",future_custom:"앞으로 하고 싶은 일 직접 적기"
+    };
+    qa("input,select,textarea").forEach(function(control){
+      if(control.getAttribute("aria-label")||control.getAttribute("aria-labelledby")||control.closest("label"))return;
+      var id=control.id,label=id&&q('label[for="'+id.replace(/"/g,'\\"')+'"]');if(label)return;
+      var text=names[control.name]||({"simple-story-date":"이야기 날짜","table-photo":"대표 사진 선택","content-book-cover-file":"책 표지 이미지 선택"}[id])||control.placeholder||control.name||id;
+      if(text)control.setAttribute("aria-label",text);
+    });
+  }
+  function init(){compactSidebar();compactLongRooms();compactOnboardingIntro();addAccessibleNames();
+    var nav=q("#main-nav");if(nav&&window.MutationObserver)new MutationObserver(syncSidebarGroup).observe(nav,{subtree:true,attributes:true,attributeFilter:["class"]});
+    var menu=q("#menu-toggle");if(menu)menu.addEventListener("click",function(){setTimeout(syncSidebarGroup,0)});
+    document.addEventListener("click",function(event){if(event.target.closest&&event.target.closest("#main-nav [data-go]"))setTimeout(syncSidebarGroup,0)},true);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+})();
+</script>
+<style id="sara-v1365-ui2-style">
+  /* v1.36.5-ui2 · 화면 배치만 다듬습니다. 저장·연결 로직과 id는 건드리지 않습니다. */
+
+  /* [이야기 남기기] 추가 설정 안쪽의 시각적 피로도 축소 */
+  #story-other .story-more-body { font-size: 0.95em; }
+  #story-other .story-more-body .field { margin-bottom: 10px; }
+  #story-other .story-more-body .hint { font-size: 0.86em; line-height: 1.6; opacity: .78; }
+  #story-other .story-more-body .check-row { font-size: 0.94em; }
+  #story-other .other-block { margin-top: 14px; }
+  #story-other .other-block-title { font-size: 0.92em; opacity: .72; margin-bottom: 8px; }
+  #story-other .ai-runtime { padding: 10px 12px; }
+  #story-other #ai-runtime-title { font-size: 0.95em; }
+  #story-other #ai-runtime-detail { font-size: 0.84em; opacity: .75; }
+  .story-more-note { margin: 6px 0 10px; }
+  .story-more-note > summary {
+    cursor: pointer; font-size: 0.86em; opacity: .7;
+    list-style: none; padding: 6px 0; min-height: 44px; display: flex; align-items: center;
+  }
+  .story-more-note > summary::-webkit-details-marker { display: none; }
+  .story-more-note > summary::after { content: " \3009"; opacity: .6; }
+  .story-more-note[open] > summary::after { content: " \3008"; }
+
+  /* [오늘의 마무리] 남긴 것이 없는 날의 쉼 */
+  .finish-rest-note {
+    margin: 4px 0 18px; text-align: center;
+    font-size: 1.04em; line-height: 1.9; font-weight: 400;
+    opacity: .68; word-break: keep-all;
+  }
+  /* 보관 안내는 화면 아래로, 비중은 낮게 */
+  .finish-storage-fold { margin-top: 28px; opacity: .78; }
+  .finish-storage-fold .sara-drawer-title { font-size: 0.9em; font-weight: 500; }
+  .finish-storage-fold .sara-drawer-head { padding-top: 10px; padding-bottom: 10px; }
+  .finish-storage-fold[open] { opacity: 1; }
+
+  /* [설정] 서랍 정돈 */
+  .settings-fold { margin-top: 12px; }
+  .settings-fold > .sara-drawer-body > .card {
+    border: 0; background: transparent; padding-left: 0; padding-right: 0; box-shadow: none;
+  }
+  .settings-fold > .sara-drawer-body > .card + .card { margin-top: 4px; }
+  .settings-fold-danger .sara-drawer-title { opacity: .8; }
+  .settings-fold-danger > .sara-drawer-body > .card.rose { padding: 14px 16px; }
+</style>
+<style id="sara-v1365-touch-style">
+  /* v1.36.5-ui3 · 모바일 터치감·입력창 높이·다듬는 동안의 안내만 다듬습니다.
+     저장·연결 로직과 id는 건드리지 않습니다. */
+
+  /* ① 손가락으로 눌러도 잘못 눌리지 않도록 */
+  #screen-story #append-today-story,
+  #screen-story #organize-story,
+  #screen-story #voice-toggle,
+  #screen-story [data-story-action] {
+    min-height: 52px;
+    touch-action: manipulation;
+  }
+  #screen-story .story-tools {
+    margin-top: 14px;
+    gap: 10px;
+  }
+  /* 말로 이야기하기 ↔ 이 이야기 남기기 사이 안전 간격 */
+  #screen-story .story-tools + .actions,
+  #screen-story .story-tools ~ .actions {
+    margin-top: 18px;
+  }
+  #screen-story .actions { gap: 12px; }
+  #screen-story .actions > .btn + .btn { margin-top: 4px; }
+  #screen-story #voice-status {
+    display: block; margin-top: 8px;
+    font-size: 0.84em; line-height: 1.6; opacity: .72;
+  }
+  @media (max-width: 520px) {
+    #screen-story .story-tools { flex-direction: column; align-items: stretch; }
+    #screen-story #voice-toggle { width: 100%; justify-content: center; }
+    #screen-story .story-tools + .actions,
+    #screen-story .story-tools ~ .actions { margin-top: 20px; }
+    #screen-story .actions > .btn { width: 100%; }
+  }
+
+  /* ② 입력창 자동 높이 */
+  #story-text {
+    overflow-y: hidden;
+    resize: none;
+    transition: height .12s ease-out;
+  }
+  #story-text.is-overflowing { overflow-y: auto; }
+  @media (prefers-reduced-motion: reduce) {
+    #story-text { transition: none; }
+  }
+
+  /* ③ 다듬는 동안의 안내 */
+  #sara-organize-wait[hidden] { display: none !important; }
+  #sara-organize-wait {
+    position: fixed; inset: 0; z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(24, 28, 38, .52);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .sara-wait-card {
+    width: min(360px, 100%);
+    background: #fffaf1; color: #1f2933;
+    border-radius: 18px; padding: 30px 26px;
+    box-shadow: 0 18px 48px rgba(16, 24, 40, .28);
+    text-align: center; word-break: keep-all;
+  }
+  .sara-wait-dots { display: flex; justify-content: center; gap: 7px; margin-bottom: 18px; }
+  .sara-wait-dots i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #214e82; opacity: .3;
+    animation: saraWaitPulse 1.25s ease-in-out infinite;
+  }
+  .sara-wait-dots i:nth-child(2) { animation-delay: .18s; }
+  .sara-wait-dots i:nth-child(3) { animation-delay: .36s; }
+  @keyframes saraWaitPulse {
+    0%, 80%, 100% { opacity: .28; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-4px); }
+  }
+  .sara-wait-title { margin: 0 0 10px; font-size: 1.06em; font-weight: 700; line-height: 1.6; }
+  .sara-wait-sub { margin: 0; font-size: .9em; line-height: 1.75; opacity: .74; }
+  @media (prefers-reduced-motion: reduce) {
+    .sara-wait-dots i { animation: none; opacity: .6; }
+  }
+</style>
+
+<div id="sara-organize-wait" role="status" aria-live="polite" aria-hidden="true" hidden>
+  <div class="sara-wait-card">
+    <div class="sara-wait-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="sara-wait-title">사라가 이야기를 경청하며 다듬고 있어요…</p>
+    <p class="sara-wait-sub">잠시만 기다려 주세요. 적어주신 원문은 이 기기에 그대로 있습니다.</p>
+  </div>
+</div>
+
+<script id="sara-v1365-touch-script">
+(function () {
+  "use strict";
+
+  /* ② 입력창이 내용에 맞춰 늘어납니다. 너무 길어지면 그때만 스크롤합니다. */
+  var MAX_H = 520;
+  var FLOOR_H = 200;   /* 글이 짧아도 이보다 작아지지 않습니다 */
+  function grow(field) {
+    if (!field) return;
+    var css = parseFloat(getComputedStyle(field).minHeight) || 0;
+    var min = Math.min(Math.max(css, FLOOR_H), MAX_H);
+    field.style.height = "auto";
+    var want = field.scrollHeight + 2;
+    var next = Math.max(min, Math.min(want, MAX_H));
+    field.style.height = next + "px";
+    field.classList.toggle("is-overflowing", want > MAX_H);
+  }
+  function bindGrow() {
+    var field = document.getElementById("story-text");
+    if (!field || field.dataset.saraGrow === "on") return;
+    field.dataset.saraGrow = "on";
+    ["input", "change", "focus", "paste", "cut"].forEach(function (ev) {
+      field.addEventListener(ev, function () { setTimeout(function () { grow(field); }, 0); });
+    });
+    grow(field);
+  }
+
+  /* 화면이 열릴 때·음성 입력으로 글이 채워질 때도 높이를 다시 맞춥니다. */
+  function watchStoryScreen() {
+    var screen = document.getElementById("screen-story");
+    if (!screen || !window.MutationObserver) return;
+    new MutationObserver(function () {
+      if (screen.classList.contains("active")) {
+        setTimeout(function () { grow(document.getElementById("story-text")); }, 60);
+      }
+    }).observe(screen, { attributes: true, attributeFilter: ["class"] });
+  }
+
+  /* ③ 다듬는 동안 화면 중앙에 안내를 띄웁니다.
+     기존 setRuntime을 감싸기만 하므로, 원래 동작은 그대로 이어집니다. */
+  var waitTimer = null;
+  function showWait(on) {
+    var box = document.getElementById("sara-organize-wait");
+    if (!box) return;
+    if (on) {
+      box.hidden = false;
+      box.setAttribute("aria-hidden", "false");
+      if (waitTimer) clearTimeout(waitTimer);
+      /* 앱의 응답 제한(70초)보다 길게 두고, 그래도 안 풀리면 스스로 닫습니다. */
+      waitTimer = setTimeout(function () { showWait(false); }, 90000);
+    } else {
+      box.hidden = true;
+      box.setAttribute("aria-hidden", "true");
+      if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+    }
+  }
+  function wrapRuntime() {
+    var ai = window.SaraAI;
+    if (!ai || typeof ai.setRuntime !== "function" || ai.__saraWaitWrapped) return false;
+    var original = ai.setRuntime;
+    ai.setRuntime = function (kind, detail) {
+      try { showWait(kind === "busy"); } catch (ignore) {}
+      return original.apply(this, arguments);
+    };
+    ai.__saraWaitWrapped = true;
+    return true;
+  }
+  function waitForRuntime() {
+    if (wrapRuntime()) return;
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      if (wrapRuntime() || tries > 60) clearInterval(timer);
+    }, 250);
+  }
+  /* 화면이 바뀌면(초안·실패·위기 화면 등) 안내를 반드시 내립니다. */
+  function watchScreens() {
+    if (!window.MutationObserver) return;
+    ["screen-draft", "screen-organize-error", "screen-crisis", "screen-saved"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      new MutationObserver(function () {
+        if (el.classList.contains("active")) showWait(false);
+      }).observe(el, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+
+  function init() {
+    bindGrow();
+    watchStoryScreen();
+    waitForRuntime();
+    watchScreens();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+<style id="sara-v1365-ui4-style">
+  /* v1.36.5-ui4 · 글쓰기 가독성·원문 확인·헤더 여백만 다듬습니다.
+     저장·연결 로직과 id는 건드리지 않습니다. */
+
+  /* ① 이야기 입력창 가독성
+     줄간격을 1.65로 맞추면서 글자를 17px로 키워, 실제 행간(px)은 지금과 비슷하게 두고
+     글자만 크고 단정하게 보이도록 했습니다. */
+  #screen-story #story-text,
+  #screen-story .story-input {
+    line-height: 1.65 !important;
+    font-size: 17px;
+    letter-spacing: -0.005em;
+    padding: 14px 16px;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  #screen-story #story-text::placeholder {
+    line-height: 1.65;
+    opacity: .5;
+  }
+
+  /* ② 원문 확인 서랍 — 눈에는 띄되 조용하게 */
+  .draft-original-fold { margin-top: 14px; }
+  .draft-original-fold > summary {
+    font-size: 0.94em;
+    min-height: 46px;
+    display: flex; align-items: center;
+  }
+  .draft-original-fold > summary:before { color: #7b8794; }
+  .draft-original-fold .draft-original-view {
+    line-height: 1.75;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+
+  /* ③ 상단 바를 슬림하게 — 조작부는 44px 아래로 내려가지 않게 유지
+     (기존 min-height 72/64/60px 규칙보다 뒤에 두고, 내용물 높이(44px)에 맞춥니다) */
+  .app-header .header-inner,
+  body.has-nav .header-inner {
+    min-height: 52px;
+    padding: 4px 14px;
+    gap: 12px;
+  }
+  .app-header .brand small { line-height: 1.45; }
+  .app-header .header-room { gap: 8px; }
+  .app-header .menu-toggle,
+  .app-header .header-nav-btn,
+  .app-header .header-bookmark { min-height: 44px; }
+  @media (max-width: 520px) {
+    .app-header .header-inner,
+    body.has-nav .header-inner { min-height: 52px; padding: 4px 10px; gap: 10px; }
+    .app-header .header-room { gap: 7px; }
+  }
+</style>
 </body>
 </html>
