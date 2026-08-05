@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <title>사라의 집 · 대표 개인 작업본 · v1.36.6</title>
+  <title>사라의 집 · 대표 개인 작업본 · v1.37.2</title>
   <style>
     :root {
       --paper: #fffaf1;
@@ -3139,7 +3139,7 @@ async function wdSpaceLogout(){
     <div class="header-inner">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">⌂</div>
-        <div>사라의 집<small>한 번 이야기하면, 확인한 기록이 삶의 자리로 이어집니다 · v1.36.6</small></div>
+        <div>사라의 집<small>한 번 이야기하면, 확인한 기록이 삶의 자리로 이어집니다 · v1.37.2</small></div>
       </div>
       <div class="header-room">
         <button id="menu-toggle" class="menu-toggle" type="button" aria-label="전체 메뉴 열기" aria-expanded="false"><span class="hamburger-icon" aria-hidden="true"></span><span class="header-menu-label">메뉴</span></button>
@@ -3150,6 +3150,9 @@ async function wdSpaceLogout(){
           <button id="header-home" class="header-nav-btn" type="button" aria-label="홈으로"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-home"></use></svg><span>홈</span></button>
         </div>
         <button id="header-wd-home" class="header-nav-btn simple-wd-home" type="button" onclick="wdSpaceOpen(null,'home')">WD 본진</button>
+        <button id="header-ai-badge" class="header-ai-badge" type="button" data-state="unknown" aria-label="사라 연결 상태 · 눌러서 다시 확인">
+          <span class="header-ai-dot" aria-hidden="true"></span><span class="header-ai-badge-label">사라 연결 필요</span>
+        </button>
       </div>
         <div class="storage-pill">기록은 이 기기에만 보관됩니다</div>
       <div class="header-profile"><span class="profile-dot" aria-hidden="true">입</span><span><strong id="header-profile-name">입주자님</strong><small>내 기록 공간 · 편안한 입주</small></span></div>
@@ -3185,7 +3188,7 @@ async function wdSpaceLogout(){
       <div class="nav-group-label">기록과 서재</div>
       <button type="button" data-go="life-drawer"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-drawer"></use></svg><span>삶의 서랍</span></button>
       <button type="button" data-go="timeline"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-timeline"></use></svg><span>내 삶의 시간표</span></button>
-      <button type="button" data-go="library"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-library"></use></svg><span>내 삶의 서재</span></button>
+      <button type="button" data-go="library"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-library"></use></svg><span>기억 찾기</span></button>
       <button type="button" data-go="storage-map"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-map"></use></svg><span>자료 보관 지도</span></button>
       <button type="button" data-go="library" data-content-book-entry><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#function-edit"></use></svg><span>배움과 적용 기록</span></button>
       <div class="nav-group-label">생활과 창작</div>
@@ -3246,6 +3249,14 @@ async function wdSpaceLogout(){
               <span>개별 삭제와 전체 초기화가 가능합니다.</span>
             </div>
           </div>
+          <div id="foyer-ai-status" class="foyer-ai-status" data-state="unknown">
+            <span class="foyer-ai-dot" aria-hidden="true"></span>
+            <div class="foyer-ai-copy">
+              <strong id="foyer-ai-title">사라가 아직 쉬고 있어요</strong>
+              <small id="foyer-ai-detail">불러오는 중이에요…</small>
+            </div>
+            <button id="foyer-ai-toggle" class="btn primary" type="button">사라 켜기</button>
+          </div>
           <div class="sara-foyer" aria-label="현관에서 맞아주는 안내자 사라">
             <div class="sara-glow" aria-hidden="true"></div>
             <div class="sara-speech"><strong>말하고 싶은 만큼만 말씀하세요.</strong>말씀하신 범위 안에서 정리하고, 마지막 선택은 입주자님께 돌려드릴게요.</div>
@@ -3256,8 +3267,25 @@ async function wdSpaceLogout(){
 
       <section id="screen-onboarding-intro" class="screen">
         <div class="hero">
-          <p class="eyebrow">먼저, 사라를 소개합니다</p>
-          <h2>사라는 입주자님의 삶을 대신 판단하지 않고,<br>관계와 하루를 말씀 앞에서 정돈하도록 안내합니다.</h2>
+          <p class="eyebrow">먼저, 사라가 무엇을 하는지 보여드릴게요</p>
+          <h2 class="sara-role-h2">사라는 이 세 가지를 도와드려요.</h2>
+          <div class="sara-role-cards" aria-label="사라가 하는 세 가지 일">
+            <div class="sara-role-card">
+              <p class="sara-role-title">말한 뜻을 잘 정리해줘요</p>
+              <p class="sara-role-body">말이 좀 섞여 있어도, 원래 의미를 살려서 깔끔하게 정리해요.</p>
+            </div>
+            <div class="sara-role-card">
+              <p class="sara-role-title">하루 이야기를 한 장으로 정리해줘요</p>
+              <p class="sara-role-body">오늘 있었던 일을 읽기 쉽게 기록으로 만들어줘요.</p>
+            </div>
+            <div class="sara-role-card">
+              <p class="sara-role-title">삶의 흐름을 다시 이어줘요</p>
+              <p class="sara-role-body">사람, 몸, 돈, 일, 말씀 같은 것들을 연결해서 나중에 다시 찾기 쉽게 해줘요.</p>
+            </div>
+          </div>
+          <p class="sara-role-invite">지금부터 몇 가지만 함께 맞춰볼게요. 사라가 입주자님을 어떻게 이해하고 도와드리면 좋을지 정하는 과정이에요.</p>
+          <details class="sara-id-fold">
+            <summary>사라에 대해 더 자세히 알아보기</summary>
           <div class="sara-id-card" aria-label="사라가 하는 일과 지키는 약속">
             <div class="sara-id-title"><span aria-hidden="true">사</span><div><strong>사라의 성격과 약속</strong><small>잘 듣고, 관계와 삶을 정돈하고, 필요한 때 먼저 건넵니다.</small></div></div>
             <div class="sara-id-grid">
@@ -3272,18 +3300,10 @@ async function wdSpaceLogout(){
             <p class="sara-id-invite"><strong>사라는 삶을 정돈하도록 먼저 한마디 건넬 수 있어요.</strong> 하지만 강요하거나 신앙을 평가하지 않습니다. 말하고 싶지 않은 것은 비워두어도 되고, 기억한 내용은 언제든 고치거나 지울 수 있습니다.</p>
             <details><summary>AI 다듬기와 보관은 어떻게 되나요?</summary><p>입주자님이 ‘사라가 읽기 좋게 다듬기’를 누른 내용만 로그인된 Supabase 함수와 선택한 AI 제공자를 거쳐 처리됩니다. 공개 게시나 다른 입주자 공유는 하지 않습니다. 확정 전에는 삶의 기록과 사람·몸·일의 자리에 저장하지 않습니다.</p></details>
           </div>
-          <p class="lead">모두 8가지 질문이며 약 3분 정도 걸려요. 호칭, 답변 길이, 질문량, 말씀과 기억 방식, 사라가 먼저 챙기는 정도를 입주자님이 직접 정합니다.</p>
-          <p class="lead">성격검사나 신앙진단이 아닙니다. 답하기 어려운 항목은 비워둘 수 있고, 살아보면서 언제든 고치거나 지울 수 있습니다.</p>
-          <div class="notice">
-            <strong>개인화 통역 장치입니다.</strong>
-            입주자님의 말과 관계 표현을 덜 오해하고, 원하지 않는 응답 방식과 기억 범위를 지키기 위한 안내서입니다. 확인하지 않은 내용은 추론하지 않습니다.
-          </div>
-          <div class="notice" style="margin-top:12px">
-            <strong>집 전체에서 똑같이 지켜집니다.</strong>
-            어느 방에서 말씀하시든 여기서 정하신 호칭·말투·질문량·답변 길이·금지 방식·말씀 기준·기억 범위를 그대로 따릅니다.
-          </div>
+          </details>
+          <p class="lead sara-role-simple">몇 가지만 편하게 골라주시면 돼요. 어려운 질문 없어요. 답하기 힘든 건 비워두셔도 되고, 나중에 언제든 다시 고칠 수 있어요.</p>
           <div class="actions">
-            <button id="open-onboarding-form" class="btn primary large" type="button">입주신고 시작하기</button>
+            <button id="open-onboarding-form" class="btn primary large" type="button">사라와 맞춰보기 시작하기</button>
             <button class="btn ghost" type="button" data-go="welcome">처음 화면으로</button>
           </div>
         </div>
@@ -3332,6 +3352,16 @@ async function wdSpaceLogout(){
               <legend class="sr-only">편안한 답변 방식</legend>
               <p class="eyebrow">3. 편안한 답변 방식</p>
               <h2>사라가 어떻게 정리해 주면 편한가요?</h2>
+              <div class="field relation-tone-field">
+                <span class="label">사라와 어떤 느낌으로 지내고 싶으세요?</span>
+                <p class="hint">특정 나이나 사람을 흉내 내는 게 아니라, 말투의 거리감만 살짝 바뀌어요.</p>
+                <div class="choice-grid relation-tone-grid">
+                  <label class="choice-card"><input type="radio" name="relation_tone" value="unnie"><span>편하게 말할 수 있는 누나 느낌</span></label>
+                  <label class="choice-card"><input type="radio" name="relation_tone" value="dongsaeng"><span>친근한 동생 느낌</span></label>
+                  <label class="choice-card"><input type="radio" name="relation_tone" value="companion"><span>차분하게 옆에 있는 동행자 느낌</span></label>
+                </div>
+                <p class="hint">이 내용은 사라가 어떤 말투 거리감으로 답할지 정하는 데 쓰여요.</p>
+              </div>
               <p class="step-note">좋아하는 방식만 선택해 주세요.</p>
               <div class="choice-grid">
                 <label class="choice-card"><input type="checkbox" name="response_style" value="핵심부터 분명하게"><span>핵심부터 분명하게</span></label>
@@ -3647,9 +3677,11 @@ async function wdSpaceLogout(){
               <textarea id="story-text" class="story-input" maxlength="10000" placeholder="여기에 편하게 말씀하세요.&#10;예) 오늘 은정이랑 점심 먹었는데 마음이 좀 무거웠다.&#10;예) 새벽에 시편 23편을 읽었다.&#10;&#10;한 줄이어도 괜찮고, 순서가 뒤섞여도 괜찮아요."></textarea>
               <div class="story-tools"><button id="voice-toggle" class="voice-button" type="button"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#function-microphone"></use></svg><span>말로 이야기하기</span></button><span id="voice-status" class="voice-status">이 기기의 브라우저가 음성 인식을 지원하면 바로 말할 수 있어요.</span></div>
             </div>
-            <!-- v1.34.7 · 입력 직후 원문을 먼저 보여주고 수정·삭제·다듬기를 직접 고릅니다. -->
+            <!-- v1.37.0 · 사라가 하는 일(정리·다듬기)이 먼저 보이도록, 다듬기 버튼을 밖으로 꺼내 주 버튼으로 둡니다.
+                 append(조각만 담기)는 보조 버튼으로 남깁니다. 두 버튼 모두 기존 id·핸들러 그대로 유지합니다. -->
             <div id="today-session-actions" class="actions today-session-actions">
-              <button id="append-today-story" class="btn primary large" type="submit" data-story-action="append">이 이야기 남기기</button>
+              <button id="organize-story-primary" class="btn primary large" type="submit" data-story-action="organize">사라가 뜻을 살려 다듬기</button>
+              <button id="append-today-story" class="btn secondary" type="submit" data-story-action="append">하루 동안 이어서 담아두기</button>
             </div>
             <div id="today-kept-slot"></div>
             <div id="basket-nudge" class="basket-nudge" hidden></div>
@@ -3686,7 +3718,7 @@ async function wdSpaceLogout(){
                 <div class="other-block">
                   <p class="other-block-title">지난 기록이나 한 번에 남기기</p>
               <div class="actions">
-                <button id="organize-story" class="btn primary large" type="submit" data-story-action="organize">사라가 읽기 좋게 다듬기</button>
+                <button id="organize-story" class="btn primary large" type="submit" data-story-action="organize" hidden>사라가 읽기 좋게 다듬기</button>
                 <button class="btn secondary" type="submit" data-story-action="original">정리 없이 원문만 남기기</button>
               </div>
                 </div>
@@ -3709,9 +3741,9 @@ async function wdSpaceLogout(){
           <div id="today-flow-echo" hidden></div>
           <!-- v1.34.7 · 방금 남긴 원문과 다음 행동을 입력 직후 바로 보여줍니다. -->
           <div id="today-fragments-wrap" class="today-fragments-wrap" hidden>
-            <details class="sara-drawer" open>
+            <details class="sara-drawer" id="today-fragments-drawer">
               <summary class="sara-drawer-head">
-                <span class="sara-drawer-title">방금 남긴 이야기</span>
+                <span class="sara-drawer-title">담아둔 이야기</span>
                 <span id="today-fragment-count" class="sara-drawer-count">0개 이야기</span>
                 <span class="sara-drawer-mark" aria-hidden="true">〉</span>
               </summary>
@@ -3778,6 +3810,11 @@ async function wdSpaceLogout(){
             </div>
             <p class="one-sheet-foot" id="draft-foot">뜻과 방향은 입주자님이 정하십니다.</p>
           </article>
+
+          <div class="field" style="margin-top:14px">
+            <label for="draft-carryover">내일로 넘길 일이 있으면 적어주세요 <span class="soft">(없으면 비워두셔도 돼요)</span></label>
+            <input id="draft-carryover" type="text" maxlength="200" placeholder="예: 내일 병원 예약 확인하기">
+          </div>
 
           <div class="actions sheet-actions">
             <button id="confirm-record" class="btn primary large main-action" type="button">연결 확인하고 내 기록에 남기기</button>
@@ -4209,7 +4246,7 @@ async function wdSpaceLogout(){
         <div class="hero">
           <p class="eyebrow">말씀과 기도의 자리 저장 완료</p>
           <h2>삶·말씀·기도를<br>한 장에 두었습니다.</h2>
-          <p class="lead">별도 기도 기록이나 말씀 복사본을 만들지 않았습니다. 원래 기록 하나를 말씀 자리와 내 삶의 서재에서 다시 봅니다.</p>
+          <p class="lead">별도 기도 기록이나 말씀 복사본을 만들지 않았습니다. 원래 기록 하나를 말씀 자리와 기억 찾기에서 다시 봅니다.</p>
           <div class="actions">
             <button id="open-scripture-saved-sheet" class="btn primary large" type="button">한 장으로 다시 보기</button>
             <button id="open-scripture-saved-record" class="btn secondary" type="button">원래 기록 열기</button>
@@ -4261,7 +4298,7 @@ async function wdSpaceLogout(){
             <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#a97c2f" data-go="money"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-summary"></use></svg></span><strong>살림과 재정의 자리</strong><small class="soft">실제로 오간 돈과 예정된 돈을 나눠 봅니다.</small></span><span class="room-arrow">들어가기 →</span></button>
             <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#8a73a5" data-go="life-drawer"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-drawer"></use></svg></span><strong>삶의 서랍</strong><small class="soft">몸·기쁨·일·가족·마음을 펼칩니다.</small></span><span class="room-arrow">들어가기 →</span></button>
             <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#5f7189" data-go="timeline"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-timeline"></use></svg></span><strong>내 삶의 시간표</strong><small class="soft">태어난 때부터 지금까지 있었던 일을 날짜와 나이 순서로 봅니다.</small></span><span class="room-arrow">들어가기 →</span></button>
-            <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#65517f" data-go="library"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-library"></use></svg></span><strong>내 삶의 서재</strong><small class="soft">사람·날짜·말씀·금액으로 찾습니다.</small></span><span class="room-arrow">찾아보기 →</span></button>
+            <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#65517f" data-go="library"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-library"></use></svg></span><strong>기억 찾기</strong><small class="soft">사람·날짜·말씀·금액으로 찾습니다.</small></span><span class="room-arrow">찾아보기 →</span></button>
             <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#7b8f86" data-go="storage-map"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-map"></use></svg></span><strong>자료 보관 지도</strong><small class="soft">자료를 옮기지 않고 실제 보관 위치를 찾습니다.</small></span><span class="room-arrow">위치 찾기 →</span></button>
             <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#ba634e" data-go="album"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-album"></use></svg></span><strong>앨범방</strong><small class="soft">사진의 이름과 연결 기록을 남깁니다.</small></span><span class="room-arrow">들어가기 →</span></button>
             <button class="card menu-card room-tile" type="button" data-room-color style="--tile:#c87c75" data-go="careful"><span><span class="menu-icon"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><use href="#space-careful"></use></svg></span><strong>더 조심해서 보는 기록</strong><small class="soft">암호화가 아닌 로컬 보기 태그입니다.</small></span><span class="room-arrow">확인하기 →</span></button>
@@ -5203,8 +5240,8 @@ async function wdSpaceLogout(){
         <div id="tab-people" class="tab-panel active">
           <div class="card">
             <div class="page-head-row">
-              <div><h3>사람 한 곳에서 보기</h3><p class="soft">중요한 사람과 기록에서 만난 사람을 같은 사람 정보로 관리합니다.</p></div>
-              <button id="open-add-person" class="btn primary" type="button">사람 등록</button>
+              <div><h3>사람 보기</h3><p class="soft">중요한 사람과 오늘의 기록에서 만난 사람을 한곳에서 봅니다.</p></div>
+              <button id="open-add-person" class="btn primary large" type="button">사람 추가</button>
             </div>
             <div class="people-view-filters" role="group" aria-label="사람 보기 필터">
               <button class="btn secondary people-view-filter active" type="button" data-people-filter="important">중요한 사람</button>
@@ -5426,18 +5463,25 @@ async function wdSpaceLogout(){
 
       <section id="screen-library" class="screen room-library">
         <div class="page-head library-page-head">
-          <p class="eyebrow">기록을 다시 읽는 자리</p>
-          <h2>내 삶의 서재</h2>
-          <p class="soft">사람·날짜·사건·말씀·몸·돈처럼 기억나는 말로 찾아보세요.</p>
+          <p class="eyebrow">필요한 기록을 검색하고 기간별로 다시 봅니다</p>
+          <h2>기억 찾기</h2>
+          <p class="soft">사람·말씀·돈·병원·일·날짜, 제목과 본문으로 찾아보세요.</p>
         </div>
         <section class="card library-search-card" aria-labelledby="library-search-title">
           <div class="library-search-heading">
             <p class="eyebrow">내 기록 찾기</p>
             <h3 id="library-search-title">지금 다시 보고 싶은 삶의 기록을 찾아보세요.</h3>
           </div>
+          <div class="filter-row library-period-row" role="group" aria-label="기간별로 보기">
+            <button class="btn secondary library-period active" type="button" data-library-period="all">전체</button>
+            <button class="btn secondary library-period" type="button" data-library-period="day">일별</button>
+            <button class="btn secondary library-period" type="button" data-library-period="week">주별</button>
+            <button class="btn secondary library-period" type="button" data-library-period="month">월별</button>
+            <button class="btn secondary library-period" type="button" data-library-period="year">연도별</button>
+          </div>
           <div class="list-toolbar" role="group" aria-label="서재 검색 도구">
             <div class="list-toolbar-line">
-              <div class="list-toolbar-search"><label class="sr-only" for="library-search">무엇을 찾고 있나요?</label><input id="library-search" type="search" placeholder="사람·날짜·사건·말씀·몸·돈으로 찾기"></div>
+              <div class="list-toolbar-search"><label class="sr-only" for="library-search">무엇을 찾고 있나요?</label><input id="library-search" type="search" placeholder="사람·말씀·돈·병원·일·날짜로 찾기"></div>
               <button id="library-reset" class="btn ghost" type="button" hidden>지우기</button>
             </div>
             <div class="list-toolbar-line">
@@ -5688,7 +5732,7 @@ async function wdSpaceLogout(){
         </div>
         <div class="card">
           <h3>앱 정보</h3>
-          <p>버전: <strong>1.36.6-tone-final</strong></p>
+          <p>버전: <strong>1.37.2-clean</strong></p>
           <p>계보: <strong>대표님 개인 확장 작업본</strong> · 0번 핵심 실험판이나 외부 서비스판으로 확정한 파일이 아닙니다.</p>
           <p>저장 호환: 기존 기록을 잃지 않도록 저장키 <strong>saraHouseZero.v1</strong>은 그대로 유지합니다.</p>
           <p>정리 방식: 한 번 연결한 Supabase 세션 자동 복구·갱신 · AI 기록 다듬기는 사용자가 누를 때만 실행</p>
@@ -6029,6 +6073,59 @@ async function wdSpaceLogout(){
     function isConnected(){return !!(session&&(session.access_token||session.refresh_token))}
     function sessionIsFresh(){return !!(session&&session.access_token&&Number(session.expires_at||0)>Date.now()+90000)}
     function authHeaders(){if(!session||!session.access_token)throw aiError('자동 연결을 확인하지 못했습니다.','AUTH_REQUIRED',401);return {'apikey':AI_KEY,'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json'}}
+    /* v1.37.1 · 현관의 초록불은 로그인 토큰만 보고 켜지 않습니다.
+       ① 세션 갱신(로그인 확인) → ② Supabase 자체 응답(/auth/v1/user, 실제 네트워크 왕복)
+       → ③ AI 정리 함수가 실제로 응답하는지(연결 여부만 확인, AI 처리는 하지 않음) 순서로 확인합니다.
+       서버가 별도 'ping' 처리를 모르더라도, 서버가 "reachable하고 응답했다"는 사실 자체를 성공 신호로 봅니다. */
+    /* v1.37.1 · 이 함수는 window.SaraAI 안(별도 스코프)에서 삽니다.
+       $(querySelector)·go·toast는 다른 스크립트 스코프 소속이라 여기서 직접 부르면 ReferenceError가 납니다.
+       그래서 이 스코프에 이미 있는 el(getElementById)만 쓰고, 화면 이동·토스트는 호출한 쪽(메인 스크립트)이 맡습니다. */
+    function setFoyerAiState(state, title, detail) {
+      /* v1.37.2 · 현관 상세 위젯과 모든 화면 상단의 작은 공통 배지를 함께 갱신합니다. */
+      var box = el("foyer-ai-status");
+      if (box) {
+        box.setAttribute("data-state", state);
+        var t = el("foyer-ai-title"); if (t) t.textContent = title;
+        var d = el("foyer-ai-detail"); if (d) d.textContent = detail || "";
+        var btn = el("foyer-ai-toggle");
+        if (btn) {
+          btn.disabled = state === "checking";
+          btn.textContent = state === "connected" ? "다시 확인" : state === "error" ? "다시 연결하기" : state === "checking" ? "확인하는 중…" : "사라 켜기";
+        }
+      }
+      var badge = el("header-ai-badge");
+      if (badge) {
+        badge.setAttribute("data-state", state);
+        var label = badge.querySelector(".header-ai-badge-label");
+        if (label) label.textContent = state === "connected" ? "사라 준비됨" : state === "checking" ? "확인하는 중" : "사라 연결 필요";
+        badge.setAttribute("aria-label", "사라 연결 상태: " + (state === "connected" ? "준비됨" : "연결 필요") + " · 눌러서 다시 확인");
+      }
+    }
+    async function verifyAiConnectionOnFoyer() {
+      if (!session || !(session.access_token || session.refresh_token)) {
+        setFoyerAiState("off", "사라가 아직 쉬고 있어요", "설정에서 이 기기 연결을 한 번 해주세요.");
+        return { needsLogin: true };
+      }
+      setFoyerAiState("checking", "사라를 깨우는 중이에요", "로그인·연결·응답을 순서대로 확인하고 있어요.");
+      try {
+        await ensureSession();
+        var who = await authorizedFetch(AI_URL + "/auth/v1/user", { method: "GET" });
+        if (!who.ok) throw new Error("세션 확인 실패 · HTTP " + who.status);
+        var probe;
+        try {
+          probe = await authorizedFetch(AI_URL + "/functions/v1/sara-organize-v2", { method: "POST", body: JSON.stringify({ stage: "ping" }) });
+        } catch (netError) {
+          throw new Error("AI 정리 함수에 닿지 못했습니다 · " + (netError && netError.message || netError));
+        }
+        /* 함수가 'ping'을 몰라 4xx를 돌려줘도, 실제로 응답했다는 것 자체가 연결 확인입니다. */
+        if (probe.status >= 500) throw new Error("AI 정리 함수가 오류로 응답했습니다 · HTTP " + probe.status);
+        setFoyerAiState("connected", "사라가 준비됐어요", "이제 이야기를 통역하고 다듬을 수 있어요.");
+        setRuntime("connected", "로그인·Supabase·AI 정리 함수 연결을 모두 확인했습니다.");
+      } catch (error) {
+        setFoyerAiState("error", "사라를 깨우지 못했어요.", (error && error.message) || "다시 시도해 주세요.");
+        setRuntime("error", (error && error.message) || "연결을 확인하지 못했습니다.");
+      }
+    }
     async function refreshSession(){
       if(!session||!session.refresh_token)throw aiError('이 브라우저에 이어갈 연결 정보가 없습니다.','AUTH_REQUIRED',401);
       var res=await fetch(AI_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':AI_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
@@ -6131,12 +6228,13 @@ async function wdSpaceLogout(){
         callName:profile.callName||'입주자님',
         speechStyle:profile.speechStyle||[],
         responseStyle:profile.responseStyle||[],
+        relationTone:profile.relationTone||'',
         questionAmount:profile.questionAmount||'',
         saraInitiative:profile.saraInitiative||'필요한 날 한 가지 먼저 건네줘',
         discomfort:profile.discomfort||[],
         scriptureMode:profile.scriptureMode||'',
         memoryScope:profile.memoryScope||[],
-        sharedRules:{noDiagnosis:true,noMindReading:true,noSpiritualConclusion:true,askOnlyWhenMeaningChanges:true,userConfirmsBeforeMemory:true},
+        sharedRules:{noDiagnosis:true,noMindReading:true,noSpiritualConclusion:true,askOnlyWhenMeaningChanges:true,userConfirmsBeforeMemory:true,noAddedFactsOrFeelings:true},
         agentRoles:{
           noah:'삶의 맥락 통합, 판단, 우선순위와 범위 정리',
           naon:'확정 내용 구조화, 문서·파일·실행 결과물 제작',
@@ -6273,7 +6371,7 @@ async function wdSpaceLogout(){
         provider:result.provider||'openai',model:result.model||'',cleanup:result._cleanup||'not-created',cleanupTargets:Array.isArray(result._cleanupTargets)?result._cleanupTargets:[]
       };
     }
-    window.SaraAI={login:login,logout:logout,clearSavedIdentity:clearSavedIdentity,isConnected:isConnected,ensureSession:ensureSession,organizeStory:organizeStory,illuminateScripture:illuminateScripture,retryCleanup:retryCleanup,toOnePage:toOnePage,setRuntime:setRuntime,guidePayload:guidePayload,
+    window.SaraAI={login:login,logout:logout,clearSavedIdentity:clearSavedIdentity,isConnected:isConnected,ensureSession:ensureSession,organizeStory:organizeStory,illuminateScripture:illuminateScripture,retryCleanup:retryCleanup,toOnePage:toOnePage,setRuntime:setRuntime,guidePayload:guidePayload,verifyAiConnectionOnFoyer:verifyAiConnectionOnFoyer,
       providers:AI_PROVIDERS,
       getProvider:function(){return AI_PROVIDER},
       setProvider:function(k){ if(AI_PROVIDERS.some(function(p){return p.key===k})) { AI_PROVIDER=k; saveAiPrefs(); } return AI_PROVIDER },
@@ -6318,7 +6416,7 @@ async function wdSpaceLogout(){
     var QA_STORAGE_KEY = "saraHouseZero.qaChronology.v1";
     var QA_MODE_KEY = "saraHouseZero.qaChronology.active";
     /* v1.16.0 · 생활도구 지도 관제실 + 소리의 방 노래 흐름까지 반영한 실제 버전 */
-    var APP_VERSION = "1.36.6-tone-final";
+    var APP_VERSION = "1.37.2-clean";
     var WORD_LETTER_WORKSPACES = {
       hara: "https://gemini.google.com/gem/1Okq5ogzoRYfe6svjN75H-MxrZSUD5v4P?usp=sharing",
       imageStudio: "https://chatgpt.com/g/g-6a66b3317fb88191bd7d72d62ba75ea7-malsseumpyeonji-mandeulgi"
@@ -7075,7 +7173,7 @@ async function wdSpaceLogout(){
     function createChronologyQaState() {
       var qa = createEmptyState();
       qa.profile = {
-        callName:"검수입주자", children:[], speechStyle:[], responseStyle:[],
+        callName:"검수입주자", children:[], speechStyle:[], responseStyle:[], relationTone:"",
         memoryScope:[], household:[], importantPeople:[], parents:[], work:[],
         future:[], discomfort:[], questionAmount:"필요할 때만 한 가지"
       };
@@ -8484,7 +8582,7 @@ async function wdSpaceLogout(){
         scripture:"말씀과 기도의 자리", "word-letter":"말씀편지 만들기", "word-letter-view":"내 말씀편지", "faith-reading":"읽은 말씀 책장", prayers:"기도의 자리", worship:"예배 기록",
         "bible-map":"성경의 흐름과 인물", connections:"함께한 사람들의 자리", "life-drawer":"삶의 서랍",
         body:"몸을 돌보는 자리", work:"일과 생계의 자리", money:"살림과 재정의 자리", "import":"이삿짐 들이기",
-        timeline:"연대기의 방", library:"내 삶의 서재", "storage-map":"자료 보관 지도", table:"오늘의 식탁", sound:"소리의 방",
+        timeline:"연대기의 방", library:"기억 찾기", "storage-map":"자료 보관 지도", table:"오늘의 식탁", sound:"소리의 방",
         workshop:"사라의 작업실", tools:"생활도구 지도", "house-map":"방 전체 보기", info:"내 정보와 기억",
         settings:"설정", finish:"오늘은 여기까지", record:"내 기록"
       };
@@ -8706,6 +8804,7 @@ async function wdSpaceLogout(){
         future: formMultiValue("future"),
         speechStyle: speechStyle,
         responseStyle: responseStyle,
+        relationTone: formRadioValue("relation_tone"),
         questionAmount: formRadioValue("question_amount"),
         saraInitiative: formRadioValue("sara_initiative") || "필요한 날 한 가지 먼저 건네줘",
         memoryScope: memoryScope,
@@ -8724,11 +8823,15 @@ async function wdSpaceLogout(){
       }
       return "마음을 먼저 알아듣고, 현실적인 핵심은 분명히 정리하되, 결론을 재촉하지 않고 여백을 남깁니다.";
     }
+    function relationToneLabel(value) {
+      return {unnie:"편하게 말할 수 있는 누나 느낌",dongsaeng:"친근한 동생 느낌",companion:"차분하게 옆에 있는 동행자 느낌"}[value] || "";
+    }
     function displayPrivate(value) { return value === "private" ? "말하지 않기" : value; }
     function profileToText(profile) {
       if (!profile) return "아직 확정된 입주자 안내서가 없습니다.";
       var lines = [];
       if (profile.callMode) lines.push("호칭: " + (profile.callName || "입주자님"));
+      if (profile.relationTone) lines.push("사라와의 거리감: " + relationToneLabel(profile.relationTone));
       if (profile.speechStyle && profile.speechStyle.length) lines.push("평소 말하는 방식: " + textList(profile.speechStyle));
       if (profile.responseStyle && profile.responseStyle.length) lines.push("편안한 답변 방식: " + textList(profile.responseStyle));
       else if (profile.style && profile.style.length) lines.push("편안한 답변 방식: " + textList(profile.style));
@@ -8763,6 +8866,7 @@ async function wdSpaceLogout(){
       }
       add("호칭", profile.callMode ? (profile.callName || "입주자님") : "", 1);
       add("평소 말하는 방식", profile.speechStyle, 2);
+      add("사라와의 거리감", profile.relationTone ? relationToneLabel(profile.relationTone) : "", 3);
       add("편안한 답변 방식", profile.responseStyle, 3);
       add("질문량", profile.questionAmount, 4);
       add("원하지 않는 방식", profile.discomfort, 5);
@@ -9149,7 +9253,10 @@ async function wdSpaceLogout(){
         button.classList.toggle("secondary", !main);
         button.classList.toggle("sub-action", !main);
       }
-      mark($("#append-today-story"), which === "append");
+      /* v1.37.0 · "polish" 값이 들어와도 실제로 어느 버튼도 처리하지 않던 부분을 고칩니다.
+         사라의 다듬기 버튼을 항상 주 버튼으로 두고, 남겨두기 버튼은 항상 보조로 둡니다. */
+      mark($("#organize-story-primary"), true);
+      mark($("#append-today-story"), false);
       mark($("#sleep-today-story"), which === "sleep");
       var start = $("#start-today-session");
       if (start) start.classList.toggle("main-action", which === "start");
@@ -9204,12 +9311,17 @@ async function wdSpaceLogout(){
       $("#today-fragment-count").textContent = fragments.length + "개 이야기";
       $("#today-fragments-list").innerHTML = fragments.length ? fragments.slice().reverse().map(function (item, reverseIndex) {
         var isLatest = reverseIndex === 0;
+        /* v1.37.2 · 아래 목록은 시간과 첫 문장만. 긴 원문은 펼쳐보기를 눌렀을 때만. */
+        var firstLine = String(item.text || "").split(/\n/)[0];
+        var shortPreview = firstLine.length > 40 ? firstLine.slice(0, 40) + "…" : firstLine;
+        var hasMore = String(item.text || "").length > shortPreview.length;
         return "<article class='today-fragment" + (isLatest ? " is-latest" : "") + "'><div class='today-fragment-head'><time>" +
           (isLatest ? "방금 남긴 이야기 · " : "") + escapeHtml(fragmentClock(item.createdAt)) + "</time><div class='today-fragment-inline-actions'>" +
           "<button type='button' class='today-fragment-edit' data-fragment-edit='" + escapeHtml(item.id) + "'>내용 고치기</button>" +
           "<button type='button' class='today-fragment-remove' data-fragment-remove='" + escapeHtml(item.id) + "'>지우기</button></div>" +
-          "</div><p>" + escapeHtml(item.text) + "</p>" +
-          (isLatest ? "<div class='today-fragment-next'><button type='button' class='btn primary large' data-focus-story>이어서 더 이야기하기</button><button type='button' class='btn secondary' data-open-daily-close>오늘의 마무리</button></div>" : "") +
+          "</div><p class='today-fragment-preview'>" + escapeHtml(shortPreview) + "</p>" +
+          (hasMore ? "<details class='today-fragment-full'><summary>펼쳐보기</summary><p>" + escapeHtml(item.text) + "</p></details>" : "") +
+          (isLatest ? "<div class='today-fragment-next'><button type='button' class='btn primary large' data-polish-today>지금까지 다듬기</button><button type='button' class='btn secondary' data-focus-story>이어서 더 이야기하기</button><button type='button' class='btn ghost' data-open-daily-close>오늘의 마무리</button></div>" : "") +
           "</article>";
       }).join("") : emptyLineHtml("아직 담아둔 조각이 없습니다. 한 줄부터 시작해도 충분합니다.");
       /* v1.24.0 · 옛 누적 active 표시를 없애고, 지난 단계는 조용한 완료 · 현재 단계만 분명하게 */
@@ -9317,6 +9429,9 @@ async function wdSpaceLogout(){
       updateDraftStateIndicator();
       if (window.SaraVoice) window.SaraVoice.used = false;
       renderTodayFlow();
+      /* v1.37.2 · 평소엔 접혀 있다가, 방금 담았을 때만 한 번 열어 확인시켜 줍니다. */
+      var drawer = $("#today-fragments-drawer");
+      if (drawer) drawer.open = true;
       if (!silent) toast("이야기를 남겼습니다. 아직 확정 기록은 아니며, 바로 고치거나 지울 수 있어요.");
       renderTodayKept();
       return true;
@@ -9602,15 +9717,17 @@ async function wdSpaceLogout(){
       };
     }
     function questionForAnalysis(analysis) {
+      /* v1.37.0 · 지금 실제로 헷갈림을 잡아내는 경우는 이 하나(돈 지출 여부)뿐입니다.
+         새로 감지 로직을 만들지 않고, 문구만 "1번에 가까워요 / 2번에 가까워요 / 둘 다 맞아요 / 다시 말할게요" 패턴에 맞췄습니다. */
       if (!analysis.unknownMoney || !analysis.amounts.length) return null;
       return {
         id: "money_movement",
-        text: analysis.amounts[0].raw + "은 실제로 입주자님이 결제한 돈인가요?",
+        text: analysis.amounts[0].raw + ", 이 부분이 조금 헷갈려요. 어느 쪽에 가까울까요?",
         options: [
-          { value: "expense", label: "내가 결제했어요" },
-          { value: "other", label: "상대가 결제했어요" },
-          { value: "planned", label: "아직 부탁만 받은 상태예요" },
-          { value: "none", label: "돈 기록에는 연결하지 않을게요" }
+          { value: "expense", label: "1번에 가까워요 · 내가 결제했어요" },
+          { value: "other", label: "2번에 가까워요 · 상대가 결제했어요" },
+          { value: "planned", label: "둘 다 맞아요 · 아직 부탁만 받은 상태예요" },
+          { value: "none", label: "다시 말할게요 · 돈 기록에는 연결하지 않을게요" }
         ]
       };
     }
@@ -9837,17 +9954,38 @@ async function wdSpaceLogout(){
       html += "</div></div>";
       html += "<div class='connection-group topic-detail' data-topic='mind'><h3>마음과 생각</h3><p class='soft'>감정을 분석하거나 단정하지 않고, 원문에 사용자가 직접 적은 마음이 있다는 연결만 남깁니다.</p></div>";
       var draftRuleCandidates = ruleCandidatesForRecord(currentDraft);
-      html += "<div class='connection-group topic-detail' data-topic='scripture'><h3>말씀으로 조명하기</h3>" +
-        "<p class='soft'>삶을 먼저 온전히 기록한 뒤, 말씀을 나란히 둡니다. 이 집이 하나님의 뜻이나 사건의 의미를 대신 결론 내리지 않습니다.</p>" +
-        "<div class='chips'>" +
+      var scriptureCandidateCardsHtml = draftRuleCandidates.map(function (item, index) {
+        var reason = ruleCandidateReason(item, currentDraft);
+        return "<article class='scripture-candidate-card' data-candidate-index='" + index + "' " + (index ? "hidden" : "") + ">" +
+          "<p class='word-text'>" + escapeHtml(item.text) + "</p>" +
+          "<p class='word-reference'>" + escapeHtml(item.reference) + "</p>" +
+          (reason ? "<p class='scripture-candidate-reason'>" + escapeHtml(reason) + "</p>" : "") +
+          "</article>";
+      }).join("");
+      html += "<div class='connection-group topic-detail' data-topic='scripture'><h3>말씀 앞에서 다시 보기</h3>" +
+        (draftRuleCandidates.length ?
+          "<div id='scripture-candidate-stage'>" + scriptureCandidateCardsHtml +
+          "<div class='actions scripture-candidate-actions'>" +
+          "<button type='button' class='btn primary large' id='scripture-pick-this'>이 말씀으로 다시 보기</button>" +
+          (draftRuleCandidates.length > 1 ? "<button type='button' class='btn secondary' id='scripture-pick-next'>다른 말씀 보기</button>" : "") +
+          "<button type='button' class='btn ghost' id='scripture-pick-skip'>오늘은 여기까지</button>" +
+          "</div><p id='scripture-picked-note' class='soft' hidden></p></div>"
+          : "<p class='soft'>지금 기록과 뚜렷하게 닿는 말씀을 찾지 못했어요. 원하시면 아래에서 직접 찾아보실 수 있어요.</p>") +
+        "<div class='chips' hidden>" +
         (draftRuleCandidates.length ? "<label class='chip'><input type='radio' name='record_scripture_mode' value='rule'>기록에서 찾은 후보 " + draftRuleCandidates.length + "개 보기</label>" : "") +
         "<label class='chip'><input type='radio' name='record_scripture_mode' value='local'>준비된 말씀 " + SCRIPTURE_LIBRARY.length + "개에서 찾아보기</label>" +
         "<label class='chip'><input type='radio' name='record_scripture_mode' value='direct'>내가 아는 말씀 직접 연결하기</label>" +
         "<label class='chip'><input type='radio' name='record_scripture_mode' value='none' checked>오늘은 기록만 하고 말씀은 나중에 보기</label></div>" +
+        "<details class='sara-drawer scripture-other-ways'><summary>다른 방법으로 찾기</summary><div class='sara-drawer-body'>" +
+        "<div class='chips'>" +
+        "<label class='chip'><input type='radio' name='record_scripture_mode_visible' value='local'>준비된 말씀 " + SCRIPTURE_LIBRARY.length + "개에서 찾아보기</label>" +
+        "<label class='chip'><input type='radio' name='record_scripture_mode_visible' value='direct'>내가 아는 말씀 직접 연결하기</label>" +
+        "</div>" +
         "<div id='draft-local-scripture-wrap' class='conditional' hidden><label for='draft-local-scripture'><strong>상황별로 준비된 말씀</strong> <span class='soft'>" + SCRIPTURE_LIBRARY.length + "개</span></label><select id='draft-local-scripture'>" + scriptureGroupedSelectOptions() + "</select><p id='draft-local-scripture-preview' class='word-text'></p><p id='draft-local-scripture-meta' class='meta'></p><p class='soft'>장절과 본문을 저장하기 전에 직접 확인해 주세요. 원문 대조가 끝나지 않은 자료는 그대로 표시합니다.</p></div>" +
-        (draftRuleCandidates.length ? "<div id='draft-rule-scripture-wrap' class='conditional' hidden><span class='rule-label'>기록에서 찾은 후보 " + draftRuleCandidates.length + "개</span><p class='soft'>사용자가 남긴 문장과 키워드가 닿는 말씀 중 최대 3개만 먼저 보여드립니다. 전체 목록은 ‘준비된 말씀 " + SCRIPTURE_LIBRARY.length + "개에서 찾아보기’에서 열 수 있습니다.</p><label for='draft-rule-scripture' class='sr-only'>규칙 기반 말씀 후보</label><select id='draft-rule-scripture'>" + draftRuleCandidates.map(function (item) { return "<option value='" + item.id + "'>" + escapeHtml(item.reference) + "</option>"; }).join("") + "</select><p id='draft-rule-scripture-preview' class='word-text'></p><p id='draft-rule-scripture-meta' class='meta'></p></div>" : "") +
+        (draftRuleCandidates.length ? "<div id='draft-rule-scripture-wrap' class='conditional' hidden><span class='rule-label'>기록에서 찾은 후보 " + draftRuleCandidates.length + "개</span><label for='draft-rule-scripture' class='sr-only'>규칙 기반 말씀 후보</label><select id='draft-rule-scripture'>" + draftRuleCandidates.map(function (item) { return "<option value='" + item.id + "'>" + escapeHtml(item.reference) + "</option>"; }).join("") + "</select><p id='draft-rule-scripture-preview' class='word-text'></p><p id='draft-rule-scripture-meta' class='meta'></p></div>" : "") +
         "<div id='draft-direct-scripture-wrap' class='conditional' hidden><div class='field'><label for='draft-direct-scripture-reference'>말씀 장절</label><input id='draft-direct-scripture-reference' type='text' maxlength='120' placeholder='예: 시편 23편 1절'></div><div class='field' style='margin-bottom:0'><label for='draft-direct-scripture-text'>직접 확인한 본문</label><textarea id='draft-direct-scripture-text' maxlength='4000'></textarea></div></div>" +
-        "<div class='notice' style='margin-top:12px'><strong>임의로 성경 문장을 만들지 않습니다.</strong>말씀을 처방처럼 제시하거나 사건의 영적 의미를 확정하지 않습니다.</div></div>";
+        "</div></details>" +
+        "<details class='sara-drawer scripture-notice-fold'><summary>안내 보기</summary><div class='sara-drawer-body notice'><strong>임의로 성경 문장을 만들지 않습니다.</strong>말씀을 처방처럼 제시하거나 사건의 영적 의미를 확정하지 않습니다.</div></details></div>";
       var preferredTaskText = taskCandidate&&taskCandidate.taskText ? taskCandidate.taskText : (analysis.taskText||"");
       html += "<div class='connection-group topic-detail' data-topic='task'><h3>다시 만날 기록</h3><p class='soft'>내가 직접 확인한 다음 일만 남깁니다. 날짜를 정하면 그날 현관에서 사라가 먼저 건넵니다.</p><label for='link-task'>다음에 해볼 것</label><input id='link-task' type='text' maxlength='200' value='" + escapeHtml(preferredTaskText) + "' placeholder='예: 일주일 동안 저녁에 10분 걷기'><div class='field' style='margin-top:10px'><label for='link-task-date'>다시 볼 날짜 <span class='soft'>(선택)</span></label><input id='link-task-date' type='date'></div></div>";
       html += "<div class='connection-group topic-detail' data-topic='related'><h3>관련 자리</h3><label for='link-related' class='sr-only'>관련 자리</label><input id='link-related' type='text' maxlength='120' placeholder='예: 일, 가정, 교회처럼 직접 적어주세요'></div>";
@@ -9864,6 +10002,51 @@ async function wdSpaceLogout(){
       if($("#link-money-category")&&preferredMoneyCategory)$("#link-money-category").value=preferredMoneyCategory;
       $$(".topic-check").forEach(function (input) { input.addEventListener("change", refreshTopicDetails); });
       $$("input[name='record_scripture_mode']").forEach(function (input) { input.addEventListener("change", refreshScriptureChoice); });
+      /* v1.37.2 · 말씀 후보 카드 3개 버튼. 숨겨진 record_scripture_mode 라디오를 그대로 이용해
+         저장 로직은 하나도 바꾸지 않습니다. */
+      (function bindScriptureCandidateButtons() {
+        var stage = $("#scripture-candidate-stage");
+        if (!stage) return;
+        var cards = $$(".scripture-candidate-card", stage);
+        var activeIndex = 0;
+        function setRuleRadio(index) {
+          var radio = $("input[name='record_scripture_mode'][value='rule']");
+          var select = $("#draft-rule-scripture");
+          if (!radio || !select || !select.options[index]) return;
+          radio.checked = true;
+          select.value = select.options[index].value;
+          refreshScriptureChoice();
+        }
+        var pickThis = $("#scripture-pick-this");
+        if (pickThis) pickThis.addEventListener("click", function () {
+          setRuleRadio(activeIndex);
+          var note = $("#scripture-picked-note");
+          if (note) { note.hidden = false; note.textContent = "이 말씀으로 연결했습니다. 아래 \\u201c연결 확인하고 내 기록에 남기기\\u201d를 누르면 함께 저장됩니다."; }
+        });
+        var pickNext = $("#scripture-pick-next");
+        if (pickNext) pickNext.addEventListener("click", function () {
+          if (!cards.length) return;
+          cards[activeIndex].hidden = true;
+          activeIndex = (activeIndex + 1) % cards.length;
+          cards[activeIndex].hidden = false;
+          var note = $("#scripture-picked-note");
+          if (note) note.hidden = true;
+        });
+        var pickSkip = $("#scripture-pick-skip");
+        if (pickSkip) pickSkip.addEventListener("click", function () {
+          var radio = $("input[name='record_scripture_mode'][value='none']");
+          if (radio) radio.checked = true;
+          refreshScriptureChoice();
+          var note = $("#scripture-picked-note");
+          if (note) { note.hidden = false; note.textContent = "오늘은 기록만 남겼습니다. 말씀은 나중에 다시 볼 수 있어요."; }
+        });
+      })();
+      $$("input[name='record_scripture_mode_visible']").forEach(function (input) {
+        input.addEventListener("change", function () {
+          var target = $("input[name='record_scripture_mode'][value='" + input.value + "']");
+          if (target) { target.checked = true; refreshScriptureChoice(); }
+        });
+      });
       if ($("#draft-local-scripture")) $("#draft-local-scripture").addEventListener("change", refreshScriptureChoice);
       if ($("#draft-rule-scripture")) $("#draft-rule-scripture").addEventListener("change", refreshScriptureChoice);
       refreshTopicDetails();
@@ -10079,7 +10262,7 @@ async function wdSpaceLogout(){
       box.innerHTML = chips.length
         ? "<span class='one-sheet-chip-label'>확정하면 이어질 자리</span>" +
           chips.map(function (c) { return "<span class='one-sheet-chip'>" + escapeHtml(c) + "</span>"; }).join("")
-        : "<span class='one-sheet-chip-label'>아직 이어둘 자리를 고르지 않았어요. 그대로 두셔도 됩니다.</span>";
+        : "<span class='one-sheet-chip-label'>비워두어도 괜찮아요.</span>";
       var sum = $("#draft-links-summary");
       if (sum) sum.textContent = chips.length
         ? "이 기록이 이어질 자리 · " + chips.length + "곳 골랐어요"
@@ -10092,6 +10275,7 @@ async function wdSpaceLogout(){
       $("#draft-date").textContent = currentDraft.date.label;
       $("#draft-title").value = currentDraft.title;
       $("#draft-body").value = currentDraft.body;
+      if ($("#draft-carryover")) $("#draft-carryover").value = currentDraft.carryOverNote || "";
       $("#draft-title").readOnly = true;
       $("#draft-body").readOnly = true;
       $("#toggle-draft-edit").textContent = "제목과 문장 직접 고치기";
@@ -10153,8 +10337,10 @@ async function wdSpaceLogout(){
         };
       }
       var now = new Date().toISOString();
+      var carryOverNote = ($("#draft-carryover") ? $("#draft-carryover").value.trim() : "");
       return normalizeRecordMetadata({
         id: uid("record"), date: currentDraft.date, landmark: !!currentDraft.landmark,
+        carryOverNote: carryOverNote,
         dateKind: currentDraft.date.kind, dateValue: currentDraft.date.value,
         title: title || "삶의 한 조각", body: body || currentDraft.original, original: currentDraft.original,
         draft: { title: currentDraft.initialTitle, body: currentDraft.initialBody, source: currentDraft.aiUsed ? "사라 AI 초안 · 사용자 확인 전" : "원문 중심 초안 · 사용자 확인 전", provider: currentDraft.aiProvider || "", model: currentDraft.aiModel || "", cleanup: currentDraft.aiCleanup || "none", cleanupTargets: currentDraft.aiCleanupTargets || [], roomCandidates: currentDraft.aiRooms || [] },
@@ -10559,6 +10745,13 @@ async function wdSpaceLogout(){
       var current = record.links && record.links.scripture ? localScripture(record.links.scripture.candidateId) : null;
       if (current && found.indexOf(current) < 0) found.unshift(current);
       return found.slice(0, 3);
+    }
+    /* v1.37.2 · 후보가 왜 이 기록과 닿는지, 실제로 일치한 낱말을 그대로 보여줍니다. 지어내지 않습니다. */
+    function ruleCandidateReason(item, record) {
+      if (!item || !record) return "";
+      var text = [record.original || "", record.body || ""].join(" ");
+      var hit = (item.keywords || []).find(function (keyword) { return text.indexOf(keyword) >= 0; });
+      return hit ? "오늘 이야기에 적으신 '" + hit + "'라는 표현과 닿아요." : "";
     }
     function scriptureSummary(scripture) {
       if (!scripture) return "연결된 말씀 없음";
@@ -14009,7 +14202,7 @@ async function wdSpaceLogout(){
       if ($("#import-final-where")) {
         $("#import-final-where").innerHTML =
           "<button class='btn ghost sm' type='button' data-go='timeline'>연대기</button>" +
-          "<button class='btn ghost sm' type='button' data-go='library'>내 삶의 서재</button>" +
+          "<button class='btn ghost sm' type='button' data-go='library'>기억 찾기</button>" +
           "<button class='btn ghost sm' type='button' data-go='connections'>함께한 사람들의 자리</button>" +
           "<button class='btn ghost sm' type='button' data-go='life-drawer'>삶의 서랍</button>";
       }
@@ -14467,7 +14660,7 @@ async function wdSpaceLogout(){
         body: stateNoteHtml("done", "연대기 " + made + "건을 집 안에 들였습니다.", "복사본을 만들지 않고 같은 기록을 여러 자리에서 봅니다.") +
           "<p class='soft'><strong>다시 볼 수 있는 곳</strong></p><div class='link-where'>" +
           "<button class='btn secondary sub-action' type='button' data-go='timeline'>연대기</button>" +
-          "<button class='btn secondary sub-action' type='button' data-go='library'>내 삶의 서재</button></div>" +
+          "<button class='btn secondary sub-action' type='button' data-go='library'>기억 찾기</button></div>" +
           (needCheck ? stateNoteHtml("check", "확인이 필요한 기록 " + needCheck + "건", "같은 이삿짐 묶음에서 나중에 이어보실 수 있어요.") : "") +
           stateNoteHtml("undo", "이번 이삿짐만 되돌릴 수 있어요.", "다른 자료는 건드리지 않습니다."),
         actions: [
@@ -17327,32 +17520,82 @@ async function wdSpaceLogout(){
     /* v1.17.0 · 사람 등록을 두 단계로 나눕니다.
        1단계는 관계·별칭만 묻고, 나머지는 필요할 때 펼칩니다.
        저장 항목과 중복 검사는 그대로입니다. */
-    function personFormHtml(person) {
-      var p = person || {};
-      var hasExtra = !!(p.living || p.age || p.location || p.support || p.care);
-      return "<div class='person-step'><p class='person-step-head'>1 · 여기까지만 적어도 등록됩니다</p>" +
-        "<div class='field'><label for='person-relation'>관계 또는 호칭</label><input id='person-relation' type='text' maxlength='50' placeholder='예: 어머니, 교회 지체' value='" + escapeHtml(p.relation || "") + "'></div>" +
-        "<div class='field'><label for='person-alias'>별칭 <span class='soft'>(비워두면 관계를 그대로 씁니다)</span></label><input id='person-alias' type='text' maxlength='50' value='" + escapeHtml(p.alias || "") + "'></div>" +
-        "<label class='check-row'><input id='person-important' type='checkbox' " + (p.importance === "important" ? "checked" : "") + "><span>내 이야기를 이해할 때 알아둘 중요한 사람으로 표시</span></label></div>" +
-        "<details class='person-step-more'" + (hasExtra ? " open" : "") + "><summary><strong>2 · 더 적어둘 것</strong> <span class='soft'>(선택 · 나중에 적어도 됩니다)</span></summary>" +
-        "<div class='grid two' style='margin-top:10px'>" +
+    /* v1.37.1 · 관계는 드롭다운 6종+기타로, 이름칸 하나만 남깁니다.
+       내부적으로는 기존 relation/alias 필드를 그대로 씁니다(저장·표시 로직 무변경). */
+    var PERSON_RELATION_OPTIONS = ["가족","친구","교회","일","이웃","기타"];
+    function personRelationSelectHtml(current) {
+      var known = PERSON_RELATION_OPTIONS.indexOf(current) >= 0;
+      var isCustom = current && !known;
+      var opts = PERSON_RELATION_OPTIONS.map(function (v) {
+        return "<option value='" + v + "'" + (current === v ? " selected" : "") + ">" + v + "</option>";
+      }).join("");
+      return "<select id='person-relation'><option value=''" + (!current ? " selected" : "") + ">선택하지 않기</option>" + opts + "</select>" +
+        "<input id='person-relation-custom' type='text' maxlength='30' placeholder='관계를 직접 적어주세요' value='" + escapeHtml(isCustom ? current : "") + "' " + (isCustom || current === "기타" ? "" : "hidden") + ">";
+    }
+    /* v1.37.2 · 일반적인 '더 적어둘 것' 대신, 고른 관계에 맞는 선택 입력만 보여줍니다.
+       모든 입력은 DOM에 항상 있고 관계에 따라 화면에서만 보였다 숨겨집니다.
+       (저장 코드가 없는 입력을 읽어 오류나지 않도록 하기 위함이며, 모두 선택사항입니다.) */
+    function personRelationDetailHtml(p) {
+      return "<div class='person-relation-detail'>" +
+        "<div class='relation-detail-group' data-relation-detail='가족'>" +
+        "<div class='field'><label for='person-family-relation'>정확한 가족관계</label><input id='person-family-relation' type='text' maxlength='30' placeholder='예: 어머니, 큰아들' value='" + escapeHtml(p.familyRelation || "") + "'></div>" +
         "<div class='field'><label for='person-living'>함께 사는지</label><select id='person-living'><option value=''>선택하지 않기</option><option>함께 살아요</option><option>따로 살아요</option><option>상황에 따라 달라요</option><option value='private'>말하지 않기</option></select></div>" +
         "<div class='field'><label for='person-age'>나이 또는 연령대</label><input id='person-age' type='text' maxlength='30' value='" + escapeHtml(p.age || "") + "'></div>" +
-        "<div class='field'><label for='person-location'>넓은 생활 위치</label><input id='person-location' type='text' maxlength='50' value='" + escapeHtml(p.location || "") + "'></div>" +
-        "<div class='field'><label for='person-support'>지원 관계</label><input id='person-support' type='text' maxlength='80' value='" + escapeHtml(p.support || "") + "'></div>" +
-        "<div class='field'><label for='person-care'>돌봄 관계</label><input id='person-care' type='text' maxlength='80' value='" + escapeHtml(p.care || "") + "'></div></div></details>" +
-        "<p class='soft'>사람의 마음·성격·의도는 기록하지 않습니다.</p>";
+        "</div>" +
+        "<div class='relation-detail-group' data-relation-detail='친구'>" +
+        "<div class='field'><label for='person-friend-met'>어떻게 알게 된 사람인지</label><input id='person-friend-met' type='text' maxlength='60' placeholder='예: 학창시절 친구' value='" + escapeHtml(p.friendMet || "") + "'></div>" +
+        "<div class='field'><label for='person-friend-context'>주로 어떤 관계로 만나는지</label><input id='person-friend-context' type='text' maxlength='60' value='" + escapeHtml(p.friendContext || "") + "'></div>" +
+        "</div>" +
+        "<div class='relation-detail-group' data-relation-detail='교회'>" +
+        "<div class='field'><label for='person-church-name'>교회 또는 공동체</label><input id='person-church-name' type='text' maxlength='60' value='" + escapeHtml(p.churchName || "") + "'></div>" +
+        "<div class='field'><label for='person-church-role'>직분</label><input id='person-church-role' type='text' maxlength='40' value='" + escapeHtml(p.churchRole || "") + "'></div>" +
+        "<div class='field'><label for='person-church-group'>함께하는 모임</label><input id='person-church-group' type='text' maxlength='60' value='" + escapeHtml(p.churchGroup || "") + "'></div>" +
+        "</div>" +
+        "<div class='relation-detail-group' data-relation-detail='일'>" +
+        "<div class='field'><label for='person-work-place'>회사 또는 일의 자리</label><input id='person-work-place' type='text' maxlength='60' value='" + escapeHtml(p.workPlace || "") + "'></div>" +
+        "<div class='field'><label for='person-work-relation'>업무 관계</label><input id='person-work-relation' type='text' maxlength='60' placeholder='예: 같은 팀, 거래처' value='" + escapeHtml(p.workRelation || "") + "'></div>" +
+        "</div>" +
+        "<div class='relation-detail-group' data-relation-detail='이웃'>" +
+        "<div class='field'><label for='person-location'>어디에서 만나는 이웃인지</label><input id='person-location' type='text' maxlength='50' value='" + escapeHtml(p.location || "") + "'></div>" +
+        "</div>" +
+        "</div>";
+    }
+    function personFormHtml(person) {
+      var p = person || {};
+      return "<div class='person-step'><p class='person-step-head'>관계와 평소 부르는 이름만 적어도 됩니다.</p>" +
+        "<div class='field'><label for='person-relation'>관계</label>" + personRelationSelectHtml(p.relation || "") + "</div>" +
+        "<div class='field'><label for='person-alias'>평소 부르는 이름</label><input id='person-alias' type='text' maxlength='50' placeholder='예: 엄마, 김 집사님, 수진' value='" + escapeHtml(p.alias || "") + "'></div>" +
+        "<label class='check-row'><input id='person-important' type='checkbox' " + (p.importance === "important" ? "checked" : "") + "><span>중요한 사람으로 표시</span></label></div>" +
+        personRelationDetailHtml(p) +
+        "<p class='soft'>모든 세부정보는 선택사항입니다. 사람의 마음·성격·의도는 추정하거나 기록하지 않습니다.</p>";
+    }
+    function applyPersonRelationDetailVisibility(relationValue) {
+      $$(".relation-detail-group").forEach(function (group) {
+        group.hidden = group.getAttribute("data-relation-detail") !== relationValue;
+      });
+    }
+    function bindPersonRelationToggle() {
+      var select = $("#person-relation"), custom = $("#person-relation-custom");
+      if (!select || !custom) return;
+      select.addEventListener("change", function () {
+        custom.hidden = select.value !== "기타";
+        if (!custom.hidden) custom.focus();
+        applyPersonRelationDetailVisibility(select.value);
+      });
+      applyPersonRelationDetailVisibility(select.value);
     }
     function openPersonModal(personId) {
       var person = personId ? state.persons.find(function (p) { return p.id === personId; }) : null;
       var formDraftKey = "person:" + (personId || "new");
       showModal({
-        title: person ? "사람 정보 수정" : "사람 직접 등록",
+        title: person ? "사람 정보 수정" : "사람 추가하기",
         body: personFormHtml(person),
         actions: [
           { label: "취소", className: "ghost", onClick:function(){clearFormDraft(formDraftKey);} },
-          { label: person ? "수정 저장" : "직접 등록", className: "primary", onClick: function () {
-            var relation = $("#person-relation").value.trim();
+          { label: person ? "수정 저장" : "사람 추가하기", className: "primary", onClick: function () {
+            var relationSelect = $("#person-relation") ? $("#person-relation").value.trim() : "";
+            var relationCustom = $("#person-relation-custom") ? $("#person-relation-custom").value.trim() : "";
+            var relation = relationSelect === "기타" ? relationCustom : relationSelect;
             var alias = $("#person-alias").value.trim();
             /* v1.36.5 · 검증에 걸리면 모달을 닫지 않고 그 자리에 이유를 적습니다. */
             function personFormNotice(message) {
@@ -17370,9 +17613,9 @@ async function wdSpaceLogout(){
               if (box) { box.hidden = false; box.textContent = message; }
               toast(message);
             }
-            if (!relation && !alias) { personFormNotice("관계 또는 별칭을 하나는 적어주세요. 아직 등록되지 않았습니다."); return false; }
+            if (!relation && !alias) { personFormNotice("관계나 이름을 하나는 적어주세요. 아직 등록되지 않았습니다."); return false; }
             var duplicate = state.persons.find(function (p) { return (!person || p.id !== person.id) && (p.alias || "").toLowerCase() === (alias || relation).toLowerCase(); });
-            if (duplicate) { personFormNotice("같은 별칭의 사람이 이미 있습니다. 자동으로 합치지 않습니다. 기존 사람을 확인해 주세요."); return false; }
+            if (duplicate) { personFormNotice("같은 이름의 사람이 이미 있습니다. 자동으로 합치지 않습니다. 기존 사람을 확인해 주세요."); return false; }
             var errorBox = $("#person-form-error"); if (errorBox) errorBox.hidden = true;
             if (!person) {
               person = {
@@ -17384,11 +17627,18 @@ async function wdSpaceLogout(){
             person.relation = relation;
             person.alias = alias || relation;
             person.importance = $("#person-important").checked ? "important" : "general";
+            /* v1.37.2 · 관계별 세부입력. 모든 입력은 DOM에 항상 있으므로 null 걱정 없이 그대로 읽습니다. */
+            person.familyRelation = $("#person-family-relation").value.trim();
             person.living = $("#person-living").value;
             person.age = $("#person-age").value.trim();
+            person.friendMet = $("#person-friend-met").value.trim();
+            person.friendContext = $("#person-friend-context").value.trim();
+            person.churchName = $("#person-church-name").value.trim();
+            person.churchRole = $("#person-church-role").value.trim();
+            person.churchGroup = $("#person-church-group").value.trim();
+            person.workPlace = $("#person-work-place").value.trim();
+            person.workRelation = $("#person-work-relation").value.trim();
             person.location = $("#person-location").value.trim();
-            person.support = $("#person-support").value.trim();
-            person.care = $("#person-care").value.trim();
             person.updatedAt = new Date().toISOString();
             delete ensureUiDrafts().forms[formDraftKey];
             syncProfileImportantPersonIds();
@@ -17400,6 +17650,7 @@ async function wdSpaceLogout(){
         ]
       });
       $("#person-living").value = person ? person.living || "" : "";
+      bindPersonRelationToggle();
       bindModalFormDraft(formDraftKey);
     }
     function syncProfileImportantPersonIds() {
@@ -18032,25 +18283,45 @@ async function wdSpaceLogout(){
           journeySchedules, linkedSchedules, topicLabels, categories)
         .join(" ").toLowerCase();
     }
+    /* v1.37.1 · 기억 찾기 기간별 보기. 검색어와 별개로 켤 수 있습니다. */
+    var libraryPeriodFilter = "all";
+    function libraryPeriodMatch(record) {
+      if (libraryPeriodFilter === "all") return true;
+      var d = record.date; if (!d || d.kind !== "exact" || !d.value) return false;
+      var rd = new Date(d.value + "T00:00:00"); if (isNaN(rd)) return false;
+      var now = new Date();
+      if (libraryPeriodFilter === "day") return d.value === todayISO();
+      if (libraryPeriodFilter === "year") return rd.getFullYear() === now.getFullYear();
+      if (libraryPeriodFilter === "month") return rd.getFullYear() === now.getFullYear() && rd.getMonth() === now.getMonth();
+      if (libraryPeriodFilter === "week") {
+        var oneDay = 86400000;
+        var nowMonday = new Date(now); nowMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7)); nowMonday.setHours(0, 0, 0, 0);
+        var diff = Math.floor((rd - nowMonday) / oneDay);
+        return diff >= 0 && diff < 7;
+      }
+      return true;
+    }
     function renderSearch(query) {
       renderContentBooks();
       var box = $("#library-search");
       if (box && document.activeElement !== box) box.value = query || "";
       var target = $("#search-results");
       var libReset = $("#library-reset");
-      if (libReset) libReset.hidden = !(String(($("#library-search")||{}).value || "").trim() || libraryIncludeProtected || libraryIncludeHighlyProtected);
+      if (libReset) libReset.hidden = !(String(($("#library-search")||{}).value || "").trim() || libraryIncludeProtected || libraryIncludeHighlyProtected || libraryPeriodFilter !== "all");
       if ($("#library-include-protected")) $("#library-include-protected").checked = libraryIncludeProtected;
       if ($("#library-include-highly-protected")) $("#library-include-highly-protected").checked = libraryIncludeHighlyProtected;
       var clean = String(query || "").trim().toLowerCase();
-      if (!clean) {
-        target.innerHTML = "<div class='card empty'>찾고 싶은 사람, 날짜, 일, 금액, 말씀, 몸의 신호나 기쁨을 적어보세요.</div>";
+      if (!clean && libraryPeriodFilter === "all") {
+        target.innerHTML = "<div class='card empty'>찾고 싶은 사람, 날짜, 일, 금액, 말씀, 몸의 신호나 기쁨을 적어보세요. 또는 위에서 기간을 골라 훑어보세요.</div>";
         return;
       }
-      var terms = clean.split(/\s+/);
+      var terms = clean ? clean.split(/\s+/) : [];
       var results = sortedRecords().filter(function (record) {
         var level = recordProtectionLevel(record);
         if (level === "protected" && !libraryIncludeProtected) return false;
         if (level === "highly_protected" && !libraryIncludeHighlyProtected) return false;
+        if (!libraryPeriodMatch(record)) return false;
+        if (!terms.length) return true;
         var haystack = recordSearchText(record);
         return terms.every(function (term) { return haystack.indexOf(term) >= 0; });
       });
@@ -18058,7 +18329,7 @@ async function wdSpaceLogout(){
         {key:"readingRecords",label:"읽은 말씀",go:"faith-reading"},{key:"prayerRecords",label:"기도",go:"prayers"},{key:"worshipRecords",label:"예배",go:"worship"},{key:"tableRecords",label:"오늘의 식탁",go:"table"},{key:"soundRecords",label:"소리의 방",go:"sound"},{key:"workshopRecords",label:"작업실 원석",go:"workshop"},{key:"lifeTools",label:"생활도구",go:"tools"},{key:"storageMapItems",label:"자료 보관 지도",go:"storage-map"},{key:"albumRecords",label:"앨범 설명",go:"album"}
       ];
       var extras=[];
-      collectionDefs.forEach(function(def){state[def.key].forEach(function(item){
+      if (terms.length) collectionDefs.forEach(function(def){state[def.key].forEach(function(item){
         var linked=item.recordId?linkedRecord(item.recordId):null;
         if(linked){
           var level=recordProtectionLevel(linked);
@@ -18071,8 +18342,14 @@ async function wdSpaceLogout(){
       /* v1.34.4 · 노아 13항 · 결과를 요약·본문·태그째 펼치지 않습니다. 짧은 행 10개씩 · 더 보기. */
       var libPage = 10, libShown = libPage;
       var extraHtml = extras.map(function(hit){var title=hit.item.title||hit.item.name||hit.item.food||hit.item.book||hit.item.date||hit.def.label;return "<article class='list-item'><p class='meta'>"+hit.def.label+"</p><h3>"+escapeHtml(title)+"</h3><p>"+escapeHtml((hit.item.text||hit.item.after||hit.item.description||hit.item.draft||hit.item.scene||hit.item.url||"").slice(0,220))+"</p><button class='btn secondary' type='button' data-go='"+hit.def.go+"'>그 자리로 가기</button></article>";}).join("");
+      function libraryResultRowHtml(record) {
+        var already = !!record.landmark;
+        return "<div class='library-result-row'>" + recordRowHtml(record) +
+          "<button type='button' class='btn ghost library-landmark-toggle" + (already ? " is-on" : "") + "' data-toggle-landmark='" + escapeHtml(record.id) + "'>" +
+          (already ? "✓ 삶의 이정표" : "삶의 이정표로 남기기") + "</button></div>";
+      }
       function drawLibrary() {
-        var html = results.slice(0, libShown).map(function (record) { return recordRowHtml(record); }).join("");
+        var html = results.slice(0, libShown).map(function (record) { return libraryResultRowHtml(record); }).join("");
         if (libShown >= results.length) html += extraHtml;
         target.innerHTML = html || emptyLineHtml("선택한 보호 범위 안에서 찾지 못했습니다. 다른 표현으로 검색해 보세요. 보호 기록은 위에서 직접 범위를 넓힌 경우에만 검색합니다.");
         if (libShown < results.length) {
@@ -19692,6 +19969,32 @@ async function wdSpaceLogout(){
         }
         await beginStoryDraft(rawStory);
       });
+      var foyerToggle = $("#foyer-ai-toggle");
+      if (foyerToggle) foyerToggle.addEventListener("click", async function () {
+        var runtime = window.SaraAI;
+        if (!runtime || !runtime.verifyAiConnectionOnFoyer) return;
+        if (!runtime.isConnected()) {
+          toast("아직 이 기기에서 연결한 적이 없어요. 설정에서 한 번 연결해 주세요.");
+          go("settings", true);
+          setTimeout(function () { var c = $("#ai-connection-card"); if (c) c.open = true; }, 250);
+          runtime.verifyAiConnectionOnFoyer();
+          return;
+        }
+        await runtime.verifyAiConnectionOnFoyer();
+      });
+      var headerAiBadge = $("#header-ai-badge");
+      if (headerAiBadge) headerAiBadge.addEventListener("click", async function () {
+        var runtime = window.SaraAI;
+        if (!runtime || !runtime.verifyAiConnectionOnFoyer) return;
+        if (!runtime.isConnected()) {
+          toast("아직 이 기기에서 연결한 적이 없어요. 설정에서 한 번 연결해 주세요.");
+          go("settings", true);
+          setTimeout(function () { var c = $("#ai-connection-card"); if (c) c.open = true; }, 250);
+          runtime.verifyAiConnectionOnFoyer();
+          return;
+        }
+        await runtime.verifyAiConnectionOnFoyer();
+      });
       $("#retry-organize-story").addEventListener("click", async function () {
         if(!organizeFailure||!organizeFailure.story){toast("다시 정리할 이야기를 찾지 못했습니다. 작성 화면에서 다시 시도해 주세요.");go("story",true);return;}
         var retry=organizeFailure;
@@ -19959,6 +20262,25 @@ async function wdSpaceLogout(){
         renderSearch(""); toast("검색 조건을 지웠습니다.");
       });
       $("#library-search").addEventListener("input", function () { renderSearch($("#library-search").value); });
+      $$(".library-period").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          libraryPeriodFilter = btn.getAttribute("data-library-period") || "all";
+          $$(".library-period").forEach(function (b) { b.classList.toggle("active", b === btn); });
+          renderSearch($("#library-search").value);
+        });
+      });
+      $("#search-results").addEventListener("click", function (event) {
+        var toggle = event.target.closest("[data-toggle-landmark]");
+        if (!toggle) return;
+        var id = toggle.getAttribute("data-toggle-landmark");
+        var record = state.records.find(function (r) { return r.id === id; });
+        if (!record) return;
+        record.landmark = !record.landmark;
+        record.updatedAt = new Date().toISOString();
+        saveState();
+        renderSearch($("#library-search").value);
+        toast(record.landmark ? "삶의 이정표로 남겼습니다." : "삶의 이정표 표시를 지웠습니다.");
+      });
       $("#save-memory").addEventListener("click", function () {
         var text = $("#memory-input").value.trim();
         if (!text) { toast("기억해둘 내용을 먼저 적어주세요."); return; }
@@ -20232,7 +20554,7 @@ async function wdSpaceLogout(){
     "connections":{name:"함께한 사람들",img:"pose-people.png",title:"함께한 사람들",lead:"사람별로 연결된 기록을 봅니다.",action:"사람의 기록 보기"},
     "life-drawer":{name:"삶의 서랍",img:"pose-box.png",title:"삶의 서랍",lead:"몸·기쁨·마음·일·가족·말씀으로 나눠 봅니다.",action:"서랍 열어보기"},
     "timeline":{name:"연대기",img:"pose-timeline.png",title:"연대기",lead:"날짜 순서로 내 기록을 봅니다.",action:"연대기 보기"},
-    "library":{name:"내 삶의 서재",img:"pose-books.png",title:"내 삶의 서재",lead:"찾고 싶은 기록을 검색합니다.",action:"기록 찾기"},
+    "library":{name:"기억 찾기",img:"pose-books.png",title:"기억 찾기",lead:"찾고 싶은 기록을 검색합니다.",action:"기록 찾기"},
     "schedule":{name:"일정과 이동",img:"pose-calendar.png",title:"일정과 이동",lead:"오늘 갈 곳과 지나온 일정을 봅니다.",action:"일정 보기"},
     "table":{name:"오늘의 식탁",img:"pose-tea.png",title:"오늘의 식탁",lead:"먹은 것과 식탁의 기록을 봅니다.",action:"식탁 보기"},
     "sound":{name:"소리의 방",img:"pose-headphones.png",title:"소리의 방",lead:"듣고 만든 소리를 모읍니다.",action:"소리 보기"},
@@ -21070,7 +21392,7 @@ async function wdSpaceLogout(){
       "<div class='house-help-step'><b>4</b><div><strong>다듬은 오늘의 기록 확인</strong><span>제목과 문장을 직접 고치고, 처음 말한 원문도 다시 볼 수 있습니다.</span></div></div>"+
       "<div class='house-help-step'><b>5</b><div><strong>이어질 자리 선택</strong><span>함께한 사람·말씀·몸·돈·일 등 필요한 자리만 켜고 끌 수 있습니다. 아무것도 연결하지 않아도 됩니다.</span></div></div>"+
       "<div class='house-help-step'><b>6</b><div><strong>내 기록에 남기기</strong><span>확인 버튼을 누른 뒤에만 연대기·서재와 선택한 삶의 자리에 나타납니다.</span></div></div>"+
-      "<div class='house-help-step'><b>7</b><div><strong>다시 찾고 관리하기</strong><span>내 삶의 서재에서 찾고, 원래 기록을 열어 수정·삭제하거나 파일로 내보낼 수 있습니다.</span></div></div>"+
+      "<div class='house-help-step'><b>7</b><div><strong>다시 찾고 관리하기</strong><span>기억 찾기에서 찾고, 원래 기록을 열어 수정·삭제하거나 파일로 내보낼 수 있습니다.</span></div></div>"+
       "</div><p class='house-help-storage'><strong>저장 안내</strong><br>확정 기록은 이 기기 브라우저에 보관됩니다. 브라우저 데이터를 지우면 사라질 수 있으므로 필요한 기록은 파일로 내보내 주세요.</p>";
   }
   function openHelp(){
@@ -22314,6 +22636,146 @@ async function wdSpaceLogout(){
   #screen-storage-map .storage-place-card[data-storage-map-filter="phone"]        { border-left-color: #8A6DAE; }
   #screen-storage-map .storage-place-card[data-storage-map-filter="other"]        { border-left-color: #B7791F; }
   #screen-storage-map .storage-place-card[data-storage-map-filter="unknown"]      { border-left-color: #A0AEC0; }
+</style>
+<style id="sara-v1370-clarity-style">
+  /* v1.37.0 · 입주신고 첫 화면·오늘의 이야기 배치·관계 온도만 다룹니다.
+     40대 이상 기준: 글씨 크게, 버튼 크게, 설명 짧게. 기존 로직·id는 건드리지 않습니다. */
+
+  /* ① 입주신고 첫 화면 — 3가지 역할 카드 */
+  .sara-role-h2 { font-size: clamp(24px, 5vw, 32px); line-height: 1.4; margin: 6px 0 18px; }
+  .sara-role-cards { display: grid; gap: 14px; margin-bottom: 18px; }
+  .sara-role-card {
+    background: #fffaf1; border: 1px solid #e6dccf; border-left: 5px solid #8a6740;
+    border-radius: 14px; padding: 18px 20px;
+  }
+  .sara-role-title { font-size: 19px; font-weight: 800; margin: 0 0 6px; line-height: 1.5; }
+  .sara-role-body { font-size: 16px; line-height: 1.7; margin: 0; color: #5b5346; }
+  .sara-role-invite { font-size: 16px; line-height: 1.75; margin: 4px 0 16px; }
+  .sara-role-simple { font-size: 16px; line-height: 1.8; }
+  .sara-id-fold { margin: 4px 0 18px; }
+  .sara-id-fold > summary {
+    cursor: pointer; font-size: 15px; opacity: .75; min-height: 46px;
+    display: flex; align-items: center; list-style: none;
+  }
+  .sara-id-fold > summary::-webkit-details-marker { display: none; }
+  .sara-id-fold > summary::after { content: " 〉"; }
+  .sara-id-fold[open] > summary::after { content: " 〈"; }
+  #screen-onboarding-intro .actions .btn { min-height: 56px; font-size: 17px; }
+
+  /* ② 관계 온도 선택 */
+  .relation-tone-field { margin-bottom: 22px; }
+  .relation-tone-field > .label { font-size: 17px; font-weight: 700; }
+  .relation-tone-grid { margin-top: 10px; }
+  .relation-tone-grid .choice-card { font-size: 16px; min-height: 52px; display: flex; align-items: center; }
+
+  /* ③ 오늘의 이야기 — 다듬기를 주 행동으로 */
+  #today-session-actions.actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  #today-session-actions .btn { min-height: 54px; font-size: 17px; }
+  #today-session-actions .btn.primary { font-weight: 800; }
+  .today-fragment-next { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .today-fragment-next .btn { min-height: 48px; }
+
+  @media (max-width: 520px) {
+    .sara-role-card { padding: 16px 18px; }
+    .today-fragment-next { flex-direction: column; }
+    .today-fragment-next .btn { width: 100%; }
+  }
+</style>
+<style id="sara-v1371-final-style">
+  /* v1.37.1 · 40대 이상 기준 최소 CSS. 이번 회차에서 손댄 화면만 다룹니다.
+     새 레이아웃을 만들지 않고 글자 크기·버튼 높이·여백만 키웁니다. */
+
+  /* ① 사람 화면 */
+  #screen-connections #open-add-person { min-height: 52px; font-size: 16px; }
+  #screen-connections .person-step-head { font-size: 15px; }
+  #screen-connections #person-relation,
+  #screen-connections #person-relation-custom,
+  #screen-connections #person-alias { min-height: 46px; font-size: 16px; }
+  #screen-connections .check-row { min-height: 44px; }
+
+  /* ② 현관 AI 상태 */
+  .foyer-ai-status {
+    display: flex; align-items: center; gap: 12px;
+    background: #fffaf1; border: 1px solid #e6dccf; border-radius: 14px;
+    padding: 14px 16px; margin: 0 0 18px;
+  }
+  .foyer-ai-dot { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 auto; background: #b9b2a4; }
+  .foyer-ai-status[data-state="connected"] .foyer-ai-dot { background: #4caf6d; box-shadow: 0 0 0 4px rgba(76,175,109,.16); }
+  .foyer-ai-status[data-state="error"] .foyer-ai-dot { background: #c0524a; }
+  .foyer-ai-status[data-state="checking"] .foyer-ai-dot { background: #e0aa3e; animation: v15pulse 1.2s infinite; }
+  .foyer-ai-copy { flex: 1 1 auto; min-width: 0; }
+  .foyer-ai-copy strong { display: block; font-size: 16px; }
+  .foyer-ai-copy small { display: block; font-size: 13px; opacity: .75; margin-top: 2px; }
+  #foyer-ai-toggle { min-height: 48px; font-size: 15px; flex: 0 0 auto; }
+  @media (max-width: 520px) {
+    .foyer-ai-status { flex-wrap: wrap; }
+    #foyer-ai-toggle { width: 100%; }
+  }
+
+  /* ④ 저녁 확인 — 다음 날 할 일 입력칸 */
+  #draft-carryover { min-height: 46px; font-size: 16px; }
+
+  /* ⑤ 기억 찾기 */
+  #screen-library .library-page-head h2 { font-size: clamp(24px, 5vw, 30px); }
+  .library-period-row { margin: 4px 0 14px; }
+  .library-period { min-height: 46px; font-size: 15px; }
+  .library-result-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .library-result-row .sara-row { flex: 1 1 260px; }
+  .library-landmark-toggle { min-height: 42px; font-size: 13.5px; white-space: nowrap; }
+  .library-landmark-toggle.is-on { color: #8a6740; border-color: #d8c39a; }
+  @media (max-width: 520px) {
+    .library-result-row { flex-direction: column; align-items: stretch; }
+    .library-landmark-toggle { width: 100%; }
+  }
+</style>
+<style id="sara-v1372-style">
+  /* v1.37.2 · 말씀 후보 카드, 헤더 공통 배지, 관계별 세부입력, 오늘의 이야기 목록 정돈. 새 기능 추가 없음. */
+
+  /* 1. 말씀 후보 카드 */
+  #scripture-candidate-stage { margin: 10px 0 6px; }
+  .scripture-candidate-card {
+    background: #faf5ff; border: 1px solid #d6bcfa; border-left: 4px solid #9f7aea;
+    border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+  }
+  .scripture-candidate-card .word-text { font-size: 16px; line-height: 1.75; margin: 0 0 8px; }
+  .scripture-candidate-card .word-reference { font-weight: 700; font-size: 14.5px; opacity: .8; margin: 0 0 6px; }
+  .scripture-candidate-reason { font-size: 13.5px; opacity: .72; margin: 0; }
+  .scripture-candidate-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .scripture-candidate-actions .btn { min-height: 48px; }
+  .scripture-other-ways, .scripture-notice-fold { margin-top: 14px; }
+  .scripture-other-ways > summary, .scripture-notice-fold > summary {
+    cursor: pointer; font-size: 14px; opacity: .72; min-height: 44px; display: flex; align-items: center; list-style: none;
+  }
+  .scripture-other-ways > summary::-webkit-details-marker, .scripture-notice-fold > summary::-webkit-details-marker { display: none; }
+  @media (max-width: 520px) { .scripture-candidate-actions .btn { width: 100%; } }
+
+  /* 2. 헤더 공통 사라 연결 배지 */
+  .header-ai-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; border: 1px solid #e2d8ca; border-radius: 999px;
+    padding: 5px 11px; font-size: 12.5px; min-height: 32px; cursor: pointer; color: inherit;
+  }
+  .header-ai-dot { width: 8px; height: 8px; border-radius: 50%; background: #aab1bd; flex: none; }
+  .header-ai-badge[data-state="connected"] .header-ai-dot { background: #4caf6d; }
+  .header-ai-badge[data-state="checking"] .header-ai-dot { background: #e0aa3e; animation: v15pulse 1.2s infinite; }
+  .header-ai-badge[data-state="error"] .header-ai-dot { background: #c0524a; }
+  @media (max-width: 760px) { .header-ai-badge-label { display: none; } .header-ai-badge { padding: 5px 8px; } }
+
+  /* 3. 사람 관계별 세부입력 */
+  .person-relation-detail { margin-top: 4px; }
+  .relation-detail-group .field { margin-bottom: 10px; }
+  #modal-body .relation-detail-group label { font-size: 14.5px; }
+
+  /* 4. 오늘의 이야기 목록 정돈 */
+  .today-fragment-preview { font-size: 15px; line-height: 1.6; margin: 6px 0 0; }
+  .today-fragment-full { margin-top: 6px; }
+  .today-fragment-full > summary {
+    cursor: pointer; font-size: 13px; opacity: .68; min-height: 40px; display: flex; align-items: center; list-style: none;
+  }
+  .today-fragment-full > summary::-webkit-details-marker { display: none; }
+  .today-fragment-full > summary::after { content: " \3009"; }
+  .today-fragment-full[open] > summary::after { content: " \3008"; }
+  .today-fragment-full p { font-size: 15px; line-height: 1.7; margin: 6px 0 0; }
 </style>
 </body>
 </html>
