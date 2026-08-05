@@ -2823,7 +2823,17 @@ function wdSpaceOpen(event,space){
   var local=location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
   var localUrls={home:'./WD본진_첫화면재배치_왕복연결_v1.0.html',partners:'./partners.html',consulting:'./consulting_center_app.html',sara:'./sara-house.html'};
   var liveUrls={home:'https://admin.wdwave.kr/',partners:'https://pro.wdwave.kr/',consulting:'https://admin.wdwave.kr/#consulting-center',sara:'https://admin.wdwave.kr/sara-house.html'};
-  location.href=(local?localUrls:liveUrls)[space]||localUrls.home;
+  var target=(local?localUrls:liveUrls)[space]||localUrls.home;
+  /* v1.37.3 patch · WD 본진 복귀 수정: 사라의 집이 본진 화면 안에 iframe으로 열려 있을 때
+     내부 프레임만 이동해 로그인 상태를 벗어난 것처럼 보이던 문제를 막기 위해,
+     최상위 창(window.top)이 있으면 그쪽을 이동시켜 로그인된 본진 홈으로 정확히 복귀시킵니다.
+     동일 출처가 아니라 접근이 막히면 기존 방식(location.href)으로 자동 대체됩니다. */
+  var inFrame=false;
+  try{inFrame=(window.self!==window.top);}catch(crossOriginFrameCheckError){inFrame=true;}
+  if(inFrame){
+    try{window.top.location.href=target;return;}catch(blockedByCrossOriginParent){}
+  }
+  location.href=target;
 }
 function wdSpaceBack(){
   var ref=document.referrer||'';
