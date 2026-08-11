@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WD 컨설팅센터 — 브랜딩 고객관리</title>
+<title>WD 컨설팅센터 — 독립 운영원본</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ===== 전산 동일 디자인 토큰 ===== */
@@ -952,6 +952,7 @@ body{padding-left:270px;}
 /* [v17] 사이드바 메뉴 숫자 뱃지 숨김 — 요소는 유지(스크립트 참조) */
 #ccSidebar .nav-item .cnt{display:none !important;}
 </style>
+<!-- 260811 독립연결: consulting_center_app.html 독립 유지 / WD 본진은 index.html 직접 복귀 / iframe 내장 금지 -->
 </head>
 <body>
 <div class="wrap">
@@ -964,7 +965,7 @@ body{padding-left:270px;}
       <div><b>WD WAVE <em>컨설팅센터</em></b><span>퍼스널 브랜딩 디지털 사무실</span></div>
     </div>
     <div class="sb-foot">
-      <button onclick="goMainHome()">🏠 메인전산홈</button>
+      <button onclick="goMainHome()">🏠 WD 본진</button>
     </div>
     <div class="sb-sec">업무 시작</div>
     <button class="nav-item on" data-view="dash" onclick="nav('dash')"><span class="ic">🏠</span>홈</button>
@@ -3549,16 +3550,11 @@ function contractActionButtons(k){
 }
 
 /* ====================== 네비게이션 ====================== */
-/* 메인전산홈: index.html iframe 안에 있을 경우 부모의 goTo('home') 호출을 시도.
-   부모 접근이 막혀있거나(cross-origin) 부모에 goTo가 없으면 안내만 표시하고 임의 링크는 만들지 않음. */
+/* WD 본진 복귀: 컨설팅센터는 독립 파일이며 같은 GitHub 루트의 index.html로 직접 이동. */
 function goMainHome(){
-  try{
-    if(window.parent && window.parent!==window && typeof window.parent.goTo==='function'){
-      window.parent.goTo('home');
-      return;
-    }
-  }catch(e){ /* cross-origin 등으로 부모 접근 불가 */ }
-  toast('ℹ️ index.html 반영 후 메인전산홈 연결 예정');
+  // 컨설팅센터는 뉴본진 안에 내장하지 않는 독립 파일입니다.
+  // 같은 GitHub 루트의 index.html(WD 뉴본진)로 직접 복귀합니다.
+  location.href='index.html';
 }
 function nav(view){
   closeDoc();
