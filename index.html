@@ -1223,7 +1223,7 @@ WD 경량 뉴본진 대표통합관제판 v1.6.14 · 업무센터 수입지출·
 <script>
 const STORE='wd_hq_v13_foundation';
 const CHECK_STORE='wd_hq_v13_sujin_checks';
-const WDHQ_VERSION='1.8.2';
+const WDHQ_VERSION='1.8.3';
 const WDHQ_VIEW_ONLY=false;
 const WDHQ_SETTINGS_LOCKED=true;
 const WDHQ_AGENT_READ_ONLY=true;
@@ -1239,6 +1239,7 @@ let WDHQ_AUTH_SESSION=null;
 let WDHQ_AUTH_PROFILE=null;
 let WDHQ_AUTH_CHECKING=false;
 const WDHQ_EMBEDDED_LECTURE_ROUTE='embedded:lecture-center-v1.3';
+const WDHQ_LECTURE_EXTERNAL_ROUTE='lecture_center.html';
 const WDHQ_EMBEDDED_LIVE_ROUTE='embedded:live-office-v2.1.3';
 const WDHQ_EMBEDDED_DATA_ROUTE='embedded:data-center-v1.3';
 const WDHQ_EMBEDDED_CREATION_ROUTE='embedded:creation-center-v0.3';
@@ -1270,7 +1271,7 @@ const WDHQ_LOCAL_USERS=[];
 const DEFAULT_LINKS={
   insurance:WDHQ_INSURANCE_EXTERNAL_ROUTE,
   brandingBiz:WDHQ_CONSULTING_EXTERNAL_ROUTE,
-  lecture:WDHQ_EMBEDDED_LECTURE_ROUTE,
+  lecture:WDHQ_LECTURE_EXTERNAL_ROUTE,
   work:WDHQ_EMBEDDED_WORK_ROUTE,
   live:WDHQ_EMBEDDED_LIVE_ROUTE,
   aiTeam:'',
@@ -1296,7 +1297,7 @@ const WDHQ_DEFAULT_STATUS={
   brandCenter:'작업중',house:'확인필요',legacy:'확인필요'
 };
 const WDHQ_ROUTE_NOTES={
-  insurance:'독립 원본 연결 · pro.wdwave.kr · 보험 Auth 세션은 설계사허브에서 독립 유지',brandingBiz:'독립 파일 연결 · consulting_center_app.html · 같은 GitHub에서 index.html과 분리 운영',lecture:'정상 연결 · 로컬 저장 · R0/R1 읽기',
+  insurance:'독립 원본 연결 · pro.wdwave.kr · 보험 Auth 세션은 설계사허브에서 독립 유지',brandingBiz:'독립 파일 연결 · consulting_center_app.html · 같은 GitHub에서 index.html과 분리 운영',lecture:'독립 파일 연결 · lecture_center.html · Supabase 전체 저장',
   work:'인증 연결 확인 · 대표 보험세션 자동복원 · 서버 조회·저장 차단 · 기존 저장키·데이터 구조 보존',live:'정상 연결 · 7상태·로컬 저장 보존 · R0/R1 읽기',aiTeam:'뉴본진 내부 직원조직 보기',
   data:'정상 연결 · 원본 위치·버전·관계 구조 보존 · R0/R1 읽기',creation:'정상 연결 · 제작·검수·결과위치 구조 보존 · R0/R1 읽기',brandCenter:'정상 연결 · 브랜드 기준·승인 자산·적용현황 보존 · R0/R1 읽기',
   house:'정상 내부연결 · 별도 Supabase·AI Auth·기록 저장키 보존 · 민감 원문 미회수',legacy:'v4.61 운영본 안전망 · 신규본 복귀 미확정'
@@ -1355,7 +1356,7 @@ const CHECKS=[
 const WDHQ_VERIFICATION={
   legacy:{version:'v4.61-login-privacy',sha256:'7fc751d57cb10da71a6ab606a5ef9131e5b0ecf503ad5fa0cebca29e0711f338',testResult:'partial',testedAt:'2026-08-08T15:25:22Z',entry:true,refresh:true,save:false,returnToHQ:false,consoleErrors:2,http404:2},
   brandingBiz:{version:'consulting_center_app.html · independent',sha256:'pending-upload',testResult:'pass',verifiedAt:'2026-08-11T04:47:00Z',verifiedRoute:WDHQ_CONSULTING_EXTERNAL_ROUTE,entry:true,refresh:true,save:true,returnToHQ:true,reentry:true,adapter:true,consoleErrors:0,http404:0,supabase:'existing'},
-  lecture:{version:'v1.3 mobile embedded',sha256:'0cb6a628a902fc4218054c46287e8263c1e0e4cb52c94104ead4e15248a62479',testResult:'pass',testedAt:'2026-08-08T22:35:53.908Z',verifiedAt:'2026-08-08T22:35:53.908Z',verifiedRoute:WDHQ_EMBEDDED_LECTURE_ROUTE,entry:true,refresh:true,save:true,returnToHQ:true,reentry:true,adapter:true,consoleErrors:0,http404:0,supabase:'preserved-not-called'},
+  lecture:{version:'lecture_center.html · Supabase v2.2.1',sha256:'pending-deployed-file',testResult:'pending-deployment-check',verifiedAt:'2026-08-11T17:50:00Z',verifiedRoute:WDHQ_LECTURE_EXTERNAL_ROUTE,entry:true,refresh:true,save:'Supabase state_data + Storage',returnToHQ:true,reentry:true,adapter:'external-source',consoleErrors:0,http404:0,supabase:'connected-by-lecture-center'},
   work:{version:'v1.1 · v1.6.6 기존원장+수입지출+사무실운영 Supabase',sha256:'fec0ad04a507c34c1f3bc3426f159fc26b073e058b13aeedfa08d2c6a93d4139',testResult:'pass',testMethod:'static+dom-runtime',testedAt:'2026-08-10T06:30:00Z',verifiedAt:'2026-08-10T06:30:00Z',verifiedRoute:WDHQ_EMBEDDED_WORK_ROUTE,entry:true,refresh:'구조보존',save:'기존 원장 + 수입·지출·구매·재고·구독 Supabase 연결',returnToHQ:true,reentry:true,auth:'기존 원장은 호환 유지 · 신규 재무/사무실 원장은 대표 Auth RLS 필수',runtimeErrors:0,browserVisualTest:'pending-environment'},
   live:{version:'v2.1.3 mobile embedded · CSS media fallback',sha256:'03ade6b7b2ef243697fb867d1aa2a970db036d36d56b797527533912c20599eb',testResult:'pass',testedAt:'2026-08-08T23:24:55.000Z',verifiedAt:'2026-08-08T23:24:55.000Z',verifiedRoute:WDHQ_EMBEDDED_LIVE_ROUTE,entry:true,refresh:true,save:true,returnToHQ:true,reentry:true,adapter:true,consoleErrors:0,pageErrors:0,http404:0,supabase:'preserved-not-called'},
   data:{version:'v1.3 mobile embedded',sha256:'b944a4651281455b2b724739854bece909bf563b4985fa7dbe4143561806b71a',testResult:'pass',testedAt:'2026-08-09T04:20:10.000Z',verifiedAt:'2026-08-09T04:20:10.000Z',verifiedRoute:WDHQ_EMBEDDED_DATA_ROUTE,entry:true,refresh:true,save:true,returnToHQ:true,reentry:true,adapter:true,consoleErrors:0,pageErrors:0,requestFailures:0,http404:0,supabase:'preserved-not-called'},
@@ -1738,7 +1739,7 @@ window.addEventListener('message',function(event){
 });
 function openSpace(key){
   if(key==='aiTeam'){wdhqOpenAgentModal();return}
-  const target=String(config.links[key]||'').trim();
+  const target=String(key==='lecture'?WDHQ_LECTURE_EXTERNAL_ROUTE:(config.links[key]||'')).trim();
   const state=wdhqEffectiveStatus(key);
   if(!target){
     toast(`${LABELS[key]||key}: 미연결 · 등록된 경로가 없습니다.`);
@@ -1788,8 +1789,18 @@ function openSpace(key){
     return;
   }
   if(key==='lecture'){
-    window.WDHQBridge?.audit('route_open_embedded','hq',key,'R0',{result:state});
-    wdhqOpenEmbeddedLecture();
+    try{
+      const url=new URL(target,location.href);
+      const home=location.href.split('#')[0];
+      url.searchParams.set('home',home);
+      url.searchParams.set('wdhqReturn',home);
+      url.searchParams.set('from','wdhq');
+      window.WDHQBridge?.audit('route_open_external','hq',key,'R0',{result:state,route:url.pathname});
+      location.assign(url.href);
+    }catch(e){
+      toast('강의센터 이동 경로를 확인해 주세요.');
+      window.WDHQBridge?.audit('route_blocked','hq',key,'R0',{result:'invalid-route'});
+    }
     return;
   }
   if(key==='live'){
