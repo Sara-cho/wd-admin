@@ -39,7 +39,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-vis
 .metrics.metrics10{grid-template-columns:repeat(5,minmax(0,1fr))}
 .metric.compact{min-height:102px;padding:14px}.metric.compact .val{font-size:23px}.metric.compact .sub{line-height:1.35}
 .tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 14px}.tabbtn{border:1px solid var(--line);background:#fff;border-radius:999px;min-height:42px;padding:8px 13px;font-weight:900;color:#667086}.tabbtn.active{background:#102a55;color:#fff;border-color:#102a55}
-.filterbar{display:grid;grid-template-columns:1.2fr repeat(3,minmax(130px,.7fr)) auto;gap:8px;margin:0 0 12px}.filterbar input,.filterbar select{width:100%;border:1px solid #dde2ea;border-radius:10px;padding:9px 10px;min-height:44px;background:#fff}
+.filterbar{display:grid;grid-template-columns:1.2fr repeat(3,minmax(130px,.7fr));gap:8px;margin:0 0 12px}.filterbar input,.filterbar select{width:100%;border:1px solid #dde2ea;border-radius:10px;padding:9px 10px;min-height:44px;background:#fff}
 .inline-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .small-muted{font-size:10.5px;color:#80889a}.empty{border:1px dashed #d8dde8;border-radius:14px;padding:24px;text-align:center;color:#7d8698;background:#fbfcff}
 .entitylist{display:grid;gap:10px}.entitycard{border:1px solid var(--line);border-radius:15px;background:#fff;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px}.entitycard h3{margin:0 0 5px;font-size:15px}.entitycard p{margin:0;color:#7c8596;font-size:11px;line-height:1.55}
@@ -707,7 +707,7 @@ dialog{border:0;border-radius:18px;padding:0;width:min(760px,calc(100vw - 28px))
 @media(max-width:1200px){.result-primary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.result-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.review-followup-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.result-page-tabs{grid-template-columns:1fr}.result-page-tab{min-height:46px}.result-lecture-picker{display:block;padding:14px}.result-lecture-picker .btn{width:100%;margin-top:10px}.result-focus-head{display:block}.result-primary-grid,.result-secondary-grid,.review-overview,.review-content-grid,.review-followup-grid,.improvement-note-grid{grid-template-columns:1fr}.result-focus-section{padding:16px}.result-primary-card{min-height:96px}.result-primary-card b{font-size:27px}}
 
-/* v2.2.1 · 로그인 화면 없이 Supabase 공용 원본·첨부파일 자동 연결 */
+/* v2.2.2 · 강의건 보관 제거, 열기·영구삭제 및 연결 첨부파일 정리 */
 .cloud-state{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:11px;font-weight:900}.cloud-state-dot{width:8px;height:8px;border-radius:50%;background:#aeb5c1}.cloud-state.online .cloud-state-dot{background:#1f9d67;box-shadow:0 0 0 4px rgba(31,157,103,.13)}.cloud-state.saving .cloud-state-dot{background:#e49b23}.cloud-state.error .cloud-state-dot{background:#d64b5f}
 </style>
 <!-- 260811: 뉴본진 내장본에서 독립 회수. GitHub 루트의 lecture_center.html로 운영. -->
@@ -723,7 +723,7 @@ dialog{border:0;border-radius:18px;padding:0;width:min(760px,calc(100vw - 28px))
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="brandmark">WD</div><div><strong>WD WAVE</strong><small>강의센터 · v2.2.1</small></div></div>
+    <div class="brand"><div class="brandmark">WD</div><div><strong>WD WAVE</strong><small>강의센터 · v2.2.2</small></div></div>
     <button class="side-home" type="button" data-wd-home="1"><span>⌂</span><b>메인전산홈</b></button>
     <div class="navlabel">LECTURE BUSINESS</div>
     <nav class="nav" id="sideNav">
@@ -767,7 +767,7 @@ dialog{border:0;border-radius:18px;padding:0;width:min(760px,calc(100vw - 28px))
         <div id="lectureListHeader"><div class="page-title"><div><h1>강의건 관리</h1><p>여러 기관·과정의 강의건을 등록하고 문의부터 재강의까지 관리합니다.</p></div><div class="toolbar"><button class="btn" id="backListBtn">목록 보기</button><button class="btn primary" id="newLectureBtn">+ 강의 추가</button></div></div>
         <div class="tabs"><button class="tabbtn active" data-lecture-tab="lectures">강의건</button><button class="tabbtn" data-lecture-tab="institutions">기관 목록</button></div></div>
         <div id="lectureListArea">
-          <div class="filterbar"><input class="wide" id="lectureSearch" placeholder="기관명·강의명 검색"><select id="statusFilter"></select><select id="institutionFilter"></select><select id="courseFilter"></select><label class="btn" style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="archiveFilter"> 종료 보관</label></div>
+          <div class="filterbar"><input class="wide" id="lectureSearch" placeholder="기관명·강의명 검색"><select id="statusFilter"></select><select id="institutionFilter"></select><select id="courseFilter"></select></div>
           <div id="lectureListView" class="lecturelist"></div>
         </div>
         <div id="institutionListArea" class="hidden"><div class="entitylist" id="institutionList"></div></div>
@@ -854,7 +854,7 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const CLOUD_TABLE='wd_lecture_center_state';
 const CLOUD_WORKSPACE='wd-lecture-center';
 const CLOUD_BUCKET='lecture-center-files';
-const APP_VERSION='2.2.1';
+const APP_VERSION='2.2.2';
 const STATUS=['문의','제안·협의','확정','준비 중','진행 중','강의 완료','정산·증빙','종결·재강의'];
 const TYPES=['유료','재능기부','무료특강','내부교육','기타'];
 const prepItems=[['ppt','PPT 완료'],['textbook','교재 완료'],['practice','실습지 완료'],['homework','숙제지 완료'],['contact','담당자 일정 재확인'],['attendance','참석인원 확인'],['place','장소 확인'],['equipment','장비 확인'],['print','출력물 확인'],['profile','강사 프로필 제출'],['docs','기관 요청서류 제출'],['usb','USB 백업'],['cloud','클라우드 백업'],['privacy','개인정보·촬영 기준 확인']];
@@ -970,13 +970,13 @@ function parseHours(s){const m=String(s||'').match(/([\d.]+)/);return m?Number(m
 function parsePeople(s){const m=String(s||'').match(/([\d,]+)/);return m?Number(m[1].replace(/,/g,'')):0}
 function sessionYear(s){return /^\d{4}/.test(s.date||'')?Number(s.date.slice(0,4)):null}
 function actualAttendees(l){return (l.sessions||[]).reduce((a,s)=>a+parsePeople(s.attendees),0)}
-function stats(){const y=new Date().getFullYear();const active=state.lectures.filter(l=>!l.archived);const yearLectures=active.filter(l=>{const nd=new Date(l.nextDate);return (l.sessions||[]).some(s=>sessionYear(s)===y)||(nd.getFullYear&&nd.getFullYear()===y)});const instCount=new Set(yearLectures.map(l=>l.institutionId)).size;const sessions=yearLectures.reduce((a,l)=>a+(l.sessions||[]).filter(s=>!s.date||sessionYear(s)===y).length,0);const hours=yearLectures.reduce((a,l)=>a+(l.sessions||[]).filter(s=>!s.date||sessionYear(s)===y).length*parseHours(l.sessionTime),0);const students=yearLectures.reduce((a,l)=>a+actualAttendees(l),0);const confirmed=active.filter(l=>['확정','준비 중','진행 중'].includes(l.status)).length;const negotiating=active.filter(l=>['문의','제안·협의'].includes(l.status)).length;const preparing=active.filter(l=>l.status==='준비 중').length;const followup=active.filter(l=>l.results?.relecture==='요청'||l.status==='종결·재강의'||(l.results?.nextProposal||'')).length;const paywait=active.filter(l=>l.settlement?.paid!=='입금 완료'&&['강의 완료','정산·증빙','종결·재강의'].includes(l.status)).length;const owner=active.filter(l=>l.ownerCheck).length;const totalSessions=active.reduce((a,l)=>a+(l.sessions||[]).length,0);const totalHours=active.reduce((a,l)=>a+(l.sessions||[]).length*parseHours(l.sessionTime),0);const totalStudents=active.reduce((a,l)=>a+actualAttendees(l),0);const paid=active.filter(l=>l.type==='유료').length, donate=active.filter(l=>l.type==='재능기부').length, free=active.filter(l=>l.type==='무료특강').length;const repeats=active.filter(l=>l.results?.relecture==='요청'||l.status==='종결·재강의').length;const referrals=active.filter(l=>/추천|소개/.test(instById(l.institutionId).source||'')).length;const instReviews=state.institutions.filter(i=>String(i.review||'').trim()).length;const studentReviews=active.reduce((a,l)=>a+(String(l.results?.reviews||'').trim()?1:0),0);const portfolio=active.filter(l=>/가능|반영|사용/.test(l.results?.portfolio||'')).length;return {y,instCount,yearLectureCount:yearLectures.length,sessions,hours,students,confirmed,negotiating,preparing,followup,paywait,owner,totalInst:new Set(active.map(l=>l.institutionId)).size,totalLectures:active.length,totalSessions,totalHours,totalStudents,paid,donate,free,repeats,referrals,courses:state.courses.length,instReviews,studentReviews,portfolio}}
-function nearestLecture(){const now=new Date();return state.lectures.filter(l=>!l.archived&&l.nextDate).map(l=>({l,d:new Date(l.nextDate)})).filter(x=>!isNaN(x.d)).sort((a,b)=>{const af=a.d>=now?0:1,bf=b.d>=now?0:1;return af-bf||a.d-b.d})[0]?.l||state.lectures.find(l=>!l.archived)||null}
+function stats(){const y=new Date().getFullYear();const active=state.lectures;const yearLectures=active.filter(l=>{const nd=new Date(l.nextDate);return (l.sessions||[]).some(s=>sessionYear(s)===y)||(nd.getFullYear&&nd.getFullYear()===y)});const instCount=new Set(yearLectures.map(l=>l.institutionId)).size;const sessions=yearLectures.reduce((a,l)=>a+(l.sessions||[]).filter(s=>!s.date||sessionYear(s)===y).length,0);const hours=yearLectures.reduce((a,l)=>a+(l.sessions||[]).filter(s=>!s.date||sessionYear(s)===y).length*parseHours(l.sessionTime),0);const students=yearLectures.reduce((a,l)=>a+actualAttendees(l),0);const confirmed=active.filter(l=>['확정','준비 중','진행 중'].includes(l.status)).length;const negotiating=active.filter(l=>['문의','제안·협의'].includes(l.status)).length;const preparing=active.filter(l=>l.status==='준비 중').length;const followup=active.filter(l=>l.results?.relecture==='요청'||l.status==='종결·재강의'||(l.results?.nextProposal||'')).length;const paywait=active.filter(l=>l.settlement?.paid!=='입금 완료'&&['강의 완료','정산·증빙','종결·재강의'].includes(l.status)).length;const owner=active.filter(l=>l.ownerCheck).length;const totalSessions=active.reduce((a,l)=>a+(l.sessions||[]).length,0);const totalHours=active.reduce((a,l)=>a+(l.sessions||[]).length*parseHours(l.sessionTime),0);const totalStudents=active.reduce((a,l)=>a+actualAttendees(l),0);const paid=active.filter(l=>l.type==='유료').length, donate=active.filter(l=>l.type==='재능기부').length, free=active.filter(l=>l.type==='무료특강').length;const repeats=active.filter(l=>l.results?.relecture==='요청'||l.status==='종결·재강의').length;const referrals=active.filter(l=>/추천|소개/.test(instById(l.institutionId).source||'')).length;const instReviews=state.institutions.filter(i=>String(i.review||'').trim()).length;const studentReviews=active.reduce((a,l)=>a+(String(l.results?.reviews||'').trim()?1:0),0);const portfolio=active.filter(l=>/가능|반영|사용/.test(l.results?.portfolio||'')).length;return {y,instCount,yearLectureCount:yearLectures.length,sessions,hours,students,confirmed,negotiating,preparing,followup,paywait,owner,totalInst:new Set(active.map(l=>l.institutionId)).size,totalLectures:active.length,totalSessions,totalHours,totalStudents,paid,donate,free,repeats,referrals,courses:state.courses.length,instReviews,studentReviews,portfolio}}
+function nearestLecture(){const now=new Date();return state.lectures.filter(l=>l.nextDate).map(l=>({l,d:new Date(l.nextDate)})).filter(x=>!isNaN(x.d)).sort((a,b)=>{const af=a.d>=now?0:1,bf=b.d>=now?0:1;return af-bf||a.d-b.d})[0]?.l||state.lectures[0]||null}
 function prepStats(l){const x=l?.prep||{};const total=prepItems.length,done=prepItems.filter(([k])=>!!x[k]).length;return {done,total,incomplete:total-done,rate:Math.round(done/total*100)}}
 function materialIncomplete(l){const p=materialProgress(l);return Math.max(0,p.total-p.done)}
 function getYearLectureSet(){
   const y=new Date().getFullYear();
-  const active=state.lectures.filter(l=>!l.archived);
+  const active=state.lectures;
   return {y,list:active.filter(l=>{const nd=new Date(l.nextDate);return (l.sessions||[]).some(s=>sessionYear(s)===y)||(nd.getFullYear&&nd.getFullYear()===y)})};
 }
 function careerDetailData(key){
@@ -1015,7 +1015,7 @@ function toggleCareerDetail(key,label){
   renderDetailPanel('#careerDetail',label,'이 숫자를 구성하는 실제 기록입니다.',careerDetailData(key));
 }
 function workRows(key){
-  const active=state.lectures.filter(l=>!l.archived);
+  const active=state.lectures;
   let list=[];
   if(key==='confirmed') list=active.filter(l=>['확정','준비 중','진행 중'].includes(l.status));
   if(key==='negotiating') list=active.filter(l=>['문의','제안·협의'].includes(l.status));
@@ -1033,7 +1033,7 @@ function toggleWorkDetail(key,label,desc){
 }
 let workFocusKey='', dashboardLectureId='';
 function workFilterList(key=''){
-  const active=state.lectures.filter(l=>!l.archived);
+  const active=state.lectures;
   if(!key)return active;
   if(key==='confirmed')return active.filter(l=>['확정','준비 중','진행 중'].includes(l.status));
   if(key==='negotiating')return active.filter(l=>['문의','제안·협의'].includes(l.status));
@@ -1225,17 +1225,34 @@ $$('[data-lecture-tab]').forEach(b=>b.addEventListener('click',()=>switchLecture
 function fillFilters(){const sf=$('#statusFilter'),inf=$('#institutionFilter'),cf=$('#courseFilter');sf.innerHTML='<option value="">전체 상태</option>'+STATUS.map(x=>`<option>${x}</option>`).join('');inf.innerHTML='<option value="">전체 기관</option>'+state.institutions.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');cf.innerHTML='<option value="">전체 과정</option>'+state.courses.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}
 function renderLectureArea(){fillFilters();switchLectureTab(lectureTab)}
 function renderLectureList(){
-  const q=($('#lectureSearch').value||'').trim().toLowerCase(),st=$('#statusFilter').value,ii=$('#institutionFilter').value,ci=$('#courseFilter').value,arch=$('#archiveFilter').checked;
-  const list=state.lectures.filter(l=>arch?l.archived:!l.archived).filter(l=>!st||l.status===st).filter(l=>!ii||l.institutionId===ii).filter(l=>!ci||l.courseId===ci).filter(l=>{const t=(instById(l.institutionId).name+' '+l.title).toLowerCase();return !q||t.includes(q)});
+  const q=($('#lectureSearch').value||'').trim().toLowerCase(),st=$('#statusFilter').value,ii=$('#institutionFilter').value,ci=$('#courseFilter').value;
+  const list=state.lectures.filter(l=>!st||l.status===st).filter(l=>!ii||l.institutionId===ii).filter(l=>!ci||l.courseId===ci).filter(l=>{const t=(instById(l.institutionId).name+' '+l.title).toLowerCase();return !q||t.includes(q)});
   const box=$('#lectureListView');box.classList.remove('hidden');$('#lectureDetailView').classList.add('hidden');
   if(!list.length){box.innerHTML='<div class="empty">조건에 맞는 강의건이 없습니다.</div>';return}
   box.innerHTML=list.map(l=>{
     const inst=instById(l.institutionId),course=courseById(l.courseId),ps=prepStats(l);
-    return `<article class="lecturecard ${l.archived?'archive':''}" role="button" tabindex="0" onclick="selectAndOpen('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAndOpen('${l.id}')}" aria-label="${attr(inst.name+' '+l.title)} 강의 업무판 열기"><div><div class="meta"><span class="tag orange">${esc(l.type)}</span> <span class="tag purple">${esc(l.status)}</span> <span class="tag blue">준비 ${ps.rate}%</span></div><h3>${esc(inst.name)} · ${esc(l.title)}</h3><p>과정: ${esc(course.name)}<br>${esc(l.schedule||formatDateTime(l.nextDate))} · ${esc(l.totalSessions)} · ${esc(l.sessionTime)}<br>대상: ${esc(l.audience||'확인 필요')} · 인원: ${esc(l.people||'확인 필요')}<br>정산: <b>${esc(l.settlement?.paid||'확인 필요')}</b> · 후기: <b>${esc((l.results?.reviews||l.results?.managerFeedback)?'기록 있음':'미회수')}</b><br>다음 행동: <b>${esc(l.nextAction)}</b></p></div><div class="right"><span class="card-enter">업무판 열기 →</span><small>다음 강의 ${esc(formatDateTime(l.nextDate))}</small><div class="inline-actions"><button class="btn sm" onclick="event.stopPropagation();toggleArchive('${l.id}')">${l.archived?'복원':'보관'}</button></div></div></article>`
+    return `<article class="lecturecard" role="button" tabindex="0" onclick="selectAndOpen('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAndOpen('${l.id}')}" aria-label="${attr(inst.name+' '+l.title)} 강의 업무판 열기"><div><div class="meta"><span class="tag orange">${esc(l.type)}</span> <span class="tag purple">${esc(l.status)}</span> <span class="tag blue">준비 ${ps.rate}%</span></div><h3>${esc(inst.name)} · ${esc(l.title)}</h3><p>과정: ${esc(course.name)}<br>${esc(l.schedule||formatDateTime(l.nextDate))} · ${esc(l.totalSessions)} · ${esc(l.sessionTime)}<br>대상: ${esc(l.audience||'확인 필요')} · 인원: ${esc(l.people||'확인 필요')}<br>정산: <b>${esc(l.settlement?.paid||'확인 필요')}</b> · 후기: <b>${esc((l.results?.reviews||l.results?.managerFeedback)?'기록 있음':'미회수')}</b><br>다음 행동: <b>${esc(l.nextAction)}</b></p></div><div class="right"><small>다음 강의 ${esc(formatDateTime(l.nextDate))}</small><div class="inline-actions"><button class="btn sm" type="button" onclick="event.stopPropagation();selectAndOpen('${l.id}')">열기</button><button class="btn sm danger" type="button" onclick="event.stopPropagation();deleteLecture('${l.id}')">삭제</button></div></div></article>`
   }).join('')
 }
-['lectureSearch','statusFilter','institutionFilter','courseFilter','archiveFilter'].forEach(id=>$('#'+id).addEventListener(id==='lectureSearch'?'input':'change',renderLectureList));
-function toggleArchive(id){const l=lectureById(id);if(!l)return;l.archived=!l.archived;save('보관 상태를 변경했습니다.');renderLectureList()}
+['lectureSearch','statusFilter','institutionFilter','courseFilter'].forEach(id=>$('#'+id).addEventListener(id==='lectureSearch'?'input':'change',renderLectureList));
+async function deleteLecture(id){
+  const l=lectureById(id);if(!l)return;
+  if(!cloudReady||!sb){toast('Supabase 연결 후 강의건을 삭제할 수 있습니다.');return}
+  const inst=instById(l.institutionId),attachmentIds=[...new Set((l.attachments||[]).map(a=>a?.id).filter(Boolean))];
+  const fileNotice=attachmentIds.length?`\n이 강의에 첨부한 파일 ${attachmentIds.length}개도 함께 삭제됩니다.`:'\n이 강의에 첨부된 파일은 없습니다.';
+  if(!confirm(`「${inst.name} · ${l.title}」 강의건을 삭제할까요?${fileNotice}\n입력 내용·후기·개선노트·정산 기록이 모두 삭제되며 복구할 수 없습니다.`))return;
+  try{
+    for(let i=0;i<attachmentIds.length;i+=1000){const paths=attachmentIds.slice(i,i+1000).map(cloudFilePath),{error}=await sb.storage.from(CLOUD_BUCKET).remove(paths);if(error)throw error}
+    for(const fileId of attachmentIds){try{await removeLocalAttachmentBlob(fileId)}catch(e){console.warn('Local attachment cache delete failed',e)}}
+    state.lectures=state.lectures.filter(x=>x.id!==id);
+    if(state.selectedLectureId===id)state.selectedLectureId=state.lectures[0]?.id||'';
+    lectureDetailStage='';stageEditMode=false;state.updated=new Date().toISOString();persistLocal();clearTimeout(cloudSaveTimer);cloudSavePending=true;
+    for(let attempt=0;attempt<40&&cloudSaving;attempt++)await new Promise(resolve=>setTimeout(resolve,50));
+    const saved=await flushCloudSave();
+    if(!saved)throw new Error('강의건 삭제 상태를 Supabase에 저장하지 못했습니다.');
+    refreshAll();renderLectureArea();toast('강의건과 연결 첨부파일을 삭제했습니다.');
+  }catch(e){console.error('Lecture deletion failed',e);setCloudStatus('error','삭제 저장 실패');toast('삭제를 완료하지 못했습니다. Supabase 연결을 확인해 주세요.')}
+}
 function selectAndOpen(id){
   state.selectedLectureId=id;
   const lecture=lectureById(id);
@@ -1278,7 +1295,7 @@ function courseAssetFilesHtml(c,key){const files=(c.assetFiles||[]).filter(a=>a.
 function courseAssetsHtml(c){const total=courseAssetCount(c),groups=MATERIAL_DEFS.filter(d=>(c.assetFiles||[]).some(a=>a.materialKey===d.key)).length;return `<div class="course-asset-summary"><div><h3>과정에 연결된 강의자료</h3><p>특정 기관용이 아닌, 이 교육과정에서 반복해서 사용할 원본 자료입니다.</p></div><span class="tag ${total?'green':'gray'}">${groups}/8개 분류 · 파일 ${total}개</span></div><div class="course-table-scroll"><table class="course-asset-table"><thead><tr><th style="width:18%">자료 분류</th><th>연결된 파일</th><th style="width:12%">상태</th><th style="width:110px">파일 추가</th></tr></thead><tbody>${MATERIAL_DEFS.map(d=>{const n=(c.assetFiles||[]).filter(a=>a.materialKey===d.key).length;return `<tr><td><b>${esc(d.label)}</b><span class="course-cell-sub">${esc(d.desc)}</span></td><td>${courseAssetFilesHtml(c,d.key)}</td><td><span class="course-material-count ${n?'has':''}">${n?n+'개 연결':'미연결'}</span></td><td><button class="btn sm purple" onclick="chooseCourseAsset('${d.key}')">+ 첨부</button></td></tr>`}).join('')}</tbody></table></div>`}
 function courseHistoryHtml(c){const ls=state.lectures.filter(l=>l.courseId===c.id);if(!ls.length)return '<div class="empty">이 과정을 적용한 실제 강의건이 아직 없습니다.</div>';return `<div class="course-asset-summary"><div><h3>과정 사용 이력</h3><p>이 원본 교육과정을 적용한 기관과 실제 강의건입니다.</p></div><span class="tag blue">${ls.length}건</span></div><div class="course-table-scroll"><table class="course-history-table"><thead><tr><th>기관</th><th>강의명</th><th>일정·회차</th><th>상태</th><th>열기</th></tr></thead><tbody>${ls.map(l=>`<tr><td><b>${esc(instById(l.institutionId).name)}</b></td><td>${esc(l.title)}</td><td>${esc(l.schedule||'일정 미입력')} · ${esc(l.totalSessions)}</td><td><span class="tag purple">${esc(l.status)}</span></td><td><button class="btn sm" onclick="openLectureFromCourse('${l.id}')">강의건 열기</button></td></tr>`).join('')}</tbody></table></div>`}
 function renderCourseLibraryDetail(){const c=selectedCourse(),box=$('#courseLibraryDetail');if(!box)return;if(!c){box.innerHTML='<div class="course-library-empty">왼쪽에서 교육과정을 추가해 주세요.</div>';return}const tabs=[['overview','과정 개요'],['sessions','차시별 교육과정'],['materials','연결 강의자료'],['history','사용 이력']];const body=courseLibraryTab==='sessions'?courseSessionsHtml(c):courseLibraryTab==='materials'?courseAssetsHtml(c):courseLibraryTab==='history'?courseHistoryHtml(c):courseOverviewHtml(c);box.innerHTML=`<div class="course-detail-head"><div><span class="tag purple">${esc(c.field)}</span><h2>${esc(c.name)}</h2><p>${esc(c.audience||'교육대상 미입력')} · ${c.defaultSessions}회 · ${esc(c.totalHours||'총 시간 미입력')}</p></div><div class="course-detail-actions"><button class="btn" onclick="editCourse('${c.id}')">과정 수정</button><button class="btn primary" onclick="newLectureWithCourse('${c.id}')">이 과정으로 강의 추가</button></div></div><div class="course-detail-tabs">${tabs.map(([k,label])=>`<button class="course-detail-tab ${courseLibraryTab===k?'active':''}" onclick="setCourseLibraryTab('${k}')">${label}${k==='materials'?` (${courseAssetCount(c)})`:''}</button>`).join('')}</div><div class="course-detail-body">${body}</div>`}
-function fillLectureSelects(){const cur=state.selectedLectureId,lectures=state.lectures.filter(l=>!l.archived),options=lectures.length?lectures.map(l=>`<option value="${l.id}" ${l.id===cur?'selected':''}>${esc(instById(l.institutionId).name)} · ${esc(l.title)}</option>`).join(''):'<option value="">등록된 강의가 없습니다</option>';['#resultReviewLectureSelect','#resultImprovementLectureSelect'].forEach(sel=>{const el=$(sel);if(el)el.innerHTML=options})}
+function fillLectureSelects(){const cur=state.selectedLectureId,lectures=state.lectures,options=lectures.length?lectures.map(l=>`<option value="${l.id}" ${l.id===cur?'selected':''}>${esc(instById(l.institutionId).name)} · ${esc(l.title)}</option>`).join(''):'<option value="">등록된 강의가 없습니다</option>';['#resultReviewLectureSelect','#resultImprovementLectureSelect'].forEach(sel=>{const el=$(sel);if(el)el.innerHTML=options})}
 function changeResultLecture(id){if(!id)return;setSelectedLecture(id);renderResults()}
 $('#resultReviewLectureSelect').addEventListener('change',e=>changeResultLecture(e.target.value));
 $('#resultImprovementLectureSelect').addEventListener('change',e=>changeResultLecture(e.target.value));
@@ -1580,7 +1597,7 @@ function toLocalInput(v){const d=new Date(v);if(isNaN(d))return'';const z=n=>Str
 function refreshAll(){renderDashboard();fillFilters();renderCourses();renderAssetInstitutions();renderResults()}
 function setDate(){const d=new Date();$('#dateText').textContent=new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}).format(d)}
 $('#newLectureBtn').onclick=newLecture;$('#newCourseBtn').onclick=()=>openCourseDialog();$('#backListBtn').onclick=renderLectureArea;$('#dlInstitution').onchange=toggleNewInstitutionFields;$('#dcSessions').onchange=changeCourseSessionCount;$('#saveLectureDialog').onclick=saveNewLecture;$('#saveInstitutionDialog').onclick=saveInstitution;$('#saveCourseDialog').onclick=saveCourse;$('#saveInstructorAssetEditor').onclick=saveInstructorAssetEditor;$('#downloadInstructorAssetFromViewer').onclick=()=>{if(activeViewerAssetId)downloadInstructorAsset(activeViewerAssetId)};$('#courseLibrarySearch').addEventListener('input',renderCourses);$('#courseAssetFilePicker').addEventListener('change',e=>handleCourseAssetFiles(e.target.files));$('#instructorAssetFilePicker').addEventListener('change',e=>handleInstructorAssetFiles(e.target.files));$('#instructorAssetViewerDialog').addEventListener('close',()=>closeInstructorAssetViewer(false));$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).close());
-window.showPage=showPage;window.switchLectureTab=switchLectureTab;window.selectAndOpen=selectAndOpen;window.selectAndPage=selectAndPage;window.toggleArchive=toggleArchive;window.editInstitution=editInstitution;window.editCourse=editCourse;window.openLectureDetail=openLectureDetail;window.selectLectureStage=selectLectureStage;window.renderLectureArea=renderLectureArea;
+window.showPage=showPage;window.switchLectureTab=switchLectureTab;window.selectAndOpen=selectAndOpen;window.selectAndPage=selectAndPage;window.deleteLecture=deleteLecture;window.editInstitution=editInstitution;window.editCourse=editCourse;window.openLectureDetail=openLectureDetail;window.selectLectureStage=selectLectureStage;window.renderLectureArea=renderLectureArea;
 window.toggleCareerDetail=toggleCareerDetail;window.setWorkFocus=setWorkFocus;window.setDashboardLecture=setDashboardLecture;window.openLectureFromDashboard=openLectureFromDashboard;
 window.toggleStageEdit=toggleStageEdit;window.saveLectureDetail=saveLectureDetail;window.completeStage=completeStage;window.chooseAttachment=chooseAttachment;window.chooseResultAttachment=chooseResultAttachment;window.chooseReportAttachment=chooseReportAttachment;window.showPublicReportPreview=showPublicReportPreview;window.printPublicReport=printPublicReport;window.copyPptPrompt=copyPptPrompt;window.openAttachment=openAttachment;window.deleteAttachment=deleteAttachment;window.openCreationCenter=openCreationCenter;window.selectSession=selectSession;window.selectCourseEditSession=selectCourseEditSession;window.editSessionPlan=editSessionPlan;
 window.selectCourseLibrary=selectCourseLibrary;window.setCourseLibraryTab=setCourseLibraryTab;window.chooseCourseAsset=chooseCourseAsset;window.deleteCourseAsset=deleteCourseAsset;window.newLectureWithCourse=newLectureWithCourse;window.openLectureFromCourse=openLectureFromCourse;window.editCourseSessions=editCourseSessions;
@@ -1661,7 +1678,7 @@ setDate();refreshAll();renderLectureArea();initCloud();
   window.WDCenterAgentAdapter={
     version:'1.1',space:'lecture',sourceOwner:'WD 강의센터',storageKey:KEY,mode:'read-only',
     read(){
-      const s=read(); return (s.lectures||[]).filter(x=>!x.archived).map((x,i)=>({
+      const s=read(); return (s.lectures||[]).map((x,i)=>({
         id:String(x.id||'lecture-'+i),space:'lecture',entityType:'lecture',title:String(x.title||x.name||x.courseName||'강의'),
         status:String(x.status||x.stage||'진행'),assignee:x.assignee||null,dueAt:x.nextDate||x.date||null,
         nextAction:x.nextAction||x.next_action||x.nextStep||'다음 강의·준비 확인',
