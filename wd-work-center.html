@@ -1290,11 +1290,12 @@
                 <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;">자료명</th>
                 <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">등록자</th>
                 <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">등록일</th>
+                <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">최종수정일</th>
                 <th style="padding:11px 12px;text-align:center;font-weight:800;color:#78716C;white-space:nowrap;">파일</th>
               </tr>
             </thead>
             <tbody id="aa-table-body">
-              <tr><td colspan="5" style="padding:40px;text-align:center;color:#94a3b8;">불러오는 중...</td></tr>
+              <tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8;">불러오는 중...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1316,9 +1317,10 @@
                 <button onclick="aaCloseDetailModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;padding:0 0 0 4px;">×</button>
               </div>
             </div>
-            <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;display:flex;gap:14px;">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;display:flex;gap:14px;flex-wrap:wrap;">
               <span>등록자: <b id="aa-det-author" style="color:#374151;"></b></span>
               <span>등록일: <b id="aa-det-date" style="color:#374151;"></b></span>
+              <span>최종수정일: <b id="aa-det-updated-date" style="color:#374151;"></b></span>
             </div>
             <div style="background:#fff;border:1.5px solid #E5E0D5;border-radius:10px;padding:14px;margin-bottom:14px;max-height:340px;overflow-y:auto;">
               <pre id="aa-det-content" style="margin:0;font-family:'Noto Sans KR',sans-serif;font-size:13px;color:#1C1917;white-space:pre-wrap;word-break:break-all;line-height:1.7;"></pre>
@@ -7939,11 +7941,30 @@ function _aaEsc(s){
   if(!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function aaDateOnly(value){return value?String(value).substring(0,10):'—';}
+function aaLatestDateValue(values){
+  var valid=(values||[]).filter(Boolean);if(!valid.length)return '';
+  return valid.reduce(function(latest,value){
+    if(!latest)return value;
+    var currentTime=Date.parse(value),latestTime=Date.parse(latest);
+    if(!isNaN(currentTime)&&!isNaN(latestTime))return currentTime>latestTime?value:latest;
+    return String(value)>String(latest)?value:latest;
+  },'');
+}
+function aaFinalModifiedAt(archive){
+  if(!archive)return '';
+  var values=[archive.updated_at,archive.created_at];
+  if(archive.__driveFile)values.push(archive.__driveFile.modifiedTime,archive.__driveFile.createdTime);
+  if(!archive.__driveOnly){
+    (_aaDriveByArchive[String(archive.id)]||[]).forEach(function(file){values.push(file.modifiedTime,file.createdTime);});
+  }
+  return aaLatestDateValue(values);
+}
 
 /* ── 초기 로드 ── */
 async function aaLoad(){
   var tbody = document.getElementById('aa-table-body');
-  if(tbody) tbody.innerHTML='<tr><td colspan="5" style="padding:32px;text-align:center;color:#94a3b8;">불러오는 중...</td></tr>';
+  if(tbody) tbody.innerHTML='<tr><td colspan="6" style="padding:32px;text-align:center;color:#94a3b8;">불러오는 중...</td></tr>';
   aaRefreshDetailFilter();
   try{
     var res = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?owner_id=eq.kfcyk50&order=created_at.desc&select=*',{headers:aaHeaders()});
@@ -7951,7 +7972,7 @@ async function aaLoad(){
     _aaList = await res.json();
     aaRender();
   } catch(e){
-    if(tbody) tbody.innerHTML='<tr><td colspan="5" style="padding:32px;text-align:center;color:#ef4444;">불러오기 실패: '+e.message+'</td></tr>';
+    if(tbody) tbody.innerHTML='<tr><td colspan="6" style="padding:32px;text-align:center;color:#ef4444;">불러오기 실패: '+e.message+'</td></tr>';
   }
 }
 window.aaLoad = aaLoad;
@@ -7985,7 +8006,7 @@ window.aaRender = function(){
   var tbody = document.getElementById('aa-table-body');
   if(!tbody) return;
   if(!list.length){
-    tbody.innerHTML='<tr><td colspan="5" style="padding:40px;text-align:center;color:#94a3b8;font-size:14px;">'
+    tbody.innerHTML='<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8;font-size:14px;">'
       +((kw || detailFilter!=='전체')?'조건에 맞는 자료가 없습니다.':'['+_aaTab+'] 자료가 없습니다.<br><span style="font-size:12px;">+ 자료 등록 버튼으로 추가해보세요.</span>')
       +'</td></tr>';
     return;
@@ -7997,7 +8018,8 @@ window.aaRender = function(){
       +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+aaBadge(typeInfo.detail||'—')+'</td>'
       +'<td style="padding:11px 12px;color:#1C1917;font-weight:700;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_aaEsc(a.title)+'</td>'
       +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+_aaEsc(a.author)+(a.__driveOnly?' <span style="font-size:10px;color:#16A34A;">☁</span>':'')+'</td>'
-      +'<td style="padding:11px 12px;color:#94a3b8;white-space:nowrap;">'+(a.created_at||'').substring(0,10)+'</td>'
+      +'<td style="padding:11px 12px;color:#94a3b8;white-space:nowrap;">'+aaDateOnly(a.created_at)+'</td>'
+      +'<td style="padding:11px 12px;color:#475569;font-weight:700;white-space:nowrap;">'+aaDateOnly(aaFinalModifiedAt(a))+'</td>'
       +'<td style="padding:11px 12px;text-align:center;" id="aa-file-flag-'+a.id+'">—</td>'
       +'</tr>';
   }).join('');
@@ -8062,13 +8084,15 @@ window.aaSelectRow = async function(id){
   var titleEl   = document.getElementById('aa-det-title');
   var authorEl  = document.getElementById('aa-det-author');
   var dateEl    = document.getElementById('aa-det-date');
+  var updatedDateEl = document.getElementById('aa-det-updated-date');
   var contentEl = document.getElementById('aa-det-content');
 
   var typeInfo = aaSplitType(a.data_type);
   if(typeEl)    typeEl.innerHTML   = aaBadge(typeInfo.detail||typeInfo.category);
   if(titleEl)   titleEl.textContent  = a.title || '';
   if(authorEl)  authorEl.textContent = a.author || '';
-  if(dateEl)    dateEl.textContent   = (a.created_at||'').substring(0,10);
+  if(dateEl)    dateEl.textContent   = aaDateOnly(a.created_at);
+  if(updatedDateEl) updatedDateEl.textContent = aaDateOnly(aaFinalModifiedAt(a));
   if(contentEl) contentEl.textContent = a.content || '(내용 없음)';
 
   var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn'),copyBtn=document.getElementById('aa-det-copy-btn');
@@ -8325,6 +8349,8 @@ window.aaDriveDeleteSingleFile = async function(fileId){
 async function aaLoadFiles(archiveId){
   var driveId=String(archiveId||'').indexOf('drive:')===0?String(archiveId).slice(6):'';
   var driveFiles=driveId?_aaDriveFiles.filter(function(f){return f.id===driveId;}):(_aaDriveByArchive[String(archiveId)]||[]);
+  var updatedDateEl=document.getElementById('aa-det-updated-date');
+  if(updatedDateEl&&_aaCurrent)updatedDateEl.textContent=aaDateOnly(aaFinalModifiedAt(_aaCurrent));
   var legacyFiles=[];
   try{
     if(!driveId){
