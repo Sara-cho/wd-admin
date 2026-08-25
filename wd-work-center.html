@@ -1170,7 +1170,7 @@
           </div>
           <div id="ag-panel-content" style="display:none;">
             <!-- 이름 + 버튼 -->
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;flex-wrap:wrap;">
               <div>
                 <div id="ag-panel-name" style="font-size:20px;font-weight:800;color:#1C1917;"></div>
                 <div id="ag-panel-status-badge" style="margin-top:4px;"></div>
@@ -1232,15 +1232,27 @@
           <div style="font-size:13px;color:#94a3b8;">배포파일·AI·퍼스널브랜딩·유튜브·회사·지점장님 자료를 구분하여 보관합니다.</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-          <button id="aa-drive-connect-btn" onclick="aaDriveConnect()" style="flex-shrink:0;padding:10px 14px;background:#fff;color:#166534;border:1.5px solid #86EFAC;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">Google Drive 연결</button>
-          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:10px 14px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">최신본 불러오기</button>
-          <a id="aa-drive-folder-link" href="https://drive.google.com/drive/folders/1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;padding:10px 16px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 현재 Drive 폴더</a>
+          <span id="aa-drive-connection-badge" style="flex-shrink:0;padding:7px 10px;background:#F8FAFC;color:#64748B;border:1px solid #CBD5E1;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;">● Drive 연결 안 됨</span>
+          <a id="aa-drive-folder-link" href="https://drive.google.com/drive/folders/1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;padding:10px 16px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 Google Drive</a>
+          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:10px 14px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 동기화</button>
           <button onclick="aaOpenModal()" style="flex-shrink:0;padding:11px 20px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 자료 등록</button>
         </div>
       </div>
 
       <div id="aa-drive-status" style="margin-bottom:12px;padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;color:#64748B;font-size:11px;line-height:1.55;">
-        Google Drive 연결 전 · 텍스트 자료는 정상 사용할 수 있습니다.
+        Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.
+      </div>
+
+      <!-- Google Drive 최초 연결 안내 -->
+      <div id="aa-drive-connect-overlay" role="dialog" aria-modal="true" aria-labelledby="aa-drive-connect-title" style="display:none;position:fixed;inset:0;z-index:9400;background:rgba(15,23,42,.55);align-items:center;justify-content:center;padding:18px;box-sizing:border-box;">
+        <div style="width:min(92vw,430px);background:#fff;border-radius:18px;padding:26px;box-shadow:0 20px 70px rgba(0,0,0,.28);text-align:center;">
+          <div style="width:54px;height:54px;margin:0 auto 13px;border-radius:16px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:28px;">☁️</div>
+          <div id="aa-drive-connect-title" style="font-size:19px;font-weight:900;color:#1C1917;margin-bottom:8px;">Google Drive 연결하기</div>
+          <div style="font-size:13px;line-height:1.7;color:#64748B;margin-bottom:7px;">업무작업결과 보관의 첨부파일을 최신 상태로 확인하려면 Drive 연결이 필요합니다.</div>
+          <div style="font-size:11px;color:#94A3B8;margin-bottom:20px;">연결 계정: kfcyk20@gmail.com</div>
+          <button type="button" onclick="aaDriveConnectFromModal()" style="width:100%;padding:13px;border:0;border-radius:11px;background:#2563EB;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">Google Drive 연결하기</button>
+          <button type="button" onclick="aaCloseDriveConnectModal()" style="width:100%;margin-top:8px;padding:11px;border:0;border-radius:11px;background:#F1F5F9;color:#64748B;font-size:12px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">나중에 · 텍스트 업무 계속하기</button>
+        </div>
       </div>
 
       <!-- 자료실 대분류 탭바 -->
@@ -1297,10 +1309,10 @@
                 <div id="aa-det-badge" style="margin-bottom:5px;"></div>
                 <div id="aa-det-title" style="font-size:15px;font-weight:900;color:#1C1917;word-break:break-all;"></div>
               </div>
-              <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+              <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
                 <button id="aa-det-copy-btn" onclick="aaCopyContent()" style="padding:5px 10px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:7px;font-size:11px;font-weight:700;color:#4338CA;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">📋 복사</button>
-                <button id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="padding:5px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:11px;font-weight:700;color:#16A34A;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">✏️ 수정</button>
-                <button id="aa-det-delete-btn" onclick="aaDelete()" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:7px;font-size:11px;font-weight:700;color:#DC2626;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">🗑</button>
+                <button id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="padding:5px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:11px;font-weight:700;color:#16A34A;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">✏️ 내용 수정</button>
+                <button id="aa-det-delete-btn" onclick="aaDelete()" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:7px;font-size:11px;font-weight:700;color:#DC2626;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">🗑 자료 전체 삭제</button>
                 <button onclick="aaCloseDetailModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;padding:0 0 0 4px;">×</button>
               </div>
             </div>
@@ -1311,13 +1323,9 @@
             <div style="background:#fff;border:1.5px solid #E5E0D5;border-radius:10px;padding:14px;margin-bottom:14px;max-height:340px;overflow-y:auto;">
               <pre id="aa-det-content" style="margin:0;font-family:'Noto Sans KR',sans-serif;font-size:13px;color:#1C1917;white-space:pre-wrap;word-break:break-all;line-height:1.7;"></pre>
             </div>
-            <!-- 첨부파일 -->
+            <!-- 원본 파일 -->
             <div>
-              <div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:8px;">📎 첨부파일</div>
-              <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
-                <input id="aa-file-input" type="file" multiple style="font-size:11px;flex:1;">
-                <button onclick="aaUploadFiles()" style="padding:6px 12px;background:#FBBF24;border:none;border-radius:7px;font-size:11px;font-weight:800;color:#1C1917;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">Drive 업로드</button>
-              </div>
+              <div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:8px;">📎 원본 파일</div>
               <div id="aa-file-list"><div style="font-size:11px;color:#94a3b8;">첨부파일 없음</div></div>
               <input id="aa-drive-replace-input" type="file" style="display:none;" onchange="aaDriveReplaceSelected(this)">
             </div>
@@ -1565,9 +1573,9 @@
             <textarea id="aa-f-content" rows="10" placeholder="프롬프트, 지침, 업무방식 등 내용을 입력하세요" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;resize:vertical;line-height:1.7;"></textarea>
           </div>
           <!-- [v42실행] 첨부파일 -->
-          <div>
+          <div id="aa-modal-file-block">
             <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">첨부파일</label>
-            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">첨부파일이 있을 때만 선택한 Google Drive 상세폴더에 저장됩니다. 텍스트만 등록하면 Drive 파일은 만들지 않습니다.</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">파일을 선택하면 해당 자료의 Google Drive 폴더에 함께 저장됩니다. 텍스트만 등록하면 파일은 만들지 않습니다.</div>
             <input id="aa-modal-file-input" type="file" multiple style="width:100%;font-size:12px;padding:4px 0;box-sizing:border-box;">
           </div>
         </div>
@@ -7547,6 +7555,21 @@ function aaDriveSetStatus(message,tone){
   el.style.background=p[0];el.style.borderColor=p[1];el.style.color=p[2];el.textContent=message;
 }
 function aaDriveTokenValid(){ return !!(_aaDriveToken && Date.now()<_aaDriveTokenExp-30000); }
+function aaDriveUpdateConnectionBadge(){
+  var badge=document.getElementById('aa-drive-connection-badge');if(!badge)return;
+  if(aaDriveTokenValid()){
+    badge.textContent='● Drive 연결됨';badge.style.background='#F0FDF4';badge.style.borderColor='#86EFAC';badge.style.color='#166534';
+  }else{
+    badge.textContent='● Drive 연결 안 됨';badge.style.background='#F8FAFC';badge.style.borderColor='#CBD5E1';badge.style.color='#64748B';
+  }
+}
+window.aaOpenDriveConnectModal=function(){
+  var ov=document.getElementById('aa-drive-connect-overlay');if(ov)ov.style.display='flex';
+};
+window.aaCloseDriveConnectModal=function(){
+  var ov=document.getElementById('aa-drive-connect-overlay');if(ov)ov.style.display='none';
+};
+window.aaDriveConnectFromModal=function(){aaDriveConnect();};
 function aaDriveSaveSession(){
   try{sessionStorage.setItem(_AA_DRIVE_SESSION_KEY,JSON.stringify({token:_aaDriveToken,expiresAt:_aaDriveTokenExp}));}catch(e){}
 }
@@ -7560,7 +7583,7 @@ function aaDriveRestoreSession(){
 function aaDriveClearSession(){
   _aaDriveToken='';_aaDriveTokenExp=0;
   try{sessionStorage.removeItem(_AA_DRIVE_SESSION_KEY);}catch(e){}
-  var btn=document.getElementById('aa-drive-connect-btn');if(btn)btn.textContent='Google Drive 연결';
+  aaDriveUpdateConnectionBadge();
 }
 function aaDriveInitClient(){
   if(_aaDriveTokenClient)return true;
@@ -7569,15 +7592,15 @@ function aaDriveInitClient(){
     client_id:_AA_DRIVE_CLIENT_ID,
     scope:_AA_DRIVE_SCOPE,
     callback:function(resp){
-      if(!resp||resp.error){aaDriveClearSession();aaDriveSetStatus('Google Drive 연결 실패 · 다시 연결해주세요.','error');return;}
+      if(!resp||resp.error){aaDriveClearSession();aaDriveSetStatus('Google Drive 연결 실패 · 다시 연결해주세요.','error');aaOpenDriveConnectModal();return;}
       _aaDriveToken=resp.access_token||'';
       _aaDriveTokenExp=Date.now()+(Number(resp.expires_in||3600)*1000);
       aaDriveSaveSession();
-      var btn=document.getElementById('aa-drive-connect-btn');if(btn)btn.textContent='Drive 연결됨';
-      aaDriveSetStatus('Google Drive 연결 완료 · 최신 파일을 확인하고 있습니다.','info');
+      aaDriveUpdateConnectionBadge();aaCloseDriveConnectModal();
+      aaDriveSetStatus('Google Drive 연결 완료 · 파일을 확인하고 있습니다.','info');
       aaDriveRefresh(false);
     },
-    error_callback:function(){aaDriveSetStatus('Google Drive 연결창을 완료하지 못했습니다.','warn');}
+    error_callback:function(){aaDriveUpdateConnectionBadge();aaDriveSetStatus('Google Drive 연결창을 완료하지 못했습니다.','warn');aaOpenDriveConnectModal();}
   });
   return true;
 }
@@ -7596,7 +7619,7 @@ function aaDriveHeaders(extra){
 async function aaDriveApi(url,opts){
   opts=opts||{};opts.headers=Object.assign({},aaDriveHeaders(),opts.headers||{});opts.cache='no-store';
   var res=await fetch(url,opts);
-  if(res.status===401){aaDriveClearSession();aaDriveSetStatus('Google Drive 인증이 만료되었습니다. 다시 연결해주세요.','warn');throw new Error('Drive 인증 만료');}
+  if(res.status===401){aaDriveClearSession();aaDriveSetStatus('Google Drive 인증이 만료되었습니다. 다시 연결해주세요.','warn');aaOpenDriveConnectModal();throw new Error('Drive 인증 만료');}
   if(!res.ok){var t=await res.text();throw new Error('Drive '+res.status+': '+t.substring(0,140));}
   return res;
 }
@@ -7622,7 +7645,7 @@ function aaDriveFolderIds(){
 }
 function aaDriveUpdateFolderLink(){
   var c=_AA_DRIVE_CONFIG[_aaTab];var link=document.getElementById('aa-drive-folder-link');
-  if(link&&c){link.href=c.rootUrl;link.textContent='📁 '+_aaTab+' Drive';}
+  if(link&&c){link.href=c.rootUrl;link.textContent='📁 구글드라이브 열기';}
 }
 async function aaDriveListAll(){
   var ids=aaDriveFolderIds();
@@ -7648,27 +7671,109 @@ function aaDriveIndexFiles(){
     if(aid){if(!_aaDriveByArchive[aid])_aaDriveByArchive[aid]=[];_aaDriveByArchive[aid].push(f);}
   });
 }
+function aaDriveMetaPath(fileId){return 'gdrive:'+String(fileId||'');}
+function aaDriveIdFromMeta(path){var s=String(path||'');return s.indexOf('gdrive:')===0?s.slice(7):'';}
+async function aaDriveGetArchiveFileRows(archiveId){
+  var url=aaSbUrl()+'/rest/v1/wd_ai_archive_files?archive_id=eq.'+encodeURIComponent(archiveId)+'&owner_id=eq.kfcyk50&select=*';
+  var res=await fetch(url,{headers:aaHeaders()});if(!res.ok)throw new Error('첨부파일 연결정보 확인 실패');return res.json();
+}
+async function aaDriveDeleteArchiveRecord(archiveId){
+  var rows=await aaDriveGetArchiveFileRows(archiveId);
+  for(var i=0;i<rows.length;i++){
+    if(aaDriveIdFromMeta(rows[i].file_path))continue;
+    var storageRes=await fetch(aaSbUrl()+'/storage/v1/object/wd-ai-archive-files/'+rows[i].file_path,{
+      method:'DELETE',headers:{'apikey':aaSbKey(),'Authorization':'Bearer '+aaSbKey()}
+    });
+    if(!storageRes.ok&&storageRes.status!==404)throw new Error('기존 첨부파일 삭제 실패');
+  }
+  var res=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?id=eq.'+encodeURIComponent(archiveId)+'&owner_id=eq.kfcyk50',{
+    method:'DELETE',headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'})
+  });
+  if(!res.ok)throw new Error('업무센터 자료 삭제 실패');
+}
+async function aaDriveTrashFile(fileId){
+  var url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?fields='+encodeURIComponent('id,trashed');
+  await aaDriveApi(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})});
+}
+async function aaDriveFileWasDeleted(fileId){
+  var url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?fields='+encodeURIComponent('id,trashed,parents');
+  var res=await fetch(url,{method:'GET',headers:aaDriveHeaders(),cache:'no-store'});
+  if(res.status===401){aaDriveClearSession();aaOpenDriveConnectModal();throw new Error('Google Drive 인증이 만료되었습니다.');}
+  if(res.status===404)return true;
+  if(!res.ok)throw new Error('Google Drive 삭제 여부 확인 실패');
+  var data=await res.json();return !!data.trashed;
+}
+async function aaDriveReconcileLinks(){
+  var rowsRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?owner_id=eq.kfcyk50&select=*',{headers:aaHeaders()});
+  if(!rowsRes.ok)throw new Error('Drive 연결정보를 불러오지 못했습니다.');
+  var allRows=await rowsRes.json();
+  var markers=allRows.filter(function(r){return !!aaDriveIdFromMeta(r.file_path);});
+  var markerByPath={};markers.forEach(function(r){markerByPath[r.file_path]=r;});
+  var currentById={};_aaDriveFiles.forEach(function(f){currentById[String(f.id)]=f;});
+  var archivesRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?owner_id=eq.kfcyk50&select=id',{headers:aaHeaders()});
+  if(!archivesRes.ok)throw new Error('업무센터 자료 목록을 확인하지 못했습니다.');
+  var existingArchives={};(await archivesRes.json()).forEach(function(r){existingArchives[String(r.id)]=1;});
+
+  var inserts=[];
+  for(var i=0;i<_aaDriveFiles.length;i++){
+    var f=_aaDriveFiles[i],archiveId=f.appProperties&&f.appProperties.wdArchiveId;
+    if(!archiveId||!existingArchives[String(archiveId)])continue;
+    var path=aaDriveMetaPath(f.id),existing=markerByPath[path];
+    if(!existing){
+      inserts.push({archive_id:String(archiveId),owner_id:'kfcyk50',file_name:f.name||'Drive 파일',file_path:path,file_type:f.mimeType||'',file_size:f.size?Number(f.size):null,uploaded_at:f.modifiedTime||new Date().toISOString()});
+    }else if(String(existing.archive_id)!==String(archiveId)||existing.file_name!==f.name||String(existing.file_size||'')!==String(f.size||'')){
+      var patchRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?id=eq.'+encodeURIComponent(existing.id)+'&owner_id=eq.kfcyk50',{
+        method:'PATCH',headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'}),
+        body:JSON.stringify({archive_id:String(archiveId),file_name:f.name||'Drive 파일',file_type:f.mimeType||'',file_size:f.size?Number(f.size):null,uploaded_at:f.modifiedTime||new Date().toISOString()})
+      });
+      if(!patchRes.ok)throw new Error('Drive 파일ID 갱신 실패');
+    }
+  }
+  if(inserts.length){
+    var insertRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files',{
+      method:'POST',headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'}),body:JSON.stringify(inserts)
+    });
+    if(!insertRes.ok)throw new Error('Drive 파일ID 저장 실패');
+  }
+
+  var removedFiles=0;
+  for(var m=0;m<markers.length;m++){
+    var marker=markers[m],driveId=aaDriveIdFromMeta(marker.file_path);
+    if(currentById[driveId])continue;
+    if(!(await aaDriveFileWasDeleted(driveId)))continue;
+    var deleteMarkerRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?id=eq.'+encodeURIComponent(marker.id)+'&owner_id=eq.kfcyk50',{
+      method:'DELETE',headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'})
+    });
+    if(!deleteMarkerRes.ok)throw new Error('삭제된 Drive 연결정보 정리 실패');
+    removedFiles++;
+  }
+  return {removedFiles:removedFiles};
+}
 window.aaDriveRefresh=async function(manual){
   if(_aaDriveRefreshing)return;
   if(!aaDriveTokenValid()){
-    if(manual){aaDriveConnect();}else{aaDriveSetStatus('Google Drive 연결 필요 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
+    aaDriveUpdateConnectionBadge();
+    if(manual){aaOpenDriveConnectModal();}else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
     return;
   }
   _aaDriveRefreshing=true;
-  var btn=document.getElementById('aa-drive-refresh-btn');if(btn){btn.disabled=true;btn.textContent='확인 중...';}
-  aaDriveSetStatus('Google Drive 최신 파일 확인 중...','info');
+  var btn=document.getElementById('aa-drive-refresh-btn');if(btn){btn.disabled=true;btn.textContent='동기화 중...';}
+  aaDriveSetStatus('Google Drive 파일 확인 중...','info');
   try{
-    _aaDriveFiles=await aaDriveListAll();aaDriveIndexFiles();_aaDriveLastSync=Date.now();
+    _aaDriveFiles=await aaDriveListAll();aaDriveIndexFiles();
+    var reconcile=await aaDriveReconcileLinks();_aaDriveLastSync=Date.now();
     var tm=new Date(_aaDriveLastSync);var hh=String(tm.getHours()).padStart(2,'0'),mm=String(tm.getMinutes()).padStart(2,'0');
-    aaDriveSetStatus('Google Drive 최신본 확인 완료 · 파일 '+_aaDriveFiles.length+'개 · '+hh+':'+mm,'ok');
-    var cb=document.getElementById('aa-drive-connect-btn');if(cb)cb.textContent='Drive 연결됨';
+    aaDriveSetStatus('Google Drive 확인 완료 · 파일 '+_aaDriveFiles.length+'개 · '+hh+':'+mm,'ok');
+    aaDriveUpdateConnectionBadge();
+    if(_aaCurrent&&_aaCurrent.__driveOnly&&!_aaDriveFiles.some(function(f){return f.id===_aaCurrent.__driveFile.id;})){_aaCurrent=null;aaCloseDetailModal();}
     aaRender();
+    if(reconcile.removedFiles&&typeof showT==='function')showT('🗑 Drive에서 삭제된 첨부파일 '+reconcile.removedFiles+'개를 업무센터에서도 제거했습니다.');
     if(_aaCurrent&&document.getElementById('aa-detail-modal-overlay').style.display==='flex')await aaLoadFiles(_aaCurrent.id);
   }catch(e){
-    if(aaDriveTokenValid())aaDriveSetStatus('Drive 최신본 확인 실패 · 기존 업무센터 자료는 정상 사용 가능합니다.','error');
+    if(aaDriveTokenValid())aaDriveSetStatus('Google Drive 확인 실패 · 기존 업무센터 자료는 정상 사용 가능합니다.','error');
     console.error('[WD Drive]',e);
   }finally{
-    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='최신본 불러오기';}
+    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 동기화';}
   }
 };
 function aaDriveFileMetadata(file,archiveId,category,detail){
@@ -7684,7 +7789,7 @@ async function aaDriveUploadMultipart(file,metadata){
 async function aaDriveUploadResumable(file,metadata,fileId){
   var base='https://www.googleapis.com/upload/drive/v3/files'+(fileId?'/'+encodeURIComponent(fileId):'')+'?uploadType=resumable&fields='+encodeURIComponent('id,name,mimeType,size,createdTime,modifiedTime,webViewLink,parents,appProperties');
   var init=await aaDriveApi(base,{method:fileId?'PATCH':'POST',headers:{'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':file.type||'application/octet-stream','X-Upload-Content-Length':String(file.size||0)},body:JSON.stringify(metadata||{})});
-  var location=init.headers.get('Location');if(!location)throw new Error('Drive 업로드 주소를 받지 못했습니다.');
+  var location=init.headers.get('Location');if(!location)throw new Error('첨부파일 저장 주소를 받지 못했습니다.');
   var put=await aaDriveApi(location,{method:'PUT',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
   var txt=await put.text();return txt?JSON.parse(txt):{id:fileId||''};
 }
@@ -7693,7 +7798,7 @@ async function aaDriveUploadOne(file,archiveId,category,detail){
   var same=_aaDriveFiles.filter(function(f){return f.__category===category&&f.__detail===detail&&f.name===file.name;});
   var linked=same.filter(function(f){return f.appProperties&&String(f.appProperties.wdArchiveId||'')===String(archiveId);});
   if(linked.length===1)return aaDriveReplaceContent(linked[0].id,file,false);
-  if(same.length)throw new Error('같은 이름의 Drive 파일이 이미 있습니다: '+file.name+' · 기존 파일에서 교체해주세요.');
+  if(same.length)throw new Error('같은 이름의 파일이 Google Drive에 있습니다: '+file.name+' · 기존 자료의 파일 교체를 사용해주세요.');
   var metadata=aaDriveFileMetadata(file,archiveId,category,detail);
   var created=file.size>5*1024*1024?await aaDriveUploadResumable(file,metadata,''):await aaDriveUploadMultipart(file,metadata);
   created.__category=category;created.__detail=detail;_aaDriveFiles.push(created);aaDriveIndexFiles();return created;
@@ -7714,14 +7819,60 @@ window.aaDrivePromptReplace=function(fileId){
 };
 window.aaDriveReplaceSelected=async function(input){
   var file=input&&input.files&&input.files[0];if(!file||!_aaDriveReplaceId)return;
-  try{aaDriveSetStatus('기존 Drive 파일 교체 중...','info');await aaDriveReplaceContent(_aaDriveReplaceId,file,true);if(typeof showT==='function')showT('Drive 최신 파일로 교체했습니다.');if(_aaCurrent)await aaLoadFiles(_aaCurrent.id);}
-  catch(e){alert('Drive 파일 교체 실패: '+e.message);}finally{_aaDriveReplaceId='';if(input)input.value='';}
+  try{aaDriveSetStatus('파일 교체 중...','info');await aaDriveReplaceContent(_aaDriveReplaceId,file,true);if(typeof showT==='function')showT('파일을 교체했습니다.');if(_aaCurrent)await aaLoadFiles(_aaCurrent.id);}
+  catch(e){alert('파일 교체 실패: '+e.message);}finally{_aaDriveReplaceId='';if(input)input.value='';}
 };
 window.aaDriveOpenFile=function(fileId){
   var f=_aaDriveFiles.find(function(x){return x.id===fileId;});
   if(f&&f.webViewLink)window.open(f.webViewLink,'_blank','noopener,noreferrer');
   else window.open('https://drive.google.com/open?id='+encodeURIComponent(fileId),'_blank','noopener,noreferrer');
 };
+window.aaDriveOpenArchiveFolder=function(){
+  if(!_aaCurrent)return;
+  var typeInfo=aaSplitType(_aaCurrent.data_type);
+  var target=aaDriveTarget(typeInfo.category,typeInfo.detail);
+  var config=_AA_DRIVE_CONFIG[typeInfo.category];
+  var folderId=target&&target.id?target.id:(config&&config.rootId?config.rootId:'');
+  if(!folderId){if(typeof showT==='function')showT('연결된 Google Drive 폴더가 없습니다.');return;}
+  window.open('https://drive.google.com/drive/folders/'+encodeURIComponent(folderId),'_blank','noopener,noreferrer');
+};
+window.aaDriveDownloadFile=async function(fileId){
+  var f=_aaDriveFiles.find(function(x){return x.id===fileId;});
+  if(!f){alert('Google Drive에서 원본 파일을 찾지 못했습니다.');return;}
+  if(!aaDriveTokenValid()){aaDriveSetStatus('Google Drive 인증이 필요합니다. 상단 동기화를 눌러주세요.','warn');alert('상단의 동기화를 누른 뒤 다시 다운로드해주세요.');return;}
+  var mime=String(f.mimeType||''),url='',name=f.name||'원본파일';
+  var exports={
+    'application/vnd.google-apps.document':['application/vnd.openxmlformats-officedocument.wordprocessingml.document','.docx'],
+    'application/vnd.google-apps.spreadsheet':['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.xlsx'],
+    'application/vnd.google-apps.presentation':['application/vnd.openxmlformats-officedocument.presentationml.presentation','.pptx'],
+    'application/vnd.google-apps.drawing':['image/png','.png']
+  };
+  if(exports[mime]){
+    url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'/export?mimeType='+encodeURIComponent(exports[mime][0]);
+    if(name.toLowerCase().slice(-exports[mime][1].length)!==exports[mime][1])name+=exports[mime][1];
+  }else if(mime.indexOf('application/vnd.google-apps.')===0){
+    aaDriveOpenFile(fileId);return;
+  }else{
+    url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?alt=media';
+  }
+  try{
+    var res=await aaDriveApi(url,{method:'GET'});var blob=await res.blob();var blobUrl=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=blobUrl;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(blobUrl);},1500);
+  }catch(e){alert('원본 다운로드 실패: '+e.message);}
+};
+async function aaDriveLinkExistingFile(fileId,archiveId,category,detail){
+  var current=_aaDriveFiles.find(function(f){return String(f.id)===String(fileId);});
+  if(!current)throw new Error('연결할 Google Drive 파일을 찾지 못했습니다.');
+  var target=aaDriveTarget(category,detail);if(!target)throw new Error('선택한 상세구분의 Google Drive 폴더 연결이 없습니다.');
+  var parents=current.parents||[],url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?fields='+encodeURIComponent('id,name,mimeType,size,createdTime,modifiedTime,webViewLink,parents,appProperties');
+  if(parents.indexOf(target.id)<0){
+    url+='&addParents='+encodeURIComponent(target.id);
+    if(parents.length)url+='&removeParents='+encodeURIComponent(parents.join(','));
+  }
+  var props=Object.assign({},current.appProperties||{},{wdArchiveId:String(archiveId),wdCategory:String(category),wdDetail:String(detail||''),wdOwner:String(aaOwnerId()),wdSource:'wd-work-center'});
+  await aaDriveApi(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({appProperties:props})});
+}
 async function aaDriveMoveArchiveFiles(archiveId,category,detail){
   if(!aaDriveTokenValid())return;
   var target=aaDriveTarget(category,detail);if(!target)return;
@@ -7745,8 +7896,9 @@ function aaDriveVirtualRows(){
 function aaDriveInit(){
   if(_aaDriveInitDone)return;_aaDriveInitDone=true;
   aaDriveRestoreSession();aaDriveInitClient();aaDriveUpdateFolderLink();
-  if(aaDriveTokenValid()){var b=document.getElementById('aa-drive-connect-btn');if(b)b.textContent='Drive 연결됨';aaDriveRefresh(false);}
-  else aaDriveSetStatus('Google Drive 연결 필요 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');
+  aaDriveUpdateConnectionBadge();
+  if(aaDriveTokenValid()){aaCloseDriveConnectModal();aaDriveRefresh(false);}
+  else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');setTimeout(aaOpenDriveConnectModal,250);}
 }
 
 /* ── [v44] Storage 안전 경로 생성 ── */
@@ -7920,8 +8072,8 @@ window.aaSelectRow = async function(id){
   if(contentEl) contentEl.textContent = a.content || '(내용 없음)';
 
   var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn'),copyBtn=document.getElementById('aa-det-copy-btn');
-  if(editBtn)editBtn.style.display=a.__driveOnly?'none':'';
-  if(deleteBtn)deleteBtn.style.display=a.__driveOnly?'none':'';
+  if(editBtn)editBtn.style.display='';
+  if(deleteBtn){deleteBtn.style.display='';deleteBtn.textContent=a.__driveOnly?'🗑 파일 삭제':'🗑 자료 전체 삭제';}
   if(copyBtn)copyBtn.style.display=a.__driveOnly?'none':'';
 
   // 파일 목록
@@ -7974,6 +8126,7 @@ window.aaOpenModal = function(){
   var n=document.getElementById('aa-f-title');  if(n) n.value='';
   var c=document.getElementById('aa-f-content');if(c) c.value='';
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
+  var fb=document.getElementById('aa-modal-file-block');if(fb)fb.style.display='';
   var e=document.getElementById('aa-modal-err');if(e){e.style.display='none';e.textContent='';}
   var sb=document.getElementById('aa-save-btn');if(sb){sb.disabled=false;sb.textContent='저장';}
   var ov=document.getElementById('aa-modal-overlay'); if(ov) ov.style.display='flex';
@@ -7982,18 +8135,18 @@ window.aaOpenModal = function(){
 /* ── 수정 모달 열기 ── */
 window.aaOpenModalEdit = function(){
   if(!_aaCurrent) return;
-  if(_aaCurrent.__driveOnly){if(typeof showT==='function')showT('Drive에서 직접 올린 파일은 원본 폴더에서 관리합니다.');return;}
   var a=_aaCurrent;
   aaCloseDetailModal(); // 상세 모달이 뒤에 겹쳐 보이지 않도록 먼저 닫기
-  document.getElementById('aa-modal-title').textContent='자료 수정';
-  document.getElementById('aa-edit-id').value=a.id||'';
+  document.getElementById('aa-modal-title').textContent='내용 수정';
+  document.getElementById('aa-edit-id').value=a.__driveOnly?'drive:'+String(a.__driveFile.id):(a.id||'');
   var typeInfo=aaSplitType(a.data_type);
   var g=document.getElementById('aa-f-category');if(g) g.value=typeInfo.category;
   aaRefreshDetailOptions(typeInfo.detail);
-  var u=document.getElementById('aa-f-author'); if(u) u.value=a.author||'최윤경';
+  var u=document.getElementById('aa-f-author'); if(u) u.value=a.__driveOnly?'최윤경':(a.author||'최윤경');
   var n=document.getElementById('aa-f-title');  if(n) n.value=a.title||'';
-  var c=document.getElementById('aa-f-content');if(c) c.value=a.content||'';
+  var c=document.getElementById('aa-f-content');if(c) c.value=a.__driveOnly?'':(a.content||'');
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
+  var fb=document.getElementById('aa-modal-file-block');if(fb)fb.style.display=a.__driveOnly?'none':'';
   var e=document.getElementById('aa-modal-err');if(e){e.style.display='none';e.textContent='';}
   var sb=document.getElementById('aa-save-btn');if(sb){sb.disabled=false;sb.textContent='저장';}
   var ov=document.getElementById('aa-modal-overlay'); if(ov) ov.style.display='flex';
@@ -8023,6 +8176,7 @@ window.aaSave = async function(){
   var author  = ((document.getElementById('aa-f-author')||{}).value||'최윤경').trim();
   var content = ((document.getElementById('aa-f-content')||{}).value||'').trim();
   var editId  = ((document.getElementById('aa-edit-id')||{}).value||'');
+  var driveSourceId = editId.indexOf('drive:')===0 ? editId.slice(6) : '';
   var modalFileInput = document.getElementById('aa-modal-file-input');
   var modalFiles = (modalFileInput && modalFileInput.files && modalFileInput.files.length)
     ? Array.from(modalFileInput.files) : [];
@@ -8030,7 +8184,11 @@ window.aaSave = async function(){
   if(!title){ showErr('자료명은 필수 항목입니다.'); return; }
   if((_AA_CATEGORIES[category]||[]).length && !detail){ showErr('상세구분을 선택해주세요.'); return; }
   if(modalFiles.length&&!aaDriveTokenValid()){
-    showErr('첨부파일은 Google Drive 연결 후 저장할 수 있습니다. 먼저 상단의 Google Drive 연결을 눌러주세요.');
+    showErr('첨부파일을 저장하려면 먼저 상단의 동기화를 눌러주세요.');
+    return;
+  }
+  if(driveSourceId&&!aaDriveTokenValid()){
+    showErr('Google Drive 파일과 연결하려면 먼저 상단의 동기화를 눌러주세요.');
     return;
   }
   if(modalFiles.length&&!aaDriveTarget(category,detail)){
@@ -8043,7 +8201,7 @@ window.aaSave = async function(){
   var payload = { data_type:dataType, title:title, content:content, author:author, updated_at:now };
   try{
     var res; var savedId = editId;
-    if(editId){
+    if(editId&&!driveSourceId){
       // ── 수정 ──
       res = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?id=eq.'+encodeURIComponent(editId)+'&owner_id=eq.kfcyk50',{
         method:'PATCH', headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'}),
@@ -8064,9 +8222,20 @@ window.aaSave = async function(){
     }
     if(!res.ok){ var t2=await res.text(); throw new Error(t2.substring(0,80)); }
 
+    // Drive에서 직접 들어온 파일은 새 업무센터 기록과 파일ID를 연결한다.
+    if(driveSourceId&&savedId){
+      try{await aaDriveLinkExistingFile(driveSourceId,savedId,category,detail);}
+      catch(linkErr){
+        await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?id=eq.'+encodeURIComponent(savedId)+'&owner_id=eq.kfcyk50',{
+          method:'DELETE',headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'})
+        });
+        throw linkErr;
+      }
+    }
+
     // ── 첨부파일은 Google Drive 상세폴더에만 업로드 ──
     if(modalFiles.length && savedId){
-      setBusy('Drive 업로드 중...');
+      setBusy('첨부파일 저장 중...');
       var failed = [];
       for(var i=0;i<modalFiles.length;i++){
         var file = modalFiles[i];
@@ -8076,13 +8245,13 @@ window.aaSave = async function(){
       }
       if(modalFileInput) modalFileInput.value='';
       if(failed.length){
-        if(typeof showT==='function') showT('⚠️ 일부 Drive 파일 업로드 실패');
-        alert('자료는 저장됐으나 Drive 파일 업로드 실패:\n'+failed.join('\n'));
+        if(typeof showT==='function') showT('⚠️ 일부 첨부파일 저장 실패');
+        alert('자료는 저장됐으나 첨부파일 저장 실패:\n'+failed.join('\n'));
       }
     }
 
-    var refreshDriveAfterSave=!!modalFiles.length;
-    if(editId&&aaDriveTokenValid()){
+    var refreshDriveAfterSave=!!modalFiles.length||!!driveSourceId;
+    if(editId&&!driveSourceId&&aaDriveTokenValid()){
       try{await aaDriveMoveArchiveFiles(savedId,category,detail);refreshDriveAfterSave=true;}catch(moveErr){console.error('[WD Drive move]',moveErr);}
     }
 
@@ -8090,7 +8259,7 @@ window.aaSave = async function(){
     var _aaModalOv=document.getElementById('aa-modal-overlay'); if(_aaModalOv) _aaModalOv.style.display='none';
     var _aaModalFi=document.getElementById('aa-modal-file-input'); if(_aaModalFi) _aaModalFi.value='';
     if(refreshDriveAfterSave)await aaDriveRefresh(false);
-    if(typeof showT==='function') showT(modalFiles.length?'📚 자료와 Drive 파일 저장됨':'📚 텍스트 자료 저장됨');
+    if(typeof showT==='function') showT(driveSourceId?'📚 내용과 Drive 원본을 연결했습니다.':(modalFiles.length?'📚 자료와 첨부파일 저장됨':'📚 텍스트 자료 저장됨'));
     // 저장한 데이터종류 탭으로 이동 후 로드
     if(typeof aaSetTab==='function') aaSetTab(category);
     await aaLoad();
@@ -8106,30 +8275,50 @@ window.aaSave = async function(){
 /* ── 삭제 ── */
 window.aaDelete = async function(){
   if(!_aaCurrent) return;
-  if(_aaCurrent.__driveOnly){alert('Google Drive 원본은 업무센터에서 자동 삭제하지 않습니다. Drive에서 직접 관리해주세요.');return;}
-  if(!confirm('['+_aaCurrent.title+'] 자료를 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.')) return;
+  if(_aaCurrent.__driveOnly){
+    if(!aaDriveTokenValid()){alert('상단의 동기화를 누른 뒤 다시 삭제해주세요.');return;}
+    if(!confirm('['+_aaCurrent.title+'] Google Drive 원본을 삭제하시겠습니까?\nDrive 휴지통으로 이동하며 업무센터 목록에서도 사라집니다.'))return;
+    try{
+      await aaDriveTrashFile(_aaCurrent.__driveFile.id);
+      _aaCurrent=null;aaCloseDetailModal();await aaDriveRefresh(false);
+      if(typeof showT==='function')showT('🗑 Google Drive 원본과 업무센터 항목을 삭제했습니다.');
+    }catch(e){alert('삭제 실패: '+e.message);}
+    return;
+  }
   var id = _aaCurrent.id;
   try{
-    // 파일 Storage 삭제
-    var fr = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?archive_id=eq.'+encodeURIComponent(id)+'&select=file_path',{headers:aaHeaders()});
-    if(fr.ok){
-      var fList = await fr.json();
-      for(var i=0;i<fList.length;i++){
-        await fetch(aaSbUrl()+'/storage/v1/object/wd-ai-archive-files/'+fList[i].file_path,{
-          method:'DELETE', headers:{'apikey':aaSbKey(),'Authorization':'Bearer '+aaSbKey()}
-        });
-      }
-    }
-    // 자료 삭제 (CASCADE로 파일 메타 자동 삭제)
-    var res = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?id=eq.'+encodeURIComponent(id)+'&owner_id=eq.kfcyk50',{
-      method:'DELETE', headers:Object.assign({},aaHeaders(),{'Prefer':'return=minimal'})
-    });
-    if(!res.ok) throw new Error('삭제 실패');
-    _aaCurrent=null;
-    aaCloseDetailModal();
-    if(typeof showT==='function') showT('🗑 자료 삭제됨');
-    await aaLoad();
-  } catch(e){ alert('삭제 실패: '+e.message); }
+    var rows=await aaDriveGetArchiveFileRows(id),driveIds=[];
+    rows.forEach(function(r){var did=aaDriveIdFromMeta(r.file_path);if(did&&driveIds.indexOf(did)<0)driveIds.push(did);});
+    (_aaDriveByArchive[String(id)]||[]).forEach(function(f){if(driveIds.indexOf(String(f.id))<0)driveIds.push(String(f.id));});
+    if(driveIds.length&&!aaDriveTokenValid()){alert('연결된 Google Drive 원본도 함께 삭제하려면 먼저 상단의 동기화를 눌러주세요.');return;}
+    var message=driveIds.length
+      ?'['+_aaCurrent.title+'] 자료와 Google Drive 원본을 함께 삭제하시겠습니까?\nDrive 원본은 휴지통으로 이동합니다.'
+      :'['+_aaCurrent.title+'] 자료를 업무센터에서 삭제하시겠습니까?';
+    if(!confirm(message))return;
+    for(var i=0;i<driveIds.length;i++)await aaDriveTrashFile(driveIds[i]);
+    await aaDriveDeleteArchiveRecord(id);
+    _aaCurrent=null;aaCloseDetailModal();
+    if(driveIds.length)await aaDriveRefresh(false);else await aaLoad();
+    if(typeof showT==='function')showT(driveIds.length?'🗑 업무센터 자료와 Drive 원본을 함께 삭제했습니다.':'🗑 자료를 삭제했습니다.');
+  } catch(e){
+    alert('삭제 실패: '+e.message);
+    if(aaDriveTokenValid())try{await aaDriveRefresh(false);}catch(refreshErr){}
+    else await aaLoad();
+  }
+};
+
+/* ── 연결 자료의 첨부파일 1개만 삭제 ── */
+window.aaDriveDeleteSingleFile = async function(fileId){
+  var f=_aaDriveFiles.find(function(x){return String(x.id)===String(fileId);});
+  if(!f){alert('Google Drive에서 파일을 찾지 못했습니다. 동기화 후 다시 확인해주세요.');return;}
+  if(!aaDriveTokenValid()){aaOpenDriveConnectModal();return;}
+  if(!confirm('['+f.name+'] 파일만 삭제하시겠습니까?\nDrive 휴지통으로 이동하며 글과 다른 첨부파일은 그대로 유지됩니다.'))return;
+  try{
+    await aaDriveTrashFile(f.id);
+    await aaDriveRefresh(false);
+    if(_aaCurrent)await aaLoadFiles(_aaCurrent.id);
+    if(typeof showT==='function')showT('🗑 선택한 첨부파일만 삭제했습니다.');
+  }catch(e){alert('파일 삭제 실패: '+e.message);}
 };
 
 /* ── 파일 목록 로드 ── */
@@ -8140,26 +8329,35 @@ async function aaLoadFiles(archiveId){
   try{
     if(!driveId){
       var res = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?archive_id=eq.'+encodeURIComponent(archiveId)+'&order=uploaded_at.desc&select=*',{headers:aaHeaders()});
-      if(res.ok)legacyFiles=await res.json();
+      if(res.ok){legacyFiles=(await res.json()).filter(function(f){return !aaDriveIdFromMeta(f.file_path);});}
     }
     var el = document.getElementById('aa-file-list');if(!el)return;
     var html='';
+    var driveChecked=!!driveId||!!(_aaDriveLastSync&&aaDriveTokenValid());
+    var folderBtn='<button onclick="aaDriveOpenArchiveFolder()" style="padding:5px 10px;background:#fff;border:1px solid #CBD5E1;border-radius:7px;font-size:10px;font-weight:800;color:#475569;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">📁 폴더 열기</button>';
     if(driveFiles.length){
-      html+='<div style="font-size:10px;font-weight:800;color:#166534;margin:4px 0 5px;">Google Drive 최신 원본</div>';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:9px;margin-bottom:6px;">'
+        +'<span style="font-size:11px;font-weight:800;color:#166534;">✅ Google Drive에 있음</span>'+folderBtn+'</div>';
       html+=driveFiles.map(function(f){
         var kb=f.size?Math.round(Number(f.size)/1024)+'KB':'';
         var uploadDate=f.modifiedTime?f.modifiedTime.substring(0,10):'';
         var meta=[kb,uploadDate].filter(Boolean).join(' · ');
-        var nativeFile=String(f.mimeType||'').indexOf('application/vnd.google-apps.')===0;
-        return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #DCFCE7;">'
-          +'<span style="font-size:11.5px;flex:1;color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">☁️ '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
-          +'<button onclick="aaDriveOpenFile(\''+f.id+'\')" style="padding:3px 8px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:5px;font-size:10px;font-weight:700;color:#166534;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">원본 열기</button>'
-          +(nativeFile?'':'<button onclick="aaDrivePromptReplace(\''+f.id+'\')" style="padding:3px 8px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:5px;font-size:10px;font-weight:700;color:#1D4ED8;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">교체</button>')
+        return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #DCFCE7;flex-wrap:wrap;">'
+          +'<span style="font-size:11.5px;flex:1;min-width:180px;color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">☁️ '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
+          +'<button onclick="aaDriveDownloadFile(\''+f.id+'\')" style="padding:5px 10px;background:#166534;border:1px solid #166534;border-radius:6px;font-size:10px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">원본 다운로드</button>'
+          +'<button onclick="aaDrivePromptReplace(\''+f.id+'\')" style="padding:5px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:800;color:#1D4ED8;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 교체</button>'
+          +'<button onclick="aaDriveDeleteSingleFile(\''+f.id+'\')" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:800;color:#DC2626;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 삭제</button>'
           +'</div>';
       }).join('');
+    }else if(driveChecked){
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:9px;margin-bottom:6px;">'
+        +'<span style="font-size:11px;font-weight:800;color:#64748B;">○ Google Drive에 없음</span>'+folderBtn+'</div>';
+    }else{
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;margin-bottom:6px;">'
+        +'<span style="font-size:11px;font-weight:800;color:#92400E;">● Google Drive 확인 전 · 상단 동기화 필요</span>'+folderBtn+'</div>';
     }
     if(legacyFiles.length){
-      html+='<div style="font-size:10px;font-weight:800;color:#64748B;margin:10px 0 5px;">기존 Supabase 첨부파일</div>';
+      html+='<div style="font-size:10px;font-weight:800;color:#64748B;margin:10px 0 5px;">기존 첨부파일</div>';
       html+=legacyFiles.map(function(f){
       var kb = f.file_size ? Math.round(f.file_size/1024)+'KB' : '';
       var uploadDate = f.uploaded_at ? f.uploaded_at.substring(0,10) : '';
