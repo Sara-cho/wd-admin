@@ -1268,7 +1268,7 @@
 
       <!-- 검색 + 상세구분 필터 + 정렬 -->
       <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-        <input id="aa-search" type="text" placeholder="이름·내용 검색..." oninput="aaRender()" style="flex:1;min-width:240px;padding:11px 15px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+        <input id="aa-search" type="text" placeholder="업무작업결과 전체 검색..." oninput="aaRender()" style="flex:1;min-width:240px;padding:11px 15px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
         <select id="aa-detail-filter" onchange="aaRender()" aria-label="상세구분 필터" style="padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;min-width:130px;">
           <option value="전체">상세구분 전체</option>
         </select>
@@ -1286,7 +1286,7 @@
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
               <tr style="background:#F8F7F4;border-bottom:2px solid #E5E0D5;">
-                <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">상세구분</th>
+                <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">분류</th>
                 <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;">자료명</th>
                 <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">등록자</th>
                 <th style="padding:11px 12px;text-align:left;font-weight:800;color:#78716C;white-space:nowrap;">등록일</th>
@@ -7942,6 +7942,22 @@ function _aaEsc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function aaDateOnly(value){return value?String(value).substring(0,10):'—';}
+function aaDateTime(value){
+  if(!value)return '—';
+  var date=new Date(value);
+  if(Number.isNaN(date.getTime()))return String(value).replace('T',' ').substring(0,16);
+  try{
+    var parts=new Intl.DateTimeFormat('ko-KR',{
+      timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+    }).formatToParts(date);
+    var map={};
+    parts.forEach(function(part){if(part.type!=='literal')map[part.type]=part.value;});
+    return map.year+'-'+map.month+'-'+map.day+' '+map.hour+':'+map.minute;
+  }catch(_err){
+    return String(value).replace('T',' ').substring(0,16);
+  }
+}
 function aaLatestDateValue(values){
   var valid=(values||[]).filter(Boolean);if(!valid.length)return '';
   return valid.reduce(function(latest,value){
@@ -7980,19 +7996,25 @@ window.aaLoad = aaLoad;
 /* ── 목록 렌더 ── */
 window.aaRender = function(){
   var kw   = ((document.getElementById('aa-search')||{}).value||'').trim().toLowerCase();
+  var searching = !!kw;
   var sort = ((document.getElementById('aa-sort')||{}).value||'latest');
   var detailFilter = ((document.getElementById('aa-detail-filter')||{}).value||'전체');
-  // 현재 탭 기준 필터
+  // 검색어가 있으면 7개 카테고리 전체 검색, 없으면 현재 탭 기준 표시
   var combined = _aaList.concat(aaDriveVirtualRows());
   var list = combined.filter(function(a){
     var typeInfo = aaSplitType(a.data_type);
-    var matchTab = typeInfo.category === _aaTab;
-    var matchDetail = detailFilter === '전체' || typeInfo.detail === detailFilter;
+    var matchTab = searching || typeInfo.category === _aaTab;
+    var matchDetail = searching || detailFilter === '전체' || typeInfo.detail === detailFilter;
+    var linkedFileNames = a.__driveOnly
+      ? ((a.__driveFile&&a.__driveFile.name)||'')
+      : ((_aaDriveByArchive[String(a.id)]||[]).map(function(file){return file.name||'';}).join(' '));
     var matchKw  = !kw
       || (a.title||'').toLowerCase().includes(kw)
       || (a.content||'').toLowerCase().includes(kw)
       || (a.author||'').toLowerCase().includes(kw)
-      || (typeInfo.detail||'').toLowerCase().includes(kw);
+      || (typeInfo.category||'').toLowerCase().includes(kw)
+      || (typeInfo.detail||'').toLowerCase().includes(kw)
+      || linkedFileNames.toLowerCase().includes(kw);
     return matchTab && matchDetail && matchKw;
   });
   // 정렬
@@ -8014,12 +8036,15 @@ window.aaRender = function(){
   tbody.innerHTML = list.map(function(a){
     var sel = _aaCurrent && _aaCurrent.id === a.id;
     var typeInfo = aaSplitType(a.data_type);
+    var classification = searching
+      ? '<div style="font-size:10px;color:#64748B;font-weight:800;margin-bottom:4px;">'+_aaEsc(typeInfo.category||'—')+'</div>'+aaBadge(typeInfo.detail||'—')
+      : aaBadge(typeInfo.detail||'—');
     return '<tr onclick="aaSelectRow(\''+a.id+'\')" style="cursor:pointer;border-bottom:1px solid #F1F5F9;'+(sel?'background:#FFF9C4;':'')+'\" onmouseover="if(this.style.background!==\'#FFF9C4\') this.style.background=\'#FAFAF8\'" onmouseout="this.style.background=\''+(sel?'#FFF9C4':'')+'\'\">'
-      +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+aaBadge(typeInfo.detail||'—')+'</td>'
+      +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+classification+'</td>'
       +'<td style="padding:11px 12px;color:#1C1917;font-weight:700;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_aaEsc(a.title)+'</td>'
       +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+_aaEsc(a.author)+(a.__driveOnly?' <span style="font-size:10px;color:#16A34A;">☁</span>':'')+'</td>'
       +'<td style="padding:11px 12px;color:#94a3b8;white-space:nowrap;">'+aaDateOnly(a.created_at)+'</td>'
-      +'<td style="padding:11px 12px;color:#475569;font-weight:700;white-space:nowrap;">'+aaDateOnly(aaFinalModifiedAt(a))+'</td>'
+      +'<td style="padding:11px 12px;color:#475569;font-weight:700;white-space:nowrap;">'+aaDateTime(aaFinalModifiedAt(a))+'</td>'
       +'<td style="padding:11px 12px;text-align:center;" id="aa-file-flag-'+a.id+'">—</td>'
       +'</tr>';
   }).join('');
@@ -8092,7 +8117,7 @@ window.aaSelectRow = async function(id){
   if(titleEl)   titleEl.textContent  = a.title || '';
   if(authorEl)  authorEl.textContent = a.author || '';
   if(dateEl)    dateEl.textContent   = aaDateOnly(a.created_at);
-  if(updatedDateEl) updatedDateEl.textContent = aaDateOnly(aaFinalModifiedAt(a));
+  if(updatedDateEl) updatedDateEl.textContent = aaDateTime(aaFinalModifiedAt(a));
   if(contentEl) contentEl.textContent = a.content || '(내용 없음)';
 
   var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn'),copyBtn=document.getElementById('aa-det-copy-btn');
@@ -8350,7 +8375,7 @@ async function aaLoadFiles(archiveId){
   var driveId=String(archiveId||'').indexOf('drive:')===0?String(archiveId).slice(6):'';
   var driveFiles=driveId?_aaDriveFiles.filter(function(f){return f.id===driveId;}):(_aaDriveByArchive[String(archiveId)]||[]);
   var updatedDateEl=document.getElementById('aa-det-updated-date');
-  if(updatedDateEl&&_aaCurrent)updatedDateEl.textContent=aaDateOnly(aaFinalModifiedAt(_aaCurrent));
+  if(updatedDateEl&&_aaCurrent)updatedDateEl.textContent=aaDateTime(aaFinalModifiedAt(_aaCurrent));
   var legacyFiles=[];
   try{
     if(!driveId){
