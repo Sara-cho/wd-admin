@@ -1,0 +1,1072 @@
+<!doctype html>
+<!-- WD 제작센터 독립 배포파일: wd-production-center.html -->
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>WD 제작센터 · v3.2</title>
+<meta name="description" content="WD WAVE 제작센터 통합 운영판 HTML 프로토타입" />
+<style>
+:root{
+  --bg:#f4f2f8;--paper:#fff;--ink:#1d1a2d;--muted:#6f6a7c;--line:#e6e1ec;
+  --navy:#10162f;--navy2:#171d3c;--violet:#7157d9;--violet2:#9677ed;--lav:#ede7ff;
+  --green:#1d8a69;--greenbg:#e4f6ef;--amber:#a96d10;--amberbg:#fff2d9;--red:#a64555;--redbg:#fde8ec;
+  --blue:#315ea8;--bluebg:#e8f0ff;--shadow:0 20px 60px rgba(28,22,56,.12);--r:20px;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif;line-height:1.55}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}.app{min-height:100vh;display:grid;grid-template-columns:270px 1fr}
+.sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(180deg,var(--navy),#0b1026);color:#fff;padding:24px 18px;display:flex;flex-direction:column;z-index:20;overflow:auto}
+.brand{display:flex;gap:12px;align-items:center;padding:5px 8px 22px;border-bottom:1px solid rgba(255,255,255,.11)}
+.logo{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,#ad8cff,#6546cf);font-weight:900;box-shadow:0 12px 28px rgba(125,87,233,.3)}
+.brand b{font-size:20px;letter-spacing:.03em}.brand small{display:block;color:#bdbbd1;margin-top:2px}.navlabel{font-size:11px;color:#8e93ad;padding:20px 11px 8px;font-weight:800;letter-spacing:.08em}
+.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:#d6d7e2;border-radius:13px;padding:12px 13px;text-align:left;display:flex;align-items:center;gap:11px;font-weight:750;transition:.18s}.nav button:hover{background:rgba(255,255,255,.07);transform:translateX(2px)}.nav button.active{background:linear-gradient(135deg,rgba(151,116,239,.33),rgba(113,87,217,.2));color:#fff;box-shadow:inset 0 0 0 1px rgba(203,188,255,.12)}.nav .icon{width:23px;text-align:center;font-size:17px}.sidefoot{margin-top:auto;padding:16px 10px 4px;border-top:1px solid rgba(255,255,255,.1);color:#aeb1c5;font-size:12px}.sidefoot strong{color:#fff}
+.main{min-width:0}.topbar{height:72px;position:sticky;top:0;z-index:15;background:rgba(244,242,248,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px}.crumb{font-weight:850}.crumb small{display:block;color:var(--muted);font-weight:600}.topactions{display:flex;align-items:center;gap:9px}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;background:#ef9c38}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;font-weight:800;box-shadow:0 4px 14px rgba(24,20,44,.04)}.btn:hover{transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,var(--violet),var(--violet2));border:0;color:#fff}.btn.dark{background:var(--navy);color:#fff;border-color:var(--navy)}.btn.ghost{background:transparent}.btn.danger{color:var(--red);background:var(--redbg);border-color:#f3cbd3}.btn.sm{padding:7px 10px;font-size:12px}.content{padding:28px 30px 60px;max-width:1640px;margin:0 auto}.page{display:none}.page.active{display:block}
+.hero{background:linear-gradient(125deg,#161c3b,#4e3b96 55%,#9271e5);color:#fff;border-radius:28px;padding:32px 34px;position:relative;overflow:hidden;box-shadow:var(--shadow)}.hero:after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;right:-80px;top:-130px;background:radial-gradient(circle,rgba(255,255,255,.23),transparent 65%)}.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:36px 36px}.hero>*{position:relative;z-index:2}.hero-kicker{font-size:13px;color:#ddd3ff;font-weight:800}.hero h1{font-size:38px;line-height:1.25;margin:8px 0 10px;letter-spacing:-.03em}.hero p{max-width:800px;color:#e6e0f5;margin:0}.hero-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}.hero .btn{box-shadow:none}.hero .btn.white{background:#fff;color:#302850;border:0}.hero .btn.glass{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}.stat small{color:var(--muted);font-weight:700}.stat strong{display:block;font-size:25px;margin-top:4px}.stat em{font-style:normal;font-size:12px;color:var(--green)}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:30px 0 14px}.section-head h2{font-size:23px;margin:0}.section-head p{margin:4px 0 0;color:var(--muted);font-size:14px}.roomgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.room{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;transition:.2s;min-height:190px;display:flex;flex-direction:column}.room:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#cabdf1}.roomicon{width:47px;height:47px;border-radius:15px;background:var(--lav);display:grid;place-items:center;font-size:22px}.room h3{margin:14px 0 7px}.room p{color:var(--muted);font-size:13px;margin:0}.roomfoot{margin-top:auto;padding-top:14px;display:flex;justify-content:space-between;align-items:center}.tag{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:850}.tag.ready{background:var(--greenbg);color:var(--green)}.tag.plan{background:var(--amberbg);color:var(--amber)}.tag.lock{background:#ececf1;color:#666}.tag.review{background:var(--bluebg);color:var(--blue)}
+.grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:16px}.panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px}.panel h3{margin:0 0 14px}.muted{color:var(--muted)}.list{display:grid;gap:10px}.workitem{border:1px solid var(--line);border-radius:15px;padding:13px;display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center}.workico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#f0edfa}.workitem b{display:block}.workitem small{color:var(--muted)}.workmeta{text-align:right}.empty{text-align:center;padding:38px 15px;color:var(--muted)}
+.page-title{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}.page-title h1{margin:0;font-size:30px}.page-title p{color:var(--muted);margin:5px 0 0}.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0 20px}.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 12px;font-size:12px;color:var(--muted);font-weight:750}.step.active{border-color:#8d73e0;background:var(--lav);color:#4c3999}.step.done{background:var(--greenbg);color:var(--green);border-color:#c6e8dc}.step span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#ece8f5;margin-right:6px}.step.active span{background:#785ad9;color:white}.step.done span{background:var(--green);color:#fff}
+.workbench{display:grid;grid-template-columns:290px minmax(0,1fr) 310px;gap:15px;align-items:start}.rail,.editor,.reviewbox{background:#fff;border:1px solid var(--line);border-radius:20px;padding:17px}.rail{position:sticky;top:91px}.reviewbox{position:sticky;top:91px}.rail h3,.reviewbox h3{margin:0 0 13px}.source-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;background:#faf9fc}.source-card.active{border-color:#9c87e2;background:#f0ecff}.source-card b{font-size:13px}.source-card small{display:block;color:var(--muted);margin-top:2px}.field{margin-bottom:14px}.field label{display:block;font-size:12px;font-weight:850;margin-bottom:6px;color:#4a4657}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;color:var(--ink);outline:none}.field textarea{resize:vertical;min-height:105px}.field input:focus,.field textarea:focus,.field select:focus{border-color:#8b70df;box-shadow:0 0 0 3px rgba(113,87,217,.1)}.fieldrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hint{font-size:11px;color:var(--muted);margin-top:5px}.callout{border-radius:14px;padding:12px 14px;font-size:12px;margin:11px 0}.callout.info{background:var(--bluebg);color:#254e91}.callout.warn{background:var(--amberbg);color:#80500a}.callout.safe{background:var(--greenbg);color:#17694f}.callout.danger{background:var(--redbg);color:#8f3445}.tabs{display:flex;gap:7px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow:auto}.tabs button{white-space:nowrap;border:0;background:transparent;padding:10px 11px;color:var(--muted);font-weight:800;border-bottom:3px solid transparent}.tabs button.active{color:var(--violet);border-color:var(--violet)}.editor h2{margin:0 0 6px}.editor .lead{color:var(--muted);font-size:13px;margin-bottom:17px}.formsection{border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:13px}.formsection h4{margin:0 0 12px}.choicegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.choice{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;text-align:left}.choice.active{border-color:#8b70df;background:var(--lav)}.checklist{display:grid;gap:8px}.check{border:1px solid var(--line);border-radius:11px;padding:10px;display:flex;gap:9px;align-items:flex-start;font-size:12px}.check input{margin-top:3px}.approval{border:1px solid #d9cfee;background:#faf8ff;border-radius:16px;padding:14px}.approval strong{display:block}.divider{height:1px;background:var(--line);margin:14px 0}.actions{display:flex;gap:8px;flex-wrap:wrap}.statusline{display:flex;gap:7px;flex-wrap:wrap}.status{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}.status.draft{background:#efedf3;color:#666}.status.checking{background:var(--bluebg);color:var(--blue)}.status.approved{background:var(--greenbg);color:var(--green)}.status.wait{background:var(--amberbg);color:var(--amber)}
+.previewcard{aspect-ratio:4/5;border-radius:18px;overflow:hidden;position:relative;background:linear-gradient(180deg,#7e86b7 0%,#c8acb8 42%,#445069 43%,#1d2a3c 100%);box-shadow:0 18px 45px rgba(27,22,55,.18);max-width:420px;margin:0 auto}.previewcard:after{content:"";position:absolute;inset:47% -20% 0;background:linear-gradient(155deg,transparent 0 35%,#344055 36% 51%,transparent 52%),linear-gradient(210deg,transparent 0 38%,#233148 39% 53%,transparent 54%)}.previewcopy{position:absolute;z-index:2;inset:0;padding:42px 34px;text-align:center;display:flex;flex-direction:column;justify-content:center;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.4)}.previewcopy .verse{font-size:13px;letter-spacing:.03em}.previewcopy h3{font-family:Georgia,"Noto Serif KR",serif;font-size:28px;line-height:1.5;margin:16px 0}.previewcopy p{font-size:13px;line-height:1.8}.previewcopy small{margin-top:12px}.docpreview{border:1px solid var(--line);background:#fff;border-radius:5px;min-height:540px;padding:50px 48px;box-shadow:0 16px 40px rgba(20,18,34,.09)}.docpreview h1{font-size:27px;border-bottom:3px solid var(--navy);padding-bottom:12px}.docpreview h2{font-size:18px;margin-top:25px}.docpreview p,.docpreview li{font-size:13px;color:#34313e}.codebox{background:#11162c;color:#e8e8f5;border-radius:15px;padding:16px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;white-space:pre-wrap;min-height:270px;max-height:540px;overflow:auto}.abc{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.abc .variant{border:1px solid var(--line);border-radius:14px;padding:13px}.variant b{color:var(--violet)}.variant p{font-size:12px;margin:8px 0 0;color:var(--muted)}
+.assetmap{display:grid;gap:9px}.assetrow{display:grid;grid-template-columns:130px 1fr 110px;gap:10px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:11px;font-size:12px}.assetrow strong{font-size:12px}.dcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.dcitem{border:1px solid var(--line);border-radius:12px;padding:10px}.dcitem label{font-size:10px;color:var(--muted);display:block}.dcitem code{font-size:11px;word-break:break-all}.timeline{border-left:2px solid #ddd4f5;margin-left:9px;padding-left:17px;display:grid;gap:15px}.event{position:relative}.event:before{content:"";width:10px;height:10px;border-radius:50%;background:var(--violet);position:absolute;left:-23px;top:7px}.event b{font-size:13px}.event small{display:block;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(9,10,22,.58);display:none;align-items:center;justify-content:center;z-index:80;padding:18px}.modal.show{display:flex}.modalbox{background:#fff;border-radius:24px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 30px 100px rgba(0,0,0,.35)}.modalhead{display:flex;justify-content:space-between;align-items:center}.modalhead h2{margin:0}.x{border:0;background:#f0edf5;width:34px;height:34px;border-radius:50%}.typegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.typecard{border:1px solid var(--line);border-radius:15px;padding:15px;text-align:left;background:#fff}.typecard.active{border-color:#8c72df;background:var(--lav)}.typecard b{display:block;margin-top:6px}.typecard small{color:var(--muted)}.toast{position:fixed;right:24px;bottom:24px;background:#11162c;color:#fff;padding:12px 16px;border-radius:13px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);pointer-events:none;z-index:90;transition:.25s}.toast.show{opacity:1;transform:none}
+.mobilebar{display:none}.mini-table{width:100%;border-collapse:collapse;font-size:12px}.mini-table th,.mini-table td{border-bottom:1px solid var(--line);padding:9px;text-align:left}.mini-table th{color:var(--muted)}
+@media(max-width:1250px){.roomgrid{grid-template-columns:repeat(2,1fr)}.workbench{grid-template-columns:240px 1fr}.reviewbox{grid-column:1/-1;position:static}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){.app{display:block}.sidebar{display:none}.topbar{padding:0 14px;height:62px}.topactions .pill{display:none}.content{padding:18px 14px 90px}.hero{padding:24px 20px}.hero h1{font-size:30px}.roomgrid,.stats,.grid2{grid-template-columns:1fr}.page-title{display:block}.page-title .actions{margin-top:12px}.steps{display:flex;overflow:auto}.step{min-width:145px}.workbench{display:block}.rail,.reviewbox{position:static;margin-bottom:12px}.fieldrow,.choicegrid,.abc,.dcgrid{grid-template-columns:1fr}.typegrid{grid-template-columns:1fr 1fr}.mobilebar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:50;padding-bottom:env(safe-area-inset-bottom)}.mobilebar button{border:0;background:#fff;padding:8px 4px;font-size:10px;color:var(--muted)}.mobilebar b{display:block;font-size:18px}.mobilebar button.active{color:var(--violet)}.assetrow{grid-template-columns:1fr}.docpreview{padding:30px 22px}.topbar .crumb small{display:none}}
+@media print{.sidebar,.topbar,.mobilebar,.actions,.reviewbox,.rail,.steps{display:none!important}.app{display:block}.content{padding:0}.page{display:none!important}.page.active{display:block!important}.editor{border:0}.docpreview{box-shadow:none;border:0}.hero,.stats,.roomgrid{display:none}}
+
+/* v0.3 clean home */
+body{font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;letter-spacing:-.012em}
+.app{grid-template-columns:250px 1fr}
+.sidebar{padding:22px 16px}.brand{padding:4px 8px 18px}.brand b{font-size:19px}.brand small{font-size:12px}
+.navlabel{padding:17px 11px 7px;font-size:10px}.nav{gap:3px}.nav button{min-height:44px;padding:10px 12px;font-size:14px;font-weight:760}.nav .icon{font-size:16px}
+.topbar{height:70px;padding:0 28px}.crumb{font-size:15px}.crumb small{font-size:12px;margin-top:2px}.content{padding:24px 28px 56px;max-width:1540px}
+.hero.clean{padding:26px 30px;border-radius:22px;background:linear-gradient(120deg,#18203f,#47358c 62%,#8062d8)}
+.hero.clean h1{font-size:31px;line-height:1.25;margin:7px 0 7px}.hero.clean p{font-size:14px;max-width:720px}.hero.clean .hero-actions{margin-top:17px}
+.stats.clean-stats{gap:12px;margin:14px 0 22px}.clean-stats .stat{padding:15px 17px;border-radius:15px}.clean-stats .stat small{font-size:12px}.clean-stats .stat strong{font-size:23px;margin-top:2px}.clean-stats .stat em{font-size:11px}
+.section-head.clean-head{margin:24px 0 12px;align-items:center}.section-head.clean-head h2{font-size:21px}.section-head.clean-head p{font-size:13px}
+.clean-work{grid-template-columns:1fr}.clean-work .panel{padding:16px;border-radius:17px}
+.make-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.make-card{border:1px solid var(--line);background:#fff;border-radius:17px;padding:17px;min-height:148px;display:flex;flex-direction:column;transition:.18s}.make-card:hover{border-color:#b9a9ec;box-shadow:0 10px 28px rgba(45,34,84,.08);transform:translateY(-2px)}.make-card .roomicon{width:41px;height:41px;border-radius:12px;font-size:19px}.make-card h3{font-size:17px;margin:12px 0 5px}.make-card p{font-size:12.5px;color:var(--muted);margin:0;line-height:1.55}.make-card .roomfoot{margin-top:auto;padding-top:12px}
+.flow-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.flow-card{border:1px solid var(--line);background:#fff;border-radius:15px;padding:14px 15px;text-align:left;display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;color:var(--ink)}.flow-card:hover{border-color:#b9a9ec;background:#fbfaff}.flow-num{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--lav);color:#543da2;font-weight:900}.flow-card b{display:block;font-size:14px}.flow-card small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.flow-card i{font-style:normal;color:#8d7abf;font-size:18px}
+.topactions .pill{font-size:11px}.sidefoot{line-height:1.65}
+@media(max-width:1180px){.make-grid,.flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.content{padding:16px 13px 86px}.hero.clean{padding:22px 19px}.hero.clean h1{font-size:25px}.stats.clean-stats{grid-template-columns:repeat(2,1fr)}.make-grid,.flow-grid{grid-template-columns:1fr}.topactions .pill{display:none}}
+
+/* v0.4 simple home */
+.home-flow{padding:22px 23px;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:0 8px 26px rgba(34,27,65,.055)}
+.home-flow-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:15px}.home-flow-head h1{font-size:24px;margin:0}.home-flow-head p{font-size:13px;color:var(--muted);margin:4px 0 0}
+.home-flow .flow-grid{position:relative}.home-flow .flow-card{min-height:78px}.home-flow .flow-card:not(:last-child):after{content:"";position:absolute}
+.simple-make-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.make-button{min-height:148px;border:1px solid var(--line);border-radius:17px;background:#fff;padding:17px;text-align:left;color:var(--ink);display:flex;flex-direction:column;align-items:flex-start;transition:.18s;box-shadow:0 4px 16px rgba(34,27,65,.025)}
+.make-button:hover{border-color:#aa98e5;background:#fbfaff;box-shadow:0 10px 28px rgba(45,34,84,.08);transform:translateY(-2px)}
+.make-button .roomicon{width:40px;height:40px;border-radius:12px;font-size:18px}.make-button b{font-size:16px;margin-top:12px}.make-button span:last-child{font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px}
+@media(max-width:1250px){.simple-make-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:850px){.home-flow{padding:18px 15px}.home-flow-head{display:block}.simple-make-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.simple-make-grid{grid-template-columns:1fr}.home-flow .flow-grid{grid-template-columns:1fr}}
+
+.hq-return{width:100%;min-height:46px;margin:16px 0 3px;border:1px solid rgba(210,220,255,.24);border-radius:12px;background:rgba(255,255,255,.075);color:#fff;font-size:13px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)}
+.hq-return:hover{background:rgba(255,255,255,.13);border-color:rgba(210,220,255,.38)}
+
+/* v0.6 one-screen dashboard */
+.content{padding-top:18px}.dash-section{margin-bottom:14px}.dash-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 9px}.dash-title h2{font-size:19px;margin:0}.dash-title p{font-size:11.5px;color:var(--muted);margin:2px 0 0}
+.dashboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.meter{border:1px solid var(--line);border-radius:16px;background:#fff;padding:13px 15px;text-align:left;color:var(--ink);min-height:86px;display:grid;grid-template-columns:1fr auto;align-items:center;transition:.18s}.meter:hover{border-color:#b9a9ec;background:#fbfaff}.meter small{display:block;color:var(--muted);font-size:11px;font-weight:750}.meter strong{display:block;font-size:25px;line-height:1.1;margin-top:5px}.meter-icon{width:36px;height:36px;border-radius:11px;background:var(--lav);display:grid;place-items:center;color:#5b43ad;font-size:16px}
+.home-flow{padding:15px 17px;border-radius:18px}.home-flow-head{margin-bottom:10px}.home-flow-head h1{font-size:19px}.home-flow-head p{font-size:11.5px}.home-flow .flow-card{min-height:64px;padding:10px 12px;grid-template-columns:30px 1fr auto}.home-flow .flow-num{width:30px;height:30px}.home-flow .flow-card b{font-size:13px}.home-flow .flow-card small{font-size:10.5px}
+.today-box{min-height:74px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:11px 13px}.today-empty{min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:14px;color:var(--muted);font-size:12px}.today-empty b{display:block;color:var(--ink);font-size:13px;margin-bottom:2px}.today-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.today-item{border:1px solid #ece7f2;border-radius:12px;padding:10px 11px;display:grid;grid-template-columns:32px 1fr auto;gap:9px;align-items:center}.today-item .workico{width:32px;height:32px;border-radius:9px}.today-item b{font-size:12px}.today-item small{font-size:10px;color:var(--muted)}
+.direct-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.direct-card{min-height:150px;border:1px solid var(--line);border-radius:17px;background:#fff;padding:15px;display:flex;flex-direction:column;transition:.18s}.direct-card:hover{border-color:#aa98e5;box-shadow:0 9px 25px rgba(45,34,84,.075);transform:translateY(-2px)}.direct-card .roomicon{width:39px;height:39px;border-radius:11px;font-size:18px}.direct-card h3{font-size:15px;margin:10px 0 4px}.direct-card p{font-size:11px;color:var(--muted);margin:0;line-height:1.45}.direct-card .roomfoot{padding-top:10px}.direct-card .tag{font-size:9.5px;padding:4px 7px}.direct-card .btn{font-size:10.5px;padding:6px 9px}
+@media(max-width:1250px){.direct-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.today-list{grid-template-columns:1fr 1fr}}
+@media(max-width:850px){.dashboard{grid-template-columns:1fr 1fr}.direct-grid,.today-list{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.dashboard,.direct-grid,.today-list{grid-template-columns:1fr}.today-empty{align-items:flex-start;flex-direction:column}}
+
+/* v0.7 status dashboard */
+.topbar{justify-content:flex-start}.meter{position:relative;overflow:hidden;border-width:1px;border-left-width:5px}.meter:after{content:"눌러서 확인";position:absolute;right:13px;bottom:8px;font-size:9px;font-weight:850;opacity:.62}.meter.progress{border-left-color:#7557d9;background:linear-gradient(135deg,#fff,#f6f2ff)}.meter.progress .meter-icon{background:#ece5ff;color:#6645c8}.meter.review{border-left-color:#d89224;background:linear-gradient(135deg,#fff,#fff8ea)}.meter.review .meter-icon{background:#fff0cf;color:#a66a0a}.meter.approved{border-left-color:#29906d;background:linear-gradient(135deg,#fff,#eefaf5)}.meter.approved .meter-icon{background:#dcf4e9;color:#1c795b}.meter.location{border-left-color:#3778bb;background:linear-gradient(135deg,#fff,#edf6ff)}.meter.location .meter-icon{background:#deefff;color:#2f6da9}.meter strong{font-size:27px}.meter small{color:#454052}
+.status-modal-box{width:min(660px,100%)}.status-modal-top{display:grid;grid-template-columns:72px 1fr;gap:15px;align-items:center;padding:15px;border-radius:15px;background:#f7f4fc;margin:12px 0}.status-modal-count{width:72px;height:72px;border-radius:16px;background:var(--lav);display:grid;place-items:center;font-size:30px;font-weight:950;color:#5b42ad}.status-modal-top b{display:block;font-size:15px;margin-bottom:3px}.status-modal-top p{margin:0;color:var(--muted);font-size:12px}.status-work-list{display:grid;gap:7px;margin:11px 0}.status-work{border:1px solid var(--line);border-radius:11px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}.status-work small{color:var(--muted)}.status-checks{margin:12px 0;padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:#fff}.status-checks h3{font-size:13px;margin:0 0 8px}.status-checks ol{margin:0;padding-left:19px;color:#514b5d;font-size:12px;line-height:1.8}.status-empty{padding:16px;border:1px dashed #d9d0e7;border-radius:12px;text-align:center;color:var(--muted);font-size:12px}
+
+/* v0.8 today placement */
+.today-section{padding:15px 17px;border-radius:18px;background:linear-gradient(120deg,#332365,#6748bc 68%,#8265dd);box-shadow:0 12px 28px rgba(70,48,126,.15)}
+.today-section .dash-title{margin-bottom:8px}.today-section .dash-title h2{color:#fff}.today-section .dash-title p{color:#ded5f5}.today-section .today-box{min-height:66px;border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.1)}
+.today-section .today-empty{color:#e7e0f7}.today-section .today-empty b{color:#fff}.today-section .today-empty .btn.primary{background:#fff;color:#563ca0;border:0}.today-section .today-item{background:#fff;border-color:#fff}.today-section .today-item b{color:var(--ink)}
+
+/* v0.9 home visual hierarchy */
+#page-home{display:none}#page-home.active{display:block}
+#page-home>.dash-section{margin:0 0 16px}
+#page-home .section-kicker{display:block;margin-bottom:4px;color:#7155c7;font-size:10px;font-weight:900;letter-spacing:.15em}
+#page-home .dash-title h2,#page-home .home-flow-head h1{font-size:22px;letter-spacing:-.035em}
+#page-home .dash-title p,#page-home .home-flow-head p{font-size:13px;line-height:1.55}
+
+/* One unified status board */
+#page-home>.dash-section:first-child{padding:21px 22px 22px;border:1px solid #dcd7e9;border-radius:20px;background:#fff;box-shadow:0 9px 24px rgba(35,29,67,.07)}
+#page-home>.dash-section:first-child .dash-title{margin-bottom:15px}
+#page-home .dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:0;overflow:hidden;border:1px solid #ddd7eb;border-radius:16px;background:#f8f7fb}
+#page-home .meter{position:relative;min-height:91px;padding:17px 19px;border:0;border-right:1px solid #ddd7e8;border-radius:0;background:transparent;box-shadow:none;text-align:left}
+#page-home .meter:last-child{border-right:0}
+#page-home .meter:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--meter-color,#7759d6)}
+#page-home .meter.progress{--meter-color:#7556df}#page-home .meter.review{--meter-color:#d89a24}#page-home .meter.approved{--meter-color:#27966d}#page-home .meter.location{--meter-color:#3c83c8}
+#page-home .meter:hover{z-index:1;background:#fff;box-shadow:inset 0 0 0 2px var(--meter-color)}
+#page-home .meter small{font-size:12px;font-weight:800;color:#4d465c}
+#page-home .meter strong{margin-top:5px;font-size:30px;line-height:1;color:#15112b}
+#page-home .meter-icon{width:38px;height:38px;border-radius:12px}
+#page-home .meter:after{content:"상세 보기";position:absolute;right:15px;bottom:10px;color:#777087;font-size:10px;font-weight:700}
+
+/* Compact standalone Today action band */
+#page-home .today-section{display:grid;grid-template-columns:190px 1fr;gap:18px;align-items:center;min-height:112px;padding:17px 18px;background:linear-gradient(120deg,#38266d,#6547ba 62%,#7f61dc);border-radius:19px;box-shadow:0 10px 24px rgba(78,55,139,.16)}
+#page-home .today-section .dash-title{margin:0;padding-left:3px}
+#page-home .today-section .section-kicker{color:#cfc3f3}
+#page-home .today-section .dash-title h2{font-size:23px}
+#page-home .today-section .today-box{min-height:76px;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(255,255,255,.10)}
+#page-home .today-section .today-empty{min-height:74px;padding:13px 15px}
+#page-home .today-section .today-empty b{font-size:14px}.today-section .today-empty span{font-size:12px}
+
+/* Connected common process instead of four floating buttons */
+#page-home .home-flow{padding:20px 22px 21px;border:1px solid #ddd8e9;border-radius:20px;background:#fff;box-shadow:0 9px 24px rgba(35,29,67,.06)}
+#page-home .home-flow-head{margin-bottom:17px}
+#page-home .flow-grid{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0 4px}
+#page-home .flow-grid:before{content:"";position:absolute;left:10%;right:10%;top:25px;height:2px;background:#ddd4f2}
+#page-home .flow-card{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:98px;padding:3px 12px 8px;border:0;background:transparent;text-align:center;box-shadow:none}
+#page-home .flow-card:hover{transform:none;background:#f8f5ff;border-radius:14px}
+#page-home .flow-num{display:grid;place-items:center;width:46px;height:46px;border:7px solid #fff;border-radius:50%;background:#684bc0;color:#fff;font-size:15px;font-weight:900;box-shadow:0 0 0 1px #dcd3ef}
+#page-home .flow-card b{display:block;font-size:14px}.flow-card small{display:block;margin-top:3px;font-size:11px;color:#756e80}.flow-card i{display:none}
+
+/* Five clear whole-card choices */
+#page-home>.dash-section:last-child{padding:4px 0 0}
+#page-home>.dash-section:last-child .dash-title{margin-bottom:13px}
+#page-home .direct-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+#page-home .direct-card{position:relative;min-height:150px;padding:17px 17px 15px;border:1px solid #ddd8e8;border-radius:17px;background:#fff;box-shadow:0 7px 18px rgba(35,29,67,.045);cursor:pointer}
+#page-home .direct-card:after{content:"→";position:absolute;right:16px;top:17px;color:#7253ce;font-size:20px;font-weight:900}
+#page-home .direct-card:hover{transform:translateY(-2px);border-color:#8e73df;box-shadow:0 12px 24px rgba(74,51,137,.12)}
+#page-home .direct-card .roomicon{width:43px;height:43px;margin-bottom:14px;border-radius:13px;font-size:18px}
+#page-home .direct-card h3{font-size:17px}.direct-card p{margin-top:7px;font-size:12px;line-height:1.55;color:#696274}
+#page-home .direct-card .roomfoot{display:none}
+
+@media(max-width:1100px){#page-home .direct-grid{grid-template-columns:repeat(3,1fr)}#page-home .dashboard{grid-template-columns:repeat(2,1fr)}#page-home .meter:nth-child(2){border-right:0}#page-home .meter:nth-child(-n+2){border-bottom:1px solid #ddd7e8}}
+@media(max-width:720px){#page-home>.dash-section:first-child,#page-home .home-flow{padding:17px 15px}#page-home .dashboard{grid-template-columns:1fr 1fr}#page-home .meter{min-height:87px;padding:15px 13px}#page-home .meter:after{display:none}#page-home .today-section{display:block;padding:16px}.today-section .dash-title{margin-bottom:12px!important}#page-home .flow-grid{grid-template-columns:1fr 1fr;gap:10px}#page-home .flow-grid:before{display:none}#page-home .flow-card{border:1px solid #e1dbee;border-radius:14px}#page-home .direct-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){#page-home .dashboard,#page-home .direct-grid{grid-template-columns:1fr}#page-home .meter{border-right:0;border-bottom:1px solid #ddd7e8}#page-home .meter:last-child{border-bottom:0}}
+
+/* v1.0 task-first home */
+#page-home{max-width:1480px;margin:0 auto}
+#page-home>.work-summary{display:grid;grid-template-columns:minmax(0,2.15fr) minmax(320px,.85fr);gap:12px;margin-bottom:18px}
+#page-home>.work-summary>.dash-section{margin:0;box-shadow:0 8px 20px rgba(35,29,67,.055)}
+
+/* Compact summary, not a starting area */
+#page-home .status-panel{padding:17px 18px 18px!important;border:1px solid #ddd8e8!important;border-radius:18px!important;background:#fff!important}
+#page-home .status-panel .dash-title{margin-bottom:11px!important}
+#page-home .status-panel .dash-title h2{font-size:19px}
+#page-home .status-panel .dash-title p{font-size:11px}
+#page-home .status-panel .dashboard{border-radius:13px}
+#page-home .status-panel .meter{min-height:72px;padding:13px 14px}
+#page-home .status-panel .meter strong{font-size:25px}
+#page-home .status-panel .meter-icon{width:31px;height:31px;border-radius:10px;font-size:13px}
+#page-home .status-panel .meter:after{display:none}
+
+/* Today belongs to the same summary row */
+#page-home .today-panel{display:flex;flex-direction:column;min-height:0;padding:17px 18px!important;border:1px solid #d8cef3;border-left:5px solid #6a48c1;border-radius:18px;background:#f5f1ff;box-shadow:0 8px 20px rgba(61,41,115,.07)!important}
+#page-home .today-panel .dash-title{margin:0 0 10px!important;padding:0}
+#page-home .today-panel .section-kicker{color:#6b4abc}
+#page-home .today-panel .dash-title h2{color:#20153f;font-size:19px}
+#page-home .today-panel .dash-title p{color:#73678a;font-size:11px}
+#page-home .today-panel .today-box{display:flex;flex:1;min-height:72px;padding:0;border:1px solid #e2daf5;border-radius:12px;background:#fff}
+#page-home .today-panel .today-empty{width:100%;min-height:70px;padding:12px 13px;color:#6e6679}
+#page-home .today-panel .today-empty b{color:#21183a;font-size:13px}.today-panel .today-empty span{font-size:11px}
+#page-home .today-panel .today-empty .btn.primary{background:#6242b8;color:#fff}
+
+/* The only strong action area */
+#page-home .direct-section{margin:0 0 18px!important;padding:22px!important;border-radius:22px;background:linear-gradient(125deg,#211847,#3d2879 58%,#6848bd);box-shadow:0 14px 30px rgba(48,31,94,.16)}
+#page-home .direct-section .dash-title{margin-bottom:16px!important}
+#page-home .direct-section .section-kicker{color:#cfc3f5}
+#page-home .direct-section .dash-title h2{color:#fff;font-size:25px}
+#page-home .direct-section .dash-title p{color:#d8d0eb;font-size:13px}
+#page-home .direct-section .direct-grid{gap:11px}
+#page-home .direct-section .direct-card{min-height:142px;padding:17px 16px 15px;border-color:rgba(255,255,255,.55);box-shadow:0 8px 18px rgba(17,9,43,.14)}
+#page-home .direct-section .direct-card:after{top:15px;color:#6545bd}
+#page-home .direct-section .direct-card h3{font-size:17px}
+#page-home .direct-section .direct-card p{font-size:12px;color:#676171}
+
+/* Common process is guidance, not another button wall */
+#page-home .home-flow{margin:0!important;padding:18px 21px 15px;border-radius:18px;box-shadow:none;background:#fbfafc}
+#page-home .home-flow-head{margin-bottom:12px}
+#page-home .home-flow-head h1{font-size:19px}
+#page-home .home-flow-head p{font-size:11px}
+#page-home .flow-card{min-height:78px;padding-bottom:2px}
+#page-home .flow-num{width:37px;height:37px;border-width:6px;font-size:13px}
+#page-home .flow-grid:before{top:21px}
+#page-home .flow-card b{font-size:13px}.flow-card small{font-size:10px}
+#page-home .flow-card:hover{background:transparent}
+
+@media(max-width:1050px){#page-home>.work-summary{grid-template-columns:1fr}#page-home .direct-section .direct-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){#page-home .direct-section{padding:18px 15px!important}#page-home .direct-section .direct-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){#page-home .direct-section .direct-grid{grid-template-columns:1fr}}
+
+/* v1.1 balanced home and grouped process */
+#page-home>.work-summary{grid-template-columns:minmax(0,2.15fr) minmax(350px,.85fr)}
+
+/* Today: large left working area */
+#page-home .today-panel{min-height:204px;padding:21px 22px!important;border:0;border-radius:20px;background:linear-gradient(120deg,#332267,#5940a9 62%,#7659d2);box-shadow:0 10px 25px rgba(61,41,115,.14)!important}
+#page-home .today-panel .dash-title{margin-bottom:14px!important}
+#page-home .today-panel .section-kicker{color:#d7cff2}
+#page-home .today-panel .dash-title h2{color:#fff;font-size:22px}
+#page-home .today-panel .dash-title p{color:#ddd6ee;font-size:12px}
+#page-home .today-panel .today-box{min-height:105px;border-color:rgba(255,255,255,.19);background:rgba(255,255,255,.1)}
+#page-home .today-panel .today-empty{min-height:103px;padding:18px 19px;color:#e3ddf2}
+#page-home .today-panel .today-empty b{color:#fff;font-size:14px}.today-panel .today-empty span{font-size:12px}
+#page-home .today-panel .today-empty .btn.primary{background:#fff;color:#583aa9}
+
+/* Status: compact right dashboard */
+#page-home .status-panel{min-height:204px;padding:18px!important;background:#faf8ff!important;border:1px solid #d9d0ef!important;border-left:5px solid #7556d9!important}
+#page-home .status-panel .dash-title{margin-bottom:10px!important}
+#page-home .status-panel .dash-title h2{font-size:19px}
+#page-home .status-panel .dash-title p{display:none}
+#page-home .status-panel .dashboard{grid-template-columns:1fr 1fr;border:0;border-radius:12px;gap:7px;background:transparent;overflow:visible}
+#page-home .status-panel .meter{min-height:59px;padding:10px 11px;border:1px solid #e1dced!important;border-radius:11px;background:#fff}
+#page-home .status-panel .meter:before{width:4px;height:auto;right:auto;bottom:0;border-radius:11px 0 0 11px}
+#page-home .status-panel .meter strong{font-size:22px;margin-top:3px}
+#page-home .status-panel .meter small{font-size:10px}
+#page-home .status-panel .meter-icon{display:none}
+
+/* One production card containing step 1 and step 2 */
+#page-home .production-process{margin-top:2px;padding:22px;border:1px solid #dcd6e8;border-radius:22px;background:#fff;box-shadow:0 11px 27px rgba(35,29,67,.07)}
+#page-home .process-heading{display:grid;grid-template-columns:auto 1fr;align-items:end;column-gap:12px;margin:0 2px 18px;padding:0 2px 16px;border-bottom:1px solid #e6e1ed}
+#page-home .process-heading>span{grid-column:1/-1;margin-bottom:4px;color:#7658ca;font-size:10px;font-weight:900;letter-spacing:.15em}
+#page-home .process-heading h2{font-size:24px;letter-spacing:-.04em}
+#page-home .process-heading p{padding-bottom:2px;color:#746d7f;font-size:12px}
+#page-home .production-process .sub-number{display:inline-grid;place-items:center;width:29px;height:29px;margin-right:10px;border-radius:9px;background:#684bc0;color:#fff;font-size:13px;vertical-align:2px}
+
+/* Step 1 gets comfortable inner spacing */
+#page-home .production-process .home-flow{margin:0 0 14px!important;padding:19px 20px 16px!important;border:1px solid #e0d9ed;border-radius:17px;background:#faf8fd}
+#page-home .production-process .home-flow-head{margin:0 0 15px;padding:0 2px}
+#page-home .production-process .home-flow-head h1{font-size:18px}
+#page-home .production-process .home-flow-head p{margin-top:5px;font-size:11px}
+
+/* Step 2 stays the strong selectable area but belongs to the same card */
+#page-home .production-process .direct-section{margin:0!important;padding:19px 20px 20px!important;border-radius:17px;box-shadow:none}
+#page-home .production-process .direct-section .dash-title{margin:0 0 15px!important;padding:0 2px}
+#page-home .production-process .direct-section .dash-title h2{font-size:20px}
+#page-home .production-process .direct-section .sub-number{background:#fff;color:#5d3daf}
+#page-home .production-process .direct-section .direct-card{min-height:135px}
+
+@media(max-width:1050px){#page-home>.work-summary{grid-template-columns:1fr}.work-summary .today-panel{order:1}.work-summary .status-panel{order:2}#page-home .status-panel .dashboard{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:720px){#page-home .production-process{padding:16px}#page-home .process-heading{display:block}.process-heading p{margin-top:5px}#page-home .status-panel .dashboard{grid-template-columns:1fr 1fr}}
+
+/* v1.2 calmer palette */
+/* Today uses the former quick-start purple as the single strong area. */
+#page-home .today-panel{background:linear-gradient(125deg,#211847,#3d2879 58%,#6848bd)!important}
+
+/* Status uses one neutral treatment and larger, clearer type. */
+#page-home .status-panel{background:#fff!important;border:1px solid #dcd7e7!important;border-left:1px solid #dcd7e7!important}
+#page-home .status-panel .section-kicker{color:#716b7c}
+#page-home .status-panel .dash-title h2{font-size:21px;color:#171329}
+#page-home .status-panel .dashboard{gap:8px}
+#page-home .status-panel .meter,
+#page-home .status-panel .meter.progress,
+#page-home .status-panel .meter.review,
+#page-home .status-panel .meter.approved,
+#page-home .status-panel .meter.location{min-height:62px;padding:10px 12px;border:1px solid #dfdbe7!important;border-radius:11px;background:#faf9fc!important;box-shadow:none!important}
+#page-home .status-panel .meter:before{display:none!important}
+#page-home .status-panel .meter:hover{background:#f4f1f9!important;border-color:#8874bd!important;box-shadow:none!important}
+#page-home .status-panel .meter small{font-size:12px;font-weight:800;color:#4a4553}
+#page-home .status-panel .meter strong{margin-top:4px;font-size:27px;color:#151126}
+
+/* Quick-start now shares the same quiet color as the common process. */
+#page-home .production-process .direct-section{border:1px solid #e0d9ed!important;background:#faf8fd!important;color:#171329!important}
+#page-home .production-process .direct-section .dash-title h2{color:#171329!important}
+#page-home .production-process .direct-section .dash-title p{color:#716a7b!important}
+#page-home .production-process .direct-section .sub-number{background:#684bc0!important;color:#fff!important}
+#page-home .production-process .direct-section .direct-card{border-color:#ddd7e8;background:#fff;box-shadow:0 5px 14px rgba(35,29,67,.04)}
+#page-home .production-process .direct-section .direct-card:hover{border-color:#8d76cf;box-shadow:0 8px 18px rgba(67,48,117,.09)}
+
+@media(max-width:1050px){#page-home .status-panel .dashboard{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:720px){#page-home .status-panel .dashboard{grid-template-columns:1fr 1fr}}
+
+/* v1.3 one-screen compact home */
+/* Reduce the top summary height while keeping both areas readable. */
+#page-home>.work-summary{gap:12px;margin-bottom:14px}
+#page-home .today-panel{min-height:168px;padding:16px 19px!important}
+#page-home .today-panel .dash-title{margin-bottom:9px!important}
+#page-home .today-panel .dash-title h2{font-size:20px}
+#page-home .today-panel .dash-title p{font-size:11px}
+#page-home .today-panel .today-box{min-height:76px}
+#page-home .today-panel .today-empty{min-height:74px;padding:12px 15px}
+#page-home .status-panel{min-height:168px;padding:14px 15px!important}
+#page-home .status-panel .dash-title{margin-bottom:7px!important}
+#page-home .status-panel .dash-title h2{font-size:19px}
+#page-home .status-panel .meter{min-height:52px;padding:7px 10px}
+#page-home .status-panel .meter strong{font-size:24px;margin-top:1px}
+#page-home .status-panel .meter small{font-size:11px}
+
+/* Production title is now one compact line. */
+#page-home .production-process{padding:13px 15px 15px;border-radius:19px}
+#page-home .process-heading{display:flex;align-items:center;gap:13px;min-height:43px;margin:0 2px 11px;padding:0 3px 10px;border-bottom:1px solid #e6e1ed}
+#page-home .process-heading>span{order:1;margin:0;white-space:nowrap;font-size:9px}
+#page-home .process-heading h2{order:2;white-space:nowrap;font-size:21px}
+#page-home .process-heading p{order:3;margin-left:auto;padding:0;text-align:right;font-size:11px}
+
+/* Compress both process rows so the whole dashboard fits without scrolling on PC. */
+#page-home .production-process .home-flow{margin:0 0 10px!important;padding:12px 15px 10px!important;border-radius:15px}
+#page-home .production-process .home-flow-head{display:flex;align-items:center;gap:12px;margin:0 0 7px;padding:0}
+#page-home .production-process .home-flow-head h1{white-space:nowrap;font-size:16px}
+#page-home .production-process .home-flow-head p{margin:0;font-size:10px}
+#page-home .production-process .sub-number{width:25px;height:25px;margin-right:7px;border-radius:7px;font-size:12px}
+#page-home .production-process .flow-grid{min-height:61px}
+#page-home .production-process .flow-grid:before{top:17px}
+#page-home .production-process .flow-card{min-height:64px;gap:4px;padding:0 8px}
+#page-home .production-process .flow-num{width:31px;height:31px;border-width:5px;font-size:11px}
+#page-home .production-process .flow-card b{font-size:12px}.production-process .flow-card small{margin-top:1px;font-size:9px}
+
+#page-home .production-process .direct-section{padding:12px 14px 13px!important;border-radius:15px}
+#page-home .production-process .direct-section .dash-title{display:flex;align-items:center;gap:12px;margin:0 0 8px!important;padding:0}
+#page-home .production-process .direct-section .dash-title>div{display:flex;align-items:center;gap:12px}
+#page-home .production-process .direct-section .dash-title h2{white-space:nowrap;font-size:17px}
+#page-home .production-process .direct-section .dash-title p{margin:0;font-size:10px}
+#page-home .production-process .direct-section .direct-grid{gap:9px}
+#page-home .production-process .direct-section .direct-card{min-height:108px;padding:11px 12px 10px;border-radius:13px}
+#page-home .production-process .direct-section .direct-card:after{top:10px;right:12px;font-size:17px}
+#page-home .production-process .direct-section .direct-card .roomicon{width:34px;height:34px;margin-bottom:8px;border-radius:10px;font-size:14px}
+#page-home .production-process .direct-section .direct-card h3{font-size:14px}
+#page-home .production-process .direct-section .direct-card p{margin-top:4px;font-size:10px;line-height:1.4}
+
+@media(min-width:1100px) and (min-height:760px){#page-home{padding-bottom:8px}}
+@media(max-width:720px){#page-home .process-heading{display:block;padding:4px 2px 10px}.process-heading>span{display:block;margin-bottom:3px}.process-heading p{margin-top:3px;text-align:left}.production-process .home-flow-head,.production-process .direct-section .dash-title,.production-process .direct-section .dash-title>div{display:block}.production-process .home-flow-head p,.production-process .direct-section .dash-title p{margin-top:4px}}
+
+/* v1.4 readable process type */
+/* Restore readability without returning to the tall layout. */
+#page-home .production-process .home-flow-head h1{font-size:18px}
+#page-home .production-process .home-flow-head p{font-size:11px}
+#page-home .production-process .sub-number{width:28px;height:28px;font-size:13px}
+#page-home .production-process .flow-grid{min-height:69px}
+#page-home .production-process .flow-grid:before{top:19px}
+#page-home .production-process .flow-card{min-height:70px;gap:5px}
+#page-home .production-process .flow-num{width:35px;height:35px;font-size:12px}
+#page-home .production-process .flow-card b{font-size:14px}
+#page-home .production-process .flow-card small{margin-top:2px;font-size:11px}
+
+#page-home .production-process .direct-section .dash-title h2{font-size:19px}
+#page-home .production-process .direct-section .dash-title p{font-size:11px}
+#page-home .production-process .direct-section .direct-card{min-height:116px;padding:12px 13px 11px}
+#page-home .production-process .direct-section .direct-card .roomicon{width:38px;height:38px;margin-bottom:9px;font-size:16px}
+#page-home .production-process .direct-section .direct-card h3{font-size:16px}
+#page-home .production-process .direct-section .direct-card p{margin-top:5px;font-size:11px;line-height:1.45}
+
+/* v1.5 final readability lift */
+#page-home .production-process .home-flow-head h1{font-size:19px}
+#page-home .production-process .home-flow-head p{font-size:12px}
+#page-home .production-process .flow-card b{font-size:15px}
+#page-home .production-process .flow-card small{font-size:12px}
+#page-home .production-process .direct-section .dash-title h2{font-size:20px}
+#page-home .production-process .direct-section .dash-title p{font-size:12px}
+#page-home .production-process .direct-section .direct-card{min-height:120px}
+#page-home .production-process .direct-section .direct-card h3{font-size:17px}
+#page-home .production-process .direct-section .direct-card p{font-size:12px}
+
+/* v2.0 prompt room */
+.prompt-page-title{margin-bottom:12px}.prompt-page-title h1{font-size:29px}
+.prompt-steps{margin:12px 0 16px}.prompt-steps .step{transition:.2s}.prompt-steps .step.done{background:#e7f5ef;color:#16745b;border-color:#c5e6da}.prompt-steps .step.active{box-shadow:0 0 0 2px rgba(120,90,217,.12)}
+.prompt-workbench{grid-template-columns:270px minmax(0,1fr);align-items:start}.prompt-rail{top:84px;padding:18px}.prompt-choice-head span,.prompt-editor-head span,.prompt-result-head span{color:#7354c8;font-size:10px;font-weight:900;letter-spacing:.13em}.prompt-choice-head h3{margin:4px 0 3px;font-size:21px}.prompt-choice-head p{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.5}.prompt-mode-list{display:grid;gap:8px}.prompt-mode-list .choice{width:100%;padding:13px;text-align:left}.prompt-mode-list .choice b{font-size:14px}.prompt-ai-block{margin-top:18px;padding-top:17px;border-top:1px solid var(--line)}.prompt-ai-block label{display:block;margin-bottom:7px;font-weight:850}.prompt-ai-block select{width:100%;height:45px;border:1px solid var(--line);border-radius:11px;background:#fff;padding:0 11px;font:inherit}.prompt-ai-block select:disabled{background:#f2f0f5;color:#918b9d}.prompt-ai-block .callout{margin-top:10px;font-size:11px}
+.prompt-editor{position:relative;min-height:590px}.prompt-editor fieldset{min-width:0;margin:0;padding:0;border:0}.prompt-editor.is-locked{background:#f5f3f8}.prompt-editor.is-locked fieldset{opacity:.25;filter:grayscale(.7);pointer-events:none}.prompt-lock{position:absolute;z-index:3;left:50%;top:160px;transform:translateX(-50%);width:min(390px,75%);padding:26px;border:1px solid #d9d1ea;border-radius:17px;background:rgba(255,255,255,.96);box-shadow:0 15px 34px rgba(50,35,91,.12);text-align:center}.prompt-lock-icon{font-size:27px}.prompt-lock b{display:block;margin-top:8px;font-size:17px}.prompt-lock p{margin:6px 0 0;color:var(--muted);font-size:12px}.prompt-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:17px}.prompt-editor-head h2,.prompt-result-head h2{margin:4px 0 0;font-size:23px}.prompt-editor-head p,.prompt-result-head p{margin:5px 0 0;color:var(--muted);font-size:12px}.selection-summary{padding:8px 11px;border-radius:10px;background:var(--lav);color:#573ca7;font-size:12px;font-weight:850}.prompt-build-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:15px;padding:14px 15px;border-radius:14px;background:#f7f4fc}.prompt-build-row b{display:block;font-size:14px}.prompt-build-row span{display:block;margin-top:3px;color:var(--muted);font-size:11px}
+.prompt-results{margin-top:16px;padding-top:20px;border-top:1px solid var(--line)}.prompt-result-head{margin-bottom:13px}.prompt-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.prompt-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:1px solid var(--line);border-radius:12px;background:#fff;color:#615b6b;font:inherit;cursor:pointer}.prompt-tabs button b{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:#eee9fb;color:#6447bd}.prompt-tabs button.active{border-color:#7657d3;background:#f4f0ff;color:#3e287c}.prompt-tabs button.active b{background:#684bc0;color:#fff}.prompt-variant-panel{display:none}.prompt-variant-panel.active{display:block}.variant-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-bottom:0;border-radius:13px 13px 0 0;background:#faf9fc}.variant-toolbar b{display:block;font-size:14px}.variant-toolbar span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.prompt-variant-panel .codebox{max-height:380px;margin:0;border-radius:0 0 13px 13px;white-space:pre-wrap;overflow:auto;font-family:inherit;font-size:13px;line-height:1.65}.prompt-review{margin-top:13px;border:1px solid var(--line);border-radius:14px;background:#fff}.prompt-review summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px;cursor:pointer;list-style:none}.prompt-review summary::-webkit-details-marker{display:none}.prompt-review summary b,.prompt-review summary small{display:block}.prompt-review summary small{margin-top:3px;color:var(--muted)}.prompt-review summary i{color:#6c4fc2;font-style:normal;font-size:11px;font-weight:800}.prompt-review-body{padding:0 15px 15px}.prompt-review-body .checklist{grid-template-columns:1fr 1fr}.prompt-review-body .callout{margin-top:10px}
+@media(max-width:980px){.prompt-workbench{display:block}.prompt-rail{position:static;margin-bottom:12px}.prompt-editor{min-height:0}.prompt-lock{top:130px}.prompt-review-body .checklist{grid-template-columns:1fr}}
+@media(max-width:620px){.prompt-tabs{grid-template-columns:1fr}.prompt-editor-head,.prompt-build-row,.variant-toolbar{display:block}.selection-summary{margin-top:10px}.prompt-build-row .btn,.variant-toolbar .btn{width:100%;margin-top:10px}}
+
+/* v2.1 selected draft review gate */
+.variant-toolbar [data-select-prompt].selected{background:#1f8f69;border-color:#1f8f69;color:#fff}
+.prompt-review-gate{margin-top:14px;padding:17px;border:1px solid #d9d1e9;border-radius:15px;background:#faf8fd}
+.review-gate-head,.prompt-final-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.review-gate-head span,.prompt-final-head span{color:#7354c8;font-size:10px;font-weight:900;letter-spacing:.13em}.review-gate-head h2,.prompt-final-head h2{margin:4px 0 0;font-size:21px}.review-gate-head p,.prompt-final-head p{margin:4px 0 0;color:var(--muted);font-size:12px}.selected-variant-badge{padding:9px 12px;border-radius:10px;background:#684bc0;color:#fff;font-size:12px;font-weight:850}.prompt-review-gate .prompt-review-body{padding:0}.review-complete-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}.review-complete-row .callout{flex:1;margin:0}.review-complete-row .btn:disabled{opacity:.45;cursor:not-allowed}
+.prompt-final{margin-top:14px;padding:17px;border:2px solid #785ad9;border-radius:15px;background:#fff}.prompt-final-head{align-items:center}.final-actions{display:flex;gap:8px}.prompt-final .codebox{max-height:420px;white-space:pre-wrap;overflow:auto;font-family:inherit;font-size:13px;line-height:1.65}
+@media(max-width:650px){.review-gate-head,.prompt-final-head,.review-complete-row{display:block}.selected-variant-badge{display:inline-block;margin-top:10px}.review-complete-row .btn,.final-actions{width:100%;margin-top:10px}.final-actions{display:grid}.final-actions .btn{width:100%}}
+
+/* v2.2 readability */
+#page-home .production-process .home-flow-head h1{font-size:21px}
+#page-home .production-process .home-flow-head p{font-size:12px}
+#page-home .production-process .direct-section .dash-title h2{font-size:22px}
+#page-home .production-process .direct-section .dash-title p{font-size:12px}
+#page-home .production-process .flow-card b{font-size:14px}
+#page-home .production-process .flow-card small{font-size:11px}
+#page-home .production-process .direct-card h3{font-size:18px}
+#page-home .production-process .direct-card p{font-size:12.5px}
+
+/* v2.3 manual review */
+.prompt-review-notes{margin:14px 0 4px}.prompt-review-notes textarea{min-height:105px;background:#fff}.prompt-review-notes label{font-size:13px}
+
+/* v2.4 Supabase prompt log */
+.prompt-log-open{display:inline-flex;align-items:center;gap:7px;border-color:#d9d0ef;color:#4e3695;background:#fff}
+.prompt-log-open span{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:var(--lav);color:#6647c1}
+.prompt-log-box{width:min(1280px,96vw);max-width:none;height:min(82vh,850px);padding:0;overflow:hidden;display:flex;flex-direction:column}
+.prompt-log-head{padding:24px 26px 18px;border-bottom:1px solid var(--line)}.prompt-log-head p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.prompt-log-kicker{display:block;color:#7254ca;font-size:10px;font-weight:900;letter-spacing:.15em;margin-bottom:5px}
+.prompt-log-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 26px;background:#faf9fc;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+.prompt-log-table-wrap{overflow:auto;flex:1;padding:0 26px 24px}.prompt-log-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:980px}
+.prompt-log-table th{position:sticky;top:0;z-index:1;background:#f5f2fa;color:#696276;text-align:left;font-size:11px;letter-spacing:.02em;padding:12px 11px;border-bottom:1px solid #ddd6e8}
+.prompt-log-table td{padding:13px 11px;border-bottom:1px solid var(--line);vertical-align:middle}.prompt-log-table tbody tr:hover{background:#fbfaff}.prompt-log-table .log-name{font-weight:850;color:#27213a}.prompt-log-table .log-purpose{max-width:300px;color:#635d6c}.prompt-log-table .log-date{white-space:nowrap;color:#756e7d}.prompt-log-table .log-ai{display:inline-flex;padding:5px 9px;border-radius:999px;background:#eee9fb;color:#573da9;font-size:11px;font-weight:850}.prompt-log-table .log-empty{text-align:center;padding:64px 20px;color:var(--muted)}.prompt-log-table .btn{white-space:nowrap}
+.prompt-log-editor-modal{z-index:86}.prompt-log-editor-box{width:min(980px,94vw);max-width:none;padding:25px}.prompt-log-meta{margin:13px 0 17px;padding:10px 12px;border-radius:10px;background:#f6f3fb;color:var(--muted);font-size:12px}.prompt-log-content textarea{min-height:390px;font-family:inherit;line-height:1.65;white-space:pre-wrap}.prompt-log-editor-box.is-view input:read-only,.prompt-log-editor-box.is-view textarea:read-only,.prompt-log-editor-box.is-view select:disabled{background:#f8f7fa;color:#2a2534;opacity:1}.prompt-log-editor-actions{display:flex;justify-content:space-between;gap:12px;margin-top:16px}.prompt-log-editor-actions>div{display:flex;gap:8px}
+@media(max-width:820px){.prompt-log-box,.prompt-log-editor-box{width:100%;height:100%;max-height:none;border-radius:0}.prompt-log-head,.prompt-log-toolbar{padding-left:17px;padding-right:17px}.prompt-log-table-wrap{padding:0 17px 20px}.prompt-log-editor-actions{flex-direction:column}.prompt-log-editor-actions>div{justify-content:flex-end}}
+
+.ai-page-title{margin-bottom:14px}.ai-steps{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px}.ai-steps>div{height:48px;border:1px solid var(--line);background:#fff;border-radius:14px;display:flex;align-items:center;gap:9px;padding:0 14px;color:var(--muted);font-weight:800}.ai-steps b{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#eeeafc;color:#6447ca}.ai-steps .active{border-color:#8b6df0;background:#f2edff;color:#21153f}.ai-steps .done{background:#e8f7f1;border-color:#b8e4d2;color:#15765d}.ai-steps .done b{background:#16936f;color:#fff}.ai-workbench{display:grid;grid-template-columns:285px minmax(0,1fr);gap:16px;align-items:start}.ai-target-panel,.ai-editor{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 12px 30px rgba(30,20,60,.05)}.ai-target-panel{padding:22px;position:sticky;top:90px}.ai-target-panel h2{margin:5px 0 7px}.ai-target-panel>p{color:var(--muted);font-size:13px;line-height:1.55}.eyebrow,.ai-section-head>span,.ai-result-head>div>span{color:#7050dc;font-size:11px;font-weight:900;letter-spacing:.12em}.ai-targets{display:grid;gap:9px;margin:18px 0}.ai-targets button{text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer}.ai-targets button b,.ai-targets button small{display:block}.ai-targets button small{color:var(--muted);margin-top:5px}.ai-targets button.active{border:2px solid #7757e4;background:#f0ebff;padding:13px}.ai-editor{padding:24px;position:relative;min-height:460px}.ai-editor.is-locked fieldset{opacity:.18;pointer-events:none}.ai-lock{position:absolute;z-index:3;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:rgba(250,249,253,.82);backdrop-filter:blur(2px);border-radius:22px}.ai-lock div{font-size:32px}.ai-lock span{color:var(--muted);font-size:13px}.ai-editor:not(.is-locked) .ai-lock{display:none}.ai-editor fieldset{border:0;padding:0;margin:0}.ai-section-head{margin-bottom:20px}.ai-section-head h2,.ai-result-head h2{margin:7px 0}.ai-section-head p,.ai-result-head p{margin:0;color:var(--muted)}.ai-memory-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.memory{border-radius:14px;padding:12px}.memory.allow{background:#eef9f5}.memory.once{background:#fff7e8}.memory.never{background:#fff0f2}.memory textarea{background:#fff;min-height:105px}.ai-buildbar{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#f5f2fc;border:1px solid #e5def7;border-radius:16px;padding:14px 16px;margin-top:12px}.ai-buildbar b,.ai-buildbar span{display:block}.ai-buildbar span{color:var(--muted);font-size:12px;margin-top:3px}.ai-output,.ai-test,.ai-review{border-top:1px solid var(--line);margin-top:24px;padding-top:24px}.ai-input-step{border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px;background:#fff}.ai-flow-title{display:flex;gap:12px;align-items:flex-start;margin-bottom:15px}.ai-flow-title>b{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:#6747d3;color:#fff;font-size:17px}.ai-flow-title span{color:#7050dc;font-size:10px;font-weight:900;letter-spacing:.1em}.ai-flow-title h2{margin:2px 0 3px}.ai-flow-title p{margin:0;color:var(--muted);font-size:12px}.ai-test-result{margin-top:14px;border:1px solid #ded6f4;background:#faf8ff;border-radius:16px;padding:16px}.ai-test-reply,.ai-test-assessment{border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px;margin-bottom:10px}.ai-test-reply>span,.ai-test-assessment>span{display:block;color:#7050dc;font-size:11px;font-weight:900;margin-bottom:8px}.ai-test-reply pre{white-space:pre-wrap;line-height:1.7;margin:0;font:inherit}.ai-test-assessment ul{margin:6px 0 10px;padding-left:20px}.ai-test-assessment .test-pass{color:#168264;font-weight:900}.ai-test-assessment .test-fix{color:#c26819;font-weight:900}.ai-result-head{display:flex;justify-content:space-between;align-items:flex-end;gap:15px}.ai-tabs{margin-top:15px;display:flex;gap:7px;flex-wrap:wrap}.ai-tabs button{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 13px;font-weight:800;color:var(--muted);cursor:pointer}.ai-tabs button.active{background:#6545cf;color:#fff;border-color:#6545cf}.ai-code{margin-top:10px;min-height:260px;max-height:500px;white-space:pre-wrap;overflow:auto;line-height:1.75}.ai-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.ai-checks label{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;font-weight:700}.ai-final{background:#faf8ff;margin-left:-24px;margin-right:-24px;margin-bottom:-24px;padding:24px;border-radius:0 0 22px 22px}.ai-log-code{min-height:350px}.ai-log-detail-modal .prompt-log-editor-box{max-width:1050px}@media(max-width:1050px){.ai-workbench{grid-template-columns:1fr}.ai-target-panel{position:static}.ai-targets{grid-template-columns:repeat(3,1fr)}.ai-memory-grid{grid-template-columns:1fr}.ai-steps span{display:none}}@media(max-width:700px){.ai-steps{gap:4px}.ai-steps>div{justify-content:center;padding:0}.ai-targets{grid-template-columns:1fr}.ai-checks{grid-template-columns:1fr}.ai-result-head,.ai-buildbar{align-items:stretch;flex-direction:column}.ai-editor{padding:16px}.ai-final{margin-left:-16px;margin-right:-16px;margin-bottom:-16px;padding:16px}}
+
+/* AI 개인화 제작실 v2.2 · 단일 작업창 마법사 */
+.ai-wizard-steps{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.ai-wizard-steps button{appearance:none;border:1px solid #ddd8eb;background:#fff;border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:9px;color:#6e6880;text-align:left;font-weight:800}
+.ai-wizard-steps button b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#eee9fa;color:#7657d6}
+.ai-wizard-steps button.active{border-color:#7d5ce4;background:#f3efff;color:#27194e;box-shadow:0 5px 16px rgba(91,63,172,.10)}
+.ai-wizard-steps button.done{border-color:#a9ddcb;background:#ecf9f4;color:#0f7b5c}.ai-wizard-steps button.done b{background:#15966f;color:#fff}
+.ai-wizard-workbench{align-items:start}.ai-wizard-editor{min-height:610px}.ai-stage-panel{min-height:545px;display:flex;flex-direction:column}.ai-stage-panel .ai-stage-nav{margin-top:auto}
+.ai-stage-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:22px;border-top:1px solid #e7e1ef}
+.ai-stage-panel .field textarea{min-height:110px}.ai-stage-panel[data-ai-panel="4"] .field textarea{min-height:180px}
+.ai-stage-panel .ai-flow-title{margin-bottom:26px}.ai-stage-panel .ai-flow-title h2{font-size:27px;margin:4px 0 7px}.ai-stage-panel .ai-flow-title p{font-size:14px}
+.ai-test-result{margin-top:18px}.ai-test-reply pre{max-height:245px;overflow:auto}.ai-test-assessment{margin-top:14px}
+.ai-final .ai-code{min-height:330px;max-height:430px;overflow:auto}
+.ai-target-panel{position:sticky;top:86px}.ai-targets button.active{border-color:#7753e8;background:#f0ebff;box-shadow:0 0 0 1px #7753e8 inset}
+@media(max-width:1050px){.ai-wizard-steps{grid-template-columns:repeat(3,1fr)}.ai-wizard-workbench{grid-template-columns:1fr}.ai-target-panel{position:static}.ai-wizard-editor{min-height:560px}}
+@media(max-width:680px){.ai-wizard-steps{grid-template-columns:repeat(2,1fr)}.ai-wizard-steps button{padding:10px}.ai-stage-panel .ai-flow-title h2{font-size:23px}}
+
+
+/* AI 개인화 제작실 v2.4 · 기억 선택 입력 및 함수 연결 보완 */
+.ai-wizard-steps{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
+.ai-wizard-steps button{appearance:none;border:1px solid #ddd8eb;background:#fff;border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:9px;color:#6e6880;text-align:left;font-weight:800}
+.ai-wizard-steps button b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#eee9fa;color:#7657d6}
+.ai-wizard-steps button.active{border-color:#7d5ce4;background:#f3efff;color:#27194e;box-shadow:0 5px 16px rgba(91,63,172,.10)}
+.ai-wizard-steps button.done{border-color:#a9ddcb;background:#ecf9f4;color:#0f7b5c}.ai-wizard-steps button.done b{background:#15966f;color:#fff}
+.ai-wizard-workbench{align-items:start}.ai-wizard-editor{min-height:610px}.ai-stage-panel{min-height:545px;display:flex;flex-direction:column}.ai-stage-panel .ai-stage-nav{margin-top:auto}
+.ai-stage-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:22px;border-top:1px solid #e7e1ef}
+.ai-stage-panel .field textarea{min-height:110px}.ai-stage-panel[data-ai-panel="5"] .field textarea{min-height:180px}
+.ai-stage-panel .ai-flow-title{margin-bottom:26px}.ai-stage-panel .ai-flow-title h2{font-size:27px;margin:4px 0 7px}.ai-stage-panel .ai-flow-title p{font-size:14px}
+.ai-test-result{margin-top:18px}.ai-test-reply pre{max-height:245px;overflow:auto}.ai-test-assessment{margin-top:14px}
+.ai-final .ai-code{min-height:330px;max-height:430px;overflow:auto}
+.ai-wizard-workbench{display:block;max-width:1500px;margin:0 auto}.ai-targets button.active{border-color:#7753e8;background:#f0ebff;box-shadow:0 0 0 1px #7753e8 inset}.ai-target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.ai-target-grid button{min-height:150px;justify-content:center;align-items:flex-start;padding:24px}.ai-target-grid button b{font-size:21px}.ai-target-grid button small{font-size:13px}
+.ai-scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.ai-scope-grid button{appearance:none;border:1px solid #ded8eb;background:#fff;border-radius:18px;padding:24px;text-align:left;min-height:190px;display:flex;flex-direction:column;gap:10px;color:#211936}.ai-scope-grid button>span{width:44px;height:44px;border-radius:14px;background:#eee8ff;color:#6843d1;display:grid;place-items:center;font-size:12px;font-weight:900}.ai-scope-grid button b{font-size:21px}.ai-scope-grid button small{color:var(--muted);font-size:13px;line-height:1.65}.ai-scope-grid button.active{border-color:#7753e8;background:#f4f0ff;box-shadow:0 0 0 1px #7753e8 inset,0 10px 24px rgba(90,57,174,.10)}
+.ai-memory-grid label em{font-style:normal;font-size:11px;color:#7958d8;background:#eee8ff;border-radius:999px;padding:3px 7px;margin-left:5px}.ai-optional-note{display:flex;gap:12px;align-items:center;margin:14px 0 18px;padding:13px 15px;border-radius:13px;background:#f4f0ff;color:#523897}.ai-optional-note span{font-size:12px;color:#706582}
+.ai-final{gap:18px}.ai-final-actions{display:flex;flex-wrap:wrap;justify-content:flex-end}.ai-final-saved{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid #b8e5d5;border-radius:14px;background:#ecf9f4;color:#13775c}.ai-final-saved span{font-size:12px;color:#4e776b}.ai-final-guide{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:#f4f0ff;color:#3f2a78}.ai-final-guide span{font-size:12px;color:#6a5e81}.ai-final-all{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ai-final-card{border:1px solid #dfd9eb;border-radius:16px;background:#fff;overflow:hidden}.ai-final-card.wide{grid-column:1/-1}.ai-final-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #ebe6f1;background:#faf8fd}.ai-final-card-head h3{margin:0;font-size:16px}.ai-final-card-head button{appearance:none;border:1px solid #dcd4ec;border-radius:9px;background:#fff;padding:7px 10px;font-weight:800;color:#6043bc;cursor:pointer}.ai-final-card pre{margin:0;padding:17px;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:13px;line-height:1.7;color:#272033;min-height:90px}.ai-final-card[data-kind="instructions"] pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#11172b;color:#eef1ff}.ai-final-card[data-kind="knowledge"] pre{min-height:150px}
+@media(max-width:1050px){.ai-wizard-steps{grid-template-columns:repeat(4,1fr)}.ai-wizard-editor{min-height:560px}}
+@media(max-width:680px){.ai-wizard-steps{grid-template-columns:repeat(2,1fr)}.ai-wizard-steps button{padding:10px}.ai-stage-panel .ai-flow-title h2{font-size:23px}.ai-final-all{grid-template-columns:1fr}.ai-final-card.wide{grid-column:auto}.ai-final-saved,.ai-final-guide{align-items:flex-start;flex-direction:column}.ai-final-actions{justify-content:flex-start}}
+
+.ai-progress{display:inline-flex;align-items:center;white-space:nowrap;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900;background:#eee9fa;color:#6546c4}.ai-progress.tested{background:#fff0cd;color:#9b6800}.ai-progress.completed{background:#def5ea;color:#11785b}.log-muted{font-size:11px;color:#aaa3b7}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">WD</div><div><b>WD WAVE</b><small>제작센터 · v3.2</small></div></div><button type="button" class="hq-return" data-wd-home="1">🏠 WD 본진</button>
+    <div class="navlabel">HOME</div>
+    <nav class="nav" id="mainNav">
+      <button class="active" data-page="home"><span class="icon">⌂</span>제작센터 홈</button>
+      <div class="navlabel">만들기</div>
+      <button data-page="prompt"><span class="icon">✦</span>프롬프트 제작</button>
+      <button data-page="gpt"><span class="icon">◎</span>AI 개인화</button>
+      <button data-page="document"><span class="icon">▤</span>문서 제작</button>
+      <button data-page="image"><span class="icon">▧</span>이미지 제작</button>
+      <div class="navlabel">공통 관리</div>
+      <button data-page="source"><span class="icon">◫</span>원석 정리</button>
+      <button data-page="instruction"><span class="icon">☷</span>지침 제작</button>
+      <button data-page="review"><span class="icon">✓</span>전문 검수</button>
+      <button data-page="outputs"><span class="icon">◆</span>승인본·결과 위치</button>
+      <div class="navlabel">연결</div>
+      <button data-page="datacenter"><span class="icon">▦</span>데이터센터 연결</button>
+      <button data-page="guide"><span class="icon">?</span>운영 기준</button>
+    </nav>
+    <div class="sidefoot"><strong>현재 상태</strong><br>이 브라우저에 임시 저장<br>외부 API는 아직 연결되지 않았습니다.</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="crumb" id="crumb">WD 제작센터 홈<small>사람의 원석을 실제 결과물로 연결합니다.</small></div>
+      
+    </header>
+
+    <div class="content">
+      <section class="page active" id="page-home">
+                <div class="work-summary">
+<section class="dash-section today-section today-panel" aria-labelledby="today-title">
+          <div class="dash-title"><div><span class="section-kicker">TODAY</span><h2 id="today-title">오늘 할 일</h2><p>오늘 처리할 작업만 표시합니다.</p></div></div>
+          <div class="today-box" id="todayWorks"></div>
+        </section>
+<section class="dash-section status-panel" aria-labelledby="dashboard-title">
+          <div class="dash-title"><div><span class="section-kicker">WORK STATUS</span><h2 id="dashboard-title">제작 현황</h2><p>진행 상태를 누르면 해당 작업과 다음 행동을 확인합니다.</p></div></div>
+          <div class="dashboard">
+            <button class="meter progress" data-status-modal="progress"><span><small>진행 중</small><strong id="statDraft">0</strong></span><span class="meter-icon">✦</span></button>
+            <button class="meter review" data-status-modal="review"><span><small>검수 대기</small><strong id="statReview">0</strong></span><span class="meter-icon">✓</span></button>
+            <button class="meter approved" data-status-modal="approved"><span><small>승인 완료</small><strong id="statApproved">0</strong></span><span class="meter-icon">◆</span></button>
+            <button class="meter location" data-status-modal="location"><span><small>결과 위치 기록</small><strong id="statDC">0</strong></span><span class="meter-icon">▦</span></button>
+          </div>
+        </section>
+        </div>
+
+        <section class="production-process" aria-labelledby="process-title">
+          <div class="process-heading"><span>PRODUCTION PROCESS</span><h2 id="process-title">제작 과정</h2><p>공통 순서를 확인한 뒤 필요한 제작실을 선택합니다.</p></div>
+<section class="home-flow dash-section" aria-labelledby="flow-title">
+          <div class="home-flow-head"><div><h1 id="flow-title"><span class="sub-number">1</span>공통 제작 과정</h1><p>제작실이 달라도 결과물은 이 흐름으로 정리됩니다.</p></div></div>
+          <div class="flow-grid">
+            <button class="flow-card" data-jump="source"><span class="flow-num">1</span><span><b>원석 정리</b><small>원문·자료 보존</small></span><i>›</i></button>
+            <button class="flow-card" data-jump="prompt"><span class="flow-num">2</span><span><b>제작 진행</b><small>결과물 제작</small></span><i>›</i></button>
+            <button class="flow-card" data-jump="review"><span class="flow-num">3</span><span><b>전문 검수</b><small>사실·품질 확인</small></span><i>›</i></button>
+            <button class="flow-card" data-jump="outputs"><span class="flow-num">4</span><span><b>승인·결과 위치</b><small>최종본 기록</small></span><i>›</i></button>
+          </div>
+        </section>
+<section class="dash-section direct-section" aria-labelledby="direct-title">
+          <div class="dash-title"><div><h2 id="direct-title"><span class="sub-number">2</span>개별 바로 만들기</h2><p>필요한 제작실 하나를 선택하면 바로 시작합니다.</p></div></div>
+          <div class="direct-grid">
+            <article class="direct-card" data-open="prompt"><div class="roomicon">✦</div><h3>프롬프트</h3><p>AI에게 맡길 일을 정확한 요청문으로 정리합니다.</p><div class="roomfoot"><span class="tag ready">사용 가능</span><button class="btn sm">열기</button></div></article>
+            <article class="direct-card" data-open="instruction"><div class="roomicon">☷</div><h3>지침</h3><p>역할·기준·금지사항·완료 조건을 정리합니다.</p><div class="roomfoot"><span class="tag ready">사용 가능</span><button class="btn sm">열기</button></div></article>
+            <article class="direct-card" data-open="gpt"><div class="roomicon">◎</div><h3>AI 개인화</h3><p>설명·지침·기억 기준을 한 번에 만듭니다.</p><div class="roomfoot"><span class="tag ready">사용 가능</span><button class="btn sm">열기</button></div></article>
+            <article class="direct-card" data-open="document"><div class="roomicon">▤</div><h3>문서</h3><p>리포트·제안서·강의안·업무문서를 만듭니다.</p><div class="roomfoot"><span class="tag plan">샘플 모드</span><button class="btn sm">열기</button></div></article>
+            <article class="direct-card" data-open="image"><div class="roomicon">▧</div><h3>이미지</h3><p>카드뉴스·썸네일·프로필 이미지를 만듭니다.</p><div class="roomfoot"><span class="tag ready">화면 구현</span><button class="btn sm">열기</button></div></article>
+          </div>
+        </section>
+        </section>
+      </section>
+
+      <section class="page" id="page-source">
+        <div class="page-title"><div><h1>원석 정리실</h1><p>사용자가 넣은 원문은 보존하고, AI 초안·사용자 수정본·최종본을 섞지 않습니다.</p></div><div class="actions"><button class="btn" id="loadSampleSource">샘플 원석 불러오기</button><button class="btn primary" data-next="prompt">이 원석으로 제작</button></div></div>
+        <div class="steps"><div class="step active"><span>1</span>원자료</div><div class="step"><span>2</span>AI 정리 초안</div><div class="step"><span>3</span>사용자 확인</div><div class="step"><span>4</span>전문 검수</div><div class="step"><span>5</span>최종 결과물</div></div>
+        <div class="workbench">
+          <aside class="rail"><h3>원자료 종류</h3>
+            <div class="source-card active"><b>직접 입력</b><small>메모·상담·설교·아이디어</small></div><div class="source-card"><b>음성·영상 정리본</b><small>원본과 전사본 분리</small></div><div class="source-card"><b>파일·링크</b><small>현재 화면은 위치만 기록</small></div><div class="source-card"><b>이전 작업</b><small>확정된 원석을 다시 사용</small></div>
+            <div class="callout warn">파일 분석·유튜브 자막 추출·음성 전사는 실제 API 연결 전에는 작동하지 않습니다.</div>
+          </aside>
+          <div class="editor">
+            <h2>한 번 넣고, 필요한 결과물로만 연결</h2><div class="lead">정리되지 않은 말도 그대로 넣을 수 있습니다. 원문을 덮어쓰지 않습니다.</div>
+            <div class="fieldrow"><div class="field"><label>원석 제목</label><input id="sourceTitle" value="8월 6일 새벽말씀 원석"></div><div class="field"><label>원본 소유 공간</label><select id="sourceOwner"><option>브랜딩센터 · 콘텐츠 제작실</option><option>사라의 집</option><option>컨설팅센터</option><option>설계사허브</option><option>WD 업무센터</option></select></div></div>
+            <div class="field"><label>사용자가 넣은 원문</label><textarea id="sourceRaw" rows="10" placeholder="원문, 메모, 상담 내용, 설교 요약을 그대로 붙여넣으세요."></textarea><div class="hint">원문은 AI 초안과 분리해 보존합니다.</div></div>
+            <div class="fieldrow"><div class="field"><label>공개 범위</label><select id="privacy"><option>대표전용</option><option>내부제한</option><option>담당센터</option><option>외부공개 후보</option></select></div><div class="field"><label>이 원석의 사용 목적</label><select id="sourcePurpose"><option>말씀편지</option><option>프롬프트</option><option>지침</option><option>AI 개인화</option><option>브랜드·문서</option><option>콘텐츠 묶음</option></select></div></div>
+            <div class="actions"><button class="btn primary" id="organizeSourceBtn">샘플 정리 초안 만들기</button><button class="btn" id="saveSourceBtn">원문만 저장</button><button class="btn ghost" id="clearSourceBtn">비우기</button></div>
+            <div id="sourceAnalysis" class="hidden">
+              <div class="divider"></div><div class="tabs"><button class="active">직접 확인된 사실</button><button>사용자가 중요하게 말한 것</button><button>WD 정리</button><button>아직 확인 필요</button></div>
+              <div class="abc"><div class="variant"><b>직접 확인</b><p id="factText">원문에 실제로 있는 내용만 표시합니다.</p></div><div class="variant"><b>WD의 정리</b><p>오늘 붙들 한 가지 메시지로 응축할 수 있습니다. 아직 사용자의 최종 문장은 아닙니다.</p></div><div class="variant"><b>확인 필요</b><p>장절·이름·날짜·금액·공개범위처럼 잘못되면 위험한 정보를 다시 확인합니다.</p></div></div>
+              <div class="callout safe">이 내용은 AI 정리 초안입니다. 사용자가 수정·확정하기 전에는 원문·장기기억·공개 콘텐츠로 확정하지 않습니다.</div>
+            </div>
+          </div>
+          <aside class="reviewbox"><h3>개인기록 보호</h3><div class="checklist"><label class="check"><input type="checkbox" checked>원문과 AI 초안을 분리한다</label><label class="check"><input type="checkbox" checked>확정 전 자동 연결하지 않는다</label><label class="check"><input type="checkbox" checked>사용자가 말하지 않은 마음을 만들지 않는다</label><label class="check"><input type="checkbox" checked>민감정보를 외부 콘텐츠로 자동 전환하지 않는다</label><label class="check"><input type="checkbox">이 원석을 장기 기억 후보로 검토한다</label></div><div class="callout info">사용자가 멈추거나 건너뛰면 더 파고들지 않습니다.</div></aside>
+        </div>
+      </section>
+
+      <section class="page" id="page-prompt">
+        <div class="page-title prompt-page-title"><div><h1>프롬프트 제작실</h1><p>제작 방식과 대상 AI를 먼저 정한 뒤, 같은 내용에서 핵심형·실행형·검수형을 비교합니다.</p></div><div class="actions"><button class="btn prompt-log-open" id="openPromptLogs" type="button"><span>▤</span> 프롬프트 제작 로그</button></div></div>
+        <div class="steps prompt-steps" id="promptSteps">
+          <div class="step active" data-prompt-step="1"><span>1</span>방식 선택</div>
+          <div class="step" data-prompt-step="2"><span>2</span>내용 입력</div>
+          <div class="step" data-prompt-step="3"><span>3</span>초안 비교</div>
+          <div class="step" data-prompt-step="4"><span>4</span>대표 검수</div>
+          <div class="step" data-prompt-step="5"><span>5</span>복사·사용</div>
+        </div>
+        <div class="workbench prompt-workbench">
+          <aside class="rail prompt-rail">
+            <div class="prompt-choice-head"><span>먼저 선택</span><h3>제작 모드</h3><p>만들 프롬프트의 사용 방식을 정합니다.</p></div>
+            <div class="prompt-mode-list">
+              <button class="choice" data-mode="precision"><b>정밀 작업용</b><div class="hint">역할·절차·검수까지 자세히</div></button>
+              <button class="choice" data-mode="quick"><b>빠른 실행용</b><div class="hint">복사 후 바로 실행할 짧은 구조</div></button>
+              <button class="choice" data-mode="repeat"><b>반복 업무용</b><div class="hint">입력값만 바꿔 다시 사용하는 구조</div></button>
+            </div>
+            <div class="prompt-ai-block">
+              <label for="targetAI">대상 AI</label>
+              <select id="targetAI" disabled>
+                <option value="">제작 모드를 먼저 선택하세요</option>
+                <option value="ChatGPT">ChatGPT</option>
+                <option value="Claude">Claude</option>
+                <option value="Gemini">Gemini</option>
+              </select>
+              <div class="callout info" id="targetHint">제작 모드를 선택하면 대상 AI를 고를 수 있습니다.</div>
+            </div>
+          </aside>
+
+          <section class="editor prompt-editor is-locked" id="promptEditor">
+            <div class="prompt-lock" id="promptLock"><div class="prompt-lock-icon">🔒</div><b>왼쪽 선택을 먼저 완료해 주세요.</b><p>제작 모드와 대상 AI를 선택하면 입력 화면이 활성화됩니다.</p></div>
+            <fieldset id="promptForm" disabled>
+              <div class="prompt-editor-head"><div><span>STEP 2</span><h2>무엇을 왜 만들지 정합니다</h2><p>예시는 안내문일 뿐이며 입력값으로 저장되지 않습니다.</p></div><div class="selection-summary" id="promptSelectionSummary">선택 대기</div></div>
+              <div class="fieldrow"><div class="field"><label>프롬프트 이름</label><input id="pName" required placeholder="예: 고객 브랜드 방향 분석"></div><div class="field"><label>사용 목적</label><input id="pPurpose" required placeholder="이 프롬프트로 무엇을 얻을지 적으세요"></div></div>
+              <div class="field"><label>AI가 맡을 역할</label><input id="pRole" required placeholder="예: 퍼스널 브랜딩 상담 분석가이자 문서 설계자"></div>
+              <div class="field"><label>입력 자료</label><textarea id="pInput" required placeholder="상담 내용, 고객 기본정보, 참고자료 등 실제 입력 자료를 적으세요"></textarea></div>
+              <div class="fieldrow"><div class="field"><label>반드시 포함할 것</label><textarea id="pMust" required placeholder="결과에 반드시 들어가야 할 항목"></textarea></div><div class="field"><label>하지 말아야 할 것</label><textarea id="pBan" required placeholder="과장, 추정, 금지 표현 등"></textarea></div></div>
+              <div class="field"><label>원하는 출력 형식</label><textarea id="pFormat" required placeholder="표, 섹션, 길이, 복사용 형식 등"></textarea></div>
+              <div class="prompt-build-row"><div><b>입력을 마쳤나요?</b><span>선택한 제작 모드 안에서 핵심형·실행형·검수형을 만듭니다.</span></div><button class="btn primary" id="buildPrompt2" type="button">A/B/C 초안 보기</button></div>
+            </fieldset>
+
+            <div id="promptVariants" class="prompt-results hidden">
+              <div class="prompt-result-head"><div><span>STEP 3</span><h2>A/B/C 초안 비교</h2><p>선택한 제작 모드와 대상 AI는 같고, 표현의 깊이만 다릅니다.</p></div></div>
+              <div class="prompt-tabs" role="tablist">
+                <button class="active" data-prompt-variant="A" role="tab"><b>A</b><span>핵심형</span></button>
+                <button data-prompt-variant="B" role="tab"><b>B</b><span>실행형</span></button>
+                <button data-prompt-variant="C" role="tab"><b>C</b><span>검수형</span></button>
+              </div>
+              <div class="prompt-variant-panel active" data-prompt-panel="A"><div class="variant-toolbar"><div><b>A · 핵심형</b><span>선택한 제작 모드의 필수 요소를 선명하게 정리</span></div><button class="btn primary sm" data-select-prompt="A">A 초안 선택</button></div><pre class="codebox" id="promptOutputA"></pre></div>
+              <div class="prompt-variant-panel" data-prompt-panel="B"><div class="variant-toolbar"><div><b>B · 실행형</b><span>행동 순서·입력 위치·산출물을 실제 실행 중심으로 구성</span></div><button class="btn primary sm" data-select-prompt="B">B 초안 선택</button></div><pre class="codebox" id="promptOutputB"></pre></div>
+              <div class="prompt-variant-panel" data-prompt-panel="C"><div class="variant-toolbar"><div><b>C · 검수형</b><span>사실 확인·누락 방지·예외 처리·완료 기준을 강화</span></div><button class="btn primary sm" data-select-prompt="C">C 초안 선택</button></div><pre class="codebox" id="promptOutputC"></pre></div>
+
+              <section class="prompt-review prompt-review-gate hidden" id="promptReview">
+                <div class="review-gate-head"><div><span>STEP 4</span><h2>선택한 초안 대표 검수</h2><p>만족한 항목은 체크하고, 부족한 부분은 아래에 직접 적어 최종본에 반영합니다.</p></div><div class="selected-variant-badge" id="selectedVariantBadge">선택 대기</div></div>
+                <div class="prompt-review-body"><div class="checklist" id="promptReviewChecks">
+                  <label class="check"><input type="checkbox">목적과 결과물이 일치한다</label>
+                  <label class="check"><input type="checkbox">자료에 없는 사실을 만들지 않는다</label>
+                  <label class="check"><input type="checkbox">사람의 속마음·성격을 단정하지 않는다</label>
+                  <label class="check"><input type="checkbox">출력 형식과 완료 기준이 분명하다</label>
+                  <label class="check"><input type="checkbox">실제 대상 AI에서 시험할 준비가 되었다</label>
+                </div><div class="field prompt-review-notes"><label for="promptReviewNotes">빠진 내용 · 부족한 점 · 바꾸고 싶은 점</label><textarea id="promptReviewNotes" placeholder="예: 8주 계획은 빼고, 먼저 인터뷰 질문과 브랜드 핵심문장부터 나오게 해줘. 체크하지 않은 항목은 어떻게 고칠지도 적어주세요."></textarea><div class="hint">체크하지 않은 항목이 있다면 수정 의견을 반드시 적어주세요.</div></div><div class="review-complete-row"><div class="callout warn" id="promptReviewStatus">대표님이 직접 확인한 체크와 수정 의견을 AI가 최종본에 반영합니다.</div><button class="btn primary" id="completePromptReview" type="button">검수 반영해 최종본 만들기</button></div></div>
+              </section>
+
+              <section class="prompt-final hidden" id="promptFinal">
+                <div class="prompt-final-head"><div><span>STEP 5</span><h2>최종 완성본</h2><p id="promptFinalLabel">검수가 완료된 초안입니다.</p></div><div class="final-actions"><button class="btn primary" id="copyPromptFinal" type="button">완성본 복사</button><button class="btn" id="downloadPromptFinal" type="button">TXT 파일 다운로드</button></div></div>
+                <pre class="codebox" id="promptFinalOutput"></pre>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="page-instruction">
+        <div class="page-title"><div><h1>지침 제작실</h1><p>프로젝트가 반복 대화에서도 같은 기준으로 움직이도록 상세본·실무본·압축본을 만듭니다.</p></div><div class="actions"><button class="btn" id="instructionSample">WD 샘플 불러오기</button><button class="btn primary" id="buildInstruction">지침 초안 생성</button></div></div>
+        <div class="workbench">
+          <aside class="rail"><h3>출력 길이</h3><div class="source-card active" data-limit="8000"><b>상세본</b><small>약 8,000자 이내</small></div><div class="source-card" data-limit="4000"><b>실무본</b><small>약 4,000자</small></div><div class="source-card" data-limit="2000"><b>압축본</b><small>약 2,000자</small></div><div class="callout info">같은 기준을 길이에 맞춰 압축하되 금지·사실성·위험 기준은 삭제하지 않습니다.</div></aside>
+          <div class="editor"><h2>프로젝트의 목적과 경계를 먼저 고정합니다</h2><div class="fieldrow"><div class="field"><label>지침 이름</label><input id="iName" placeholder="예: WD 제작센터 프로젝트 지침"></div><div class="field"><label>적용 공간</label><input id="iSpace" placeholder="예: ChatGPT 프로젝트 / 내부 업무공간"></div></div><div class="field"><label>목적</label><textarea id="iPurpose"></textarea></div><div class="fieldrow"><div class="field"><label>AI 역할</label><textarea id="iRole"></textarea></div><div class="field"><label>사람이 결정할 영역</label><textarea id="iHuman"></textarea></div></div><div class="fieldrow"><div class="field"><label>유지 기준</label><textarea id="iKeep"></textarea></div><div class="field"><label>금지사항</label><textarea id="iBan"></textarea></div></div><div class="fieldrow"><div class="field"><label>사실성·검증 기준</label><textarea id="iFact"></textarea></div><div class="field"><label>완료 기준</label><textarea id="iDone"></textarea></div></div><div class="actions"><button class="btn primary" id="buildInstruction2">지침 구성</button><button class="btn" id="copyInstruction">복사</button><button class="btn" id="downloadInstruction">TXT 저장</button></div><div class="divider"></div><div class="codebox" id="instructionOutput">지침 입력값을 채우면 상세본과 압축본의 기준 구조가 표시됩니다.</div></div>
+          <aside class="reviewbox"><h3>지침 고정항목</h3><div class="checklist"><label class="check"><input type="checkbox" checked>이미 확정된 것과 새 결정 구분</label><label class="check"><input type="checkbox" checked>사실·시험·추론·제안·확인 불가 구분</label><label class="check"><input type="checkbox" checked>파괴적 변경은 사전 확인</label><label class="check"><input type="checkbox" checked>새 앱·새 DB를 습관적으로 제안하지 않음</label><label class="check"><input type="checkbox" checked>완료 기준과 결과 위치 포함</label></div></aside>
+        </div>
+      </section>
+
+      <section class="page" id="page-gpt">
+  <div class="page-title ai-page-title"><div><h1>AI 개인화 제작실</h1><p>한 사람의 사용 방식에 맞춰 ChatGPT·Claude·Gemini용 개인화 설정 패키지를 단계별로 만듭니다.</p></div><div class="actions"><button class="btn ai-log-open" id="openPersonalizationLogs" type="button">▤ 개인화 제작 로그</button></div></div>
+  <div class="ai-steps ai-wizard-steps" id="aiSteps">
+    <button class="active" data-ai-step="1" type="button"><b>1</b><span>개인화 목적</span></button>
+    <button data-ai-step="2" type="button"><b>2</b><span>대상 AI</span></button>
+    <button data-ai-step="3" type="button"><b>3</b><span>도움받을 일</span></button>
+    <button data-ai-step="4" type="button"><b>4</b><span>답변 방식</span></button>
+    <button data-ai-step="5" type="button"><b>5</b><span>기억 선택</span></button>
+    <button data-ai-step="6" type="button"><b>6</b><span>테스트 대화</span></button>
+    <button data-ai-step="7" type="button"><b>7</b><span>완성·저장</span></button>
+  </div>
+  <div class="ai-workbench ai-wizard-workbench">
+    <section class="ai-editor ai-wizard-editor" id="aiEditor">
+      <fieldset id="aiForm">
+        <section class="ai-stage-panel" data-ai-panel="1">
+          <div class="ai-flow-title"><b>1</b><div><span>개인화 목적</span><h2>누구를 위해 개인화할까요?</h2><p>목적에 따라 질문의 초점과 최종 지침 구성이 달라집니다.</p></div></div>
+          <div class="ai-scope-grid"><button type="button" data-ai-scope="self"><span>나</span><b>내 AI 개인화</b><small>내가 계속 사용할 AI의 말투·도움 방식·기억 기준을 맞춥니다.</small></button><button type="button" data-ai-scope="client"><span>고객</span><b>고객 AI 개인화</b><small>특정 고객이 편하게 사용할 수 있도록 수준·호칭·경계를 맞춥니다.</small></button><button type="button" data-ai-scope="specific"><span>목적</span><b>특정 목적 개인화</b><small>상담·글쓰기·업무 등 한 가지 역할과 완료 기준에 집중합니다.</small></button></div>
+          <div class="ai-stage-nav"><span></span><button class="btn primary" data-ai-next="2" type="button">개인화할 AI 선택 →</button></div>
+        </section>
+        <section class="ai-stage-panel hidden" data-ai-panel="2">
+          <div class="ai-flow-title"><b>2</b><div><span>대상 AI</span><h2>어떤 AI를 개인화할까요?</h2><p>실제로 사용할 AI를 선택하면 그 서비스에 붙여 넣기 좋은 형태로 만듭니다.</p></div></div>
+          <div class="ai-targets ai-target-grid"><button type="button" data-ai-target="chatgpt"><b>ChatGPT</b><small>맞춤 지침·GPT 지침</small></button><button type="button" data-ai-target="claude"><b>Claude</b><small>프로필·프로젝트 지침</small></button><button type="button" data-ai-target="gemini"><b>Gemini</b><small>Gem·저장 정보 지침</small></button></div>
+          <div class="ai-stage-nav"><button class="btn" data-ai-back="1" type="button">← 이전</button><button class="btn primary" data-ai-next="3" type="button">내용 입력으로 →</button></div>
+        </section>
+        <section class="ai-stage-panel hidden" data-ai-panel="3">
+          <div class="ai-flow-title"><b>3</b><div><span>도움받을 일</span><h2>이 AI가 무엇을 도우면 좋을까요?</h2><p>누가, 어떤 장면에서, 무슨 일을 맡길지 정합니다.</p></div></div>
+          <div class="fieldrow"><div class="field"><label>AI 이름 *</label><input id="gName" placeholder="예: 재란님의 브랜드 도우미"></div><div class="field"><label>사용자 호칭</label><input id="gCall" placeholder="예: 재란님"></div></div>
+          <div class="field"><label>개인화 목적·주로 사용할 장면 *</label><textarea id="gPurpose" placeholder="예: 퍼스널브랜딩 상담 내용을 정리하고 소개글·콘텐츠 초안을 만들 때 사용"></textarea></div>
+          <div class="field"><label>구체적으로 도와줄 일 *</label><textarea id="gHelp" placeholder="반복해서 맡길 일, 혼자 하기 어려운 일, AI가 먼저 확인해야 할 일을 적어주세요."></textarea></div>
+          <div class="ai-stage-nav"><button class="btn" data-ai-back="2" type="button">← 이전</button><button class="btn primary" data-ai-next="4" type="button">답변 방식으로 →</button></div>
+        </section>
+        <section class="ai-stage-panel hidden" data-ai-panel="4">
+          <div class="ai-flow-title"><b>4</b><div><span>답변 방식</span><h2>어떻게 말하고 설명할까요?</h2><p>말투뿐 아니라 질문량·설명 길이·진행 순서를 정합니다.</p></div></div>
+          <div class="fieldrow"><div class="field"><label>편안한 답변 방식 *</label><textarea id="gTone" placeholder="예: 쉬운 말, 한 번에 질문 1개, 먼저 핵심을 말하고 단계별 설명"></textarea></div><div class="field"><label>피하고 싶은 방식 *</label><textarea id="gAvoid" placeholder="예: 과장, 어려운 용어, 한꺼번에 많은 질문, 성격 단정"></textarea></div></div>
+          <div class="field"><label>사용자의 이해 수준·기기 환경</label><textarea id="gDevice" placeholder="예: 휴대폰 중심, 표보다 짧은 단계 안내 선호, 복사·붙여넣기부터 설명 필요"></textarea></div>
+          <div class="ai-stage-nav"><button class="btn" data-ai-back="3" type="button">← 이전</button><button class="btn primary" data-ai-next="5" type="button">기억 선택으로 →</button></div>
+        </section>
+        <section class="ai-stage-panel hidden" data-ai-panel="5">
+          <div class="ai-flow-title"><b>5</b><div><span>기억 선택 · 선택 입력</span><h2>기억할 내용이 있으면 적어주세요</h2><p>세 칸은 모두 선택사항입니다. 귀찮거나 아직 정하지 못했다면 비워둔 채 바로 넘어가도 됩니다.</p></div></div>
+          <div class="ai-memory-grid"><div class="field memory allow"><label>기억해도 되는 내용 <em>선택</em></label><textarea id="gMemory" placeholder="예: 장기간 유지해도 되는 선호·업무·표현 기준"></textarea></div><div class="field memory once"><label>이번 대화에서만 사용할 내용 <em>선택</em></label><textarea id="gSession" placeholder="예: 일정·일회성 연락처·임시 상황"></textarea></div><div class="field memory never"><label>기억하면 안 되는 내용 <em>선택</em></label><textarea id="gNever" placeholder="예: 민감정보·공개 금지 내용·저장하면 안 되는 자료"></textarea></div></div>
+          <div class="ai-optional-note"><b>기억 내용을 쓰지 않아도 괜찮습니다.</b><span>앞 단계에서 작성한 내용만으로 개인화 초안을 만들며, 빈 기억 항목은 결과에서 제외됩니다.</span></div>
+          <div class="ai-stage-nav"><button class="btn" data-ai-back="4" type="button">← 이전</button><button class="btn primary" id="buildGpt2" type="button">입력한 내용으로 초안 만들기 →</button></div>
+        </section>
+      </fieldset>
+      <section class="ai-stage-panel ai-test hidden" data-ai-panel="6" id="aiTestSection">
+        <div class="ai-result-head"><div><span>STEP 6</span><h2>실제 테스트 대화</h2><p>완성 전, 이 사람이 실제로 물을 법한 장면으로 답변 방식과 기억 기준을 확인합니다.</p></div><button class="btn" id="openAiDraft" type="button">개인화 초안 보기</button></div>
+        <div class="field"><label>시험할 사용자 질문·상황 *</label><textarea id="aiTestScenario" placeholder="예: 소개글을 만들고 싶은데 자료가 하나도 없어. 무엇부터 해야 해?"></textarea></div>
+        <div class="ai-buildbar" id="aiTestRunBar"><div><b>개인화 설정을 적용해 답하게 해볼까요?</b><span>실제 답변과 설정 적용 점검을 함께 보여드립니다.</span></div><button class="btn primary" id="runAiTest" type="button">테스트 대화 실행</button></div>
+        <div class="ai-test-result hidden" id="aiTestResult"><div class="ai-test-reply"><span>개인화 AI의 실제 답변</span><pre id="aiTestReply"></pre></div><div class="ai-test-assessment"><span>설정 적용 점검</span><div id="aiTestAssessment"></div></div><div class="field"><label>고칠 점·추가할 내용</label><textarea id="aiTestFeedback" placeholder="답변에서 부족한 점, 다음 답변부터 바꿀 점을 적어주세요. 괜찮으면 비워두어도 됩니다."></textarea></div><div class="ai-stage-nav"><button class="btn" data-ai-back="5" type="button">← 설정 수정</button><button class="btn primary" id="finalizeAiPackage" type="button">테스트 반영해 최종본 만들기 →</button></div></div>
+      </section>
+      <section class="ai-stage-panel ai-output ai-final hidden" data-ai-panel="7" id="aiFinalSection"><div class="ai-result-head"><div><span>STEP 7</span><h2>최종 개인화 패키지</h2><p>Instructions부터 테스트 질문까지 다섯 가지 최종 항목을 한 번에 확인하고 내려받습니다.</p></div><div class="actions ai-final-actions"><button class="btn" id="copyAiInstructions" type="button">Instructions 복사</button><button class="btn" id="downloadAiFinal" type="button">전체 항목 TXT</button><button class="btn primary" id="downloadAiMarkdown" type="button">최종 개인화 파일 (.md)</button></div></div><div class="ai-final-saved"><b>✓ 최종본 저장 완료</b><span>Supabase 개인화 제작 로그의 7단계 완료 기록으로 저장되었습니다.</span></div><div class="ai-final-guide"><b>어디에 사용하나요?</b><span><strong>Instructions 복사</strong>는 AI의 지침 입력란에 붙여 넣고, <strong>.md 파일</strong>은 지식·소스 파일로 업로드할 때 사용하세요.</span></div><div class="ai-final-all" id="aiFinalAll"></div><div class="ai-stage-nav"><button class="btn" data-ai-back="6" type="button">← 테스트로 돌아가기</button><button class="btn" id="restartAiWizard" type="button">새 개인화 시작</button></div></section>
+    </section>
+  </div>
+</section>
+
+      <section class="page" id="page-document">
+        <div class="page-title"><div><h1>문서 제작실</h1><p>모든 문서를 새 편집기로 만들지 않고, 목적별 구조와 확정 원고를 완성해 파일·미리캔버스로 넘깁니다.</p></div><div class="actions"><button class="btn" id="docSample">샘플 문서</button><button class="btn primary" onclick="window.print()">인쇄·PDF</button></div></div>
+        <div class="workbench">
+          <aside class="rail"><h3>문서 유형</h3><div class="source-card active" data-doctype="brand"><b>브랜드 1장 리포트</b><small>고객용 핵심 요약</small></div><div class="source-card" data-doctype="proposal"><b>제안서</b><small>범위·일정·비용·제외</small></div><div class="source-card" data-doctype="portfolio"><b>포트폴리오</b><small>경력·역량·사례</small></div><div class="source-card" data-doctype="lesson"><b>강의안</b><small>대상·목표·회차·활동</small></div><div class="source-card" data-doctype="work"><b>업무문서</b><small>지시·매뉴얼·완료보고</small></div></aside>
+          <div class="editor"><h2>고객 기준정보는 한 번만</h2><div class="fieldrow"><div class="field"><label>고객·프로젝트</label><input id="dClient" placeholder="예: 문선화 · 선교 브랜드"></div><div class="field"><label>문서 제목</label><input id="dTitle" placeholder="브랜드 방향 1장 리포트"></div></div><div class="field"><label>확정된 기준정보</label><textarea id="dBase" placeholder="고객이 확인한 경력, 강점, 대표 고객, 존재 이유, 서비스, 말투, 금지 기준"></textarea></div><div class="fieldrow"><div class="field"><label>이 문서의 목적</label><textarea id="dPurpose"></textarea></div><div class="field"><label>이번 문서에만 필요한 정보</label><textarea id="dOnly"></textarea></div></div><div class="actions"><button class="btn primary" id="renderDoc">문서 미리보기</button><button class="btn" id="copyDoc">본문 복사</button><button class="btn" id="saveDoc">작업 저장</button></div><div class="divider"></div><article class="docpreview" id="docPreview"><h1>고객 브랜드 방향 1장 리포트</h1><p class="muted">확정된 고객 기준정보를 바탕으로 만든 사용자 확인용 초안</p><h2>한 줄 정의</h2><p>사람 안에 이미 있는 경험과 전문성을 발견해 고객이 이해할 수 있는 브랜드와 실제 결과물로 연결합니다.</p><h2>핵심 강점</h2><ul><li>복잡한 경험을 한눈에 이해되는 구조로 정리</li><li>기술보다 사람의 철학과 실제 사용 장면을 먼저 확인</li><li>말에서 끝내지 않고 문서·콘텐츠·홈페이지까지 연결</li></ul><h2>다음 행동</h2><p>대표 고객과 핵심 서비스 한 가지를 먼저 확정한 뒤, 소개 문장과 첫 콘텐츠를 제작합니다.</p></article></div>
+          <aside class="reviewbox"><h3>문서 승인</h3><div class="statusline"><span class="status draft">AI 초안</span><span class="status wait">고객 확인 전</span></div><div class="divider"></div><div class="checklist"><label class="check"><input type="checkbox" checked>고객이 말하지 않은 경력·성과 없음</label><label class="check"><input type="checkbox" checked>기준정보와 산출물 메시지 일치</label><label class="check"><input type="checkbox" checked>개인정보·민감경험 공개범위 확인</label><label class="check"><input type="checkbox">고객 내용 승인</label><label class="check"><input type="checkbox">대표 최종 승인</label></div><div class="callout info">외부 배포용 디자인은 확정 원고와 승인 이미지를 미리캔버스로 넘깁니다.</div><button class="btn" id="miriPackage">미리캔버스용 꾸러미 복사</button></aside>
+        </div>
+      </section>
+
+      <section class="page" id="page-image">
+        <div class="page-title"><div><h1>이미지 제작실</h1><p>AI는 글자 없는 배경을 만들고, 정확한 한글 문구는 제작 화면에서 별도 배치합니다.</p></div><div class="actions"><button class="btn" id="imageSample">말씀편지 샘플</button><button class="btn primary" id="downloadPng">샘플 PNG 저장</button></div></div>
+        <div class="workbench">
+          <aside class="rail"><h3>이미지 유형</h3><div class="source-card active" data-image="scripture"><b>말씀편지</b><small>본문·핵심·기도·붙들 문장</small></div><div class="source-card"><b>유튜브 썸네일</b><small>제목과 다른 짧은 갈등문구</small></div><div class="source-card"><b>카드뉴스</b><small>저장하고 다시 볼 기준</small></div><div class="source-card"><b>프로필 카드</b><small>승인 사진·경력·소개</small></div><div class="divider"></div><h3>규격</h3><div class="field"><select id="imageSize"><option>1080 × 1350 세로 카드</option><option>1080 × 1080 정사각형</option><option>1280 × 720 유튜브</option><option>1080 × 1920 쇼츠</option></select></div><div class="callout warn">현재 PNG는 샘플 배경과 텍스트를 브라우저 캔버스로 저장합니다. 실제 AI 이미지 생성은 API 미연결입니다.</div></aside>
+          <div class="editor"><h2>문장 확정 후 이미지</h2><div class="fieldrow"><div class="field"><label>성경본문·장절</label><input id="imgVerse" value="시편 77:11"></div><div class="field"><label>제목</label><input id="imgTitle" value="하나님이 행하신 일을 기억합니다"></div></div><div class="field"><label>짧은 핵심</label><textarea id="imgCore">오늘의 형편만 바라보지 않고, 하나님께서 이미 행하신 일을 다시 기억합니다.</textarea></div><div class="fieldrow"><div class="field"><label>짧은 기도</label><textarea id="imgPrayer">주님, 흔들리는 마음이 주께서 행하신 일을 다시 기억하게 하소서.</textarea></div><div class="field"><label>붙들 문장</label><textarea id="imgHold">오늘의 형편보다 먼저 하나님이 행하신 일을 기억하겠습니다.</textarea></div></div><div class="fieldrow"><div class="field"><label>이미지 장면</label><select id="imgScene"><option>새벽의 빈 길</option><option>잔잔한 호숫가</option><option>비 온 뒤 밝아지는 창</option><option>큰 나무 아래 작은 사람</option><option>따뜻한 식탁과 햇빛</option></select></div><div class="field"><label>문장 중심</label><select id="imgHierarchy"><option>붙들 문장 중심</option><option>성경구절 중심</option><option>제목 중심</option><option>짧은 기도 중심</option></select></div></div><div class="actions"><button class="btn primary" id="refreshImage">미리보기 반영</button><button class="btn">배경 3안 보기</button><button class="btn">미리캔버스 꾸러미</button></div><div class="divider"></div><div class="previewcard" id="imagePreview"><div class="previewcopy"><div class="verse" id="pvVerse">시편 77:11</div><h3 id="pvTitle">하나님이 행하신 일을<br>기억합니다</h3><p id="pvCore">오늘의 형편만 바라보지 않고,<br>하나님께서 이미 행하신 일을 다시 기억합니다.</p><small id="pvHold">오늘의 형편보다 먼저 하나님이 행하신 일을 기억하겠습니다.</small></div></div></div>
+          <aside class="reviewbox"><h3>말씀편지 검수</h3><div class="checklist"><label class="check"><input type="checkbox" checked>성경본문·장절 확인</label><label class="check"><input type="checkbox" checked>설교 흐름과 제작 묵상 구분</label><label class="check"><input type="checkbox" checked>본문에 없는 약속·성공문구 없음</label><label class="check"><input type="checkbox" checked>기도가 짧고 말씀에 근거함</label><label class="check"><input type="checkbox">최근 3일 이미지와 중복 확인</label><label class="check"><input type="checkbox">대표 문구·이미지 승인</label></div><div class="callout safe">프로필은 반복되어야 하고, 콘텐츠 장면은 반복되지 않아야 합니다.</div></aside>
+        </div>
+      </section>
+
+      <section class="page" id="page-review">
+        <div class="page-title"><div><h1>전문 검수실</h1><p>같은 AI 결과물도 사용 영역에 따라 확인할 근거와 최종 승인자가 다릅니다.</p></div><div class="actions"><button class="btn primary" id="completeReview">검수 결과 저장</button></div></div>
+        <div class="grid2"><div class="panel"><h3>검수 영역 선택</h3><div class="choicegrid" id="reviewModes"><button class="choice active" data-review="personal"><b>사라의 집</b><div class="hint">원문 소유·사용자 확인</div></button><button class="choice" data-review="consulting"><b>컨설팅</b><div class="hint">고객 기준·버전·납품</div></button><button class="choice" data-review="insurance"><b>보험</b><div class="hint">근거·약관·개인정보</div></button><button class="choice" data-review="content"><b>콘텐츠</b><div class="hint">공개범위·민감정보</div></button><button class="choice" data-review="document"><b>업무문서</b><div class="hint">파일·시험·완료 구분</div></button><button class="choice" data-review="web"><b>홈페이지</b><div class="hint">파일·배포·운영 분리</div></button></div><div class="divider"></div><div id="reviewChecklist" class="checklist"></div></div><aside class="panel"><h3>승인 경로</h3><div class="timeline" id="approvalTimeline"><div class="event"><b>AI 초안</b><small>아직 전달할 수 없는 상태</small></div><div class="event"><b>사용자·담당자 수정</b><small>사람이 직접 고친 내용</small></div><div class="event"><b>전문 검수</b><small>영역별 근거와 위험 확인</small></div><div class="event"><b>최종 승인</b><small>승인자·승인일 기록</small></div><div class="event"><b>전달·납품·공개</b><small>실제 결과 위치 기록</small></div></div><div class="callout warn">생성 완료 ≠ 고객 전달 가능<br>파일 완성 ≠ 실제 배포 완료</div></aside></div>
+      </section>
+
+      <section class="page" id="page-outputs">
+        <div class="page-title"><div><h1>승인본·결과 위치</h1><p>최종본을 제작센터 안에 모두 쌓지 않고 실제 원본 위치와 원래 업무공간을 연결합니다.</p></div><div class="actions"><button class="btn" id="exportAll">JSON 백업</button><button class="btn primary" id="newOutput">결과물 등록</button></div></div>
+        <div class="panel"><table class="mini-table"><thead><tr><th>결과물</th><th>원래 공간</th><th>상태</th><th>승인자</th><th>최종 위치</th><th></th></tr></thead><tbody id="outputTable"></tbody></table></div>
+        <div class="section-head"><div><h2>등록 기준</h2><p>모든 초안이 아니라 내부 검수 기준본부터 데이터센터 색인을 시작합니다.</p></div></div>
+        <div class="stats"><div class="stat"><small>작업 시작</small><strong>등록 안 함</strong><em>초안 과잉 방지</em></div><div class="stat"><small>내부 검수본</small><strong>색인 시작</strong><em>개별 결과물 ID</em></div><div class="stat"><small>승인본</small><strong>필수 갱신</strong><em>승인자·최종 위치</em></div><div class="stat"><small>납품·공개</small><strong>실제 주소</strong><em>전달과 확인 구분</em></div></div>
+      </section>
+
+      <section class="page" id="page-datacenter">
+        <div class="page-title"><div><h1>데이터센터 연결</h1><p>원자료·제작작업·결과물·승인·사용처·최종 위치를 잃지 않기 위한 최소 연결 구조입니다.</p></div><div class="actions"><button class="btn" id="generateIds">새 ID 생성</button><button class="btn primary" id="saveDc">로컬 색인 저장</button></div></div>
+        <div class="grid2"><div class="panel"><h3>필수 관계·승인 필드 9개</h3><div class="dcgrid" id="dcFields"></div><div class="divider"></div><div class="fieldrow"><div class="field"><label>원래 업무공간</label><select id="dcSpace"><option>브랜딩센터</option><option>사라의 집</option><option>컨설팅센터</option><option>설계사허브</option><option>WD 업무센터</option></select></div><div class="field"><label>민감도</label><select id="dcSensitivity"><option>일반</option><option>내부제한</option><option>민감</option><option>최상위 위치만 등록</option></select></div></div><div class="callout danger">현재 접근등급은 실제 로그인·마스킹이 아니라 표시값입니다. 기도·건강·고객상담·보험 개인정보·API 키 원문을 넣지 않습니다.</div></div><aside class="panel"><h3>등록 시점</h3><div class="timeline"><div class="event"><b>작업 시작</b><small>개별 파일 등록하지 않음</small></div><div class="event"><b>첫 저장</b><small>작업 대표 레코드만 선택</small></div><div class="event"><b>내부 검수</b><small>결과물 개별 색인 시작</small></div><div class="event"><b>승인본</b><small>승인정보·최종 위치 필수</small></div><div class="event"><b>납품·공개</b><small>실제 주소와 사용처 갱신</small></div></div><div class="callout info">이 화면은 연결 구조를 보여주는 로컬 프로토타입입니다. 실제 중앙 공동저장은 아직 연결하지 않았습니다.</div></aside></div>
+      </section>
+
+      <section class="page" id="page-guide">
+        <div class="page-title"><div><h1>WD 제작센터 운영 기준</h1><p>무엇을 만들지보다 무엇을 왜 만들고 누가 최종 확인하는지를 먼저 정합니다.</p></div></div>
+        <div class="roomgrid"><article class="room"><div class="roomicon">1</div><h3>원자료 보존</h3><p>원문은 원래 공간이 소유하고 AI 초안이 원문을 덮어쓰지 않습니다.</p></article><article class="room"><div class="roomicon">2</div><h3>사람의 확인</h3><p>사용자 수정·전문 검수·최종 승인 단계를 결과물마다 분리합니다.</p></article><article class="room"><div class="roomicon">3</div><h3>도구 분리</h3><p>WD는 생각·구조·검수, 미리캔버스는 디자인 마감, 데이터센터는 관계·위치 색인을 맡습니다.</p></article><article class="room"><div class="roomicon">4</div><h3>결과 복귀</h3><p>완성물은 제작센터 소유가 아니라 고객·프로젝트·업무공간으로 돌아갑니다.</p></article></div>
+        <div class="section-head"><div><h2>공통 제작 흐름</h2></div></div><div class="panel"><div class="steps"><div class="step done"><span>1</span>원자료</div><div class="step done"><span>2</span>AI 초안</div><div class="step active"><span>3</span>사람 수정·선택</div><div class="step"><span>4</span>전문 검수·승인</div><div class="step"><span>5</span>내보내기·복귀</div></div><div class="callout safe">평안 &gt; 효율 · 지속 &gt; 속도 · 안정 &gt; 성장 · 통합 &gt; 확장 · 실행 &gt; 완벽</div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<nav class="mobilebar"><button class="active" data-page="home"><b>⌂</b>홈</button><button data-page="source"><b>◫</b>원석</button><button data-page="prompt"><b>✦</b>제작</button><button data-page="review"><b>✓</b>검수</button><button data-page="outputs"><b>◆</b>결과</button></nav>
+
+<div class="modal" id="newWorkModal"><div class="modalbox"><div class="modalhead"><h2>새 제작 시작</h2><button class="x" data-close>×</button></div><p class="muted">먼저 무엇을 만들지 고르고, 원자료가 있는 공간과 공개 범위를 확인합니다.</p><div class="typegrid" id="newTypes"><button class="typecard active" data-type="prompt">✦<b>프롬프트</b><small>정확한 AI 작업 요청</small></button><button class="typecard" data-type="instruction">☷<b>지침</b><small>프로젝트 운영 기준</small></button><button class="typecard" data-type="gpt">◎<b>AI 개인화</b><small>사용자 맞춤 설정</small></button><button class="typecard" data-type="document">▤<b>문서</b><small>리포트·제안서·강의안</small></button><button class="typecard" data-type="image">▧<b>이미지</b><small>말씀편지·썸네일</small></button><button class="typecard" data-type="source">◫<b>원석 정리</b><small>사실·해석·제안 분리</small></button></div><div class="fieldrow"><div class="field"><label>작업 이름</label><input id="newTitle" placeholder="예: 시편 77편 말씀편지"></div><div class="field"><label>원래 업무공간</label><select id="newOwner"><option>브랜딩센터</option><option>사라의 집</option><option>컨설팅센터</option><option>설계사허브</option><option>WD 업무센터</option></select></div></div><div class="field"><label>공개 범위</label><select id="newPrivacy"><option>대표전용</option><option>내부제한</option><option>담당센터</option><option>외부공개 후보</option></select></div><div class="actions"><button class="btn" data-close>취소</button><button class="btn primary" id="createWork">작업 만들기</button></div></div></div>
+<div class="modal" id="statusInfoModal"><div class="modalbox status-modal-box"><div class="modalhead"><h2 id="statusModalTitle">제작 현황</h2><button class="x" data-status-close>×</button></div><div class="status-modal-top"><div class="status-modal-count" id="statusModalCount">0</div><div><b id="statusModalLead">현재 상태</b><p id="statusModalSummary"></p></div></div><div id="statusModalWorks"></div><div class="status-checks"><h3>지금 해야 할 일</h3><ol id="statusModalChecklist"></ol></div><div class="actions"><button class="btn" data-status-close>닫기</button><button class="btn primary" id="statusModalAction">해당 메뉴 열기</button></div></div></div>
+<div class="modal prompt-log-modal" id="promptLogModal">
+  <div class="modalbox prompt-log-box">
+    <div class="modalhead prompt-log-head"><div><span class="prompt-log-kicker">PROMPT ARCHIVE</span><h2>프롬프트 제작 로그</h2><p>대표님이 검수해 완성한 프롬프트만 Supabase에 저장됩니다.</p></div><button class="x" type="button" data-prompt-log-close>×</button></div>
+    <div class="prompt-log-toolbar"><div id="promptLogStatus">저장된 기록을 불러오고 있습니다.</div><button class="btn sm" id="refreshPromptLogs" type="button">새로고침</button></div>
+    <div class="prompt-log-table-wrap">
+      <table class="prompt-log-table"><thead><tr><th>생성 날짜</th><th>프롬프트 이름</th><th>사용 목적</th><th>대상 AI</th><th>프롬프트 보기</th><th>수정</th><th>삭제</th></tr></thead><tbody id="promptLogRows"></tbody></table>
+    </div>
+  </div>
+</div>
+<div class="modal prompt-log-editor-modal" id="promptLogEditorModal">
+  <div class="modalbox prompt-log-editor-box">
+    <div class="modalhead"><div><span class="prompt-log-kicker">SAVED PROMPT</span><h2 id="promptLogEditorTitle">프롬프트 보기</h2></div><button class="x" type="button" data-prompt-editor-close>×</button></div>
+    <div class="prompt-log-meta" id="promptLogMeta"></div>
+    <div class="fieldrow"><div class="field"><label for="promptLogName">프롬프트 이름</label><input id="promptLogName"></div><div class="field"><label for="promptLogPurpose">사용 목적</label><input id="promptLogPurpose"></div></div>
+    <div class="field"><label for="promptLogAI">대상 AI</label><select id="promptLogAI"><option>ChatGPT</option><option>Claude</option><option>Gemini</option></select></div>
+    <div class="field prompt-log-content"><label for="promptLogFinal">최종 프롬프트</label><textarea id="promptLogFinal"></textarea></div>
+    <div class="prompt-log-editor-actions"><div><button class="btn" id="copySavedPrompt" type="button">완성본 복사</button><button class="btn" id="downloadSavedPrompt" type="button">TXT 다운로드</button></div><div><button class="btn" id="cancelPromptLogEdit" type="button">닫기</button><button class="btn primary hidden" id="savePromptLogEdit" type="button">수정 저장</button></div></div>
+  </div>
+</div>
+<div class="modal ai-log-modal" id="personalizationLogModal"><div class="modalbox prompt-log-box"><div class="modalhead prompt-log-head"><div><span class="prompt-log-kicker">PERSONALIZATION ARCHIVE</span><h2>개인화 제작 로그</h2><p>5단계 초안부터 Supabase에 저장되며, 테스트와 완성 단계가 같은 기록에 이어집니다.</p></div><button class="x" type="button" data-ai-log-close>×</button></div><div class="prompt-log-toolbar"><div id="aiLogStatus">저장된 기록을 불러오고 있습니다.</div><button class="btn sm" id="refreshAiLogs" type="button">새로고침</button></div><div class="prompt-log-table-wrap"><table class="prompt-log-table"><thead><tr><th>최근 저장</th><th>진행 단계</th><th>AI 이름</th><th>대상 AI</th><th>사용 목적</th><th>보기</th><th>이어하기</th><th>삭제</th></tr></thead><tbody id="aiLogRows"></tbody></table></div></div></div>
+<div class="modal ai-log-detail-modal" id="aiLogDetailModal"><div class="modalbox prompt-log-editor-box"><div class="modalhead"><div><span class="prompt-log-kicker">SAVED PACKAGE</span><h2 id="aiLogDetailTitle">개인화 패키지 보기</h2></div><button class="x" type="button" data-ai-detail-close>×</button></div><div class="prompt-log-meta" id="aiLogDetailMeta"></div><div class="tabs ai-tabs" id="aiLogDetailTabs"></div><pre class="codebox ai-code ai-log-code" id="aiLogDetailOutput"></pre><div class="prompt-log-editor-actions"><div><button class="btn" id="copySavedAi" type="button">현재 항목 복사</button><button class="btn" id="downloadSavedAi" type="button">전체 TXT 다운로드</button></div><button class="btn" type="button" data-ai-detail-close>닫기</button></div></div></div>
+<div class="toast" id="toast">저장했습니다.</div>
+<canvas id="exportCanvas" width="1080" height="1350" class="hidden"></canvas>
+<script>
+const STORE='wd_creation_center_v02';
+const initialWorks=[];
+const defaultOutputs=[];
+const SAMPLE_WORK_IDS=new Set(['work-260806-scripture','work-260806-guideline','work-260806-content','work-260805-report','work-260804-gpt']);
+const SAMPLE_OUTPUT_TITLES=new Set(['문선화 브랜드 1장 리포트','선아 AI 개인화 패키지','시편 76편 말씀편지 PNG','설계사허브 고객 안내문']);
+let state; try{state=JSON.parse(localStorage.getItem(STORE)||'null')}catch(e){state=null} state=state||{works:initialWorks,outputs:defaultOutputs,dc:[]};state.works=(Array.isArray(state.works)?state.works:[]).filter(x=>!SAMPLE_WORK_IDS.has(x.id));state.outputs=(Array.isArray(state.outputs)?state.outputs:[]).filter(x=>!SAMPLE_OUTPUT_TITLES.has(x.title));try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+let currentPage='home',newType='prompt',reviewMode='personal';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function save(){try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){} const el=$('#saveState');if(el){el.textContent='방금 저장';setTimeout(()=>el.textContent='자동 저장',1200)}updateStats()}
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
+function icon(type){return {prompt:'✦',instruction:'☷',gpt:'◎',document:'▤',image:'▧',source:'◫'}[type]||'◆'}
+function label(type){return {prompt:'프롬프트',instruction:'지침',gpt:'AI 개인화',document:'문서',image:'이미지',source:'원석'}[type]||type}
+function showPage(page){currentPage=page;$$('.page').forEach(x=>x.classList.remove('active'));$('#page-'+page)?.classList.add('active');$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$$('#mainNav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const titles={home:['WD 제작센터 홈','사람의 원석을 실제 결과물로 연결합니다.'],source:['원석 정리실','원문·AI 초안·사용자 수정·최종본을 분리합니다.'],prompt:['프롬프트 제작실','목적과 검수 기준이 있는 실행 프롬프트'],instruction:['지침 제작실','프로젝트가 흔들리지 않는 운영 기준'],gpt:['AI 개인화 제작실','사용자별 AI 설정 패키지를 단계별로 완성합니다.'],document:['문서 제작실','확정 원고와 구조를 실제 문서로'],image:['이미지 제작실','문장 확정 후 이미지와 한글 배치'],review:['전문 검수실','영역별 근거와 최종 승인'],outputs:['승인본·결과 위치','최종본과 원래 업무공간 연결'],datacenter:['데이터센터 연결','원자료·파생물·승인·위치 색인'],guide:['운영 기준','제작보다 사람의 확인과 결과 복귀']};const t=titles[page]||titles.home;$('#crumb').innerHTML=t[0]+'<small>'+t[1]+'</small>';window.scrollTo({top:0,behavior:'smooth'});if(page==='outputs')renderOutputs()}
+$$('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.jump)));$$('[data-open]').forEach(c=>c.addEventListener('click',()=>showPage(c.dataset.open)));$$('[data-next]').forEach(c=>c.addEventListener('click',()=>showPage(c.dataset.next)));
+const STATUS_INFO={
+  progress:{title:'진행 중',lead:'현재 제작하고 있는 작업',summary:'초안 작성부터 사용자 확인 전까지의 작업입니다.',page:'prompt',checks:['작업 목적과 원래 업무공간을 확인합니다.','필요한 제작실에서 초안을 작성합니다.','사람 확인이 끝나면 검수 대기로 넘깁니다.']},
+  review:{title:'검수 대기',lead:'확인이 필요한 작업',summary:'사실·품질·전문 기준을 확인해야 하는 작업입니다.',page:'review',checks:['원문과 결과물의 사실관계를 비교합니다.','누락·과장·금지사항 위반을 확인합니다.','보완 후 승인 가능 상태로 변경합니다.']},
+  approved:{title:'승인 완료',lead:'승인이 끝난 결과물',summary:'사람 확인과 전문 검수를 통과한 결과물입니다.',page:'outputs',checks:['최종 승인자와 승인 시점을 확인합니다.','외부 전달·납품·공개 여부를 구분합니다.','최종 파일 위치가 기록됐는지 확인합니다.']},
+  location:{title:'결과 위치 기록',lead:'최종 파일 위치가 연결된 결과물',summary:'결과물이 어디에 있고 어디에서 사용하는지 기록된 상태입니다.',page:'outputs',checks:['최종본 파일 위치를 기록합니다.','원래 업무공간과 실제 사용처를 연결합니다.','구버전이 최신본처럼 보이지 않는지 확인합니다.']}
+};
+function statusRows(kind){const works=Array.isArray(state.works)?state.works:[],outputs=Array.isArray(state.outputs)?state.outputs:[];if(kind==='progress')return works.filter(x=>!/승인 완료|납품 완료|공개 완료/.test(x.status||''));if(kind==='review')return works.filter(x=>/검수|확인/.test(x.status||''));if(kind==='approved')return outputs.length?outputs:works.filter(x=>x.approved||/승인 완료|납품 완료|공개 완료/.test(x.status||''));return works.filter(x=>x.dc||x.location)}
+function openStatusModal(kind){const info=STATUS_INFO[kind];if(!info)return;const rows=statusRows(kind);$('#statusModalTitle').textContent=info.title;$('#statusModalCount').textContent=String(rows.length);$('#statusModalLead').textContent=info.lead;$('#statusModalSummary').textContent=info.summary;$('#statusModalChecklist').innerHTML=info.checks.map(x=>'<li>'+wdEsc(x)+'</li>').join('');$('#statusModalWorks').innerHTML=rows.length?'<div class="status-work-list">'+rows.slice(0,5).map(x=>'<div class="status-work"><b>'+wdEsc(x.title||x.name||'제작 작업')+'</b><small>'+wdEsc(x.status||x.type||'확인')+'</small></div>').join('')+'</div>':'<div class="status-empty">현재 해당 상태의 작업이 없습니다.</div>';$('#statusModalAction').onclick=()=>{closeStatusModal();showPage(info.page)};$('#statusInfoModal').classList.add('show')}
+function closeStatusModal(){$('#statusInfoModal').classList.remove('show')}
+$$('[data-status-modal]').forEach(btn=>btn.onclick=()=>openStatusModal(btn.dataset.statusModal));$$('[data-status-close]').forEach(btn=>btn.onclick=closeStatusModal);$('#statusInfoModal').addEventListener('click',e=>{if(e.target.id==='statusInfoModal')closeStatusModal()});
+function updateStats(){
+  const works=Array.isArray(state.works)?state.works:[],outputs=Array.isArray(state.outputs)?state.outputs:[];
+  const set=(id,value)=>{const el=$(id);if(el)el.textContent=String(value)};
+  set('#statDraft',works.filter(x=>!/승인 완료|납품 완료|공개 완료/.test(x.status||'')).length);
+  set('#statReview',works.filter(x=>/검수|확인/.test(x.status||'')).length);
+  set('#statApproved',outputs.length||works.filter(x=>x.approved||/승인 완료|납품 완료|공개 완료/.test(x.status||'')).length);
+  set('#statDC',works.filter(x=>x.dc||x.location).length);
+  renderToday();
+}
+function renderToday(){
+  const box=$('#todayWorks');if(!box)return;
+  const works=(Array.isArray(state.works)?state.works:[]).filter(x=>!/승인 완료|납품 완료|공개 완료/.test(x.status||'')).slice(0,3);
+  if(!works.length){box.innerHTML='<div class="today-empty"><div><b>오늘 등록된 제작 작업이 없습니다.</b><span>작업을 만들면 이 자리에 표시됩니다.</span></div><button class="btn primary sm" id="todayNewBtn">＋ 새 제작</button></div>';$('#todayNewBtn').onclick=()=>modal(true);return}
+  box.innerHTML='<div class="today-list">'+works.map(w=>'<div class="today-item"><div class="workico">'+icon(w.type)+'</div><div><b>'+wdEsc(w.title)+'</b><small>'+wdEsc(label(w.type))+' · '+wdEsc(w.status||'진행 중')+'</small></div><button class="btn sm" data-today-open="'+wdEsc(w.type)+'">열기</button></div>').join('')+'</div>';
+  $('[data-today-open]').forEach(btn=>btn.onclick=()=>showPage(btn.dataset.todayOpen));
+}
+function wdEsc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function modal(show=true){$('#newWorkModal').classList.toggle('show',show)}
+const topNew=$('#newWorkBtn');if(topNew)topNew.onclick=()=>modal(true);$$('[data-close]').forEach(x=>x.onclick=()=>modal(false));$$('#newTypes .typecard').forEach(x=>x.onclick=()=>{$$('#newTypes .typecard').forEach(y=>y.classList.remove('active'));x.classList.add('active');newType=x.dataset.type});
+$('#createWork').onclick=()=>{const title=$('#newTitle').value.trim()||'새 '+label(newType)+' 작업';state.works.unshift({id:'work-'+Date.now(),title,type:newType,space:$('#newOwner').value,status:'작성 중',updated:'방금',approved:false,dc:false,privacy:$('#newPrivacy').value});save();modal(false);toast('작업을 만들었습니다.');showPage(newType);$('#newTitle').value=''};
+$('#loadSampleSource').onclick=()=>{$('#sourceRaw').value='설교자는 절망과 한숨의 상황에서 삶의 전환점은 하나님께서 옛적에 행하신 일을 기억하는 데서 시작된다고 말했다. 기억은 묵상으로 이어지고, 묵상은 하나님의 구속의 은혜를 찬양하게 한다. 성경본문은 시편 77편 11절부터 15절이다.';toast('샘플 원석을 불러왔습니다.')};
+$('#organizeSourceBtn').onclick=()=>{const raw=$('#sourceRaw').value.trim();if(!raw)return toast('먼저 원문을 넣어주세요.');$('#factText').textContent=raw.slice(0,150)+(raw.length>150?'…':'');$('#sourceAnalysis').classList.remove('hidden');toast('샘플 정리 초안을 만들었습니다.')};$('#saveSourceBtn').onclick=()=>{save();toast('원문만 로컬 저장했습니다.')};$('#clearSourceBtn').onclick=()=>{$('#sourceRaw').value='';$('#sourceAnalysis').classList.add('hidden')};
+let promptMode='';
+let promptVariantOutputs={A:'',B:'',C:''};
+let selectedPromptVariant='';
+let reviewedPromptFinal='';
+let currentPromptLogId='';
+let promptLogRows=[];
+let activePromptLog=null;
+let promptRequestBusy=false;
+function wdReadSharedSupabaseToken(){
+  try{
+    const raw=localStorage.getItem('sb-mzftzadtoepcrwhnwdmn-auth-token');
+    if(!raw)return '';
+    const saved=JSON.parse(raw);
+    return saved?.access_token||saved?.currentSession?.access_token||saved?.session?.access_token||'';
+  }catch(error){return ''}
+}
+let wdPromptAuthToken=wdReadSharedSupabaseToken();
+const WD_PROMPT_FUNCTION_URL='https://mzftzadtoepcrwhnwdmn.supabase.co/functions/v1/prompt-studio';
+const WD_PROMPT_LOGS_URL='https://mzftzadtoepcrwhnwdmn.supabase.co/rest/v1/wd_prompt_logs';
+const WD_PROMPT_PUBLISHABLE_KEY='sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh';
+const promptModeNames={precision:'정밀 작업용',quick:'빠른 실행용',repeat:'반복 업무용'};
+const promptProviderKeys={ChatGPT:'chatgpt',Claude:'claude',Gemini:'gemini'};
+window.addEventListener('message',function(event){
+  if(event&&event.data&&event.data.type==='wdhq:creation-auth-token')wdPromptAuthToken=String(event.data.token||'');
+});
+window.addEventListener('storage',function(event){
+  if(event&&event.key==='sb-mzftzadtoepcrwhnwdmn-auth-token')wdPromptAuthToken=wdReadSharedSupabaseToken();
+});
+function promptValue(id){return ($('#'+id).value||'').trim()}
+function setPromptStep(step,complete){
+  $$('#promptSteps [data-prompt-step]').forEach(function(el){
+    const n=Number(el.dataset.promptStep);el.classList.toggle('done',n<step||(complete&&n===step));el.classList.toggle('active',!complete&&n===step);
+  });
+}
+function updatePromptUnlock(){
+  const ai=$('#targetAI').value,ready=!!promptMode&&!!ai;
+  $('#promptForm').disabled=!ready;$('#promptEditor').classList.toggle('is-locked',!ready);$('#promptLock').classList.toggle('hidden',ready);
+  $('#promptSelectionSummary').textContent=ready?promptModeNames[promptMode]+' · '+ai:'선택 대기';
+  if(ready){$('#targetHint').textContent=ai+'가 A/B/C 초안 생성과 선택본 검수를 담당합니다.';setPromptStep(2)}
+}
+$$('#page-prompt [data-mode]').forEach(function(btn){btn.addEventListener('click',function(){
+  promptMode=btn.dataset.mode;$$('#page-prompt [data-mode]').forEach(function(x){x.classList.toggle('active',x===btn)});
+  const ai=$('#targetAI');ai.disabled=false;if(!ai.value)ai.options[0].textContent='대상 AI를 선택하세요';
+  $('#targetHint').textContent=promptModeNames[promptMode]+'을 선택했습니다. 이제 대상 AI를 선택하세요.';setPromptStep(1);updatePromptUnlock();
+})});
+$('#targetAI').addEventListener('change',updatePromptUnlock);
+function promptData(){return {name:promptValue('pName'),purpose:promptValue('pPurpose'),role:promptValue('pRole'),input:promptValue('pInput'),must:promptValue('pMust'),ban:promptValue('pBan'),format:promptValue('pFormat'),provider:promptProviderKeys[$('#targetAI').value]||'',mode:promptMode}}
+function promptMissing(){const ids=['pName','pPurpose','pRole','pInput','pMust','pBan','pFormat'];return ids.filter(function(id){return !promptValue(id)})}
+async function promptLogRequest(query,options){
+  if(!wdPromptAuthToken)throw new Error('본진 대표 로그인 세션을 확인한 뒤 제작센터를 다시 열어 주세요.');
+  const config=Object.assign({},options||{}),headers=Object.assign({'apikey':WD_PROMPT_PUBLISHABLE_KEY,'Authorization':'Bearer '+wdPromptAuthToken,'Content-Type':'application/json'},config.headers||{});config.headers=headers;
+  const response=await fetch(WD_PROMPT_LOGS_URL+(query||''),config);let body=null;if(response.status!==204){try{body=await response.json()}catch(error){}}
+  if(!response.ok)throw new Error(body&&body.message?body.message:'프롬프트 제작 로그 요청에 실패했습니다.');return body;
+}
+function promptLogPayload(checks,notes){
+  return {prompt_name:promptValue('pName'),purpose:promptValue('pPurpose'),target_ai:$('#targetAI').value,production_mode:promptMode,selected_variant:selectedPromptVariant,final_prompt:reviewedPromptFinal,form_data:promptData(),variants:Object.assign({},promptVariantOutputs),review_checks:checks||[],review_notes:notes||'',updated_at:new Date().toISOString()};
+}
+async function saveCurrentPromptLog(checks,notes){
+  const payload=promptLogPayload(checks,notes),editing=!!currentPromptLogId,query=editing?'?id=eq.'+encodeURIComponent(currentPromptLogId):'';
+  const rows=await promptLogRequest(query,{method:editing?'PATCH':'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});const row=Array.isArray(rows)?rows[0]:null;if(row){currentPromptLogId=row.id;activePromptLog=row}return row;
+}
+function formatPromptLogDate(value){try{return new Date(value).toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}catch(error){return value||'—'}}
+function closePromptLogs(){$('#promptLogModal').classList.remove('show')}
+function closePromptLogEditor(){$('#promptLogEditorModal').classList.remove('show');activePromptLog=null}
+function renderPromptLogs(){
+  const body=$('#promptLogRows');if(!promptLogRows.length){body.innerHTML='<tr><td class="log-empty" colspan="7">아직 저장된 프롬프트가 없습니다.<br>초안을 선택하고 대표 검수를 반영하면 자동으로 저장됩니다.</td></tr>';return}
+  body.innerHTML=promptLogRows.map(function(row){return '<tr><td class="log-date">'+wdEsc(formatPromptLogDate(row.created_at))+'</td><td class="log-name">'+wdEsc(row.prompt_name)+'</td><td class="log-purpose">'+wdEsc(row.purpose)+'</td><td><span class="log-ai">'+wdEsc(row.target_ai)+'</span></td><td><button class="btn sm" data-prompt-log-view="'+wdEsc(row.id)+'">보기</button></td><td><button class="btn sm" data-prompt-log-edit="'+wdEsc(row.id)+'">수정</button></td><td><button class="btn sm danger" data-prompt-log-delete="'+wdEsc(row.id)+'">삭제</button></td></tr>'}).join('');
+  $$('[data-prompt-log-view]').forEach(function(btn){btn.onclick=function(){openPromptLogEditor(btn.dataset.promptLogView,false)}});$$('[data-prompt-log-edit]').forEach(function(btn){btn.onclick=function(){openPromptLogEditor(btn.dataset.promptLogEdit,true)}});$$('[data-prompt-log-delete]').forEach(function(btn){btn.onclick=function(){deletePromptLog(btn.dataset.promptLogDelete)}});
+}
+async function loadPromptLogs(){
+  $('#promptLogStatus').textContent='Supabase에서 기록을 불러오고 있습니다…';$('#promptLogRows').innerHTML='<tr><td class="log-empty" colspan="7">불러오는 중…</td></tr>';
+  try{const fields='id,created_at,updated_at,prompt_name,purpose,target_ai,production_mode,selected_variant,final_prompt,form_data,variants,review_checks,review_notes';promptLogRows=await promptLogRequest('?select='+fields+'&order=created_at.desc&limit=200',{method:'GET'})||[];$('#promptLogStatus').textContent='총 '+promptLogRows.length+'개의 완성 프롬프트';renderPromptLogs()}catch(error){$('#promptLogStatus').textContent=error.message;$('#promptLogRows').innerHTML='<tr><td class="log-empty" colspan="7">로그를 불러오지 못했습니다.<br>'+wdEsc(error.message)+'</td></tr>'}
+}
+function openPromptLogEditor(id,editing){
+  const row=promptLogRows.find(function(item){return item.id===id});if(!row)return;activePromptLog=row;const box=$('.prompt-log-editor-box');box.classList.toggle('is-view',!editing);$('#promptLogEditorTitle').textContent=editing?'프롬프트 수정':'프롬프트 보기';$('#promptLogMeta').textContent=formatPromptLogDate(row.created_at)+' · '+(promptModeNames[row.production_mode]||row.production_mode)+' · '+(row.selected_variant||'—')+' 초안';$('#promptLogName').value=row.prompt_name||'';$('#promptLogPurpose').value=row.purpose||'';$('#promptLogAI').value=row.target_ai||'ChatGPT';$('#promptLogFinal').value=row.final_prompt||'';$('#promptLogName').readOnly=!editing;$('#promptLogPurpose').readOnly=!editing;$('#promptLogAI').disabled=!editing;$('#promptLogFinal').readOnly=!editing;$('#savePromptLogEdit').classList.toggle('hidden',!editing);$('#cancelPromptLogEdit').textContent=editing?'취소':'닫기';$('#promptLogEditorModal').classList.add('show');
+}
+async function deletePromptLog(id){
+  const row=promptLogRows.find(function(item){return item.id===id});if(!row||!confirm('“'+row.prompt_name+'” 프롬프트 기록을 삭제할까요?\n삭제한 기록은 되돌릴 수 없습니다.'))return;
+  try{await promptLogRequest('?id=eq.'+encodeURIComponent(id),{method:'DELETE'});if(currentPromptLogId===id)currentPromptLogId='';promptLogRows=promptLogRows.filter(function(item){return item.id!==id});$('#promptLogStatus').textContent='총 '+promptLogRows.length+'개의 완성 프롬프트';renderPromptLogs();toast('프롬프트 기록을 삭제했습니다.')}catch(error){toast(error.message)}
+}
+async function callPromptStudio(action,extra){
+  if(!wdPromptAuthToken)throw new Error('본진 대표 로그인 세션을 확인한 뒤 제작센터를 다시 열어 주세요.');
+  const response=await fetch(WD_PROMPT_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':WD_PROMPT_PUBLISHABLE_KEY,'Authorization':'Bearer '+wdPromptAuthToken},body:JSON.stringify(Object.assign({action:action,data:promptData()},extra||{}))});
+  let body={};try{body=await response.json()}catch(error){}
+  if(!response.ok)throw new Error(body.message||'대상 AI 호출에 실패했습니다.');
+  return body;
+}
+function showPromptVariant(kind){
+  $$('#page-prompt [data-prompt-variant]').forEach(function(x){x.classList.toggle('active',x.dataset.promptVariant===kind)});
+  $$('#page-prompt [data-prompt-panel]').forEach(function(x){x.classList.toggle('active',x.dataset.promptPanel===kind)});
+}
+function resetPromptReview(){
+  selectedPromptVariant='';reviewedPromptFinal='';
+  $$('#page-prompt [data-select-prompt]').forEach(function(x){x.classList.remove('selected');x.disabled=false;x.textContent=x.dataset.selectPrompt+' 초안 선택'});
+  $$('#promptReviewChecks input').forEach(function(x){x.checked=false;x.disabled=false});
+  $('#promptReviewNotes').value='';$('#completePromptReview').disabled=false;$('#completePromptReview').textContent='검수 반영해 최종본 만들기';
+  $('#promptReviewStatus').className='callout warn';$('#promptReviewStatus').textContent='대표님이 직접 확인한 체크와 수정 의견을 AI가 최종본에 반영합니다.';
+  $('#promptReview').classList.add('hidden');$('#promptFinal').classList.add('hidden');
+}
+async function buildPromptVariants(){
+  if(promptRequestBusy)return;currentPromptLogId='';
+  if(!promptMode||!$('#targetAI').value)return toast('제작 모드와 대상 AI를 먼저 선택해 주세요.');
+  const missing=promptMissing();if(missing.length){$('#'+missing[0]).focus();return toast('입력 항목을 모두 작성해 주세요.')}
+  const button=$('#buildPrompt2'),old=button.textContent;promptRequestBusy=true;button.disabled=true;button.textContent='A/B/C 만드는 중…';resetPromptReview();
+  try{
+    const result=await callPromptStudio('draft');
+    (result.variants||[]).forEach(function(item){const k=String(item.id||'').toUpperCase();if(promptVariantOutputs.hasOwnProperty(k)){promptVariantOutputs[k]=String(item.prompt||'');$('#promptOutput'+k).textContent=promptVariantOutputs[k]}});
+    if(!promptVariantOutputs.A||!promptVariantOutputs.B||!promptVariantOutputs.C)throw new Error('A/B/C 초안을 모두 받지 못했습니다.');
+    const info=$('.prompt-result-head p');if(info)info.textContent=(result.provider||$('#targetAI').value)+' · '+(result.model||'연결 모델')+'이 만든 세 가지 초안입니다.';
+    $('#promptVariants').classList.remove('hidden');showPromptVariant('A');setPromptStep(3);save();$('#promptVariants').scrollIntoView({behavior:'smooth',block:'start'});toast('A/B/C 초안 생성이 완료됐습니다. 하나를 선택해 주세요.');
+  }catch(error){toast(error.message||'초안을 만들지 못했습니다.')}finally{promptRequestBusy=false;button.disabled=false;button.textContent=old}
+}
+$('#buildPrompt2').addEventListener('click',buildPromptVariants);
+$$('#page-prompt [data-prompt-variant]').forEach(function(btn){btn.addEventListener('click',function(){showPromptVariant(btn.dataset.promptVariant)})});
+function choosePromptVariant(k){
+  if(promptRequestBusy)return;if(!promptVariantOutputs[k])return toast('먼저 A/B/C 초안을 만들어 주세요.');
+  selectedPromptVariant=k;reviewedPromptFinal='';showPromptVariant(k);
+  $$('#page-prompt [data-select-prompt]').forEach(function(x){const selected=x.dataset.selectPrompt===k;x.classList.toggle('selected',selected);x.disabled=false;x.textContent=selected?'✓ '+k+' 초안 선택됨':x.dataset.selectPrompt+' 초안 선택'});
+  $('#selectedVariantBadge').textContent=k+' 초안 · 대표 검수 중';$$('#promptReviewChecks input').forEach(function(x){x.checked=false;x.disabled=false});$('#promptReviewNotes').value='';
+  $('#completePromptReview').disabled=false;$('#completePromptReview').textContent='검수 반영해 최종본 만들기';$('#promptFinal').classList.add('hidden');$('#promptReview').classList.remove('hidden');
+  $('#promptReviewStatus').className='callout info';$('#promptReviewStatus').textContent='만족한 항목은 체크하고, 체크하지 않은 부족한 부분은 아래에 직접 적어주세요.';
+  setPromptStep(4);$('#promptReview').scrollIntoView({behavior:'smooth',block:'center'});toast(k+' 초안을 선택했습니다. 대표님이 직접 검수해 주세요.');
+}
+$$('#page-prompt [data-select-prompt]').forEach(function(btn){btn.addEventListener('click',function(){choosePromptVariant(btn.dataset.selectPrompt)})});
+$('#completePromptReview').addEventListener('click',async function(){
+  if(promptRequestBusy)return;if(!selectedPromptVariant)return toast('먼저 A/B/C 중 하나를 선택해 주세요.');
+  const inputs=$$('#promptReviewChecks input'),checks=inputs.map(function(x){return {label:(x.parentElement.textContent||'').trim(),checked:x.checked}}),unchecked=checks.filter(function(x){return !x.checked}),notes=$('#promptReviewNotes').value.trim();
+  if(unchecked.length&&!notes){$('#promptReviewNotes').focus();return toast('체크하지 않은 항목이 있으면 빠진 내용이나 바꿀 점을 적어주세요.')}
+  const oldText=this.textContent;promptRequestBusy=true;this.disabled=true;this.textContent='대표 의견 반영 중…';inputs.forEach(function(x){x.disabled=true});$('#promptReviewNotes').disabled=true;
+  $('#promptReviewStatus').className='callout info';$('#promptReviewStatus').textContent=$('#targetAI').value+'가 대표님의 체크와 수정 의견을 반영해 최종본을 만들고 있습니다.';
+  try{
+    const result=await callPromptStudio('review',{selectedPrompt:promptVariantOutputs[selectedPromptVariant],manualReview:{checks:checks,notes:notes}}),review=result.review||{};
+    reviewedPromptFinal=String(review.finalPrompt||'');if(!reviewedPromptFinal)throw new Error('최종 완성본을 받지 못했습니다.');
+    $('#selectedVariantBadge').textContent=selectedPromptVariant+' 초안 · 대표 검수 반영 완료';$('#promptReviewStatus').className='callout safe';$('#promptReviewStatus').textContent=review.summary||'대표님의 체크와 수정 의견을 반영했습니다.';
+    $('#promptFinalOutput').textContent=reviewedPromptFinal;$('#promptFinalLabel').textContent=selectedPromptVariant+' 초안 · 대표 검수 반영 최종본';$('#promptFinal').classList.remove('hidden');setPromptStep(5);$('#promptFinal').scrollIntoView({behavior:'smooth',block:'start'});toast('대표 검수 의견을 반영한 최종본이 준비됐습니다.');try{await saveCurrentPromptLog(checks,notes);toast('최종본을 프롬프트 제작 로그에 저장했습니다.')}catch(logError){toast('최종본은 준비됐지만 로그 저장을 확인해 주세요.')}
+  }catch(error){$('#promptReviewStatus').className='callout danger';$('#promptReviewStatus').textContent=error.message||'검수 의견을 반영하지 못했습니다.';toast(error.message||'최종본을 만들지 못했습니다.')}finally{promptRequestBusy=false;this.disabled=false;this.textContent=oldText;inputs.forEach(function(x){x.disabled=false});$('#promptReviewNotes').disabled=false}
+});
+$('#copyPromptFinal').addEventListener('click',function(){if(!reviewedPromptFinal||$('#promptFinal').classList.contains('hidden'))return toast('대표 검수를 먼저 완료해 주세요.');copyText(reviewedPromptFinal);setPromptStep(5,true)});
+$('#downloadPromptFinal').addEventListener('click',function(){if(!reviewedPromptFinal||$('#promptFinal').classList.contains('hidden'))return toast('대표 검수를 먼저 완료해 주세요.');const safe=(promptValue('pName')||'WD_프롬프트').replace(/[\/:*?"<>|]/g,'_');downloadText(safe+'_'+selectedPromptVariant+'_완성본.txt',reviewedPromptFinal);setPromptStep(5,true)});
+$('#openPromptLogs').addEventListener('click',function(){$('#promptLogModal').classList.add('show');loadPromptLogs()});$('#refreshPromptLogs').addEventListener('click',loadPromptLogs);$$('[data-prompt-log-close]').forEach(function(btn){btn.addEventListener('click',closePromptLogs)});$$('[data-prompt-editor-close]').forEach(function(btn){btn.addEventListener('click',closePromptLogEditor)});$('#cancelPromptLogEdit').addEventListener('click',closePromptLogEditor);
+$('#promptLogModal').addEventListener('click',function(event){if(event.target===this)closePromptLogs()});$('#promptLogEditorModal').addEventListener('click',function(event){if(event.target===this)closePromptLogEditor()});
+$('#copySavedPrompt').addEventListener('click',function(){if(activePromptLog)copyText($('#promptLogFinal').value)});$('#downloadSavedPrompt').addEventListener('click',function(){if(!activePromptLog)return;const safe=($('#promptLogName').value||'WD_프롬프트').replace(/[\/:*?"<>|]/g,'_');downloadText(safe+'_완성본.txt',$('#promptLogFinal').value)});
+$('#savePromptLogEdit').addEventListener('click',async function(){if(!activePromptLog)return;const name=$('#promptLogName').value.trim(),purpose=$('#promptLogPurpose').value.trim(),finalPrompt=$('#promptLogFinal').value.trim();if(!name||!purpose||!finalPrompt)return toast('이름, 사용 목적, 최종 프롬프트를 모두 입력해 주세요.');const old=this.textContent;this.disabled=true;this.textContent='저장 중…';try{const rows=await promptLogRequest('?id=eq.'+encodeURIComponent(activePromptLog.id),{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify({prompt_name:name,purpose:purpose,target_ai:$('#promptLogAI').value,final_prompt:finalPrompt,updated_at:new Date().toISOString()})});const saved=Array.isArray(rows)?rows[0]:null;if(saved){promptLogRows=promptLogRows.map(function(row){return row.id===saved.id?saved:row});if(currentPromptLogId===saved.id){reviewedPromptFinal=saved.final_prompt;$('#promptFinalOutput').textContent=reviewedPromptFinal}renderPromptLogs()}closePromptLogEditor();toast('프롬프트 기록을 수정했습니다.')}catch(error){toast(error.message)}finally{this.disabled=false;this.textContent=old}});
+document.addEventListener('keydown',function(event){if(event.key!=='Escape')return;if($('#promptLogEditorModal').classList.contains('show'))closePromptLogEditor();else if($('#promptLogModal').classList.contains('show'))closePromptLogs()});
+function instructionText(){return `# ${$('#iName').value||'프로젝트 기본 지침'}\n\n## 1. 목적\n${$('#iPurpose').value||'이 프로젝트의 목적을 입력합니다.'}\n\n## 2. AI 역할\n${$('#iRole').value||'정리·분석·제작·검수에서 맡을 역할을 입력합니다.'}\n\n## 3. 사람이 결정할 영역\n${$('#iHuman').value||'최종 방향, 승인, 공개, 배포는 사람이 결정합니다.'}\n\n## 4. 유지 기준\n${$('#iKeep').value||'이미 확정된 구조와 원본을 보존합니다.'}\n\n## 5. 사실성·검증\n${$('#iFact').value||'직접 확인한 사실, 시험한 사실, 추론, 제안, 확인 불가를 구분합니다.'}\n\n## 6. 금지사항\n${$('#iBan').value||'확인하지 않은 사실을 만들지 않고 새 앱·새 DB를 습관적으로 제안하지 않습니다.'}\n\n## 7. 완료 기준\n${$('#iDone').value||'결과물, 검수 범위, 확인 불가, 다음 행동, 결과 위치를 남깁니다.'}`}
+$('#instructionSample').onclick=()=>{$('#iName').value='WD 제작센터 프로젝트 기본 지침';$('#iSpace').value='WD 제작센터';$('#iPurpose').value='사람의 원자료와 철학을 프롬프트·지침·AI 개인화·문서·이미지로 연결한다.';$('#iRole').value='원석을 구조화하고 범위를 자르며 실제 결과물과 검수 기준을 만든다.';$('#iHuman').value='민감정보 사용, 최종 승인, 외부 공개, 배포, 기억과 삭제 권한은 사람이 결정한다.';$('#iKeep').value='원자료 원본 보존, AI 초안 분리, 사용자 수정, 전문 검수, 결과의 원래 공간 복귀.';$('#iBan').value='과장, 불안 자극, 성격·심리·영적 단정, 민감정보 자동 전환, 새 시스템 확장.';$('#iFact').value='자료에서 확인, 코드에서 확인, 실제 시험, 합리적 추론, 제안, 확인 불가를 구분한다.';$('#iDone').value='승인본·최종 위치·원자료 관계·검수자·승인자·다음 행동이 기록되면 완료.';toast('WD 샘플을 불러왔습니다.')};function buildInstruction(){const t=instructionText();$('#instructionOutput').textContent=t;save();toast('지침 초안을 구성했습니다.')}$('#buildInstruction').onclick=$('#buildInstruction2').onclick=buildInstruction;$('#copyInstruction').onclick=()=>copyText($('#instructionOutput').textContent);$('#downloadInstruction').onclick=()=>downloadText('WD_지침_초안.txt',$('#instructionOutput').textContent);
+let aiScope='';let aiTarget='';let aiDraftPackage=null;let aiFinalPackage=null;let aiTestData=null;let aiCurrentTab='instructions';let aiLogRows=[];let aiActiveLog=null;let aiEditingLogId='';let aiBusy=false;let aiStage=1;let aiMaxStage=1;
+const AI_SCOPE_LABELS={self:'내 AI',client:'고객 AI',specific:'특정 목적 AI'},AI_TARGET_LABELS={chatgpt:'ChatGPT',claude:'Claude',gemini:'Gemini'},AI_TAB_LABELS={instructions:'Instructions',description:'한 줄 설명',starters:'대화 시작문',knowledge:'지식파일',tests:'테스트 질문'};
+const WD_AI_FUNCTION_URL='https://mzftzadtoepcrwhnwdmn.supabase.co/functions/v1/personalization-studio';
+const WD_AI_LOGS_URL='https://mzftzadtoepcrwhnwdmn.supabase.co/rest/v1/wd_personalization_logs';
+function promptValue(id){const e=$('#'+id);return e?e.value.trim():''}
+function aiData(){return {scope:aiScope,target:aiTarget,name:promptValue('gName'),call:promptValue('gCall'),purpose:promptValue('gPurpose'),help:promptValue('gHelp'),tone:promptValue('gTone'),avoid:promptValue('gAvoid'),device:promptValue('gDevice'),memory:promptValue('gMemory'),session:promptValue('gSession'),never:promptValue('gNever')}}
+function aiGoStage(step,force){step=Number(step);if(!force&&step>aiMaxStage)return toast('앞 단계를 먼저 완료해 주세요.');aiStage=step;$$('[data-ai-panel]').forEach(function(p){p.classList.toggle('hidden',Number(p.dataset.aiPanel)!==step)});$$('#aiSteps [data-ai-step]').forEach(function(x){const n=Number(x.dataset.aiStep);x.classList.toggle('active',n===step);x.classList.toggle('done',n<step&&n<=aiMaxStage)});window.scrollTo({top:0,behavior:'smooth'})}
+function aiAdvance(step){aiMaxStage=Math.max(aiMaxStage,step);aiGoStage(step,true)}
+function aiNeed(ids,msg){if(ids.some(function(id){return !promptValue(id)})){toast(msg);return false}return true}
+function aiInvalidate(){if(!aiDraftPackage)return;aiDraftPackage=null;aiFinalPackage=null;aiTestData=null;aiMaxStage=Math.min(aiMaxStage,5);$('#aiTestResult').classList.add('hidden');$('#aiTestFeedback').value=''}
+$$('[data-ai-scope]').forEach(function(x){x.onclick=function(){aiScope=x.dataset.aiScope;$$('[data-ai-scope]').forEach(function(y){y.classList.toggle('active',y===x)});aiDraftPackage=null;aiFinalPackage=null;aiTestData=null;aiEditingLogId='';aiMaxStage=Math.max(aiMaxStage,2)}});
+$$('[data-ai-target]').forEach(function(x){x.onclick=function(){aiTarget=x.dataset.aiTarget;$$('[data-ai-target]').forEach(function(y){y.classList.toggle('active',y===x)});aiDraftPackage=null;aiFinalPackage=null;aiTestData=null;aiEditingLogId='';aiMaxStage=Math.max(aiMaxStage,3)}});
+$$('#aiSteps [data-ai-step]').forEach(function(x){x.onclick=function(){aiGoStage(Number(x.dataset.aiStep))}});
+$$('[data-ai-back]').forEach(function(x){x.onclick=function(){aiGoStage(Number(x.dataset.aiBack),true)}});
+$$('[data-ai-next]').forEach(function(x){x.onclick=function(){const n=Number(x.dataset.aiNext);if(n===2&&!aiScope)return toast('개인화 목적을 먼저 선택해 주세요.');if(n===3&&!aiTarget)return toast('개인화할 AI를 선택해 주세요.');if(n===4&&!aiNeed(['gName','gPurpose','gHelp'],'AI 이름, 목적, 도와줄 일을 입력해 주세요.'))return;if(n===5&&!aiNeed(['gTone','gAvoid'],'편안한 방식과 피할 방식을 입력해 주세요.'))return;aiAdvance(n)}});
+$$('#aiForm input,#aiForm textarea').forEach(function(x){x.addEventListener('input',aiInvalidate)});
+function aiSetBusy(button,on,label){if(on){button.dataset.old=button.textContent;button.disabled=true;button.textContent=label}else{button.disabled=false;button.textContent=button.dataset.old||button.textContent}}
+async function aiFunction(action,extra){if(!wdPromptAuthToken)throw new Error('본진 대표 로그인 세션을 확인해 주세요.');const r=await fetch(WD_AI_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':WD_PROMPT_PUBLISHABLE_KEY,'Authorization':'Bearer '+wdPromptAuthToken},body:JSON.stringify(Object.assign({action:action,data:aiData()},extra||{}))});let b={};try{b=await r.json()}catch(e){}if(!r.ok)throw new Error(b.error||b.message||'개인화 AI 요청에 실패했습니다.');return b}
+function aiPackageText(pkg,key){const v=(pkg||{})[key];if(key==='starters'&&Array.isArray(v))return v.map(function(x,i){return (i+1)+'. '+String(x||'')}).join('\n');if(key==='tests'&&Array.isArray(v))return v.map(function(x,i){return (i+1)+'. 질문: '+String((x&&x.question)||'')+'\n   기대 행동: '+String((x&&x.expected)||'')}).join('\n\n');return Array.isArray(v)?v.map(String).join('\n'):String(v||'')}
+function aiFullText(pkg){return Object.keys(AI_TAB_LABELS).map(function(k){return '# '+AI_TAB_LABELS[k]+'\n\n'+aiPackageText(pkg,k)}).join('\n\n---\n\n')}
+function aiMarkdownText(pkg){const d=aiData(),head=['# '+(d.name||'AI 개인화 패키지'),'','- 개인화 목적: '+(AI_SCOPE_LABELS[d.scope]||d.scope||''),'- 대상 AI: '+(AI_TARGET_LABELS[d.target]||d.target||''),'- 사용 목적: '+(d.purpose||''),'- 생성일: '+new Date().toLocaleString('ko-KR'),''];return head.concat(Object.keys(AI_TAB_LABELS).reduce(function(a,k){return a.concat(['## '+AI_TAB_LABELS[k],'',aiPackageText(pkg,k),''])},[])).join('\n')}
+function aiRenderTabs(container,pkg,output){const box=$('#'+container);box.innerHTML=Object.keys(AI_TAB_LABELS).map(function(k){return '<button type="button" data-ai-tab="'+k+'" class="'+(k===aiCurrentTab?'active':'')+'">'+AI_TAB_LABELS[k]+'</button>'}).join('');$('#'+output).textContent=aiPackageText(pkg,aiCurrentTab);$$('#'+container+' [data-ai-tab]').forEach(function(b){b.onclick=function(){aiCurrentTab=b.dataset.aiTab;aiRenderTabs(container,pkg,output)}})}
+function aiRenderAll(pkg){const box=$('#aiFinalAll');box.innerHTML=Object.keys(AI_TAB_LABELS).map(function(k){const wide=k==='instructions'||k==='knowledge';return '<section class="ai-final-card '+(wide?'wide':'')+'" data-kind="'+k+'"><div class="ai-final-card-head"><h3>'+AI_TAB_LABELS[k]+'</h3><button type="button" data-ai-section-copy="'+k+'">복사</button></div><pre>'+wdEsc(aiPackageText(pkg,k)||'생성된 내용이 없습니다.')+'</pre></section>'}).join('');$$('[data-ai-section-copy]').forEach(function(b){b.onclick=function(){copyText(aiPackageText(pkg,b.dataset.aiSectionCopy))}})}
+$('#buildGpt2').onclick=async function(){if(aiBusy)return;if(!aiScope||!aiTarget)return toast('개인화 목적과 대상 AI를 확인해 주세요.');if(!aiNeed(['gName','gPurpose','gHelp','gTone','gAvoid'],'필수 입력값을 확인해 주세요.'))return;aiBusy=true;aiSetBusy(this,true,'개인화 초안 만드는 중…');try{await saveAiLog(5,'draft',[],'');const body=await aiFunction('draft');aiDraftPackage=body.package;aiFinalPackage=null;aiTestData=null;aiCurrentTab='instructions';$('#aiTestResult').classList.add('hidden');$('#aiTestFeedback').value='';await saveAiLog(5,'draft',[],'');aiAdvance(6);toast('5단계 입력과 초안을 제작 로그에 저장했습니다.')}catch(e){toast(e.message)}finally{aiBusy=false;aiSetBusy(this,false)}};
+$('#openAiDraft').onclick=function(){if(!aiDraftPackage)return;aiCurrentTab='instructions';$('#aiLogDetailTitle').textContent='현재 개인화 초안';$('#aiLogDetailMeta').textContent=(AI_TARGET_LABELS[aiTarget]||aiTarget)+'용 · 테스트 전 초안';aiRenderTabs('aiLogDetailTabs',aiDraftPackage,'aiLogDetailOutput');$('#aiLogDetailModal').classList.add('show')};
+$('#runAiTest').onclick=async function(){if(aiBusy||!aiDraftPackage)return toast('먼저 개인화 초안을 만들어 주세요.');const scenario=promptValue('aiTestScenario');if(!scenario)return toast('실제로 시험할 질문이나 상황을 적어주세요.');aiBusy=true;aiSetBusy(this,true,'테스트 답변 만드는 중…');try{const body=await aiFunction('test',{draft:aiDraftPackage,scenario:scenario});aiTestData=body.test;$('#aiTestReply').textContent=aiTestData.reply||'';const a=aiTestData.assessment||{},strengths=(a.strengths||[]).map(function(x){return '<li>'+wdEsc(x)+'</li>'}).join(''),concerns=(a.concerns||[]).map(function(x){return '<li>'+wdEsc(x)+'</li>'}).join('');$('#aiTestAssessment').innerHTML='<div class="'+(a.aligned?'test-pass':'test-fix')+'">'+(a.aligned?'설정과 대체로 일치':'설정 보완이 필요')+'</div>'+(strengths?'<b>잘 지킨 점</b><ul>'+strengths+'</ul>':'')+(concerns?'<b>보완할 점</b><ul>'+concerns+'</ul>':'')+(a.correction?'<b>권장 수정</b><p>'+wdEsc(a.correction)+'</p>':'');$('#aiTestResult').classList.remove('hidden');aiMaxStage=Math.max(aiMaxStage,6);await saveAiLog(6,'tested',[],promptValue('aiTestFeedback'));toast('테스트 결과를 만들고 같은 제작 로그에 저장했습니다.')}catch(e){toast(e.message)}finally{aiBusy=false;aiSetBusy(this,false)}};
+$('#finalizeAiPackage').onclick=async function(){if(aiBusy||!aiDraftPackage)return;if(!aiTestData)return toast('먼저 테스트 대화를 실행해 주세요.');aiBusy=true;aiSetBusy(this,true,'최종 패키지 만드는 중…');const feedback=promptValue('aiTestFeedback'),test={scenario:promptValue('aiTestScenario'),result:aiTestData,feedback:feedback};try{const body=await aiFunction('finalize',{draft:aiDraftPackage,checks:[],notes:feedback,test:test});aiFinalPackage=body.package;aiCurrentTab='instructions';aiRenderAll(aiFinalPackage);await saveAiLog(7,'completed',[],feedback);aiAdvance(7);toast('최종 패키지 5종을 만들고 제작 로그를 완성 처리했습니다.')}catch(e){toast(e.message)}finally{aiBusy=false;aiSetBusy(this,false)}};
+$('#copyAiInstructions').onclick=function(){if(aiFinalPackage)copyText(aiPackageText(aiFinalPackage,'instructions'))};$('#downloadAiFinal').onclick=function(){if(!aiFinalPackage)return;downloadText((promptValue('gName')||'AI_개인화')+'_전체항목.txt',aiFullText(aiFinalPackage))};$('#downloadAiMarkdown').onclick=function(){if(!aiFinalPackage)return;downloadText((promptValue('gName')||'AI_개인화')+'_최종개인화.md',aiMarkdownText(aiFinalPackage))};
+$('#restartAiWizard').onclick=function(){if(!confirm('현재 입력을 비우고 새 개인화를 시작할까요?'))return;aiScope='';aiTarget='';aiDraftPackage=null;aiFinalPackage=null;aiTestData=null;aiEditingLogId='';aiStage=1;aiMaxStage=1;$$('[data-ai-scope],[data-ai-target]').forEach(function(x){x.classList.remove('active')});$$('#aiForm input,#aiForm textarea,#aiTestScenario,#aiTestFeedback').forEach(function(x){x.value=''});$('#aiTestResult').classList.add('hidden');aiGoStage(1,true)};
+async function aiLogRequest(query,options){if(!wdPromptAuthToken)throw new Error('본진 대표 로그인 세션을 확인해 주세요.');const c=Object.assign({},options||{});c.headers=Object.assign({'apikey':WD_PROMPT_PUBLISHABLE_KEY,'Authorization':'Bearer '+wdPromptAuthToken,'Content-Type':'application/json'},c.headers||{});const r=await fetch(WD_AI_LOGS_URL+(query||''),c);let b=null;if(r.status!==204){try{b=await r.json()}catch(e){}}if(!r.ok)throw new Error((b&&b.message)||'개인화 로그 요청에 실패했습니다.');return b}
+async function saveAiLog(stage,status,checks,notes){const d=aiData(),now=new Date().toISOString(),payload={target_ai:d.target,assistant_name:d.name,user_call:d.call,purpose:d.purpose,input_data:d,draft_package:aiDraftPackage||{},final_package:aiFinalPackage||{},review_checks:checks||[],review_notes:notes||'',test_scenario:promptValue('aiTestScenario'),test_result:aiTestData||{},progress_stage:stage,progress_status:status,updated_at:now,completed_at:status==='completed'?now:null};const editing=!!aiEditingLogId,q=editing?'?id=eq.'+encodeURIComponent(aiEditingLogId):'';const rows=await aiLogRequest(q,{method:editing?'PATCH':'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});const row=Array.isArray(rows)?rows[0]:null;if(row)aiEditingLogId=row.id;return row}
+function aiDate(v){try{return new Date(v).toLocaleString('ko-KR')}catch(e){return v||''}}
+const AI_PROGRESS_LABELS={draft:'5단계 · 입력·초안',tested:'6단계 · 테스트 완료',completed:'7단계 · 완성'};
+function aiSavedPackage(r){return r&&r.progress_status==='completed'&&r.final_package&&Object.keys(r.final_package).length?r.final_package:(r&&r.draft_package)||{}}
+async function loadAiLogs(){$('#aiLogStatus').textContent='Supabase에서 기록을 불러오고 있습니다…';$('#aiLogRows').innerHTML='<tr><td colspan="8" class="log-empty">불러오는 중…</td></tr>';try{aiLogRows=await aiLogRequest('?select=id,created_at,updated_at,target_ai,assistant_name,user_call,purpose,input_data,draft_package,final_package,review_checks,review_notes,test_scenario,test_result,progress_stage,progress_status,completed_at&order=updated_at.desc&limit=200',{method:'GET'})||[];$('#aiLogStatus').textContent='총 '+aiLogRows.length+'개의 제작 기록';renderAiLogs()}catch(e){$('#aiLogStatus').textContent=e.message;$('#aiLogRows').innerHTML='<tr><td colspan="8" class="log-empty">'+wdEsc(e.message)+'</td></tr>'}}
+function renderAiLogs(){const body=$('#aiLogRows');if(!aiLogRows.length){body.innerHTML='<tr><td colspan="8" class="log-empty">아직 저장된 개인화 제작 기록이 없습니다.<br>5단계에서 초안을 만들면 자동 저장됩니다.</td></tr>';return}body.innerHTML=aiLogRows.map(function(r){const scope=(r.input_data||{}).scope,status=r.progress_status||'completed',hasPackage=aiSavedPackage(r)&&Object.keys(aiSavedPackage(r)).length;return '<tr><td>'+wdEsc(aiDate(r.updated_at||r.created_at))+'</td><td><span class="ai-progress '+status+'">'+wdEsc(AI_PROGRESS_LABELS[status]||((r.progress_stage||5)+'단계'))+'</span></td><td class="log-name">'+wdEsc(r.assistant_name)+'</td><td><span class="log-ai">'+wdEsc(AI_TARGET_LABELS[r.target_ai]||r.target_ai)+'</span></td><td>'+wdEsc((AI_SCOPE_LABELS[scope]?AI_SCOPE_LABELS[scope]+' · ':'')+r.purpose)+'</td><td>'+(hasPackage?'<button class="btn sm" data-ai-log-view="'+r.id+'">보기</button>':'<span class="log-muted">생성 전</span>')+'</td><td><button class="btn sm" data-ai-log-load="'+r.id+'">이어하기</button></td><td><button class="btn sm danger" data-ai-log-delete="'+r.id+'">삭제</button></td></tr>'}).join('');$$('[data-ai-log-view]').forEach(function(b){b.onclick=function(){openAiLogDetail(b.dataset.aiLogView)}});$$('[data-ai-log-load]').forEach(function(b){b.onclick=function(){loadAiLogForEdit(b.dataset.aiLogLoad)}});$$('[data-ai-log-delete]').forEach(function(b){b.onclick=function(){deleteAiLog(b.dataset.aiLogDelete)}})}
+function openAiLogDetail(id){const r=aiLogRows.find(function(x){return x.id===id});if(!r)return;aiActiveLog=r;aiCurrentTab='instructions';$('#aiLogDetailTitle').textContent=r.assistant_name;$('#aiLogDetailMeta').textContent=(AI_PROGRESS_LABELS[r.progress_status]||((r.progress_stage||5)+'단계'))+' · '+aiDate(r.updated_at||r.created_at)+' · '+(AI_TARGET_LABELS[r.target_ai]||r.target_ai);aiRenderTabs('aiLogDetailTabs',aiSavedPackage(r),'aiLogDetailOutput');$('#aiLogDetailModal').classList.add('show')}
+function loadAiLogForEdit(id){const r=aiLogRows.find(function(x){return x.id===id});if(!r)return;const d=r.input_data||{};aiScope=d.scope||'self';aiTarget=d.target||r.target_ai;$$('[data-ai-scope]').forEach(function(x){x.classList.toggle('active',x.dataset.aiScope===aiScope)});$$('[data-ai-target]').forEach(function(x){x.classList.toggle('active',x.dataset.aiTarget===aiTarget)});['gName','gCall','gPurpose','gHelp','gTone','gAvoid','gDevice','gMemory','gSession','gNever'].forEach(function(id){const key={gName:'name',gCall:'call',gPurpose:'purpose',gHelp:'help',gTone:'tone',gAvoid:'avoid',gDevice:'device',gMemory:'memory',gSession:'session',gNever:'never'}[id];$('#'+id).value=d[key]||''});aiEditingLogId=r.id;aiDraftPackage=r.draft_package&&Object.keys(r.draft_package).length?r.draft_package:null;aiFinalPackage=null;aiTestData=r.test_result&&r.test_result.reply?r.test_result:null;$('#aiTestScenario').value=r.test_scenario||'';$('#aiTestFeedback').value=r.review_notes||'';$('#personalizationLogModal').classList.remove('show');if(aiTestData){$('#aiTestReply').textContent=aiTestData.reply||'';$('#aiTestResult').classList.remove('hidden');const a=aiTestData.assessment||{};$('#aiTestAssessment').innerHTML='<div class="'+(a.aligned?'test-pass':'test-fix')+'">'+(a.aligned?'설정과 대체로 일치':'설정 보완이 필요')+'</div>';aiMaxStage=6;aiGoStage(6,true)}else if(aiDraftPackage){aiMaxStage=6;$('#aiTestResult').classList.add('hidden');aiGoStage(6,true)}else{aiMaxStage=5;aiGoStage(5,true)}showPage('gpt');toast('저장된 단계부터 이어서 작업할 수 있습니다.')}
+async function deleteAiLog(id){const r=aiLogRows.find(function(x){return x.id===id});if(!r||!confirm('“'+r.assistant_name+'” 개인화 기록을 삭제할까요?\n삭제한 기록은 되돌릴 수 없습니다.'))return;try{await aiLogRequest('?id=eq.'+encodeURIComponent(id),{method:'DELETE'});if(aiEditingLogId===id)aiEditingLogId='';aiLogRows=aiLogRows.filter(function(x){return x.id!==id});renderAiLogs();$('#aiLogStatus').textContent='총 '+aiLogRows.length+'개의 제작 기록';toast('개인화 기록을 삭제했습니다.')}catch(e){toast(e.message)}}
+$('#openPersonalizationLogs').onclick=function(){$('#personalizationLogModal').classList.add('show');loadAiLogs()};$('#refreshAiLogs').onclick=loadAiLogs;$$('[data-ai-log-close]').forEach(function(x){x.onclick=function(){$('#personalizationLogModal').classList.remove('show')}});$$('[data-ai-detail-close]').forEach(function(x){x.onclick=function(){$('#aiLogDetailModal').classList.remove('show')}});$('#copySavedAi').onclick=function(){if(aiActiveLog)copyText(aiPackageText(aiSavedPackage(aiActiveLog),aiCurrentTab))};$('#downloadSavedAi').onclick=function(){if(aiActiveLog)downloadText((aiActiveLog.assistant_name||'AI_개인화')+'_패키지.txt',aiFullText(aiSavedPackage(aiActiveLog)))};$('#personalizationLogModal').onclick=function(e){if(e.target===this)this.classList.remove('show')};$('#aiLogDetailModal').onclick=function(e){if(e.target===this)this.classList.remove('show')};
+aiGoStage(1,true);
+$('#docSample').onclick=()=>{$('#dClient').value='문선화 · 선교 브랜드';$('#dTitle').value='선교 브랜드 방향 1장 리포트';$('#dBase').value='선교사 경력, 통역 경험, 매달 해외 사역, 말씀과 현장을 연결하는 태도, 롤모델 최자실 목사님';$('#dPurpose').value='고객이 자신의 브랜드 방향을 한눈에 이해하고 다음 행동을 선택하도록 돕는다.';$('#dOnly').value='첫 채널, 90일 실행 우선순위, 공개 가능한 사례 범위';toast('샘플 문서를 채웠습니다.')};$('#renderDoc').onclick=()=>{const title=$('#dTitle').value||'브랜드 방향 1장 리포트',client=$('#dClient').value||'고객 프로젝트',base=$('#dBase').value||'확정된 고객 기준정보를 입력하세요.',purpose=$('#dPurpose').value||'문서 목적을 입력하세요.',only=$('#dOnly').value||'이번 문서 전용 정보를 입력하세요.';$('#docPreview').innerHTML=`<h1>${escapeHtml(title)}</h1><p class="muted">${escapeHtml(client)} · 사용자 확인 전 초안</p><h2>문서 목적</h2><p>${escapeHtml(purpose)}</p><h2>확정된 기준정보</h2><p>${escapeHtml(base)}</p><h2>이번 산출물 전용 정보</h2><p>${escapeHtml(only)}</p><h2>확인할 사항</h2><ul><li>고객이 말하지 않은 내용이 없는가</li><li>민감 경험과 공개범위를 다시 확인했는가</li><li>다른 산출물의 확정 메시지와 충돌하지 않는가</li></ul><h2>다음 행동</h2><p>고객 내용 확인 → WD 내부 검수 → 최종 승인 → 납품 위치 등록</p>`;toast('문서 미리보기를 반영했습니다.')};$('#copyDoc').onclick=()=>copyText($('#docPreview').innerText);$('#saveDoc').onclick=()=>{state.works.unshift({id:'work-'+Date.now(),title:$('#dTitle').value||'새 문서',type:'document',space:'컨설팅센터',status:'사용자 확인',updated:'방금',approved:false,dc:false});save();toast('문서 작업을 저장했습니다.')};$('#miriPackage').onclick=()=>copyText(`문서명: ${$('#dTitle').value}\n목적: ${$('#dPurpose').value}\n확정 원고:\n${$('#docPreview').innerText}\n\n디자인 기준: WD 승인 색상·글꼴·로고 사용 / 모바일 가독성 / 과장 금지`);
+function refreshImage(){const title=$('#imgTitle').value||'오늘의 말씀';$('#pvVerse').textContent=$('#imgVerse').value;$('#pvTitle').innerHTML=escapeHtml(title).replace(/\n/g,'<br>');$('#pvCore').innerHTML=escapeHtml($('#imgCore').value).replace(/\n/g,'<br>');$('#pvHold').textContent=$('#imgHold').value;toast('이미지 미리보기를 반영했습니다.')}$('#refreshImage').onclick=refreshImage;$('#imageSample').onclick=()=>{refreshImage();toast('말씀편지 샘플을 불러왔습니다.')};
+$('#downloadPng').onclick=()=>{const c=$('#exportCanvas'),ctx=c.getContext('2d'),w=c.width,h=c.height;let g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#7e86b7');g.addColorStop(.42,'#c8acb8');g.addColorStop(.43,'#445069');g.addColorStop(1,'#1d2a3c');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.fillStyle='rgba(22,31,48,.85)';ctx.beginPath();ctx.moveTo(0,780);ctx.lineTo(420,590);ctx.lineTo(780,760);ctx.lineTo(1080,600);ctx.lineTo(1080,1350);ctx.lineTo(0,1350);ctx.fill();ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='34px sans-serif';ctx.fillText($('#imgVerse').value,540,250);ctx.font='bold 66px serif';wrap(ctx,$('#imgTitle').value,540,430,820,92);ctx.font='32px sans-serif';wrap(ctx,$('#imgCore').value,540,760,850,48);ctx.font='26px sans-serif';wrap(ctx,$('#imgHold').value,540,1110,800,42);const a=document.createElement('a');a.download='WD_말씀편지_샘플.png';a.href=c.toDataURL('image/png');a.click();toast('샘플 PNG를 저장했습니다.')};
+const reviewSets={personal:['원문과 AI 초안이 분리되어 있다','사용자가 직접 말한 마음과 AI 해석을 구분했다','확정 전 자동 저장·연결·장기기억을 하지 않았다','민감정보를 외부 콘텐츠로 자동 전환하지 않았다','사용자 본인이 최종 문장과 보관 위치를 승인했다'],consulting:['고객이 말하지 않은 경력·성과를 만들지 않았다','고객 기준정보와 산출물 메시지가 일치한다','내부 검수와 고객 확인을 구분했다','고객에게 보낸 파일과 승인본을 식별할 수 있다','최종 납품 위치와 수정 범위를 기록했다'],insurance:['실제 상담·가입제안서·증권·약관 근거가 있다','담보·지급·면책·감액·갱신 조건을 대조했다','주민번호·계좌·카드·증권번호를 제거했다','숫자 불일치와 확인 불가를 표시했다','설계사 최종 승인 전 고객 전달을 막았다'],content:['개인 원문과 외부 공개본을 분리했다','가족·건강·돈·신앙고백 등 민감정보를 확인했다','제목·썸네일·내용이 같은 문장을 반복하지 않는다','사용자의 실제 경험을 과장된 성공담으로 바꾸지 않았다','대표가 공개본을 최종 승인했다'],document:['기준 원본·버전·파일명을 확인했다','코드·로컬 실행·저장·재접속·배포 시험을 구분했다','파일 생성과 실제 작동을 구분했다','미완료·확인 불가·다음 행동을 남겼다','최종 결과 위치와 이전 버전을 기록했다'],web:['HTML 파일 생성과 로컬 실행을 구분했다','고객 디자인 승인과 실제 배포 승인을 구분했다','운영주소·모바일·저장·외부 DB를 각각 확인했다','원본·작업본·운영본·복구점을 구분했다','대표 승인 없이 정식 배포하지 않았다']};
+function renderReview(){const box=$('#reviewChecklist');box.innerHTML=reviewSets[reviewMode].map((t,i)=>`<label class="check"><input type="checkbox" ${i<3?'checked':''}>${t}</label>`).join('')}renderReview();$$('#reviewModes .choice').forEach(x=>x.onclick=()=>{$$('#reviewModes .choice').forEach(y=>y.classList.remove('active'));x.classList.add('active');reviewMode=x.dataset.review;renderReview()});$('#completeReview').onclick=()=>{toast('검수 결과를 로컬 저장했습니다.');save()};
+function renderOutputs(){const tb=$('#outputTable');tb.innerHTML=state.outputs.map((o,i)=>`<tr><td><b>${o.title}</b><br><small class="muted">${label(o.type)}</small></td><td>${o.space}</td><td><span class="status ${/승인|납품|공개/.test(o.status)?'approved':'checking'}">${o.status}</span></td><td>${o.approver}</td><td>${o.location}</td><td><button class="btn sm" data-delout="${i}">삭제</button></td></tr>`).join('');$$('[data-delout]').forEach(b=>b.onclick=()=>{if(confirm('이 로컬 결과 기록을 삭제할까요?')){state.outputs.splice(+b.dataset.delout,1);save();renderOutputs()}})}renderOutputs();$('#newOutput').onclick=()=>{const title=prompt('결과물 이름을 입력하세요.');if(!title)return;state.outputs.unshift({title,space:'브랜딩센터',status:'승인 대기',approver:'미지정',location:'위치 확인 필요',type:'document'});save();renderOutputs();toast('결과물 기록을 추가했습니다.')};$('#exportAll').onclick=()=>downloadText('WD_제작센터_로컬백업.json',JSON.stringify(state,null,2));
+function uuid(prefix){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)}
+const dcNames=['sourceAssetIds','relationType','sourceVersionUsed','productionWorkId','productionOutputId','productionWorkUrl','approvalStatus','approver','approvedAt'];function renderDC(){const vals=state.dcDraft||{};$('#dcFields').innerHTML=dcNames.map(n=>`<div class="dcitem"><label>${n}</label><code id="dc-${n}">${vals[n]||'—'}</code></div>`).join('')}renderDC();$('#generateIds').onclick=()=>{state.dcDraft={sourceAssetIds:'asset-source-001',relationType:'파생물',sourceVersionUsed:'v1.0',productionWorkId:uuid('work'),productionOutputId:uuid('output'),productionWorkUrl:'local://wd-creation-center/work',approvalStatus:'승인 대기',approver:'미지정',approvedAt:'—'};renderDC();toast('샘플 관계 ID를 생성했습니다.')};$('#saveDc').onclick=()=>{state.dc.push({...state.dcDraft,space:$('#dcSpace').value,sensitivity:$('#dcSensitivity').value,savedAt:new Date().toISOString()});save();toast('로컬 색인 기록을 저장했습니다.')};
+function copyText(t){navigator.clipboard?.writeText(t).then(()=>toast('복사했습니다.')).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('복사했습니다.')})}function downloadText(name,text){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('파일을 저장했습니다.')}function escapeHtml(s=''){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}function wrap(ctx,text,x,y,maxWidth,lineHeight){const words=(text||'').split(' ');let line='',yy=y;for(let n=0;n<words.length;n++){let test=line+words[n]+' ';if(ctx.measureText(test).width>maxWidth&&n>0){ctx.fillText(line,x,yy);line=words[n]+' ';yy+=lineHeight}else line=test}ctx.fillText(line,x,yy)}
+$$('.rail .choice').forEach(x=>x.onclick=()=>{if(!x.parentElement)return;[...x.parentElement.querySelectorAll('.choice')].forEach(y=>y.classList.remove('active'));x.classList.add('active')});$$('.rail .source-card').forEach(x=>x.onclick=()=>{[...x.parentElement.querySelectorAll('.source-card')].forEach(y=>y.classList.remove('active'));x.classList.add('active')});
+updateStats();
+</script>
+
+
+<!-- WD CENTER CONNECT BRIDGE v1.0 · 260809 -->
+<script id="wd-center-connect-bridge-v1">
+(function(){
+  const NAV_KEY='wd_nav_session_v1';
+  const MAX_AGE=24*60*60*1000;
+  const FALLBACK='https://admin.wdwave.kr/';
+
+  function readSession(){
+    try{
+      const s=JSON.parse(sessionStorage.getItem(NAV_KEY)||'null');
+      if(!s||!s.hubUrl||!s.at)return null;
+      if(Date.now()-Number(s.at)>MAX_AGE)return null;
+      return s;
+    }catch(e){return null}
+  }
+  function safeHub(url){
+    try{
+      const u=new URL(url,location.href);
+      if(u.origin===location.origin)return u.href;
+      if(u.protocol==='https:' && (u.hostname==='wdwave.kr'||u.hostname.endsWith('.wdwave.kr')))return u.href;
+    }catch(e){}
+    return FALLBACK;
+  }
+  function goHome(){
+    const s=readSession();
+    const target=safeHub(s&&s.hubUrl?s.hubUrl:FALLBACK);
+    location.assign(target);
+  }
+  window.WDCenterBridge=Object.assign(window.WDCenterBridge||{},{
+    version:'1.0',
+    readSession,
+    goHome,
+    navKey:NAV_KEY
+  });
+
+  document.addEventListener('click',function(e){
+    const el=e.target&&e.target.closest?e.target.closest('a,button'):null;
+    if(!el)return;
+    const text=(el.textContent||'').replace(/\s+/g,' ').trim();
+    const explicit=el.hasAttribute('data-wd-home');
+    if(explicit || /WD\s*본진|메인전산홈/.test(text)){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      goHome();
+    }
+  },true);
+
+  function ensureHomeButton(){
+    const has=[...document.querySelectorAll('a,button')].some(el=>/WD\s*본진|메인전산홈/.test((el.textContent||'').replace(/\s+/g,' ')));
+    if(has)return;
+    const b=document.createElement('button');
+    b.type='button';
+    b.setAttribute('data-wd-home','1');
+    b.textContent='🎛 WD 본진';
+    b.style.cssText='position:fixed;right:14px;top:14px;z-index:2147483000;min-height:44px;padding:9px 12px;border:1px solid #dbe3ef;border-radius:10px;background:#fff;color:#17345f;font:700 12px system-ui,-apple-system,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.12)';
+    document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureHomeButton);
+  else ensureHomeButton();
+})();
+</script>
+
+
+<script id="wd-agent-adapter-creation-v1">
+(function(){
+  const KEY='wd_creation_center_v02';
+  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')||{}}catch(e){return {}}};
+  window.WDCenterAgentAdapter={
+    version:'1.0',space:'creation_center',sourceOwner:'WD 제작센터',storageKey:KEY,mode:'read-only',
+    read(){
+      const s=read(), out=[];
+      (s.works||[]).forEach((x,i)=>out.push({id:String(x.id||'work-'+i),space:'creation_center',entityType:'production_work',title:String(x.title||'제작업무'),status:String(x.status||'작성 중'),assignee:x.assignee||null,dueAt:x.due||x.dueAt||null,nextAction:x.nextAction||x.next||null,blocker:x.blocker||null,approvalRequired:!!x.approved===false&&/검수|승인|확인/.test(String(x.status||'')),approvalState:x.approved?'approved':((!!x.approved===false&&/검수|승인|확인/.test(String(x.status||'')))?'pending':'none'),amount:null,currency:'KRW',moneyStatus:'none',resultLocation:x.resultLocation||null,sourceOwner:String(x.space||'WD 제작센터'),version:x.version||null,updatedAt:x.updatedAt||null,riskLevel:'R1'}));
+      (s.outputs||[]).forEach((x,i)=>out.push({id:String(x.id||'output-'+i),space:'creation_center',entityType:'output',title:String(x.title||x.name||'결과물'),status:String(x.status||'승인본'),assignee:null,dueAt:null,nextAction:x.nextAction||null,blocker:null,approvalRequired:false,approvalState:'approved',amount:null,currency:'KRW',moneyStatus:'none',resultLocation:x.location||x.resultLocation||x.url||null,sourceOwner:'WD 제작센터',version:x.version||null,updatedAt:x.updatedAt||null,riskLevel:'R0'}));
+      return out;
+    }
+  };
+})();
+</script>
+
+</body>
+</html>
