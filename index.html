@@ -493,7 +493,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 #setupModal .wdhq-setup-tabs{
   flex:0 0 auto;
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(3,1fr);
   gap:8px;
   padding:12px 18px;
   background:#f8fafc;
@@ -761,7 +761,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 }
 @media(max-width:850px){
   #setupModal .wdhq-setup-modal{width:98vw;height:92vh;max-height:92vh}
-  #setupModal .wdhq-setup-tabs{grid-template-columns:1fr 1fr}
+  #setupModal .wdhq-setup-tabs{grid-template-columns:repeat(3,1fr)}
   #setupModal .formgrid{grid-template-columns:1fr}
   #setupModal .agent-ready .ar-grid,
   #setupModal .wdhq-space-grid{grid-template-columns:1fr 1fr}
@@ -1113,6 +1113,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
     <div class="wdhq-setup-tabs" role="tablist" aria-label="연결 설정 탭">
       <button type="button" class="wdhq-setup-tab active" data-setup-tab="spaces" onclick="wdhqSetupTab('spaces')">공간 연결</button>
       <button type="button" class="wdhq-setup-tab" data-setup-tab="drive" onclick="wdhqSetupTab('drive')">드라이브 연결</button>
+      <button type="button" class="wdhq-setup-tab" data-setup-tab="github" onclick="wdhqSetupTab('github')">GitHub 파일 안내</button>
     </div>
 
     <div class="mbody wdhq-setup-body">
@@ -1142,6 +1143,24 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
             <thead><tr><th>공간</th><th>메뉴</th><th>연결 자료</th><th>Google Drive 위치</th></tr></thead>
             <tbody id="wdhq-drive-connection-rows"></tbody>
           </table>
+        </div>
+      </section>
+
+      <section class="wdhq-setup-panel" data-setup-panel="github">
+        <div class="wdhq-setup-panel-head">
+          <div>
+            <h3>wd-admin에 있는 파일</h3>
+          </div>
+        </div>
+        <div class="tablewrap wdhq-setup-tablewrap">
+          <table class="wdhq-connection-table">
+            <thead><tr><th>파일명</th><th>연결 공간</th><th>역할</th></tr></thead>
+            <tbody id="wdhq-github-structure-rows"></tbody>
+          </table>
+        </div>
+        <div class="hint" style="margin-top:14px;font-size:14px;line-height:1.65">
+          <b>보험사업부는 별도 GitHub를 사용합니다.</b><br>
+          보험사업부 파일은 <code>WD-Insurance-Menual / index.html</code>에 있습니다.
         </div>
       </section>
 
@@ -1732,7 +1751,7 @@ function renderSetup(){
   const spaceRows=[
     ['뉴본진 통합 운영판','전체 운영·첫 출입문','본진','index','kfcyk20 → wd-admin','kfcyk20','hq'],
     ['보험사업부','보험 업무','독립','index','saraunni.tv → WD-Insurance-Menual','윤경(saraunni.tv)<br>형민·지영(woori08944)','independent'],
-    ['사라의 집','개인 삶·기록·말씀','독립','sara-house','kfcyk20 → wd-admin','kfcyk20','independent'],
+    ['사라의 집','개인 삶·기록·말씀','독립','sara-house','kfcyk20 → wd-admin','saraunni.tv (sara-house)','independent'],
     ['퍼스널브랜딩','퍼스널브랜딩 업무','독립','consulting_center_app','kfcyk20 → wd-admin','kfcyk20','independent'],
     ['AI 강의센터','AI 강사 업무','독립','lecture_center','kfcyk20 → wd-admin','kfcyk20','independent'],
     ['WD 업무센터','업무관련내용','본진 내장','index','kfcyk20 → wd-admin','kfcyk20','embedded'],
@@ -1752,10 +1771,20 @@ function renderSetup(){
     ['AI 강의센터','강의 자료','기관·과정·강의안·성과자료','세부 폴더 미지정'],
     ['WD 데이터센터','원본 위치 관리','전체 자료의 원본 위치·버전','세부 폴더 미지정']
   ];
+  const githubRows=[
+    ['index.html','뉴본진 통합 운영판','뉴본진 전체 화면과 메뉴'],
+    ['before-home.html','구본진','이전 본진 화면 확인'],
+    ['consulting_center_app.html','퍼스널브랜딩','퍼스널브랜딩 업무 화면'],
+    ['lecture_center.html','AI 강의센터','AI 강의 업무 화면'],
+    ['sara-house.html','사라의 집','개인 삶·기록·말씀 공간'],
+    ['CNAME','운영주소','admin.wdwave.kr 연결']
+  ];
   const spaceBody=document.getElementById('wdhq-space-connection-rows');
   if(spaceBody)spaceBody.innerHTML=spaceRows.map(r=>`<tr class="wdhq-row-${r[6]}"><td>${r[0]}</td><td>${r[1]}</td><td><span class="wdhq-structure ${r[6]}">${r[2]}</span></td><td><code>${r[3]}</code></td><td>${r[4]}</td><td>${r[5]}</td></tr>`).join('');
   const driveBody=document.getElementById('wdhq-drive-connection-rows');
   if(driveBody)driveBody.innerHTML=driveRows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+  const githubBody=document.getElementById('wdhq-github-structure-rows');
+  if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
 }
 function openSetup(){
   renderSetup();
@@ -1775,7 +1804,8 @@ function wdhqSetupTab(tab){
   if(foot){
     const labels={
       spaces:'공간별 HTML·GitHub·Supabase 연결 구조를 확인합니다.',
-      drive:'메뉴별 Google Drive 연결 위치와 상태를 확인합니다.'
+      drive:'메뉴별 Google Drive 연결 위치와 상태를 확인합니다.',
+      github:'wd-admin 파일이 어느 공간과 연결되는지 확인합니다.'
     };
     foot.textContent=labels[target]||'연결 상태를 확인합니다.';
   }
