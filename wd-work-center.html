@@ -1228,7 +1228,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
         <div>
           <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">📚 업무작업결과 보관</div>
-          <div style="font-size:13px;color:#94a3b8;">배포파일·AI·퍼스널브랜딩·유튜브·회사·지점장님 자료를 구분하여 보관합니다.</div>
+          <div style="font-size:13px;color:#94a3b8;">배포파일·AI·퍼스널브랜딩·브랜딩고객·유튜브·회사·지점장님 자료를 구분하여 보관합니다.</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
           <span id="aa-drive-connection-badge" style="flex-shrink:0;padding:7px 10px;background:#F8FAFC;color:#64748B;border:1px solid #CBD5E1;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;">● Drive 연결 안 됨</span>
@@ -1259,6 +1259,7 @@
         <button onclick="aaSetTab('깃허브배포파일')" id="aa-tab-깃허브배포파일" style="padding:11px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:14px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">깃허브배포파일</button>
         <button onclick="aaSetTab('AI자료실')" id="aa-tab-AI자료실" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">AI자료실</button>
         <button onclick="aaSetTab('퍼스널브랜딩')" id="aa-tab-퍼스널브랜딩" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">퍼스널브랜딩</button>
+        <button onclick="aaSetTab('브랜딩고객자료')" id="aa-tab-브랜딩고객자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">브랜딩고객자료</button>
         <button onclick="aaSetTab('유튜브자료실')" id="aa-tab-유튜브자료실" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">유튜브자료실</button>
         <button onclick="aaSetTab('WD회사자료')" id="aa-tab-WD회사자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">WD회사자료</button>
         <button onclick="aaSetTab('지점장님자료')" id="aa-tab-지점장님자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">지점장님자료</button>
@@ -1545,6 +1546,7 @@
                 <option value="깃허브배포파일">깃허브배포파일</option>
                 <option value="AI자료실">AI자료실</option>
                 <option value="퍼스널브랜딩">퍼스널브랜딩</option>
+                <option value="브랜딩고객자료">브랜딩고객자료</option>
                 <option value="유튜브자료실">유튜브자료실</option>
                 <option value="WD회사자료">WD회사자료</option>
                 <option value="지점장님자료">지점장님자료</option>
@@ -7445,6 +7447,7 @@ var _AA_CATEGORIES = {
   '깃허브배포파일':['HTML파일'],
   'AI자료실':['프롬프트','지침'],
   '퍼스널브랜딩':['업무진행방법','양식파일','홍보자료','카드뉴스','기타'],
+  '브랜딩고객자료':[],
   '유튜브자료실':[],
   'WD회사자료':['양식파일','HTML파일','로고','이미지파일','기타'],
   '지점장님자료':['홍보자료','개인자료'],
@@ -7476,7 +7479,8 @@ window.aaRefreshDetailOptions=function(selected){
   var category=((document.getElementById('aa-f-category')||{}).value||'깃허브배포파일');
   var select=document.getElementById('aa-f-detail');if(!select)return;
   var items=_AA_CATEGORIES[category]||[];
-  select.innerHTML=items.length?items.map(function(x){return '<option value="'+_aaEsc(x)+'">'+_aaEsc(x)+'</option>';}).join(''):'<option value="">해당 없음</option>';
+  var emptyLabel=category==='브랜딩고객자료'?'Google Drive 동기화 후 고객 폴더 선택':'해당 없음';
+  select.innerHTML=items.length?items.map(function(x){return '<option value="'+_aaEsc(x)+'">'+_aaEsc(x)+'</option>';}).join(''):'<option value="">'+emptyLabel+'</option>';
   select.disabled=!items.length;
   if(selected&&items.indexOf(selected)>-1)select.value=selected;
 };
@@ -7516,6 +7520,12 @@ var _AA_DRIVE_CONFIG={
     rootId:'1emqe0yMwXXkfwSGyWpJp-5WgVl48ratL',
     rootUrl:'https://drive.google.com/drive/folders/1emqe0yMwXXkfwSGyWpJp-5WgVl48ratL',
     details:{'업무진행방법':'1_s_EpiuMjv622QgdJ0pDpEF5PwZNQcg3','양식파일':'1Kb4s3q3oj7PvnCdsT37eUfFPWLP0wB8P','홍보자료':'1u8AXFcPIAzeqNdxnwbU3SV_DAqlfA-_h','카드뉴스':'14lZ2APtQ3E1HTg259co89xnVlKp5JJu6','기타':'1mSN3C9r-DK6eYpd2HljX4XNPKofbUFqy'}
+  },
+  '브랜딩고객자료':{
+    rootId:'1UFaIkPCbM6hSXRSjGqaXs-m3Jm1DqGbf',
+    rootUrl:'https://drive.google.com/drive/folders/1UFaIkPCbM6hSXRSjGqaXs-m3Jm1DqGbf',
+    dynamicCustomerFolders:true,
+    details:{}
   },
   '유튜브자료실':{
     rootId:'1CTUb6AClikAS9InQ5ifLUiBEUFdXpBpI',
@@ -7648,22 +7658,64 @@ function aaDriveUpdateFolderLink(){
   var c=_AA_DRIVE_CONFIG[_aaTab];var link=document.getElementById('aa-drive-folder-link');
   if(link&&c){link.href=c.rootUrl;link.textContent='📁 구글드라이브 열기';}
 }
-async function aaDriveListAll(){
-  var ids=aaDriveFolderIds();
-  var q='('+ids.map(function(id){return "'"+id+"' in parents";}).join(' or ')+') and trashed = false';
+async function aaDriveSyncCustomerFolders(){
+  var category='브랜딩고객자료',config=_AA_DRIVE_CONFIG[category];
+  if(!config||!config.dynamicCustomerFolders)return;
+  var q="'"+config.rootId+"' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+  var fields='nextPageToken,files(id,name,mimeType,parents)';
+  var folders=[],pageToken='';
+  do{
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('name_natural')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent(fields);
+    if(pageToken)url+='&pageToken='+encodeURIComponent(pageToken);
+    var res=await aaDriveApi(url,{method:'GET'}),data=await res.json();
+    folders=folders.concat(data.files||[]);pageToken=data.nextPageToken||'';
+  }while(pageToken);
+  folders.sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''),'ko',{numeric:true});});
+  config.details={};
+  folders.forEach(function(folder){if(folder&&folder.id&&folder.name)config.details[folder.name]=folder.id;});
+  _AA_CATEGORIES[category]=folders.map(function(folder){return folder.name;});
+  if(_aaTab===category){aaRefreshDetailFilter();}
+  var formCategory=(document.getElementById('aa-f-category')||{}).value;
+  if(formCategory===category){aaRefreshDetailOptions();}
+}
+async function aaDriveListChildrenOf(parentIds){
+  if(!parentIds.length)return [];
+  var q='('+parentIds.map(function(id){return "'"+id+"' in parents";}).join(' or ')+') and trashed = false';
   var fields='nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,webViewLink,parents,appProperties,thumbnailLink)';
   var files=[],pageToken='';
   do{
     var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&spaces=drive&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent(fields);
     if(pageToken)url+='&pageToken='+encodeURIComponent(pageToken);
-    var res=await aaDriveApi(url,{method:'GET'});var data=await res.json();
+    var res=await aaDriveApi(url,{method:'GET'}),data=await res.json();
     files=files.concat(data.files||[]);pageToken=data.nextPageToken||'';
   }while(pageToken);
+  return files;
+}
+async function aaDriveListAll(){
+  await aaDriveSyncCustomerFolders();
+  var ids=aaDriveFolderIds();
+  var files=await aaDriveListChildrenOf(ids);
   var reverse=aaDriveReverseFolders();
-  return files.filter(function(f){return f.mimeType!=='application/vnd.google-apps.folder';}).map(function(f){
+  var output=[],queue=[];
+  files.forEach(function(f){
     var loc=null;(f.parents||[]).some(function(pid){if(reverse[pid]){loc=reverse[pid];return true;}return false;});
-    f.__category=loc?loc.category:'WD회사자료';f.__detail=loc?loc.detail:'분류확인';return f;
+    if(f.mimeType==='application/vnd.google-apps.folder'){
+      if(loc&&loc.category==='브랜딩고객자료'&&loc.detail&&loc.detail!=='분류확인')queue.push({id:f.id,category:loc.category,detail:loc.detail});
+      return;
+    }
+    f.__category=loc?loc.category:'WD회사자료';f.__detail=loc?loc.detail:'분류확인';output.push(f);
   });
+  while(queue.length){
+    var batch=queue.splice(0,80),locations={};batch.forEach(function(item){locations[item.id]=item;});
+    var nested=await aaDriveListChildrenOf(batch.map(function(item){return item.id;}));
+    nested.forEach(function(f){
+      var loc=null;(f.parents||[]).some(function(pid){if(locations[pid]){loc=locations[pid];return true;}return false;});
+      if(!loc)return;
+      if(f.mimeType==='application/vnd.google-apps.folder'){queue.push({id:f.id,category:loc.category,detail:loc.detail});return;}
+      f.__category=loc.category;f.__detail=loc.detail;output.push(f);
+    });
+  }
+  return output;
 }
 function aaDriveIndexFiles(){
   _aaDriveByArchive={};
@@ -7867,7 +7919,8 @@ async function aaDriveLinkExistingFile(fileId,archiveId,category,detail){
   if(!current)throw new Error('연결할 Google Drive 파일을 찾지 못했습니다.');
   var target=aaDriveTarget(category,detail);if(!target)throw new Error('선택한 상세구분의 Google Drive 폴더 연결이 없습니다.');
   var parents=current.parents||[],url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?fields='+encodeURIComponent('id,name,mimeType,size,createdTime,modifiedTime,webViewLink,parents,appProperties');
-  if(parents.indexOf(target.id)<0){
+  var sameCustomerTree=category==='브랜딩고객자료'&&current.__category===category&&current.__detail===detail;
+  if(!sameCustomerTree&&parents.indexOf(target.id)<0){
     url+='&addParents='+encodeURIComponent(target.id);
     if(parents.length)url+='&removeParents='+encodeURIComponent(parents.join(','));
   }
@@ -7880,6 +7933,7 @@ async function aaDriveMoveArchiveFiles(archiveId,category,detail){
   var files=_aaDriveByArchive[String(archiveId)]||[];
   for(var i=0;i<files.length;i++){
     var f=files[i],parents=f.parents||[];
+    if(category==='브랜딩고객자료'&&f.__category===category&&f.__detail===detail)continue;
     if(parents.indexOf(target.id)>-1)continue;
     var url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'?addParents='+encodeURIComponent(target.id)+'&removeParents='+encodeURIComponent(parents.join(','))+'&fields='+encodeURIComponent('id,name,mimeType,size,createdTime,modifiedTime,webViewLink,parents,appProperties');
     var props=Object.assign({},f.appProperties||{},{wdArchiveId:String(archiveId),wdCategory:String(category),wdDetail:String(detail||''),wdOwner:String(aaOwnerId()),wdSource:'wd-work-center'});
@@ -8069,7 +8123,7 @@ window.aaSetTab = function(type){
   _aaTab = type;
   _aaCurrent = null;  // 탭 바뀌면 상세 초기화
   // 탭 버튼 스타일 갱신
-  ['깃허브배포파일','AI자료실','퍼스널브랜딩','유튜브자료실','WD회사자료','지점장님자료','WD브랜드자산'].forEach(function(t){
+  ['깃허브배포파일','AI자료실','퍼스널브랜딩','브랜딩고객자료','유튜브자료실','WD회사자료','지점장님자료','WD브랜드자산'].forEach(function(t){
     var btn = document.getElementById('aa-tab-'+t);
     if(!btn) return;
     var active = (t === type);
@@ -8230,6 +8284,7 @@ window.aaSave = async function(){
     ? Array.from(modalFileInput.files) : [];
 
   if(!title){ showErr('자료명은 필수 항목입니다.'); return; }
+  if(category==='브랜딩고객자료'&&!detail){ showErr('상단 동기화 후 저장할 고객 폴더를 선택해주세요.'); return; }
   if((_AA_CATEGORIES[category]||[]).length && !detail){ showErr('상세구분을 선택해주세요.'); return; }
   if(modalFiles.length&&!aaDriveTokenValid()){
     showErr('첨부파일을 저장하려면 먼저 상단의 동기화를 눌러주세요.');
