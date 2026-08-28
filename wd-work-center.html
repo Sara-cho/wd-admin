@@ -8052,12 +8052,16 @@ window.aaRender = function(){
   var searching = !!kw;
   var sort = ((document.getElementById('aa-sort')||{}).value||'latest');
   var detailFilter = ((document.getElementById('aa-detail-filter')||{}).value||'전체');
-  // 검색어가 있으면 7개 카테고리 전체 검색, 없으면 현재 탭 기준 표시
+  var customerTab = _aaTab==='브랜딩고객자료';
+  var customerChosen = customerTab && detailFilter && detailFilter!=='전체';
+  // 일반 자료실 검색은 전체 카테고리, 브랜딩고객자료 검색은 해당 카테고리 안에서만 수행한다.
   var combined = _aaList.concat(aaDriveVirtualRows());
   var list = combined.filter(function(a){
     var typeInfo = aaSplitType(a.data_type);
-    var matchTab = searching || typeInfo.category === _aaTab;
-    var matchDetail = searching || detailFilter === '전체' || typeInfo.detail === detailFilter;
+    var matchTab = customerTab ? typeInfo.category === _aaTab : (searching || typeInfo.category === _aaTab);
+    var matchDetail = customerTab
+      ? (searching || customerChosen && typeInfo.detail === detailFilter)
+      : (searching || detailFilter === '전체' || typeInfo.detail === detailFilter);
     var linkedFileNames = a.__driveOnly
       ? ((a.__driveFile&&a.__driveFile.name)||'')
       : ((_aaDriveByArchive[String(a.id)]||[]).map(function(file){return file.name||'';}).join(' '));
@@ -8080,6 +8084,14 @@ window.aaRender = function(){
   });
   var tbody = document.getElementById('aa-table-body');
   if(!tbody) return;
+  if(customerTab&&!searching&&!customerChosen){
+    tbody.innerHTML='<tr><td colspan="6" style="padding:52px 18px;text-align:center;color:#64748B;font-size:14px;line-height:1.7;">'
+      +'<div style="font-size:28px;margin-bottom:8px;">👤</div>'
+      +'<strong style="color:#1C1917;font-size:15px;">고객을 선택하거나 검색해주세요.</strong><br>'
+      +'<span style="font-size:12px;color:#94A3B8;">Google Drive의 고객 폴더 이름 그대로 선택할 수 있습니다.</span>'
+      +'</td></tr>';
+    return;
+  }
   if(!list.length){
     tbody.innerHTML='<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8;font-size:14px;">'
       +((kw || detailFilter!=='전체')?'조건에 맞는 자료가 없습니다.':'['+_aaTab+'] 자료가 없습니다.<br><span style="font-size:12px;">+ 자료 등록 버튼으로 추가해보세요.</span>')
@@ -8089,7 +8101,7 @@ window.aaRender = function(){
   tbody.innerHTML = list.map(function(a){
     var sel = _aaCurrent && _aaCurrent.id === a.id;
     var typeInfo = aaSplitType(a.data_type);
-    var classification = searching
+    var classification = searching&&!customerTab
       ? '<div style="font-size:10px;color:#64748B;font-weight:800;margin-bottom:4px;">'+_aaEsc(typeInfo.category||'—')+'</div>'+aaBadge(typeInfo.detail||'—')
       : aaBadge(typeInfo.detail||'—');
     return '<tr onclick="aaSelectRow(\''+a.id+'\')" style="cursor:pointer;border-bottom:1px solid #F1F5F9;'+(sel?'background:#FFF9C4;':'')+'\" onmouseover="if(this.style.background!==\'#FFF9C4\') this.style.background=\'#FAFAF8\'" onmouseout="this.style.background=\''+(sel?'#FFF9C4':'')+'\'\">'
@@ -8111,10 +8123,12 @@ window.aaRender = function(){
 function aaRefreshDetailFilter(){
   var select=document.getElementById('aa-detail-filter');
   if(!select)return;
+  var previous=select.value;
   var items=_AA_CATEGORIES[_aaTab]||[];
-  select.innerHTML='<option value="전체">상세구분 전체</option>'
+  var customerTab=_aaTab==='브랜딩고객자료';
+  select.innerHTML=(customerTab?'<option value="">고객 선택</option>':'<option value="전체">상세구분 전체</option>')
     +items.map(function(x){return '<option value="'+_aaEsc(x)+'">'+_aaEsc(x)+'</option>';}).join('');
-  select.value='전체';
+  select.value=items.indexOf(previous)>-1?previous:(customerTab?'':'전체');
   select.disabled=!items.length;
 }
 
@@ -8122,6 +8136,11 @@ function aaRefreshDetailFilter(){
 window.aaSetTab = function(type){
   _aaTab = type;
   _aaCurrent = null;  // 탭 바뀌면 상세 초기화
+  var searchInput=document.getElementById('aa-search');
+  if(searchInput){
+    if(type==='브랜딩고객자료')searchInput.value='';
+    searchInput.placeholder=type==='브랜딩고객자료'?'고객명 또는 자료명 검색...':'업무작업결과 전체 검색...';
+  }
   // 탭 버튼 스타일 갱신
   ['깃허브배포파일','AI자료실','퍼스널브랜딩','브랜딩고객자료','유튜브자료실','WD회사자료','지점장님자료','WD브랜드자산'].forEach(function(t){
     var btn = document.getElementById('aa-tab-'+t);
