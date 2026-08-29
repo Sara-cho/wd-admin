@@ -212,10 +212,16 @@
     <!-- ★ [v53실행] 사이드바: 크기↑, 폰트↑, 순서변경, 명칭변경 -->
     <div id="wcn-sidebar" style="width:170px;min-width:170px;background:#fff;border-right:2px solid #E5E0D5;padding:16px 0 20px;flex-shrink:0;">
 
-      <!-- 업무센터 첫 화면: 업무작업결과 보관 -->
+      <!-- 독립 회수 첫 화면 -->
+      <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">운영 요약</div>
+      <button onclick="wcnTabSwitch('overview')" id="wcn-tab-overview" class="wc-side-button">
+        <span style="font-size:16px;">🧭</span><span>오늘 운영판</span>
+      </button>
+
+      <!-- 그룹1: 일상 업무 -->
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">회사 업무</div>
-      <button onclick="wcnTabSwitch('ai-archive')" id="wcn-tab-ai-archive" style="width:100%;padding:11px 16px;border:none;border-left:3px solid #FBBF24;background:#FFFBEB;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">📚</span><span style="font-size:13px;font-weight:800;color:#1C1917;">업무작업결과 보관</span>
+      <button onclick="wcnTabSwitch('daily-haru')" id="wcn-tab-daily-haru" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">☀️</span><span style="font-size:13px;font-weight:700;color:#78716C;">윤경의 하루</span>
       </button>
       <!-- [v20] 구 아이디어모음 — 숨김 처리 (wc_ideas 기반, 미사용) -->
       <button onclick="wcnTabSwitch('idea')" id="wcn-tab-idea" style="display:none;">
@@ -232,6 +238,12 @@
       <button onclick="wcnTabSwitch('journal')" id="wcn-tab-journal" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
         <span style="font-size:16px;">📒</span><span style="font-size:13px;font-weight:700;color:#78716C;">업무일지</span>
       </button>
+      <button onclick="wcnTabSwitch('ai-archive')" id="wcn-tab-ai-archive" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">🤖</span><span style="font-size:13px;font-weight:700;color:#78716C;">작업결과 보관</span>
+      </button>
+      <a href="https://drive.google.com/drive/u/1/folders/1JL2yPIdGdJHoGEFBJRz16otTJZAEkAiH" target="_blank" rel="noopener noreferrer" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;text-decoration:none;">
+        <span style="font-size:16px;">📁</span><span style="font-size:13px;font-weight:700;color:#78716C;">구글드라이브</span>
+      </a>
       <!-- 구분선 + 그룹2 -->
       <div style="border-top:2px solid #E5E0D5;margin:14px 12px 12px;"></div>
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">월간 정산</div>
@@ -264,7 +276,7 @@
     <div id="wcn-content-area" style="flex:1;padding:14px;overflow-y:auto;min-width:0;">
 
     <!-- ── 독립 업무센터 운영 요약 ── -->
-    <section id="wcn-panel-overview" class="wcn-tab-content" style="display:none;">
+    <section id="wcn-panel-overview" class="wcn-tab-content">
       <div class="wc-overview-intro">
         <div>
           <div class="wc-eyebrow">오늘의 회사 운영</div>
@@ -299,7 +311,7 @@
           <div><b>세무</b><span>Supabase + 브라우저 캐시 · tax_monthly_tasks / tx_*</span></div>
           <div><b>계정</b><span>Supabase · kit_accounts</span></div>
           <div><b>설계사 행정</b><span>Supabase · wd_agents / wd_agent_files</span></div>
-          <div><b>업무작업결과 보관</b><span>Supabase · wd_ai_archive / files</span></div>
+          <div><b>작업결과 보관</b><span>Supabase · wd_ai_archive / files</span></div>
           <div><b>수입·지출</b><span>Supabase · work_finance_transactions</span></div>
           <div><b>구매·신청</b><span>Supabase · work_office_purchases</span></div>
           <div><b>비품·재고</b><span>Supabase · work_inventory_items</span></div>
@@ -1211,7 +1223,7 @@
         </div>
         <div style="font-size:13.5px;color:#374151;line-height:1.8;margin-bottom:20px;">
           오늘 업무하시느라 고생 많으셨습니다. 🙏<br>
-          오늘 업무에서 <b>최종 보관할 파일</b>이 있다면 업무작업결과 보관에 등록해주세요.<br>
+          오늘 업무에서 <b>최종 보관할 파일</b>이 있다면 작업결과 보관에 등록해주세요.<br>
           첨부파일이 있을 때만 Google Drive에 업로드되며, 아직 정리 중이면 나중에 해도 됩니다.
         </div>
         <div style="display:flex;flex-direction:column;gap:9px;">
@@ -1222,13 +1234,13 @@
     </div>
 
     <!-- ── [v38실행] AI 자료실 패널 ── -->
-    <div id="wcn-panel-ai-archive" class="wcn-tab-content" style="display:block;">
+    <div id="wcn-panel-ai-archive" class="wcn-tab-content" style="display:none;">
 
       <!-- 헤더 -->
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
         <div>
-          <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">📚 업무작업결과 보관</div>
-          <div style="font-size:13px;color:#94a3b8;">배포파일·AI·퍼스널브랜딩·브랜딩고객·유튜브·회사·지점장님 자료를 구분하여 보관합니다.</div>
+          <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">🤖 작업결과 보관</div>
+          <div style="font-size:13px;color:#94a3b8;">프롬프트, 업무진행방식, 지침, 스킬, 서류양식, 기타 업무 자료를 보관합니다.</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
           <span id="aa-drive-connection-badge" style="flex-shrink:0;padding:7px 10px;background:#F8FAFC;color:#64748B;border:1px solid #CBD5E1;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;">● Drive 연결 안 됨</span>
@@ -1247,29 +1259,27 @@
         <div style="width:min(92vw,430px);background:#fff;border-radius:18px;padding:26px;box-shadow:0 20px 70px rgba(0,0,0,.28);text-align:center;">
           <div style="width:54px;height:54px;margin:0 auto 13px;border-radius:16px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:28px;">☁️</div>
           <div id="aa-drive-connect-title" style="font-size:19px;font-weight:900;color:#1C1917;margin-bottom:8px;">Google Drive 연결하기</div>
-          <div style="font-size:13px;line-height:1.7;color:#64748B;margin-bottom:7px;">업무작업결과 보관의 첨부파일을 최신 상태로 확인하려면 Drive 연결이 필요합니다.</div>
+          <div style="font-size:13px;line-height:1.7;color:#64748B;margin-bottom:7px;">작업결과 보관의 첨부파일을 최신 상태로 확인하려면 Drive 연결이 필요합니다.</div>
           <div style="font-size:11px;color:#94A3B8;margin-bottom:20px;">연결 계정: kfcyk20@gmail.com</div>
           <button type="button" onclick="aaDriveConnectFromModal()" style="width:100%;padding:13px;border:0;border-radius:11px;background:#2563EB;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">Google Drive 연결하기</button>
           <button type="button" onclick="aaCloseDriveConnectModal()" style="width:100%;margin-top:8px;padding:11px;border:0;border-radius:11px;background:#F1F5F9;color:#64748B;font-size:12px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">나중에 · 텍스트 업무 계속하기</button>
         </div>
       </div>
 
-      <!-- 자료실 대분류 탭바 -->
+      <!-- 기존 작업결과 보관 분류 탭바 -->
       <div id="aa-tab-bar" style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px;gap:0;overflow-x:auto;">
-        <button onclick="aaSetTab('깃허브배포파일')" id="aa-tab-깃허브배포파일" style="padding:11px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:14px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">깃허브배포파일</button>
-        <button onclick="aaSetTab('AI자료실')" id="aa-tab-AI자료실" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">AI자료실</button>
-        <button onclick="aaSetTab('퍼스널브랜딩')" id="aa-tab-퍼스널브랜딩" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">퍼스널브랜딩</button>
-        <button onclick="aaSetTab('브랜딩고객자료')" id="aa-tab-브랜딩고객자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">브랜딩고객자료</button>
-        <button onclick="aaSetTab('유튜브자료실')" id="aa-tab-유튜브자료실" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">유튜브자료실</button>
-        <button onclick="aaSetTab('WD회사자료')" id="aa-tab-WD회사자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">WD회사자료</button>
-        <button onclick="aaSetTab('지점장님자료')" id="aa-tab-지점장님자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">지점장님자료</button>
-        <button onclick="aaSetTab('WD브랜드자산')" id="aa-tab-WD브랜드자산" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">WD브랜드자산</button>
+        <button onclick="aaSetTab('프롬프트')" id="aa-tab-프롬프트" style="padding:11px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:14px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">프롬프트</button>
+        <button onclick="aaSetTab('업무진행방식')" id="aa-tab-업무진행방식" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">업무진행방식</button>
+        <button onclick="aaSetTab('지침')" id="aa-tab-지침" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">지침</button>
+        <button onclick="aaSetTab('스킬')" id="aa-tab-스킬" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">스킬</button>
+        <button onclick="aaSetTab('서류양식')" id="aa-tab-서류양식" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">서류양식</button>
+        <button onclick="aaSetTab('기타')" id="aa-tab-기타" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">기타</button>
       </div>
 
       <!-- 검색 + 상세구분 필터 + 정렬 -->
       <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-        <input id="aa-search" type="text" placeholder="업무작업결과 전체 검색..." oninput="aaRender()" style="flex:1;min-width:240px;padding:11px 15px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
-        <select id="aa-detail-filter" onchange="aaRender()" aria-label="상세구분 필터" style="padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;min-width:130px;">
+        <input id="aa-search" type="text" placeholder="작업결과 전체 검색..." oninput="aaRender()" style="flex:1;min-width:240px;padding:11px 15px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+        <select id="aa-detail-filter" onchange="aaRender()" aria-label="상세구분 필터" style="display:none;">
           <option value="전체">상세구분 전체</option>
         </select>
         <select id="aa-sort" onchange="aaRender()" style="padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;">
@@ -1538,25 +1548,17 @@
         </div>
         <input type="hidden" id="aa-edit-id">
         <div style="display:grid;gap:12px;">
-          <!-- 카테고리 + 상세구분 -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">카테고리 <span style="color:#ef4444;">*</span></label>
-              <select id="aa-f-category" onchange="aaRefreshDetailOptions()" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;">
-                <option value="깃허브배포파일">깃허브배포파일</option>
-                <option value="AI자료실">AI자료실</option>
-                <option value="퍼스널브랜딩">퍼스널브랜딩</option>
-                <option value="브랜딩고객자료">브랜딩고객자료</option>
-                <option value="유튜브자료실">유튜브자료실</option>
-                <option value="WD회사자료">WD회사자료</option>
-                <option value="지점장님자료">지점장님자료</option>
-                <option value="WD브랜드자산">WD브랜드자산</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">상세구분</label>
-              <select id="aa-f-detail" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;"></select>
-            </div>
+          <!-- 기존 작업결과 보관 분류 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">분류 <span style="color:#ef4444;">*</span></label>
+            <select id="aa-f-type" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;">
+              <option value="프롬프트">프롬프트</option>
+              <option value="업무진행방식">업무진행방식</option>
+              <option value="지침">지침</option>
+              <option value="스킬">스킬</option>
+              <option value="서류양식">서류양식</option>
+              <option value="기타">기타</option>
+            </select>
           </div>
           <div>
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">등록자 <span style="color:#ef4444;">*</span></label>
@@ -3000,8 +3002,9 @@ window.tx_scheduleAutoSave = function(){
     var uid = (typeof _CURRENT_UID !== 'undefined' && _CURRENT_UID) ? _CURRENT_UID : '';
     var defaultAuthor = (uid === 'kfcyk30') ? '박수진' : '최윤경';
     wj_selectAuthor(defaultAuthor);
-    // 업무센터 첫 진입은 업무작업결과 보관으로 시작
-    wcnTabSwitch('ai-archive');
+    // 업무센터 첫 진입은 기존 기준인 오늘 운영판으로 시작
+    wcnTabSwitch('overview');
+    if(typeof renderWorkcenterOverview==='function') renderWorkcenterOverview(false);
     // 목록 로드
     wj_loadList();
   };
@@ -7441,7 +7444,8 @@ window.wcnTabSwitch = function(tab){
 /* ── 전역 상태 ── */
 var _aaList    = [];           // 목록 캐시
 var _aaCurrent = null;         // 현재 선택된 자료
-var _aaTab     = '깃허브배포파일';   // 현재 선택 대분류
+var _aaTab     = '프롬프트';   // 기존 작업결과 보관 기본 분류
+var _AA_LEGACY_TYPES = ['프롬프트','업무진행방식','지침','스킬','서류양식','기타'];
 
 var _AA_CATEGORIES = {
   '깃허브배포파일':['HTML파일'],
@@ -7474,6 +7478,26 @@ function aaSplitType(value){
 }
 function aaJoinType(category,detail){
   return String(category||'깃허브배포파일')+'|'+String(detail||'');
+}
+function aaLegacyType(value){
+  var raw=String(value||'');
+  if(_AA_LEGACY_TYPES.indexOf(raw)>-1)return raw;
+  var info=aaSplitType(raw);
+  var reverse={
+    'AI자료실|프롬프트':'프롬프트',
+    '퍼스널브랜딩|업무진행방법':'업무진행방식',
+    'AI자료실|지침':'지침',
+    'WD회사자료|양식파일':'서류양식',
+    'WD회사자료|기타':'기타'
+  };
+  var direct=reverse[info.category+'|'+info.detail];
+  if(direct)return direct;
+  if(/프롬프트/.test(info.detail))return '프롬프트';
+  if(/업무진행/.test(info.detail))return '업무진행방식';
+  if(/스킬/.test(info.detail))return '스킬';
+  if(/지침/.test(info.detail))return '지침';
+  if(/양식|서류|HTML/.test(info.detail))return '서류양식';
+  return '기타';
 }
 window.aaRefreshDetailOptions=function(selected){
   var category=((document.getElementById('aa-f-category')||{}).value||'깃허브배포파일');
@@ -7655,7 +7679,8 @@ function aaDriveFolderIds(){
   return Object.keys(seen);
 }
 function aaDriveUpdateFolderLink(){
-  var c=_AA_DRIVE_CONFIG[_aaTab];var link=document.getElementById('aa-drive-folder-link');
+  var typeInfo=aaSplitType(_aaTab);
+  var c=_AA_DRIVE_CONFIG[typeInfo.category];var link=document.getElementById('aa-drive-folder-link');
   if(link&&c){link.href=c.rootUrl;link.textContent='📁 구글드라이브 열기';}
 }
 async function aaDriveSyncCustomerFolders(){
@@ -7953,7 +7978,7 @@ function aaDriveInit(){
   aaDriveRestoreSession();aaDriveInitClient();aaDriveUpdateFolderLink();
   aaDriveUpdateConnectionBadge();
   if(aaDriveTokenValid()){aaCloseDriveConnectModal();aaDriveRefresh(false);}
-  else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');setTimeout(aaOpenDriveConnectModal,250);}
+  else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
 }
 
 /* ── [v44] Storage 안전 경로 생성 ── */
@@ -8051,17 +8076,12 @@ window.aaRender = function(){
   var kw   = ((document.getElementById('aa-search')||{}).value||'').trim().toLowerCase();
   var searching = !!kw;
   var sort = ((document.getElementById('aa-sort')||{}).value||'latest');
-  var detailFilter = ((document.getElementById('aa-detail-filter')||{}).value||'전체');
-  var customerTab = _aaTab==='브랜딩고객자료';
-  var customerChosen = customerTab && detailFilter && detailFilter!=='전체';
-  // 일반 자료실 검색은 전체 카테고리, 브랜딩고객자료 검색은 해당 카테고리 안에서만 수행한다.
+  // 화면은 기존 6개 분류만 사용하고, 최근 Drive 대분류 코드는 연결 보존용으로만 유지한다.
   var combined = _aaList.concat(aaDriveVirtualRows());
   var list = combined.filter(function(a){
     var typeInfo = aaSplitType(a.data_type);
-    var matchTab = customerTab ? typeInfo.category === _aaTab : (searching || typeInfo.category === _aaTab);
-    var matchDetail = customerTab
-      ? (searching || customerChosen && typeInfo.detail === detailFilter)
-      : (searching || detailFilter === '전체' || typeInfo.detail === detailFilter);
+    var legacyType = aaLegacyType(a.data_type);
+    var matchTab = legacyType && (searching || legacyType === _aaTab);
     var linkedFileNames = a.__driveOnly
       ? ((a.__driveFile&&a.__driveFile.name)||'')
       : ((_aaDriveByArchive[String(a.id)]||[]).map(function(file){return file.name||'';}).join(' '));
@@ -8069,10 +8089,11 @@ window.aaRender = function(){
       || (a.title||'').toLowerCase().includes(kw)
       || (a.content||'').toLowerCase().includes(kw)
       || (a.author||'').toLowerCase().includes(kw)
+      || legacyType.toLowerCase().includes(kw)
       || (typeInfo.category||'').toLowerCase().includes(kw)
       || (typeInfo.detail||'').toLowerCase().includes(kw)
       || linkedFileNames.toLowerCase().includes(kw);
-    return matchTab && matchDetail && matchKw;
+    return matchTab && matchKw;
   });
   // 정렬
   list = list.slice().sort(function(a,b){
@@ -8084,26 +8105,16 @@ window.aaRender = function(){
   });
   var tbody = document.getElementById('aa-table-body');
   if(!tbody) return;
-  if(customerTab&&!searching&&!customerChosen){
-    tbody.innerHTML='<tr><td colspan="6" style="padding:52px 18px;text-align:center;color:#64748B;font-size:14px;line-height:1.7;">'
-      +'<div style="font-size:28px;margin-bottom:8px;">👤</div>'
-      +'<strong style="color:#1C1917;font-size:15px;">고객을 선택하거나 검색해주세요.</strong><br>'
-      +'<span style="font-size:12px;color:#94A3B8;">Google Drive의 고객 폴더 이름 그대로 선택할 수 있습니다.</span>'
-      +'</td></tr>';
-    return;
-  }
   if(!list.length){
     tbody.innerHTML='<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8;font-size:14px;">'
-      +((kw || detailFilter!=='전체')?'조건에 맞는 자료가 없습니다.':'['+_aaTab+'] 자료가 없습니다.<br><span style="font-size:12px;">+ 자료 등록 버튼으로 추가해보세요.</span>')
+      +(kw?'검색 결과가 없습니다.':'['+_aaTab+'] 자료가 없습니다.<br><span style="font-size:12px;">+ 자료 등록 버튼으로 추가해보세요.</span>')
       +'</td></tr>';
     return;
   }
   tbody.innerHTML = list.map(function(a){
     var sel = _aaCurrent && _aaCurrent.id === a.id;
     var typeInfo = aaSplitType(a.data_type);
-    var classification = searching&&!customerTab
-      ? '<div style="font-size:10px;color:#64748B;font-weight:800;margin-bottom:4px;">'+_aaEsc(typeInfo.category||'—')+'</div>'+aaBadge(typeInfo.detail||'—')
-      : aaBadge(typeInfo.detail||'—');
+    var classification = aaBadge(aaLegacyType(a.data_type)||typeInfo.detail||'기타');
     return '<tr onclick="aaSelectRow(\''+a.id+'\')" style="cursor:pointer;border-bottom:1px solid #F1F5F9;'+(sel?'background:#FFF9C4;':'')+'\" onmouseover="if(this.style.background!==\'#FFF9C4\') this.style.background=\'#FAFAF8\'" onmouseout="this.style.background=\''+(sel?'#FFF9C4':'')+'\'\">'
       +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+classification+'</td>'
       +'<td style="padding:11px 12px;color:#1C1917;font-weight:700;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_aaEsc(a.title)+'</td>'
@@ -8123,13 +8134,9 @@ window.aaRender = function(){
 function aaRefreshDetailFilter(){
   var select=document.getElementById('aa-detail-filter');
   if(!select)return;
-  var previous=select.value;
-  var items=_AA_CATEGORIES[_aaTab]||[];
-  var customerTab=_aaTab==='브랜딩고객자료';
-  select.innerHTML=(customerTab?'<option value="">고객 선택</option>':'<option value="전체">상세구분 전체</option>')
-    +items.map(function(x){return '<option value="'+_aaEsc(x)+'">'+_aaEsc(x)+'</option>';}).join('');
-  select.value=items.indexOf(previous)>-1?previous:(customerTab?'':'전체');
-  select.disabled=!items.length;
+  select.innerHTML='<option value="전체">전체</option>';
+  select.value='전체';
+  select.disabled=true;
 }
 
 /* ── [v38-1] 탭 전환 ── */
@@ -8138,11 +8145,10 @@ window.aaSetTab = function(type){
   _aaCurrent = null;  // 탭 바뀌면 상세 초기화
   var searchInput=document.getElementById('aa-search');
   if(searchInput){
-    if(type==='브랜딩고객자료')searchInput.value='';
-    searchInput.placeholder=type==='브랜딩고객자료'?'고객명 또는 자료명 검색...':'업무작업결과 전체 검색...';
+    searchInput.placeholder='작업결과 전체 검색...';
   }
   // 탭 버튼 스타일 갱신
-  ['깃허브배포파일','AI자료실','퍼스널브랜딩','브랜딩고객자료','유튜브자료실','WD회사자료','지점장님자료','WD브랜드자산'].forEach(function(t){
+  _AA_LEGACY_TYPES.forEach(function(t){
     var btn = document.getElementById('aa-tab-'+t);
     if(!btn) return;
     var active = (t === type);
@@ -8185,7 +8191,7 @@ window.aaSelectRow = async function(id){
   var contentEl = document.getElementById('aa-det-content');
 
   var typeInfo = aaSplitType(a.data_type);
-  if(typeEl)    typeEl.innerHTML   = aaBadge(typeInfo.detail||typeInfo.category);
+  if(typeEl)    typeEl.innerHTML   = aaBadge(aaLegacyType(a.data_type)||typeInfo.detail||typeInfo.category);
   if(titleEl)   titleEl.textContent  = a.title || '';
   if(authorEl)  authorEl.textContent = a.author || '';
   if(dateEl)    dateEl.textContent   = aaDateOnly(a.created_at);
@@ -8241,8 +8247,7 @@ window.aaCopyContent = function(){
 window.aaOpenModal = function(){
   document.getElementById('aa-modal-title').textContent='자료 등록';
   document.getElementById('aa-edit-id').value='';
-  var g=document.getElementById('aa-f-category');if(g) g.value=_aaTab||'깃허브배포파일';
-  aaRefreshDetailOptions();
+  var t=document.getElementById('aa-f-type');if(t) t.value=_AA_LEGACY_TYPES.indexOf(_aaTab)>-1?_aaTab:'프롬프트';
   var u=document.getElementById('aa-f-author'); if(u) u.value='최윤경';
   var n=document.getElementById('aa-f-title');  if(n) n.value='';
   var c=document.getElementById('aa-f-content');if(c) c.value='';
@@ -8261,8 +8266,7 @@ window.aaOpenModalEdit = function(){
   document.getElementById('aa-modal-title').textContent='내용 수정';
   document.getElementById('aa-edit-id').value=a.__driveOnly?'drive:'+String(a.__driveFile.id):(a.id||'');
   var typeInfo=aaSplitType(a.data_type);
-  var g=document.getElementById('aa-f-category');if(g) g.value=typeInfo.category;
-  aaRefreshDetailOptions(typeInfo.detail);
+  var t=document.getElementById('aa-f-type');if(t) t.value=aaLegacyType(a.data_type)||'기타';
   var u=document.getElementById('aa-f-author'); if(u) u.value=a.__driveOnly?'최윤경':(a.author||'최윤경');
   var n=document.getElementById('aa-f-title');  if(n) n.value=a.title||'';
   var c=document.getElementById('aa-f-content');if(c) c.value=a.__driveOnly?'':(a.content||'');
@@ -8291,9 +8295,10 @@ window.aaSave = async function(){
   function setIdle(){ if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='저장';} }
 
   var title   = ((document.getElementById('aa-f-title')||{}).value||'').trim();
-  var category= ((document.getElementById('aa-f-category')||{}).value||'깃허브배포파일').trim();
-  var detail= ((document.getElementById('aa-f-detail')||{}).value||'').trim();
-  var dataType= aaJoinType(category,detail);
+  var dataType= ((document.getElementById('aa-f-type')||{}).value||'프롬프트').trim();
+  var driveType=aaSplitType(dataType);
+  var category=driveType.category;
+  var detail=driveType.detail;
   var author  = ((document.getElementById('aa-f-author')||{}).value||'최윤경').trim();
   var content = ((document.getElementById('aa-f-content')||{}).value||'').trim();
   var editId  = ((document.getElementById('aa-edit-id')||{}).value||'');
@@ -8303,8 +8308,7 @@ window.aaSave = async function(){
     ? Array.from(modalFileInput.files) : [];
 
   if(!title){ showErr('자료명은 필수 항목입니다.'); return; }
-  if(category==='브랜딩고객자료'&&!detail){ showErr('상단 동기화 후 저장할 고객 폴더를 선택해주세요.'); return; }
-  if((_AA_CATEGORIES[category]||[]).length && !detail){ showErr('상세구분을 선택해주세요.'); return; }
+  if(_AA_LEGACY_TYPES.indexOf(dataType)<0){ showErr('분류를 확인해주세요.'); return; }
   if(modalFiles.length&&!aaDriveTokenValid()){
     showErr('첨부파일을 저장하려면 먼저 상단의 동기화를 눌러주세요.');
     return;
@@ -8383,12 +8387,12 @@ window.aaSave = async function(){
     if(refreshDriveAfterSave)await aaDriveRefresh(false);
     if(typeof showT==='function') showT(driveSourceId?'📚 내용과 Drive 원본을 연결했습니다.':(modalFiles.length?'📚 자료와 첨부파일 저장됨':'📚 텍스트 자료 저장됨'));
     // 저장한 데이터종류 탭으로 이동 후 로드
-    if(typeof aaSetTab==='function') aaSetTab(category);
+    if(typeof aaSetTab==='function') aaSetTab(dataType);
     await aaLoad();
     // 저장한 항목 자동 선택 (파일 목록까지 새로 불러옴)
     if(savedId){ await aaSelectRow(savedId); }
     else if(!editId && _aaList.length){
-      var newest=_aaList.find(function(x){ return aaSplitType(x.data_type).category===category; });
+      var newest=_aaList.find(function(x){ return aaLegacyType(x.data_type)===dataType; });
       if(newest) await aaSelectRow(newest.id);
     }
   } catch(e){ setIdle(); showErr('저장 실패: '+e.message); }
@@ -8743,8 +8747,8 @@ setInterval(function(){
     window.addEventListener('DOMContentLoaded',function(){
       var hd=document.getElementById('wcn-header-date'),k=wcKstDate();if(hd)hd.textContent=k.getFullYear()+'.'+String(k.getMonth()+1).padStart(2,'0')+'.'+String(k.getDate()).padStart(2,'0');
       if(!_CURRENT_UID){var guard=document.getElementById('wc-auth-guard');if(guard)guard.style.display='flex';var st=document.getElementById('wc-storage-status');if(st){st.className='wc-state warn';st.textContent='본진 로그인 필요'}return}
-      if(typeof wj_init==='function')wj_init();else if(typeof wcnTabSwitch==='function')wcnTabSwitch('ai-archive');
-      setTimeout(function(){if(typeof wcnTabSwitch==='function')wcnTabSwitch('ai-archive')},80);
+      if(typeof wj_init==='function')wj_init();else if(typeof wcnTabSwitch==='function')wcnTabSwitch('overview');
+      setTimeout(function(){if(typeof wcnTabSwitch==='function')wcnTabSwitch('overview');if(typeof renderWorkcenterOverview==='function')renderWorkcenterOverview(false)},80);
     });
   </script>
 
