@@ -9692,6 +9692,9 @@ setInterval(function(){
   .wc-google-signal-button:hover{background:#DBEAFE}.wc-google-signal-button:disabled{opacity:.58;cursor:wait}
   .wc-google-signal-status{font-size:10.5px;line-height:1.45;text-align:center;color:#78716C}
   .wc-google-signal-status.ok{color:#166534}.wc-google-signal-status.warn{color:#92400E}.wc-google-signal-status.error{color:#B91C1C}
+  .wc-google-api-diagnostics{display:none;margin-top:2px;padding:7px 8px;border:1px solid #E7E5E4;border-radius:8px;background:#FAFAF9;text-align:left;font-size:9.5px;line-height:1.5;color:#57534E;word-break:break-word}
+  .wc-google-api-diagnostics.show{display:block}.wc-google-api-diagnostic+.wc-google-api-diagnostic{margin-top:5px;padding-top:5px;border-top:1px solid #E7E5E4}
+  .wc-google-api-diagnostic b{color:#292524}.wc-google-api-diagnostic .ok{color:#166534}.wc-google-api-diagnostic .fail{color:#B91C1C}
   .wc-google-signal-section{margin-top:16px;padding-top:16px;border-top:1px solid #E7E5E4}
   .wc-google-signal-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
   .wc-google-signal-heading strong{font-size:13px;color:#292524}.wc-google-signal-heading span{font-size:10.5px;color:#78716C}
@@ -9716,7 +9719,7 @@ setInterval(function(){
   var ADMIN_TERMS=['세금','납부','원천세','부가세','종합소득세','국세','지방세','급여','4대보험','건강보험','국민연금','고용보험','산재보험','행정','신고','제출','마감','기한'];
   var MONEY_TERMS=['납부','납입','급여','결제','구매','주문','구독','갱신','청구','입금','출금','영수증','세금계산서','미납','연체'];
   var EXCEPTION_TERMS=['오류','실패','반려','누락','미납','연체','정지','만료','권한','보안','인증 필요','조치 필요'];
-  var STATE={token:'',expiresAt:0,tokenClient:null,loading:false,connected:false,lastChecked:null,error:'',gmailCount:0,calendarCount:0,signals:{today:[],admin:[],money:[],missing:[]}};
+  var STATE={token:'',expiresAt:0,tokenClient:null,loading:false,connected:false,lastChecked:null,error:'',gmailCount:0,calendarCount:0,apiDiagnostics:{gmail:{result:'확인 전',httpStatus:'-',errorName:'-',message:'-'},calendar:{result:'확인 전',httpStatus:'-',errorName:'-',message:'-'}},signals:{today:[],admin:[],money:[],missing:[]}};
   window.__WC_GOOGLE_SIGNALS_STATE__=STATE;
 
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
@@ -9726,6 +9729,21 @@ setInterval(function(){
   function tokenValid(){return !!(STATE.token&&Date.now()<STATE.expiresAt-30000);}
   function setStatus(message,tone){var el=document.getElementById('wc-google-signal-status');if(!el)return;el.textContent=message;el.className='wc-google-signal-status'+(tone?' '+tone:'');}
   function setButtonBusy(on){var b=document.getElementById('wc-google-signal-btn');if(!b)return;b.disabled=!!on;b.textContent=on?'Google 신호 확인 중…':'Google 업무신호 확인';}
+  function safeErrorText(value){
+    return String(value||'').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig,'[email]').replace(/Bearer\s+\S+/ig,'Bearer [redacted]').replace(/access[_ -]?token\s*[:=]?\s*\S+/ig,'token [redacted]').replace(/\s+/g,' ').trim().substring(0,160)||'-';
+  }
+  function diagnosticFrom(result){
+    if(result&&result.status==='fulfilled')return{result:'성공',httpStatus:200,errorName:'-',message:'정상'};
+    var e=result&&result.reason||{};
+    return{result:'실패',httpStatus:e.httpStatus||'-',errorName:safeErrorText(e.errorName||e.name||'ERROR'),message:safeErrorText(e.safeMessage||e.message||'요청 실패')};
+  }
+  function renderApiDiagnostics(){
+    var el=document.getElementById('wc-google-api-diagnostics');if(!el)return;
+    var d=STATE.apiDiagnostics||{},g=d.gmail||{},c=d.calendar||{};
+    if(g.result==='확인 전'&&c.result==='확인 전'){el.className='wc-google-api-diagnostics';el.textContent='';return;}
+    function row(label,x){var cls=x.result==='성공'?'ok':(x.result==='실패'?'fail':'');return '<div class="wc-google-api-diagnostic"><b>'+label+' API</b> · <span class="'+cls+'">'+esc(x.result||'확인 전')+'</span> · HTTP '+esc(x.httpStatus||'-')+'<br>'+esc(x.errorName||'-')+' · '+esc(x.message||'-')+'</div>';}
+    el.className='wc-google-api-diagnostics show';el.innerHTML=row('Gmail',g)+row('Calendar',c);
+  }
 
   function scheduleModalSignals(type){
     var tries=0;
@@ -9757,7 +9775,8 @@ setInterval(function(){
     if(refresh){intro.insertBefore(box,refresh);box.appendChild(refresh);}else{intro.appendChild(box);}
     var btn=document.createElement('button');btn.type='button';btn.id='wc-google-signal-btn';btn.className='wc-google-signal-button';btn.textContent='Google 업무신호 확인';btn.addEventListener('click',window.wcGoogleCheckSignals);
     var status=document.createElement('div');status.id='wc-google-signal-status';status.className='wc-google-signal-status';status.textContent='연결 전 · 저장 안 함';
-    box.appendChild(btn);box.appendChild(status);
+    var diagnostics=document.createElement('div');diagnostics.id='wc-google-api-diagnostics';diagnostics.className='wc-google-api-diagnostics';diagnostics.setAttribute('aria-live','polite');
+    box.appendChild(btn);box.appendChild(status);box.appendChild(diagnostics);renderApiDiagnostics();
   }
 
   function mergeCard(valueId,noteId,googleCount){
@@ -9813,7 +9832,13 @@ setInterval(function(){
 
   async function api(url){
     var res=await fetch(url,{method:'GET',headers:{Authorization:'Bearer '+STATE.token,Accept:'application/json'}});
-    if(!res.ok){var detail='';try{detail=(await res.text()).substring(0,180);}catch(e){}throw new Error('Google API '+res.status+(detail?' · '+detail:''));}
+    if(!res.ok){
+      var detail='',parsed=null,meta=null;
+      try{detail=await res.text();parsed=JSON.parse(detail);meta=parsed&&parsed.error||null;}catch(e){}
+      var err=new Error(safeErrorText(meta&&meta.message||('Google API 요청 실패')));
+      err.httpStatus=res.status;err.errorName=safeErrorText(meta&&meta.status||(meta&&meta.errors&&meta.errors[0]&&meta.errors[0].reason)||'HTTP_ERROR');err.safeMessage=safeErrorText(meta&&meta.message||detail||'Google API 요청 실패');
+      throw err;
+    }
     return res.json();
   }
   function headerValue(message,name){var hs=(message.payload&&message.payload.headers)||[],low=String(name).toLowerCase();for(var i=0;i<hs.length;i++){if(String(hs[i].name||'').toLowerCase()===low)return hs[i].value||'';}return'';}
@@ -9821,7 +9846,7 @@ setInterval(function(){
 
   async function fetchGmail(){
     var profile=await api('https://gmail.googleapis.com/gmail/v1/users/me/profile');
-    if(String(profile.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('연결 계정이 '+ACCOUNT+'이 아닙니다.');
+    if(String(profile.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase()){var mismatch=new Error('연결 계정을 확인하세요.');mismatch.errorName='ACCOUNT_MISMATCH';mismatch.safeMessage='지정된 Google 계정과 현재 연결 계정이 다릅니다.';throw mismatch;}
     var list=await api('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50&includeSpamTrash=false&q='+encodeURIComponent('newer_than:30d -in:spam -in:trash'));
     var refs=(list.messages||[]),out=[];
     for(var start=0;start<refs.length;start+=10){
@@ -9851,10 +9876,11 @@ setInterval(function(){
   }
 
   async function loadSignals(){
-    STATE.loading=true;STATE.error='';setButtonBusy(true);setStatus('Gmail·Calendar 읽는 중 · 저장 안 함','warn');
+    STATE.loading=true;STATE.error='';STATE.apiDiagnostics={gmail:{result:'확인 중',httpStatus:'-',errorName:'-',message:'-'},calendar:{result:'확인 중',httpStatus:'-',errorName:'-',message:'-'}};setButtonBusy(true);setStatus('Gmail·Calendar 읽는 중 · 저장 안 함','warn');renderApiDiagnostics();
     try{
       STATE.signals=emptySignals();
       var settled=await Promise.allSettled([fetchGmail(),fetchCalendar()]);
+      STATE.apiDiagnostics.gmail=diagnosticFrom(settled[0]);STATE.apiDiagnostics.calendar=diagnosticFrom(settled[1]);renderApiDiagnostics();
       var gmail=settled[0].status==='fulfilled'?settled[0].value:[],calendar=settled[1].status==='fulfilled'?settled[1].value:[];
       gmail.concat(calendar).forEach(classify);normalizeBuckets();
       STATE.gmailCount=gmail.length;STATE.calendarCount=calendar.length;STATE.lastChecked=new Date();STATE.connected=settled.some(function(x){return x.status==='fulfilled';});
@@ -10370,6 +10396,7 @@ setInterval(function(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
+
 
 </body>
 </html>
