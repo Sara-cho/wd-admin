@@ -9727,9 +9727,31 @@ setInterval(function(){
   function setStatus(message,tone){var el=document.getElementById('wc-google-signal-status');if(!el)return;el.textContent=message;el.className='wc-google-signal-status'+(tone?' '+tone:'');}
   function setButtonBusy(on){var b=document.getElementById('wc-google-signal-btn');if(!b)return;b.disabled=!!on;b.textContent=on?'Google 신호 확인 중…':'Google 업무신호 확인';}
 
+  function scheduleModalSignals(type){
+    var tries=0;
+    function place(){
+      tries++;
+      var modal=document.getElementById('wc-summary-modal');
+      var body=document.getElementById('wc-summary-modal-body');
+      if(modal&&body&&modal.style.display!=='none'&&!document.getElementById('wc-google-signal-section'))appendSignalsToModal(type);
+      if(tries<24)setTimeout(place,250);
+    }
+    setTimeout(place,0);
+  }
+  function wireSummaryFallback(){
+    [['wc-summary-today-btn','today'],['wc-summary-admin-btn','admin'],['wc-summary-money-btn','money'],['wc-summary-missing-btn','missing']].forEach(function(pair){
+      var btn=document.getElementById(pair[0]);
+      if(!btn||btn.getAttribute('data-wc-google-wired')==='1')return;
+      btn.setAttribute('data-wc-google-wired','1');
+      btn.addEventListener('click',function(){scheduleModalSignals(pair[1]);});
+    });
+  }
+
   function ensureEntry(){
     var intro=document.querySelector('#wcn-panel-overview .wc-overview-intro');
-    if(!intro||document.getElementById('wc-google-signal-actions'))return;
+    if(!intro)return;
+    wireSummaryFallback();
+    if(document.getElementById('wc-google-signal-actions'))return;
     var refresh=intro.querySelector('.wc-refresh');
     var box=document.createElement('div');box.id='wc-google-signal-actions';box.className='wc-google-signal-actions';
     if(refresh){intro.insertBefore(box,refresh);box.appendChild(refresh);}else{intro.appendChild(box);}
