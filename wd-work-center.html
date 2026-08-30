@@ -9684,5 +9684,214 @@ setInterval(function(){
 })();
 </script>
 
+<!-- v1.7.0 Google 업무신호 1차 · Gmail/Calendar 읽기 전용 · 비저장 -->
+<style id="wc-google-signals-v170-style">
+  .wc-google-signal-actions{display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:170px}
+  .wc-google-signal-actions .wc-refresh{width:100%;margin:0}
+  .wc-google-signal-button{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;padding:9px 13px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;font-family:inherit}
+  .wc-google-signal-button:hover{background:#DBEAFE}.wc-google-signal-button:disabled{opacity:.58;cursor:wait}
+  .wc-google-signal-status{font-size:10.5px;line-height:1.45;text-align:center;color:#78716C}
+  .wc-google-signal-status.ok{color:#166534}.wc-google-signal-status.warn{color:#92400E}.wc-google-signal-status.error{color:#B91C1C}
+  .wc-google-signal-section{margin-top:16px;padding-top:16px;border-top:1px solid #E7E5E4}
+  .wc-google-signal-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .wc-google-signal-heading strong{font-size:13px;color:#292524}.wc-google-signal-heading span{font-size:10.5px;color:#78716C}
+  .wc-google-signal-row{padding:13px;margin-bottom:9px;border:1px solid #DBEAFE;border-radius:12px;background:#F8FBFF}
+  .wc-google-signal-top{display:flex;align-items:flex-start;gap:9px}.wc-google-signal-main{flex:1;min-width:0}
+  .wc-google-signal-source{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;background:#E0E7FF;color:#3730A3;font-size:10px;font-weight:900;margin-bottom:5px}
+  .wc-google-signal-title{font-size:13px;font-weight:900;color:#1C1917;line-height:1.5;word-break:keep-all}
+  .wc-google-signal-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px;margin-top:9px;font-size:10.5px;line-height:1.55;color:#57534E}
+  .wc-google-signal-meta b{color:#78716C}.wc-google-signal-link{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:7px 9px;border:1px solid #BFDBFE;border-radius:8px;background:#fff;color:#1D4ED8;text-decoration:none;font-size:10.5px;font-weight:900;white-space:nowrap}
+  @media(max-width:680px){.wc-google-signal-actions{width:100%;min-width:0}.wc-google-signal-meta{grid-template-columns:1fr}.wc-google-signal-top{flex-wrap:wrap}.wc-google-signal-link{width:100%}}
+</style>
+<script id="wc-google-signals-v170">
+(function(){
+  if(window.__WC_GOOGLE_SIGNALS_V1__)return;
+
+  var ACCOUNT='kfcyk20@gmail.com';
+  var CLIENT_ID=(window._AA_DRIVE_CLIENT_ID||'467637069689-nttclpbsjpnmat18g1932q5vvrb8et9o.apps.googleusercontent.com');
+  var GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
+  var CALENDAR_SCOPE='https://www.googleapis.com/auth/calendar.events.readonly';
+  var SCOPES=GMAIL_SCOPE+' '+CALENDAR_SCOPE;
+  var SIGNAL_TERMS=['세금','납부','납입','원천세','부가세','종합소득세','국세','지방세','급여','4대보험','건강보험','국민연금','고용보험','산재보험','회사','행정','신고','제출','마감','기한','결제','구매','주문','구독','갱신','증빙','영수증','세금계산서','권한','보안','로그인','인증','오류','실패','반려','누락','미납','연체','정지','만료'];
+  var ADMIN_TERMS=['세금','납부','원천세','부가세','종합소득세','국세','지방세','급여','4대보험','건강보험','국민연금','고용보험','산재보험','행정','신고','제출','마감','기한'];
+  var MONEY_TERMS=['납부','납입','급여','결제','구매','주문','구독','갱신','청구','입금','출금','영수증','세금계산서','미납','연체'];
+  var EXCEPTION_TERMS=['오류','실패','반려','누락','미납','연체','정지','만료','권한','보안','인증 필요','조치 필요'];
+  var STATE={token:'',expiresAt:0,tokenClient:null,loading:false,connected:false,lastChecked:null,error:'',gmailCount:0,calendarCount:0,signals:{today:[],admin:[],money:[],missing:[]}};
+  window.__WC_GOOGLE_SIGNALS_STATE__=STATE;
+
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
+  function hasAny(text,terms){var s=String(text||'').toLowerCase();return terms.some(function(k){return s.indexOf(String(k).toLowerCase())>-1;});}
+  function uniqueSignals(items){var seen={};return (items||[]).filter(function(x){var k=x.source+':'+x.id;if(seen[k])return false;seen[k]=true;return true;});}
+  function emptySignals(){return{today:[],admin:[],money:[],missing:[]};}
+  function tokenValid(){return !!(STATE.token&&Date.now()<STATE.expiresAt-30000);}
+  function setStatus(message,tone){var el=document.getElementById('wc-google-signal-status');if(!el)return;el.textContent=message;el.className='wc-google-signal-status'+(tone?' '+tone:'');}
+  function setButtonBusy(on){var b=document.getElementById('wc-google-signal-btn');if(!b)return;b.disabled=!!on;b.textContent=on?'Google 신호 확인 중…':'Google 업무신호 확인';}
+
+  function ensureEntry(){
+    var intro=document.querySelector('#wcn-panel-overview .wc-overview-intro');
+    if(!intro||document.getElementById('wc-google-signal-actions'))return;
+    var refresh=intro.querySelector('.wc-refresh');
+    var box=document.createElement('div');box.id='wc-google-signal-actions';box.className='wc-google-signal-actions';
+    if(refresh){intro.insertBefore(box,refresh);box.appendChild(refresh);}else{intro.appendChild(box);}
+    var btn=document.createElement('button');btn.type='button';btn.id='wc-google-signal-btn';btn.className='wc-google-signal-button';btn.textContent='Google 업무신호 확인';btn.addEventListener('click',window.wcGoogleCheckSignals);
+    var status=document.createElement('div');status.id='wc-google-signal-status';status.className='wc-google-signal-status';status.textContent='연결 전 · 저장 안 함';
+    box.appendChild(btn);box.appendChild(status);
+  }
+
+  function mergeCard(valueId,noteId,googleCount){
+    var value=document.getElementById(valueId),note=document.getElementById(noteId);if(!value)return;
+    var current=parseInt(String(value.textContent||'').replace(/[^0-9-]/g,''),10);if(!isFinite(current))current=0;
+    var lastMerged=parseInt(value.getAttribute('data-wc-google-merged')||'',10);
+    var savedBase=parseInt(value.getAttribute('data-wc-google-base')||'',10);
+    var base=(isFinite(lastMerged)&&current===lastMerged&&isFinite(savedBase))?savedBase:current;
+    var merged=base+Number(googleCount||0);
+    value.setAttribute('data-wc-google-base',String(base));value.setAttribute('data-wc-google-merged',String(merged));value.textContent=merged+'건';
+    if(note){
+      var currentNote=String(note.textContent||'');var lastNote=note.getAttribute('data-wc-google-note')||'';var baseNote=note.getAttribute('data-wc-google-base-note');
+      if(!baseNote||currentNote!==lastNote)baseNote=currentNote.replace(/\s*·\s*Google 후보 \d+건\s*$/,'');
+      var mergedNote=googleCount?baseNote+' · Google 후보 '+googleCount+'건':baseNote;
+      note.setAttribute('data-wc-google-base-note',baseNote);note.setAttribute('data-wc-google-note',mergedNote);note.textContent=mergedNote;
+    }
+  }
+
+  function applyCounts(){
+    mergeCard('wc-sum-today','wc-sum-today-note',STATE.signals.today.length);
+    mergeCard('wc-sum-deadline','wc-sum-deadline-note',STATE.signals.admin.length);
+    mergeCard('wc-sum-money','wc-sum-money-note',STATE.signals.money.length);
+    mergeCard('wc-sum-missing','wc-sum-missing-note',STATE.signals.missing.length);
+  }
+
+  function validDate(y,m,d){var dt=new Date(Date.UTC(Number(y),Number(m)-1,Number(d)));return dt.getUTCFullYear()===Number(y)&&dt.getUTCMonth()===Number(m)-1&&dt.getUTCDate()===Number(d)?dt:null;}
+  function extractDue(text){
+    var s=String(text||'');var now=new Date();var y=now.getFullYear(),m;
+    m=s.match(/(20\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})\s*일?/);if(m)return validDate(m[1],m[2],m[3]);
+    m=s.match(/(?:^|\s)(\d{1,2})\s*[.\-/월]\s*(\d{1,2})\s*일?/);if(m)return validDate(y,m[1],m[2]);
+    return null;
+  }
+  function dateText(dt,allDay){
+    if(!dt)return '기한 정보 없음';
+    try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:allDay?undefined:'2-digit',minute:allDay?undefined:'2-digit'}).format(dt);}catch(e){return dt.toISOString().substring(0,16).replace('T',' ');}
+  }
+  function daysUntil(dt){if(!dt)return null;var a=new Date(),today=Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()),target=Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate());return Math.ceil((target-today)/86400000);}
+  function nextAction(text,source){
+    if(hasAny(text,EXCEPTION_TERMS))return '원본에서 오류·권한·누락 상태를 확인하세요.';
+    if(hasAny(text,MONEY_TERMS))return '결제·납부 여부와 증빙을 확인하세요.';
+    if(source==='Calendar')return '일정 전 준비사항과 완료 후 후속업무를 확인하세요.';
+    if(hasAny(text,ADMIN_TERMS))return '기한과 필요한 제출자료를 확인하세요.';
+    return '원본을 열어 실제 업무 여부를 확인하세요.';
+  }
+  function classify(signal){
+    var text=signal.title+' '+(signal.searchText||'');var dueDays=daysUntil(signal.dueDate);
+    if(signal.source==='Gmail'||(dueDays!==null&&dueDays<=3))STATE.signals.today.push(signal);
+    if(signal.source==='Calendar'||hasAny(text,ADMIN_TERMS)||(dueDays!==null&&dueDays<=14))STATE.signals.admin.push(signal);
+    if(hasAny(text,MONEY_TERMS))STATE.signals.money.push(signal);
+    if(hasAny(text,EXCEPTION_TERMS))STATE.signals.missing.push(signal);
+  }
+  function normalizeBuckets(){Object.keys(STATE.signals).forEach(function(k){STATE.signals[k]=uniqueSignals(STATE.signals[k]);});}
+
+  async function api(url){
+    var res=await fetch(url,{method:'GET',headers:{Authorization:'Bearer '+STATE.token,Accept:'application/json'}});
+    if(!res.ok){var detail='';try{detail=(await res.text()).substring(0,180);}catch(e){}throw new Error('Google API '+res.status+(detail?' · '+detail:''));}
+    return res.json();
+  }
+  function headerValue(message,name){var hs=(message.payload&&message.payload.headers)||[],low=String(name).toLowerCase();for(var i=0;i<hs.length;i++){if(String(hs[i].name||'').toLowerCase()===low)return hs[i].value||'';}return'';}
+  function gmailOriginal(threadId){return 'https://mail.google.com/mail/u/?authuser='+encodeURIComponent(ACCOUNT)+'#all/'+encodeURIComponent(threadId||'');}
+
+  async function fetchGmail(){
+    var profile=await api('https://gmail.googleapis.com/gmail/v1/users/me/profile');
+    if(String(profile.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('연결 계정이 '+ACCOUNT+'이 아닙니다.');
+    var list=await api('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50&includeSpamTrash=false&q='+encodeURIComponent('newer_than:30d -in:spam -in:trash'));
+    var refs=(list.messages||[]),out=[];
+    for(var start=0;start<refs.length;start+=10){
+      var batch=refs.slice(start,start+10);
+      var rows=await Promise.all(batch.map(function(x){return api('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+encodeURIComponent(x.id)+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date&metadataHeaders=Message-ID');}));
+      rows.forEach(function(msg){
+        var subject=headerValue(msg,'Subject')||'(제목 없음)',sender=headerValue(msg,'From'),searchText=subject+' '+sender+' '+String(msg.snippet||'');
+        if(!hasAny(searchText,SIGNAL_TERMS))return;
+        var due=extractDue(searchText),signal={id:msg.id,source:'Gmail',title:subject,dueDate:due,dueText:due?dateText(due,true):(hasAny(searchText,ADMIN_TERMS)?'기한 확인 필요':'기한 정보 없음'),originalUrl:gmailOriginal(msg.threadId),searchText:searchText,nextAction:nextAction(searchText,'Gmail'),representativeRequired:true};
+        out.push(signal);
+      });
+    }
+    return out;
+  }
+
+  async function fetchCalendar(){
+    var from=new Date(),to=new Date(from.getTime()+30*86400000);
+    var url='https://www.googleapis.com/calendar/v3/calendars/primary/events?singleEvents=true&orderBy=startTime&showDeleted=false&maxResults=80&timeZone='+encodeURIComponent('Asia/Seoul')+'&timeMin='+encodeURIComponent(from.toISOString())+'&timeMax='+encodeURIComponent(to.toISOString());
+    var data=await api(url),out=[];
+    (data.items||[]).forEach(function(ev){
+      var title=ev.summary||'(제목 없는 일정)',searchText=title+' '+String(ev.description||'')+' '+String(ev.location||'');
+      if(!hasAny(searchText,SIGNAL_TERMS))return;
+      var raw=(ev.start&&((ev.start.dateTime)||ev.start.date))||'';var due=raw?new Date(raw):null;if(due&&isNaN(due.getTime()))due=null;
+      out.push({id:ev.id,source:'Calendar',title:title,dueDate:due,dueText:due?dateText(due,!!(ev.start&&ev.start.date)):'일정 시간 확인 필요',originalUrl:ev.htmlLink||'https://calendar.google.com/calendar/u/0/r',searchText:searchText,nextAction:nextAction(searchText,'Calendar'),representativeRequired:true});
+    });
+    return out;
+  }
+
+  async function loadSignals(){
+    STATE.loading=true;STATE.error='';setButtonBusy(true);setStatus('Gmail·Calendar 읽는 중 · 저장 안 함','warn');
+    try{
+      STATE.signals=emptySignals();
+      var settled=await Promise.allSettled([fetchGmail(),fetchCalendar()]);
+      var gmail=settled[0].status==='fulfilled'?settled[0].value:[],calendar=settled[1].status==='fulfilled'?settled[1].value:[];
+      gmail.concat(calendar).forEach(classify);normalizeBuckets();
+      STATE.gmailCount=gmail.length;STATE.calendarCount=calendar.length;STATE.lastChecked=new Date();STATE.connected=settled.some(function(x){return x.status==='fulfilled';});
+      var failures=settled.filter(function(x){return x.status==='rejected';});
+      if(failures.length){STATE.error=failures.map(function(x){return String(x.reason&&x.reason.message||x.reason);}).join(' / ');setStatus('일부 확인 실패 · 기존 기능 정상','warn');}
+      else setStatus('Gmail '+gmail.length+' · Calendar '+calendar.length+' · 화면 메모리','ok');
+      applyCounts();
+      if(typeof showT==='function')showT(failures.length?'Google 업무신호 일부만 확인했습니다.':'Google 업무신호 후보를 확인했습니다.');
+    }catch(e){
+      STATE.error=String(e&&e.message||e);STATE.connected=false;STATE.signals=emptySignals();applyCounts();setStatus('연결 실패 · 기존 기능 정상','error');console.warn('[Google 업무신호]',e);
+    }finally{STATE.loading=false;setButtonBusy(false);}
+  }
+
+  function initTokenClient(){
+    if(STATE.tokenClient)return true;
+    if(!(window.google&&google.accounts&&google.accounts.oauth2))return false;
+    STATE.tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:CLIENT_ID,scope:SCOPES,hint:ACCOUNT,
+      callback:async function(resp){
+        if(!resp||resp.error||!resp.access_token){STATE.error=String(resp&&resp.error||'권한 승인 실패');setStatus('읽기 권한 연결 실패','error');setButtonBusy(false);return;}
+        if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(resp,GMAIL_SCOPE,CALENDAR_SCOPE)){STATE.error='Gmail·Calendar 읽기 권한이 모두 승인되지 않았습니다.';setStatus('읽기 권한 일부 미승인','warn');setButtonBusy(false);return;}
+        STATE.token=resp.access_token;STATE.expiresAt=Date.now()+Number(resp.expires_in||3600)*1000;await loadSignals();
+      },
+      error_callback:function(){STATE.error='Google 권한 창을 완료하지 못했습니다.';setStatus('Google 권한 연결 중단','warn');setButtonBusy(false);}
+    });
+    return true;
+  }
+
+  window.wcGoogleCheckSignals=function(){
+    ensureEntry();if(STATE.loading)return;
+    if(tokenValid()){loadSignals();return;}
+    if(!initTokenClient()){setStatus('Google 로그인 기능 불러오는 중','warn');setTimeout(initTokenClient,700);return;}
+    setButtonBusy(true);setStatus('읽기 전용 권한 확인 중','warn');STATE.tokenClient.requestAccessToken({prompt:''});
+  };
+
+  function signalRows(items){
+    if(!items.length)return '<div style="padding:18px;text-align:center;background:#FAFAF9;border:1px dashed #D6D3D1;border-radius:11px;color:#78716C;font-size:12px">이 구분의 Google 업무신호 후보가 없습니다.</div>';
+    return items.map(function(x){return '<div class="wc-google-signal-row"><div class="wc-google-signal-top"><div class="wc-google-signal-main"><span class="wc-google-signal-source">'+esc(x.source)+'</span><div class="wc-google-signal-title">'+esc(x.title)+'</div><div class="wc-google-signal-meta"><span><b>기한 후보</b> · '+esc(x.dueText)+'</span><span><b>대표 확인</b> · '+(x.representativeRequired?'필요':'불필요')+'</span><span style="grid-column:1/-1"><b>다음 행동 후보</b> · '+esc(x.nextAction)+'</span></div></div><a class="wc-google-signal-link" href="'+esc(x.originalUrl)+'" target="_blank" rel="noopener noreferrer">원본 열기 →</a></div></div>';}).join('');
+  }
+  function appendSignalsToModal(type){
+    var body=document.getElementById('wc-summary-modal-body');if(!body)return;
+    var old=document.getElementById('wc-google-signal-section');if(old)old.remove();
+    var section=document.createElement('section');section.id='wc-google-signal-section';section.className='wc-google-signal-section';
+    var items=(STATE.signals&&STATE.signals[type])||[];
+    var stateText=STATE.lastChecked?'마지막 확인 '+dateText(STATE.lastChecked,false)+' · 저장 안 함':'아직 Google 업무신호를 읽지 않았습니다.';
+    section.innerHTML='<div class="wc-google-signal-heading"><div><strong>Google 업무신호 후보 '+items.length+'건</strong><div style="font-size:10.5px;color:#78716C;margin-top:3px">Gmail·Calendar 원본과 업무 완료 상태는 분리됩니다.</div></div><span>'+esc(stateText)+'</span></div>'+(STATE.lastChecked?signalRows(items):'<div style="padding:16px;border:1px solid #BFDBFE;background:#EFF6FF;border-radius:11px;font-size:12px;color:#1D4ED8;line-height:1.7">오늘 운영판의 <b>Google 업무신호 확인</b>을 눌러 읽기 전용으로 확인하세요. 어떤 Supabase 원장에도 자동 저장하지 않습니다.</div>');
+    body.appendChild(section);
+  }
+
+  var baseOverview=window.renderWorkcenterOverview;
+  if(typeof baseOverview==='function')window.renderWorkcenterOverview=async function(showToast){await baseOverview(showToast);ensureEntry();applyCounts();};
+  var baseOpen=window.wcOpenSummaryModal;
+  if(typeof baseOpen==='function')window.wcOpenSummaryModal=async function(type){await baseOpen(type);appendSignalsToModal(type);};
+
+  function boot(){ensureEntry();initTokenClient();applyCounts();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.__WC_GOOGLE_SIGNALS_V1__=true;
+})();
+</script>
+
 </body>
 </html>
