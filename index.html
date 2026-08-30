@@ -1436,37 +1436,26 @@ async function wdhqOpenEmbeddedWork(){
   const frame=document.createElement('iframe');
   frame.title='WD 업무센터';
   frame.style.cssText='width:100%;height:100%;border:0;background:#fffbeb;';
-  shell.append(frame);
+  const back=document.createElement('button');
+  back.type='button';
+  back.textContent='← WD 본진';
+  back.setAttribute('aria-label','WD 본진으로 돌아가기');
+  back.style.cssText='position:absolute;right:10px;top:max(68px,calc(env(safe-area-inset-top) + 68px));z-index:2147483000;min-height:44px;padding:9px 13px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:#78350f;color:#fff;font:800 13px system-ui,-apple-system,sans-serif;box-shadow:0 5px 18px rgba(0,0,0,.24);';
+  back.addEventListener('click',wdhqCloseEmbeddedWork);
+  shell.append(frame,back);
   document.body.appendChild(shell);
   document.documentElement.style.overflow='hidden';
   document.body.style.overflow='hidden';
-  try{
-    let centerHtml=await wdhqDecodeGzipUtf8Base64(WDHQ_EMBEDDED_WORK_GZIP_B64);
-    const uidOriginal="var _CURRENT_UID = localStorage.getItem('wd_current_uid') || '';";
-    const uidPreview="var _CURRENT_UID = localStorage.getItem('wd_current_uid') || 'kfcyk50';";
-    if(!centerHtml.includes(uidOriginal))throw new Error('업무센터 대표 확인 경로를 찾을 수 없습니다.');
-    centerHtml=centerHtml.replace(uidOriginal,uidPreview);
-    const homeOriginal="function wcGoHome(){var p=wcSameOriginParent();if(p&&typeof p.goTo==='function'){p.goTo('home');return}if(window.parent!==window){window.parent.postMessage({type:'wd:navigate',target:'home'},location.origin);return}var q=new URLSearchParams(location.search).get('home');location.href=q||'index.html'}";
-    const homeEmbedded="function wcGoHome(){if(window.parent&&window.parent!==window){window.parent.postMessage({type:'wdhq:return-home-work'},'*');return}var q=new URLSearchParams(location.search).get('home');location.href=q||'index.html'}";
-    if(!centerHtml.includes(homeOriginal))throw new Error('업무센터 복귀 Hook을 찾을 수 없습니다.');
-    centerHtml=centerHtml.replace(homeOriginal,homeEmbedded);
-    const logoutOriginal="function wcLogout(){var p=wcSameOriginParent();if(p&&typeof p.lockLogout==='function'){p.lockLogout();return}['wd_lock_auth','wd_lock_user','wd_current_uid','wd_user_name','wd_current_dbk'].forEach(function(k){localStorage.removeItem(k)});wcGoHome()}";
-    const logoutEmbedded="function wcLogout(){if(window.parent&&window.parent!==window){window.parent.postMessage({type:'wdhq:return-home-work'},'*');return}wcGoHome()}";
-    if(!centerHtml.includes(logoutOriginal))throw new Error('업무센터 로그아웃 Hook을 찾을 수 없습니다.');
-    centerHtml=centerHtml.replace(logoutOriginal,logoutEmbedded);
-    const liveBridge="<script>window.__WD_WORK_TEMP_PREVIEW__=false;window.__WD_WORK_EXISTING_SUPABASE_RESTORED__=true;window.__WD_WORK_FINANCE_OFFICE_V166__=true;<\/script>";
-    if(!centerHtml.includes('</head>'))throw new Error('업무센터 문서 연결부를 찾을 수 없습니다.');
-    centerHtml=centerHtml.replace('</head>',liveBridge+'</head>');
-    frame.addEventListener('load',async function(){
-      try{const token=await wdhqGetRealAccessToken();frame.contentWindow?.postMessage({type:'wdhq:work-auth-token',token:token||''},'*')}catch(error){}
-    },{once:true});
-    frame.srcdoc=centerHtml;
-  }catch(error){
-    shell.remove();
-    document.documentElement.style.overflow='';
-    document.body.style.overflow='';
-    toast('WD 업무센터 연결 내용을 확인해 주세요.');
-  }
+  frame.addEventListener('load',async function(){
+    try{
+      const token=await wdhqGetRealAccessToken();
+      frame.contentWindow?.postMessage({type:'wdhq:work-auth-token',token:token||''},'*');
+    }catch(error){
+      toast('WD 업무센터 Auth 연결을 확인해 주세요.');
+    }
+  });
+  const joiner=WDHQ_EMBEDDED_WORK_ROUTE.includes('?')?'&':'?';
+  frame.src=WDHQ_EMBEDDED_WORK_ROUTE+joiner+'embedded=1&v=20260830-idea-inbox-v1';
 }
 window.addEventListener('message',function(event){
   if(event&&event.data&&event.data.type==='wdhq:return-home-work')wdhqCloseEmbeddedWork();
