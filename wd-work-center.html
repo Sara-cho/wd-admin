@@ -9921,14 +9921,19 @@ setInterval(function(){
     })();
     return STATE.tasksReadProbePromise;
   };
+  async function runTasksReadProbeIntoControl(){
+    var result=await window.wcGoogleReadTaskListsOnce();
+    var button=document.getElementById('wc-google-tasks-read-probe');
+    if(button){button.setAttribute('data-called',result.called?'true':'false');button.setAttribute('data-http-status',String(result.httpStatus||0));button.setAttribute('data-ok',result.ok?'true':'false');button.setAttribute('data-list-count',String(result.listCount||0));button.setAttribute('data-titles',JSON.stringify(result.titles||[]));button.setAttribute('data-error',String(result.error||''));}
+    return result;
+  }
   function ensureTasksReadProbeControl(){
     if(document.getElementById('wc-google-tasks-read-probe'))return;
     var button=document.createElement('button');
     button.id='wc-google-tasks-read-probe';button.type='button';button.tabIndex=-1;button.setAttribute('aria-hidden','true');
     button.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;z-index:-1;overflow:hidden';
     button.addEventListener('click',async function(){
-      var result=await window.wcGoogleReadTaskListsOnce();
-      button.setAttribute('data-called',result.called?'true':'false');button.setAttribute('data-http-status',String(result.httpStatus||0));button.setAttribute('data-ok',result.ok?'true':'false');button.setAttribute('data-list-count',String(result.listCount||0));button.setAttribute('data-titles',JSON.stringify(result.titles||[]));button.setAttribute('data-error',String(result.error||''));
+      await runTasksReadProbeIntoControl();
     });
     document.body.appendChild(button);
   }
@@ -9994,16 +9999,16 @@ setInterval(function(){
       callback:async function(resp){
         if(!resp||resp.error||!resp.access_token){STATE.error=String(resp&&resp.error||'권한 승인 실패');setStatus('읽기 권한 연결 실패','error');setButtonBusy(false);return;}
         if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(resp,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE)){STATE.error='Gmail·Calendar 읽기 권한이 모두 승인되지 않았습니다.';setStatus('읽기 권한 일부 미승인','warn');setButtonBusy(false);return;}
-        STATE.token=resp.access_token;STATE.expiresAt=Date.now()+Number(resp.expires_in||3600)*1000;await loadSignals();
+        STATE.token=resp.access_token;STATE.expiresAt=Date.now()+Number(resp.expires_in||3600)*1000;await loadSignals();await runTasksReadProbeIntoControl();
       },
       error_callback:function(){STATE.error='Google 권한 창을 완료하지 못했습니다.';setStatus('Google 권한 연결 중단','warn');setButtonBusy(false);}
     });
     return true;
   }
 
-  window.wcGoogleCheckSignals=function(){
+  window.wcGoogleCheckSignals=async function(){
     ensureEntry();if(STATE.loading)return;
-    if(tokenValid()){loadSignals();return;}
+    if(tokenValid()){await loadSignals();await runTasksReadProbeIntoControl();return;}
     if(!initTokenClient()){setStatus('Google 로그인 기능 불러오는 중','warn');setTimeout(initTokenClient,700);return;}
     setButtonBusy(true);setStatus('읽기 전용 권한 확인 중','warn');STATE.tokenClient.requestAccessToken({prompt:''});
   };
