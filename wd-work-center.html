@@ -9714,7 +9714,8 @@ setInterval(function(){
   var CLIENT_ID=(window._AA_DRIVE_CLIENT_ID||'467637069689-nttclpbsjpnmat18g1932q5vvrb8et9o.apps.googleusercontent.com');
   var GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
   var CALENDAR_SCOPE='https://www.googleapis.com/auth/calendar.events.readonly';
-  var SCOPES=GMAIL_SCOPE+' '+CALENDAR_SCOPE;
+  var TASKS_SCOPE='https://www.googleapis.com/auth/tasks';
+  var SCOPES=GMAIL_SCOPE+' '+CALENDAR_SCOPE+' '+TASKS_SCOPE;
   var SIGNAL_TERMS=['세금','납부','납입','원천세','부가세','종합소득세','국세','지방세','급여','4대보험','건강보험','국민연금','고용보험','산재보험','회사','행정','신고','제출','마감','기한','결제','구매','주문','구독','갱신','증빙','영수증','세금계산서','권한','보안','로그인','인증','오류','실패','반려','누락','미납','연체','정지','만료'];
   var ADMIN_TERMS=['세금','납부','원천세','부가세','종합소득세','국세','지방세','급여','4대보험','건강보험','국민연금','고용보험','산재보험','행정','신고','제출','마감','기한'];
   var MONEY_TERMS=['납부','납입','급여','결제','구매','주문','구독','갱신','청구','입금','출금','영수증','세금계산서','미납','연체'];
@@ -9901,7 +9902,7 @@ setInterval(function(){
       client_id:CLIENT_ID,scope:SCOPES,hint:ACCOUNT,
       callback:async function(resp){
         if(!resp||resp.error||!resp.access_token){STATE.error=String(resp&&resp.error||'권한 승인 실패');setStatus('읽기 권한 연결 실패','error');setButtonBusy(false);return;}
-        if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(resp,GMAIL_SCOPE,CALENDAR_SCOPE)){STATE.error='Gmail·Calendar 읽기 권한이 모두 승인되지 않았습니다.';setStatus('읽기 권한 일부 미승인','warn');setButtonBusy(false);return;}
+        if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(resp,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE)){STATE.error='Gmail·Calendar 읽기 권한이 모두 승인되지 않았습니다.';setStatus('읽기 권한 일부 미승인','warn');setButtonBusy(false);return;}
         STATE.token=resp.access_token;STATE.expiresAt=Date.now()+Number(resp.expires_in||3600)*1000;await loadSignals();
       },
       error_callback:function(){STATE.error='Google 권한 창을 완료하지 못했습니다.';setStatus('Google 권한 연결 중단','warn');setButtonBusy(false);}
