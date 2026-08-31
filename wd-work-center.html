@@ -10398,5 +10398,152 @@ setInterval(function(){
 </script>
 
 
+<!-- v1.8.0 업무일지 자동작성 1차 · 기존 원장 읽기/초안만 · 비저장 -->
+<style id="wc-journal-draft-v180-style">
+  .wc-journal-draft-entry{margin:-2px 0 12px;padding:12px;border:1px solid #BFDBFE;border-radius:12px;background:#F8FBFF}
+  .wc-journal-draft-entry-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .wc-journal-draft-entry-title{font-size:13px;font-weight:900;color:#1E3A8A}
+  .wc-journal-draft-entry-note{margin-top:4px;font-size:10.5px;line-height:1.55;color:#64748B}
+  .wc-journal-draft-button{border:1px solid #93C5FD;border-radius:9px;background:#EFF6FF;color:#1D4ED8;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit}
+  .wc-journal-draft-button:hover{background:#DBEAFE}.wc-journal-draft-button:disabled{opacity:.55;cursor:wait}
+  .wc-journal-draft-candidates{display:none;margin-top:11px;padding-top:11px;border-top:1px solid #DBEAFE}
+  .wc-journal-draft-candidates.show{display:block}
+  .wc-journal-draft-status{margin-bottom:8px;font-size:10.5px;font-weight:700;color:#64748B}
+  .wc-journal-draft-group{margin-top:9px}.wc-journal-draft-group-title{margin-bottom:5px;font-size:11px;font-weight:900;color:#334155}
+  .wc-journal-draft-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;padding:8px 9px;border:1px solid #E2E8F0;border-radius:9px;background:#fff;cursor:pointer}
+  .wc-journal-draft-item input{margin-top:2px;accent-color:#2563EB}.wc-journal-draft-item-main{min-width:0;flex:1}
+  .wc-journal-draft-item-title{font-size:11.5px;font-weight:800;line-height:1.5;color:#1E293B;word-break:break-word}
+  .wc-journal-draft-item-meta{margin-top:2px;font-size:10px;line-height:1.45;color:#64748B;word-break:break-word}
+  .wc-journal-draft-empty{padding:11px;border:1px dashed #CBD5E1;border-radius:9px;background:#fff;color:#94A3B8;font-size:11px;text-align:center}
+  .wc-journal-draft-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .wc-journal-draft-actions button{border-radius:9px;padding:8px 12px;font-size:11.5px;font-weight:900;cursor:pointer;font-family:inherit}
+  .wc-journal-draft-apply{border:0;background:#2563EB;color:#fff}.wc-journal-draft-close{border:1px solid #CBD5E1;background:#fff;color:#64748B}
+  @media(max-width:680px){.wc-journal-draft-button{width:100%}.wc-journal-draft-actions button{width:100%}}
+</style>
+<script id="wc-journal-draft-v180">
+(function(){
+  if(window.__WC_JOURNAL_DRAFT_V1__)return;
+  var STATE={loading:false,date:'',items:[],errors:[]};
+  window.__WC_JOURNAL_DRAFT_STATE__=STATE;
+
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
+  function currentUid(){return String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();}
+  function currentName(){return String(localStorage.getItem('wd_user_name')||(currentUid()==='kfcyk50'?'최윤경':'현재 사용자')).trim();}
+  function isOwner(){return localStorage.getItem('wd_current_role')==='owner'||currentUid()==='kfcyk50';}
+  function kstYmd(value){
+    var d=value?new Date(value):new Date();if(isNaN(d.getTime()))return String(value||'').substring(0,10);
+    var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),map={};
+    parts.forEach(function(p){map[p.type]=p.value});return map.year+'-'+map.month+'-'+map.day;
+  }
+  function minText(value){var n=Number(value||0);return Math.floor(n/60)+'시간 '+(n%60)+'분';}
+  function taskStatus(row){
+    var idea=String(row.idea_status||'');
+    if(idea&&idea!=='아이디어상태'&&idea!=='업무요청')return idea;
+    return String(row.status||idea||'상태 미확인');
+  }
+  function isDone(row){return /완료|done|closed/i.test(String(row.status||'')+' '+String(row.idea_status||''));}
+  function isHold(row){return /보류|hold/i.test(String(row.status||'')+' '+String(row.idea_status||''));}
+  function signalItems(){
+    var gs=window.__WC_GOOGLE_SIGNALS_STATE__,out=[],seen={};
+    if(!gs||!gs.lastChecked||!gs.signals)return out;
+    Object.keys(gs.signals).forEach(function(k){(gs.signals[k]||[]).forEach(function(s){var key=String(s.source||'')+':'+String(s.id||s.title||'');if(seen[key])return;seen[key]=true;out.push(s)})});
+    return out;
+  }
+  function field(id){return document.getElementById(id)}
+  function setBusy(on){var b=field('wc-journal-draft-open');if(b){b.disabled=!!on;b.textContent=on?'오늘 기록 확인 중…':'오늘 기록으로 초안 만들기'}}
+  function itemTitle(item){
+    if(item.kind==='task')return '['+taskStatus(item.row)+'] '+String(item.row.core_content||item.row.content||'업무내용 미확인');
+    if(item.kind==='hours'){
+      var r=item.row,prefix=isOwner()?'업무 흐름':'출퇴근';
+      return prefix+' · '+String(r.start_time||'시작 미입력')+' ~ '+String(r.end_time||'종료 미입력');
+    }
+    return String(item.row.source||'Google')+' · '+String(item.row.title||'제목 없음');
+  }
+  function itemMeta(item){
+    if(item.kind==='task')return [item.row.next_action&&('다음 행동: '+item.row.next_action),item.row.handoff_note&&('인계: '+item.row.handoff_note)].filter(Boolean).join(' · ')||'오늘 변경된 work_tasks';
+    if(item.kind==='hours')return '누적 보류·휴게 '+Number(item.row.break_minutes||0)+'분 · 실제 '+minText(item.row.total_minutes||0);
+    return [item.row.dueText&&('기한: '+item.row.dueText),item.row.nextAction&&('다음 행동: '+item.row.nextAction)].filter(Boolean).join(' · ')||'현재 화면에서 확인한 Google 업무신호';
+  }
+  function render(){
+    var box=field('wc-journal-draft-candidates'),status=field('wc-journal-draft-status'),list=field('wc-journal-draft-list');if(!box||!status||!list)return;
+    box.className='wc-journal-draft-candidates show';
+    status.textContent=STATE.date+' 기록 후보 '+STATE.items.length+'건 · 포함할 항목만 체크하세요.'+(STATE.errors.length?' · 일부 조회 확인 필요':'');
+    if(!STATE.items.length){list.innerHTML='<div class="wc-journal-draft-empty">오늘 변경된 업무·근무기록·확인한 Google 업무신호가 없습니다.</div>';return}
+    var labels={task:'오늘 변경된 업무',hours:'근무 흐름',signal:'확인한 Google 업무신호'},html='';
+    ['task','hours','signal'].forEach(function(kind){var group=STATE.items.map(function(item,index){return{item:item,index:index}}).filter(function(x){return x.item.kind===kind});if(!group.length)return;
+      html+='<div class="wc-journal-draft-group"><div class="wc-journal-draft-group-title">'+labels[kind]+' · '+group.length+'건</div>';
+      group.forEach(function(x){html+='<label class="wc-journal-draft-item"><input type="checkbox" data-wc-journal-draft-index="'+x.index+'" checked><span class="wc-journal-draft-item-main"><span class="wc-journal-draft-item-title">'+esc(itemTitle(x.item))+'</span><span class="wc-journal-draft-item-meta">'+esc(itemMeta(x.item))+'</span></span></label>'});
+      html+='</div>';
+    });
+    list.innerHTML=html;
+  }
+  async function loadCandidates(){
+    var uid=currentUid();if(!uid){if(typeof showT==='function')showT('본진 로그인을 먼저 확인해 주세요.');return}
+    if(!window._supaReady||typeof _sbSelect!=='function'){if(typeof showT==='function')showT('Supabase 읽기 연결을 확인해 주세요.');return}
+    STATE.loading=true;STATE.date=kstYmd();STATE.items=[];STATE.errors=[];setBusy(true);
+    try{
+      var settled=await Promise.allSettled([
+        _sbSelect('work_tasks','*',{eq:{user_id:uid},order:'updated_at'}),
+        _sbSelect('work_hours','*',{eq:{user_id:uid,work_date:STATE.date},limit:1})
+      ]);
+      if(settled[0].status==='fulfilled'){
+        (settled[0].value.data||[]).filter(function(row){return kstYmd(row.updated_at||row.request_date)===STATE.date}).forEach(function(row){STATE.items.push({kind:'task',row:row})});
+      }else STATE.errors.push('work_tasks');
+      if(settled[1].status==='fulfilled'){
+        (settled[1].value.data||[]).forEach(function(row){STATE.items.push({kind:'hours',row:row})});
+      }else STATE.errors.push('work_hours');
+      signalItems().forEach(function(row){STATE.items.push({kind:'signal',row:row})});
+      render();
+      if(typeof showT==='function')showT('오늘 기록 후보를 불러왔습니다. 포함 항목을 확인해 주세요.');
+    }catch(error){console.error('[journal-draft] load',error);if(typeof showT==='function')showT('오늘 기록 후보를 불러오지 못했습니다.');}
+    finally{STATE.loading=false;setBusy(false)}
+  }
+  function selectedItems(){
+    return STATE.items.filter(function(item,index){var input=document.querySelector('[data-wc-journal-draft-index="'+index+'"]');return !!(input&&input.checked)});
+  }
+  function buildDraft(items){
+    var tasks=items.filter(function(x){return x.kind==='task'}).map(function(x){return x.row});
+    var hours=items.filter(function(x){return x.kind==='hours'}).map(function(x){return x.row});
+    var signals=items.filter(function(x){return x.kind==='signal'}).map(function(x){return x.row});
+    var lines=[STATE.date+' 업무일지 초안','작성자: '+currentName(),''];
+    lines.push('[오늘 처리·변경한 업무]');
+    if(tasks.length)tasks.forEach(function(r){lines.push('- ['+taskStatus(r)+'] '+String(r.core_content||r.content||'업무내용 미확인'))});else lines.push('- 선택한 업무 없음');
+    lines.push('','[근무 흐름]');
+    if(hours.length)hours.forEach(function(r){
+      if(isOwner())lines.push('- 업무 시작 '+String(r.start_time||'미입력')+' / 오늘 업무 종료 '+String(r.end_time||'미입력')+' / 누적 보류·휴게 '+Number(r.break_minutes||0)+'분 / 실제 업무 '+minText(r.total_minutes||0));
+      else lines.push('- 출근 '+String(r.start_time||'미입력')+' / 퇴근 '+String(r.end_time||'미입력')+' / 휴게 '+Number(r.break_minutes||0)+'분 / 근무 '+minText(r.total_minutes||0));
+    });else lines.push('- 선택한 근무기록 없음');
+    lines.push('','[확인한 Google 업무신호]');
+    if(signals.length)signals.forEach(function(s){lines.push('- '+String(s.source||'Google')+' · '+String(s.title||'제목 없음')+(s.nextAction?'\n  다음 행동: '+s.nextAction:''))});else lines.push('- 선택한 신호 없음');
+    var handoffs=tasks.filter(function(r){return String(r.handoff_note||'').trim()});
+    lines.push('','[인계내역]');
+    if(handoffs.length)handoffs.forEach(function(r){lines.push('- '+String(r.handoff_note).trim())});else lines.push('- 없음');
+    var open=tasks.filter(function(r){return !isDone(r)});
+    lines.push('','[미완료·내일 이어갈 일]');
+    if(open.length)open.forEach(function(r){var state=isHold(r)?'보류':'진행';lines.push('- ['+state+'] '+String(r.core_content||r.content||'업무내용 미확인')+(r.next_action?'\n  다음 행동: '+r.next_action:''))});else lines.push('- 없음');
+    return lines.join('\n');
+  }
+  function applyDraft(){
+    var items=selectedItems();if(!items.length){if(typeof showT==='function')showT('초안에 포함할 기록을 선택해 주세요.');return}
+    var ta=field('wj-content');if(!ta)return;
+    if(ta.value.trim()&&!window.confirm('현재 업무일지 작성 내용을 오늘 기록 초안으로 바꿀까요?'))return;
+    ta.value=buildDraft(items);ta.focus();
+    var status=field('wc-journal-draft-status');if(status)status.textContent='초안을 입력했습니다. 내용을 확인·수정한 뒤 기존 저장 버튼을 눌러야 저장됩니다.';
+    if(typeof showT==='function')showT('업무일지 초안을 채웠습니다. 자동 저장하지 않았습니다.');
+  }
+  function close(){var box=field('wc-journal-draft-candidates');if(box)box.className='wc-journal-draft-candidates'}
+  function boot(){
+    var panel=field('wcn-panel-journal');if(!panel||field('wc-journal-draft-entry'))return;
+    var card=panel.firstElementChild;if(!card)return;
+    var entry=document.createElement('section');entry.id='wc-journal-draft-entry';entry.className='wc-journal-draft-entry';
+    entry.innerHTML='<div class="wc-journal-draft-entry-head"><div><div class="wc-journal-draft-entry-title">오늘 기록 후보 → 업무일지 초안</div><div class="wc-journal-draft-entry-note">현재 로그인 사용자의 오늘 변경 업무·근무기록·현재 화면의 Google 신호만 읽습니다. 자동 저장·자동 완료처리는 하지 않습니다.</div></div><button type="button" id="wc-journal-draft-open" class="wc-journal-draft-button">오늘 기록으로 초안 만들기</button></div><div id="wc-journal-draft-candidates" class="wc-journal-draft-candidates"><div id="wc-journal-draft-status" class="wc-journal-draft-status"></div><div id="wc-journal-draft-list"></div><div class="wc-journal-draft-actions"><button type="button" class="wc-journal-draft-close" id="wc-journal-draft-close">닫기</button><button type="button" class="wc-journal-draft-apply" id="wc-journal-draft-apply">선택한 기록으로 초안 채우기</button></div></div>';
+    var heading=card.firstElementChild;if(heading&&heading.nextSibling)card.insertBefore(entry,heading.nextSibling);else card.appendChild(entry);
+    field('wc-journal-draft-open').addEventListener('click',loadCandidates);field('wc-journal-draft-apply').addEventListener('click',applyDraft);field('wc-journal-draft-close').addEventListener('click',close);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.__WC_JOURNAL_DRAFT_V1__=true;
+})();
+</script>
+
 </body>
 </html>
