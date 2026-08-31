@@ -10772,5 +10772,98 @@ setInterval(function(){
 })();
 </script>
 
+<!-- v2.0.0 Google Tasks 명시적 보내기 + 주소록 빠른실행 · 화면메모리/Google만 -->
+<style id="wc-google-tasks-send-v200-style">
+  .wc-quick-actions{margin:0 0 12px;padding:16px;border:1.5px solid #E7E5E4;border-radius:16px;background:#fff}
+  .wc-quick-actions-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:11px}
+  .wc-quick-actions-head strong{font-size:14px;color:#292524}.wc-quick-actions-head span{font-size:10.5px;color:#78716C}
+  .wc-quick-actions-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .wc-quick-action{display:flex;align-items:center;gap:8px;min-height:42px;padding:9px 10px;border:1px solid #E7E5E4;border-radius:10px;background:#FAFAF9;color:#292524;text-decoration:none;font:800 11.5px 'Noto Sans KR',sans-serif;cursor:pointer;text-align:left}
+  .wc-quick-action:hover{border-color:#F59E0B;background:#FFFBEB}.wc-quick-action span{font-size:15px}
+  .wc-task-send{margin-top:9px;padding:11px;border:1px solid #BFDBFE;border-radius:11px;background:#F8FBFF}
+  .wc-task-send-title{font-size:11.5px;font-weight:900;color:#1D4ED8;margin-bottom:7px}
+  .wc-task-send-controls{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) auto;gap:7px;align-items:center}
+  .wc-task-send select,.wc-task-send button{min-height:36px;border:1px solid #BFDBFE;border-radius:8px;background:#fff;font:700 11px 'Noto Sans KR',sans-serif;color:#334155;padding:7px 9px}
+  .wc-task-send button{background:#2563EB;color:#fff;border-color:#2563EB;font-weight:900;cursor:pointer;white-space:nowrap}.wc-task-send button:disabled{opacity:.55;cursor:wait}
+  .wc-task-send-status{margin-top:6px;font-size:10px;line-height:1.5;color:#64748B}.wc-task-send-status.ok{color:#166534}.wc-task-send-status.error{color:#B91C1C}
+  @media(max-width:760px){.wc-quick-actions-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wc-task-send-controls{grid-template-columns:1fr}.wc-task-send button{width:100%}}
+</style>
+<script id="wc-google-tasks-send-v200">
+(function(){
+  if(window.__WC_GOOGLE_TASKS_SEND_V2__)return;
+  var TASKS_LISTS_URL='https://tasks.googleapis.com/tasks/v1/users/@me/lists';
+  function el(id){return document.getElementById(id)}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function toast(message){if(typeof showT==='function')showT(message)}
+  function status(message,tone){var node=el('wc-task-send-status');if(!node)return;node.textContent=message;node.className='wc-task-send-status'+(tone?' '+tone:'')}
+  function googleState(){return window.__WC_GOOGLE_SIGNALS_STATE__||null}
+  function token(){var state=googleState();return state&&state.token&&Date.now()<Number(state.expiresAt||0)-30000?state.token:''}
+  function actionRows(){
+    var input=el('wj-next'),seen={};
+    return String(input&&input.value||'').split(/\r?\n/).map(function(line){return line.replace(/^\s*[-•*]\s*/,'').trim()}).filter(function(line){if(!line||seen[line])return false;seen[line]=true;return true}).map(function(raw){
+      var match=raw.match(/기한(?:\s*후보)?\s*[:·]?\s*(\d{4}-\d{2}-\d{2})/i),due=match?match[1]:'';
+      var title=raw.split(/\s+·\s+(?=기한|우선순위)/)[0].replace(/\s*\(?기한(?:\s*후보)?\s*[:·]?\s*\d{4}-\d{2}-\d{2}\)?/ig,'').trim();
+      return{raw:raw,title:title||raw,due:due};
+    });
+  }
+  function renderActions(){
+    var select=el('wc-task-action-select');if(!select)return;
+    var current=select.value,rows=actionRows();
+    select.innerHTML=rows.length?rows.map(function(row,index){return'<option value="'+index+'">'+esc(row.title)+(row.due?' · '+esc(row.due):'')+'</option>'}).join(''):'<option value="">다음 행동을 먼저 입력하세요</option>';
+    if(current&&Number(current)<rows.length)select.value=current;
+  }
+  async function loadTaskLists(){
+    var select=el('wc-task-list-select'),accessToken=token();if(!select)return false;
+    if(!accessToken){select.innerHTML='<option value="">Google 연결 확인 필요</option>';status('먼저 오늘 운영판에서 Google 업무신호 확인을 실행해 주세요.','error');return false}
+    select.disabled=true;select.innerHTML='<option value="">Task List 확인 중…</option>';status('연결된 Google Task List를 확인하고 있습니다.');
+    try{
+      var res=await fetch(TASKS_LISTS_URL,{method:'GET',headers:{Authorization:'Bearer '+accessToken,Accept:'application/json'},cache:'no-store'}),data=await res.json();
+      if(!res.ok)throw new Error(String(data&&data.error&&data.error.message||'Task List 확인 실패').substring(0,140));
+      var items=Array.isArray(data.items)?data.items:[];
+      select.innerHTML=items.length?items.map(function(item){return'<option value="'+esc(item.id)+'">'+esc(item.title||'제목 없는 목록')+'</option>'}).join(''):'<option value="">사용 가능한 Task List 없음</option>';
+      status('Task List '+items.length+'개 확인 · 보낼 목록을 선택하세요.','ok');return items.length>0;
+    }catch(error){select.innerHTML='<option value="">Task List 확인 실패</option>';status(String(error&&error.message||error),'error');return false}
+    finally{select.disabled=false}
+  }
+  async function sendSelected(){
+    var rows=actionRows(),actionSelect=el('wc-task-action-select'),listSelect=el('wc-task-list-select'),button=el('wc-task-send-button');
+    var row=rows[Number(actionSelect&&actionSelect.value||0)];if(!row){toast('Google Tasks로 보낼 다음 행동을 선택해 주세요.');return}
+    if(!token()){await loadTaskLists();return}
+    if(!listSelect||!listSelect.value){if(!(await loadTaskLists()))return}
+    var listId=listSelect.value,listName=listSelect.options[listSelect.selectedIndex]&&listSelect.options[listSelect.selectedIndex].textContent||'선택 목록';
+    var message='다음 행동을 Google Tasks에 생성할까요?\n\n'+row.title+(row.due?'\n기한: '+row.due:'')+'\n목록: '+listName+'\n\n업무센터 원장과 완료상태는 변경되지 않습니다.';
+    if(!window.confirm(message))return;
+    button.disabled=true;button.textContent='생성 중…';status('대표 확인 완료 · Google Tasks에 생성 중입니다.');
+    try{
+      var workDate=(el('wj-work-date')&&el('wj-work-date').value)||new Date().toISOString().slice(0,10);
+      var payload={title:row.title,notes:'WD 업무센터 · 업무일지 '+workDate+'\n원본 식별: 업무일지 다음 행동'};
+      if(row.due)payload.due=row.due+'T00:00:00.000Z';
+      var res=await fetch('https://tasks.googleapis.com/tasks/v1/lists/'+encodeURIComponent(listId)+'/tasks',{method:'POST',headers:{Authorization:'Bearer '+token(),'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)}),data=await res.json();
+      if(!res.ok)throw new Error(String(data&&data.error&&data.error.message||'Task 생성 실패').substring(0,140));
+      status('생성 완료 · '+row.title+' · 업무센터 원장은 변경하지 않았습니다.','ok');toast('Google Tasks에 다음 행동 1건을 생성했습니다.');
+    }catch(error){status(String(error&&error.message||error),'error');toast('Google Tasks 생성에 실패했습니다. 연결 상태를 확인해 주세요.');}
+    finally{button.disabled=false;button.textContent='Google Tasks로 보내기'}
+  }
+  function addTaskSender(){
+    var input=el('wj-next');if(!input||el('wc-task-send'))return;
+    var box=document.createElement('div');box.id='wc-task-send';box.className='wc-task-send';
+    box.innerHTML='<div class="wc-task-send-title">대표가 확정한 다음 행동만 Google Tasks로 보내기</div><div class="wc-task-send-controls"><select id="wc-task-action-select" aria-label="보낼 다음 행동"></select><select id="wc-task-list-select" aria-label="Google Task List"><option value="">Task List 확인</option></select><button type="button" id="wc-task-send-button">Google Tasks로 보내기</button></div><div id="wc-task-send-status" class="wc-task-send-status">자동 생성·자동 완료처리 없음 · 보낼 때마다 대표 확인</div>';
+    var details=input.closest('details');(details||input.parentNode).insertAdjacentElement('afterend',box);renderActions();
+    input.addEventListener('input',renderActions);el('wc-task-list-select').addEventListener('focus',function(){if(!this.value)loadTaskLists()},{once:true});el('wc-task-send-button').addEventListener('click',sendSelected);
+  }
+  function goTab(name){if(typeof window.wcnTabSwitch==='function')window.wcnTabSwitch(name)}
+  function addQuickActions(){
+    var panel=el('wcn-panel-overview');if(!panel||el('wc-quick-actions'))return;
+    var box=document.createElement('section');box.id='wc-quick-actions';box.className='wc-quick-actions';
+    box.innerHTML='<div class="wc-quick-actions-head"><strong>빠른 실행</strong><span>실제 행동 진입만 표시</span></div><div class="wc-quick-actions-grid"><button type="button" class="wc-quick-action" data-tab="share"><span>✅</span>할 일</button><a class="wc-quick-action" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer"><span>🗓️</span>일정</a><a class="wc-quick-action" href="https://contacts.google.com/" target="_blank" rel="noopener noreferrer"><span>👥</span>주소록</a><button type="button" class="wc-quick-action" data-tab="finance"><span>💳</span>수입·지출</button><button type="button" class="wc-quick-action" data-tab="office"><span>📦</span>구매·비품</button><button type="button" class="wc-quick-action" data-tab="ai-archive"><span>🔎</span>자료 찾기</button><a class="wc-quick-action" href="wd-production-center.html"><span>🏭</span>제작 시작</a><a class="wc-quick-action" href="lecture_center.html"><span>🎓</span>강의 준비</a></div>';
+    var intro=panel.querySelector('.wc-overview-intro');if(intro&&intro.nextSibling)panel.insertBefore(box,intro.nextSibling);else panel.prepend(box);
+    box.querySelectorAll('[data-tab]').forEach(function(button){button.addEventListener('click',function(){goTab(this.getAttribute('data-tab'))})});
+  }
+  function boot(){addQuickActions();addTaskSender()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.wcLoadGoogleTaskLists=loadTaskLists;window.__WC_GOOGLE_TASKS_SEND_V2__=true;
+})();
+</script>
+
 </body>
 </html>
