@@ -1704,17 +1704,8 @@ function openSpace(key){
     return;
   }
   if(key==='work'){
-    try{
-      const url=new URL(target,location.href);
-      const home=location.href.split('#')[0];
-      url.searchParams.set('home',home);
-      url.searchParams.set('from','wdhq');
-      window.WDHQBridge?.audit('route_open_external','hq',key,'R0',{result:state,route:url.pathname});
-      location.assign(url.href);
-    }catch(e){
-      toast('WD 업무센터 이동 경로를 확인해 주세요.');
-      window.WDHQBridge?.audit('route_blocked','hq',key,'R0',{result:'invalid-route'});
-    }
+    window.WDHQBridge?.audit('route_open_embedded','hq',key,'R0',{result:state,route:WDHQ_EMBEDDED_WORK_ROUTE});
+    wdhqOpenEmbeddedWork();
     return;
   }
   if(key==='house'){
@@ -3601,3 +3592,4 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
 
 </body>
 </html>
+
