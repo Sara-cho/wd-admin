@@ -362,57 +362,17 @@
           </div>
         </div>
 
-        <!-- 운영 브리핑형 업무내용 · 기존 content 한 칸에 직렬화해 저장 -->
-        <div id="wj-briefing-editor" class="wj-briefing-editor" style="margin-bottom:10px;">
-          <div class="wj-briefing-editor-head">
-            <div>
-              <div class="wj-briefing-editor-title">오늘 운영 브리핑</div>
-              <div class="wj-briefing-editor-note">오늘 한 일 → 남은 일 → 다음 행동 순서로 짧게 정리합니다.</div>
-            </div>
-            <span>자동 저장 없음</span>
-          </div>
-
-          <section class="wj-brief-section wj-brief-core">
-            <div class="wj-brief-section-title"><span>①</span> 오늘의 핵심 3줄</div>
-            <label><span>가장 중요한 완료</span><input id="wj-core-done" data-wj-brief-field placeholder="예: Google 업무신호 실제 연결 검수 완료"></label>
-            <label><span>현재 진행 중 핵심</span><input id="wj-core-progress" data-wj-brief-field placeholder="예: 업무일지 브리핑형 화면 정리 중"></label>
-            <label><span>다음 최우선 행동</span><input id="wj-core-next" data-wj-brief-field placeholder="예: 대표 화면 확인"></label>
-          </section>
-
-          <div class="wj-brief-grid">
-            <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>②</span> 오늘 한 일</div>
-              <textarea id="wj-done" data-wj-brief-field placeholder="오늘 실제 처리·확인한 업무만 한 줄씩 입력"></textarea>
-            </section>
-            <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>③</span> 진행 중 / 보류</div>
-              <textarea id="wj-progress" data-wj-brief-field placeholder="현재 상태 · 보류 이유 · 이어서 할 내용"></textarea>
-            </section>
-            <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>④</span> 다음 행동</div>
-              <textarea id="wj-next" data-wj-brief-field placeholder="해야 할 일 · 기한 · 우선순위"></textarea>
-            </section>
-            <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>⑤</span> 중요 업무신호</div>
-              <textarea id="wj-signals" data-wj-brief-field placeholder="실제로 확인하거나 행동으로 이어진 Gmail / Calendar 신호만 입력"></textarea>
-            </section>
-            <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>⑥</span> 업무시간 요약</div>
-              <textarea id="wj-hours" data-wj-brief-field placeholder="현재 로그인 사용자의 기존 work_hours 기록 범위에서 표시"></textarea>
-            </section>
-            <section class="wj-brief-section wj-brief-check">
-              <div class="wj-brief-section-title"><span>⑦</span> 대표 확인사항</div>
-              <textarea id="wj-representative" data-wj-brief-field placeholder="대표 판단·승인·확인이 필요한 것만 입력"></textarea>
-            </section>
-          </div>
+        <!-- 업무내용 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">업무내용</div>
+          <textarea id="wj-content" placeholder="업무내용을 자세히 작성해주세요."
+            style="width:100%;min-height:90px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
         </div>
-        <textarea id="wj-content" aria-hidden="true" tabindex="-1" style="display:none;"></textarea>
 
         <!-- 작성일 + 저장 -->
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:13px;color:#94a3b8;">📅 <span id="wj-write-date"></span></div>
           <div style="display:flex;gap:6px;align-items:center;">
-            <button id="wj-print-btn" type="button" onclick="wj_printCurrent()" style="padding:10px 14px;background:#fff;border:1.5px solid #CBD5E1;border-radius:10px;font-size:13px;font-weight:700;color:#475569;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🖨️ PDF/인쇄</button>
             <button id="wj-cancel-btn" onclick="wj_cancelEdit()" style="display:none;padding:10px 16px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;color:#64748b;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">취소</button>
             <button id="wj-save-btn" onclick="wj_save()" style="padding:10px 22px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">저장</button>
           </div>
@@ -3247,23 +3207,17 @@ window.tx_scheduleAutoSave = function(){
         var delBtn = r.id
           ? '<button onclick="event.stopPropagation();wj_delete(\''+r.id+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;border-radius:7px;font-size:11px;font-weight:700;color:#dc2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🗑️ 삭제</button>'
           : '';
-        var printBtn = r.id
-          ? '<button onclick="event.stopPropagation();wj_printSaved(\''+r.id+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #bfdbfe;border-radius:7px;font-size:11px;font-weight:700;color:#1d4ed8;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🖨️ PDF/인쇄</button>'
-          : '';
         html += '<div style="background:#fff;border:1.5px solid #E8E8F4;border-radius:13px;padding:14px;">'
           + '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px;">'
           + catBadges
           + '<span style="font-size:13px;font-weight:700;color:#334155;margin-left:2px;">'+wj_esc(r.author_name)+'</span>'
           + '<span style="margin-left:auto;display:flex;align-items:center;gap:6px;">'
-          + printBtn
           + editBtn
           + delBtn
           + '<span style="font-size:12px;color:#94a3b8;">'+wj_esc(createdTime)+'</span>'
           + '</span>'
           + '</div>'
-          + (typeof window.wj_renderBriefingContent==='function'
-              ? window.wj_renderBriefingContent(r.content)
-              : '<div style="font-size:15px;color:#334155;line-height:1.6;white-space:pre-wrap;">'+wj_esc(r.content)+'</div>')
+          + '<div style="font-size:15px;color:#334155;line-height:1.6;white-space:pre-wrap;">'+wj_esc(r.content)+'</div>'
           + '</div>';
       });
       listEl.innerHTML = html;
@@ -9766,7 +9720,7 @@ setInterval(function(){
   var ADMIN_TERMS=['세금','납부','원천세','부가세','종합소득세','국세','지방세','급여','4대보험','건강보험','국민연금','고용보험','산재보험','행정','신고','제출','마감','기한'];
   var MONEY_TERMS=['납부','납입','급여','결제','구매','주문','구독','갱신','청구','입금','출금','영수증','세금계산서','미납','연체'];
   var EXCEPTION_TERMS=['오류','실패','반려','누락','미납','연체','정지','만료','권한','보안','인증 필요','조치 필요'];
-  var STATE={token:'',expiresAt:0,tokenClient:null,loading:false,connected:false,lastChecked:null,error:'',gmailCount:0,calendarCount:0,apiDiagnostics:{gmail:{result:'확인 전',httpStatus:'-',errorName:'-',message:'-'},calendar:{result:'확인 전',httpStatus:'-',errorName:'-',message:'-'}},signals:{today:[],admin:[],money:[],missing:[]}};
+  var STATE={token:'',expiresAt:0,tokenClient:null,loading:false,connected:false,lastChecked:null,error:'',gmailCount:0,calendarCount:0,tasksReadProbePromise:null,tasksReadProbeResult:null,apiDiagnostics:{gmail:{result:'확인 전',httpStatus:'-',errorName:'-',message:'-'},calendar:{result:'확인 전',httpStatus:'-',errorName:'-',message:'-'}},signals:{today:[],admin:[],money:[],missing:[]}};
   window.__WC_GOOGLE_SIGNALS_STATE__=STATE;
 
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
@@ -9888,6 +9842,23 @@ setInterval(function(){
     }
     return res.json();
   }
+  window.wcGoogleReadTaskListsOnce=function(){
+    if(STATE.tasksReadProbePromise)return STATE.tasksReadProbePromise;
+    if(!tokenValid())return Promise.resolve({called:false,httpStatus:0,ok:false,listCount:0,titles:[],error:'승인된 Google 토큰이 현재 메모리에 없습니다.'});
+    STATE.tasksReadProbePromise=(async function(){
+      var res=null,data=null,result=null;
+      try{
+        res=await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists',{method:'GET',headers:{Authorization:'Bearer '+STATE.token,Accept:'application/json'}});
+        try{data=await res.json();}catch(e){data=null;}
+        result={called:true,httpStatus:res.status,ok:res.ok,listCount:res.ok&&data&&Array.isArray(data.items)?data.items.length:0,titles:res.ok&&data&&Array.isArray(data.items)?data.items.map(function(x){return String(x&&x.title||'(제목 없음)').substring(0,80);}):[],error:res.ok?'':safeErrorText(data&&data.error&&data.error.message||'Google Tasks 목록 읽기 실패')};
+      }catch(e){
+        result={called:true,httpStatus:0,ok:false,listCount:0,titles:[],error:safeErrorText(e&&e.message||'Google Tasks 목록 읽기 실패')};
+      }
+      STATE.tasksReadProbeResult=result;
+      return result;
+    })();
+    return STATE.tasksReadProbePromise;
+  };
   function headerValue(message,name){var hs=(message.payload&&message.payload.headers)||[],low=String(name).toLowerCase();for(var i=0;i<hs.length;i++){if(String(hs[i].name||'').toLowerCase()===low)return hs[i].value||'';}return'';}
   function gmailOriginal(threadId){return 'https://mail.google.com/mail/u/?authuser='+encodeURIComponent(ACCOUNT)+'#all/'+encodeURIComponent(threadId||'');}
 
@@ -10445,197 +10416,166 @@ setInterval(function(){
 </script>
 
 
-<!-- v1.9.0 업무일지 운영 브리핑형 화면 · 기존 content 저장구조 유지 -->
-<style id="wc-journal-briefing-v190-style">
-  .wj-briefing-editor{border-top:1px solid #F1F5F9;padding-top:12px}
-  .wj-briefing-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
-  .wj-briefing-editor-title{font-size:15px;font-weight:900;color:#0F172A}
-  .wj-briefing-editor-note{margin-top:3px;font-size:11px;line-height:1.5;color:#64748B}
-  .wj-briefing-editor-head>span{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:#F1F5F9;color:#64748B;font-size:10px;font-weight:800}
-  .wj-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-  .wj-brief-section{padding:12px;border:1px solid #E2E8F0;border-radius:12px;background:#FFF}
-  .wj-brief-section-title{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:900;color:#334155}
-  .wj-brief-section-title>span{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:6px;background:#F1F5F9;color:#475569;font-size:10px}
-  .wj-brief-section textarea,.wj-brief-section input{width:100%;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:9px;background:#FAFAF9;color:#1E293B;font-family:'Noto Sans KR',sans-serif;font-size:12px;line-height:1.6;outline:none}
-  .wj-brief-section textarea{min-height:88px;padding:9px 10px;resize:vertical}
-  .wj-brief-section input{padding:8px 10px}
-  .wj-brief-section textarea:focus,.wj-brief-section input:focus{border-color:#60A5FA;background:#FFF;box-shadow:0 0 0 3px rgba(96,165,250,.12)}
-  .wj-brief-core{margin-bottom:9px;border-color:#BFDBFE;background:#F8FBFF}
-  .wj-brief-core label{display:grid;grid-template-columns:126px minmax(0,1fr);gap:8px;align-items:center;margin-top:6px}
-  .wj-brief-core label>span{font-size:10.5px;font-weight:800;color:#475569}
-  .wj-brief-check{border-color:#FDE68A;background:#FFFBEB}
-  .wj-brief-card{border:1px solid #E2E8F0;border-radius:12px;background:#FFF;overflow:hidden}
-  .wj-brief-card-core{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #E2E8F0;background:#F8FAFC}
-  .wj-brief-card-core>div{padding:10px;border-right:1px solid #E2E8F0;min-width:0}.wj-brief-card-core>div:last-child{border-right:0}
-  .wj-brief-card-core b{display:block;margin-bottom:3px;font-size:9.5px;color:#64748B}.wj-brief-card-core span{display:block;font-size:11.5px;font-weight:800;line-height:1.45;color:#1E293B;word-break:break-word}
-  .wj-brief-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
-  .wj-brief-card-section{padding:11px;border-right:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;min-width:0}
-  .wj-brief-card-section:nth-child(2n){border-right:0}.wj-brief-card-section b{display:block;margin-bottom:4px;font-size:10.5px;color:#475569}.wj-brief-card-section div{font-size:11.5px;line-height:1.55;color:#334155;white-space:pre-wrap;word-break:break-word}
+<!-- v1.8.1 업무일지 자동작성 1차 · Google 신호 선확인 보완 · 비저장 -->
+<style id="wc-journal-draft-v180-style">
   .wc-journal-draft-entry{margin:-2px 0 12px;padding:12px;border:1px solid #BFDBFE;border-radius:12px;background:#F8FBFF}
   .wc-journal-draft-entry-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .wc-journal-draft-entry-title{font-size:13px;font-weight:900;color:#1E3A8A}.wc-journal-draft-entry-note{margin-top:4px;font-size:10.5px;line-height:1.55;color:#64748B}
+  .wc-journal-draft-entry-title{font-size:13px;font-weight:900;color:#1E3A8A}
+  .wc-journal-draft-entry-note{margin-top:4px;font-size:10.5px;line-height:1.55;color:#64748B}
   .wc-journal-draft-button{border:1px solid #93C5FD;border-radius:9px;background:#EFF6FF;color:#1D4ED8;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit}
   .wc-journal-draft-button:hover{background:#DBEAFE}.wc-journal-draft-button:disabled{opacity:.55;cursor:wait}
-  .wc-journal-draft-candidates{display:none;margin-top:11px;padding-top:11px;border-top:1px solid #DBEAFE}.wc-journal-draft-candidates.show{display:block}
+  .wc-journal-draft-candidates{display:none;margin-top:11px;padding-top:11px;border-top:1px solid #DBEAFE}
+  .wc-journal-draft-candidates.show{display:block}
   .wc-journal-draft-status{margin-bottom:8px;font-size:10.5px;font-weight:700;color:#64748B}
   .wc-journal-draft-group{margin-top:9px}.wc-journal-draft-group-title{margin-bottom:5px;font-size:11px;font-weight:900;color:#334155}
-  .wc-journal-draft-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;padding:8px 9px;border:1px solid #E2E8F0;border-radius:9px;background:#FFF;cursor:pointer}
+  .wc-journal-draft-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;padding:8px 9px;border:1px solid #E2E8F0;border-radius:9px;background:#fff;cursor:pointer}
   .wc-journal-draft-item input{margin-top:2px;accent-color:#2563EB}.wc-journal-draft-item-main{min-width:0;flex:1}
-  .wc-journal-draft-item-title{display:block;font-size:11.5px;font-weight:800;line-height:1.5;color:#1E293B;word-break:break-word}
-  .wc-journal-draft-item-meta{display:block;margin-top:2px;font-size:10px;line-height:1.45;color:#64748B;word-break:break-word}
-  .wc-journal-draft-empty{padding:11px;border:1px dashed #CBD5E1;border-radius:9px;background:#FFF;color:#94A3B8;font-size:11px;text-align:center}
-  .wc-journal-draft-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;flex-wrap:wrap}.wc-journal-draft-actions button{border-radius:9px;padding:8px 12px;font-size:11.5px;font-weight:900;cursor:pointer;font-family:inherit}
-  .wc-journal-draft-apply{border:0;background:#2563EB;color:#FFF}.wc-journal-draft-close{border:1px solid #CBD5E1;background:#FFF;color:#64748B}
-  @media(max-width:680px){
-    .wj-brief-grid,.wj-brief-card-grid,.wj-brief-card-core{grid-template-columns:1fr}
-    .wj-brief-core label{grid-template-columns:1fr;gap:3px}.wj-brief-card-core>div{border-right:0;border-bottom:1px solid #E2E8F0}.wj-brief-card-core>div:last-child{border-bottom:0}
-    .wj-brief-card-section{border-right:0}.wc-journal-draft-button,.wc-journal-draft-actions button{width:100%}
-    #wj-print-btn{width:100%}
-  }
+  .wc-journal-draft-item-title{font-size:11.5px;font-weight:800;line-height:1.5;color:#1E293B;word-break:break-word}
+  .wc-journal-draft-item-meta{margin-top:2px;font-size:10px;line-height:1.45;color:#64748B;word-break:break-word}
+  .wc-journal-draft-empty{padding:11px;border:1px dashed #CBD5E1;border-radius:9px;background:#fff;color:#94A3B8;font-size:11px;text-align:center}
+  .wc-journal-draft-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .wc-journal-draft-actions button{border-radius:9px;padding:8px 12px;font-size:11.5px;font-weight:900;cursor:pointer;font-family:inherit}
+  .wc-journal-draft-apply{border:0;background:#2563EB;color:#fff}.wc-journal-draft-close{border:1px solid #CBD5E1;background:#fff;color:#64748B}
+  @media(max-width:680px){.wc-journal-draft-button{width:100%}.wc-journal-draft-actions button{width:100%}}
 </style>
-
-<script id="wc-journal-briefing-v190">
-(function(){
-  if(window.__WC_JOURNAL_BRIEFING_V190__)return;
-  var FIELD_IDS=['wj-core-done','wj-core-progress','wj-core-next','wj-done','wj-progress','wj-next','wj-signals','wj-hours','wj-representative'];
-  function el(id){return document.getElementById(id)}
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-  function clean(v){return String(v||'').replace(/^\s*-\s?/gm,'').replace(/^\s*(선택한 .+ 없음|없음|해당 없음)\s*$/gm,'').trim()}
-  function firstLine(v){return clean(v).split(/\n+/).map(function(s){return s.trim()}).filter(Boolean)[0]||''}
-  function blankData(){return{coreDone:'',coreProgress:'',coreNext:'',done:'',progress:'',next:'',signals:'',hours:'',representative:''}}
-  function section(text,name){
-    var safe=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    var m=String(text||'').match(new RegExp('\\['+safe+'\\]\\s*\\n([\\s\\S]*?)(?=\\n\\[[^\\]]+\\]\\s*\\n|$)'));
-    return m?clean(m[1]):'';
-  }
-  function parse(text){
-    var raw=String(text||''),d=blankData();
-    var core=section(raw,'오늘의 핵심');
-    if(core){
-      core.split('\n').forEach(function(line){
-        var s=line.replace(/^\s*-\s*/,'').trim(),m;
-        if((m=s.match(/^(?:오늘 가장 중요한 완료|가장 중요한 완료|완료)\s*:\s*(.*)$/)))d.coreDone=m[1].trim();
-        else if((m=s.match(/^(?:현재 진행 중 핵심|진행 중 핵심|진행)\s*:\s*(.*)$/)))d.coreProgress=m[1].trim();
-        else if((m=s.match(/^(?:다음 최우선 행동|최우선 행동|다음)\s*:\s*(.*)$/)))d.coreNext=m[1].trim();
-      });
-    }
-    d.done=section(raw,'오늘 한 일');
-    d.progress=section(raw,'진행 중 / 보류');
-    d.next=section(raw,'다음 행동');
-    d.signals=section(raw,'중요 업무신호');
-    d.hours=section(raw,'업무시간 요약');
-    d.representative=section(raw,'대표 확인사항');
-    if(!raw.includes('[오늘의 핵심]')){
-      d.done=section(raw,'오늘 처리·변경한 업무')||d.done||clean(raw);
-      d.progress=section(raw,'미완료·내일 이어갈 일')||d.progress;
-      d.signals=section(raw,'확인한 Google 업무신호')||d.signals;
-      d.hours=section(raw,'근무 흐름')||d.hours;
-      d.representative=section(raw,'인계내역')||d.representative;
-      var nexts=[];raw.split('\n').forEach(function(line){var m=line.match(/다음 행동\s*:\s*(.+)$/);if(m)nexts.push(m[1].trim())});d.next=d.next||nexts.join('\n');
-      d.coreDone=firstLine(d.done);d.coreProgress=firstLine(d.progress);d.coreNext=firstLine(d.next);
-    }
-    return d;
-  }
-  function serialize(d){
-    var values=Object.keys(d).map(function(k){return String(d[k]||'').trim()});
-    if(!values.some(Boolean))return'';
-    return [
-      '[오늘의 핵심]',
-      '- 오늘 가장 중요한 완료: '+(d.coreDone||'확인 필요'),
-      '- 현재 진행 중 핵심: '+(d.coreProgress||'없음'),
-      '- 다음 최우선 행동: '+(d.coreNext||'확인 필요'),
-      '',
-      '[오늘 한 일]',d.done||'- 없음','',
-      '[진행 중 / 보류]',d.progress||'- 없음','',
-      '[다음 행동]',d.next||'- 없음','',
-      '[중요 업무신호]',d.signals||'- 없음','',
-      '[업무시간 요약]',d.hours||'- 기록 없음','',
-      '[대표 확인사항]',d.representative||'- 없음'
-    ].join('\n');
-  }
-  function readEditor(){return{
-    coreDone:(el('wj-core-done')||{}).value||'',coreProgress:(el('wj-core-progress')||{}).value||'',coreNext:(el('wj-core-next')||{}).value||'',
-    done:(el('wj-done')||{}).value||'',progress:(el('wj-progress')||{}).value||'',next:(el('wj-next')||{}).value||'',signals:(el('wj-signals')||{}).value||'',hours:(el('wj-hours')||{}).value||'',representative:(el('wj-representative')||{}).value||''
-  }}
-  function writeEditor(d,doSync){
-    var map={'wj-core-done':'coreDone','wj-core-progress':'coreProgress','wj-core-next':'coreNext','wj-done':'done','wj-progress':'progress','wj-next':'next','wj-signals':'signals','wj-hours':'hours','wj-representative':'representative'};
-    Object.keys(map).forEach(function(id){var node=el(id);if(node)node.value=String(d[map[id]]||'')});
-    if(doSync!==false)sync();
-  }
-  function sync(){var ta=el('wj-content');if(ta)ta.value=serialize(readEditor())}
-  function currentAuthor(){var panel=el('wj-briefing-editor');return String(panel&&panel.getAttribute('data-author')||localStorage.getItem('wd_user_name')||'최윤경')}
-  function currentDate(){return String((el('wj-filter-date')||{}).value||(el('wj-write-date')||{}).textContent||'')}
-  function hasEditorValue(){return FIELD_IDS.some(function(id){return String((el(id)||{}).value||'').trim()})}
-
-  window.wj_setBriefingData=function(data){writeEditor(Object.assign(blankData(),data||{}),true)};
-  window.wj_parseBriefingContent=parse;
-  window.wj_syncBriefingContent=sync;
-  window.wj_renderBriefingContent=function(content){
-    var d=parse(content),core=[['가장 중요한 완료',d.coreDone],['현재 진행 중 핵심',d.coreProgress],['다음 최우선 행동',d.coreNext]];
-    var sections=[['오늘 한 일',d.done],['진행 중 / 보류',d.progress],['다음 행동',d.next],['중요 업무신호',d.signals],['업무시간 요약',d.hours],['대표 확인사항',d.representative]];
-    var html='<div class="wj-brief-card"><div class="wj-brief-card-core">';
-    core.forEach(function(x){html+='<div><b>'+esc(x[0])+'</b><span>'+esc(x[1]||'—')+'</span></div>'});html+='</div><div class="wj-brief-card-grid">';
-    sections.forEach(function(x){html+='<div class="wj-brief-card-section"><b>'+esc(x[0])+'</b><div>'+esc(x[1]||'—')+'</div></div>'});
-    return html+'</div></div>';
-  };
-  function printHtml(data,date,author){
-    var bodySections=[['오늘 한 일',data.done],['진행 중 / 보류',data.progress],['다음 행동',data.next],['중요 업무신호',data.signals],['대표 확인사항',data.representative]];
-    var sections=bodySections.map(function(x){return'<section><h2>'+esc(x[0])+'</h2><div class="body">'+esc(x[1]||'없음')+'</div></section>'}).join('');
-    return '<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>'+esc(date)+' 업무일지</title><style>'+
-      '@page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;color:#172033;font-family:Arial,"Noto Sans KR",sans-serif}header{padding:0 0 14px;border-bottom:3px solid #172033}h1{margin:0 0 9px;font-size:24px}header .meta{display:flex;gap:18px;font-size:12px;color:#526173}.time{margin-top:10px;padding:10px 12px;border-radius:8px;background:#f1f5f9;font-size:12px;white-space:pre-wrap}.core{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.core div{padding:12px;border:1px solid #dbe4ef;border-radius:9px}.core b{display:block;margin-bottom:5px;font-size:10px;color:#64748b}.core span{font-size:13px;font-weight:700;line-height:1.45}section{break-inside:avoid;margin:0 0 10px;padding:12px;border:1px solid #dbe4ef;border-radius:9px}h2{margin:0 0 7px;font-size:13px}.body{font-size:12px;line-height:1.65;white-space:pre-wrap}.check{border-color:#f1ce62;background:#fffbeb}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
-      '</style></head><body><header><h1>WD 업무센터 · 오늘 운영 브리핑</h1><div class="meta"><span><b>날짜</b> '+esc(date)+'</span><span><b>작성자</b> '+esc(author)+'</span></div><div class="time"><b>업무시간 요약</b>\n'+esc(data.hours||'기록 없음')+'</div></header><div class="core"><div><b>가장 중요한 완료</b><span>'+esc(data.coreDone||'확인 필요')+'</span></div><div><b>현재 진행 중 핵심</b><span>'+esc(data.coreProgress||'없음')+'</span></div><div><b>다음 최우선 행동</b><span>'+esc(data.coreNext||'확인 필요')+'</span></div></div>'+sections+'<script>window.onload=function(){setTimeout(function(){window.print()},350)}<\/script></body></html>';
-  }
-  function openPrint(data,date,author){var win=window.open('','_blank','width=980,height=800');if(!win){if(typeof showT==='function')showT('인쇄 미리보기 팝업을 허용해 주세요.');return}win.document.open();win.document.write(printHtml(data,date,author));win.document.close()}
-  window.wj_printCurrent=function(){sync();var ta=el('wj-content');if(!ta||!ta.value.trim()){if(typeof showT==='function')showT('인쇄할 업무일지 내용을 먼저 작성해 주세요.');return}openPrint(parse(ta.value),currentDate(),currentAuthor())};
-  window.wj_printSaved=function(id){var item=(window.wj_items||[]).find(function(row){return String(row.id)===String(id)});if(!item){if(typeof showT==='function')showT('인쇄할 업무일지를 찾지 못했습니다.');return}openPrint(parse(item.content),item.work_date||currentDate(),item.author_name||'')};
-
-  function boot(){
-    document.querySelectorAll('[data-wj-brief-field]').forEach(function(node){node.addEventListener('input',sync)});
-    var baseAuthor=window.wj_selectAuthor;if(typeof baseAuthor==='function')window.wj_selectAuthor=function(name){baseAuthor(name);var panel=el('wj-briefing-editor');if(panel)panel.setAttribute('data-author',name)};
-    var baseEdit=window.wj_edit;if(typeof baseEdit==='function')window.wj_edit=function(id){baseEdit(id);var ta=el('wj-content');writeEditor(parse(ta&&ta.value||''),false)};
-    var baseCancel=window.wj_cancelEdit;if(typeof baseCancel==='function')window.wj_cancelEdit=function(){baseCancel();writeEditor(blankData(),false)};
-    var baseSave=window.wj_save;if(typeof baseSave==='function')window.wj_save=async function(){sync();await baseSave();var ta=el('wj-content');if(ta&&!ta.value.trim())writeEditor(blankData(),false)};
-    var ta=el('wj-content');if(ta&&ta.value.trim())writeEditor(parse(ta.value),false);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  window.__WC_JOURNAL_BRIEFING_V190__=true;
-})();
-</script>
-
-<!-- v1.9.0 오늘 기록 후보 → 운영 브리핑형 초안 · 읽기/화면메모리만 -->
-<script id="wc-journal-draft-v190">
+<script id="wc-journal-draft-v180">
 (function(){
   if(window.__WC_JOURNAL_DRAFT_V1__)return;
-  var STATE={loading:false,date:'',items:[],errors:[],googleStatus:''};window.__WC_JOURNAL_DRAFT_STATE__=STATE;
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-  function field(id){return document.getElementById(id)}
-  function currentUid(){return String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim()}
-  function currentName(){return String(localStorage.getItem('wd_user_name')||(currentUid()==='kfcyk30'?'박수진':'최윤경')).trim()}
-  function isOwner(){return localStorage.getItem('wd_current_role')==='owner'||currentUid()==='kfcyk50'||currentName()==='최윤경'}
-  function kstYmd(value){var d=value?new Date(value):new Date();if(isNaN(d.getTime()))return String(value||'').substring(0,10);var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),map={};parts.forEach(function(p){map[p.type]=p.value});return map.year+'-'+map.month+'-'+map.day}
-  function minText(value){var n=Number(value||0);return Math.floor(n/60)+'시간 '+(n%60)+'분'}
-  function taskStatus(row){var idea=String(row.idea_status||'');if(idea&&idea!=='아이디어상태'&&idea!=='업무요청')return idea;return String(row.status||idea||'상태 미확인')}
-  function taskTitle(row){return String(row.core_content||row.content||'업무내용 미확인').trim()}
-  function isDone(row){return /완료|done|closed/i.test(String(row.status||'')+' '+String(row.idea_status||''))}
-  function isHold(row){return /보류|hold/i.test(String(row.status||'')+' '+String(row.idea_status||''))}
-  function dueOf(row){return String(row.due_date||row.deadline||row.request_date||'').substring(0,10)}
-  function priorityOf(row){return String(row.priority||row.importance||'').trim()}
-  function needsRepresentative(row){return row.representative_required===true||row.representative_confirmed===false||/대표\s*(확인|승인|판단)/.test(String(row.next_action||'')+' '+String(row.handoff_note||''))}
-  function signalItems(){var gs=window.__WC_GOOGLE_SIGNALS_STATE__,out=[],seen={};if(!gs||!gs.lastChecked||!gs.signals)return out;Object.keys(gs.signals).forEach(function(k){(gs.signals[k]||[]).forEach(function(s){var key=String(s.source||'')+':'+String(s.id||s.title||'');if(seen[key])return;seen[key]=true;out.push(s)})});return out}
+  var STATE={loading:false,date:'',items:[],errors:[],googleStatus:''};
+  window.__WC_JOURNAL_DRAFT_STATE__=STATE;
+
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
+  function currentUid(){return String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();}
+  function currentName(){return String(localStorage.getItem('wd_user_name')||(currentUid()==='kfcyk50'?'최윤경':'현재 사용자')).trim();}
+  function isOwner(){return localStorage.getItem('wd_current_role')==='owner'||currentUid()==='kfcyk50';}
+  function kstYmd(value){
+    var d=value?new Date(value):new Date();if(isNaN(d.getTime()))return String(value||'').substring(0,10);
+    var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),map={};
+    parts.forEach(function(p){map[p.type]=p.value});return map.year+'-'+map.month+'-'+map.day;
+  }
+  function minText(value){var n=Number(value||0);return Math.floor(n/60)+'시간 '+(n%60)+'분';}
+  function taskStatus(row){
+    var idea=String(row.idea_status||'');
+    if(idea&&idea!=='아이디어상태'&&idea!=='업무요청')return idea;
+    return String(row.status||idea||'상태 미확인');
+  }
+  function isDone(row){return /완료|done|closed/i.test(String(row.status||'')+' '+String(row.idea_status||''));}
+  function isHold(row){return /보류|hold/i.test(String(row.status||'')+' '+String(row.idea_status||''));}
+  function signalItems(){
+    var gs=window.__WC_GOOGLE_SIGNALS_STATE__,out=[],seen={};
+    if(!gs||!gs.lastChecked||!gs.signals)return out;
+    Object.keys(gs.signals).forEach(function(k){(gs.signals[k]||[]).forEach(function(s){var key=String(s.source||'')+':'+String(s.id||s.title||'');if(seen[key])return;seen[key]=true;out.push(s)})});
+    return out;
+  }
   function wait(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
-  async function ensureGoogleSignals(){var gs=window.__WC_GOOGLE_SIGNALS_STATE__;if(gs&&gs.lastChecked){STATE.googleStatus=gs.error?'일부 확인':'확인됨';return true}if(typeof window.wcGoogleCheckSignals!=='function'){STATE.googleStatus='확인 기능 없음';return false}STATE.googleStatus='확인 중';window.wcGoogleCheckSignals();for(var i=0;i<100;i++){await wait(250);gs=window.__WC_GOOGLE_SIGNALS_STATE__;if(gs&&gs.lastChecked){STATE.googleStatus=gs.error?'일부 확인':'확인됨';return true}if(gs&&!gs.loading&&gs.error){STATE.googleStatus='확인 실패';return false}}STATE.googleStatus='미확인';return false}
+  async function ensureGoogleSignals(){
+    var gs=window.__WC_GOOGLE_SIGNALS_STATE__;
+    if(gs&&gs.lastChecked){STATE.googleStatus=gs.error?'일부 확인':'확인됨';return true}
+    if(typeof window.wcGoogleCheckSignals!=='function'){STATE.googleStatus='확인 기능 없음';return false}
+    STATE.googleStatus='확인 중';
+    window.wcGoogleCheckSignals();
+    for(var i=0;i<100;i++){
+      await wait(250);gs=window.__WC_GOOGLE_SIGNALS_STATE__;
+      if(gs&&gs.lastChecked){STATE.googleStatus=gs.error?'일부 확인':'확인됨';return true}
+      if(gs&&!gs.loading&&gs.error){STATE.googleStatus='확인 실패';return false}
+    }
+    STATE.googleStatus='미확인';return false;
+  }
+  function field(id){return document.getElementById(id)}
   function setBusy(on){var b=field('wc-journal-draft-open');if(b){b.disabled=!!on;b.textContent=on?'오늘 기록 확인 중…':'오늘 기록으로 초안 만들기'}}
-  function itemTitle(item){if(item.kind==='task')return'['+taskStatus(item.row)+'] '+taskTitle(item.row);if(item.kind==='hours'){var r=item.row;return(isOwner()?'대표 업무 흐름':'박수진 출퇴근')+' · '+String(r.start_time||'시작 미입력')+' ~ '+String(r.end_time||'종료 미입력')}return String(item.row.source||'Google')+' · '+String(item.row.title||'제목 없음')}
-  function itemMeta(item){if(item.kind==='task')return[item.row.next_action&&('다음 행동: '+item.row.next_action),dueOf(item.row)&&('기한: '+dueOf(item.row)),priorityOf(item.row)&&('우선순위: '+priorityOf(item.row))].filter(Boolean).join(' · ')||'오늘 변경된 work_tasks';if(item.kind==='hours')return'누적 보류·휴게 '+Number(item.row.break_minutes||0)+'분 · 총 '+minText(item.row.total_minutes||0);return[item.row.dueText&&('기한 후보: '+item.row.dueText),item.row.nextAction&&('다음 행동 후보: '+item.row.nextAction),'실제 확인·행동한 경우에만 포함'].filter(Boolean).join(' · ')}
-  function render(){var box=field('wc-journal-draft-candidates'),status=field('wc-journal-draft-status'),list=field('wc-journal-draft-list');if(!box||!status||!list)return;box.className='wc-journal-draft-candidates show';status.textContent=STATE.date+' 기록 후보 '+STATE.items.length+'건 · 포함할 항목만 체크하세요.'+(STATE.googleStatus?' · Google '+STATE.googleStatus:'')+(STATE.errors.length?' · 일부 조회 확인 필요':'');if(!STATE.items.length){list.innerHTML='<div class="wc-journal-draft-empty">오늘 변경된 업무·근무기록이 없고, Google 업무신호는 '+esc(STATE.googleStatus||'미확인')+' 상태입니다.</div>';return}var labels={task:'오늘 변경된 업무',hours:'업무시간',signal:'중요 Google 업무신호 후보'},html='';['task','hours','signal'].forEach(function(kind){var group=STATE.items.map(function(item,index){return{item:item,index:index}}).filter(function(x){return x.item.kind===kind});if(!group.length)return;html+='<div class="wc-journal-draft-group"><div class="wc-journal-draft-group-title">'+labels[kind]+' · '+group.length+'건</div>';group.forEach(function(x){var checked=kind==='signal'?'':' checked';html+='<label class="wc-journal-draft-item"><input type="checkbox" data-wc-journal-draft-index="'+x.index+'"'+checked+'><span class="wc-journal-draft-item-main"><span class="wc-journal-draft-item-title">'+esc(itemTitle(x.item))+'</span><span class="wc-journal-draft-item-meta">'+esc(itemMeta(x.item))+'</span></span></label>'});html+='</div>'});list.innerHTML=html}
-  async function loadCandidates(){var uid=currentUid();if(!uid){if(typeof showT==='function')showT('본진 로그인을 먼저 확인해 주세요.');return}if(!window._supaReady||typeof _sbSelect!=='function'){if(typeof showT==='function')showT('Supabase 읽기 연결을 확인해 주세요.');return}STATE.loading=true;STATE.date=kstYmd();STATE.items=[];STATE.errors=[];STATE.googleStatus='확인 중';setBusy(true);try{var settled=await Promise.allSettled([_sbSelect('work_tasks','*',{eq:{user_id:uid},order:'updated_at'}),_sbSelect('work_hours','*',{eq:{user_id:uid,work_date:STATE.date},limit:1}),ensureGoogleSignals()]);if(settled[0].status==='fulfilled'){(settled[0].value.data||[]).filter(function(row){return kstYmd(row.updated_at||row.request_date)===STATE.date}).forEach(function(row){STATE.items.push({kind:'task',row:row})})}else STATE.errors.push('work_tasks');if(settled[1].status==='fulfilled'){(settled[1].value.data||[]).forEach(function(row){STATE.items.push({kind:'hours',row:row})})}else STATE.errors.push('work_hours');if(settled[2].status==='rejected'){STATE.googleStatus='확인 실패';STATE.errors.push('Google 업무신호')}signalItems().forEach(function(row){STATE.items.push({kind:'signal',row:row})});render();if(typeof showT==='function')showT('오늘 기록 후보를 불러왔습니다. 포함 항목을 확인해 주세요.')}catch(error){console.error('[journal-draft] load',error);if(typeof showT==='function')showT('오늘 기록 후보를 불러오지 못했습니다.')}finally{STATE.loading=false;setBusy(false)}}
-  function selectedItems(){return STATE.items.filter(function(item,index){var input=document.querySelector('[data-wc-journal-draft-index="'+index+'"]');return!!(input&&input.checked)})}
-  function lineForTask(r){return'['+taskStatus(r)+'] '+taskTitle(r)}
-  function buildBriefing(items){var tasks=items.filter(function(x){return x.kind==='task'}).map(function(x){return x.row}),hours=items.filter(function(x){return x.kind==='hours'}).map(function(x){return x.row}),signals=items.filter(function(x){return x.kind==='signal'}).map(function(x){return x.row}),done=tasks.filter(isDone),open=tasks.filter(function(r){return!isDone(r)});var doneLines=done.map(lineForTask),progressLines=open.map(function(r){var parts=[lineForTask(r)];if(isHold(r)&&r.hold_reason)parts.push('보류 이유: '+r.hold_reason);if(r.next_action)parts.push('이어서: '+r.next_action);return parts.join(' · ')}),nextLines=[];tasks.forEach(function(r){if(r.next_action)nextLines.push([r.next_action,dueOf(r)&&('기한 '+dueOf(r)),priorityOf(r)&&('우선순위 '+priorityOf(r))].filter(Boolean).join(' · '))});signals.forEach(function(s){if(s.nextAction)nextLines.push([s.nextAction,s.dueText&&('기한 후보 '+s.dueText)].filter(Boolean).join(' · '))});var signalLines=signals.map(function(s){return[String(s.source||'Google')+' · '+String(s.title||'제목 없음'),s.dueText&&('기한 후보 '+s.dueText),s.nextAction&&('다음 행동 '+s.nextAction)].filter(Boolean).join(' · ')}),hourLines=hours.map(function(r){return isOwner()?'대표 · 업무 시작 '+String(r.start_time||'미입력')+' / 오늘 업무 종료 '+String(r.end_time||'미입력')+' / 누적 보류·휴게 '+Number(r.break_minutes||0)+'분':'박수진 · 출근 '+String(r.start_time||'미입력')+' / 퇴근 '+String(r.end_time||'미입력')+' / 총 근무시간 '+minText(r.total_minutes||0)}),representative=[];tasks.filter(needsRepresentative).forEach(function(r){representative.push(taskTitle(r)+' · 대표 확인 필요')});signals.filter(function(s){return!!s.representativeRequired}).forEach(function(s){representative.push(String(s.source||'Google')+' · '+String(s.title||'제목 없음')+' · 대표 확인 필요')});return{coreDone:doneLines[0]||'',coreProgress:progressLines[0]||'',coreNext:nextLines[0]||'',done:doneLines.join('\n'),progress:progressLines.join('\n'),next:nextLines.join('\n'),signals:signalLines.join('\n'),hours:hourLines.join('\n'),representative:representative.join('\n')}}
-  function applyDraft(){var items=selectedItems();if(!items.length){if(typeof showT==='function')showT('초안에 포함할 기록을 선택해 주세요.');return}var ta=field('wj-content');if(ta&&ta.value.trim()&&!window.confirm('현재 업무일지 작성 내용을 오늘 기록 초안으로 바꿀까요?'))return;var data=buildBriefing(items);if(typeof window.wj_setBriefingData==='function')window.wj_setBriefingData(data);else if(ta)ta.value='';var status=field('wc-journal-draft-status');if(status)status.textContent='운영 브리핑형 초안을 채웠습니다. 확인·수정한 뒤 기존 저장 버튼을 눌러야 저장됩니다.';if(typeof showT==='function')showT('업무일지 초안을 채웠습니다. 자동 저장하지 않았습니다.')}
+  function itemTitle(item){
+    if(item.kind==='task')return '['+taskStatus(item.row)+'] '+String(item.row.core_content||item.row.content||'업무내용 미확인');
+    if(item.kind==='hours'){
+      var r=item.row,prefix=isOwner()?'업무 흐름':'출퇴근';
+      return prefix+' · '+String(r.start_time||'시작 미입력')+' ~ '+String(r.end_time||'종료 미입력');
+    }
+    return String(item.row.source||'Google')+' · '+String(item.row.title||'제목 없음');
+  }
+  function itemMeta(item){
+    if(item.kind==='task')return [item.row.next_action&&('다음 행동: '+item.row.next_action),item.row.handoff_note&&('인계: '+item.row.handoff_note)].filter(Boolean).join(' · ')||'오늘 변경된 work_tasks';
+    if(item.kind==='hours')return '누적 보류·휴게 '+Number(item.row.break_minutes||0)+'분 · 실제 '+minText(item.row.total_minutes||0);
+    return [item.row.dueText&&('기한: '+item.row.dueText),item.row.nextAction&&('다음 행동: '+item.row.nextAction)].filter(Boolean).join(' · ')||'현재 화면에서 확인한 Google 업무신호';
+  }
+  function render(){
+    var box=field('wc-journal-draft-candidates'),status=field('wc-journal-draft-status'),list=field('wc-journal-draft-list');if(!box||!status||!list)return;
+    box.className='wc-journal-draft-candidates show';
+    status.textContent=STATE.date+' 기록 후보 '+STATE.items.length+'건 · 포함할 항목만 체크하세요.'+(STATE.googleStatus?' · Google '+STATE.googleStatus:'')+(STATE.errors.length?' · 일부 조회 확인 필요':'');
+    if(!STATE.items.length){list.innerHTML='<div class="wc-journal-draft-empty">오늘 변경된 업무·근무기록이 없고, Google 업무신호는 '+esc(STATE.googleStatus||'미확인')+' 상태입니다.</div>';return}
+    var labels={task:'오늘 변경된 업무',hours:'근무 흐름',signal:'확인한 Google 업무신호'},html='';
+    ['task','hours','signal'].forEach(function(kind){var group=STATE.items.map(function(item,index){return{item:item,index:index}}).filter(function(x){return x.item.kind===kind});if(!group.length)return;
+      html+='<div class="wc-journal-draft-group"><div class="wc-journal-draft-group-title">'+labels[kind]+' · '+group.length+'건</div>';
+      group.forEach(function(x){html+='<label class="wc-journal-draft-item"><input type="checkbox" data-wc-journal-draft-index="'+x.index+'" checked><span class="wc-journal-draft-item-main"><span class="wc-journal-draft-item-title">'+esc(itemTitle(x.item))+'</span><span class="wc-journal-draft-item-meta">'+esc(itemMeta(x.item))+'</span></span></label>'});
+      html+='</div>';
+    });
+    list.innerHTML=html;
+  }
+  async function loadCandidates(){
+    var uid=currentUid();if(!uid){if(typeof showT==='function')showT('본진 로그인을 먼저 확인해 주세요.');return}
+    if(!window._supaReady||typeof _sbSelect!=='function'){if(typeof showT==='function')showT('Supabase 읽기 연결을 확인해 주세요.');return}
+    STATE.loading=true;STATE.date=kstYmd();STATE.items=[];STATE.errors=[];STATE.googleStatus='확인 중';setBusy(true);
+    try{
+      var settled=await Promise.allSettled([
+        _sbSelect('work_tasks','*',{eq:{user_id:uid},order:'updated_at'}),
+        _sbSelect('work_hours','*',{eq:{user_id:uid,work_date:STATE.date},limit:1}),
+        ensureGoogleSignals()
+      ]);
+      if(settled[0].status==='fulfilled'){
+        (settled[0].value.data||[]).filter(function(row){return kstYmd(row.updated_at||row.request_date)===STATE.date}).forEach(function(row){STATE.items.push({kind:'task',row:row})});
+      }else STATE.errors.push('work_tasks');
+      if(settled[1].status==='fulfilled'){
+        (settled[1].value.data||[]).forEach(function(row){STATE.items.push({kind:'hours',row:row})});
+      }else STATE.errors.push('work_hours');
+      if(settled[2].status==='rejected'){STATE.googleStatus='확인 실패';STATE.errors.push('Google 업무신호')}
+      signalItems().forEach(function(row){STATE.items.push({kind:'signal',row:row})});
+      render();
+      if(typeof showT==='function')showT('오늘 기록 후보를 불러왔습니다. 포함 항목을 확인해 주세요.');
+    }catch(error){console.error('[journal-draft] load',error);if(typeof showT==='function')showT('오늘 기록 후보를 불러오지 못했습니다.');}
+    finally{STATE.loading=false;setBusy(false)}
+  }
+  function selectedItems(){
+    return STATE.items.filter(function(item,index){var input=document.querySelector('[data-wc-journal-draft-index="'+index+'"]');return !!(input&&input.checked)});
+  }
+  function buildDraft(items){
+    var tasks=items.filter(function(x){return x.kind==='task'}).map(function(x){return x.row});
+    var hours=items.filter(function(x){return x.kind==='hours'}).map(function(x){return x.row});
+    var signals=items.filter(function(x){return x.kind==='signal'}).map(function(x){return x.row});
+    var lines=[STATE.date+' 업무일지 초안','작성자: '+currentName(),''];
+    lines.push('[오늘 처리·변경한 업무]');
+    if(tasks.length)tasks.forEach(function(r){lines.push('- ['+taskStatus(r)+'] '+String(r.core_content||r.content||'업무내용 미확인'))});else lines.push('- 선택한 업무 없음');
+    lines.push('','[근무 흐름]');
+    if(hours.length)hours.forEach(function(r){
+      if(isOwner())lines.push('- 업무 시작 '+String(r.start_time||'미입력')+' / 오늘 업무 종료 '+String(r.end_time||'미입력')+' / 누적 보류·휴게 '+Number(r.break_minutes||0)+'분 / 실제 업무 '+minText(r.total_minutes||0));
+      else lines.push('- 출근 '+String(r.start_time||'미입력')+' / 퇴근 '+String(r.end_time||'미입력')+' / 휴게 '+Number(r.break_minutes||0)+'분 / 근무 '+minText(r.total_minutes||0));
+    });else lines.push('- 선택한 근무기록 없음');
+    lines.push('','[확인한 Google 업무신호]');
+    if(signals.length)signals.forEach(function(s){lines.push('- '+String(s.source||'Google')+' · '+String(s.title||'제목 없음')+(s.nextAction?'\n  다음 행동: '+s.nextAction:''))});else lines.push('- 선택한 신호 없음');
+    var handoffs=tasks.filter(function(r){return String(r.handoff_note||'').trim()});
+    lines.push('','[인계내역]');
+    if(handoffs.length)handoffs.forEach(function(r){lines.push('- '+String(r.handoff_note).trim())});else lines.push('- 없음');
+    var open=tasks.filter(function(r){return !isDone(r)});
+    lines.push('','[미완료·내일 이어갈 일]');
+    if(open.length)open.forEach(function(r){var state=isHold(r)?'보류':'진행';lines.push('- ['+state+'] '+String(r.core_content||r.content||'업무내용 미확인')+(r.next_action?'\n  다음 행동: '+r.next_action:''))});else lines.push('- 없음');
+    return lines.join('\n');
+  }
+  function applyDraft(){
+    var items=selectedItems();if(!items.length){if(typeof showT==='function')showT('초안에 포함할 기록을 선택해 주세요.');return}
+    var ta=field('wj-content');if(!ta)return;
+    if(ta.value.trim()&&!window.confirm('현재 업무일지 작성 내용을 오늘 기록 초안으로 바꿀까요?'))return;
+    ta.value=buildDraft(items);ta.focus();
+    var status=field('wc-journal-draft-status');if(status)status.textContent='초안을 입력했습니다. 내용을 확인·수정한 뒤 기존 저장 버튼을 눌러야 저장됩니다.';
+    if(typeof showT==='function')showT('업무일지 초안을 채웠습니다. 자동 저장하지 않았습니다.');
+  }
   function close(){var box=field('wc-journal-draft-candidates');if(box)box.className='wc-journal-draft-candidates'}
-  function boot(){var panel=field('wcn-panel-journal');if(!panel||field('wc-journal-draft-entry'))return;var card=panel.firstElementChild;if(!card)return;var entry=document.createElement('section');entry.id='wc-journal-draft-entry';entry.className='wc-journal-draft-entry';entry.innerHTML='<div class="wc-journal-draft-entry-head"><div><div class="wc-journal-draft-entry-title">오늘 기록 후보 → 운영 브리핑형 초안</div><div class="wc-journal-draft-entry-note">기존 work_tasks·work_hours와 현재 화면의 Google 신호만 읽습니다. Google 신호는 실제 확인·행동한 항목만 직접 포함하세요.</div></div><button type="button" id="wc-journal-draft-open" class="wc-journal-draft-button">오늘 기록으로 초안 만들기</button></div><div id="wc-journal-draft-candidates" class="wc-journal-draft-candidates"><div id="wc-journal-draft-status" class="wc-journal-draft-status"></div><div id="wc-journal-draft-list"></div><div class="wc-journal-draft-actions"><button type="button" class="wc-journal-draft-close" id="wc-journal-draft-close">닫기</button><button type="button" class="wc-journal-draft-apply" id="wc-journal-draft-apply">선택한 기록으로 초안 채우기</button></div></div>';var heading=card.firstElementChild;if(heading&&heading.nextSibling)card.insertBefore(entry,heading.nextSibling);else card.appendChild(entry);field('wc-journal-draft-open').addEventListener('click',loadCandidates);field('wc-journal-draft-apply').addEventListener('click',applyDraft);field('wc-journal-draft-close').addEventListener('click',close)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();window.__WC_JOURNAL_DRAFT_V1__=true;
+  function boot(){
+    var panel=field('wcn-panel-journal');if(!panel||field('wc-journal-draft-entry'))return;
+    var card=panel.firstElementChild;if(!card)return;
+    var entry=document.createElement('section');entry.id='wc-journal-draft-entry';entry.className='wc-journal-draft-entry';
+    entry.innerHTML='<div class="wc-journal-draft-entry-head"><div><div class="wc-journal-draft-entry-title">오늘 기록 후보 → 업무일지 초안</div><div class="wc-journal-draft-entry-note">현재 로그인 사용자의 오늘 변경 업무·근무기록·현재 화면의 Google 신호만 읽습니다. 자동 저장·자동 완료처리는 하지 않습니다.</div></div><button type="button" id="wc-journal-draft-open" class="wc-journal-draft-button">오늘 기록으로 초안 만들기</button></div><div id="wc-journal-draft-candidates" class="wc-journal-draft-candidates"><div id="wc-journal-draft-status" class="wc-journal-draft-status"></div><div id="wc-journal-draft-list"></div><div class="wc-journal-draft-actions"><button type="button" class="wc-journal-draft-close" id="wc-journal-draft-close">닫기</button><button type="button" class="wc-journal-draft-apply" id="wc-journal-draft-apply">선택한 기록으로 초안 채우기</button></div></div>';
+    var heading=card.firstElementChild;if(heading&&heading.nextSibling)card.insertBefore(entry,heading.nextSibling);else card.appendChild(entry);
+    field('wc-journal-draft-open').addEventListener('click',loadCandidates);field('wc-journal-draft-apply').addEventListener('click',applyDraft);field('wc-journal-draft-close').addEventListener('click',close);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.__WC_JOURNAL_DRAFT_V1__=true;
 })();
 </script>
 
