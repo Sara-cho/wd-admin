@@ -680,6 +680,9 @@
         <button onclick="payroll_subTab('hist')" id="pr-tab-hist"
           style="flex:1;padding:9px 4px;border-radius:9px;border:1.5px solid #E5E0D5;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#78716C;">📋 내역 누적</button>
       </div>
+      <div style="margin-bottom:12px;padding:11px 13px;border:1px solid #C7D2FE;border-radius:11px;background:#EEF2FF;font-size:11px;line-height:1.65;color:#4338CA;">
+        <b>급여 산출</b> · payroll_records &nbsp;→&nbsp; <b>지급 상태</b> · 세무업무 &nbsp;→&nbsp; <b>실제 출금</b> · 수입·지출 원장
+      </div>
 
       <!-- ══ 계산기 패널 ══ -->
       <div id="pr-panel-calc">
@@ -1007,6 +1010,10 @@
     <!-- ★ [v58실행] 세무업무 월간 루틴 패널 -->
     <div id="wcn-panel-tax" class="wcn-tab-content" style="display:none;">
       <div style="max-width:820px;margin:0 auto;">
+        <div style="margin-bottom:12px;padding:13px 15px;border:1.5px solid #BFDBFE;border-radius:13px;background:#EFF6FF;">
+          <div style="font-size:14px;font-weight:900;color:#1E3A8A;margin-bottom:5px;">세무사 처리 → 자료 제출 → 결과 확인</div>
+          <div style="font-size:11.5px;line-height:1.65;color:#475569;">업무센터는 직접 신고하지 않고 자료·요청상태·처리결과만 관리합니다. 세무사의 실제 처리 완료를 확인하기 전에는 완료로 체크하지 않습니다.</div>
+        </div>
 
         <!-- ★ [v64] 헤더: 중앙 드롭다운 월 선택 -->
         <div style="display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;min-height:40px;">
@@ -1083,11 +1090,11 @@
           </div>
         </div>
 
-        <!-- 2단계: 직원 신고·납부 -->
+        <!-- 2단계: 세무사 처리·자료 제출 -->
         <div class="tx-card locked" id="tx-card-2" style="background:#fff;border:1.5px solid #E5E0D5;border-radius:14px;margin-bottom:10px;overflow:hidden;opacity:.45;">
           <div class="tx-card-head" onclick="tx_toggleCard(2)" style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:not-allowed;user-select:none;">
             <div class="tx-step-num" id="tx-stepnum-2" style="width:26px;height:26px;border-radius:50%;background:#D8D8D8;color:#999;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
-            <div class="tx-card-title" style="flex:1;font-size:14px;font-weight:800;color:#A8A29E;">직원 신고·납부</div>
+            <div class="tx-card-title" style="flex:1;font-size:14px;font-weight:800;color:#A8A29E;">세무사 처리·자료 제출</div>
             <span class="tx-badge locked" id="tx-badge-2" style="flex-shrink:0;">🔒 잠금</span>
             <span class="tx-arrow" style="font-size:11px;color:#A8A29E;transition:transform .2s;">▼</span>
           </div>
@@ -1096,21 +1103,21 @@
             <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed #F0EDE8;">
               <div class="tx-vis" id="tx-vis-insurancePaid" onclick="txCheck('step2','insurancePaid')" style="width:22px;height:22px;border:2px solid #D4D0C8;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:14px;font-weight:900;transition:all .15s;cursor:pointer;"></div>
               <button onclick="window.open('https://si4n.nhis.or.kr','_blank')" style="padding:4px 9px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:10px;font-weight:700;color:#166534;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;flex-shrink:0;">🏛 통합징수포털</button>
-              <span id="tx-lbl-insurancePaid" onclick="txCheck('step2','insurancePaid')" style="flex:1;font-size:13px;color:#44403C;font-weight:600;cursor:pointer;user-select:none;">4대보험료 납부 확인</span>
+              <span id="tx-lbl-insurancePaid" onclick="txCheck('step2','insurancePaid')" style="flex:1;font-size:13px;color:#44403C;font-weight:600;cursor:pointer;user-select:none;">4대보험료 처리결과 확인</span>
               <span class="tx-ibadge" id="tx-ibadge-insurancePaid">미진행</span>
             </div>
             <!-- 원천세: 체크 → 홈택스 → 텍스트 → 배지 -->
             <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed #F0EDE8;">
               <div class="tx-vis" id="tx-vis-incomeTaxFiled" onclick="txCheck('step2','incomeTaxFiled')" style="width:22px;height:22px;border:2px solid #D4D0C8;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:14px;font-weight:900;transition:all .15s;cursor:pointer;"></div>
-              <button onclick="window.open('https://www.hometax.go.kr','_blank')" style="padding:4px 9px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:7px;font-size:10px;font-weight:700;color:#92400E;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;flex-shrink:0;">🏠 홈택스</button>
-              <span id="tx-lbl-incomeTaxFiled" onclick="txCheck('step2','incomeTaxFiled')" style="flex:1;font-size:13px;color:#44403C;font-weight:600;cursor:pointer;user-select:none;">원천세 신고/납부</span>
+              <button onclick="window.open('https://www.hometax.go.kr','_blank')" style="padding:4px 9px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:7px;font-size:10px;font-weight:700;color:#92400E;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;flex-shrink:0;">🏠 처리자료 확인</button>
+              <span id="tx-lbl-incomeTaxFiled" onclick="txCheck('step2','incomeTaxFiled')" style="flex:1;font-size:13px;color:#44403C;font-weight:600;cursor:pointer;user-select:none;">세무사 원천세 처리결과 확인</span>
               <span class="tx-ibadge" id="tx-ibadge-incomeTaxFiled">미진행</span>
             </div>
             <!-- 지방소득세: 체크 → 위택스 → 텍스트 → 배지 -->
             <div style="display:flex;align-items:center;gap:8px;padding:9px 0;">
               <div class="tx-vis" id="tx-vis-localTaxPaid" onclick="txCheck('step2','localTaxPaid')" style="width:22px;height:22px;border:2px solid #D4D0C8;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:14px;font-weight:900;transition:all .15s;cursor:pointer;"></div>
-              <button onclick="window.open('https://www.wetax.go.kr','_blank')" style="padding:4px 9px;background:#FDF4FF;border:1px solid #E9D5FF;border-radius:7px;font-size:10px;font-weight:700;color:#6B21A8;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;flex-shrink:0;">🏙 위택스</button>
-              <span id="tx-lbl-localTaxPaid" onclick="txCheck('step2','localTaxPaid')" style="flex:1;font-size:13px;color:#44403C;font-weight:600;cursor:pointer;user-select:none;">지방소득세 납부 확인</span>
+              <button onclick="window.open('https://www.wetax.go.kr','_blank')" style="padding:4px 9px;background:#FDF4FF;border:1px solid #E9D5FF;border-radius:7px;font-size:10px;font-weight:700;color:#6B21A8;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;flex-shrink:0;">🏙 처리자료 확인</button>
+              <span id="tx-lbl-localTaxPaid" onclick="txCheck('step2','localTaxPaid')" style="flex:1;font-size:13px;color:#44403C;font-weight:600;cursor:pointer;user-select:none;">세무사 지방소득세 처리결과 확인</span>
               <span class="tx-ibadge" id="tx-ibadge-localTaxPaid">미진행</span>
             </div>
           </div>
@@ -1120,24 +1127,24 @@
         <div class="tx-card locked" id="tx-card-3" style="background:#fff;border:1.5px solid #E5E0D5;border-radius:14px;margin-bottom:16px;overflow:hidden;opacity:.45;">
           <div class="tx-card-head" onclick="tx_toggleCard(3)" style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:not-allowed;user-select:none;">
             <div class="tx-step-num" id="tx-stepnum-3" style="width:26px;height:26px;border-radius:50%;background:#D8D8D8;color:#999;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
-            <div class="tx-card-title" style="flex:1;font-size:14px;font-weight:800;color:#A8A29E;">개인사업자 세무업무</div>
+            <div class="tx-card-title" style="flex:1;font-size:14px;font-weight:800;color:#A8A29E;">자료 제출·결과 확인</div>
             <span class="tx-badge locked" id="tx-badge-3" style="flex-shrink:0;">🔒 잠금</span>
             <span class="tx-arrow" style="font-size:11px;color:#A8A29E;transition:transform .2s;">▼</span>
           </div>
           <div class="tx-card-body" style="display:none;padding:0 16px 14px;border-top:1px solid #F0EDE8;">
             <div class="tx-row" onclick="txCheck('step3','expenseReady')" style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dashed #F0EDE8;cursor:pointer;user-select:none;">
               <div class="tx-vis" id="tx-vis-expenseReady" style="width:22px;height:22px;border:2px solid #D4D0C8;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:14px;font-weight:900;transition:all .15s;"></div>
-              <span id="tx-lbl-expenseReady" style="flex:1;font-size:13px;color:#44403C;font-weight:600;">사업 지출 증빙 정리</span>
+              <span id="tx-lbl-expenseReady" style="flex:1;font-size:13px;color:#44403C;font-weight:600;">세무사 전달용 사업지출 증빙 정리</span>
               <span class="tx-ibadge" id="tx-ibadge-expenseReady">미진행</span>
             </div>
             <div class="tx-row" onclick="txCheck('step3','specialReport')" style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dashed #F0EDE8;cursor:pointer;user-select:none;">
               <div class="tx-vis" id="tx-vis-specialReport" style="width:22px;height:22px;border:2px solid #D4D0C8;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:14px;font-weight:900;transition:all .15s;"></div>
-              <span id="tx-lbl-specialReport" style="flex:1;font-size:13px;color:#44403C;font-weight:600;">해당 월 특별신고 확인</span>
+              <span id="tx-lbl-specialReport" style="flex:1;font-size:13px;color:#44403C;font-weight:600;">간이지급명세서 기한후 제출 결과 확인</span>
               <span class="tx-ibadge" id="tx-ibadge-specialReport">미진행</span>
             </div>
             <div class="tx-row" onclick="txCheck('step3','finalClosed')" style="display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer;user-select:none;">
               <div class="tx-vis" id="tx-vis-finalClosed" style="width:22px;height:22px;border:2px solid #D4D0C8;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:14px;font-weight:900;transition:all .15s;"></div>
-              <span id="tx-lbl-finalClosed" style="flex:1;font-size:13px;color:#44403C;font-weight:600;">이번 달 세무마감 완료</span>
+              <span id="tx-lbl-finalClosed" style="flex:1;font-size:13px;color:#44403C;font-weight:600;">세무사 처리결과 확인 후 월 마감</span>
               <span class="tx-ibadge" id="tx-ibadge-finalClosed">미진행</span>
             </div>
             <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #F0EDE8;display:flex;gap:6px;flex-wrap:wrap;">
@@ -1150,7 +1157,7 @@
         <!-- 메모 -->
         <div style="background:#fff;border:1.5px solid #E5E0D5;border-radius:14px;padding:14px;">
           <div style="font-size:12px;font-weight:700;color:#78716C;margin-bottom:8px;">📝 월 메모</div>
-          <textarea id="tx-memo" placeholder="이번 달 세무 관련 메모를 남겨주세요." style="width:100%;min-height:80px;border:1px solid #E5E0D5;border-radius:10px;padding:10px;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:#1C1917;resize:vertical;outline:none;box-sizing:border-box;background:#FAFAF9;"></textarea>
+          <textarea id="tx-memo" placeholder="세무사 요청 · 자료 제출 · 간이지급명세서 기한후 제출 · 처리결과를 기록하세요." style="width:100%;min-height:80px;border:1px solid #E5E0D5;border-radius:10px;padding:10px;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:#1C1917;resize:vertical;outline:none;box-sizing:border-box;background:#FAFAF9;"></textarea>
         </div>
 
       </div>
@@ -1934,7 +1941,7 @@
     <div id="wcn-panel-finance" class="wcn-tab-content" style="display:none;">
       <div class="wcfo-shell">
         <div class="wcfo-head">
-          <div><div class="wcfo-kicker">MONEY LEDGER · SUPABASE</div><h2>💳 수입·지출</h2><p>돈의 최종 원본입니다. 구매·구독 화면과 중복 계산하지 않습니다.</p></div>
+          <div><div class="wcfo-kicker">MONEY LEDGER · SUPABASE</div><h2>💳 수입·지출</h2><p>급여·세무상태와 분리해 실제 입금·출금만 기록하는 돈의 최종 원장입니다.</p></div>
           <button type="button" class="wcfo-auth" id="wcfo-fin-auth" onclick="wcfoRequestSecureLogin()" title="대표 인증 연결">보안 연결 확인 중</button>
         </div>
         <div class="wcfo-summary" id="wcfo-fin-summary">
@@ -1947,7 +1954,7 @@
             <div class="wcfo-form-grid">
               <label><span>구분 *</span><select id="wcfo-fin-flow"><option>수입</option><option>지출</option></select></label>
               <label><span>사업영역</span><select id="wcfo-fin-area"><option value="">선택</option><option>보험</option><option>컨설팅</option><option>강의</option><option>회사운영</option><option>기타</option></select></label>
-              <label><span>분류</span><input id="wcfo-fin-category" placeholder="예: 컨설팅비, 월세"></label>
+              <label><span>분류</span><input id="wcfo-fin-category" list="wcfo-fin-category-options" placeholder="직원급여 / 세무 / 사업지출 / 보험수입 / 별도수입"><datalist id="wcfo-fin-category-options"><option value="직원급여"></option><option value="세무"></option><option value="사업지출"></option><option value="보험수입"></option><option value="별도수입"></option></datalist></label>
               <label><span>거래처·고객</span><input id="wcfo-fin-counterparty" placeholder="예: 홍길동 / 네이버"></label>
               <label class="span2"><span>내용 *</span><input id="wcfo-fin-title" placeholder="예: 8월 컨설팅 잔금"></label>
               <label><span>금액 *</span><input id="wcfo-fin-amount" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></label>
@@ -2019,6 +2026,7 @@
         </section>
 
         <section id="wcfo-office-subscription" class="wcfo-office-panel" style="display:none;">
+          <div style="margin-bottom:10px;padding:10px 12px;border:1px solid #FED7AA;border-radius:10px;background:#FFF7ED;font-size:11px;line-height:1.6;color:#9A3412;"><b>반복 기준</b>은 이곳에, 실제 지급 완료는 수입·지출 원장에 기록합니다.</div>
           <div class="wcfo-grid2">
             <div class="wcfo-card"><div class="wcfo-card-title"><span>고정비·구독 등록</span><small id="wcfo-sub-edit-label">신규</small></div>
               <input type="hidden" id="wcfo-sub-id"><div class="wcfo-form-grid">
@@ -2201,8 +2209,8 @@ window._txShowBanner = function(){
   var done1 = window._txIsDone(1), done2 = window._txIsDone(2), done3 = window._txIsDone(3);
   var lines = [
     (done1?'✅':'⬜') + ' 급여 지급',
-    (done2?'✅':'⬜') + ' 직원 신고·납부',
-    (done3?'✅':'⬜') + ' 개인사업자 세무업무',
+    (done2?'✅':'⬜') + ' 세무사 처리·자료 제출',
+    (done3?'✅':'⬜') + ' 자료 제출·결과 확인',
   ];
   var all = done1 && done2 && done3;
   var banner = document.getElementById('tx-save-banner');
@@ -9099,19 +9107,19 @@ setInterval(function(){
       ]
     },
     step2: {
-      title: '2단계 · 직원 신고·납부',
+      title: '2단계 · 세무사 처리·자료 제출',
       fields: [
         ['insurancePaid','4대보험료 납부 확인'],
         ['incomeTaxFiled','원천세 신고·납부'],
-        ['localTaxPaid','지방소득세 납부 확인']
+        ['localTaxPaid','세무사 지방소득세 처리결과 확인']
       ]
     },
     step3: {
-      title: '3단계 · 개인사업자 세무업무',
+      title: '3단계 · 자료 제출·결과 확인',
       fields: [
-        ['expenseReady','사업 지출 증빙 정리'],
-        ['specialReport','해당 월 특별신고 확인'],
-        ['finalClosed','이번 달 세무마감 완료']
+        ['expenseReady','세무사 전달용 사업지출 증빙 정리'],
+        ['specialReport','간이지급명세서 기한후 제출 결과 확인'],
+        ['finalClosed','세무사 처리결과 확인 후 월 마감']
       ]
     }
   };
@@ -9387,8 +9395,8 @@ setInterval(function(){
   function taxStages(row){
     var defs=[
       ['step1','1단계 · 급여 지급',['payrollSaved','transferDone','payslipSent']],
-      ['step2','2단계 · 직원 신고·납부',['insurancePaid','incomeTaxFiled','localTaxPaid']],
-      ['step3','3단계 · 개인사업자 세무업무',['expenseReady','specialReport','finalClosed']]
+      ['step2','2단계 · 세무사 처리·자료 제출',['insurancePaid','incomeTaxFiled','localTaxPaid']],
+      ['step3','3단계 · 자료 제출·결과 확인',['expenseReady','specialReport','finalClosed']]
     ];
     return defs.map(function(d){
       var obj=row&&row.checklist_json&&row.checklist_json[d[0]]?row.checklist_json[d[0]]:{};
