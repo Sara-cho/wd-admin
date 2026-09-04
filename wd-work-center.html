@@ -334,7 +334,7 @@
         <div style="font-size:14px;font-weight:700;color:#1C1917;margin-bottom:12px;">📝 업무일지 작성</div>
 
         <!-- 작성자 -->
-        <div style="margin-bottom:10px;">
+        <div id="wj-author-picker" style="margin-bottom:10px;">
           <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">작성자</div>
           <div style="display:flex;gap:6px;">
             <button id="wj-author-sujin" onclick="wj_selectAuthor('박수진')"
@@ -349,8 +349,12 @@
         </div>
 
         <!-- 카테고리 -->
-        <div style="margin-bottom:10px;">
+        <div id="wj-category-picker" style="margin-bottom:10px;">
           <div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:6px;">카테고리</div>
+          <div id="wj-category-compact" class="wj-category-compact">
+            <span>추천 카테고리: <b id="wj-category-current">초안 생성 후 자동 추천</b></span>
+            <button type="button" id="wj-category-toggle">수정</button>
+          </div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;" id="wj-category-btns">
             <button onclick="wj_selectCategory('회사운영')" data-cat="회사운영" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">회사운영</button>
             <button onclick="wj_selectCategory('보험업무')" data-cat="보험업무" style="padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#334155;transition:all .15s;">보험업무</button>
@@ -371,7 +375,7 @@
             <span>자동 저장 없음</span>
           </div>
 
-          <section class="wj-brief-section wj-brief-core">
+          <section class="wj-brief-section wj-brief-core" aria-hidden="true">
             <div class="wj-brief-section-title"><span>①</span> 오늘의 핵심 3줄</div>
             <label><span>가장 중요한 완료</span><input id="wj-core-done" data-wj-brief-field placeholder="예: Google 업무신호 실제 연결 검수 완료"></label>
             <label><span>현재 진행 중 핵심</span><input id="wj-core-progress" data-wj-brief-field placeholder="예: 업무일지 브리핑형 화면 정리 중"></label>
@@ -383,27 +387,25 @@
               <div class="wj-brief-section-title"><span>②</span> 오늘 한 일</div>
               <div id="wj-done-summary" class="wj-brief-live-summary" aria-live="polite"></div>
               <details class="wj-brief-editor-details" data-wj-editor-details="done" open>
-                <summary>더보기 · 전체 기록 입력·수정</summary>
+                <summary>오늘 한 일 입력·수정</summary>
                 <textarea id="wj-done" data-wj-brief-field placeholder="오늘 실제 처리·확인한 업무만 한 줄씩 입력"></textarea>
               </details>
             </section>
             <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>③</span> 진행 중 / 보류</div>
+              <div class="wj-brief-section-title"><span>②</span> 남은 일·다음 행동</div>
               <div id="wj-progress-summary" class="wj-brief-live-summary" aria-live="polite"></div>
               <details class="wj-brief-editor-details" data-wj-editor-details="progress" open>
-                <summary>더보기 · 전체 기록 입력·수정</summary>
+                <summary>진행 중·보류 입력·수정</summary>
                 <textarea id="wj-progress" data-wj-brief-field placeholder="현재 상태 · 보류 이유 · 이어서 할 내용"></textarea>
               </details>
-            </section>
-            <section class="wj-brief-section">
-              <div class="wj-brief-section-title"><span>④</span> 다음 행동</div>
+              <div class="wj-next-subtitle">다음 행동</div>
               <div id="wj-next-summary" class="wj-brief-live-summary" aria-live="polite"></div>
               <details class="wj-brief-editor-details" data-wj-editor-details="next" open>
-                <summary>더보기 · 전체 기록 입력·수정</summary>
+                <summary>다음 행동 입력·수정</summary>
                 <textarea id="wj-next" data-wj-brief-field placeholder="해야 할 일 · 기한 · 우선순위"></textarea>
               </details>
             </section>
-            <section class="wj-brief-section">
+            <section class="wj-brief-section wj-brief-hidden-auto" aria-hidden="true">
               <div class="wj-brief-section-title"><span>⑤</span> 중요 업무신호</div>
               <div id="wj-signals-summary" class="wj-brief-live-summary" aria-live="polite"></div>
               <details class="wj-brief-editor-details" data-wj-editor-details="signals" open>
@@ -411,13 +413,16 @@
                 <textarea id="wj-signals" data-wj-brief-field placeholder="실제로 확인하거나 행동으로 이어진 Gmail / Calendar 신호만 입력"></textarea>
               </details>
             </section>
-            <section class="wj-brief-section">
+            <section class="wj-brief-section wj-brief-hours-auto">
               <div class="wj-brief-section-title"><span>⑥</span> 업무시간 요약</div>
-              <textarea id="wj-hours" data-wj-brief-field placeholder="현재 로그인 사용자의 기존 work_hours 기록 범위에서 표시"></textarea>
+              <div id="wj-hours-auto" class="wj-hours-auto">근무기록에서 자동 회수합니다.</div>
+              <textarea id="wj-hours" data-wj-brief-field aria-hidden="true" tabindex="-1" placeholder="현재 로그인 사용자의 기존 work_hours 기록 범위에서 표시"></textarea>
             </section>
             <section class="wj-brief-section wj-brief-check">
-              <div class="wj-brief-section-title"><span>⑦</span> 대표 확인사항</div>
-              <textarea id="wj-representative" data-wj-brief-field placeholder="대표 판단·승인·확인이 필요한 것만 입력"></textarea>
+              <details id="wj-representative-details">
+                <summary class="wj-brief-section-title"><span>③</span> 대표 확인 필요 <small>필요한 날만 입력</small></summary>
+                <textarea id="wj-representative" data-wj-brief-field placeholder="대표 판단·승인·확인이 필요한 것만 입력"></textarea>
+              </details>
             </section>
           </div>
         </div>
@@ -1309,7 +1314,8 @@
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
           <span id="aa-drive-connection-badge" style="flex-shrink:0;padding:7px 10px;background:#F8FAFC;color:#64748B;border:1px solid #CBD5E1;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;">● Drive 연결 안 됨</span>
           <a id="aa-drive-folder-link" href="https://drive.google.com/drive/folders/1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;padding:10px 16px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 Google Drive</a>
-          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:10px 14px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 동기화</button>
+          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:10px 14px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 Drive 확인</button>
+          <button id="aa-drive-reconcile-btn" onclick="aaDrivePreviewReconcile()" style="flex-shrink:0;padding:10px 14px;background:#FFF7ED;color:#9A3412;border:1.5px solid #FDBA74;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">연결정보 정합화</button>
           <button onclick="aaOpenModal()" style="flex-shrink:0;padding:11px 20px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 자료 등록</button>
         </div>
       </div>
@@ -7884,6 +7890,44 @@ async function aaDriveFileWasDeleted(fileId){
   if(!res.ok)throw new Error('Google Drive 삭제 여부 확인 실패');
   var data=await res.json();return !!data.trashed;
 }
+async function aaDriveReconcilePlan(){
+  var rowsRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?owner_id=eq.kfcyk50&select=*',{headers:aaHeaders()});
+  if(!rowsRes.ok)throw new Error('Drive 연결정보를 불러오지 못했습니다.');
+  var allRows=await rowsRes.json(),markers=allRows.filter(function(r){return !!aaDriveIdFromMeta(r.file_path);}),markerByPath={};
+  markers.forEach(function(r){markerByPath[r.file_path]=r;});
+  var archivesRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive?owner_id=eq.kfcyk50&select=id',{headers:aaHeaders()});
+  if(!archivesRes.ok)throw new Error('업무센터 자료 목록을 확인하지 못했습니다.');
+  var existingArchives={};(await archivesRes.json()).forEach(function(r){existingArchives[String(r.id)]=1;});
+  var currentById={},create=[],update=[],remove=[];_aaDriveFiles.forEach(function(f){currentById[String(f.id)]=f;});
+  _aaDriveFiles.forEach(function(f){
+    var archiveId=f.appProperties&&f.appProperties.wdArchiveId;if(!archiveId||!existingArchives[String(archiveId)])return;
+    var existing=markerByPath[aaDriveMetaPath(f.id)];
+    if(!existing)create.push(f.name||'Drive 파일');
+    else if(String(existing.archive_id)!==String(archiveId)||existing.file_name!==f.name||String(existing.file_size||'')!==String(f.size||''))update.push(f.name||'Drive 파일');
+  });
+  for(var i=0;i<markers.length;i++){
+    var driveId=aaDriveIdFromMeta(markers[i].file_path);if(currentById[driveId])continue;
+    if(await aaDriveFileWasDeleted(driveId))remove.push(markers[i].file_name||driveId);
+  }
+  return {create:create,update:update,remove:remove};
+}
+window.aaDrivePreviewReconcile=async function(){
+  if(!aaDriveTokenValid()){aaOpenDriveConnectModal();return;}
+  var btn=document.getElementById('aa-drive-reconcile-btn');if(btn){btn.disabled=true;btn.textContent='변경 대상 확인 중...';}
+  try{
+    _aaDriveFiles=await aaDriveListAll();aaDriveIndexFiles();
+    var plan=await aaDriveReconcilePlan(),total=plan.create.length+plan.update.length+plan.remove.length;
+    if(!total){aaDriveSetStatus('연결정보 정합화 확인 완료 · 변경 대상 없음','ok');return;}
+    var preview=['연결정보 정합화는 Supabase 연결정보를 변경합니다.','',
+      '신규 연결 '+plan.create.length+'건','정보 갱신 '+plan.update.length+'건','삭제된 Drive 파일 연결정리 '+plan.remove.length+'건','',
+      'Drive 원본 파일은 이동·삭제·교체하지 않습니다.','이 변경을 실행할까요?'].join('\n');
+    if(!window.confirm(preview)){aaDriveSetStatus('연결정보 변경을 취소했습니다. Drive 조회결과만 유지합니다.','warn');return;}
+    var result=await aaDriveReconcileLinks();
+    aaDriveSetStatus('연결정보 정합화 완료 · 신규 '+plan.create.length+'건 · 갱신 '+plan.update.length+'건 · 정리 '+result.removedFiles+'건','ok');
+    aaRender();
+  }catch(e){aaDriveSetStatus('연결정보 정합화 확인 실패 · '+String(e.message||e).substring(0,120),'error');console.error('[WD Drive reconcile]',e);}
+  finally{if(btn){btn.disabled=false;btn.textContent='연결정보 정합화';}}
+};
 async function aaDriveReconcileLinks(){
   var rowsRes=await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?owner_id=eq.kfcyk50&select=*',{headers:aaHeaders()});
   if(!rowsRes.ok)throw new Error('Drive 연결정보를 불러오지 못했습니다.');
@@ -7938,23 +7982,22 @@ window.aaDriveRefresh=async function(manual){
     return;
   }
   _aaDriveRefreshing=true;
-  var btn=document.getElementById('aa-drive-refresh-btn');if(btn){btn.disabled=true;btn.textContent='동기화 중...';}
+  var btn=document.getElementById('aa-drive-refresh-btn');if(btn){btn.disabled=true;btn.textContent='Drive 확인 중...';}
   aaDriveSetStatus('Google Drive 파일 확인 중...','info');
   try{
     _aaDriveFiles=await aaDriveListAll();aaDriveIndexFiles();
-    var reconcile=await aaDriveReconcileLinks();_aaDriveLastSync=Date.now();
+    _aaDriveLastSync=Date.now();
     var tm=new Date(_aaDriveLastSync);var hh=String(tm.getHours()).padStart(2,'0'),mm=String(tm.getMinutes()).padStart(2,'0');
     aaDriveSetStatus('Google Drive 확인 완료 · 파일 '+_aaDriveFiles.length+'개 · '+hh+':'+mm,'ok');
     aaDriveUpdateConnectionBadge();
     if(_aaCurrent&&_aaCurrent.__driveOnly&&!_aaDriveFiles.some(function(f){return f.id===_aaCurrent.__driveFile.id;})){_aaCurrent=null;aaCloseDetailModal();}
     aaRender();
-    if(reconcile.removedFiles&&typeof showT==='function')showT('🗑 Drive에서 삭제된 첨부파일 '+reconcile.removedFiles+'개를 업무센터에서도 제거했습니다.');
     if(_aaCurrent&&document.getElementById('aa-detail-modal-overlay').style.display==='flex')await aaLoadFiles(_aaCurrent.id);
   }catch(e){
     if(aaDriveTokenValid())aaDriveSetStatus('Google Drive 확인 실패 · 기존 업무센터 자료는 정상 사용 가능합니다.','error');
     console.error('[WD Drive]',e);
   }finally{
-    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 동기화';}
+    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 Drive 확인';}
   }
 };
 function aaDriveFileMetadata(file,archiveId,category,detail){
@@ -10562,6 +10605,16 @@ setInterval(function(){
   .wj-brief-core label{display:grid;grid-template-columns:126px minmax(0,1fr);gap:8px;align-items:center;margin-top:6px}
   .wj-brief-core label>span{font-size:10.5px;font-weight:800;color:#475569}
   .wj-brief-check{border-color:#FDE68A;background:#FFFBEB}
+  #wj-author-picker{display:none!important}
+  .wj-category-compact{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border:1px solid #DBEAFE;border-radius:10px;background:#F8FBFF;color:#475569;font-size:11.5px}
+  .wj-category-compact b{color:#1D4ED8}.wj-category-compact button{border:1px solid #BFDBFE;border-radius:8px;background:#fff;color:#1D4ED8;padding:5px 9px;font:800 11px 'Noto Sans KR',sans-serif;cursor:pointer}
+  #wj-category-btns{display:none!important;margin-top:7px}#wj-category-picker.is-open #wj-category-btns{display:flex!important}
+  .wj-brief-core,.wj-brief-hidden-auto{display:none!important}
+  .wj-next-subtitle{margin:10px 0 5px;padding-top:9px;border-top:1px solid #F1F5F9;color:#475569;font-size:11px;font-weight:900}
+  .wj-brief-hours-auto{grid-column:1/-1;background:#F8FAFC}.wj-hours-auto{font-size:11.5px;line-height:1.55;color:#475569;white-space:pre-wrap}
+  #wj-hours{display:none!important}#wj-representative-details>summary{cursor:pointer;list-style:none;margin-bottom:0}#wj-representative-details>summary::-webkit-details-marker{display:none}
+  #wj-representative-details>summary small{margin-left:auto;color:#92400E;font-size:9.5px}#wj-representative-details[open]>summary{margin-bottom:8px}
+  #wj-print-btn{display:none!important}
   .wj-brief-card{border:1px solid #E2E8F0;border-radius:12px;background:#FFF;overflow:hidden}
   .wj-brief-card-core{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #E2E8F0;background:#F8FAFC}
   .wj-brief-card-core>div{padding:10px;border-right:1px solid #E2E8F0;min-width:0}.wj-brief-card-core>div:last-child{border-right:0}
@@ -10664,6 +10717,9 @@ setInterval(function(){
   function serialize(d){
     var values=Object.keys(d).map(function(k){return String(d[k]||'').trim()});
     if(!values.some(Boolean))return'';
+    d.coreDone=d.coreDone||firstLine(d.done);
+    d.coreProgress=d.coreProgress||firstLine(d.progress);
+    d.coreNext=d.coreNext||firstLine(d.next);
     return [
       '[오늘의 핵심]',
       '- 오늘 가장 중요한 완료: '+(d.coreDone||'확인 필요'),
@@ -10692,10 +10748,17 @@ setInterval(function(){
   function writeEditor(d,doSync){
     var map={'wj-core-done':'coreDone','wj-core-progress':'coreProgress','wj-core-next':'coreNext','wj-done':'done','wj-progress':'progress','wj-next':'next','wj-signals':'signals','wj-hours':'hours','wj-representative':'representative'};
     Object.keys(map).forEach(function(id){var node=el(id);if(node)node.value=String(d[map[id]]||'')});
+    var hoursAuto=el('wj-hours-auto');if(hoursAuto)hoursAuto.textContent=d.hours||'근무기록 없음 · 근무기록 원장에서 자동 회수합니다.';
+    var representativeDetails=el('wj-representative-details');if(representativeDetails)representativeDetails.open=!!String(d.representative||'').trim();
     renderEditorSummaries(true);
     if(doSync!==false)sync();
   }
   function sync(){var ta=el('wj-content');if(ta)ta.value=serialize(readEditor())}
+  function updateCategoryCompact(){
+    var current=el('wj-category-current'),active=document.querySelectorAll('#wj-category-btns button');if(!current)return;
+    var selected=[];active.forEach(function(button){if(button.style.background&&button.style.background!=='rgb(255, 255, 255)'&&button.style.background!=='#fff')selected.push(button.getAttribute('data-cat'))});
+    current.textContent=selected.filter(Boolean).join(' + ')||'초안 생성 후 자동 추천';
+  }
   function currentAuthor(){var panel=el('wj-briefing-editor');return String(panel&&panel.getAttribute('data-author')||localStorage.getItem('wd_user_name')||'최윤경')}
   function currentDate(){return String((el('wj-filter-date')||{}).value||(el('wj-write-date')||{}).textContent||'')}
   function hasEditorValue(){return FIELD_IDS.some(function(id){return String((el(id)||{}).value||'').trim()})}
@@ -10725,10 +10788,13 @@ setInterval(function(){
   function boot(){
     document.querySelectorAll('[data-wj-brief-field]').forEach(function(node){node.addEventListener('input',function(){sync();renderEditorSummaries(false)})});
     var baseAuthor=window.wj_selectAuthor;if(typeof baseAuthor==='function')window.wj_selectAuthor=function(name){baseAuthor(name);var panel=el('wj-briefing-editor');if(panel)panel.setAttribute('data-author',name)};
+    var baseCategory=window.wj_selectCategory;if(typeof baseCategory==='function')window.wj_selectCategory=function(name){baseCategory(name);setTimeout(updateCategoryCompact,0)};
+    var baseRecommendedCategory=window.wj_applyRecommendedCategory;if(typeof baseRecommendedCategory==='function')window.wj_applyRecommendedCategory=function(name){baseRecommendedCategory(name);setTimeout(updateCategoryCompact,0)};
+    var categoryToggle=el('wj-category-toggle');if(categoryToggle)categoryToggle.addEventListener('click',function(){var picker=el('wj-category-picker'),open=picker&&picker.classList.toggle('is-open');this.textContent=open?'닫기':'수정'});
     var baseEdit=window.wj_edit;if(typeof baseEdit==='function')window.wj_edit=function(id){baseEdit(id);var ta=el('wj-content');writeEditor(parse(ta&&ta.value||''),false)};
     var baseCancel=window.wj_cancelEdit;if(typeof baseCancel==='function')window.wj_cancelEdit=function(){baseCancel();writeEditor(blankData(),false)};
-    var baseSave=window.wj_save;if(typeof baseSave==='function')window.wj_save=async function(){sync();await baseSave();var ta=el('wj-content');if(ta&&!ta.value.trim())writeEditor(blankData(),false)};
-    var ta=el('wj-content');if(ta&&ta.value.trim())writeEditor(parse(ta.value),false);else renderEditorSummaries(false);
+    var baseSave=window.wj_save;if(typeof baseSave==='function')window.wj_save=async function(){sync();await baseSave();var ta=el('wj-content');if(ta&&!ta.value.trim())writeEditor(blankData(),false);updateCategoryCompact()};
+    var ta=el('wj-content');if(ta&&ta.value.trim())writeEditor(parse(ta.value),false);else renderEditorSummaries(false);updateCategoryCompact();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.__WC_JOURNAL_BRIEFING_V191__=true;
