@@ -1628,10 +1628,8 @@
           </div>
           <div>
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">등록자 <span style="color:#ef4444;">*</span></label>
-              <select id="aa-f-author" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;">
-                <option value="최윤경">최윤경</option>
-                <option value="박수진">박수진</option>
-              </select>
+              <input id="aa-f-author" type="text" readonly aria-readonly="true"
+                style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#f8fafc;color:#334155;cursor:not-allowed;">
           </div>
           <!-- 데이터이름 -->
           <div>
@@ -7630,6 +7628,12 @@ function aaOwnerId(){
   if(typeof _CURRENT_UID !== 'undefined' && _CURRENT_UID) return String(_CURRENT_UID);
   return 'kfcyk50';
 }
+function aaCurrentUserName(){
+  var uid=String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();
+  if(uid==='kfcyk30') return '박수진';
+  if(uid==='kfcyk50') return '최윤경';
+  return String(localStorage.getItem('wd_user_name')||'').trim()||'최윤경';
+}
 
 /* ── Google Drive 연결 [Drive연결후보 v1] ── */
 var _AA_DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com';
@@ -8426,7 +8430,7 @@ window.aaOpenModal = function(){
   document.getElementById('aa-modal-title').textContent='자료 등록';
   document.getElementById('aa-edit-id').value='';
   var t=document.getElementById('aa-f-type');if(t) t.value=_AA_LEGACY_TYPES.indexOf(_aaTab)>-1?_aaTab:'회사운영';
-  var u=document.getElementById('aa-f-author'); if(u) u.value='최윤경';
+  var u=document.getElementById('aa-f-author'); if(u) u.value=aaCurrentUserName();
   var n=document.getElementById('aa-f-title');  if(n) n.value='';
   var c=document.getElementById('aa-f-content');if(c) c.value='';
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
@@ -8446,7 +8450,7 @@ window.aaOpenModalEdit = function(){
   document.getElementById('aa-edit-id').value=a.__driveOnly?'drive:'+String(a.__driveFile.id):(a.id||'');
   var typeInfo=aaSplitType(a.data_type);
   var t=document.getElementById('aa-f-type');if(t) t.value=aaLegacyType(a.data_type)||'미분류';
-  var u=document.getElementById('aa-f-author'); if(u) u.value=a.__driveOnly?'최윤경':(a.author||'최윤경');
+  var u=document.getElementById('aa-f-author'); if(u) u.value=a.__driveOnly?aaCurrentUserName():(a.author||aaCurrentUserName());
   var n=document.getElementById('aa-f-title');  if(n) n.value=a.title||'';
   var c=document.getElementById('aa-f-content');if(c) c.value=a.__driveOnly?'':(a.content||'');
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
@@ -8478,7 +8482,7 @@ window.aaSave = async function(){
   var driveType=aaSplitType(dataType);
   var category=driveType.category;
   var detail=driveType.detail;
-  var author  = ((document.getElementById('aa-f-author')||{}).value||'최윤경').trim();
+  var author  = ((document.getElementById('aa-f-author')||{}).value||aaCurrentUserName()).trim();
   var content = ((document.getElementById('aa-f-content')||{}).value||'').trim();
   var editId  = ((document.getElementById('aa-edit-id')||{}).value||'');
   var driveSourceId = editId.indexOf('drive:')===0 ? editId.slice(6) : '';
