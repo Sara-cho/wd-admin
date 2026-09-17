@@ -11054,5 +11054,226 @@ setInterval(function(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
+
+<!-- 수진 로그인 전용: Drive 업무지시 읽기 + 스티커 업무메모 저장 -->
+<style id="wc-sujin-journal-drive-v1-style">
+  .wsj-shell{max-width:1280px;margin:0 auto;padding:4px 2px 30px;color:#1c1917;font-family:'Noto Sans KR',sans-serif}
+  .wsj-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;margin-bottom:12px;border:1.5px solid #fde68a;border-radius:16px;background:linear-gradient(135deg,#fff,#fffbeb)}
+  .wsj-eyebrow{margin-bottom:4px;font-size:10px;font-weight:900;letter-spacing:.13em;color:#b45309}.wsj-head h2{margin:0;font-size:21px}.wsj-head p{margin:5px 0 0;font-size:12px;line-height:1.65;color:#78716c}
+  .wsj-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}.wsj-btn{min-height:38px;padding:8px 12px;border:1px solid #d6d3d1;border-radius:10px;background:#fff;color:#44403c;font:800 12px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-btn.primary{border-color:#f59e0b;background:#fbbf24;color:#1c1917}.wsj-btn:disabled{opacity:.55;cursor:wait}
+  #wc-global-drive-entry{border:1px solid rgba(255,255,255,.72);border-radius:9px;background:rgba(255,255,255,.42);color:#5f3705;padding:6px 10px;font:900 10.5px 'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap}#wc-global-drive-entry.ok{border-color:#86efac;background:#f0fdf4;color:#166534}#wc-global-drive-entry.warn{border-color:#fff;background:#fff7d6;color:#92400e}#wc-global-drive-entry:disabled{opacity:.6;cursor:wait}
+  #wc-drive-entry-guard{position:fixed;inset:0;z-index:19990;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(28,25,23,.76);backdrop-filter:blur(4px)}#wc-drive-entry-guard.show{display:flex}.wc-drive-entry-box{width:min(440px,100%);padding:27px 25px;border:1px solid #fde68a;border-radius:20px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.3);text-align:center}.wc-drive-entry-icon{display:flex;width:58px;height:58px;margin:0 auto 13px;align-items:center;justify-content:center;border-radius:17px;background:#fef3c7;font-size:28px}.wc-drive-entry-box h2{margin:0 0 8px;font-size:20px}.wc-drive-entry-box p{margin:0;color:#78716c;font-size:12.5px;line-height:1.72}.wc-drive-entry-list{margin:16px 0;padding:12px 14px;border:1px solid #eeeae3;border-radius:12px;background:#fafaf9;text-align:left;color:#57534e;font-size:11.5px;line-height:1.8}.wc-drive-entry-action{width:100%;min-height:48px;border:0;border-radius:11px;background:#fbbf24;color:#1c1917;font:900 14px 'Noto Sans KR',sans-serif;cursor:pointer}.wc-drive-entry-action:disabled{opacity:.6;cursor:wait}.wc-drive-entry-state{min-height:18px;margin-top:9px;color:#92400e;font-size:10.5px;font-weight:700;line-height:1.5}
+  .wsj-status{margin-bottom:12px;padding:9px 12px;border:1px solid #e7e5e4;border-radius:10px;background:#fafaf9;color:#78716c;font-size:11px;font-weight:700;line-height:1.55}.wsj-status.ok{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.wsj-status.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}.wsj-status.error{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
+  .wsj-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}.wsj-card{display:flex;min-height:610px;flex-direction:column;overflow:hidden;border:1.5px solid #e7e5e4;border-radius:16px;background:#fff;box-shadow:0 4px 18px rgba(28,25,23,.05)}.wsj-card.memo{border-color:#facc15;background:#fff8c7;box-shadow:0 5px 20px rgba(161,98,7,.09)}
+  .wsj-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:15px 17px;border-bottom:1px solid #eeeae3;background:#fff}.wsj-card.memo .wsj-card-head{border-bottom-color:#fde68a;background:#fff3a3}.wsj-card-title{font-size:15px;font-weight:900}.wsj-card-note{margin-top:3px;font-size:10.5px;color:#78716c}.wsj-source{display:none;color:#2563eb;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap}
+  .wsj-instruction{flex:1;overflow:auto;padding:20px 19px;white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.88;color:#292524}.wsj-instruction.empty{display:flex;align-items:center;justify-content:center;color:#a8a29e;text-align:center}
+  .wsj-memo{flex:1;width:100%;min-height:500px;resize:vertical;border:0;outline:0;background:transparent;padding:20px 19px;color:#3f3506;font:600 14px/1.88 'Noto Sans KR',sans-serif}.wsj-memo::placeholder{color:#a58b3b}.wsj-savebar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;border-top:1px solid #fde68a;background:#fff3a3}.wsj-saved{font-size:10.5px;color:#8a6d1d}.wsj-save{min-width:104px;padding:10px 18px;border:0;border-radius:10px;background:#1c1917;color:#fde68a;font:900 13px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-save:disabled{opacity:.55;cursor:wait}
+  @media(max-width:900px){.wsj-grid{grid-template-columns:1fr}.wsj-card{min-height:480px}.wsj-memo{min-height:390px}}
+  @media(max-width:640px){.wsj-head{display:block;padding:15px}.wsj-head-actions{justify-content:flex-start;margin-top:11px}.wsj-card{min-height:430px}.wsj-instruction,.wsj-memo{padding:16px 15px;font-size:13px}.wsj-savebar{align-items:flex-start;flex-direction:column}.wsj-save{width:100%}}
+</style>
+<script id="wc-sujin-journal-drive-v1">
+(function(){
+  'use strict';
+  var INSTRUCTION_FOLDER_ID='1rwGAAZTsZUByibXzId0AjhdBq7NJN-gy';
+  var JOURNAL_FOLDER_ID='1NiAw7ktZBd3Htq1NmJJtvCzDXYsyLof9';
+  var FILES_FOLDER_ID='1JKA9YKa9_eiD-mXqOoXmb0WBWKCUCBAg';
+  var DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com';
+  var DRIVE_SCOPE='https://www.googleapis.com/auth/drive';
+  var SESSION_KEY='wd_sujin_journal_drive_v1';
+  var STATE={token:'',expiresAt:0,tokenClient:null,date:'',instructionFile:null,journalFile:null,loading:false,saving:false,refreshTimer:null,autoTried:false};
+
+  function isSujin(){
+    var uid=String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();
+    var name=String(localStorage.getItem('wd_user_name')||'').trim();
+    return uid==='kfcyk30'||name==='박수진';
+  }
+  function field(id){return document.getElementById(id)}
+  function kstDate(){
+    var parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),map={};
+    parts.forEach(function(x){map[x.type]=x.value;});return map.year+'-'+map.month+'-'+map.day;
+  }
+  function tokenValid(){return !!(STATE.token&&Date.now()<STATE.expiresAt-30000)}
+  function syncSharedDriveToken(){
+    try{
+      if(typeof _aaDriveToken!=='undefined')_aaDriveToken=STATE.token;
+      if(typeof _aaDriveTokenExp!=='undefined')_aaDriveTokenExp=STATE.expiresAt;
+      if(typeof aaDriveSaveSession==='function')aaDriveSaveSession();
+      if(typeof aaDriveUpdateConnectionBadge==='function')aaDriveUpdateConnectionBadge();
+    }catch(e){}
+    try{window.dispatchEvent(new CustomEvent('wd-work-drive-ready',{detail:{ready:tokenValid()}}));}catch(e){}
+  }
+  function scheduleRefresh(){
+    clearTimeout(STATE.refreshTimer);if(!tokenValid())return;
+    var delay=Math.max(60000,STATE.expiresAt-Date.now()-120000);
+    STATE.refreshTimer=setTimeout(function(){silentConnect();},delay);
+  }
+  function saveSession(){try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:STATE.token,expiresAt:STATE.expiresAt}));}catch(e){}syncSharedDriveToken();scheduleRefresh()}
+  function restoreSession(){
+    try{var x=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(x&&x.token&&Number(x.expiresAt)>Date.now()+30000){STATE.token=x.token;STATE.expiresAt=Number(x.expiresAt);syncSharedDriveToken();scheduleRefresh();return true;}}catch(e){}
+    try{if(typeof aaDriveRestoreSession==='function')aaDriveRestoreSession();if(typeof aaDriveTokenValid==='function'&&aaDriveTokenValid()){STATE.token=_aaDriveToken;STATE.expiresAt=_aaDriveTokenExp;saveSession();return true;}}catch(e){}
+    return false;
+  }
+  function clearSession(){STATE.token='';STATE.expiresAt=0;clearTimeout(STATE.refreshTimer);try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}try{if(typeof aaDriveClearSession==='function')aaDriveClearSession();}catch(e){}updateGlobalDriveButton();showEntryGuard('Drive 연결이 만료되었습니다. 다시 연결한 뒤 업무센터를 계속할 수 있습니다.')}
+  function setStatus(message,tone){var el=field('wsj-status');if(!el)return;el.textContent=message;el.className='wsj-status'+(tone?' '+tone:'')}
+  function updateGlobalDriveButton(busy){
+    var b=field('wc-global-drive-entry');if(!b)return;b.disabled=!!busy;
+    b.className=tokenValid()?'ok':'warn';b.textContent=busy?'Drive 확인 중…':(tokenValid()?'● Drive 연결됨':'Google Drive 연결');
+  }
+  function showEntryGuard(message){
+    var guard=field('wc-drive-entry-guard'),state=field('wc-drive-entry-state'),button=field('wc-drive-entry-action');
+    if(guard)guard.className='show';if(state)state.textContent=message||'Google 계정을 한 번 연결하면 업무센터 전체에서 공동 사용합니다.';
+    if(button){button.disabled=false;button.textContent='Google Drive 연결하고 시작';}
+  }
+  function hideEntryGuard(){var guard=field('wc-drive-entry-guard');if(guard)guard.className=''}
+  function setEntryGuardBusy(on,message){var button=field('wc-drive-entry-action'),state=field('wc-drive-entry-state');if(button){button.disabled=!!on;button.textContent=on?'Drive 연결 중…':'Google Drive 연결하고 시작'}if(state&&message)state.textContent=message}
+  function setBusy(on){STATE.loading=!!on;updateGlobalDriveButton(on)}
+  function headers(extra){var h={Authorization:'Bearer '+STATE.token};Object.keys(extra||{}).forEach(function(k){h[k]=extra[k]});return h}
+  async function api(url,opts){
+    opts=opts||{};opts.headers=Object.assign({},headers(),opts.headers||{});opts.cache='no-store';
+    var res=await fetch(url,opts);
+    if(res.status===401){clearSession();setStatus('Google Drive 연결이 만료되었습니다. 다시 연결해주세요.','warn');throw new Error('Drive 연결 만료');}
+    if(!res.ok){var detail=await res.text();throw new Error('Drive '+res.status+': '+detail.substring(0,120));}
+    return res;
+  }
+  async function verifyFolders(){
+    var ids=[INSTRUCTION_FOLDER_ID,JOURNAL_FOLDER_ID,FILES_FOLDER_ID];
+    var rows=await Promise.all(ids.map(function(id){return api('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields='+encodeURIComponent('id,name,capabilities(canEdit,canAddChildren)'),{method:'GET'}).then(function(r){return r.json()})}));
+    if(!rows[0]||!rows[1]||!rows[2])throw new Error('업무공유폴더 연결을 확인할 수 없습니다.');
+    if(!(rows[1].capabilities&&rows[1].capabilities.canAddChildren!==false))throw new Error('02_업무일지 폴더의 편집 권한이 필요합니다.');
+  }
+  function initTokenClient(){
+    if(STATE.tokenClient)return true;
+    if(!(window.google&&google.accounts&&google.accounts.oauth2))return false;
+    STATE.tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,
+      callback:async function(resp){
+        if(!resp||resp.error||!resp.access_token){setStatus('Google Drive 연결을 완료하지 못했습니다.','error');setBusy(false);return;}
+        STATE.token=resp.access_token;STATE.expiresAt=Date.now()+Number(resp.expires_in||3600)*1000;saveSession();updateGlobalDriveButton(false);setEntryGuardBusy(true,'업무공유폴더 권한을 확인하고 있습니다.');
+        var connectedOk=false;
+        try{
+          await verifyFolders();
+          if(typeof aaDriveVerifyAccount==='function')await aaDriveVerifyAccount();
+          if(isSujin()&&field('wsj-shell'))await loadAll();
+          else if(typeof aaDriveRefresh==='function')aaDriveRefresh(false).catch(function(){});
+          connectedOk=true;
+        }catch(e){console.error('[work-center-drive connect]',e);setStatus('Drive 연결 확인 실패 · '+String(e.message||e).substring(0,80),'error');}
+        finally{setBusy(false);if(connectedOk){hideEntryGuard();}else{clearSession();showEntryGuard('업무공유폴더 권한을 확인하지 못했습니다. 올바른 Google 계정으로 다시 연결해주세요.');}}
+      },
+      error_callback:function(){setStatus('Google 계정 연결이 완료되지 않았습니다.','warn');setBusy(false);showEntryGuard('Google 계정 선택창을 완료한 뒤 업무센터를 시작할 수 있습니다.');}
+    });
+    return true;
+  }
+  window.wsjConnect=async function(){
+    if(STATE.loading)return;
+    if(tokenValid()){
+      setBusy(true);
+      try{if(isSujin())await loadAll();else if(typeof aaDriveRefresh==='function')await aaDriveRefresh(false);}
+      catch(e){setStatus('다시 불러오지 못했습니다 · '+String(e.message||e).substring(0,70),'error');}
+      finally{setBusy(false)}return;
+    }
+    if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중입니다. 잠시 후 다시 눌러주세요.','warn');setTimeout(initTokenClient,700);return;}
+    setBusy(true);setEntryGuardBusy(true,'Google 계정 선택창을 확인해주세요.');setStatus('업무공유폴더 권한을 확인합니다.','warn');STATE.tokenClient.requestAccessToken({prompt:'select_account'});
+  };
+  function silentConnect(){
+    if(tokenValid()){updateGlobalDriveButton(false);return;}
+    if(!initTokenClient()){setTimeout(silentConnect,700);return;}
+    STATE.autoTried=true;setBusy(true);STATE.tokenClient.requestAccessToken({prompt:''});
+  }
+  async function listTodayFile(folderId,kind){
+    var name=STATE.date+'_수진'+kind;
+    var q="'"+folderId+"' in parents and name contains '"+name.replace(/'/g,"\\'")+"' and trashed = false";
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size)');
+    var data=await (await api(url,{method:'GET'})).json();return (data.files||[])[0]||null;
+  }
+  async function readTextFile(file){
+    if(!file)return '';
+    var url;
+    if(file.mimeType==='application/vnd.google-apps.document')url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'/export?mimeType='+encodeURIComponent('text/plain');
+    else if(file.mimeType==='application/vnd.google-apps.spreadsheet')throw new Error('업무지시는 Google 문서 또는 텍스트 파일로 저장해주세요.');
+    else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media';
+    return (await api(url,{method:'GET'})).text();
+  }
+  function renderInstruction(text){
+    var box=field('wsj-instruction'),link=field('wsj-source');if(!box)return;
+    box.textContent=text||'오늘 전달된 업무지시가 없습니다.\n대표님 GPT가 01_업무지시 폴더에 오늘 날짜 문서를 저장하면 여기에 표시됩니다.';
+    box.className='wsj-instruction'+(text?'':' empty');
+    if(link){if(STATE.instructionFile&&STATE.instructionFile.webViewLink){link.href=STATE.instructionFile.webViewLink;link.style.display='inline'}else link.style.display='none'}
+  }
+  async function loadInstruction(){STATE.instructionFile=await listTodayFile(INSTRUCTION_FOLDER_ID,'업무지시');renderInstruction(await readTextFile(STATE.instructionFile))}
+  async function loadJournal(){
+    STATE.journalFile=await listTodayFile(JOURNAL_FOLDER_ID,'업무일지');
+    var memo=field('wsj-memo');if(memo)memo.value=STATE.journalFile?await readTextFile(STATE.journalFile):'';
+    var saved=field('wsj-saved');if(saved)saved.textContent=STATE.journalFile?'저장된 오늘 업무메모를 불러왔습니다.':'아직 저장된 오늘 업무메모가 없습니다.';
+  }
+  async function loadAll(){
+    if(!tokenValid())return;
+    setStatus('오늘 업무지시와 업무메모를 불러오는 중입니다.','warn');
+    await verifyFolders();await Promise.all([loadInstruction(),loadJournal()]);
+    setStatus('업무공유폴더 연결됨 · '+STATE.date+' 기준','ok');
+    updateGlobalDriveButton(false);
+  }
+  function multipartBody(metadata,text,boundary){
+    var head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n';
+    return new Blob([head,text,'\r\n--'+boundary+'--'],{type:'multipart/related; boundary='+boundary});
+  }
+  async function createJournal(text){
+    var boundary='wsj_'+Date.now()+'_'+Math.random().toString(16).slice(2),name=STATE.date+'_수진업무일지.txt';
+    var metadata={name:name,mimeType:'text/plain',parents:[JOURNAL_FOLDER_ID],description:'WD 업무센터 수진 업무메모 · '+STATE.date};
+    var res=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body:multipartBody(metadata,text,boundary)});
+    return res.json();
+  }
+  async function updateJournal(file,text){
+    if(file.mimeType==='application/vnd.google-apps.document')throw new Error('업무일지는 업무센터가 만든 텍스트 원본으로 저장해주세요.');
+    var res=await api('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(file.id)+'?uploadType=media&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'PATCH',headers:{'Content-Type':'text/plain; charset=UTF-8'},body:text});
+    return res.json();
+  }
+  window.wsjSave=async function(){
+    if(STATE.saving)return;var memo=field('wsj-memo'),text=String((memo&&memo.value)||'');
+    if(!text.trim()){if(typeof showT==='function')showT('업무메모를 입력해주세요.');return;}
+    if(!tokenValid()){setStatus('먼저 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
+    STATE.saving=true;var button=field('wsj-save');if(button){button.disabled=true;button.textContent='저장 중…'}
+    try{
+      STATE.journalFile=STATE.journalFile?await updateJournal(STATE.journalFile,text):await createJournal(text);
+      var saved=field('wsj-saved');if(saved)saved.textContent='방금 02_업무일지 폴더에 저장했습니다.';
+      setStatus('업무메모 저장 완료 · 02_업무일지 폴더에 저장되었습니다.','ok');
+      if(typeof showT==='function')showT('📒 수진 업무메모 저장 완료');
+    }catch(e){console.error('[sujin-journal-drive save]',e);setStatus('업무메모 저장 실패 · '+String(e.message||e).substring(0,85),'error');}
+    finally{STATE.saving=false;if(button){button.disabled=false;button.textContent='업무메모 저장'}}
+  };
+  window.wsjOpenFiles=function(){window.open('https://drive.google.com/drive/folders/'+FILES_FOLDER_ID,'_blank','noopener,noreferrer')};
+  function installGlobalDriveEntry(){
+    var host=document.querySelector('.wc-head-status');if(!host||field('wc-global-drive-entry'))return;
+    var button=document.createElement('button');button.type='button';button.id='wc-global-drive-entry';button.className='warn';button.textContent='Google Drive 연결';button.onclick=window.wsjConnect;host.appendChild(button);
+    if(!field('wc-drive-entry-guard')){
+      var guard=document.createElement('div');guard.id='wc-drive-entry-guard';guard.innerHTML='<div class="wc-drive-entry-box" role="dialog" aria-modal="true" aria-labelledby="wc-drive-entry-title"><div class="wc-drive-entry-icon">📁</div><h2 id="wc-drive-entry-title">업무센터 Drive 연결</h2><p>업무센터를 시작하기 전에 Google Drive를 한 번 연결합니다.</p><div class="wc-drive-entry-list">✓ 오늘 업무지시 불러오기<br>✓ 업무메모 저장<br>✓ 작업결과 보관·업무공유파일 공동 사용</div><button type="button" id="wc-drive-entry-action" class="wc-drive-entry-action" onclick="wsjConnect()">Google Drive 연결하고 시작</button><div id="wc-drive-entry-state" class="wc-drive-entry-state">연결 후 모든 메뉴에서 같은 Drive 연결을 사용합니다.</div></div>';document.body.appendChild(guard);
+    }
+    updateGlobalDriveButton(false);
+  }
+  function install(){
+    if(!isSujin())return;var panel=field('wcn-panel-journal');if(!panel||field('wsj-shell'))return;
+    STATE.date=kstDate();
+    panel.style.maxWidth='100%';panel.innerHTML='<section id="wsj-shell" class="wsj-shell">'
+      +'<header class="wsj-head"><div><div class="wsj-eyebrow">SUJIN DAILY WORK</div><h2>수진 업무일지</h2><p>'+STATE.date+' · 대표님 업무지시를 확인하고 오른쪽에 일하면서 메모하세요.</p></div>'
+      +'<div class="wsj-head-actions"><button type="button" class="wsj-btn" onclick="wsjOpenFiles()">📁 업무공유파일</button></div></header>'
+      +'<div id="wsj-status" class="wsj-status">업무센터의 공용 Drive 연결로 오늘 업무지시와 저장된 메모를 자동으로 불러옵니다.</div>'
+      +'<div class="wsj-grid"><article class="wsj-card"><div class="wsj-card-head"><div><div class="wsj-card-title">오늘 할 일</div><div class="wsj-card-note">대표님이 보낸 업무지시 · 읽기 전용</div></div><a id="wsj-source" class="wsj-source" target="_blank" rel="noopener noreferrer">원본 열기</a></div><div id="wsj-instruction" class="wsj-instruction empty">Google Drive 연결 후 오늘 업무지시를 표시합니다.</div></article>'
+      +'<article class="wsj-card memo"><div class="wsj-card-head"><div><div class="wsj-card-title">업무메모</div><div class="wsj-card-note">일하면서 자유롭게 작성하는 수진의 스티커메모</div></div></div><textarea id="wsj-memo" class="wsj-memo" placeholder="오늘 한 일, 확인한 것, 진행 중인 내용, 남은 일을 편하게 적으세요."></textarea><div class="wsj-savebar"><span id="wsj-saved" class="wsj-saved">업무센터 Drive 연결을 확인하고 있습니다.</span><button type="button" id="wsj-save" class="wsj-save" onclick="wsjSave()">업무메모 저장</button></div></article></div>'
+      +'</section>';
+    if(restoreSession())loadAll().catch(function(e){setStatus('자동 연결 확인 실패 · Google Drive를 다시 연결해주세요.','warn')});
+  }
+  var baseSwitch=window.wcnTabSwitch;
+  if(typeof baseSwitch==='function')window.wcnTabSwitch=function(tab){baseSwitch(tab);if(tab==='journal')install()};
+  function boot(){
+    installGlobalDriveEntry();install();
+    if(restoreSession()){
+      hideEntryGuard();
+      updateGlobalDriveButton(false);
+      if(isSujin()&&field('wsj-shell'))loadAll().catch(function(e){setStatus('자동 연결 확인 실패 · 상단 Drive 연결을 눌러주세요.','warn')});
+    }else showEntryGuard('Google 계정을 연결해야 업무센터를 사용할 수 있습니다.');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.__WC_SUJIN_JOURNAL_DRIVE_V1__=true;
+})();
+</script>
 </body>
 </html>
