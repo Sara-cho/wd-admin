@@ -1473,7 +1473,6 @@
                 <button class="aa-detail-action" id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="background:#F0FDF4;border:1px solid #BBF7D0;color:#16A34A;">✏️ 수정</button>
                 <button class="aa-detail-action" id="aa-det-delete-btn" onclick="aaDelete()" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;">🗑 삭제</button>
                 <button class="aa-detail-action" id="aa-det-replace-btn" onclick="aaDetailReplace()" disabled style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;">↻ 교체</button>
-                <button class="aa-detail-action" id="aa-det-preview-btn" onclick="aaDetailPreview()" disabled style="background:#F0FDF4;border:1px solid #86EFAC;color:#15803D;">👁 미리보기</button>
                 <button class="aa-detail-action" id="aa-det-download-btn" onclick="aaDetailDownload()" disabled style="background:#166534;border:1px solid #166534;color:#fff;">↓ 다운로드</button>
                 <button onclick="aaCloseDetailModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;padding:0 0 0 4px;">×</button>
               </div>
@@ -1493,8 +1492,9 @@
               <input id="aa-drive-replace-input" type="file" style="display:none;" onchange="aaDriveReplaceSelected(this)">
             </div>
             <div id="aa-inline-preview" style="display:none;margin-top:14px;border:1px solid #CBD5E1;border-radius:11px;overflow:hidden;background:#fff;">
-              <div style="padding:9px 11px;border-bottom:1px solid #E2E8F0;background:#F8FAFC;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid #E2E8F0;background:#F8FAFC;">
                 <div id="aa-inline-preview-title" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:900;color:#334155;">파일 미리보기</div>
+                <button type="button" onclick="aaExpandInlinePreview()" style="flex:0 0 auto;padding:5px 8px;border:1px solid #BFDBFE;border-radius:6px;background:#EFF6FF;color:#1D4ED8;font-size:10px;font-weight:800;cursor:pointer;">⛶ 크게 보기</button>
               </div>
               <div id="aa-inline-preview-stage" style="height:300px;display:flex;align-items:center;justify-content:center;background:#EEF2F7;overflow:auto;padding:10px;box-sizing:border-box;"></div>
             </div>
@@ -8756,10 +8756,8 @@ function aaUpdateDetailActions(){
   var selected=_aaDetailSelectedFile;
   var archiveOnly=!!(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료');
   var replaceBtn=document.getElementById('aa-det-replace-btn');
-  var previewBtn=document.getElementById('aa-det-preview-btn');
   var downloadBtn=document.getElementById('aa-det-download-btn');
   if(replaceBtn){replaceBtn.disabled=!selected||selected.source!=='drive'||archiveOnly;replaceBtn.title=replaceBtn.disabled?'Drive 파일을 선택하면 교체할 수 있습니다.':'';}
-  if(previewBtn){previewBtn.disabled=!selected||!selected.previewable;previewBtn.title=previewBtn.disabled?'미리보기 가능한 이미지·PDF를 선택해주세요.':'';}
   if(downloadBtn)downloadBtn.disabled=!selected;
   var rows=document.querySelectorAll('.aa-detail-file-row');
   for(var i=0;i<rows.length;i++)rows[i].classList.toggle('selected',!!selected&&rows[i].getAttribute('data-file-key')===selected.key);
@@ -8776,10 +8774,6 @@ window.aaSelectDetailLegacyFile=function(fileId){
 };
 window.aaDetailReplace=function(){
   if(_aaDetailSelectedFile&&_aaDetailSelectedFile.source==='drive')aaDrivePromptReplace(_aaDetailSelectedFile.id);
-};
-window.aaDetailPreview=function(){
-  var file=_aaDetailSelectedFile;if(!file||!file.previewable)return;
-  if(file.source==='drive')aaDrivePreviewFile(file.id);else aaPreviewFile(file.path,file.name,file.mimeType);
 };
 window.aaDetailDownload=function(){
   var file=_aaDetailSelectedFile;if(!file)return;
