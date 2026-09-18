@@ -1356,9 +1356,23 @@
         </select>
       </div>
 
-      <!-- 목록 테이블 (전체폭, 상세는 모달로 오픈) -->
+      <style id="aa-split-detail-style">
+        #aa-layout.aa-detail-open{display:grid;grid-template-columns:minmax(0,3fr) minmax(360px,2fr);gap:12px;align-items:start}
+        #aa-list-pane{min-width:0;overflow-x:auto}
+        #aa-detail-modal-overlay{min-width:0}
+        #aa-detail-pane-inner{scrollbar-gutter:stable}
+        #aa-inline-preview-stage img,#aa-preview-stage img{display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 4px 18px rgba(15,23,42,.12)}
+        #aa-inline-preview-stage iframe,#aa-preview-stage iframe{width:100%;height:100%;border:0;background:#fff}
+        @media(max-width:900px){
+          #aa-layout.aa-detail-open{display:block}
+          #aa-detail-modal-overlay{position:fixed!important;inset:0!important;z-index:9250!important;height:auto!important;min-height:0!important;background:rgba(0,0,0,.5)!important;padding:12px!important;align-items:center!important;justify-content:center!important}
+          #aa-detail-pane-inner{width:96vw!important;max-width:720px!important;height:90vh!important;border-radius:16px!important;padding:18px!important}
+        }
+      </style>
+
+      <!-- 목록 + 앱시트형 우측 상세판 -->
       <div id="aa-layout" style="min-height:400px;">
-        <div style="overflow-x:auto;">
+        <div id="aa-list-pane">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
               <tr style="background:#F8F7F4;border-bottom:2px solid #E5E0D5;">
@@ -1375,11 +1389,10 @@
             </tbody>
           </table>
         </div>
-      </div><!-- /aa-layout -->
 
-      <!-- ── 자료 상세보기 모달 ── -->
-      <div id="aa-detail-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9250;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px;box-sizing:border-box;" onclick="if(event.target===this) aaCloseDetailModal()">
-        <div style="background:#F8F7F4;border-radius:18px;padding:26px;width:96vw;max-width:1180px;height:90vh;overflow-y:auto;box-sizing:border-box;box-shadow:0 16px 60px rgba(0,0,0,.25);">
+      <!-- ── 자료 상세보기 우측판 ── -->
+      <div id="aa-detail-modal-overlay" style="display:none;position:sticky;top:12px;height:calc(100vh - 250px);min-height:520px;box-sizing:border-box;">
+        <div id="aa-detail-pane-inner" style="background:#F8F7F4;border:1px solid #E5E0D5;border-radius:14px;padding:18px;width:100%;height:100%;overflow-y:auto;box-sizing:border-box;box-shadow:0 6px 24px rgba(15,23,42,.08);">
           <div id="aa-detail-content">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;">
               <div style="flex:1;min-width:0;">
@@ -1407,10 +1420,21 @@
               <div id="aa-file-list"><div style="font-size:11px;color:#94a3b8;">첨부파일 없음</div></div>
               <input id="aa-drive-replace-input" type="file" style="display:none;" onchange="aaDriveReplaceSelected(this)">
             </div>
+            <div id="aa-inline-preview" style="display:none;margin-top:14px;border:1px solid #CBD5E1;border-radius:11px;overflow:hidden;background:#fff;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid #E2E8F0;background:#F8FAFC;">
+                <div id="aa-inline-preview-title" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:900;color:#334155;">파일 미리보기</div>
+                <div style="display:flex;gap:5px;flex:0 0 auto;">
+                  <button type="button" onclick="aaExpandInlinePreview()" style="padding:5px 8px;border:1px solid #BFDBFE;border-radius:6px;background:#EFF6FF;color:#1D4ED8;font-size:10px;font-weight:800;cursor:pointer;">⛶ 크게 보기</button>
+                  <button type="button" onclick="aaCloseInlinePreview()" style="padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;background:#fff;color:#64748B;font-size:10px;font-weight:800;cursor:pointer;">닫기</button>
+                </div>
+              </div>
+              <div id="aa-inline-preview-stage" style="height:300px;display:flex;align-items:center;justify-content:center;background:#EEF2F7;overflow:auto;padding:10px;box-sizing:border-box;"></div>
+            </div>
           </div>
         </div>
       </div>
-      <!-- /자료 상세보기 모달 -->
+      <!-- /자료 상세보기 우측판 -->
+      </div><!-- /aa-layout -->
 
       <!-- ── 이미지·PDF 파일 미리보기 모달 ── -->
       <div id="aa-file-preview-overlay" style="display:none;position:fixed;inset:0;z-index:9350;background:rgba(15,23,42,.72);align-items:center;justify-content:center;padding:18px;box-sizing:border-box;" onclick="if(event.target===this) aaCloseFilePreview()">
@@ -8408,20 +8432,23 @@ window.aaSelectRow = async function(id){
   document.getElementById('aa-file-list').innerHTML='<div style="font-size:11px;color:#94a3b8;">파일 불러오는 중...</div>';
   var fi = document.getElementById('aa-file-input'); if(fi){fi.value='';fi.disabled=!!a.__driveOnly||archiveOnly;if(fi.parentElement)fi.parentElement.style.display=(a.__driveOnly||archiveOnly)?'none':'flex';}
 
-  // 상세 모달 열기
+  // 앱시트형 우측 상세판 열기
   aaOpenDetailModal();
 
   await aaLoadFiles(id);
 };
 
-/* ── 상세 모달 열기/닫기 ── */
+/* ── 앱시트형 우측 상세판 열기/닫기 ── */
 window.aaOpenDetailModal = function(){
-  var ov = document.getElementById('aa-detail-modal-overlay');
-  if(ov) ov.style.display = 'flex';
+  var ov=document.getElementById('aa-detail-modal-overlay'),layout=document.getElementById('aa-layout');
+  if(layout)layout.classList.add('aa-detail-open');
+  if(ov)ov.style.display='flex';
 };
 window.aaCloseDetailModal = function(){
-  var ov = document.getElementById('aa-detail-modal-overlay');
-  if(ov) ov.style.display = 'none';
+  var ov=document.getElementById('aa-detail-modal-overlay'),layout=document.getElementById('aa-layout');
+  if(ov)ov.style.display='none';
+  if(layout)layout.classList.remove('aa-detail-open');
+  aaCloseInlinePreview();
 };
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape'){
@@ -8678,8 +8705,10 @@ async function aaLoadFiles(archiveId){
         var kb=f.size?Math.round(Number(f.size)/1024)+'KB':'';
         var uploadDate=f.modifiedTime?f.modifiedTime.substring(0,10):'';
         var meta=[kb,uploadDate].filter(Boolean).join(' · ');
+        var previewable=!!aaPreviewKind(f.name,f.mimeType);
         return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #DCFCE7;flex-wrap:wrap;">'
           +'<span style="font-size:11.5px;flex:1;min-width:180px;color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">☁️ '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
+          +(previewable?'<button onclick="aaDrivePreviewFile(\''+f.id+'\')" style="padding:5px 10px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;font-size:10px;font-weight:800;color:#15803D;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">미리보기</button>':'')
           +'<button onclick="aaDriveDownloadFile(\''+f.id+'\')" style="padding:5px 10px;background:#166534;border:1px solid #166534;border-radius:6px;font-size:10px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">원본 다운로드</button>'
           +(archiveOnly?'':'<button onclick="aaDrivePromptReplace(\''+f.id+'\')" style="padding:5px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:800;color:#1D4ED8;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 교체</button>')
           +(archiveOnly?'':'<button onclick="aaDriveDeleteSingleFile(\''+f.id+'\')" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:800;color:#DC2626;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 삭제</button>')
@@ -8710,7 +8739,13 @@ async function aaLoadFiles(archiveId){
         +'</div>';
       }).join('');
     }
+    if(!_aaCurrent||String(_aaCurrent.id)!==String(archiveId))return;
     el.innerHTML=html||'<div style="font-size:11px;color:#94a3b8;">첨부파일 없음</div>';
+    aaCloseInlinePreview();
+    var firstDrive=driveFiles.find(function(file){return !!aaPreviewKind(file.name,file.mimeType)});
+    var firstLegacy=legacyFiles.find(function(file){return !!aaPreviewKind(file.file_name,file.file_type)});
+    if(firstDrive)await aaDrivePreviewFile(firstDrive.id,true);
+    else if(firstLegacy)await aaPreviewFile(firstLegacy.file_path,firstLegacy.file_name,firstLegacy.file_type,true);
   } catch(e){
     var el2=document.getElementById('aa-file-list');
     if(el2) el2.innerHTML='<div style="font-size:11px;color:#ef4444;">파일 목록 불러오기 실패</div>';
@@ -8728,13 +8763,38 @@ function aaPreviewKind(fileName,fileType){
   if(mime==='application/pdf' || ext==='pdf') return 'pdf';
   return '';
 }
-window.aaCloseFilePreview=function(){
-  var ov=document.getElementById('aa-file-preview-overlay');
-  var stage=document.getElementById('aa-preview-stage');
-  if(stage) stage.innerHTML='';
-  if(ov) ov.style.display='none';
+var _aaInlinePreviewState={url:'',kind:'',name:'',objectUrl:false};
+function aaRenderPreviewStage(stage,state){
+  if(!stage)return;stage.innerHTML='';
+  if(state.kind==='image'){
+    var img=document.createElement('img');img.src=state.url;img.alt=String(state.name||'이미지 미리보기');stage.appendChild(img);
+  }else if(state.kind==='pdf'){
+    var frame=document.createElement('iframe');frame.src=state.url;frame.title=String(state.name||'PDF 미리보기');stage.appendChild(frame);
+  }
+}
+function aaShowInlinePreview(url,kind,fileName,isObjectUrl){
+  if(_aaInlinePreviewState.objectUrl&&_aaInlinePreviewState.url)try{URL.revokeObjectURL(_aaInlinePreviewState.url)}catch(_ignore){}
+  _aaInlinePreviewState={url:url,kind:kind,name:String(fileName||'파일'),objectUrl:!!isObjectUrl};
+  var box=document.getElementById('aa-inline-preview'),title=document.getElementById('aa-inline-preview-title'),stage=document.getElementById('aa-inline-preview-stage');
+  if(title)title.textContent='미리보기 · '+_aaInlinePreviewState.name;
+  aaRenderPreviewStage(stage,_aaInlinePreviewState);if(box)box.style.display='block';
+}
+window.aaCloseInlinePreview=function(){
+  var box=document.getElementById('aa-inline-preview'),stage=document.getElementById('aa-inline-preview-stage');
+  if(stage)stage.innerHTML='';if(box)box.style.display='none';
+  if(_aaInlinePreviewState.objectUrl&&_aaInlinePreviewState.url)try{URL.revokeObjectURL(_aaInlinePreviewState.url)}catch(_ignore){}
+  _aaInlinePreviewState={url:'',kind:'',name:'',objectUrl:false};
 };
-window.aaPreviewFile=async function(filePath,fileName,fileType){
+window.aaExpandInlinePreview=function(){
+  if(!_aaInlinePreviewState.url)return;
+  var title=document.getElementById('aa-preview-title'),stage=document.getElementById('aa-preview-stage'),ov=document.getElementById('aa-file-preview-overlay');
+  if(title)title.textContent='미리보기 · '+_aaInlinePreviewState.name;aaRenderPreviewStage(stage,_aaInlinePreviewState);if(ov)ov.style.display='flex';
+};
+window.aaCloseFilePreview=function(){
+  var ov=document.getElementById('aa-file-preview-overlay'),stage=document.getElementById('aa-preview-stage');
+  if(stage)stage.innerHTML='';if(ov)ov.style.display='none';
+};
+window.aaPreviewFile=async function(filePath,fileName,fileType,quiet){
   var kind=aaPreviewKind(fileName,fileType);
   if(!kind){ aaOpenFile(filePath); return; }
   try{
@@ -8744,26 +8804,18 @@ window.aaPreviewFile=async function(filePath,fileName,fileType){
     if(!res.ok) throw new Error('미리보기 주소 발급 실패');
     var d=await res.json();
     var url=aaSbUrl()+'/storage/v1'+d.signedURL;
-    var title=document.getElementById('aa-preview-title');
-    var stage=document.getElementById('aa-preview-stage');
-    var ov=document.getElementById('aa-file-preview-overlay');
-    if(title) title.textContent='미리보기 · '+String(fileName||'파일');
-    if(stage){
-      stage.innerHTML='';
-      if(kind==='image'){
-        var img=document.createElement('img');
-        img.src=url;img.alt=String(fileName||'이미지 미리보기');
-        img.style.cssText='display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 4px 22px rgba(15,23,42,.12);';
-        stage.appendChild(img);
-      }else{
-        var frame=document.createElement('iframe');
-        frame.src=url;frame.title=String(fileName||'PDF 미리보기');
-        frame.style.cssText='width:100%;height:100%;border:0;border-radius:10px;background:#fff;';
-        stage.appendChild(frame);
-      }
-    }
-    if(ov) ov.style.display='flex';
-  }catch(e){ alert('파일 미리보기 실패: '+e.message); }
+    aaShowInlinePreview(url,kind,fileName,false);
+  }catch(e){if(!quiet)alert('파일 미리보기 실패: '+e.message);}
+};
+window.aaDrivePreviewFile=async function(fileId,quiet){
+  var file=_aaDriveFiles.find(function(item){return String(item.id)===String(fileId)});if(!file)return;
+  var kind=aaPreviewKind(file.name,file.mimeType);if(!kind)return;
+  if(!aaDriveTokenValid()){if(!quiet)aaOpenDriveConnectModal();return;}
+  try{
+    var res=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media',{headers:{Authorization:'Bearer '+_aaDriveToken}});
+    if(!res.ok)throw new Error('Drive 파일을 불러오지 못했습니다.');
+    var objectUrl=URL.createObjectURL(await res.blob());aaShowInlinePreview(objectUrl,kind,file.name,true);
+  }catch(e){if(!quiet)alert('파일 미리보기 실패: '+e.message);}
 };
 
 /* ── 파일 업로드 ── */
