@@ -94,16 +94,22 @@
     window._SB_URL=_SB_URL;window.SUPA_KEY=SUPA_KEY;window._supaReady=_supaReady;
     var _UID_MAP={kfcyk50:'kfcyk50',kfcyk30:'kfcyk30'};
     function getCurrentOwnerId(){return _UID_MAP[_CURRENT_UID]||_CURRENT_UID||''}window.getCurrentOwnerId=getCurrentOwnerId;
+    var _WC_SHARED_UIDS=['kfcyk50','kfcyk30'];
+    var _WC_SHARED_USER_TABLES={work_tasks:1,payroll_records:1,work_journals:1,kit_accounts:1,tax_monthly_tasks:1,work_finance_transactions:1,work_office_purchases:1,work_inventory_items:1,work_subscriptions:1,work_hours:1,wc_ideas:1,work_task_comments:1};
+    function wcIsSharedUid(value){return _WC_SHARED_UIDS.indexOf(String(value||''))>-1}
+    function wcSharedFilter(column){return String(column||'user_id')+'=in.('+_WC_SHARED_UIDS.map(encodeURIComponent).join(',')+')'}
+    function wcUserName(uid){return String(uid||'')==='kfcyk30'?'박수진':(String(uid||'')==='kfcyk50'?'최윤경':String(uid||''))}
+    window.wcSharedFilter=wcSharedFilter;window.wcUserName=wcUserName;
     var _WC_ACCESS_TOKEN='';
     window.wcSetAuthToken=function(token){_WC_ACCESS_TOKEN=String(token||'');window.__WD_WORK_SECURE_AUTH__=!!_WC_ACCESS_TOKEN;try{window.dispatchEvent(new CustomEvent('wd-work-auth-ready',{detail:{ready:!!_WC_ACCESS_TOKEN}}))}catch(e){}};
     window.addEventListener('message',function(event){if(event&&event.data&&event.data.type==='wdhq:work-auth-token')window.wcSetAuthToken(event.data.token||'')});
     function wcRequestAuthToken(){try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'wdhq:request-work-auth'},'*')}catch(e){}}
     function _sbHeaders(extra){var bearer=_WC_ACCESS_TOKEN||SUPA_KEY;var h={apikey:SUPA_KEY,Authorization:'Bearer '+bearer,'Content-Type':'application/json'};if(extra)Object.assign(h,extra);return h}
-    async function _sbSelect(table,query,opts){opts=opts||{};var url=_SB_URL+'/rest/v1/'+table+'?select='+(query||'*');if(opts.eq)Object.keys(opts.eq).forEach(function(k){url+='&'+k+'=eq.'+encodeURIComponent(opts.eq[k])});if(opts.like)Object.keys(opts.like).forEach(function(k){url+='&'+k+'=like.'+encodeURIComponent(opts.like[k])});if(opts.order)url+='&order='+opts.order+(opts.asc?'.asc':'.desc');if(opts.limit)url+='&limit='+opts.limit;var h=_sbHeaders();if(opts.single)h.Accept='application/vnd.pgrst.object+json';var res=await fetch(url,{headers:h});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=await res.json();return{data:opts.single?(data||null):(data||[]),error:null}}
+    async function _sbSelect(table,query,opts){opts=opts||{};var url=_SB_URL+'/rest/v1/'+table+'?select='+(query||'*');if(opts.eq)Object.keys(opts.eq).forEach(function(k){if(k==='user_id'&&_WC_SHARED_USER_TABLES[table]&&wcIsSharedUid(opts.eq[k]))url+='&'+wcSharedFilter('user_id');else url+='&'+k+'=eq.'+encodeURIComponent(opts.eq[k])});if(opts.like)Object.keys(opts.like).forEach(function(k){url+='&'+k+'=like.'+encodeURIComponent(opts.like[k])});if(opts.order)url+='&order='+opts.order+(opts.asc?'.asc':'.desc');if(opts.limit)url+='&limit='+opts.limit;var h=_sbHeaders();if(opts.single)h.Accept='application/vnd.pgrst.object+json';var res=await fetch(url,{headers:h});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=await res.json();return{data:opts.single?(data||null):(data||[]),error:null}}
     async function _sbInsert(table,payload,opts){opts=opts||{};var h=_sbHeaders();if(opts.returning)h.Prefer='return=representation';var res=await fetch(_SB_URL+'/rest/v1/'+table,{method:'POST',headers:h,body:JSON.stringify(payload)});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=opts.returning?await res.json():null;return{data:data&&data[0]||null,error:null}}
     async function _sbUpdate(table,payload,eqCol,eqVal){var res=await fetch(_SB_URL+'/rest/v1/'+table+'?'+eqCol+'=eq.'+encodeURIComponent(eqVal),{method:'PATCH',headers:_sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify(payload)});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));return{data:null,error:null}}
     async function _sbUpsert(table,payload,conflict){var h=_sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'});if(conflict)h.Prefer+=';on-conflict='+conflict;var res=await fetch(_SB_URL+'/rest/v1/'+table,{method:'POST',headers:h,body:JSON.stringify(payload)});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));return{data:null,error:null}}
-    async function _sbDelete(table,eqCol,eqVal){var res=await fetch(_SB_URL+'/rest/v1/'+table+'?'+eqCol+'=eq.'+encodeURIComponent(eqVal),{method:'DELETE',headers:_sbHeaders({Prefer:'return=minimal'})});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));return{data:null,error:null}}
+    async function _sbDelete(table,eqCol,eqVal){var shared=!!(_WC_SHARED_USER_TABLES[table]&&_CURRENT_UID),url=_SB_URL+'/rest/v1/'+table+'?'+eqCol+'=eq.'+encodeURIComponent(eqVal);if(shared)url+='&user_id=eq.'+encodeURIComponent(_CURRENT_UID);var res=await fetch(url,{method:'DELETE',headers:_sbHeaders({Prefer:'return=representation'}),body:null});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=await res.json().catch(function(){return[]});if(shared&&!data.length)throw new Error('본인이 저장한 기록만 삭제할 수 있습니다.');return{data:data,error:null}}
     var _wcToastTimer=null;function showT(msg){var el=document.getElementById('toastEl');if(!el)return;el.textContent=msg;el.classList.add('on');clearTimeout(_wcToastTimer);_wcToastTimer=setTimeout(function(){el.classList.remove('on')},2200)}window.showT=showT;
     function wcSameOriginParent(){try{return window.parent!==window&&window.parent.location.origin===location.origin?window.parent:null}catch(e){return null}}
     function wcGoHome(){var p=wcSameOriginParent();if(p&&typeof p.goTo==='function'){p.goTo('home');return}if(window.parent!==window){window.parent.postMessage({type:'wd:navigate',target:'home'},location.origin);return}var q=new URLSearchParams(location.search).get('home');location.href=q||'index.html'}
@@ -179,6 +185,13 @@
   max-width: 100% !important;
   width: 100% !important;
 }
+/* 작업결과 보관: 가운데 60% 제한을 풀어 목록 3/5 + 상세 2/5로 사용 */
+#wcn-panel-ai-archive {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
 #work-center-new #wcn-content-area:has(#wcn-panel-accounts[style*="display: block"]),
 #work-center-new #wcn-content-area:has(#wcn-panel-accounts:not([style*="display: none"])) {
   overflow-x: auto !important;
@@ -202,7 +215,6 @@
       </div>
       <div class="wc-head-status">
         <span id="wcn-header-date"></span>
-        <span id="wc-storage-status" class="wc-state pending">연결 확인 전</span>
       </div>
     </div>
   </header>
@@ -212,16 +224,26 @@
 
     <!-- 왼쪽 사이드바 -->
     <!-- ★ [v53실행] 사이드바: 크기↑, 폰트↑, 순서변경, 명칭변경 -->
-    <div id="wcn-sidebar" style="width:170px;min-width:170px;background:#fff;border-right:2px solid #E5E0D5;padding:16px 0 20px;flex-shrink:0;">
-
-      <!-- 독립 회수 첫 화면 -->
-      <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">운영 요약</div>
-      <button onclick="wcnTabSwitch('overview')" id="wcn-tab-overview" class="wc-side-button">
-        <span style="font-size:16px;">🧭</span><span>오늘 운영판</span>
-      </button>
+    <div id="wcn-sidebar" style="width:190px;min-width:190px;background:#fff;border-right:2px solid #E5E0D5;padding:16px 8px 20px;flex-shrink:0;">
 
       <!-- 그룹1: 일상 업무 -->
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">회사 업무</div>
+      <button onclick="wcnTabSwitch('journal')" id="wcn-tab-journal" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">📒</span><span style="font-size:13px;font-weight:700;color:#78716C;">업무일지</span>
+      </button>
+      <button onclick="wcnTabSwitch('hours')" id="wcn-tab-hours" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">🕐</span><span style="font-size:13px;font-weight:700;color:#78716C;">근무기록</span>
+      </button>
+      <button onclick="wcnTabSwitch('manual')" id="wcn-tab-manual" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">📘</span><span style="font-size:13px;font-weight:700;color:#78716C;">업무매뉴얼</span>
+      </button>
+      <button onclick="wcnTabSwitch('ai-archive')" id="wcn-tab-ai-archive" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">🤖</span><span style="font-size:13px;font-weight:700;color:#78716C;">작업결과 보관</span>
+      </button>
+      <!-- [v20] 아이디어·자료수집함 — work_tasks 기준 -->
+      <button onclick="wcnTabSwitch('share')" id="wcn-tab-share" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">💡</span><span style="font-size:13px;font-weight:700;color:#78716C;">아이디어·자료수집함</span>
+      </button>
       <button onclick="wcnTabSwitch('daily-haru')" id="wcn-tab-daily-haru" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
         <span style="font-size:16px;">☀️</span><span style="font-size:13px;font-weight:700;color:#78716C;">윤경의 하루</span>
       </button>
@@ -229,23 +251,6 @@
       <button onclick="wcnTabSwitch('idea')" id="wcn-tab-idea" style="display:none;">
         <span>💡</span><span>아이디어모음(구)</span>
       </button>
-      <!-- [v20] 아이디어모음 — work_tasks 기준 -->
-      <button onclick="wcnTabSwitch('share')" id="wcn-tab-share" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">💡</span><span style="font-size:13px;font-weight:700;color:#78716C;">아이디어모음</span>
-      </button>
-      <!-- [v61실행] 근무기록 → 업무일지 앞으로 이동 -->
-      <button onclick="wcnTabSwitch('hours')" id="wcn-tab-hours" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">🕐</span><span style="font-size:13px;font-weight:700;color:#78716C;">근무기록</span>
-      </button>
-      <button onclick="wcnTabSwitch('journal')" id="wcn-tab-journal" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">📒</span><span style="font-size:13px;font-weight:700;color:#78716C;">업무일지</span>
-      </button>
-      <button onclick="wcnTabSwitch('ai-archive')" id="wcn-tab-ai-archive" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
-        <span style="font-size:16px;">🤖</span><span style="font-size:13px;font-weight:700;color:#78716C;">작업결과 보관</span>
-      </button>
-      <a href="https://drive.google.com/drive/u/1/folders/1JL2yPIdGdJHoGEFBJRz16otTJZAEkAiH" target="_blank" rel="noopener noreferrer" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;text-decoration:none;">
-        <span style="font-size:16px;">📁</span><span style="font-size:13px;font-weight:700;color:#78716C;">구글드라이브</span>
-      </a>
       <!-- 구분선 + 그룹2 -->
       <div style="border-top:2px solid #E5E0D5;margin:14px 12px 12px;"></div>
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">월간 정산</div>
@@ -528,6 +533,58 @@
         <div id="wh-month-list" style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px;"></div>
       </div>
 
+    </div>
+
+    <style id="wc-manual-style">
+      #wcn-panel-manual{max-width:100%!important;width:100%!important;margin:0!important}
+      .wm-shell{color:#1c1917}.wm-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:7px}.wm-head h2{margin:0;font-size:18px}.wm-head p{display:none}.wm-head-actions,.wm-reader-actions{display:flex;align-items:center;gap:7px}.wm-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 13px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#44403c;font:800 12px 'Noto Sans KR',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}.wm-btn.refresh{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.wm-btn.edit{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.wm-btn.danger{border-color:#fecaca;background:#fff;color:#dc2626}.wm-btn:disabled{opacity:.55;cursor:wait}
+      .wm-controls{display:flex;align-items:center;gap:12px;margin-bottom:9px;border-bottom:2px solid #e2e8f0}.wm-tabs{display:flex;min-width:0;flex:1;overflow-x:auto}.wm-tabs button{padding:11px 21px;border:0;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font:800 14px 'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap;margin-bottom:-2px}.wm-tabs button.on{border-bottom-color:#fbbf24;color:#1c1917}.wm-controls input{width:250px;min-width:180px;margin-bottom:6px;padding:9px 12px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#292524;font:500 13px 'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box}.wm-controls input:focus{border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.1)}
+      .wm-status{display:none;margin-bottom:9px;padding:8px 11px;border:1px solid #e7e5e4;border-radius:9px;background:#fafaf9;color:#78716c;font-size:10.5px;font-weight:700}.wm-status.show{display:block}.wm-status.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}.wm-status.error{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
+      .wm-layout{display:grid;height:clamp(540px,calc(100vh - 205px),760px);grid-template-columns:minmax(0,3fr) minmax(390px,2fr);gap:14px;align-items:stretch}.wm-list-card,.wm-reader{min-height:0;overflow:hidden}.wm-list-card{display:flex;flex-direction:column;background:transparent}.wm-list-head{display:grid;grid-template-columns:minmax(0,1fr) 125px 120px 105px;gap:10px;align-items:center;padding:12px 14px;border-bottom:2px solid #e5e0d5;background:#f8f7f4;color:#78716c;font-size:12px;font-weight:900}.wm-list-head span{color:#78716c;font-size:12px}.wm-list-head small{margin-left:6px;color:#a8a29e;font-size:10px}.wm-list{min-height:0;flex:1;overflow:auto}.wm-row{display:grid;width:100%;grid-template-columns:minmax(0,1fr) 125px 120px 105px;gap:10px;align-items:center;padding:13px 14px;border:0;border-bottom:1px solid #eeeae3;background:transparent;text-align:left;cursor:pointer;font-family:'Noto Sans KR',sans-serif}.wm-row:hover{background:#fffaf0}.wm-row.on{background:#fff5b8}.wm-row-title{overflow:hidden;color:#292524;font-size:14px;font-weight:900;text-overflow:ellipsis;white-space:nowrap}.wm-row-cell{overflow:hidden;color:#78716c;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.wm-pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:900}.wm-empty{display:flex;min-height:220px;align-items:center;justify-content:center;padding:22px;color:#a8a29e;font-size:12.5px;text-align:center}
+      .wm-reader{display:flex;flex-direction:column;border:1px solid #e5e0d5;border-radius:14px;background:#f8f7f4;box-shadow:0 6px 24px rgba(15,23,42,.06)}.wm-reader-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid #e5e0d5;background:#f8f7f4}.wm-reader-head h3{margin:6px 0 0;font-size:18px}.wm-reader-head p{margin:6px 0 0;color:#78716c;font-size:12px;font-weight:600}.wm-category{display:inline-block;padding:4px 9px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:10.5px;font-weight:900}.wm-reader-body{min-height:0;flex:1;overflow:auto;margin:12px;padding:22px 23px;border:1px solid #e5e0d5;border-radius:10px;background:#fff;white-space:pre-wrap;word-break:keep-all;color:#292524;font:500 15.5px/1.9 'Noto Sans KR',sans-serif}.wm-reader-body.empty{display:flex;align-items:center;justify-content:center;color:#a8a29e;text-align:center}.wm-reader-body iframe{width:100%;height:100%;border:0;background:#fff}
+      @media(max-width:900px){.wm-layout{height:auto;grid-template-columns:1fr}.wm-list-card{height:340px}.wm-reader{min-height:520px}.wm-head{align-items:flex-start}.wm-reader-head{display:block}.wm-reader-head .wm-btn{margin-top:10px}.wm-controls{align-items:stretch;flex-direction:column;gap:6px}.wm-controls input{width:100%;margin-bottom:7px}.wm-tabs{width:100%}.wm-list-head,.wm-row{grid-template-columns:minmax(0,1fr) 65px 78px}.wm-list-head>*:last-child,.wm-row>*:last-child{display:none}}
+      @media(max-width:640px){.wm-head{display:block}.wm-head-actions{margin-top:10px}.wm-head-actions .wm-btn{flex:1}.wm-tabs button{padding:9px 14px}.wm-reader-body{padding:18px 16px;font-size:12.5px}}
+    </style>
+    <!-- ── 업무매뉴얼: Google Drive 03_업무매뉴얼 원본 조회 ── -->
+    <div id="wcn-panel-manual" class="wcn-tab-content" style="display:none;">
+      <section class="wm-shell">
+        <header class="wm-head">
+          <div>
+            <h2>📘 업무매뉴얼</h2>
+            <p>업무 방법을 빠르게 찾고, 선택한 매뉴얼을 바로 확인합니다.</p>
+          </div>
+          <div class="wm-head-actions">
+            <a class="wm-btn" href="https://drive.google.com/drive/folders/1yx-Ded0o4oKHULmPjYUrY4GUBAZwZkQa" target="_blank" rel="noopener noreferrer">📁 업무매뉴얼 폴더 열기</a>
+            <button type="button" id="wm-refresh" class="wm-btn refresh" onclick="wmLoad(true)">↻ 새로고침</button>
+          </div>
+        </header>
+        <div class="wm-controls">
+          <div class="wm-tabs" role="tablist" aria-label="업무매뉴얼 분류">
+            <button type="button" class="on" data-wm-tab="회사운영" onclick="wmSetTab('회사운영')">회사운영</button>
+            <button type="button" data-wm-tab="보험업무" onclick="wmSetTab('보험업무')">보험업무</button>
+            <button type="button" data-wm-tab="퍼스널브랜딩" onclick="wmSetTab('퍼스널브랜딩')">퍼스널브랜딩</button>
+            <button type="button" data-wm-tab="AI강의" onclick="wmSetTab('AI강의')">AI강의</button>
+          </div>
+          <input id="wm-search" type="search" placeholder="매뉴얼 검색..." oninput="wmRender()" aria-label="매뉴얼 검색">
+        </div>
+        <div id="wm-status" class="wm-status">Drive 업무매뉴얼을 확인합니다.</div>
+        <div class="wm-layout">
+          <div class="wm-list-card">
+            <div class="wm-list-head"><strong>매뉴얼명 <small id="wm-count">0건</small></strong><span>분류</span><span>생성자</span><span>수정일</span></div>
+            <div id="wm-list" class="wm-list"><div class="wm-empty">업무매뉴얼을 불러오고 있습니다.</div></div>
+          </div>
+          <article class="wm-reader">
+            <div class="wm-reader-head">
+              <div><span id="wm-reader-category" class="wm-category">업무매뉴얼</span><h3 id="wm-reader-title">매뉴얼을 선택해주세요</h3><p id="wm-reader-meta">왼쪽 목록에서 필요한 업무 방법을 선택하세요.</p></div>
+              <div class="wm-reader-actions">
+                <a id="wm-original" class="wm-btn edit" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">✏ 매뉴얼 수정</a>
+                <button type="button" id="wm-delete" class="wm-btn danger" onclick="wmDelete()" style="display:none;">🗑 삭제</button>
+              </div>
+            </div>
+            <div id="wm-reader-body" class="wm-reader-body empty">선택한 매뉴얼의 내용이 여기에 표시됩니다.</div>
+          </article>
+        </div>
+      </section>
     </div>
 
     <!-- ── 업무공유공간 탭 [v61실행] ── -->
@@ -1306,22 +1363,21 @@
     <div id="wcn-panel-ai-archive" class="wcn-tab-content" style="display:none;">
 
       <!-- 헤더 -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
         <div>
-          <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">🤖 작업결과 보관</div>
-          <div style="font-size:13px;color:#94a3b8;">프롬프트, 업무진행방식, 지침, 스킬, 서류양식, 기타 업무 자료를 보관합니다.</div>
+          <div style="font-size:17px;font-weight:800;color:#1C1917;">🗂 작업결과 보관</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-          <span id="aa-drive-connection-badge" style="flex-shrink:0;padding:7px 10px;background:#F8FAFC;color:#64748B;border:1px solid #CBD5E1;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;">● Drive 연결 안 됨</span>
-          <a id="aa-drive-folder-link" href="https://drive.google.com/drive/folders/1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;padding:10px 16px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 Google Drive</a>
-          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:10px 14px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 Drive 확인</button>
-          <button id="aa-drive-reconcile-btn" onclick="aaDrivePreviewReconcile()" style="flex-shrink:0;padding:10px 14px;background:#FFF7ED;color:#9A3412;border:1.5px solid #FDBA74;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">연결정보 정합화</button>
-          <button onclick="aaOpenModal()" style="flex-shrink:0;padding:11px 20px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 자료 등록</button>
+          <span id="aa-drive-connection-badge" style="display:none;">● Drive 연결 안 됨</span>
+          <a id="aa-drive-folder-link" href="#" onclick="return wdOpenCompanyDrive(event)" aria-disabled="true" style="flex-shrink:0;padding:9px 14px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 Google Drive 열기</a>
+          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:9px 13px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 동기화</button>
+          <button id="aa-drive-reconcile-btn" onclick="aaDrivePreviewReconcile()" style="display:none;">연결정보 정합화</button>
+          <button id="aa-add-btn" onclick="aaOpenModal()" style="flex-shrink:0;padding:11px 20px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 자료 등록</button>
         </div>
       </div>
 
-      <div id="aa-drive-status" style="margin-bottom:12px;padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;color:#64748B;font-size:11px;line-height:1.55;">
-        Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.
+      <div id="aa-drive-status" style="display:none;">
+        회사 Google Drive 연결 전 · 기존 텍스트 자료와 분류 탭은 그대로 사용할 수 있습니다.
       </div>
 
       <!-- Google Drive 최초 연결 안내 -->
@@ -1330,41 +1386,65 @@
           <div style="width:54px;height:54px;margin:0 auto 13px;border-radius:16px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:28px;">☁️</div>
           <div id="aa-drive-connect-title" style="font-size:19px;font-weight:900;color:#1C1917;margin-bottom:8px;">Google Drive 연결하기</div>
           <div style="font-size:13px;line-height:1.7;color:#64748B;margin-bottom:7px;">작업결과 보관의 첨부파일을 최신 상태로 확인하려면 Drive 연결이 필요합니다.</div>
-          <div style="font-size:11px;color:#94A3B8;margin-bottom:20px;">연결 계정: kfcyk20@gmail.com</div>
-          <button type="button" onclick="aaDriveConnectFromModal()" style="width:100%;padding:13px;border:0;border-radius:11px;background:#2563EB;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">Google Drive 연결하기</button>
+          <div style="font-size:11px;color:#94A3B8;margin-bottom:20px;">woori 회사 계정 또는 공유받은 지점장님 계정을 선택하세요. 업무센터는 회사공통 4개 폴더만 읽고 씁니다.</div>
+          <button type="button" onclick="aaDriveConnectFromModal()" style="width:100%;padding:13px;border:0;border-radius:11px;background:#2563EB;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">Google 계정 선택</button>
           <button type="button" onclick="aaCloseDriveConnectModal()" style="width:100%;margin-top:8px;padding:11px;border:0;border-radius:11px;background:#F1F5F9;color:#64748B;font-size:12px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">나중에 · 텍스트 업무 계속하기</button>
         </div>
       </div>
 
-      <!-- 업무 자료 분류 탭바 -->
-      <div id="aa-tab-bar" style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px;gap:0;overflow-x:auto;">
+      <!-- 업무 자료 분류 탭 + 검색·정렬: 한 줄 압축 -->
+      <div id="aa-controls-row" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;min-width:0;">
+      <div id="aa-tab-bar" style="display:flex;flex:1;min-width:0;border-bottom:2px solid #e2e8f0;margin-bottom:0;gap:0;overflow-x:auto;">
         <button onclick="aaSetTab('회사운영')" id="aa-tab-회사운영" style="padding:11px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:14px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">회사운영</button>
         <button onclick="aaSetTab('보험업무')" id="aa-tab-보험업무" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">보험업무</button>
-        <button onclick="aaSetTab('AI·강의')" id="aa-tab-AI·강의" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">AI·강의</button>
-        <button onclick="aaSetTab('브랜딩·콘텐츠')" id="aa-tab-브랜딩·콘텐츠" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">브랜딩·콘텐츠</button>
-        <button onclick="aaSetTab('시스템·개발')" id="aa-tab-시스템·개발" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">시스템·개발</button>
-        <button onclick="aaSetTab('계약·기관·제출')" id="aa-tab-계약·기관·제출" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">계약·기관·제출</button>
-        <button onclick="aaSetTab('참고자료')" id="aa-tab-참고자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">참고자료</button>
-        <button onclick="aaSetTab('미분류')" id="aa-tab-미분류" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">미분류</button>
+        <button onclick="aaSetTab('퍼스널브랜딩')" id="aa-tab-퍼스널브랜딩" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">퍼스널브랜딩</button>
+        <button onclick="aaSetTab('AI강의')" id="aa-tab-AI강의" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">AI강의</button>
+        <button onclick="aaSetTab('정리이전자료')" id="aa-tab-정리이전자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">정리이전자료</button>
       </div>
 
+      <div id="aa-tab-guide" style="display:none;">현재 자료는 네 영역에 저장하고, 고객·프로젝트·자료 종류는 자료명과 검색으로 찾습니다. 정리 전 자료는 별도 탭에서 보존합니다.</div>
+
       <!-- 검색 + 상세구분 필터 + 정렬 -->
-      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-        <input id="aa-search" type="text" placeholder="작업결과 전체 검색..." oninput="aaRender()" style="flex:1;min-width:240px;padding:11px 15px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+      <div id="aa-search-row" style="display:flex;gap:7px;align-items:center;flex:0 0 350px;min-width:0;">
+        <input id="aa-search" type="text" placeholder="자료 검색..." oninput="aaRender()" style="width:100%;min-width:0;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
         <select id="aa-detail-filter" onchange="aaRender()" aria-label="상세구분 필터" style="display:none;">
           <option value="전체">상세구분 전체</option>
         </select>
-        <select id="aa-sort" onchange="aaRender()" style="padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;">
+        <select id="aa-sort" onchange="aaRender()" style="padding:8px 9px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;">
           <option value="latest">최신순</option>
           <option value="oldest">오래된순</option>
           <option value="title_asc">이름순 ㄱ-ㅎ</option>
           <option value="title_desc">이름순 ㅎ-ㄱ</option>
         </select>
       </div>
+      </div>
 
-      <!-- 목록 테이블 (전체폭, 상세는 모달로 오픈) -->
+      <style id="aa-split-detail-style">
+        #aa-layout.aa-detail-open{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px;align-items:start;width:100%}
+        #aa-list-pane{min-width:0;overflow-x:auto}
+        #aa-detail-modal-overlay{min-width:0}
+        #aa-detail-pane-inner{scrollbar-gutter:stable}
+        .aa-detail-action{padding:5px 9px;border-radius:7px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap}
+        .aa-detail-action:disabled{opacity:.38;cursor:not-allowed}
+        .aa-detail-file-row{display:flex;align-items:center;gap:6px;padding:8px 9px;border:1px solid transparent;border-bottom-color:#E5E7EB;border-radius:7px;cursor:pointer;transition:.15s background,.15s border-color}
+        .aa-detail-file-row:hover{background:#fff}
+        .aa-detail-file-row.selected{background:#FFFBEB;border-color:#FDE68A}
+        #aa-inline-preview-stage img,#aa-preview-stage img{display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 4px 18px rgba(15,23,42,.12)}
+        #aa-inline-preview-stage iframe,#aa-preview-stage iframe{width:100%;height:100%;border:0;background:#fff}
+        @media(max-width:1180px){
+          #aa-controls-row{align-items:stretch!important;flex-direction:column!important;gap:7px!important}
+          #aa-search-row{flex:0 0 auto!important;width:100%!important}
+        }
+        @media(max-width:900px){
+          #aa-layout.aa-detail-open{display:block}
+          #aa-detail-modal-overlay{position:fixed!important;inset:0!important;z-index:9250!important;height:auto!important;min-height:0!important;background:rgba(0,0,0,.5)!important;padding:12px!important;align-items:center!important;justify-content:center!important}
+          #aa-detail-pane-inner{width:96vw!important;max-width:720px!important;height:90vh!important;border-radius:16px!important;padding:18px!important}
+        }
+      </style>
+
+      <!-- 목록 + 앱시트형 우측 상세판 -->
       <div id="aa-layout" style="min-height:400px;">
-        <div style="overflow-x:auto;">
+        <div id="aa-list-pane">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
               <tr style="background:#F8F7F4;border-bottom:2px solid #E5E0D5;">
@@ -1381,11 +1461,10 @@
             </tbody>
           </table>
         </div>
-      </div><!-- /aa-layout -->
 
-      <!-- ── 자료 상세보기 모달 ── -->
-      <div id="aa-detail-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9250;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px;box-sizing:border-box;" onclick="if(event.target===this) aaCloseDetailModal()">
-        <div style="background:#F8F7F4;border-radius:18px;padding:26px;width:96vw;max-width:1180px;height:90vh;overflow-y:auto;box-sizing:border-box;box-shadow:0 16px 60px rgba(0,0,0,.25);">
+      <!-- ── 자료 상세보기 우측판 ── -->
+      <div id="aa-detail-modal-overlay" style="display:none;position:sticky;top:12px;height:calc(100vh - 250px);min-height:520px;box-sizing:border-box;">
+        <div id="aa-detail-pane-inner" style="background:#F8F7F4;border:1px solid #E5E0D5;border-radius:14px;padding:18px;width:100%;height:100%;overflow-y:auto;box-sizing:border-box;box-shadow:0 6px 24px rgba(15,23,42,.08);">
           <div id="aa-detail-content">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;">
               <div style="flex:1;min-width:0;">
@@ -1393,9 +1472,10 @@
                 <div id="aa-det-title" style="font-size:15px;font-weight:900;color:#1C1917;word-break:break-all;"></div>
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-                <button id="aa-det-copy-btn" onclick="aaCopyContent()" style="padding:5px 10px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:7px;font-size:11px;font-weight:700;color:#4338CA;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">📋 복사</button>
-                <button id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="padding:5px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:11px;font-weight:700;color:#16A34A;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">✏️ 내용 수정</button>
-                <button id="aa-det-delete-btn" onclick="aaDelete()" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:7px;font-size:11px;font-weight:700;color:#DC2626;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">🗑 자료 전체 삭제</button>
+                <button class="aa-detail-action" id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="background:#F0FDF4;border:1px solid #BBF7D0;color:#16A34A;">✏️ 수정</button>
+                <button class="aa-detail-action" id="aa-det-delete-btn" onclick="aaDelete()" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;">🗑 삭제</button>
+                <button class="aa-detail-action" id="aa-det-replace-btn" onclick="aaDetailReplace()" disabled style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;">↻ 교체</button>
+                <button class="aa-detail-action" id="aa-det-download-btn" onclick="aaDetailDownload()" disabled style="background:#166534;border:1px solid #166534;color:#fff;">↓ 다운로드</button>
                 <button onclick="aaCloseDetailModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;padding:0 0 0 4px;">×</button>
               </div>
             </div>
@@ -1413,10 +1493,18 @@
               <div id="aa-file-list"><div style="font-size:11px;color:#94a3b8;">첨부파일 없음</div></div>
               <input id="aa-drive-replace-input" type="file" style="display:none;" onchange="aaDriveReplaceSelected(this)">
             </div>
+            <div id="aa-inline-preview" style="display:none;margin-top:14px;border:1px solid #CBD5E1;border-radius:11px;overflow:hidden;background:#fff;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid #E2E8F0;background:#F8FAFC;">
+                <div id="aa-inline-preview-title" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:900;color:#334155;">파일 미리보기</div>
+                <button type="button" onclick="aaExpandInlinePreview()" style="flex:0 0 auto;padding:5px 8px;border:1px solid #BFDBFE;border-radius:6px;background:#EFF6FF;color:#1D4ED8;font-size:10px;font-weight:800;cursor:pointer;">⛶ 크게 보기</button>
+              </div>
+              <div id="aa-inline-preview-stage" style="height:300px;display:flex;align-items:center;justify-content:center;background:#EEF2F7;overflow:auto;padding:10px;box-sizing:border-box;"></div>
+            </div>
           </div>
         </div>
       </div>
-      <!-- /자료 상세보기 모달 -->
+      <!-- /자료 상세보기 우측판 -->
+      </div><!-- /aa-layout -->
 
       <!-- ── 이미지·PDF 파일 미리보기 모달 ── -->
       <div id="aa-file-preview-overlay" style="display:none;position:fixed;inset:0;z-index:9350;background:rgba(15,23,42,.72);align-items:center;justify-content:center;padding:18px;box-sizing:border-box;" onclick="if(event.target===this) aaCloseFilePreview()">
@@ -1626,20 +1714,14 @@
             <select id="aa-f-type" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;">
               <option value="회사운영">회사운영</option>
               <option value="보험업무">보험업무</option>
-              <option value="AI·강의">AI·강의</option>
-              <option value="브랜딩·콘텐츠">브랜딩·콘텐츠</option>
-              <option value="시스템·개발">시스템·개발</option>
-              <option value="계약·기관·제출">계약·기관·제출</option>
-              <option value="참고자료">참고자료</option>
-              <option value="미분류">미분류</option>
+              <option value="퍼스널브랜딩">퍼스널브랜딩</option>
+              <option value="AI강의">AI강의</option>
             </select>
           </div>
           <div>
               <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">등록자 <span style="color:#ef4444;">*</span></label>
-              <select id="aa-f-author" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#fff;">
-                <option value="최윤경">최윤경</option>
-                <option value="박수진">박수진</option>
-              </select>
+              <input id="aa-f-author" type="text" readonly aria-readonly="true"
+                style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;background:#f8fafc;color:#334155;cursor:not-allowed;">
           </div>
           <!-- 데이터이름 -->
           <div>
@@ -2302,7 +2384,7 @@ window.tx_init = function(){
   /* [2] 비동기: Supabase 보완 */
   if(window._supaReady&&window._SB_URL&&window.SUPA_KEY){
     window._txStatus('불러오는 중...');
-    fetch(window._SB_URL+'/rest/v1/tax_monthly_tasks?user_id=eq.'+encodeURIComponent(window._txUid())+'&tax_year=eq.'+window._TX.year+'&tax_month=eq.'+window._TX.month+'&limit=1',{headers:{apikey:window.SUPA_KEY,'Authorization':'Bearer '+window.SUPA_KEY}})
+  fetch(window._SB_URL+'/rest/v1/tax_monthly_tasks?'+wcSharedFilter('user_id')+'&tax_year=eq.'+window._TX.year+'&tax_month=eq.'+window._TX.month+'&order=updated_at.desc&limit=1',{headers:{apikey:window.SUPA_KEY,'Authorization':'Bearer '+window.SUPA_KEY}})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(rows){
       if(rows&&rows.length>0){
@@ -2540,6 +2622,7 @@ function acRender(){
   var tbody='<tbody>';
   list.forEach(function(r){
     var acType = r.account_type||'업무계정';
+    var isOwn=String(r.user_id||'')===String(acUid()),writer=typeof wcUserName==='function'?wcUserName(r.user_id):String(r.user_id||'');
     // memo 파싱
     var rawM=r.memo||'';
     var sepI=rawM.indexOf('\n---\n');
@@ -2572,7 +2655,7 @@ function acRender(){
 
     var tdCommon='<tr data-view-id="'+r.id+'" style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">';
     var tdType='<td style="padding:10px 10px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>';
-    var tdName='<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>';
+    var tdName='<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'<div style="margin-top:3px;font-size:9px;font-weight:700;color:#94a3b8;">'+escHtml(writer)+'</div></td>';
     var tdMemoInfo='<td style="padding:10px 10px;font-size:12px;color:#334155;vertical-align:middle;">'+memoInfoCell+'</td>';
     var tdId='<td style="padding:10px 10px;vertical-align:middle;max-width:0;">'
       +'<div style="display:flex;align-items:center;gap:5px;min-width:0;">'
@@ -2585,7 +2668,7 @@ function acRender(){
     var tdMgmt='<td style="padding:10px 10px;vertical-align:middle;white-space:nowrap;">'
       +'<div style="display:flex;gap:4px;">'
       +'<button data-edit-id="'+r.id+'" style="padding:4px 8px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">✏️</button>'
-      +'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>'
+      +(isOwn?'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>':'')
       +'</div></td>';
 
     if(isJeon){
@@ -3077,16 +3160,15 @@ window.tx_scheduleAutoSave = function(){
     var verifiedName = String(localStorage.getItem('wd_user_name') || '').trim();
     var defaultAuthor = (verifiedName === '박수진') ? '박수진' : '최윤경';
     wj_selectAuthor(defaultAuthor);
-    // 업무센터 첫 진입은 기존 기준인 오늘 운영판으로 시작
-    wcnTabSwitch('overview');
-    if(typeof renderWorkcenterOverview==='function') renderWorkcenterOverview(false);
+    // 업무센터 첫 진입은 두 계정 모두 업무일지로 시작
+    wcnTabSwitch('journal');
     // 목록 로드
     wj_loadList();
   };
 
   // ── 탭 전환 ── [v51실행] 앱시트 사이드바 스타일
   window.wcnTabSwitch = function(tab){
-    ['overview','daily-haru','idea','journal','hours','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
+    ['overview','daily-haru','idea','journal','hours','manual','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
       var panel = document.getElementById('wcn-panel-'+t);
       var btn   = document.getElementById('wcn-tab-'+t);
       var active = (t === tab);
@@ -3372,16 +3454,17 @@ window.tx_scheduleAutoSave = function(){
       return;
     }
     try {
-      var url = _SB_URL + '/rest/v1/work_journals?id=eq.' + encodeURIComponent(id);
+      var url = _SB_URL + '/rest/v1/work_journals?id=eq.' + encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(_CURRENT_UID);
       var res = await fetch(url, {
         method: 'DELETE',
         headers: {
           'apikey':        SUPA_KEY,
           'Authorization': 'Bearer ' + SUPA_KEY,
-          'Prefer':        'return=minimal'
+          'Prefer':        'return=representation'
         }
       });
       if(res.ok){
+        var deleted=await res.json().catch(function(){return[]});if(!deleted.length){if(typeof showT==='function')showT('본인이 저장한 업무일지만 삭제할 수 있습니다.');return;}
         if(typeof showT==='function') showT('🗑️ 업무일지가 삭제되었습니다.');
         wj_loadList();
       } else {
@@ -3840,6 +3923,7 @@ window.tx_scheduleAutoSave = function(){
     if(!area)return;
     var cur=yh_currentStep(data);
     var html='';
+    var archiveOnly=!!(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료');
     html+=yh_stepCard(1,cur,'STEP 01','이메일 확인',data,function(){return yh_step1Body(data);});
     html+=yh_stepCard(2,cur,'STEP 02','오늘의 할 일 3가지',data,function(){return yh_step2Body(data);});
     html+=yh_stepCard(3,cur,'STEP 03','오늘 진행한 일',data,function(){return yh_step3Body(data);});
@@ -4074,7 +4158,7 @@ window.tx_scheduleAutoSave = function(){
       +'<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;">'
       +'<span style="font-size:16px;">📁</span>'
       +'<span style="flex:1;font-size:13px;color:'+(d4.drive?C.green:'#1A1A1A')+';">구글드라이브 등록</span>'
-      +'<a href="https://drive.google.com/drive/u/1/folders/1JL2yPIdGdJHoGEFBJRz16otTJZAEkAiH" target="_blank" rel="noopener" style="padding:5px 11px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;color:#555;margin-right:6px;white-space:nowrap;">드라이브 열기</a>'
+      +'<button type="button" onclick="wdOpenCompanyDrive(event)" style="padding:5px 11px;background:#fff;border:1px solid #D8D8D8;border-radius:7px;font-size:11px;font-weight:600;color:#555;margin-right:6px;white-space:nowrap;cursor:pointer;">회사 Drive 열기</button>'
       +'<div onclick="yh_toggleRoutine(\'drive\')" style="cursor:pointer;">'+chkBox(!!d4.drive)+'</div>'
       +'</div>'
       +'<div style="padding:0 14px 10px;">'
@@ -4717,7 +4801,7 @@ window.tx_scheduleAutoSave = function(){
     var lastDay  = _wh_month + '-' + String(lastNum).padStart(2,'0');
     try {
       var url = _SB_URL + '/rest/v1/work_hours'
-        + '?user_id=eq.'    + encodeURIComponent(uid)
+        + '?' + wcSharedFilter('user_id')
         + '&work_date=gte.' + encodeURIComponent(firstDay)
         + '&work_date=lte.' + encodeURIComponent(lastDay)
         + '&order=work_date.asc';
@@ -4737,6 +4821,7 @@ window.tx_scheduleAutoSave = function(){
       rows.forEach(function(r){
         var dayLabel = r.work_day || wh_dayLabel(r.work_date);
         var dateDisp = (r.work_date||'').replace(/-/g,'.').substring(2); // YY.MM.DD
+        var isOwn = String(r.user_id||'')===String(uid),writer=typeof wcUserName==='function'?wcUserName(r.user_id):String(r.user_id||'');
         var brk = r.break_minutes ? Math.floor(r.break_minutes/60)+'시간 '+(r.break_minutes%60)+'분' : '1시간';
         if(r.break_minutes === 30)  brk = '30분';
         if(r.break_minutes === 60)  brk = '1시간';
@@ -4744,11 +4829,11 @@ window.tx_scheduleAutoSave = function(){
         if(r.break_minutes === 120) brk = '2시간';
         html += '<div style="display:flex;align-items:center;padding:9px 10px;background:#f8f7fc;border-radius:10px;gap:8px;font-size:14px;">'
           + '<span style="font-weight:800;color:#4A3F7A;min-width:62px;">'+dateDisp+'('+dayLabel+')</span>'
+          + '<span style="padding:2px 7px;border-radius:999px;background:'+(isOwn?'#E0F2FE':'#F3F4F6')+';color:'+(isOwn?'#0369A1':'#6B7280')+';font-size:10px;font-weight:800;white-space:nowrap;">'+wh_esc(writer)+'</span>'
           + '<span style="color:#64748b;">'+( r.start_time||'—' )+' ~ '+( r.end_time||'—' )+'</span>'
           + '<span style="margin-left:auto;display:flex;align-items:center;gap:6px;">'
-          + '<button onclick="event.stopPropagation();wh_editByDate(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #c4b5fd;border-radius:7px;font-size:11px;font-weight:700;color:#7C3AED;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">✏️ 수정</button>'
-          // ★ [v2실행] 삭제 버튼 추가
-          + '<button onclick="event.stopPropagation();wh_delete(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;border-radius:7px;font-size:11px;font-weight:700;color:#dc2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🗑️ 삭제</button>'
+          + (isOwn?'<button onclick="event.stopPropagation();wh_editByDate(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #c4b5fd;border-radius:7px;font-size:11px;font-weight:700;color:#7C3AED;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">✏️ 수정</button>':'')
+          + (isOwn?'<button onclick="event.stopPropagation();wh_delete(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;border-radius:7px;font-size:11px;font-weight:700;color:#dc2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🗑️ 삭제</button>':'')
           + '<span style="font-weight:700;color:#334155;">'+wh_minToStr(r.total_minutes)+'</span>'
           + '</span>'
           + '</div>';
@@ -4815,10 +4900,11 @@ window.tx_scheduleAutoSave = function(){
         headers: {
           'apikey':        SUPA_KEY,
           'Authorization': 'Bearer ' + SUPA_KEY,
-          'Prefer':        'return=minimal'
+          'Prefer':        'return=representation'
         }
       });
       if(res.ok){
+        var deleted=await res.json().catch(function(){return[]});if(!deleted.length){if(typeof showT==='function')showT('본인이 저장한 근무기록만 삭제할 수 있습니다.');return;}
         if(typeof showT==='function') showT('🗑️ 근무기록이 삭제되었습니다.');
         wh_loadMonth();
       } else {
@@ -5001,7 +5087,7 @@ window.tx_scheduleAutoSave = function(){
     listEl.innerHTML='<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
     var uid=wt_getUid();
     try{
-      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)
+    var url=_SB_URL+'/rest/v1/work_tasks?'+wcSharedFilter('user_id')
         +'&idea_status=eq.'+encodeURIComponent(_wt_ideaStatus)
         +'&order=created_at.desc';
       var res=await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
@@ -5199,7 +5285,7 @@ window.tx_scheduleAutoSave = function(){
     var uid=wt_getUid();
     try{
       // idea_status 필터 없이 전체 로드
-      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc';
+    var url=_SB_URL+'/rest/v1/work_tasks?'+wcSharedFilter('user_id')+'&order=created_at.desc';
       var res=await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
       if(!res.ok){listEl.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">검색 오류: '+res.status+'</div>';return;}
       var allTasks=await res.json();
@@ -5811,7 +5897,7 @@ window.tx_scheduleAutoSave = function(){
     listEl.innerHTML = '<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
     var uid = wi_getUid();
     // idea_status 필터 + 순서
-    var url = _SB_URL + '/rest/v1/wc_ideas?user_id=eq.' + encodeURIComponent(uid)
+    var url = _SB_URL + '/rest/v1/wc_ideas?' + wcSharedFilter('user_id')
       + '&idea_status=eq.' + encodeURIComponent(_wi_currentStatus)
       + '&order=created_at.desc';
     try {
@@ -5852,6 +5938,7 @@ window.tx_scheduleAutoSave = function(){
       var st = item.idea_status || '아이디어상태';
       var stColor = STATUS_COLOR[st] || '#64748b';
       var idSafe = String(item.id || '').replace(/'/g,'');
+      var isOwn = String(item.user_id||'')===String(wi_getUid());
       var created = item.created_at ? item.created_at.substring(0,10) : '';
       // 상태 이동 버튼
       var nextBtns = (STATUS_NEXT[st] || []).map(function(ns){
@@ -5871,7 +5958,7 @@ window.tx_scheduleAutoSave = function(){
         + '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">'
         + nextBtns
         + '<button onclick="wi_edit(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #FBBF24;border-radius:7px;font-size:11px;font-weight:700;color:#D97706;background:#FEF3C7;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">수정</button>'
-        + '<button onclick="wi_delete(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;color:#94a3b8;background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>'
+        + (isOwn?'<button onclick="wi_delete(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;color:#94a3b8;background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>':'')
         + '</div></div>';
     }).join('');
     listEl.innerHTML = html;
@@ -5934,13 +6021,15 @@ window.tx_scheduleAutoSave = function(){
   // ── 삭제 ──
   window.wi_delete = async function(id){
     if(!id){ return; }
+    var owned=_wi_items.find(function(item){return String(item.id)===String(id)&&String(item.user_id||'')===String(wi_getUid())});
+    if(!owned){if(typeof showT==='function')showT('본인이 저장한 아이디어만 삭제할 수 있습니다.');return;}
     if(!confirm('이 아이디어를 삭제하시겠습니까?')) return;
     if(!wi_supaReady()){
       if(typeof showT==='function') showT('⚠️ Supabase 미연결'); return;
     }
     try {
       var res = await fetch(
-        _SB_URL + '/rest/v1/wc_ideas?id=eq.' + encodeURIComponent(id),
+        _SB_URL + '/rest/v1/wc_ideas?id=eq.' + encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(wi_getUid()),
         {
           method: 'DELETE',
           headers: {
@@ -6895,7 +6984,7 @@ async function agLoad(){
     return;
   }
   try{
-    var res = await fetch(agSbUrl()+'/rest/v1/wd_agents?owner_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc&select=*',{headers:agHeaders()});
+    var res = await fetch(agSbUrl()+'/rest/v1/wd_agents?owner_id=in.('+['kfcyk50','kfcyk30'].map(encodeURIComponent).join(',')+')&order=created_at.desc&select=*',{headers:agHeaders()});
     if(!res.ok) throw new Error('조회 실패 '+res.status);
     _agList = await res.json();
     console.log('[agent] rows count:', _agList.length);
@@ -7340,7 +7429,7 @@ async function agLoadFiles(agentId){
   var uid = agUid();
   _agFiles = [];
   try{
-    var res = await fetch(agSbUrl()+'/rest/v1/wd_agent_files?agent_id=eq.'+encodeURIComponent(agentId)+'&owner_id=eq.'+encodeURIComponent(uid)+'&order=uploaded_at.desc&select=*',{headers:agHeaders()});
+    var res = await fetch(agSbUrl()+'/rest/v1/wd_agent_files?agent_id=eq.'+encodeURIComponent(agentId)+'&owner_id=in.('+['kfcyk50','kfcyk30'].map(encodeURIComponent).join(',')+')&order=uploaded_at.desc&select=*',{headers:agHeaders()});
     if(!res.ok) throw new Error('파일 조회 실패 ('+res.status+')');
     var files = await res.json();
     _agFiles = files; // [v51] 전역 배열에 저장 (보기/다운/삭제 함수에서 참조)
@@ -7462,8 +7551,9 @@ window.agDownloadFile = async function(fileId){
 window.agDeleteFile = async function(fileId){
   var f = _agFiles.find(function(x){ return x.id===fileId; });
   if(!f){ alert('파일 정보를 찾을 수 없습니다.'); return; }
-  if(!confirm('['+f.file_name+']을 삭제하시겠습니까?')) return;
   var uid = agUid();
+  if(String(f.owner_id||'')!==String(uid)){if(typeof showT==='function')showT('본인이 저장한 파일만 삭제할 수 있습니다.');return;}
+  if(!confirm('['+f.file_name+']을 삭제하시겠습니까?')) return;
   try{
     await fetch(agSbUrl()+'/storage/v1/object/wd-agent-files/'+f.file_path,{
       method:'DELETE', headers:{'apikey':agSbKey(),'Authorization':'Bearer '+agSbKey()}
@@ -7480,8 +7570,9 @@ window.agDeleteFile = async function(fileId){
 /* ── 설계사 삭제 ── */
 window.agDelete = async function(){
   if(!_agCurrent) return;
-  if(!confirm('['+_agCurrent.korean_name+'] 설계사를 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.')) return;
   var uid = agUid();
+  if(String(_agCurrent.owner_id||'')!==String(uid)){if(typeof showT==='function')showT('본인이 저장한 설계사 정보만 삭제할 수 있습니다.');return;}
+  if(!confirm('['+_agCurrent.korean_name+'] 설계사를 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.')) return;
   var agentId = _agCurrent.id;
   try{
     // 파일 메타 목록 조회 후 Storage 삭제
@@ -7544,7 +7635,9 @@ window.wcnTabSwitch = function(tab){
 var _aaList    = [];           // 목록 캐시
 var _aaCurrent = null;         // 현재 선택된 자료
 var _aaTab     = '회사운영';
-var _AA_LEGACY_TYPES = ['회사운영','보험업무','AI·강의','브랜딩·콘텐츠','시스템·개발','계약·기관·제출','참고자료','미분류'];
+var _AA_LEGACY_TYPES = ['회사운영','보험업무','퍼스널브랜딩','AI강의','정리이전자료'];
+/* 2026-09-17 구조개편 전에 등록된 업무센터 기록은 과거자료 탭에서 보존한다. */
+var _AA_MIGRATION_CUTOFF = Date.parse('2026-09-17T00:00:00+09:00');
 
 var _AA_CATEGORIES = {
   '깃허브배포파일':['HTML파일'],
@@ -7569,6 +7662,8 @@ function aaSplitType(value){
   var legacy={
     '회사운영':['WD회사자료','기타'],
     '보험업무':['지점장님자료','개인자료'],
+    '퍼스널브랜딩':['퍼스널브랜딩','기타'],
+    'AI강의':['AI자료실','지침'],
     'AI·강의':['지점장님자료','홍보자료'],
     '브랜딩·콘텐츠':['퍼스널브랜딩','기타'],
     '시스템·개발':['WD회사자료','HTML파일'],
@@ -7592,21 +7687,21 @@ function aaLegacyType(value){
   var raw=String(value||'');
   if(_AA_LEGACY_TYPES.indexOf(raw)>-1)return raw;
   var info=aaSplitType(raw);
-  var reverse={
-    'AI자료실|프롬프트':'프롬프트',
-    '퍼스널브랜딩|업무진행방법':'업무진행방식',
-    'AI자료실|지침':'지침',
-    'WD회사자료|양식파일':'서류양식',
-    'WD회사자료|기타':'기타'
-  };
-  var direct=reverse[info.category+'|'+info.detail];
-  if(direct)return direct;
-  if(/프롬프트/.test(info.detail))return '프롬프트';
-  if(/업무진행/.test(info.detail))return '업무진행방식';
-  if(/스킬/.test(info.detail))return '스킬';
-  if(/지침/.test(info.detail))return '지침';
-  if(/양식|서류|HTML/.test(info.detail))return '서류양식';
-  return '기타';
+  var categoryType={'WD회사자료':'회사운영','지점장님자료':'보험업무','퍼스널브랜딩':'퍼스널브랜딩','AI자료실':'AI강의','정리이전자료':'정리이전자료'};
+  if(categoryType[info.category])return categoryType[info.category];
+  var text=[raw,info.category,info.detail].join(' ');
+  if(/보험/.test(text))return '보험업무';
+  if(/퍼스널|브랜딩|콘텐츠|유튜브|블로그|홍보|카드뉴스/.test(text))return '퍼스널브랜딩';
+  if(/AI|강의|교육|프롬프트|스킬/.test(text))return 'AI강의';
+  return '회사운영';
+}
+function aaIsMigratedArchive(archive){
+  if(!archive||archive.__driveOnly)return aaLegacyType((archive||{}).data_type)==='정리이전자료';
+  var created=Date.parse(archive.created_at||'');
+  return !isNaN(created)&&created<_AA_MIGRATION_CUTOFF;
+}
+function aaDisplayType(archive){
+  return aaIsMigratedArchive(archive)?'정리이전자료':aaLegacyType((archive||{}).data_type);
 }
 window.aaRefreshDetailOptions=function(selected){
   var category=((document.getElementById('aa-f-category')||{}).value||'깃허브배포파일');
@@ -7633,57 +7728,53 @@ function aaOwnerId(){
   if(typeof _CURRENT_UID !== 'undefined' && _CURRENT_UID) return String(_CURRENT_UID);
   return 'kfcyk50';
 }
+function aaCurrentUserName(){
+  var uid=String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();
+  if(uid==='kfcyk30') return '박수진';
+  if(uid==='kfcyk50') return '최윤경';
+  return String(localStorage.getItem('wd_user_name')||'').trim()||'최윤경';
+}
 
 /* ── Google Drive 연결 [Drive연결후보 v1] ── */
-var _AA_DRIVE_CLIENT_ID='467637069689-nttclpbsjpnmat18g1932q5vvrb8et9o.apps.googleusercontent.com';
+var _AA_DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com';
 var _AA_DRIVE_SCOPE='https://www.googleapis.com/auth/drive';
-var _AA_DRIVE_SESSION_KEY='wd_work_drive_access_v1';
+var _AA_DRIVE_SESSION_KEY='wd_work_company_drive_access_v2';
+/* woori 회사공통 Drive 운영 폴더. 05_정리이전자료는 조회·검색·다운로드용으로 함께 읽는다. */
+var _AA_COMPANY_DRIVE_ROOT_ID='17Sca0e7QuMRMNNYWxAlzMhDNhyxydS48';
+var _AA_MIGRATION_FOLDER_ID='1PTAJXgPGB4gielNyeUeWeSWs6z_Czfex';
 var _AA_DRIVE_CONFIG={
-  '깃허브배포파일':{
-    rootId:'1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg',
-    rootUrl:'https://drive.google.com/drive/folders/1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg',
-    details:{'HTML파일':'1qaZSBkrMRzPUsmktEoi3KRfSODy7Ip4X'}
-  },
-  'AI자료실':{
-    rootId:'1xgkyH3la2A6lv_Nz4Vp4_eGRIeQho1Kv',
-    rootUrl:'https://drive.google.com/drive/folders/1xgkyH3la2A6lv_Nz4Vp4_eGRIeQho1Kv',
-    details:{'프롬프트':'1EY1tpkuJG743D12bIMMWvLncmw3rL3U1','지침':'1bKcSyJ_RZH5nrdW6M1pVxSf19sZ-sDV2'}
-  },
-  '퍼스널브랜딩':{
-    rootId:'1emqe0yMwXXkfwSGyWpJp-5WgVl48ratL',
-    rootUrl:'https://drive.google.com/drive/folders/1emqe0yMwXXkfwSGyWpJp-5WgVl48ratL',
-    details:{'업무진행방법':'1_s_EpiuMjv622QgdJ0pDpEF5PwZNQcg3','양식파일':'1Kb4s3q3oj7PvnCdsT37eUfFPWLP0wB8P','홍보자료':'1u8AXFcPIAzeqNdxnwbU3SV_DAqlfA-_h','카드뉴스':'14lZ2APtQ3E1HTg259co89xnVlKp5JJu6','기타':'1mSN3C9r-DK6eYpd2HljX4XNPKofbUFqy'}
-  },
-  '브랜딩고객자료':{
-    rootId:'1UFaIkPCbM6hSXRSjGqaXs-m3Jm1DqGbf',
-    rootUrl:'https://drive.google.com/drive/folders/1UFaIkPCbM6hSXRSjGqaXs-m3Jm1DqGbf',
-    dynamicCustomerFolders:true,
-    details:{}
-  },
-  '유튜브자료실':{
-    rootId:'1CTUb6AClikAS9InQ5ifLUiBEUFdXpBpI',
-    rootUrl:'https://drive.google.com/drive/folders/1CTUb6AClikAS9InQ5ifLUiBEUFdXpBpI',
-    details:{'':'1CTUb6AClikAS9InQ5ifLUiBEUFdXpBpI'}
-  },
   'WD회사자료':{
-    rootId:'1drb7LWuopMlYoilMzHnqciRmU2rE8Sbr',
-    rootUrl:'https://drive.google.com/drive/folders/1drb7LWuopMlYoilMzHnqciRmU2rE8Sbr',
-    details:{'양식파일':'1vh89EYgQQqOxryuGodulMkFmTp87Fsq3','HTML파일':'1Vx96x72ilyyaX120ytDEKh0ELYoH3dXD','로고':'1f1nLYlDd-Idsuf7iuPfsvPkp1vEaVd5V','이미지파일':'1rNrofHi2gBoyE4YzIUrfHMCSiO3RGHiL','기타':'1hvBxwMwTWGPg7LsqMqmCJhWsZ8Wji8-u'}
+    rootId:'1V4arkZhihHmWJ2f9t4Sh03hPl9rH8DrR',
+    rootUrl:'https://drive.google.com/drive/folders/1V4arkZhihHmWJ2f9t4Sh03hPl9rH8DrR',
+    details:{'기타':'1V4arkZhihHmWJ2f9t4Sh03hPl9rH8DrR'}
   },
   '지점장님자료':{
-    rootId:'1-RrzYRyMn3cHZvnk71oNtjofIjWfzjiS',
-    rootUrl:'https://drive.google.com/drive/folders/1-RrzYRyMn3cHZvnk71oNtjofIjWfzjiS',
-    details:{'홍보자료':'1AILybB3pbMnImF0MfXiACEBblKOZ4cpu','개인자료':'1VN_Amc6c9MrV5XFqHBpxcPiGdtzmk0Oe'}
+    rootId:'1uPvy82jNaEZAKnNHW6Ll7mNSyVRGtm7Z',
+    rootUrl:'https://drive.google.com/drive/folders/1uPvy82jNaEZAKnNHW6Ll7mNSyVRGtm7Z',
+    details:{'개인자료':'1uPvy82jNaEZAKnNHW6Ll7mNSyVRGtm7Z'}
   },
-  'WD브랜드자산':{
-    rootId:'1BIRpIt3xdUQXe_cuBKiXohZaz16Wa0Tw',
-    rootUrl:'https://drive.google.com/drive/folders/1BIRpIt3xdUQXe_cuBKiXohZaz16Wa0Tw',
-    details:{'로고':'1_n1AkF6s_uX3z_3KdIEbI2l3cDrzQ9jj','이미지':'1RZ6KiVqfpz4yFajF5psiThLJEiWp_bhD','서류':'1IukC0qX0k9fFF45zwz-hpRmNyqUNvl4g','양식':'1G9-0c50iE-vM1tERZ_K0-TELUt1CWrNT','문구&설명글':'1kbWwI31sbUgjUDjDKOp2sDWZ8EZZbcRl'}
+  '퍼스널브랜딩':{
+    rootId:'1WoUGC6xKoeE5IoofLCH3cLt0jjmh2skf',
+    rootUrl:'https://drive.google.com/drive/folders/1WoUGC6xKoeE5IoofLCH3cLt0jjmh2skf',
+    details:{'기타':'1WoUGC6xKoeE5IoofLCH3cLt0jjmh2skf'}
+  },
+  'AI자료실':{
+    rootId:'1K48EB1apq0immg2zpKTl5zQYb9ppx1x1',
+    rootUrl:'https://drive.google.com/drive/folders/1K48EB1apq0immg2zpKTl5zQYb9ppx1x1',
+    details:{'지침':'1K48EB1apq0immg2zpKTl5zQYb9ppx1x1'}
+  },
+  '정리이전자료':{
+    rootId:'1PTAJXgPGB4gielNyeUeWeSWs6z_Czfex',
+    rootUrl:'https://drive.google.com/drive/folders/1PTAJXgPGB4gielNyeUeWeSWs6z_Czfex',
+    details:{'보존자료':'1PTAJXgPGB4gielNyeUeWeSWs6z_Czfex'}
   }
 };
 var _aaDriveToken='';
 var _aaDriveTokenExp=0;
 var _aaDriveTokenClient=null;
+var _aaDriveUserEmail='';
+var _aaDriveOwnerEmail='';
+var _aaDriveCanWrite=false;
 var _aaDriveFiles=[];
 var _aaDriveByArchive={};
 var _aaDriveLastSync=0;
@@ -7702,7 +7793,11 @@ function aaDriveTokenValid(){ return !!(_aaDriveToken && Date.now()<_aaDriveToke
 function aaDriveUpdateConnectionBadge(){
   var badge=document.getElementById('aa-drive-connection-badge');if(!badge)return;
   if(aaDriveTokenValid()){
-    badge.textContent='● Drive 연결됨';badge.style.background='#F0FDF4';badge.style.borderColor='#86EFAC';badge.style.color='#166534';
+    if(_aaDriveCanWrite){
+      badge.textContent='● 회사 Drive 읽기·쓰기';badge.style.background='#F0FDF4';badge.style.borderColor='#86EFAC';badge.style.color='#166534';
+    }else{
+      badge.textContent='● 공유 Drive 조회';badge.style.background='#EFF6FF';badge.style.borderColor='#BFDBFE';badge.style.color='#1D4ED8';
+    }
   }else{
     badge.textContent='● Drive 연결 안 됨';badge.style.background='#F8FAFC';badge.style.borderColor='#CBD5E1';badge.style.color='#64748B';
   }
@@ -7726,6 +7821,7 @@ function aaDriveRestoreSession(){
 }
 function aaDriveClearSession(){
   _aaDriveToken='';_aaDriveTokenExp=0;
+  _aaDriveUserEmail='';_aaDriveOwnerEmail='';_aaDriveCanWrite=false;
   try{sessionStorage.removeItem(_AA_DRIVE_SESSION_KEY);}catch(e){}
   aaDriveUpdateConnectionBadge();
 }
@@ -7735,25 +7831,31 @@ function aaDriveInitClient(){
   _aaDriveTokenClient=google.accounts.oauth2.initTokenClient({
     client_id:_AA_DRIVE_CLIENT_ID,
     scope:_AA_DRIVE_SCOPE,
-    callback:function(resp){
+    callback:async function(resp){
       if(!resp||resp.error){aaDriveClearSession();aaDriveSetStatus('Google Drive 연결 실패 · 다시 연결해주세요.','error');aaOpenDriveConnectModal();return;}
       _aaDriveToken=resp.access_token||'';
       _aaDriveTokenExp=Date.now()+(Number(resp.expires_in||3600)*1000);
       aaDriveSaveSession();
-      aaDriveUpdateConnectionBadge();aaCloseDriveConnectModal();
-      aaDriveSetStatus('Google Drive 연결 완료 · 파일을 확인하고 있습니다.','info');
-      aaDriveRefresh(false);
+      aaCloseDriveConnectModal();
+      aaDriveSetStatus('Google Drive 계정과 회사폴더 권한을 확인하고 있습니다.','info');
+      try{await aaDriveVerifyAccount();await aaDriveRefresh(false);}
+      catch(e){aaDriveSetStatus('Google Drive 권한 확인 실패 · '+String(e.message||e).substring(0,100),'error');}
     },
     error_callback:function(){aaDriveUpdateConnectionBadge();aaDriveSetStatus('Google Drive 연결창을 완료하지 못했습니다.','warn');aaOpenDriveConnectModal();}
   });
   return true;
 }
 window.aaDriveConnect=function(){
+  /* 업무센터 입구의 공용 Drive 연결을 단일 진입점으로 사용한다. */
+  if(typeof window.wsjConnect==='function'){
+    window.wsjConnect();
+    return;
+  }
   if(!aaDriveInitClient()){
     aaDriveSetStatus('Google 로그인 기능을 불러오는 중입니다. 잠시 후 다시 눌러주세요.','warn');
     setTimeout(aaDriveInitClient,700);return;
   }
-  _aaDriveTokenClient.requestAccessToken({prompt:aaDriveTokenValid()?'':'consent'});
+  _aaDriveTokenClient.requestAccessToken({prompt:aaDriveTokenValid()?'':'select_account'});
 };
 function aaDriveHeaders(extra){
   var h={Authorization:'Bearer '+_aaDriveToken};
@@ -7762,10 +7864,29 @@ function aaDriveHeaders(extra){
 }
 async function aaDriveApi(url,opts){
   opts=opts||{};opts.headers=Object.assign({},aaDriveHeaders(),opts.headers||{});opts.cache='no-store';
+  var method=String(opts.method||'GET').toUpperCase();
+  if(method!=='GET'&&method!=='HEAD'&&!_aaDriveCanWrite){
+    throw new Error('WD WAVE 회사공통 폴더의 편집 권한이 필요합니다.');
+  }
   var res=await fetch(url,opts);
   if(res.status===401){aaDriveClearSession();aaDriveSetStatus('Google Drive 인증이 만료되었습니다. 다시 연결해주세요.','warn');aaOpenDriveConnectModal();throw new Error('Drive 인증 만료');}
   if(!res.ok){var t=await res.text();throw new Error('Drive '+res.status+': '+t.substring(0,140));}
   return res;
+}
+async function aaDriveVerifyAccount(){
+  if(!aaDriveTokenValid())throw new Error('Google Drive 인증이 필요합니다.');
+  var aboutUrl='https://www.googleapis.com/drive/v3/about?fields='+encodeURIComponent('user(displayName,emailAddress)');
+  var rootUrl='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(_AA_COMPANY_DRIVE_ROOT_ID)+'?fields='+encodeURIComponent('id,name,owners(displayName,emailAddress),capabilities(canAddChildren,canEdit)');
+  var results=await Promise.all([aaDriveApi(aboutUrl,{method:'GET'}),aaDriveApi(rootUrl,{method:'GET'})]);
+  var about=await results[0].json(),root=await results[1].json();
+  _aaDriveUserEmail=String((about.user&&about.user.emailAddress)||'').trim().toLowerCase();
+  _aaDriveOwnerEmail=String((root.owners&&root.owners[0]&&root.owners[0].emailAddress)||'').trim().toLowerCase();
+  _aaDriveCanWrite=!!(root.capabilities&&root.capabilities.canAddChildren!==false&&root.capabilities.canEdit!==false);
+  aaDriveUpdateConnectionBadge();
+  return {userEmail:_aaDriveUserEmail,ownerEmail:_aaDriveOwnerEmail,canWrite:_aaDriveCanWrite};
+}
+function aaDriveAssertCompanyWrite(){
+  if(!_aaDriveCanWrite)throw new Error('이 계정에는 WD WAVE 회사공통 폴더 편집 권한이 없습니다.');
 }
 function aaDriveTarget(category,detail){
   var c=_AA_DRIVE_CONFIG[category];if(!c)return null;
@@ -7790,7 +7911,7 @@ function aaDriveFolderIds(){
 function aaDriveUpdateFolderLink(){
   var typeInfo=aaSplitType(_aaTab);
   var c=_AA_DRIVE_CONFIG[typeInfo.category];var link=document.getElementById('aa-drive-folder-link');
-  if(link&&c){link.href=c.rootUrl;link.textContent='📁 구글드라이브 열기';}
+  if(link&&c){link.href=c.rootUrl;link.textContent='📁 '+aaLegacyType(_aaTab)+' 폴더 열기';}
 }
 async function aaDriveSyncCustomerFolders(){
   var category='브랜딩고객자료',config=_AA_DRIVE_CONFIG[category];
@@ -7976,6 +8097,8 @@ async function aaDriveReconcileLinks(){
 }
 window.aaDriveRefresh=async function(manual){
   if(_aaDriveRefreshing)return;
+  /* 입구에서 저장한 공용 세션을 작업결과 보관에서도 그대로 회수한다. */
+  if(!aaDriveTokenValid())aaDriveRestoreSession();
   if(!aaDriveTokenValid()){
     aaDriveUpdateConnectionBadge();
     if(manual){aaOpenDriveConnectModal();}else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
@@ -7985,10 +8108,12 @@ window.aaDriveRefresh=async function(manual){
   var btn=document.getElementById('aa-drive-refresh-btn');if(btn){btn.disabled=true;btn.textContent='Drive 확인 중...';}
   aaDriveSetStatus('Google Drive 파일 확인 중...','info');
   try{
+    await aaDriveVerifyAccount();
     _aaDriveFiles=await aaDriveListAll();aaDriveIndexFiles();
     _aaDriveLastSync=Date.now();
     var tm=new Date(_aaDriveLastSync);var hh=String(tm.getHours()).padStart(2,'0'),mm=String(tm.getMinutes()).padStart(2,'0');
-    aaDriveSetStatus('Google Drive 확인 완료 · 파일 '+_aaDriveFiles.length+'개 · '+hh+':'+mm,'ok');
+    var accessLabel=_aaDriveCanWrite?'회사공통 읽기·쓰기':'회사공통 조회 전용';
+    aaDriveSetStatus('Google Drive 동기화 완료 · '+accessLabel+' · '+(_aaDriveUserEmail||'연결 계정')+' · 파일 '+_aaDriveFiles.length+'개 · '+hh+':'+mm,'ok');
     aaDriveUpdateConnectionBadge();
     if(_aaCurrent&&_aaCurrent.__driveOnly&&!_aaDriveFiles.some(function(f){return f.id===_aaCurrent.__driveFile.id;})){_aaCurrent=null;aaCloseDetailModal();}
     aaRender();
@@ -7997,7 +8122,7 @@ window.aaDriveRefresh=async function(manual){
     if(aaDriveTokenValid())aaDriveSetStatus('Google Drive 확인 실패 · 기존 업무센터 자료는 정상 사용 가능합니다.','error');
     console.error('[WD Drive]',e);
   }finally{
-    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 Drive 확인';}
+    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 동기화';}
   }
 };
 function aaDriveFileMetadata(file,archiveId,category,detail){
@@ -8018,6 +8143,7 @@ async function aaDriveUploadResumable(file,metadata,fileId){
   var txt=await put.text();return txt?JSON.parse(txt):{id:fileId||''};
 }
 async function aaDriveUploadOne(file,archiveId,category,detail){
+  aaDriveAssertCompanyWrite();
   var target=aaDriveTarget(category,detail);if(!target)throw new Error('선택한 상세구분의 Drive 폴더 연결이 없습니다.');
   var same=_aaDriveFiles.filter(function(f){return f.__category===category&&f.__detail===detail&&f.name===file.name;});
   var linked=same.filter(function(f){return f.appProperties&&String(f.appProperties.wdArchiveId||'')===String(archiveId);});
@@ -8028,6 +8154,7 @@ async function aaDriveUploadOne(file,archiveId,category,detail){
   created.__category=category;created.__detail=detail;_aaDriveFiles.push(created);aaDriveIndexFiles();return created;
 }
 async function aaDriveReplaceContent(fileId,file,refreshAfter){
+  aaDriveAssertCompanyWrite();
   var current=_aaDriveFiles.find(function(f){return f.id===fileId;});if(!current)throw new Error('교체할 Drive 파일을 찾지 못했습니다.');
   var updated;
   if(file.size>5*1024*1024){updated=await aaDriveUploadResumable(file,{name:file.name},fileId);}
@@ -8038,6 +8165,7 @@ async function aaDriveReplaceContent(fileId,file,refreshAfter){
   if(refreshAfter!==false)await aaDriveRefresh(false);return updated;
 }
 window.aaDrivePromptReplace=function(fileId){
+  if(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료'){if(typeof showT==='function')showT('정리이전자료는 원본 보존을 위해 교체하지 않습니다.');return;}
   if(!aaDriveTokenValid()){aaDriveConnect();return;}
   _aaDriveReplaceId=fileId;var input=document.getElementById('aa-drive-replace-input');if(input){input.value='';input.click();}
 };
@@ -8086,6 +8214,7 @@ window.aaDriveDownloadFile=async function(fileId){
   }catch(e){alert('원본 다운로드 실패: '+e.message);}
 };
 async function aaDriveLinkExistingFile(fileId,archiveId,category,detail){
+  aaDriveAssertCompanyWrite();
   var current=_aaDriveFiles.find(function(f){return String(f.id)===String(fileId);});
   if(!current)throw new Error('연결할 Google Drive 파일을 찾지 못했습니다.');
   var target=aaDriveTarget(category,detail);if(!target)throw new Error('선택한 상세구분의 Google Drive 폴더 연결이 없습니다.');
@@ -8099,6 +8228,7 @@ async function aaDriveLinkExistingFile(fileId,archiveId,category,detail){
   await aaDriveApi(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({appProperties:props})});
 }
 async function aaDriveMoveArchiveFiles(archiveId,category,detail){
+  aaDriveAssertCompanyWrite();
   if(!aaDriveTokenValid())return;
   var target=aaDriveTarget(category,detail);if(!target)return;
   var files=_aaDriveByArchive[String(archiveId)]||[];
@@ -8126,6 +8256,13 @@ function aaDriveInit(){
   if(aaDriveTokenValid()){aaCloseDriveConnectModal();aaDriveRefresh(false);}
   else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
 }
+window.addEventListener('wd-work-drive-ready',function(event){
+  if(!(event&&event.detail&&event.detail.ready))return;
+  aaDriveRestoreSession();
+  aaDriveUpdateConnectionBadge();
+  aaCloseDriveConnectModal();
+  if(aaDriveTokenValid()&&!_aaDriveRefreshing)aaDriveRefresh(false);
+});
 
 /* ── [v44] Storage 안전 경로 생성 ── */
 /* 원본 파일명은 file_name에 보관, Storage key는 ASCII 안전 문자만 사용 */
@@ -8138,6 +8275,10 @@ function aiSafeFilePath(ownerId, archiveId, file){
 
 /* ── 종류 배지 색상 ── */
 var _AA_BADGE = {
+  '회사운영':   'background:#EFF6FF;color:#1D4ED8;',
+  '보험업무':   'background:#F0FDF4;color:#15803D;',
+  '퍼스널브랜딩':'background:#F5F3FF;color:#6D28D9;',
+  'AI강의':     'background:#FFF7ED;color:#C2410C;',
   '프롬프트':    'background:#EEF2FF;color:#4338CA;',
   '업무진행방식':'background:#F0FDF4;color:#16A34A;',
   '업무진행방법':'background:#F0FDF4;color:#16A34A;',
@@ -8226,7 +8367,7 @@ window.aaRender = function(){
   var combined = _aaList.concat(aaDriveVirtualRows());
   var list = combined.filter(function(a){
     var typeInfo = aaSplitType(a.data_type);
-    var legacyType = aaLegacyType(a.data_type);
+    var legacyType = aaDisplayType(a);
     var matchTab = legacyType && (searching || legacyType === _aaTab);
     var linkedFileNames = a.__driveOnly
       ? ((a.__driveFile&&a.__driveFile.name)||'')
@@ -8260,7 +8401,7 @@ window.aaRender = function(){
   tbody.innerHTML = list.map(function(a){
     var sel = _aaCurrent && _aaCurrent.id === a.id;
     var typeInfo = aaSplitType(a.data_type);
-    var classification = aaBadge(aaLegacyType(a.data_type)||typeInfo.detail||'기타');
+    var classification = aaBadge(aaDisplayType(a)||typeInfo.detail||'기타');
     return '<tr onclick="aaSelectRow(\''+a.id+'\')" style="cursor:pointer;border-bottom:1px solid #F1F5F9;'+(sel?'background:#FFF9C4;':'')+'\" onmouseover="if(this.style.background!==\'#FFF9C4\') this.style.background=\'#FAFAF8\'" onmouseout="this.style.background=\''+(sel?'#FFF9C4':'')+'\'\">'
       +'<td style="padding:11px 12px;color:#64748b;white-space:nowrap;">'+classification+'</td>'
       +'<td style="padding:11px 12px;color:#1C1917;font-weight:700;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_aaEsc(a.title)+'</td>'
@@ -8291,8 +8432,15 @@ window.aaSetTab = function(type){
   _aaCurrent = null;  // 탭 바뀌면 상세 초기화
   var searchInput=document.getElementById('aa-search');
   if(searchInput){
-    searchInput.placeholder='작업결과 전체 검색...';
+    searchInput.placeholder='자료 검색...';
   }
+  var archiveOnly=(type==='정리이전자료');
+  var addBtn=document.getElementById('aa-add-btn');
+  if(addBtn)addBtn.style.display=archiveOnly?'none':'';
+  var guide=document.getElementById('aa-tab-guide');
+  if(guide)guide.textContent=archiveOnly
+    ?'구조개편 전 업무센터 기록과 05_정리이전자료 폴더의 파일을 확인합니다. 새 자료는 앞의 네 영역에 등록하세요.'
+    :'현재 자료는 네 영역에 저장하고, 고객·프로젝트·자료 종류는 자료명과 검색으로 찾습니다. 정리 전 자료는 별도 탭에서 보존합니다.';
   // 탭 버튼 스타일 갱신
   _AA_LEGACY_TYPES.forEach(function(t){
     var btn = document.getElementById('aa-tab-'+t);
@@ -8335,38 +8483,42 @@ window.aaSelectRow = async function(id){
   var dateEl    = document.getElementById('aa-det-date');
   var updatedDateEl = document.getElementById('aa-det-updated-date');
   var contentEl = document.getElementById('aa-det-content');
+  var archiveOnly = aaDisplayType(a)==='정리이전자료';
 
   var typeInfo = aaSplitType(a.data_type);
-  if(typeEl)    typeEl.innerHTML   = aaBadge(aaLegacyType(a.data_type)||typeInfo.detail||typeInfo.category);
+  if(typeEl)    typeEl.innerHTML   = aaBadge(aaDisplayType(a)||typeInfo.detail||typeInfo.category);
   if(titleEl)   titleEl.textContent  = a.title || '';
   if(authorEl)  authorEl.textContent = a.author || '';
   if(dateEl)    dateEl.textContent   = aaDateOnly(a.created_at);
   if(updatedDateEl) updatedDateEl.textContent = aaDateTime(aaFinalModifiedAt(a));
   if(contentEl) contentEl.textContent = a.content || '(내용 없음)';
 
-  var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn'),copyBtn=document.getElementById('aa-det-copy-btn');
-  if(editBtn)editBtn.style.display='';
-  if(deleteBtn){deleteBtn.style.display='';deleteBtn.textContent=a.__driveOnly?'🗑 파일 삭제':'🗑 자료 전체 삭제';}
-  if(copyBtn)copyBtn.style.display=a.__driveOnly?'none':'';
+  var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn');
+  if(editBtn)editBtn.style.display=archiveOnly?'none':'';
+  if(deleteBtn){deleteBtn.style.display=archiveOnly?'none':'';deleteBtn.textContent='🗑 삭제';}
 
   // 파일 목록
   document.getElementById('aa-file-list').innerHTML='<div style="font-size:11px;color:#94a3b8;">파일 불러오는 중...</div>';
-  var fi = document.getElementById('aa-file-input'); if(fi){fi.value='';fi.disabled=!!a.__driveOnly;if(fi.parentElement)fi.parentElement.style.display=a.__driveOnly?'none':'flex';}
+  var fi = document.getElementById('aa-file-input'); if(fi){fi.value='';fi.disabled=!!a.__driveOnly||archiveOnly;if(fi.parentElement)fi.parentElement.style.display=(a.__driveOnly||archiveOnly)?'none':'flex';}
 
-  // 상세 모달 열기
+  // 앱시트형 우측 상세판 열기
   aaOpenDetailModal();
 
   await aaLoadFiles(id);
 };
 
-/* ── 상세 모달 열기/닫기 ── */
+/* ── 앱시트형 우측 상세판 열기/닫기 ── */
 window.aaOpenDetailModal = function(){
-  var ov = document.getElementById('aa-detail-modal-overlay');
-  if(ov) ov.style.display = 'flex';
+  var ov=document.getElementById('aa-detail-modal-overlay'),layout=document.getElementById('aa-layout');
+  if(layout)layout.classList.add('aa-detail-open');
+  if(ov)ov.style.display='flex';
 };
 window.aaCloseDetailModal = function(){
-  var ov = document.getElementById('aa-detail-modal-overlay');
-  if(ov) ov.style.display = 'none';
+  var ov=document.getElementById('aa-detail-modal-overlay'),layout=document.getElementById('aa-layout');
+  if(ov)ov.style.display='none';
+  if(layout)layout.classList.remove('aa-detail-open');
+  _aaDetailSelectedFile=null;
+  aaCloseInlinePreview();
 };
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape'){
@@ -8391,10 +8543,11 @@ window.aaCopyContent = function(){
 
 /* ── 등록 모달 열기 ── */
 window.aaOpenModal = function(){
+  if(_aaTab==='정리이전자료'){if(typeof showT==='function')showT('정리이전자료는 조회·검색·다운로드만 가능합니다.');return;}
   document.getElementById('aa-modal-title').textContent='자료 등록';
   document.getElementById('aa-edit-id').value='';
   var t=document.getElementById('aa-f-type');if(t) t.value=_AA_LEGACY_TYPES.indexOf(_aaTab)>-1?_aaTab:'회사운영';
-  var u=document.getElementById('aa-f-author'); if(u) u.value='최윤경';
+  var u=document.getElementById('aa-f-author'); if(u) u.value=aaCurrentUserName();
   var n=document.getElementById('aa-f-title');  if(n) n.value='';
   var c=document.getElementById('aa-f-content');if(c) c.value='';
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
@@ -8407,13 +8560,14 @@ window.aaOpenModal = function(){
 /* ── 수정 모달 열기 ── */
 window.aaOpenModalEdit = function(){
   if(!_aaCurrent) return;
+  if(aaDisplayType(_aaCurrent)==='정리이전자료'){if(typeof showT==='function')showT('정리이전자료는 원본 보존을 위해 수정하지 않습니다.');return;}
   var a=_aaCurrent;
   aaCloseDetailModal(); // 상세 모달이 뒤에 겹쳐 보이지 않도록 먼저 닫기
   document.getElementById('aa-modal-title').textContent='내용 수정';
   document.getElementById('aa-edit-id').value=a.__driveOnly?'drive:'+String(a.__driveFile.id):(a.id||'');
   var typeInfo=aaSplitType(a.data_type);
   var t=document.getElementById('aa-f-type');if(t) t.value=aaLegacyType(a.data_type)||'미분류';
-  var u=document.getElementById('aa-f-author'); if(u) u.value=a.__driveOnly?'최윤경':(a.author||'최윤경');
+  var u=document.getElementById('aa-f-author'); if(u) u.value=a.__driveOnly?aaCurrentUserName():(a.author||aaCurrentUserName());
   var n=document.getElementById('aa-f-title');  if(n) n.value=a.title||'';
   var c=document.getElementById('aa-f-content');if(c) c.value=a.__driveOnly?'':(a.content||'');
   var fi=document.getElementById('aa-modal-file-input');if(fi) fi.value='';
@@ -8445,7 +8599,7 @@ window.aaSave = async function(){
   var driveType=aaSplitType(dataType);
   var category=driveType.category;
   var detail=driveType.detail;
-  var author  = ((document.getElementById('aa-f-author')||{}).value||'최윤경').trim();
+  var author  = ((document.getElementById('aa-f-author')||{}).value||aaCurrentUserName()).trim();
   var content = ((document.getElementById('aa-f-content')||{}).value||'').trim();
   var editId  = ((document.getElementById('aa-edit-id')||{}).value||'');
   var driveSourceId = editId.indexOf('drive:')===0 ? editId.slice(6) : '';
@@ -8461,6 +8615,10 @@ window.aaSave = async function(){
   }
   if(driveSourceId&&!aaDriveTokenValid()){
     showErr('Google Drive 파일과 연결하려면 먼저 상단의 동기화를 눌러주세요.');
+    return;
+  }
+  if((modalFiles.length||driveSourceId)&&!_aaDriveCanWrite){
+    showErr('연결한 Google 계정에 WD WAVE 회사공통 폴더 편집 권한이 필요합니다.');
     return;
   }
   if(modalFiles.length&&!aaDriveTarget(category,detail)){
@@ -8545,6 +8703,7 @@ window.aaSave = async function(){
 /* ── 삭제 ── */
 window.aaDelete = async function(){
   if(!_aaCurrent) return;
+  if(aaDisplayType(_aaCurrent)==='정리이전자료'){alert('정리이전자료는 원본 보존을 위해 업무센터에서 삭제하지 않습니다.');return;}
   if(_aaCurrent.__driveOnly){
     if(!aaDriveTokenValid()){alert('상단의 동기화를 누른 뒤 다시 삭제해주세요.');return;}
     if(!confirm('['+_aaCurrent.title+'] Google Drive 원본을 삭제하시겠습니까?\nDrive 휴지통으로 이동하며 업무센터 목록에서도 사라집니다.'))return;
@@ -8579,6 +8738,7 @@ window.aaDelete = async function(){
 
 /* ── 연결 자료의 첨부파일 1개만 삭제 ── */
 window.aaDriveDeleteSingleFile = async function(fileId){
+  if(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료'){alert('정리이전자료는 원본 보존을 위해 업무센터에서 삭제하지 않습니다.');return;}
   var f=_aaDriveFiles.find(function(x){return String(x.id)===String(fileId);});
   if(!f){alert('Google Drive에서 파일을 찾지 못했습니다. 동기화 후 다시 확인해주세요.');return;}
   if(!aaDriveTokenValid()){aaOpenDriveConnectModal();return;}
@@ -8591,10 +8751,42 @@ window.aaDriveDeleteSingleFile = async function(fileId){
   }catch(e){alert('파일 삭제 실패: '+e.message);}
 };
 
+/* ── 상세 상단 파일 동작 ── */
+var _aaDetailSelectedFile=null;
+var _aaDetailLegacyFiles=[];
+function aaUpdateDetailActions(){
+  var selected=_aaDetailSelectedFile;
+  var archiveOnly=!!(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료');
+  var replaceBtn=document.getElementById('aa-det-replace-btn');
+  var downloadBtn=document.getElementById('aa-det-download-btn');
+  if(replaceBtn){replaceBtn.disabled=!selected||selected.source!=='drive'||archiveOnly;replaceBtn.title=replaceBtn.disabled?'Drive 파일을 선택하면 교체할 수 있습니다.':'';}
+  if(downloadBtn)downloadBtn.disabled=!selected;
+  var rows=document.querySelectorAll('.aa-detail-file-row');
+  for(var i=0;i<rows.length;i++)rows[i].classList.toggle('selected',!!selected&&rows[i].getAttribute('data-file-key')===selected.key);
+}
+window.aaSelectDetailDriveFile=function(fileId){
+  var file=_aaDriveFiles.find(function(item){return String(item.id)===String(fileId)});if(!file)return;
+  _aaDetailSelectedFile={key:'drive:'+file.id,source:'drive',id:file.id,name:file.name,mimeType:file.mimeType||'',previewable:!!aaPreviewKind(file.name,file.mimeType)};
+  aaUpdateDetailActions();
+};
+window.aaSelectDetailLegacyFile=function(fileId){
+  var file=_aaDetailLegacyFiles.find(function(item){return String(item.id)===String(fileId)});if(!file)return;
+  _aaDetailSelectedFile={key:'legacy:'+file.id,source:'legacy',id:file.id,path:file.file_path,name:file.file_name,mimeType:file.file_type||'',previewable:!!aaPreviewKind(file.file_name,file.file_type)};
+  aaUpdateDetailActions();
+};
+window.aaDetailReplace=function(){
+  if(_aaDetailSelectedFile&&_aaDetailSelectedFile.source==='drive')aaDrivePromptReplace(_aaDetailSelectedFile.id);
+};
+window.aaDetailDownload=function(){
+  var file=_aaDetailSelectedFile;if(!file)return;
+  if(file.source==='drive')aaDriveDownloadFile(file.id);else aaDownloadFile(file.path,file.name);
+};
+
 /* ── 파일 목록 로드 ── */
 async function aaLoadFiles(archiveId){
   var driveId=String(archiveId||'').indexOf('drive:')===0?String(archiveId).slice(6):'';
   var driveFiles=driveId?_aaDriveFiles.filter(function(f){return f.id===driveId;}):(_aaDriveByArchive[String(archiveId)]||[]);
+  var archiveOnly=!!(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료');
   var updatedDateEl=document.getElementById('aa-det-updated-date');
   if(updatedDateEl&&_aaCurrent)updatedDateEl.textContent=aaDateTime(aaFinalModifiedAt(_aaCurrent));
   var legacyFiles=[];
@@ -8603,30 +8795,18 @@ async function aaLoadFiles(archiveId){
       var res = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?archive_id=eq.'+encodeURIComponent(archiveId)+'&order=uploaded_at.desc&select=*',{headers:aaHeaders()});
       if(res.ok){legacyFiles=(await res.json()).filter(function(f){return !aaDriveIdFromMeta(f.file_path);});}
     }
+    _aaDetailLegacyFiles=legacyFiles.slice();
     var el = document.getElementById('aa-file-list');if(!el)return;
     var html='';
-    var driveChecked=!!driveId||!!(_aaDriveLastSync&&aaDriveTokenValid());
-    var folderBtn='<button onclick="aaDriveOpenArchiveFolder()" style="padding:5px 10px;background:#fff;border:1px solid #CBD5E1;border-radius:7px;font-size:10px;font-weight:800;color:#475569;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">📁 폴더 열기</button>';
     if(driveFiles.length){
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:9px;margin-bottom:6px;">'
-        +'<span style="font-size:11px;font-weight:800;color:#166534;">✅ Google Drive에 있음</span>'+folderBtn+'</div>';
       html+=driveFiles.map(function(f){
         var kb=f.size?Math.round(Number(f.size)/1024)+'KB':'';
         var uploadDate=f.modifiedTime?f.modifiedTime.substring(0,10):'';
         var meta=[kb,uploadDate].filter(Boolean).join(' · ');
-        return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #DCFCE7;flex-wrap:wrap;">'
-          +'<span style="font-size:11.5px;flex:1;min-width:180px;color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">☁️ '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
-          +'<button onclick="aaDriveDownloadFile(\''+f.id+'\')" style="padding:5px 10px;background:#166534;border:1px solid #166534;border-radius:6px;font-size:10px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">원본 다운로드</button>'
-          +'<button onclick="aaDrivePromptReplace(\''+f.id+'\')" style="padding:5px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:800;color:#1D4ED8;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 교체</button>'
-          +'<button onclick="aaDriveDeleteSingleFile(\''+f.id+'\')" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:800;color:#DC2626;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 삭제</button>'
+        return '<div class="aa-detail-file-row" data-file-key="drive:'+_aaEsc(f.id)+'" onclick="aaSelectDetailDriveFile(\''+f.id+'\')">'
+          +'<span style="font-size:11.5px;flex:1;min-width:0;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
           +'</div>';
       }).join('');
-    }else if(driveChecked){
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:9px;margin-bottom:6px;">'
-        +'<span style="font-size:11px;font-weight:800;color:#64748B;">○ Google Drive에 없음</span>'+folderBtn+'</div>';
-    }else{
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;margin-bottom:6px;">'
-        +'<span style="font-size:11px;font-weight:800;color:#92400E;">● Google Drive 확인 전 · 상단 동기화 필요</span>'+folderBtn+'</div>';
     }
     if(legacyFiles.length){
       html+='<div style="font-size:10px;font-weight:800;color:#64748B;margin:10px 0 5px;">기존 첨부파일</div>';
@@ -8634,19 +8814,21 @@ async function aaLoadFiles(archiveId){
       var kb = f.file_size ? Math.round(f.file_size/1024)+'KB' : '';
       var uploadDate = f.uploaded_at ? f.uploaded_at.substring(0,10) : '';
       var meta = [kb, uploadDate].filter(Boolean).join(' · ');
-      var previewable = !!aaPreviewKind(f.file_name,f.file_type);
-      var filePathArg = aaEncodeArg(f.file_path);
-      var fileNameArg = aaEncodeArg(f.file_name);
-      var fileTypeArg = aaEncodeArg(f.file_type||'');
-      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f1f5f9;">'
+      return '<div class="aa-detail-file-row" data-file-key="legacy:'+_aaEsc(f.id)+'" onclick="aaSelectDetailLegacyFile(\''+f.id+'\')">'
         +'<span style="font-size:11.5px;flex:1;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 '+_aaEsc(f.file_name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
-        +'<button onclick="aaPreviewFile(decodeURIComponent(\''+filePathArg+'\'),decodeURIComponent(\''+fileNameArg+'\'),decodeURIComponent(\''+fileTypeArg+'\'))" style="padding:3px 8px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:5px;font-size:10px;font-weight:700;color:#16A34A;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">'+(previewable?'미리보기':'열기')+'</button>'
-        +'<button onclick="aaDownloadFile(\''+f.file_path+'\',\''+_aaEsc(f.file_name)+'\')" style="padding:3px 8px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;font-size:10px;font-weight:700;color:#4338CA;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">다운로드</button>'
-        +'<button onclick="aaDeleteFile(\''+f.id+'\',\''+f.file_path+'\')" style="padding:3px 8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:5px;font-size:10px;font-weight:700;color:#DC2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>'
         +'</div>';
       }).join('');
     }
+    if(!_aaCurrent||String(_aaCurrent.id)!==String(archiveId))return;
     el.innerHTML=html||'<div style="font-size:11px;color:#94a3b8;">첨부파일 없음</div>';
+    aaCloseInlinePreview();
+    var firstDrive=driveFiles.find(function(file){return !!aaPreviewKind(file.name,file.mimeType)});
+    var firstLegacy=legacyFiles.find(function(file){return !!aaPreviewKind(file.file_name,file.file_type)});
+    if(driveFiles.length)aaSelectDetailDriveFile(driveFiles[0].id);
+    else if(legacyFiles.length)aaSelectDetailLegacyFile(legacyFiles[0].id);
+    else{_aaDetailSelectedFile=null;aaUpdateDetailActions();}
+    if(firstDrive){aaSelectDetailDriveFile(firstDrive.id);await aaDrivePreviewFile(firstDrive.id,true);}
+    else if(firstLegacy){aaSelectDetailLegacyFile(firstLegacy.id);await aaPreviewFile(firstLegacy.file_path,firstLegacy.file_name,firstLegacy.file_type,true);}
   } catch(e){
     var el2=document.getElementById('aa-file-list');
     if(el2) el2.innerHTML='<div style="font-size:11px;color:#ef4444;">파일 목록 불러오기 실패</div>';
@@ -8664,13 +8846,38 @@ function aaPreviewKind(fileName,fileType){
   if(mime==='application/pdf' || ext==='pdf') return 'pdf';
   return '';
 }
-window.aaCloseFilePreview=function(){
-  var ov=document.getElementById('aa-file-preview-overlay');
-  var stage=document.getElementById('aa-preview-stage');
-  if(stage) stage.innerHTML='';
-  if(ov) ov.style.display='none';
+var _aaInlinePreviewState={url:'',kind:'',name:'',objectUrl:false};
+function aaRenderPreviewStage(stage,state){
+  if(!stage)return;stage.innerHTML='';
+  if(state.kind==='image'){
+    var img=document.createElement('img');img.src=state.url;img.alt=String(state.name||'이미지 미리보기');stage.appendChild(img);
+  }else if(state.kind==='pdf'){
+    var frame=document.createElement('iframe');frame.src=state.url;frame.title=String(state.name||'PDF 미리보기');stage.appendChild(frame);
+  }
+}
+function aaShowInlinePreview(url,kind,fileName,isObjectUrl){
+  if(_aaInlinePreviewState.objectUrl&&_aaInlinePreviewState.url)try{URL.revokeObjectURL(_aaInlinePreviewState.url)}catch(_ignore){}
+  _aaInlinePreviewState={url:url,kind:kind,name:String(fileName||'파일'),objectUrl:!!isObjectUrl};
+  var box=document.getElementById('aa-inline-preview'),title=document.getElementById('aa-inline-preview-title'),stage=document.getElementById('aa-inline-preview-stage');
+  if(title)title.textContent='미리보기 · '+_aaInlinePreviewState.name;
+  aaRenderPreviewStage(stage,_aaInlinePreviewState);if(box)box.style.display='block';
+}
+window.aaCloseInlinePreview=function(){
+  var box=document.getElementById('aa-inline-preview'),stage=document.getElementById('aa-inline-preview-stage');
+  if(stage)stage.innerHTML='';if(box)box.style.display='none';
+  if(_aaInlinePreviewState.objectUrl&&_aaInlinePreviewState.url)try{URL.revokeObjectURL(_aaInlinePreviewState.url)}catch(_ignore){}
+  _aaInlinePreviewState={url:'',kind:'',name:'',objectUrl:false};
 };
-window.aaPreviewFile=async function(filePath,fileName,fileType){
+window.aaExpandInlinePreview=function(){
+  if(!_aaInlinePreviewState.url)return;
+  var title=document.getElementById('aa-preview-title'),stage=document.getElementById('aa-preview-stage'),ov=document.getElementById('aa-file-preview-overlay');
+  if(title)title.textContent='미리보기 · '+_aaInlinePreviewState.name;aaRenderPreviewStage(stage,_aaInlinePreviewState);if(ov)ov.style.display='flex';
+};
+window.aaCloseFilePreview=function(){
+  var ov=document.getElementById('aa-file-preview-overlay'),stage=document.getElementById('aa-preview-stage');
+  if(stage)stage.innerHTML='';if(ov)ov.style.display='none';
+};
+window.aaPreviewFile=async function(filePath,fileName,fileType,quiet){
   var kind=aaPreviewKind(fileName,fileType);
   if(!kind){ aaOpenFile(filePath); return; }
   try{
@@ -8680,35 +8887,29 @@ window.aaPreviewFile=async function(filePath,fileName,fileType){
     if(!res.ok) throw new Error('미리보기 주소 발급 실패');
     var d=await res.json();
     var url=aaSbUrl()+'/storage/v1'+d.signedURL;
-    var title=document.getElementById('aa-preview-title');
-    var stage=document.getElementById('aa-preview-stage');
-    var ov=document.getElementById('aa-file-preview-overlay');
-    if(title) title.textContent='미리보기 · '+String(fileName||'파일');
-    if(stage){
-      stage.innerHTML='';
-      if(kind==='image'){
-        var img=document.createElement('img');
-        img.src=url;img.alt=String(fileName||'이미지 미리보기');
-        img.style.cssText='display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 4px 22px rgba(15,23,42,.12);';
-        stage.appendChild(img);
-      }else{
-        var frame=document.createElement('iframe');
-        frame.src=url;frame.title=String(fileName||'PDF 미리보기');
-        frame.style.cssText='width:100%;height:100%;border:0;border-radius:10px;background:#fff;';
-        stage.appendChild(frame);
-      }
-    }
-    if(ov) ov.style.display='flex';
-  }catch(e){ alert('파일 미리보기 실패: '+e.message); }
+    aaShowInlinePreview(url,kind,fileName,false);
+  }catch(e){if(!quiet)alert('파일 미리보기 실패: '+e.message);}
+};
+window.aaDrivePreviewFile=async function(fileId,quiet){
+  var file=_aaDriveFiles.find(function(item){return String(item.id)===String(fileId)});if(!file)return;
+  var kind=aaPreviewKind(file.name,file.mimeType);if(!kind)return;
+  if(!aaDriveTokenValid()){if(!quiet)aaOpenDriveConnectModal();return;}
+  try{
+    var res=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media',{headers:{Authorization:'Bearer '+_aaDriveToken}});
+    if(!res.ok)throw new Error('Drive 파일을 불러오지 못했습니다.');
+    var objectUrl=URL.createObjectURL(await res.blob());aaShowInlinePreview(objectUrl,kind,file.name,true);
+  }catch(e){if(!quiet)alert('파일 미리보기 실패: '+e.message);}
 };
 
 /* ── 파일 업로드 ── */
 window.aaUploadFiles = async function(){
   if(!_aaCurrent){ if(typeof showT==='function') showT('⚠️ 자료를 먼저 선택해주세요.'); return; }
+  if(aaDisplayType(_aaCurrent)==='정리이전자료'){if(typeof showT==='function')showT('정리이전자료는 조회·검색·다운로드만 가능합니다.');return;}
   if(_aaCurrent.__driveOnly){ if(typeof showT==='function') showT('Drive에서 직접 올린 파일은 원본 폴더에서 관리합니다.'); return; }
   var input=document.getElementById('aa-file-input');
   if(!input||!input.files||!input.files.length){ if(typeof showT==='function') showT('⚠️ 파일을 선택해주세요.'); return; }
   if(!aaDriveTokenValid()){aaDriveSetStatus('첨부파일 업로드를 위해 Google Drive를 연결해주세요.','warn');aaDriveConnect();return;}
+  if(!_aaDriveCanWrite){alert('연결한 Google 계정에 WD WAVE 회사공통 폴더 편집 권한이 필요합니다.');return;}
   var typeInfo=aaSplitType(_aaCurrent.data_type);
   if(!aaDriveTarget(typeInfo.category,typeInfo.detail)){alert('선택한 상세구분의 Google Drive 폴더 연결이 없습니다.');return;}
   var files=Array.from(input.files); var failed=[];
@@ -8891,8 +9092,8 @@ setInterval(function(){
     window.addEventListener('DOMContentLoaded',function(){
       var hd=document.getElementById('wcn-header-date'),k=wcKstDate();if(hd)hd.textContent=k.getFullYear()+'.'+String(k.getMonth()+1).padStart(2,'0')+'.'+String(k.getDate()).padStart(2,'0');
       if(!_CURRENT_UID){var guard=document.getElementById('wc-auth-guard');if(guard)guard.style.display='flex';var st=document.getElementById('wc-storage-status');if(st){st.className='wc-state warn';st.textContent='본진 로그인 필요'}return}
-      if(typeof wj_init==='function')wj_init();else if(typeof wcnTabSwitch==='function')wcnTabSwitch('overview');
-      setTimeout(function(){if(typeof wcnTabSwitch==='function')wcnTabSwitch('overview');if(typeof renderWorkcenterOverview==='function')renderWorkcenterOverview(false)},80);
+      if(typeof wj_init==='function')wj_init();else if(typeof wcnTabSwitch==='function')wcnTabSwitch('journal');
+      setTimeout(function(){if(typeof wcnTabSwitch==='function')wcnTabSwitch('journal')},80);
     });
   </script>
 
@@ -9853,7 +10054,7 @@ setInterval(function(){
   if(window.__WC_GOOGLE_SIGNALS_V1__)return;
 
   var ACCOUNT='kfcyk20@gmail.com';
-  var CLIENT_ID=(window._AA_DRIVE_CLIENT_ID||'467637069689-nttclpbsjpnmat18g1932q5vvrb8et9o.apps.googleusercontent.com');
+  var CLIENT_ID=(window._AA_DRIVE_CLIENT_ID||'525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com');
   var GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
   var CALENDAR_SCOPE='https://www.googleapis.com/auth/calendar.events.readonly';
   var TASKS_SCOPE='https://www.googleapis.com/auth/tasks';
@@ -10226,7 +10427,7 @@ setInterval(function(){
   function field(id){return document.getElementById(id)}
   function toast(message){if(typeof showT==='function')showT(message)}
   function activateShareOnly(){
-    ['overview','daily-haru','idea','journal','hours','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
+    ['overview','daily-haru','idea','journal','hours','manual','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
       var panel=document.getElementById('wcn-panel-'+t),btn=document.getElementById('wcn-tab-'+t),active=t==='share';
       if(panel)panel.style.display=active?'block':'none';
       if(btn){
@@ -10951,5 +11152,552 @@ setInterval(function(){
 })();
 </script>
 
+<!-- 2차 시공후보: 기존 업무센터 유지 + 작업결과 보관의 회사 Drive 입구만 교체 -->
+<script id="wd-company-drive-root-v1">
+(function(){
+  'use strict';
+  var STORAGE_KEY='wd_company_drive_root_url_v1';
+  var ROOT_URL='https://drive.google.com/drive/folders/17Sca0e7QuMRMNNYWxAlzMhDNhyxydS48';
+  window.WD_COMPANY_DRIVE_ROOT_URL=ROOT_URL;
+  function currentUrl(){
+    return String(window.WD_COMPANY_DRIVE_ROOT_URL||localStorage.getItem(STORAGE_KEY)||ROOT_URL).trim();
+  }
+  window.wdSetCompanyDriveRoot=function(url){
+    var value=String(url||'').trim();
+    if(value)localStorage.setItem(STORAGE_KEY,value);
+    else localStorage.removeItem(STORAGE_KEY);
+    apply();
+  };
+  window.wdOpenCompanyDrive=function(event){
+    if(event&&typeof event.preventDefault==='function')event.preventDefault();
+    var clicked=event&&event.currentTarget?String(event.currentTarget.href||''):'';
+    var url=clicked.indexOf('https://drive.google.com/drive/folders/')===0?clicked:currentUrl();
+    if(!url){
+      if(typeof showT==='function')showT('회사 Google Drive 연결 후 바로가기가 활성화됩니다.');
+      else window.alert('회사 Google Drive 연결 후 바로가기가 활성화됩니다.');
+      return false;
+    }
+    window.open(url,'_blank','noopener,noreferrer');
+    return false;
+  };
+  function apply(){
+    var link=document.getElementById('aa-drive-folder-link');
+    var url=currentUrl();
+    if(link){
+      link.href=url||'#';
+      link.setAttribute('aria-disabled',url?'false':'true');
+      link.style.opacity=url?'1':'.62';
+      link.title=url?'woori 회사 Google Drive 열기':'회사 Drive 연결 대기';
+      link.textContent='📁 Google Drive 열기';
+    }
+    var status=document.getElementById('aa-drive-status');
+    if(status){
+      if(url){
+        status.textContent='회사공통 폴더 지정 완료 · Drive 동기화를 눌러 읽기·쓰기 연결을 시작하세요.';
+        status.style.background='#EFF6FF';status.style.borderColor='#BFDBFE';status.style.color='#1D4ED8';
+      }else{
+        status.textContent='회사 Google Drive 연결 전 · 기존 텍스트 자료와 분류 탭은 그대로 사용할 수 있습니다.';
+        status.style.background='#FFFBEB';status.style.borderColor='#FDE68A';status.style.color='#92400E';
+      }
+    }
+  }
+  function boot(){
+    apply();
+    var label=document.querySelector('#wcn-tab-ai-archive span:last-child');
+    if(label)label.textContent='작업결과 보관';
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+</script>
+
+<!-- 수진 로그인 전용: 날짜별 Drive 업무지시 읽기 + Google Docs 업무일지 저장 -->
+<style id="wc-sujin-journal-drive-v1-style">
+  .wsj-shell{max-width:1460px;margin:0 auto;padding:8px 4px 30px;color:#1f2b3d;font-family:'Noto Sans KR',sans-serif}
+  .wsj-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px;margin-bottom:14px;border:1px solid #eadfca;border-radius:18px;background:#fffdf8;box-shadow:0 8px 26px rgba(55,44,20,.05)}
+  .wsj-eyebrow{margin-bottom:5px;font-size:10px;font-weight:900;letter-spacing:.13em;color:#b45309}.wsj-head h2{margin:0;font-size:24px;letter-spacing:-.035em}.wsj-head p{margin:6px 0 0;font-size:12.5px;line-height:1.65;color:#7c8797}
+  .wsj-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}.wsj-btn{min-height:38px;padding:8px 12px;border:1px solid #d6d3d1;border-radius:10px;background:#fff;color:#44403c;font:800 12px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-btn.primary{border-color:#f59e0b;background:#fbbf24;color:#1c1917}.wsj-btn:disabled{opacity:.55;cursor:wait}
+  .wsj-date-tools{display:flex;min-height:38px;align-items:center;gap:7px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:10px;background:#fff}.wsj-date-tools span{font-size:10.5px;font-weight:800;color:#78716c;white-space:nowrap}.wsj-date-tools strong{font-size:11.5px;color:#292524;white-space:nowrap}.wsj-today{min-height:38px;padding:0 10px;border:1px solid #fde68a;border-radius:10px;background:#fef3c7;color:#92400e;font:900 10.5px 'Noto Sans KR',sans-serif;cursor:pointer}
+  #wc-global-drive-entry{border:1px solid rgba(255,255,255,.72);border-radius:9px;background:rgba(255,255,255,.42);color:#5f3705;padding:6px 10px;font:900 10.5px 'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap}#wc-global-drive-entry.ok{border-color:#86efac;background:#f0fdf4;color:#166534}#wc-global-drive-entry.warn{border-color:#fff;background:#fff7d6;color:#92400e}#wc-global-drive-entry:disabled{opacity:.6;cursor:wait}
+  #wc-drive-entry-guard{position:fixed;inset:0;z-index:19990;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(28,25,23,.76);backdrop-filter:blur(4px)}#wc-drive-entry-guard.show{display:flex}.wc-drive-entry-box{width:min(440px,100%);padding:27px 25px;border:1px solid #fde68a;border-radius:20px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.3);text-align:center}.wc-drive-entry-icon{display:flex;width:58px;height:58px;margin:0 auto 13px;align-items:center;justify-content:center;border-radius:17px;background:#fef3c7;font-size:28px}.wc-drive-entry-box h2{margin:0 0 8px;font-size:20px}.wc-drive-entry-box p{margin:0;color:#78716c;font-size:12.5px;line-height:1.72}.wc-drive-entry-list{margin:16px 0;padding:12px 14px;border:1px solid #eeeae3;border-radius:12px;background:#fafaf9;text-align:left;color:#57534e;font-size:11.5px;line-height:1.8}.wc-drive-entry-action{width:100%;min-height:48px;border:0;border-radius:11px;background:#fbbf24;color:#1c1917;font:900 14px 'Noto Sans KR',sans-serif;cursor:pointer}.wc-drive-entry-action:disabled{opacity:.6;cursor:wait}.wc-drive-entry-state{min-height:18px;margin-top:9px;color:#92400e;font-size:10.5px;font-weight:700;line-height:1.5}
+  .wsj-status{margin-bottom:14px;padding:10px 14px;border:1px solid #e4ddca;border-radius:12px;background:rgba(255,255,255,.78);color:#7c8797;font-size:11.5px;font-weight:700;line-height:1.55}.wsj-status.ok{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.wsj-status.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}.wsj-status.error{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
+  .wsj-grid{display:grid;height:clamp(560px,calc(100vh - 300px),690px);grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr);gap:18px;align-items:stretch}.wsj-left-stack{display:flex;height:100%;min-width:0;min-height:0;flex-direction:column;gap:18px}.wsj-card{display:flex;min-height:0;flex-direction:column;overflow:hidden;border:1px solid #eadfca;border-radius:20px;background:#fff;box-shadow:0 10px 30px rgba(55,44,20,.07)}.wsj-left-stack .wsj-card.instruction{min-height:0;flex:1}.wsj-left-stack .wsj-card.files{min-height:0;flex:0 0 220px}.wsj-card.memo{height:100%;border-color:#efcf62;background:#fff3ad;box-shadow:0 12px 34px rgba(161,98,7,.12)}
+  .wsj-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 19px 16px;border-bottom:1px solid #eadfca;background:#fff}.wsj-card.memo .wsj-card-head{border-bottom-color:#e7c94f;background:#ffe98a}.wsj-card-eyebrow{margin-bottom:6px;color:#7c8797;font-size:10px;font-weight:900;letter-spacing:.1em}.wsj-card.memo .wsj-card-eyebrow{color:#8a6400}.wsj-card-title{font-size:19px;font-weight:900;letter-spacing:-.03em}.wsj-card-note{margin-top:5px;font-size:12px;color:#7c8797;line-height:1.45}.wsj-card.memo .wsj-card-note{color:#806919}.wsj-card-head-tools{display:flex;align-items:center;gap:6px}.wsj-expand{padding:7px 10px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#44403c;font:800 10.5px 'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap}.wsj-expand.refresh{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.wsj-expand:disabled{opacity:.55;cursor:wait}
+  .wsj-instruction{min-height:0;flex:1;overflow:auto;margin:13px;padding:18px 19px;border:1px solid #e7ebf0;border-radius:14px;background:#fff;white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.88;color:#292524;overscroll-behavior:contain}.wsj-instruction.empty{display:flex;align-items:center;justify-content:center;color:#a8a29e;text-align:center}
+  .wsj-files{flex:1;overflow:auto;margin:12px;padding:0}.wsj-file-empty{display:flex;min-height:120px;align-items:center;justify-content:center;padding:16px;border:1px solid #e7ebf0;border-radius:14px;color:#a8a29e;font-size:11.5px;text-align:center}.wsj-file-row{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid #e7ebf0;border-radius:12px;background:#fff}.wsj-file-row+.wsj-file-row{margin-top:8px}.wsj-file-icon{display:flex;width:36px;height:36px;flex:0 0 36px;align-items:center;justify-content:center;border-radius:10px;background:#eef5ff;font-size:18px}.wsj-file-main{min-width:0;flex:1}.wsj-file-name{overflow:hidden;color:#292524;font-size:12px;font-weight:900;text-overflow:ellipsis;white-space:nowrap}.wsj-file-meta{margin-top:3px;color:#a8a29e;font-size:10px}.wsj-file-actions{display:flex;gap:5px;flex:0 0 auto}.wsj-file-action{padding:7px 9px;border:1px solid #d6d3d1;border-radius:8px;background:#fff;color:#57534e;font:800 10px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-file-action.download{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}.wsj-file-action:disabled{opacity:.55;cursor:wait}
+  .wsj-memo{min-height:0;flex:1;width:calc(100% - 28px);margin:14px;resize:none;overflow:auto;border:1px solid #e4cb70;border-radius:15px;outline:0;background:rgba(255,255,255,.76);padding:20px;color:#3f3506;font:600 14.5px/1.9 'Noto Sans KR',sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.65)}.wsj-memo:focus{border-color:#d6a700;box-shadow:0 0 0 3px rgba(214,167,0,.12)}.wsj-memo::placeholder{color:#a58b3b}.wsj-journal-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.wsj-draft-state{padding:8px 11px;border:1px solid #e4c34f;border-radius:9px;background:#fffbea;color:#8a6d1d;font:800 10.5px 'Noto Sans KR',sans-serif;white-space:nowrap;cursor:pointer}.wsj-draft-state.saved{border-color:#86efac;background:#f0fdf4;color:#166534}.wsj-draft-state.working{border-color:#fde68a;background:#fff7d6;color:#92400e}.wsj-saved{margin-top:6px;font-size:10.5px;color:#8a6d1d}.wsj-save{min-width:112px;padding:10px 15px;border:0;border-radius:10px;background:#1c1917;color:#fde68a;font:900 12px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-save:disabled{opacity:.55;cursor:wait}
+  .wsj-instruction-modal{position:fixed;inset:0;z-index:20030;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(28,25,23,.72);backdrop-filter:blur(4px)}.wsj-instruction-modal.show{display:flex}.wsj-instruction-dialog{display:flex;width:min(900px,100%);max-height:88vh;flex-direction:column;overflow:hidden;border:1px solid #fde68a;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.32)}.wsj-instruction-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-bottom:1px solid #eeeae3;background:#fffbeb}.wsj-instruction-modal-head h3{margin:0;font-size:18px}.wsj-instruction-modal-head p{margin:4px 0 0;color:#78716c;font-size:11px}.wsj-instruction-modal-content{min-height:260px;overflow:auto;margin:0;padding:24px;white-space:pre-wrap;word-break:break-word;color:#292524;font:500 14px/1.9 'Noto Sans KR',sans-serif}.wsj-instruction-modal-close{width:36px;height:36px;flex:0 0 36px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#57534e;font-size:21px;cursor:pointer}
+  .wsj-history-modal{position:fixed;inset:0;z-index:20020;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(28,25,23,.7);backdrop-filter:blur(4px)}.wsj-history-modal.show{display:flex}.wsj-history-dialog{width:min(720px,100%);max-height:min(760px,90vh);overflow:hidden;border:1px solid #fde68a;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.3)}.wsj-history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #eeeae3}.wsj-history-head h3{margin:0;font-size:18px}.wsj-history-head p{margin:5px 0 0;color:#78716c;font-size:11px;line-height:1.55}.wsj-history-close{width:34px;height:34px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#57534e;font-size:20px;cursor:pointer}.wsj-history-state{padding:10px 20px;background:#fffbeb;color:#92400e;font-size:11px;font-weight:800}.wsj-history-table-wrap{max-height:560px;overflow:auto;padding:0 20px 20px}.wsj-history-table{width:100%;border-collapse:collapse}.wsj-history-table th{position:sticky;top:0;padding:12px 10px;border-bottom:1px solid #d6d3d1;background:#fff;color:#78716c;font-size:10.5px;text-align:left}.wsj-history-table td{padding:13px 10px;border-bottom:1px solid #eeeae3;color:#292524;font-size:12px}.wsj-history-table td:first-child{font-weight:900}.wsj-history-kind{color:#78716c;font-size:10.5px}.wsj-history-view{padding:7px 12px;border:1px solid #f59e0b;border-radius:8px;background:#fff7d6;color:#92400e;font:900 11px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-history-empty{padding:34px 12px!important;color:#a8a29e!important;text-align:center}.wsj-history-table th:last-child,.wsj-history-table td:last-child{text-align:right}.wsj-history-reader{display:none;max-height:610px;overflow:auto}.wsj-history-reader.show{display:block}.wsj-history-reader-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 20px;border-bottom:1px solid #eeeae3;background:#fffbeb}.wsj-history-back{padding:7px 11px;border:1px solid #d6d3d1;border-radius:8px;background:#fff;color:#44403c;font:800 11px 'Noto Sans KR',sans-serif;cursor:pointer}.wsj-history-reader-date{font-size:12px;font-weight:900;color:#92400e}.wsj-history-content{min-height:300px;margin:0;padding:22px 24px;white-space:pre-wrap;word-break:break-word;color:#292524;font:500 13px/1.85 'Noto Sans KR',sans-serif}.wsj-history-content.loading{display:flex;align-items:center;justify-content:center;color:#a8a29e}
+  @media(max-width:900px){.wsj-grid{height:auto;grid-template-columns:1fr}.wsj-left-stack{height:auto}.wsj-left-stack .wsj-card.instruction{height:360px;min-height:360px;flex:none}.wsj-left-stack .wsj-card.files{min-height:210px;flex:0 0 210px}.wsj-card.memo{height:540px;min-height:540px}}
+  @media(max-width:640px){.wsj-head{display:block;padding:15px}.wsj-head-actions{justify-content:flex-start;margin-top:11px}.wsj-date-tools{flex:1;justify-content:space-between}.wsj-head-actions>.wsj-btn{flex:1}.wsj-instruction,.wsj-memo{padding:16px 15px;font-size:13px}.wsj-card.memo .wsj-card-head{display:block}.wsj-journal-actions{justify-content:flex-start;margin-top:10px}.wsj-save{flex:1}.wsj-instruction-modal,.wsj-history-modal{padding:12px}.wsj-instruction-modal-head,.wsj-history-head{padding:16px}.wsj-instruction-modal-content{padding:18px 16px;font-size:13px}.wsj-history-state{padding:9px 16px}.wsj-history-table-wrap{padding:0 10px 14px}.wsj-history-table th,.wsj-history-table td{padding:11px 7px}.wsj-history-content{padding:18px 16px}}
+</style>
+<script id="wc-sujin-journal-drive-v1">
+(function(){
+  'use strict';
+  var INSTRUCTION_FOLDER_ID='1xDDgmq_tgKSvzqwTdMikRoJ3a7PFM4rZ';
+  var JOURNAL_FOLDER_ID='19893_XG7jXziYDYK-q5xaNlrtQna0ubf';
+  var FILES_FOLDER_ID='1akIH85_fbbPkshgPLWCkzxv3doMgJU0W';
+  var DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com';
+  var DRIVE_SCOPE='https://www.googleapis.com/auth/drive';
+  /* 업무센터 전체가 작업결과 보관과 같은 하나의 Drive 세션을 사용한다. */
+  var SESSION_KEY='wd_work_company_drive_access_v2';
+  var LEGACY_SESSION_KEY='wd_sujin_journal_drive_v1';
+  var DRAFT_KEY_PREFIX='wd_sujin_journal_draft_v1_';
+  var STATE={token:'',expiresAt:0,tokenClient:null,date:'',instructionFile:null,journalFile:null,sharedFiles:[],history:[],loading:false,saving:false,refreshTimer:null,draftTimer:null,autoTried:false};
+
+  function isSujin(){
+    var uid=String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();
+    var name=String(localStorage.getItem('wd_user_name')||'').trim();
+    /* 업무센터의 업무일지는 로그인 계정과 관계없이 수진 공용 업무일지로 고정한다.
+       지점장님 업무일지는 이 화면에 두지 않고 별도 운영판으로 분리한다. */
+    return uid==='kfcyk30'||uid==='kfcyk50'||name==='박수진'||name==='최윤경';
+  }
+  function field(id){return document.getElementById(id)}
+  function kstDate(){
+    var parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),map={};
+    parts.forEach(function(x){map[x.type]=x.value;});return map.year+'-'+map.month+'-'+map.day;
+  }
+  function selectedDateLabel(){return STATE.date}
+  function esc(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+  function kstDateOf(value){
+    if(!value)return '';
+    var parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)),map={};
+    parts.forEach(function(x){map[x.type]=x.value;});return map.year+'-'+map.month+'-'+map.day;
+  }
+  function tokenValid(){return !!(STATE.token&&Date.now()<STATE.expiresAt-30000)}
+  function syncSharedDriveToken(){
+    try{
+      if(typeof _aaDriveToken!=='undefined')_aaDriveToken=STATE.token;
+      if(typeof _aaDriveTokenExp!=='undefined')_aaDriveTokenExp=STATE.expiresAt;
+      if(typeof aaDriveSaveSession==='function')aaDriveSaveSession();
+      if(typeof aaDriveUpdateConnectionBadge==='function')aaDriveUpdateConnectionBadge();
+    }catch(e){}
+    try{window.dispatchEvent(new CustomEvent('wd-work-drive-ready',{detail:{ready:tokenValid()}}));}catch(e){}
+  }
+  function scheduleRefresh(){
+    clearTimeout(STATE.refreshTimer);if(!tokenValid())return;
+    var delay=Math.max(60000,STATE.expiresAt-Date.now()-120000);
+    STATE.refreshTimer=setTimeout(function(){silentConnect();},delay);
+  }
+  function saveSession(){try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:STATE.token,expiresAt:STATE.expiresAt}));}catch(e){}syncSharedDriveToken();scheduleRefresh()}
+  function restoreSession(){
+    try{
+      var x=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+      if(!(x&&x.token))x=JSON.parse(sessionStorage.getItem(LEGACY_SESSION_KEY)||'null');
+      if(x&&x.token&&Number(x.expiresAt)>Date.now()+30000){
+        STATE.token=x.token;STATE.expiresAt=Number(x.expiresAt);saveSession();
+        try{sessionStorage.removeItem(LEGACY_SESSION_KEY);}catch(ignore){}
+        return true;
+      }
+    }catch(e){}
+    try{if(typeof aaDriveRestoreSession==='function')aaDriveRestoreSession();if(typeof aaDriveTokenValid==='function'&&aaDriveTokenValid()){STATE.token=_aaDriveToken;STATE.expiresAt=_aaDriveTokenExp;saveSession();return true;}}catch(e){}
+    return false;
+  }
+  function clearSession(){STATE.token='';STATE.expiresAt=0;clearTimeout(STATE.refreshTimer);try{sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(LEGACY_SESSION_KEY);}catch(e){}try{if(typeof aaDriveClearSession==='function')aaDriveClearSession();}catch(e){}updateGlobalDriveButton();showEntryGuard('Drive 연결이 만료되었습니다. 다시 연결한 뒤 업무센터를 계속할 수 있습니다.')}
+  function setStatus(message,tone){var el=field('wsj-status');if(!el)return;el.textContent=message;el.className='wsj-status'+(tone?' '+tone:'')}
+  function draftKey(date){return DRAFT_KEY_PREFIX+String(date||STATE.date||kstDate())}
+  function readDraft(date){try{var x=JSON.parse(localStorage.getItem(draftKey(date))||'null');return x&&typeof x.text==='string'?x:null}catch(e){return null}}
+  function draftTimeLabel(ts){try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ts))}catch(e){return ''}}
+  function setDraftState(message,tone){var el=field('wsj-draft-state');if(!el)return;el.textContent=message;el.className='wsj-draft-state'+(tone?' '+tone:'')}
+  function saveDraftNow(){
+    var memo=field('wsj-memo');if(!memo)return;
+    var payload={text:String(memo.value||''),savedAt:Date.now()};
+    try{localStorage.setItem(draftKey(),JSON.stringify(payload));setDraftState('임시저장됨 '+draftTimeLabel(payload.savedAt),'saved')}catch(e){setDraftState('임시저장 실패','working')}
+  }
+  function scheduleDraftSave(){clearTimeout(STATE.draftTimer);setDraftState('임시저장 중…','working');STATE.draftTimer=setTimeout(saveDraftNow,450)}
+  function clearDraft(date){clearTimeout(STATE.draftTimer);try{localStorage.removeItem(draftKey(date))}catch(e){}}
+  window.wsjSaveDraft=function(){saveDraftNow();if(typeof showT==='function')showT('임시저장했습니다.')};
+  function updateGlobalDriveButton(busy){
+    var b=field('wc-global-drive-entry');if(!b)return;b.disabled=!!busy;
+    b.className=tokenValid()?'ok':'warn';b.textContent=busy?'Drive 확인 중…':(tokenValid()?'● Drive 연결됨':'Google Drive 연결');
+  }
+  function showEntryGuard(message){
+    var guard=field('wc-drive-entry-guard'),state=field('wc-drive-entry-state'),button=field('wc-drive-entry-action');
+    if(guard)guard.className='show';if(state)state.textContent=message||'Google 계정을 한 번 연결하면 업무센터 전체에서 공동 사용합니다.';
+    if(button){button.disabled=false;button.textContent=tokenValid()?'Drive 연결 확인하고 시작':'Google Drive 연결하고 시작';}
+  }
+  function hideEntryGuard(){var guard=field('wc-drive-entry-guard');if(guard)guard.className=''}
+  function setEntryGuardBusy(on,message){var button=field('wc-drive-entry-action'),state=field('wc-drive-entry-state');if(button){button.disabled=!!on;button.textContent=on?'Drive 연결 확인 중…':(tokenValid()?'Drive 연결 확인하고 시작':'Google Drive 연결하고 시작')}if(state&&message)state.textContent=message}
+  function setBusy(on){STATE.loading=!!on;updateGlobalDriveButton(on)}
+  function headers(extra){var h={Authorization:'Bearer '+STATE.token};Object.keys(extra||{}).forEach(function(k){h[k]=extra[k]});return h}
+  async function api(url,opts){
+    opts=opts||{};opts.headers=Object.assign({},headers(),opts.headers||{});opts.cache='no-store';
+    var res=await fetch(url,opts);
+    if(res.status===401){clearSession();setStatus('Google Drive 연결이 만료되었습니다. 다시 연결해주세요.','warn');throw new Error('Drive 연결 만료');}
+    if(!res.ok){var detail=await res.text();throw new Error('Drive '+res.status+': '+detail.substring(0,120));}
+    return res;
+  }
+  async function verifyFolders(){
+    var ids=[INSTRUCTION_FOLDER_ID,JOURNAL_FOLDER_ID,FILES_FOLDER_ID];
+    var rows=await Promise.all(ids.map(function(id){return api('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields='+encodeURIComponent('id,name,capabilities(canEdit,canAddChildren)'),{method:'GET'}).then(function(r){return r.json()})}));
+    if(!rows[0]||!rows[1]||!rows[2])throw new Error('업무공유폴더 연결을 확인할 수 없습니다.');
+    if(!(rows[1].capabilities&&rows[1].capabilities.canAddChildren!==false))throw new Error('02_업무일지 폴더의 편집 권한이 필요합니다.');
+  }
+  function initTokenClient(){
+    if(STATE.tokenClient)return true;
+    if(!(window.google&&google.accounts&&google.accounts.oauth2))return false;
+    STATE.tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,
+      callback:async function(resp){
+        if(!resp||resp.error||!resp.access_token){setStatus('Google Drive 연결을 완료하지 못했습니다.','error');setBusy(false);return;}
+        STATE.token=resp.access_token;STATE.expiresAt=Date.now()+Number(resp.expires_in||3600)*1000;saveSession();updateGlobalDriveButton(false);setEntryGuardBusy(true,'업무공유폴더 권한을 확인하고 있습니다.');
+        var connectedOk=false;
+        try{
+          await verifyFolders();
+          if(typeof aaDriveVerifyAccount==='function')await aaDriveVerifyAccount();
+          if(isSujin()&&field('wsj-shell'))await loadAll();
+          else if(typeof aaDriveRefresh==='function')aaDriveRefresh(false).catch(function(){});
+          connectedOk=true;
+        }catch(e){console.error('[work-center-drive connect]',e);setStatus('Drive 연결 확인 실패 · '+String(e.message||e).substring(0,80),'error');}
+        finally{setBusy(false);if(connectedOk){hideEntryGuard();}else{clearSession();showEntryGuard('업무공유폴더 권한을 확인하지 못했습니다. 올바른 Google 계정으로 다시 연결해주세요.');}}
+      },
+      error_callback:function(){setStatus('Google 계정 연결이 완료되지 않았습니다.','warn');setBusy(false);showEntryGuard('Google 계정 선택창을 완료한 뒤 업무센터를 시작할 수 있습니다.');}
+    });
+    return true;
+  }
+  window.wsjConnect=async function(){
+    if(STATE.loading)return;
+    if(tokenValid()){
+      setBusy(true);setEntryGuardBusy(true,'저장된 Drive 연결과 업무공유폴더 권한을 확인하고 있습니다.');
+      try{
+        await verifyFolders();
+        if(typeof aaDriveVerifyAccount==='function')await aaDriveVerifyAccount();
+        if(isSujin())await loadAll();else if(typeof aaDriveRefresh==='function')await aaDriveRefresh(false);
+        hideEntryGuard();setStatus('업무공유폴더 연결 확인 완료 · 업무센터를 시작합니다.','ok');
+      }
+      catch(e){console.error('[work-center-drive entry check]',e);setStatus('Drive 연결을 다시 확인해주세요 · '+String(e.message||e).substring(0,70),'error');showEntryGuard('연결 확인에 실패했습니다. Google Drive 연결을 다시 확인해주세요.');}
+      finally{setBusy(false);setEntryGuardBusy(false)}return;
+    }
+    if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중입니다. 잠시 후 다시 눌러주세요.','warn');setTimeout(initTokenClient,700);return;}
+    setBusy(true);setEntryGuardBusy(true,'Google 계정 선택창을 확인해주세요.');setStatus('업무공유폴더 권한을 확인합니다.','warn');STATE.tokenClient.requestAccessToken({prompt:'select_account'});
+  };
+  function silentConnect(){
+    if(tokenValid()){updateGlobalDriveButton(false);return;}
+    if(!initTokenClient()){setTimeout(silentConnect,700);return;}
+    STATE.autoTried=true;setBusy(true);STATE.tokenClient.requestAccessToken({prompt:''});
+  }
+  async function listTodayFile(folderId,kind){
+    var name=STATE.date+'_수진'+kind;
+    var q="'"+folderId+"' in parents and name contains '"+name.replace(/'/g,"\\'")+"' and trashed = false";
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size)');
+    var data=await (await api(url,{method:'GET'})).json(),files=data.files||[];
+    return files.find(function(file){return file.mimeType==='application/vnd.google-apps.document'})||files[0]||null;
+  }
+  async function readTextFile(file){
+    if(!file)return '';
+    var url;
+    if(file.mimeType==='application/vnd.google-apps.document')url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'/export?mimeType='+encodeURIComponent('text/plain');
+    else if(file.mimeType==='application/vnd.google-apps.spreadsheet')throw new Error('업무지시는 Google 문서 또는 텍스트 파일로 저장해주세요.');
+    else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media';
+    return (await api(url,{method:'GET'})).text();
+  }
+  function renderInstruction(text){
+    var box=field('wsj-instruction');if(!box)return;
+    box.textContent=text||(selectedDateLabel()+' 전달된 업무지시가 없습니다.\n대표님 GPT가 01_업무지시 폴더에 해당 날짜 문서를 저장하면 여기에 표시됩니다.');
+    box.className='wsj-instruction'+(text?'':' empty');
+  }
+  window.wsjOpenInstruction=function(){
+    var modal=field('wsj-instruction-modal'),content=field('wsj-instruction-modal-content'),date=field('wsj-instruction-modal-date'),source=field('wsj-instruction');if(!modal||!content||!source)return;
+    content.textContent=source.textContent||'표시할 업무지시가 없습니다.';if(date)date.textContent=STATE.date+' 업무지시';modal.className='wsj-instruction-modal show';document.body.style.overflow='hidden';
+  };
+  window.wsjCloseInstruction=function(){var modal=field('wsj-instruction-modal');if(modal)modal.className='wsj-instruction-modal';document.body.style.overflow=''};
+  async function loadInstruction(){STATE.instructionFile=await listTodayFile(INSTRUCTION_FOLDER_ID,'업무지시');renderInstruction(await readTextFile(STATE.instructionFile))}
+  function sharedFileById(id){return STATE.sharedFiles.find(function(file){return String(file.id)===String(id)})||null}
+  function fileIcon(file){var type=String((file&&file.mimeType)||'');if(type.indexOf('image/')===0)return '🖼️';if(type.indexOf('pdf')>=0)return '📕';if(type.indexOf('spreadsheet')>=0||type.indexOf('excel')>=0)return '📊';if(type.indexOf('document')>=0||type.indexOf('word')>=0)return '📄';if(type.indexOf('presentation')>=0||type.indexOf('powerpoint')>=0)return '📽️';return '📎'}
+  function fileSize(value){var n=Number(value||0);if(!n)return '';if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(n<10485760?1:0)+' MB'}
+  function renderSharedFiles(){
+    var box=field('wsj-files');if(!box)return;
+    if(!STATE.sharedFiles.length){box.innerHTML='<div class="wsj-file-empty">이 날짜에 전달된 업무공유파일이 없습니다.</div>';return;}
+    box.innerHTML=STATE.sharedFiles.map(function(file){var meta=[kstDateOf(file.modifiedTime||file.createdTime),fileSize(file.size)].filter(Boolean).join(' · ');return '<div class="wsj-file-row"><div class="wsj-file-icon">'+fileIcon(file)+'</div><div class="wsj-file-main"><div class="wsj-file-name" title="'+esc(file.name||'파일')+'">'+esc(file.name||'파일')+'</div><div class="wsj-file-meta">'+esc(meta)+'</div></div><div class="wsj-file-actions"><button type="button" class="wsj-file-action" onclick="wsjViewSharedFile(\''+esc(file.id)+'\')">보기</button><button type="button" class="wsj-file-action download" onclick="wsjDownloadSharedFile(\''+esc(file.id)+'\',this)">다운로드</button></div></div>'}).join('');
+  }
+  async function loadSharedFiles(){
+    var q="'"+FILES_FOLDER_ID+"' in parents and trashed = false";
+    var fields='files(id,name,mimeType,size,createdTime,modifiedTime,webViewLink,webContentLink)';
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent(fields);
+    var data=await (await api(url,{method:'GET'})).json();
+    STATE.sharedFiles=(data.files||[]).filter(function(file){
+      var name=String(file.name||'');
+      return name.indexOf(STATE.date)===0||kstDateOf(file.createdTime)===STATE.date||kstDateOf(file.modifiedTime)===STATE.date;
+    });
+    renderSharedFiles();
+  }
+  async function refreshDriveCard(button,label,loader){
+    if(!tokenValid()){showEntryGuard('먼저 Drive 연결을 확인한 뒤 '+label+'를 새로고침해주세요.');return;}
+    if(button){button.disabled=true;button.textContent='새로고침 중…'}
+    try{await loader();setStatus(label+' 새로고침 완료 · '+STATE.date,'ok');if(typeof showT==='function')showT(label+'를 새로고침했습니다.');}
+    catch(e){console.error('[sujin-journal-drive refresh '+label+']',e);setStatus(label+'를 다시 불러오지 못했습니다 · '+String(e.message||e).substring(0,75),'error');}
+    finally{if(button){button.disabled=false;button.textContent='↻ 새로고침'}}
+  }
+  window.wsjRefreshInstruction=function(button){return refreshDriveCard(button,'업무지시',loadInstruction)};
+  window.wsjRefreshSharedFiles=function(button){return refreshDriveCard(button,'업무공유파일',loadSharedFiles)};
+  window.wsjViewSharedFile=function(id){var file=sharedFileById(id);if(file&&file.webViewLink)window.open(file.webViewLink,'_blank','noopener,noreferrer')};
+  window.wsjDownloadSharedFile=async function(id,button){
+    var file=sharedFileById(id);if(!file)return;if(button){button.disabled=true;button.textContent='준비 중…'}
+    try{
+      var mime=String(file.mimeType||''),url,name=file.name||'업무공유파일';
+      var exports={
+        'application/vnd.google-apps.document':['application/pdf','.pdf'],
+        'application/vnd.google-apps.spreadsheet':['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.xlsx'],
+        'application/vnd.google-apps.presentation':['application/vnd.openxmlformats-officedocument.presentationml.presentation','.pptx']
+      };
+      if(exports[mime]){url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'/export?mimeType='+encodeURIComponent(exports[mime][0]);if(name.toLowerCase().slice(-exports[mime][1].length)!==exports[mime][1])name+=exports[mime][1]}
+      else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media';
+      var blob=await (await api(url,{method:'GET'})).blob(),objectUrl=URL.createObjectURL(blob),a=document.createElement('a');a.href=objectUrl;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(objectUrl)},1200);
+    }catch(e){console.error('[sujin-journal-drive download]',e);if(typeof showT==='function')showT('파일을 내려받지 못했습니다. 보기 버튼으로 원본을 확인해주세요.')}
+    finally{if(button){button.disabled=false;button.textContent='다운로드'}}
+  };
+  async function loadJournal(){
+    STATE.journalFile=await listTodayFile(JOURNAL_FOLDER_ID,'업무일지');
+    var driveText=STATE.journalFile?await readTextFile(STATE.journalFile):'',draft=readDraft(STATE.date),memo=field('wsj-memo');
+    if(memo)memo.value=draft&&draft.text!==driveText?draft.text:driveText;
+    var saved=field('wsj-saved');
+    if(draft&&draft.text!==driveText){if(saved)saved.textContent='작성 중이던 임시저장 내용을 복원했습니다.';setDraftState('임시저장 복원 '+draftTimeLabel(draft.savedAt),'saved')}
+    else{if(draft)clearDraft(STATE.date);if(saved)saved.textContent=STATE.journalFile?(STATE.journalFile.mimeType==='application/vnd.google-apps.document'?'Drive에 저장된 업무일지를 불러왔습니다.':'기존 텍스트 업무일지를 불러왔습니다. 저장하면 Google Docs로 새로 저장됩니다.'):'아직 Drive에 저장된 업무일지가 없습니다.';setDraftState('자동 임시저장','')}
+  }
+  function refreshDateView(){
+    var current=field('wsj-current-date'),caption=field('wsj-date-caption'),title=field('wsj-instruction-title');
+    if(current)current.textContent=STATE.date;
+    if(caption)caption.textContent=STATE.date+' · 대표님 업무지시를 확인하고 오른쪽에 업무일지를 작성하세요.';
+    if(title)title.textContent='📨 업무지시';
+  }
+  async function loadAll(){
+    if(!tokenValid())return;
+    refreshDateView();setStatus(selectedDateLabel()+' 업무지시·공유파일·업무일지를 불러오는 중입니다.','warn');
+    await verifyFolders();await Promise.all([loadInstruction(),loadSharedFiles(),loadJournal()]);
+    setStatus('업무공유폴더 연결됨 · '+STATE.date+' 기준','ok');
+    updateGlobalDriveButton(false);
+  }
+  window.wsjChangeDate=async function(value){
+    value=String(value||'').trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(value)||STATE.loading)return;
+    STATE.date=value;STATE.instructionFile=null;STATE.journalFile=null;STATE.sharedFiles=[];refreshDateView();
+    if(!tokenValid()){setStatus('날짜별 기록을 보려면 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
+    setBusy(true);try{await loadAll()}catch(e){console.error('[sujin-journal-drive date]',e);setStatus('선택한 날짜를 불러오지 못했습니다 · '+String(e.message||e).substring(0,75),'error')}finally{setBusy(false)}
+  };
+  window.wsjToday=function(){var today=kstDate();if(STATE.date===today)return;window.wsjChangeDate(today)};
+  async function listJournalHistory(){
+    var q="'"+JOURNAL_FOLDER_ID+"' in parents and name contains '_수진업무일지' and trashed = false";
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size)');
+    var data=await (await api(url,{method:'GET'})).json(),byDate={};
+    (data.files||[]).forEach(function(file){
+      var match=String(file.name||'').match(/^(\d{4}-\d{2}-\d{2})_수진업무일지(?:\.txt)?$/);if(!match)return;
+      var date=match[1],current=byDate[date];
+      if(!current||(current.mimeType!=='application/vnd.google-apps.document'&&file.mimeType==='application/vnd.google-apps.document'))byDate[date]=file;
+    });
+    return Object.keys(byDate).sort().reverse().map(function(date){return {date:date,file:byDate[date]}});
+  }
+  function renderHistory(rows){
+    var body=field('wsj-history-body'),state=field('wsj-history-state'),button=field('wsj-history-open');if(!body)return;
+    body.innerHTML='';STATE.history=rows||[];
+    if(state)state.textContent=STATE.history.length?'저장된 업무일지 '+STATE.history.length+'건 · 최근 날짜순':'저장된 업무일지가 아직 없습니다.';
+    if(button)button.textContent='📅 지난 업무일지'+(STATE.history.length?' '+STATE.history.length+'건':' 보기');
+    if(!STATE.history.length){var empty=document.createElement('tr');empty.innerHTML='<td colspan="3" class="wsj-history-empty">저장된 업무일지가 없습니다.</td>';body.appendChild(empty);return;}
+    STATE.history.forEach(function(row){
+      var tr=document.createElement('tr'),date=document.createElement('td'),kind=document.createElement('td'),action=document.createElement('td'),view=document.createElement('button');
+      date.textContent=row.date;kind.innerHTML='<span class="wsj-history-kind">'+(row.file.mimeType==='application/vnd.google-apps.document'?'Google Docs':'기존 텍스트')+'</span>';
+      view.type='button';view.className='wsj-history-view';view.textContent='보기';view.onclick=function(){window.wsjViewHistoryDate(row.date)};action.appendChild(view);tr.appendChild(date);tr.appendChild(kind);tr.appendChild(action);body.appendChild(tr);
+    });
+  }
+  window.wsjOpenHistory=async function(){
+    if(!tokenValid()){setStatus('지난 업무일지를 보려면 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
+    var modal=field('wsj-history-modal'),state=field('wsj-history-state'),body=field('wsj-history-body');if(!modal)return;window.wsjHistoryList();
+    modal.className='wsj-history-modal show';document.body.style.overflow='hidden';if(state)state.textContent='저장된 업무일지를 불러오는 중입니다.';if(body)body.innerHTML='';
+    try{renderHistory(await listJournalHistory())}catch(e){console.error('[sujin-journal-drive history]',e);if(state)state.textContent='지난 업무일지를 불러오지 못했습니다 · '+String(e.message||e).substring(0,70)}
+  };
+  window.wsjCloseHistory=function(){var modal=field('wsj-history-modal');if(modal)modal.className='wsj-history-modal';document.body.style.overflow=''};
+  window.wsjHistoryList=function(){
+    var list=field('wsj-history-list'),reader=field('wsj-history-reader'),title=field('wsj-history-title'),note=field('wsj-history-note');
+    if(list)list.style.display='block';if(reader)reader.className='wsj-history-reader';if(title)title.textContent='지난 업무일지';if(note)note.textContent='실제로 저장된 날짜만 표시합니다. 보기를 눌러도 현재 작성 중인 내용은 그대로 유지됩니다.';
+  };
+  window.wsjViewHistoryDate=async function(date){
+    var row=STATE.history.find(function(item){return item.date===date}),list=field('wsj-history-list'),reader=field('wsj-history-reader'),content=field('wsj-history-content'),readerDate=field('wsj-history-reader-date'),title=field('wsj-history-title'),note=field('wsj-history-note');if(!row||!reader||!content)return;
+    if(list)list.style.display='none';reader.className='wsj-history-reader show';if(readerDate)readerDate.textContent=date;if(title)title.textContent=date+' 업무일지';if(note)note.textContent='읽기 전용 · 현재 작성 중인 업무일지는 바뀌지 않습니다.';content.className='wsj-history-content loading';content.textContent='업무일지를 불러오는 중입니다.';
+    try{content.textContent=(await readTextFile(row.file))||'저장된 내용이 없습니다.';content.className='wsj-history-content'}catch(e){console.error('[sujin-journal-drive history read]',e);content.textContent='업무일지를 불러오지 못했습니다 · '+String(e.message||e).substring(0,80);content.className='wsj-history-content'}
+  };
+  function multipartBody(metadata,text,boundary){
+    var head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n';
+    return new Blob([head,text,'\r\n--'+boundary+'--'],{type:'multipart/related; boundary='+boundary});
+  }
+  async function createJournal(text){
+    var boundary='wsj_'+Date.now()+'_'+Math.random().toString(16).slice(2),name=STATE.date+'_수진업무일지';
+    var metadata={name:name,mimeType:'application/vnd.google-apps.document',parents:[JOURNAL_FOLDER_ID],description:'WD 업무센터 수진 업무일지 · '+STATE.date};
+    var res=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body:multipartBody(metadata,text,boundary)});
+    return res.json();
+  }
+  async function updateJournal(file,text){
+    if(file.mimeType==='application/vnd.google-apps.document'){
+      var res=await api('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(file.id)+'?uploadType=media&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'PATCH',headers:{'Content-Type':'text/plain; charset=UTF-8'},body:text});
+      return res.json();
+    }
+    return createJournal(text);
+  }
+  window.wsjSave=async function(){
+    if(STATE.saving)return;var memo=field('wsj-memo'),text=String((memo&&memo.value)||'');
+    if(!text.trim()){if(typeof showT==='function')showT('업무일지를 입력해주세요.');return;}
+    if(!tokenValid()){setStatus('먼저 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
+    STATE.saving=true;var button=field('wsj-save');if(button){button.disabled=true;button.textContent='저장 중…'}
+    try{
+      STATE.journalFile=STATE.journalFile?await updateJournal(STATE.journalFile,text):await createJournal(text);
+      clearDraft(STATE.date);var saved=field('wsj-saved');if(saved)saved.textContent='방금 02_업무일지 폴더에 저장했습니다.';setDraftState('Drive 저장 완료','saved');
+      setStatus('업무일지 저장 완료 · Google Docs로 02_업무일지 폴더에 저장되었습니다.','ok');
+      if(typeof showT==='function')showT('📒 수진 업무일지 저장 완료');
+    }catch(e){console.error('[sujin-journal-drive save]',e);setStatus('업무일지 저장 실패 · '+String(e.message||e).substring(0,85),'error');}
+    finally{STATE.saving=false;if(button){button.disabled=false;button.textContent='업무일지 저장'}}
+  };
+  window.wsjOpenFiles=function(){window.open('https://drive.google.com/drive/folders/'+FILES_FOLDER_ID,'_blank','noopener,noreferrer')};
+  function installGlobalDriveEntry(){
+    var host=document.querySelector('.wc-head-status');if(!host||field('wc-global-drive-entry'))return;
+    var button=document.createElement('button');button.type='button';button.id='wc-global-drive-entry';button.className='warn';button.textContent='Google Drive 연결';button.onclick=window.wsjConnect;host.appendChild(button);
+    if(!field('wc-drive-entry-guard')){
+      var guard=document.createElement('div');guard.id='wc-drive-entry-guard';guard.innerHTML='<div class="wc-drive-entry-box" role="dialog" aria-modal="true" aria-labelledby="wc-drive-entry-title"><div class="wc-drive-entry-icon">📁</div><h2 id="wc-drive-entry-title">업무센터 Drive 연결</h2><p>업무센터를 시작하기 전에 Google Drive를 한 번 연결합니다.</p><div class="wc-drive-entry-list">✓ 날짜별 업무지시 불러오기<br>✓ Google Docs 업무일지 저장<br>✓ 업무매뉴얼 원본 조회<br>✓ 작업결과 보관·업무공유파일 공동 사용</div><button type="button" id="wc-drive-entry-action" class="wc-drive-entry-action" onclick="wsjConnect()">Google Drive 연결하고 시작</button><div id="wc-drive-entry-state" class="wc-drive-entry-state">연결 후 모든 메뉴에서 같은 Drive 연결을 사용합니다.</div></div>';document.body.appendChild(guard);
+    }
+    updateGlobalDriveButton(false);
+  }
+  function install(){
+    if(!isSujin())return;var panel=field('wcn-panel-journal');if(!panel||field('wsj-shell'))return;
+    STATE.date=kstDate();
+    panel.style.maxWidth='100%';panel.innerHTML='<section id="wsj-shell" class="wsj-shell">'
+      +'<header class="wsj-head"><div><div class="wsj-eyebrow">SUJIN DAILY WORK</div><h2>수진 업무일지</h2><p id="wsj-date-caption">'+STATE.date+' · 대표님 업무지시를 확인하고 오른쪽에 업무일지를 작성하세요.</p></div>'
+      +'<div class="wsj-head-actions"><div class="wsj-date-tools"><span>보는 날짜</span><strong id="wsj-current-date">'+STATE.date+'</strong></div><button type="button" id="wsj-history-open" class="wsj-btn" onclick="wsjOpenHistory()">📅 지난 업무일지 보기</button></div></header>'
+      +'<div id="wsj-status" class="wsj-status">업무센터의 공용 Drive 연결로 날짜별 업무지시와 저장된 업무일지를 자동으로 불러옵니다.</div>'
+      +'<div class="wsj-grid"><div class="wsj-left-stack"><article class="wsj-card instruction"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">WORK ORDER</div><div id="wsj-instruction-title" class="wsj-card-title">📨 업무지시</div><div class="wsj-card-note">대표님이 전달한 업무를 확인합니다.</div></div><div class="wsj-card-head-tools"><button type="button" class="wsj-expand" onclick="wsjOpenInstruction()">⛶ 크게 보기</button><button type="button" class="wsj-expand refresh" onclick="wsjRefreshInstruction(this)">↻ 새로고침</button></div></div><div id="wsj-instruction" class="wsj-instruction empty">Google Drive 연결 후 선택한 날짜의 업무지시를 표시합니다.</div></article>'
+      +'<article class="wsj-card files"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">SHARED FILES</div><div class="wsj-card-title">📁 업무공유파일</div><div class="wsj-card-note">전달된 파일을 바로 보고 다운로드합니다.</div></div><button type="button" class="wsj-expand refresh" onclick="wsjRefreshSharedFiles(this)">↻ 새로고침</button></div><div id="wsj-files" class="wsj-files"><div class="wsj-file-empty">업무공유파일을 확인하고 있습니다.</div></div></article></div>'
+      +'<article class="wsj-card memo"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">MY WORK LOG</div><div class="wsj-card-title">📝 수진 업무일지</div><div class="wsj-card-note">처리한 업무와 남은 내용을 자유롭게 기록합니다.</div><div id="wsj-saved" class="wsj-saved">업무센터 Drive 연결을 확인하고 있습니다.</div></div><div class="wsj-journal-actions"><button type="button" id="wsj-draft-state" class="wsj-draft-state" onclick="wsjSaveDraft()">임시저장</button><button type="button" id="wsj-save" class="wsj-save" onclick="wsjSave()">업무일지 저장</button></div></div><textarea id="wsj-memo" class="wsj-memo" placeholder="한 일, 확인한 것, 진행 중인 내용, 남은 일을 편하게 적으세요."></textarea></article></div>'
+      +'<div id="wsj-instruction-modal" class="wsj-instruction-modal" onclick="if(event.target===this)wsjCloseInstruction()"><div class="wsj-instruction-dialog" role="dialog" aria-modal="true" aria-labelledby="wsj-instruction-modal-title"><div class="wsj-instruction-modal-head"><div><h3 id="wsj-instruction-modal-title">업무지시 전체보기</h3><p id="wsj-instruction-modal-date"></p></div><button type="button" class="wsj-instruction-modal-close" aria-label="닫기" onclick="wsjCloseInstruction()">×</button></div><pre id="wsj-instruction-modal-content" class="wsj-instruction-modal-content"></pre></div></div>'
+      +'<div id="wsj-history-modal" class="wsj-history-modal" onclick="if(event.target===this)wsjCloseHistory()"><div class="wsj-history-dialog" role="dialog" aria-modal="true" aria-labelledby="wsj-history-title"><div class="wsj-history-head"><div><h3 id="wsj-history-title">지난 업무일지</h3><p id="wsj-history-note">실제로 저장된 날짜만 표시합니다. 보기를 눌러도 현재 작성 중인 내용은 그대로 유지됩니다.</p></div><button type="button" class="wsj-history-close" aria-label="닫기" onclick="wsjCloseHistory()">×</button></div><div id="wsj-history-list"><div id="wsj-history-state" class="wsj-history-state">저장된 업무일지를 확인합니다.</div><div class="wsj-history-table-wrap"><table class="wsj-history-table"><thead><tr><th>날짜</th><th>저장형식</th><th>열기</th></tr></thead><tbody id="wsj-history-body"></tbody></table></div></div><div id="wsj-history-reader" class="wsj-history-reader"><div class="wsj-history-reader-tools"><button type="button" class="wsj-history-back" onclick="wsjHistoryList()">← 목록으로</button><strong id="wsj-history-reader-date" class="wsj-history-reader-date"></strong></div><pre id="wsj-history-content" class="wsj-history-content"></pre></div></div></div>'
+      +'</section>';
+    var memo=field('wsj-memo');if(memo)memo.addEventListener('input',scheduleDraftSave);
+    window.addEventListener('beforeunload',saveDraftNow,{once:true});
+    if(restoreSession())loadAll().catch(function(e){setStatus('자동 연결 확인 실패 · Google Drive를 다시 연결해주세요.','warn')});
+  }
+  var baseSwitch=window.wcnTabSwitch;
+  if(typeof baseSwitch==='function')window.wcnTabSwitch=function(tab){baseSwitch(tab);if(tab==='journal')install()};
+  function boot(){
+    installGlobalDriveEntry();install();
+    if(restoreSession()){
+      updateGlobalDriveButton(false);
+      showEntryGuard('Drive 연결이 유지되어 있습니다. 연결 상태를 확인한 뒤 업무센터를 시작해주세요.');
+    }else showEntryGuard('Google 계정을 연결해야 업무센터를 사용할 수 있습니다.');
+    document.addEventListener('keydown',function(event){if(event.key==='Escape'){window.wsjCloseInstruction();window.wsjCloseHistory()}});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.__WC_SUJIN_JOURNAL_DRIVE_V1__=true;
+})();
+</script>
+<script id="wc-work-manual-drive-v1">
+(function(){
+  'use strict';
+  var MANUAL_FOLDER_ID='1yx-Ded0o4oKHULmPjYUrY4GUBAZwZkQa';
+  var MANUAL_FOLDER_URL='https://drive.google.com/drive/folders/'+MANUAL_FOLDER_ID;
+  var SHARED_SESSION_KEY='wd_work_company_drive_access_v2';
+  var LEGACY_SESSION_KEY='wd_sujin_journal_drive_v1';
+  var CATEGORIES=['회사운영','보험업무','퍼스널브랜딩','AI강의'];
+  var state={files:[],tab:'회사운영',selectedId:'',loaded:false,loading:false,connectRetries:0};
+  function field(id){return document.getElementById(id)}
+  function esc(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+  function sharedSession(){
+    try{
+      var saved=JSON.parse(sessionStorage.getItem(SHARED_SESSION_KEY)||'null');
+      if(!(saved&&saved.token))saved=JSON.parse(sessionStorage.getItem(LEGACY_SESSION_KEY)||'null');
+      if(saved&&saved.token&&Number(saved.expiresAt)>Date.now()+30000)return {token:String(saved.token),expiresAt:Number(saved.expiresAt)};
+    }catch(e){}
+    return null;
+  }
+  function sharedToken(){
+    try{
+      if(typeof aaDriveRestoreSession==='function')aaDriveRestoreSession();
+      if(typeof aaDriveTokenValid==='function'&&aaDriveTokenValid())return String(_aaDriveToken||'');
+    }catch(e){}
+    var saved=sharedSession();
+    if(saved){
+      try{if(typeof _aaDriveToken!=='undefined')_aaDriveToken=saved.token;if(typeof _aaDriveTokenExp!=='undefined')_aaDriveTokenExp=saved.expiresAt;}catch(e){}
+      return saved.token;
+    }
+    return '';
+  }
+  function driveReady(){return !!sharedToken()}
+  function headers(){return {Authorization:'Bearer '+sharedToken()}}
+  async function api(url){var res=await fetch(url,{headers:headers(),cache:'no-store'});if(res.status===401)throw new Error('Drive 연결이 만료되었습니다.');if(!res.ok)throw new Error('Drive '+res.status);return res}
+  function category(file){var match=String((file&&file.name)||'').match(/^\[(회사운영|보험업무|회사|보험|퍼스널브랜딩|AI강의|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]/);if(!match)return '기타';if(match[1]==='회사')return '회사운영';if(match[1]==='보험')return '보험업무';if(match[1]==='브랜딩')return '퍼스널브랜딩';if(match[1]==='강의')return 'AI강의';return match[1]}
+  function cleanTitle(file){return String((file&&file.name)||'업무매뉴얼').replace(/^\[(?:회사운영|보험업무|회사|보험|퍼스널브랜딩|AI강의|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]\s*/,'').replace(/\.(pdf|docx?|txt|md|html?)$/i,'')}
+  function creatorName(file){var owners=(file&&file.owners)||[];if(owners[0]&&owners[0].displayName)return owners[0].displayName;return '확인 필요'}
+  function typeLabel(file){var mime=String((file&&file.mimeType)||'');if(mime==='application/vnd.google-apps.document')return 'Google Docs';if(mime==='application/pdf')return 'PDF';if(mime.indexOf('image/')===0)return '이미지';if(mime.indexOf('text/')===0)return '텍스트';return '파일'}
+  function dateLabel(value){if(!value)return '';try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)).replace(/\. /g,'.').replace(/\.$/,'')}catch(e){return String(value).substring(0,10)}}
+  function setStatus(message,tone,show){var el=field('wm-status');if(!el)return;el.textContent=message||'';el.className='wm-status'+(show?' show':'')+(tone?' '+tone:'')}
+  function filtered(){var q=String((field('wm-search')||{}).value||'').trim().toLowerCase();return state.files.filter(function(file){if(category(file)!==state.tab)return false;return !q||String(file.name||'').toLowerCase().indexOf(q)>=0||String(file.description||'').toLowerCase().indexOf(q)>=0})}
+  window.wmSetTab=function(tab){if(CATEGORIES.indexOf(tab)<0)return;state.tab=tab;document.querySelectorAll('[data-wm-tab]').forEach(function(button){button.classList.toggle('on',button.getAttribute('data-wm-tab')===tab)});window.wmRender()};
+  window.wmRender=function(){
+    var list=field('wm-list'),count=field('wm-count');if(!list)return;var rows=filtered();if(count)count.textContent=rows.length+'건';
+    if(!rows.length){list.innerHTML='<div class="wm-empty">'+(state.files.length?'선택한 분류에 해당하는 매뉴얼이 없습니다.':'03_업무매뉴얼 폴더에 아직 등록된 매뉴얼이 없습니다.')+'</div>';clearReader();return;}
+    list.innerHTML=rows.map(function(file){var active=String(file.id)===String(state.selectedId);return '<button type="button" class="wm-row'+(active?' on':'')+'" onclick="wmOpen(\''+esc(file.id)+'\')"><div class="wm-row-title">'+esc(cleanTitle(file))+'</div><div class="wm-row-cell"><span class="wm-pill">'+esc(category(file))+'</span></div><div class="wm-row-cell">'+esc(creatorName(file))+'</div><div class="wm-row-cell">'+esc(dateLabel(file.modifiedTime))+'</div></button>'}).join('');
+    if(!rows.some(function(file){return String(file.id)===String(state.selectedId)}))window.wmOpen(rows[0].id,true);
+  };
+  function clearReader(){state.selectedId='';var title=field('wm-reader-title'),cat=field('wm-reader-category'),meta=field('wm-reader-meta'),body=field('wm-reader-body'),original=field('wm-original'),del=field('wm-delete');if(title)title.textContent='매뉴얼을 선택해주세요';if(cat)cat.textContent='업무매뉴얼';if(meta)meta.textContent='왼쪽 목록에서 필요한 업무 방법을 선택하세요.';if(body){body.className='wm-reader-body empty';body.textContent='선택한 매뉴얼의 내용이 여기에 표시됩니다.'}if(original)original.style.display='none';if(del)del.style.display='none'}
+  function originalUrl(file){return file.webViewLink||('https://drive.google.com/file/d/'+encodeURIComponent(file.id)+'/view')}
+  function previewUrl(file){var mime=String(file.mimeType||''),id=encodeURIComponent(file.id);if(mime==='application/vnd.google-apps.document')return 'https://docs.google.com/document/d/'+id+'/preview';if(mime==='application/vnd.google-apps.spreadsheet')return 'https://docs.google.com/spreadsheets/d/'+id+'/preview';if(mime==='application/vnd.google-apps.presentation')return 'https://docs.google.com/presentation/d/'+id+'/preview';return 'https://drive.google.com/file/d/'+id+'/preview'}
+  async function readText(file){var mime=String(file.mimeType||''),url;if(mime==='application/vnd.google-apps.document')url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'/export?mimeType='+encodeURIComponent('text/plain');else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media';return (await api(url)).text()}
+  window.wmOpen=async function(id,quiet){
+    var file=state.files.find(function(item){return String(item.id)===String(id)});if(!file)return;state.selectedId=file.id;window.wmRender();
+    var title=field('wm-reader-title'),cat=field('wm-reader-category'),meta=field('wm-reader-meta'),body=field('wm-reader-body'),original=field('wm-original'),del=field('wm-delete');
+    if(title)title.textContent=cleanTitle(file);if(cat)cat.textContent=category(file);if(meta)meta.textContent='생성자 '+creatorName(file)+' · 생성 '+dateLabel(file.createdTime)+' · 수정 '+dateLabel(file.modifiedTime)+' · '+typeLabel(file);if(original){original.href=originalUrl(file);original.textContent=file.mimeType==='application/vnd.google-apps.document'?'✏ 매뉴얼 수정':'↗ 원본 열기';original.style.display='inline-flex'}if(del)del.style.display='inline-flex';
+    if(!body)return;body.style.padding='';body.className='wm-reader-body empty';body.textContent='매뉴얼을 불러오는 중입니다.';
+    try{
+      var mime=String(file.mimeType||''),name=String(file.name||'');
+      if(mime==='application/vnd.google-apps.document'||mime.indexOf('text/')===0||/\.(txt|md|html?)$/i.test(name)){
+        var text=await readText(file);if(String(state.selectedId)!==String(file.id))return;body.className='wm-reader-body';body.textContent=text||'매뉴얼 내용이 없습니다.';
+      }else if(mime==='application/pdf'||mime.indexOf('image/')===0||mime==='application/vnd.google-apps.spreadsheet'||mime==='application/vnd.google-apps.presentation'){
+        body.className='wm-reader-body';body.style.padding='0';body.innerHTML='<iframe title="'+esc(cleanTitle(file))+' 미리보기" src="'+esc(previewUrl(file))+'"></iframe>';
+      }else{body.className='wm-reader-body empty';body.textContent='이 파일은 화면에서 바로 볼 수 없습니다. 원본 열기를 이용해주세요.'}
+    }catch(e){console.error('[work-manual read]',e);body.className='wm-reader-body empty';body.textContent='매뉴얼을 불러오지 못했습니다. Google Docs 원본 열기를 이용해주세요.';if(!quiet)setStatus('매뉴얼 읽기 실패 · '+String(e.message||e).substring(0,70),'error',true)}
+  };
+  window.wmDelete=async function(){
+    var file=state.files.find(function(item){return String(item.id)===String(state.selectedId)});if(!file)return;
+    if(!confirm('「'+cleanTitle(file)+'」 매뉴얼을 삭제할까요?\nDrive 휴지통으로 이동하며 복구할 수 있습니다.'))return;
+    var del=field('wm-delete');if(del){del.disabled=true;del.textContent='삭제 중…'}
+    try{
+      var res=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id),{method:'PATCH',headers:Object.assign({'Content-Type':'application/json'},headers()),body:JSON.stringify({trashed:true})});
+      if(res.status===401)throw new Error('Drive 연결이 만료되었습니다.');if(!res.ok)throw new Error('Drive '+res.status);
+      state.files=state.files.filter(function(item){return String(item.id)!==String(file.id)});clearReader();setStatus('매뉴얼을 Drive 휴지통으로 이동했습니다.','',true);window.wmRender();
+    }catch(e){console.error('[work-manual delete]',e);setStatus('매뉴얼 삭제 실패 · '+String(e.message||e).substring(0,70),'error',true)}
+    finally{if(del){del.disabled=false;del.textContent='🗑 삭제'}}
+  };
+  window.wmLoad=async function(manual){
+    if(state.loading)return;var button=field('wm-refresh');
+    if(!driveReady()){
+      if(!manual&&state.connectRetries<8){state.connectRetries++;setTimeout(function(){window.wmLoad(false)},200);return;}
+      setStatus('공용 Drive 연결이 만료되었습니다. 상단 Drive 연결을 다시 확인해주세요.','warn',true);
+      if(manual&&typeof window.wsjConnect==='function')window.wsjConnect();return;
+    }
+    state.connectRetries=0;state.loading=true;if(button){button.disabled=true;button.textContent='확인 중…'};setStatus('', '',false);
+    try{
+      var q="'"+MANUAL_FOLDER_ID+"' in parents and trashed = false";
+      var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,createdTime,webViewLink,size,description,owners(displayName,emailAddress))');
+      var data=await (await api(url)).json();state.files=(data.files||[]).filter(function(file){return file.mimeType!=='application/vnd.google-apps.folder'});state.loaded=true;
+      if(!state.files.some(function(file){return category(file)===state.tab})){var next=CATEGORIES.find(function(cat){return state.files.some(function(file){return category(file)===cat})});state.tab=next||'회사운영'}
+      document.querySelectorAll('[data-wm-tab]').forEach(function(button){button.classList.toggle('on',button.getAttribute('data-wm-tab')===state.tab)});setStatus('', '',false);window.wmRender();
+    }catch(e){console.error('[work-manual load]',e);setStatus('업무매뉴얼을 불러오지 못했습니다 · '+String(e.message||e).substring(0,70),'error',true);var list=field('wm-list');if(list)list.innerHTML='<div class="wm-empty">Drive 연결을 확인한 뒤 새로고침해주세요.</div>'}
+    finally{state.loading=false;if(button){button.disabled=false;button.textContent='↻ 새로고침'}}
+  };
+  var baseSwitch=window.wcnTabSwitch;
+  if(typeof baseSwitch==='function')window.wcnTabSwitch=function(tab){baseSwitch(tab);if(tab==='manual'){var panel=field('wcn-panel-manual');if(panel)panel.style.display='block';if(!state.loaded)window.wmLoad(false)}};
+  window.addEventListener('wd-work-drive-ready',function(event){var panel=field('wcn-panel-manual');if(panel&&panel.style.display!=='none'&&!state.loaded&&(!event.detail||event.detail.ready!==false))window.wmLoad(false)});
+  window.__WC_WORK_MANUAL_DRIVE_V1__=true;
+})();
+</script>
+<script id="wc-journal-first-entry-v1">
+(function(){
+  'use strict';
+  /* 오늘 운영판은 사용하지 않고 두 계정 모두 업무일지에서 시작한다. */
+  window.renderWorkcenterOverview=async function(){ return; };
+  function openJournalFirst(){
+    var overview=document.getElementById('wcn-panel-overview');
+    if(overview)overview.style.display='none';
+    if(typeof window.wcnTabSwitch==='function')window.wcnTabSwitch('journal');
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){setTimeout(openJournalFirst,240)},{once:true});
+  }else{
+    setTimeout(openJournalFirst,240);
+  }
+})();
+</script>
 </body>
 </html>
