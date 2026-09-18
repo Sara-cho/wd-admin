@@ -11177,10 +11177,10 @@ setInterval(function(){
   function showEntryGuard(message){
     var guard=field('wc-drive-entry-guard'),state=field('wc-drive-entry-state'),button=field('wc-drive-entry-action');
     if(guard)guard.className='show';if(state)state.textContent=message||'Google 계정을 한 번 연결하면 업무센터 전체에서 공동 사용합니다.';
-    if(button){button.disabled=false;button.textContent='Google Drive 연결하고 시작';}
+    if(button){button.disabled=false;button.textContent=tokenValid()?'Drive 연결 확인하고 시작':'Google Drive 연결하고 시작';}
   }
   function hideEntryGuard(){var guard=field('wc-drive-entry-guard');if(guard)guard.className=''}
-  function setEntryGuardBusy(on,message){var button=field('wc-drive-entry-action'),state=field('wc-drive-entry-state');if(button){button.disabled=!!on;button.textContent=on?'Drive 연결 중…':'Google Drive 연결하고 시작'}if(state&&message)state.textContent=message}
+  function setEntryGuardBusy(on,message){var button=field('wc-drive-entry-action'),state=field('wc-drive-entry-state');if(button){button.disabled=!!on;button.textContent=on?'Drive 연결 확인 중…':(tokenValid()?'Drive 연결 확인하고 시작':'Google Drive 연결하고 시작')}if(state&&message)state.textContent=message}
   function setBusy(on){STATE.loading=!!on;updateGlobalDriveButton(on)}
   function headers(extra){var h={Authorization:'Bearer '+STATE.token};Object.keys(extra||{}).forEach(function(k){h[k]=extra[k]});return h}
   async function api(url,opts){
@@ -11221,10 +11221,15 @@ setInterval(function(){
   window.wsjConnect=async function(){
     if(STATE.loading)return;
     if(tokenValid()){
-      setBusy(true);
-      try{if(isSujin())await loadAll();else if(typeof aaDriveRefresh==='function')await aaDriveRefresh(false);}
-      catch(e){setStatus('다시 불러오지 못했습니다 · '+String(e.message||e).substring(0,70),'error');}
-      finally{setBusy(false)}return;
+      setBusy(true);setEntryGuardBusy(true,'저장된 Drive 연결과 업무공유폴더 권한을 확인하고 있습니다.');
+      try{
+        await verifyFolders();
+        if(typeof aaDriveVerifyAccount==='function')await aaDriveVerifyAccount();
+        if(isSujin())await loadAll();else if(typeof aaDriveRefresh==='function')await aaDriveRefresh(false);
+        hideEntryGuard();setStatus('업무공유폴더 연결 확인 완료 · 업무센터를 시작합니다.','ok');
+      }
+      catch(e){console.error('[work-center-drive entry check]',e);setStatus('Drive 연결을 다시 확인해주세요 · '+String(e.message||e).substring(0,70),'error');showEntryGuard('연결 확인에 실패했습니다. Google Drive 연결을 다시 확인해주세요.');}
+      finally{setBusy(false);setEntryGuardBusy(false)}return;
     }
     if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중입니다. 잠시 후 다시 눌러주세요.','warn');setTimeout(initTokenClient,700);return;}
     setBusy(true);setEntryGuardBusy(true,'Google 계정 선택창을 확인해주세요.');setStatus('업무공유폴더 권한을 확인합니다.','warn');STATE.tokenClient.requestAccessToken({prompt:'select_account'});
@@ -11424,9 +11429,8 @@ setInterval(function(){
   function boot(){
     installGlobalDriveEntry();install();
     if(restoreSession()){
-      hideEntryGuard();
       updateGlobalDriveButton(false);
-      if(isSujin()&&field('wsj-shell'))loadAll().catch(function(e){setStatus('자동 연결 확인 실패 · 상단 Drive 연결을 눌러주세요.','warn')});
+      showEntryGuard('Drive 연결이 유지되어 있습니다. 연결 상태를 확인한 뒤 업무센터를 시작해주세요.');
     }else showEntryGuard('Google 계정을 연결해야 업무센터를 사용할 수 있습니다.');
     document.addEventListener('keydown',function(event){if(event.key==='Escape'){window.wsjCloseInstruction();window.wsjCloseHistory()}});
   }
