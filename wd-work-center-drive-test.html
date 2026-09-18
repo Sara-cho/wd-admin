@@ -234,6 +234,9 @@
       <button onclick="wcnTabSwitch('hours')" id="wcn-tab-hours" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
         <span style="font-size:16px;">🕐</span><span style="font-size:13px;font-weight:700;color:#78716C;">근무기록</span>
       </button>
+      <button onclick="wcnTabSwitch('manual')" id="wcn-tab-manual" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
+        <span style="font-size:16px;">📘</span><span style="font-size:13px;font-weight:700;color:#78716C;">업무매뉴얼</span>
+      </button>
       <button onclick="wcnTabSwitch('ai-archive')" id="wcn-tab-ai-archive" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
         <span style="font-size:16px;">🤖</span><span style="font-size:13px;font-weight:700;color:#78716C;">작업결과 보관</span>
       </button>
@@ -530,6 +533,56 @@
         <div id="wh-month-list" style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px;"></div>
       </div>
 
+    </div>
+
+    <style id="wc-manual-style">
+      #wcn-panel-manual{max-width:100%!important;width:100%!important;margin:0!important}
+      .wm-shell{color:#1c1917}.wm-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px}.wm-head h2{margin:0;font-size:18px}.wm-head p{margin:4px 0 0;color:#78716c;font-size:11.5px}.wm-head-actions{display:flex;align-items:center;gap:7px}.wm-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#44403c;font:800 11px 'Noto Sans KR',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}.wm-btn.refresh{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.wm-btn:disabled{opacity:.55;cursor:wait}
+      .wm-controls{display:flex;align-items:center;gap:12px;margin-bottom:9px;border-bottom:2px solid #e2e8f0}.wm-tabs{display:flex;min-width:0;flex:1;overflow-x:auto}.wm-tabs button{padding:10px 19px;border:0;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font:800 13px 'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap;margin-bottom:-2px}.wm-tabs button.on{border-bottom-color:#fbbf24;color:#1c1917}.wm-controls input{width:250px;min-width:180px;margin-bottom:6px;padding:8px 11px;border:1px solid #d6d3d1;border-radius:9px;background:#fff;color:#292524;font:500 12px 'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box}.wm-controls input:focus{border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.1)}
+      .wm-status{display:none;margin-bottom:9px;padding:8px 11px;border:1px solid #e7e5e4;border-radius:9px;background:#fafaf9;color:#78716c;font-size:10.5px;font-weight:700}.wm-status.show{display:block}.wm-status.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}.wm-status.error{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
+      .wm-layout{display:grid;height:clamp(540px,calc(100vh - 235px),720px);grid-template-columns:minmax(300px,2fr) minmax(460px,3fr);gap:12px;align-items:stretch}.wm-list-card,.wm-reader{min-height:0;overflow:hidden;border:1px solid #e7e5e4;border-radius:14px;background:#fff}.wm-list-card{display:flex;flex-direction:column}.wm-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid #eeeae3;background:#fafaf9;font-size:13px}.wm-list-head span{color:#a8a29e;font-size:10.5px}.wm-list{min-height:0;flex:1;overflow:auto}.wm-row{display:block;width:100%;padding:13px 15px;border:0;border-bottom:1px solid #f0ede8;background:#fff;text-align:left;cursor:pointer;font-family:'Noto Sans KR',sans-serif}.wm-row:hover{background:#fffbeb}.wm-row.on{background:#fff7d6}.wm-row-title{overflow:hidden;color:#292524;font-size:12.5px;font-weight:900;text-overflow:ellipsis;white-space:nowrap}.wm-row-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;color:#a8a29e;font-size:9.5px}.wm-pill{display:inline-block;padding:2px 7px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:9px;font-weight:900}.wm-empty{display:flex;min-height:220px;align-items:center;justify-content:center;padding:22px;color:#a8a29e;font-size:11.5px;text-align:center}
+      .wm-reader{display:flex;flex-direction:column}.wm-reader-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px 17px;border-bottom:1px solid #eeeae3;background:#fafaf9}.wm-reader-head h3{margin:5px 0 0;font-size:16px}.wm-reader-head p{margin:5px 0 0;color:#a8a29e;font-size:10.5px}.wm-category{display:inline-block;padding:3px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:9.5px;font-weight:900}.wm-reader-body{min-height:0;flex:1;overflow:auto;padding:22px 24px;white-space:pre-wrap;word-break:break-word;color:#292524;font:500 13px/1.9 'Noto Sans KR',sans-serif}.wm-reader-body.empty{display:flex;align-items:center;justify-content:center;color:#a8a29e;text-align:center}.wm-reader-body iframe{width:100%;height:100%;border:0;background:#fff}
+      @media(max-width:900px){.wm-layout{height:auto;grid-template-columns:1fr}.wm-list-card{height:340px}.wm-reader{min-height:520px}.wm-head{align-items:flex-start}.wm-reader-head{display:block}.wm-reader-head .wm-btn{margin-top:10px}.wm-controls{align-items:stretch;flex-direction:column;gap:6px}.wm-controls input{width:100%;margin-bottom:7px}.wm-tabs{width:100%}}
+      @media(max-width:640px){.wm-head{display:block}.wm-head-actions{margin-top:10px}.wm-head-actions .wm-btn{flex:1}.wm-tabs button{padding:9px 14px}.wm-reader-body{padding:18px 16px;font-size:12.5px}}
+    </style>
+    <!-- ── 업무매뉴얼: Google Drive 03_업무매뉴얼 원본 조회 ── -->
+    <div id="wcn-panel-manual" class="wcn-tab-content" style="display:none;">
+      <section class="wm-shell">
+        <header class="wm-head">
+          <div>
+            <h2>📘 업무매뉴얼</h2>
+            <p>업무 방법을 빠르게 찾고, 선택한 매뉴얼을 바로 확인합니다.</p>
+          </div>
+          <div class="wm-head-actions">
+            <a class="wm-btn" href="https://drive.google.com/drive/folders/1yx-Ded0o4oKHULmPjYUrY4GUBAZwZkQa" target="_blank" rel="noopener noreferrer">📁 Google Drive 열기</a>
+            <button type="button" id="wm-refresh" class="wm-btn refresh" onclick="wmLoad(true)">↻ 새로고침</button>
+          </div>
+        </header>
+        <div class="wm-controls">
+          <div class="wm-tabs" role="tablist" aria-label="업무매뉴얼 분류">
+            <button type="button" class="on" data-wm-tab="전체" onclick="wmSetTab('전체')">전체</button>
+            <button type="button" data-wm-tab="회사" onclick="wmSetTab('회사')">회사</button>
+            <button type="button" data-wm-tab="보험" onclick="wmSetTab('보험')">보험</button>
+            <button type="button" data-wm-tab="브랜딩" onclick="wmSetTab('브랜딩')">브랜딩</button>
+            <button type="button" data-wm-tab="강의" onclick="wmSetTab('강의')">강의</button>
+          </div>
+          <input id="wm-search" type="search" placeholder="매뉴얼 검색..." oninput="wmRender()" aria-label="매뉴얼 검색">
+        </div>
+        <div id="wm-status" class="wm-status">Drive 업무매뉴얼을 확인합니다.</div>
+        <div class="wm-layout">
+          <div class="wm-list-card">
+            <div class="wm-list-head"><strong>매뉴얼 목록</strong><span id="wm-count">0건</span></div>
+            <div id="wm-list" class="wm-list"><div class="wm-empty">업무매뉴얼을 불러오고 있습니다.</div></div>
+          </div>
+          <article class="wm-reader">
+            <div class="wm-reader-head">
+              <div><span id="wm-reader-category" class="wm-category">업무매뉴얼</span><h3 id="wm-reader-title">매뉴얼을 선택해주세요</h3><p id="wm-reader-meta">왼쪽 목록에서 필요한 업무 방법을 선택하세요.</p></div>
+              <a id="wm-original" class="wm-btn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Google Docs 원본 열기</a>
+            </div>
+            <div id="wm-reader-body" class="wm-reader-body empty">선택한 매뉴얼의 내용이 여기에 표시됩니다.</div>
+          </article>
+        </div>
+      </section>
     </div>
 
     <!-- ── 업무공유공간 탭 [v61실행] ── -->
@@ -3110,7 +3163,7 @@ window.tx_scheduleAutoSave = function(){
 
   // ── 탭 전환 ── [v51실행] 앱시트 사이드바 스타일
   window.wcnTabSwitch = function(tab){
-    ['overview','daily-haru','idea','journal','hours','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
+    ['overview','daily-haru','idea','journal','hours','manual','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
       var panel = document.getElementById('wcn-panel-'+t);
       var btn   = document.getElementById('wcn-tab-'+t);
       var active = (t === tab);
@@ -10346,7 +10399,7 @@ setInterval(function(){
   function field(id){return document.getElementById(id)}
   function toast(message){if(typeof showT==='function')showT(message)}
   function activateShareOnly(){
-    ['overview','daily-haru','idea','journal','hours','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
+    ['overview','daily-haru','idea','journal','hours','manual','share','payroll','tax','accounts','agent','ai-archive','finance','office'].forEach(function(t){
       var panel=document.getElementById('wcn-panel-'+t),btn=document.getElementById('wcn-tab-'+t),active=t==='share';
       if(panel)panel.style.display=active?'block':'none';
       if(btn){
@@ -11464,7 +11517,7 @@ setInterval(function(){
     var host=document.querySelector('.wc-head-status');if(!host||field('wc-global-drive-entry'))return;
     var button=document.createElement('button');button.type='button';button.id='wc-global-drive-entry';button.className='warn';button.textContent='Google Drive 연결';button.onclick=window.wsjConnect;host.appendChild(button);
     if(!field('wc-drive-entry-guard')){
-      var guard=document.createElement('div');guard.id='wc-drive-entry-guard';guard.innerHTML='<div class="wc-drive-entry-box" role="dialog" aria-modal="true" aria-labelledby="wc-drive-entry-title"><div class="wc-drive-entry-icon">📁</div><h2 id="wc-drive-entry-title">업무센터 Drive 연결</h2><p>업무센터를 시작하기 전에 Google Drive를 한 번 연결합니다.</p><div class="wc-drive-entry-list">✓ 날짜별 업무지시 불러오기<br>✓ Google Docs 업무일지 저장<br>✓ 작업결과 보관·업무공유파일 공동 사용</div><button type="button" id="wc-drive-entry-action" class="wc-drive-entry-action" onclick="wsjConnect()">Google Drive 연결하고 시작</button><div id="wc-drive-entry-state" class="wc-drive-entry-state">연결 후 모든 메뉴에서 같은 Drive 연결을 사용합니다.</div></div>';document.body.appendChild(guard);
+      var guard=document.createElement('div');guard.id='wc-drive-entry-guard';guard.innerHTML='<div class="wc-drive-entry-box" role="dialog" aria-modal="true" aria-labelledby="wc-drive-entry-title"><div class="wc-drive-entry-icon">📁</div><h2 id="wc-drive-entry-title">업무센터 Drive 연결</h2><p>업무센터를 시작하기 전에 Google Drive를 한 번 연결합니다.</p><div class="wc-drive-entry-list">✓ 날짜별 업무지시 불러오기<br>✓ Google Docs 업무일지 저장<br>✓ 업무매뉴얼 원본 조회<br>✓ 작업결과 보관·업무공유파일 공동 사용</div><button type="button" id="wc-drive-entry-action" class="wc-drive-entry-action" onclick="wsjConnect()">Google Drive 연결하고 시작</button><div id="wc-drive-entry-state" class="wc-drive-entry-state">연결 후 모든 메뉴에서 같은 Drive 연결을 사용합니다.</div></div>';document.body.appendChild(guard);
     }
     updateGlobalDriveButton(false);
   }
@@ -11497,6 +11550,65 @@ setInterval(function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.__WC_SUJIN_JOURNAL_DRIVE_V1__=true;
+})();
+</script>
+<script id="wc-work-manual-drive-v1">
+(function(){
+  'use strict';
+  var MANUAL_FOLDER_ID='1yx-Ded0o4oKHULmPjYUrY4GUBAZwZkQa';
+  var MANUAL_FOLDER_URL='https://drive.google.com/drive/folders/'+MANUAL_FOLDER_ID;
+  var state={files:[],tab:'전체',selectedId:'',loaded:false,loading:false};
+  function field(id){return document.getElementById(id)}
+  function esc(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+  function driveReady(){try{if(typeof aaDriveRestoreSession==='function')aaDriveRestoreSession();return typeof aaDriveTokenValid==='function'&&aaDriveTokenValid()}catch(e){return false}}
+  function headers(){return {Authorization:'Bearer '+String((typeof _aaDriveToken!=='undefined'&&_aaDriveToken)||'')}}
+  async function api(url){var res=await fetch(url,{headers:headers(),cache:'no-store'});if(res.status===401)throw new Error('Drive 연결이 만료되었습니다.');if(!res.ok)throw new Error('Drive '+res.status);return res}
+  function category(file){var match=String((file&&file.name)||'').match(/^\[(회사|보험|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]/);return match?match[1]:'기타'}
+  function cleanTitle(file){return String((file&&file.name)||'업무매뉴얼').replace(/^\[(?:회사|보험|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]\s*/,'').replace(/\.(pdf|docx?|txt|md|html?)$/i,'')}
+  function typeLabel(file){var mime=String((file&&file.mimeType)||'');if(mime==='application/vnd.google-apps.document')return 'Google Docs';if(mime==='application/pdf')return 'PDF';if(mime.indexOf('image/')===0)return '이미지';if(mime.indexOf('text/')===0)return '텍스트';return '파일'}
+  function dateLabel(value){if(!value)return '';try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)).replace(/\. /g,'.').replace(/\.$/,'')}catch(e){return String(value).substring(0,10)}}
+  function setStatus(message,tone,show){var el=field('wm-status');if(!el)return;el.textContent=message||'';el.className='wm-status'+(show?' show':'')+(tone?' '+tone:'')}
+  function filtered(){var q=String((field('wm-search')||{}).value||'').trim().toLowerCase();return state.files.filter(function(file){var cat=category(file);if(state.tab!=='전체'&&cat!==state.tab)return false;return !q||String(file.name||'').toLowerCase().indexOf(q)>=0||String(file.description||'').toLowerCase().indexOf(q)>=0})}
+  window.wmSetTab=function(tab){state.tab=tab;document.querySelectorAll('[data-wm-tab]').forEach(function(button){button.classList.toggle('on',button.getAttribute('data-wm-tab')===tab)});window.wmRender()};
+  window.wmRender=function(){
+    var list=field('wm-list'),count=field('wm-count');if(!list)return;var rows=filtered();if(count)count.textContent=rows.length+'건';
+    if(!rows.length){list.innerHTML='<div class="wm-empty">'+(state.files.length?'선택한 분류에 해당하는 매뉴얼이 없습니다.':'03_업무매뉴얼 폴더에 아직 등록된 매뉴얼이 없습니다.')+'</div>';clearReader();return;}
+    list.innerHTML=rows.map(function(file){var active=String(file.id)===String(state.selectedId);return '<button type="button" class="wm-row'+(active?' on':'')+'" onclick="wmOpen(\''+esc(file.id)+'\')"><div class="wm-row-title">'+esc(cleanTitle(file))+'</div><div class="wm-row-meta"><span class="wm-pill">'+esc(category(file))+'</span><span>'+esc(typeLabel(file))+' · '+esc(dateLabel(file.modifiedTime))+'</span></div></button>'}).join('');
+    if(!rows.some(function(file){return String(file.id)===String(state.selectedId)}))window.wmOpen(rows[0].id,true);
+  };
+  function clearReader(){state.selectedId='';var title=field('wm-reader-title'),cat=field('wm-reader-category'),meta=field('wm-reader-meta'),body=field('wm-reader-body'),original=field('wm-original');if(title)title.textContent='매뉴얼을 선택해주세요';if(cat)cat.textContent='업무매뉴얼';if(meta)meta.textContent='왼쪽 목록에서 필요한 업무 방법을 선택하세요.';if(body){body.className='wm-reader-body empty';body.textContent='선택한 매뉴얼의 내용이 여기에 표시됩니다.'}if(original)original.style.display='none'}
+  function originalUrl(file){return file.webViewLink||('https://drive.google.com/file/d/'+encodeURIComponent(file.id)+'/view')}
+  function previewUrl(file){var mime=String(file.mimeType||''),id=encodeURIComponent(file.id);if(mime==='application/vnd.google-apps.document')return 'https://docs.google.com/document/d/'+id+'/preview';if(mime==='application/vnd.google-apps.spreadsheet')return 'https://docs.google.com/spreadsheets/d/'+id+'/preview';if(mime==='application/vnd.google-apps.presentation')return 'https://docs.google.com/presentation/d/'+id+'/preview';return 'https://drive.google.com/file/d/'+id+'/preview'}
+  async function readText(file){var mime=String(file.mimeType||''),url;if(mime==='application/vnd.google-apps.document')url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'/export?mimeType='+encodeURIComponent('text/plain');else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media';return (await api(url)).text()}
+  window.wmOpen=async function(id,quiet){
+    var file=state.files.find(function(item){return String(item.id)===String(id)});if(!file)return;state.selectedId=file.id;window.wmRender();
+    var title=field('wm-reader-title'),cat=field('wm-reader-category'),meta=field('wm-reader-meta'),body=field('wm-reader-body'),original=field('wm-original');
+    if(title)title.textContent=cleanTitle(file);if(cat)cat.textContent=category(file);if(meta)meta.textContent=typeLabel(file)+' · 수정 '+dateLabel(file.modifiedTime);if(original){original.href=originalUrl(file);original.textContent=file.mimeType==='application/vnd.google-apps.document'?'Google Docs 원본 열기':'원본 열기';original.style.display='inline-flex'}
+    if(!body)return;body.style.padding='';body.className='wm-reader-body empty';body.textContent='매뉴얼을 불러오는 중입니다.';
+    try{
+      var mime=String(file.mimeType||''),name=String(file.name||'');
+      if(mime==='application/vnd.google-apps.document'||mime.indexOf('text/')===0||/\.(txt|md|html?)$/i.test(name)){
+        var text=await readText(file);if(String(state.selectedId)!==String(file.id))return;body.className='wm-reader-body';body.textContent=text||'매뉴얼 내용이 없습니다.';
+      }else if(mime==='application/pdf'||mime.indexOf('image/')===0||mime==='application/vnd.google-apps.spreadsheet'||mime==='application/vnd.google-apps.presentation'){
+        body.className='wm-reader-body';body.style.padding='0';body.innerHTML='<iframe title="'+esc(cleanTitle(file))+' 미리보기" src="'+esc(previewUrl(file))+'"></iframe>';
+      }else{body.className='wm-reader-body empty';body.textContent='이 파일은 화면에서 바로 볼 수 없습니다. 원본 열기를 이용해주세요.'}
+    }catch(e){console.error('[work-manual read]',e);body.className='wm-reader-body empty';body.textContent='매뉴얼을 불러오지 못했습니다. Google Docs 원본 열기를 이용해주세요.';if(!quiet)setStatus('매뉴얼 읽기 실패 · '+String(e.message||e).substring(0,70),'error',true)}
+  };
+  window.wmLoad=async function(manual){
+    if(state.loading)return;var button=field('wm-refresh');
+    if(!driveReady()){setStatus('업무매뉴얼을 보려면 Google Drive 연결을 확인해주세요.','warn',true);if(manual&&typeof window.wsjConnect==='function')window.wsjConnect();return;}
+    state.loading=true;if(button){button.disabled=true;button.textContent='확인 중…'};setStatus('03_업무매뉴얼 폴더를 확인하고 있습니다.','warn',true);
+    try{
+      var q="'"+MANUAL_FOLDER_ID+"' in parents and trashed = false";
+      var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,createdTime,webViewLink,size,description)');
+      var data=await (await api(url)).json();state.files=(data.files||[]).filter(function(file){return file.mimeType!=='application/vnd.google-apps.folder'});state.loaded=true;setStatus('', '',false);window.wmRender();
+    }catch(e){console.error('[work-manual load]',e);setStatus('업무매뉴얼을 불러오지 못했습니다 · '+String(e.message||e).substring(0,70),'error',true);var list=field('wm-list');if(list)list.innerHTML='<div class="wm-empty">Drive 연결을 확인한 뒤 새로고침해주세요.</div>'}
+    finally{state.loading=false;if(button){button.disabled=false;button.textContent='↻ 새로고침'}}
+  };
+  var baseSwitch=window.wcnTabSwitch;
+  if(typeof baseSwitch==='function')window.wcnTabSwitch=function(tab){baseSwitch(tab);if(tab==='manual'){var panel=field('wcn-panel-manual');if(panel)panel.style.display='block';if(!state.loaded)window.wmLoad(false)}};
+  window.addEventListener('wd-work-drive-ready',function(){var panel=field('wcn-panel-manual');if(panel&&panel.style.display!=='none'&&!state.loaded)window.wmLoad(false)});
+  window.__WC_WORK_MANUAL_DRIVE_V1__=true;
 })();
 </script>
 <script id="wc-journal-first-entry-v1">
