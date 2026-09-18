@@ -94,16 +94,22 @@
     window._SB_URL=_SB_URL;window.SUPA_KEY=SUPA_KEY;window._supaReady=_supaReady;
     var _UID_MAP={kfcyk50:'kfcyk50',kfcyk30:'kfcyk30'};
     function getCurrentOwnerId(){return _UID_MAP[_CURRENT_UID]||_CURRENT_UID||''}window.getCurrentOwnerId=getCurrentOwnerId;
+    var _WC_SHARED_UIDS=['kfcyk50','kfcyk30'];
+    var _WC_SHARED_USER_TABLES={work_tasks:1,payroll_records:1,work_journals:1,kit_accounts:1,tax_monthly_tasks:1,work_finance_transactions:1,work_office_purchases:1,work_inventory_items:1,work_subscriptions:1,work_hours:1,wc_ideas:1,work_task_comments:1};
+    function wcIsSharedUid(value){return _WC_SHARED_UIDS.indexOf(String(value||''))>-1}
+    function wcSharedFilter(column){return String(column||'user_id')+'=in.('+_WC_SHARED_UIDS.map(encodeURIComponent).join(',')+')'}
+    function wcUserName(uid){return String(uid||'')==='kfcyk30'?'박수진':(String(uid||'')==='kfcyk50'?'최윤경':String(uid||''))}
+    window.wcSharedFilter=wcSharedFilter;window.wcUserName=wcUserName;
     var _WC_ACCESS_TOKEN='';
     window.wcSetAuthToken=function(token){_WC_ACCESS_TOKEN=String(token||'');window.__WD_WORK_SECURE_AUTH__=!!_WC_ACCESS_TOKEN;try{window.dispatchEvent(new CustomEvent('wd-work-auth-ready',{detail:{ready:!!_WC_ACCESS_TOKEN}}))}catch(e){}};
     window.addEventListener('message',function(event){if(event&&event.data&&event.data.type==='wdhq:work-auth-token')window.wcSetAuthToken(event.data.token||'')});
     function wcRequestAuthToken(){try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'wdhq:request-work-auth'},'*')}catch(e){}}
     function _sbHeaders(extra){var bearer=_WC_ACCESS_TOKEN||SUPA_KEY;var h={apikey:SUPA_KEY,Authorization:'Bearer '+bearer,'Content-Type':'application/json'};if(extra)Object.assign(h,extra);return h}
-    async function _sbSelect(table,query,opts){opts=opts||{};var url=_SB_URL+'/rest/v1/'+table+'?select='+(query||'*');if(opts.eq)Object.keys(opts.eq).forEach(function(k){url+='&'+k+'=eq.'+encodeURIComponent(opts.eq[k])});if(opts.like)Object.keys(opts.like).forEach(function(k){url+='&'+k+'=like.'+encodeURIComponent(opts.like[k])});if(opts.order)url+='&order='+opts.order+(opts.asc?'.asc':'.desc');if(opts.limit)url+='&limit='+opts.limit;var h=_sbHeaders();if(opts.single)h.Accept='application/vnd.pgrst.object+json';var res=await fetch(url,{headers:h});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=await res.json();return{data:opts.single?(data||null):(data||[]),error:null}}
+    async function _sbSelect(table,query,opts){opts=opts||{};var url=_SB_URL+'/rest/v1/'+table+'?select='+(query||'*');if(opts.eq)Object.keys(opts.eq).forEach(function(k){if(k==='user_id'&&_WC_SHARED_USER_TABLES[table]&&wcIsSharedUid(opts.eq[k]))url+='&'+wcSharedFilter('user_id');else url+='&'+k+'=eq.'+encodeURIComponent(opts.eq[k])});if(opts.like)Object.keys(opts.like).forEach(function(k){url+='&'+k+'=like.'+encodeURIComponent(opts.like[k])});if(opts.order)url+='&order='+opts.order+(opts.asc?'.asc':'.desc');if(opts.limit)url+='&limit='+opts.limit;var h=_sbHeaders();if(opts.single)h.Accept='application/vnd.pgrst.object+json';var res=await fetch(url,{headers:h});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=await res.json();return{data:opts.single?(data||null):(data||[]),error:null}}
     async function _sbInsert(table,payload,opts){opts=opts||{};var h=_sbHeaders();if(opts.returning)h.Prefer='return=representation';var res=await fetch(_SB_URL+'/rest/v1/'+table,{method:'POST',headers:h,body:JSON.stringify(payload)});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=opts.returning?await res.json():null;return{data:data&&data[0]||null,error:null}}
     async function _sbUpdate(table,payload,eqCol,eqVal){var res=await fetch(_SB_URL+'/rest/v1/'+table+'?'+eqCol+'=eq.'+encodeURIComponent(eqVal),{method:'PATCH',headers:_sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify(payload)});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));return{data:null,error:null}}
     async function _sbUpsert(table,payload,conflict){var h=_sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'});if(conflict)h.Prefer+=';on-conflict='+conflict;var res=await fetch(_SB_URL+'/rest/v1/'+table,{method:'POST',headers:h,body:JSON.stringify(payload)});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));return{data:null,error:null}}
-    async function _sbDelete(table,eqCol,eqVal){var res=await fetch(_SB_URL+'/rest/v1/'+table+'?'+eqCol+'=eq.'+encodeURIComponent(eqVal),{method:'DELETE',headers:_sbHeaders({Prefer:'return=minimal'})});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));return{data:null,error:null}}
+    async function _sbDelete(table,eqCol,eqVal){var shared=!!(_WC_SHARED_USER_TABLES[table]&&_CURRENT_UID),url=_SB_URL+'/rest/v1/'+table+'?'+eqCol+'=eq.'+encodeURIComponent(eqVal);if(shared)url+='&user_id=eq.'+encodeURIComponent(_CURRENT_UID);var res=await fetch(url,{method:'DELETE',headers:_sbHeaders({Prefer:'return=representation'}),body:null});if(!res.ok)throw new Error(table+' '+res.status+': '+(await res.text()).substring(0,100));var data=await res.json().catch(function(){return[]});if(shared&&!data.length)throw new Error('본인이 저장한 기록만 삭제할 수 있습니다.');return{data:data,error:null}}
     var _wcToastTimer=null;function showT(msg){var el=document.getElementById('toastEl');if(!el)return;el.textContent=msg;el.classList.add('on');clearTimeout(_wcToastTimer);_wcToastTimer=setTimeout(function(){el.classList.remove('on')},2200)}window.showT=showT;
     function wcSameOriginParent(){try{return window.parent!==window&&window.parent.location.origin===location.origin?window.parent:null}catch(e){return null}}
     function wcGoHome(){var p=wcSameOriginParent();if(p&&typeof p.goTo==='function'){p.goTo('home');return}if(window.parent!==window){window.parent.postMessage({type:'wd:navigate',target:'home'},location.origin);return}var q=new URLSearchParams(location.search).get('home');location.href=q||'index.html'}
@@ -2292,7 +2298,7 @@ window.tx_init = function(){
   /* [2] 비동기: Supabase 보완 */
   if(window._supaReady&&window._SB_URL&&window.SUPA_KEY){
     window._txStatus('불러오는 중...');
-    fetch(window._SB_URL+'/rest/v1/tax_monthly_tasks?user_id=eq.'+encodeURIComponent(window._txUid())+'&tax_year=eq.'+window._TX.year+'&tax_month=eq.'+window._TX.month+'&limit=1',{headers:{apikey:window.SUPA_KEY,'Authorization':'Bearer '+window.SUPA_KEY}})
+  fetch(window._SB_URL+'/rest/v1/tax_monthly_tasks?'+wcSharedFilter('user_id')+'&tax_year=eq.'+window._TX.year+'&tax_month=eq.'+window._TX.month+'&order=updated_at.desc&limit=1',{headers:{apikey:window.SUPA_KEY,'Authorization':'Bearer '+window.SUPA_KEY}})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(rows){
       if(rows&&rows.length>0){
@@ -2530,6 +2536,7 @@ function acRender(){
   var tbody='<tbody>';
   list.forEach(function(r){
     var acType = r.account_type||'업무계정';
+    var isOwn=String(r.user_id||'')===String(acUid()),writer=typeof wcUserName==='function'?wcUserName(r.user_id):String(r.user_id||'');
     // memo 파싱
     var rawM=r.memo||'';
     var sepI=rawM.indexOf('\n---\n');
@@ -2562,7 +2569,7 @@ function acRender(){
 
     var tdCommon='<tr data-view-id="'+r.id+'" style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'#fff\'">';
     var tdType='<td style="padding:10px 10px;vertical-align:middle;">'+acTypeBadge(acType)+'</td>';
-    var tdName='<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'</td>';
+    var tdName='<td style="padding:10px 10px;font-size:13px;font-weight:800;color:#1C1917;vertical-align:middle;word-break:break-word;">'+escHtml(r.service_name||'-')+'<div style="margin-top:3px;font-size:9px;font-weight:700;color:#94a3b8;">'+escHtml(writer)+'</div></td>';
     var tdMemoInfo='<td style="padding:10px 10px;font-size:12px;color:#334155;vertical-align:middle;">'+memoInfoCell+'</td>';
     var tdId='<td style="padding:10px 10px;vertical-align:middle;max-width:0;">'
       +'<div style="display:flex;align-items:center;gap:5px;min-width:0;">'
@@ -2575,7 +2582,7 @@ function acRender(){
     var tdMgmt='<td style="padding:10px 10px;vertical-align:middle;white-space:nowrap;">'
       +'<div style="display:flex;gap:4px;">'
       +'<button data-edit-id="'+r.id+'" style="padding:4px 8px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">✏️</button>'
-      +'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>'
+      +(isOwn?'<button data-del-id="'+r.id+'" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation()">🗑️</button>':'')
       +'</div></td>';
 
     if(isJeon){
@@ -3362,16 +3369,17 @@ window.tx_scheduleAutoSave = function(){
       return;
     }
     try {
-      var url = _SB_URL + '/rest/v1/work_journals?id=eq.' + encodeURIComponent(id);
+      var url = _SB_URL + '/rest/v1/work_journals?id=eq.' + encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(_CURRENT_UID);
       var res = await fetch(url, {
         method: 'DELETE',
         headers: {
           'apikey':        SUPA_KEY,
           'Authorization': 'Bearer ' + SUPA_KEY,
-          'Prefer':        'return=minimal'
+          'Prefer':        'return=representation'
         }
       });
       if(res.ok){
+        var deleted=await res.json().catch(function(){return[]});if(!deleted.length){if(typeof showT==='function')showT('본인이 저장한 업무일지만 삭제할 수 있습니다.');return;}
         if(typeof showT==='function') showT('🗑️ 업무일지가 삭제되었습니다.');
         wj_loadList();
       } else {
@@ -4708,7 +4716,7 @@ window.tx_scheduleAutoSave = function(){
     var lastDay  = _wh_month + '-' + String(lastNum).padStart(2,'0');
     try {
       var url = _SB_URL + '/rest/v1/work_hours'
-        + '?user_id=eq.'    + encodeURIComponent(uid)
+        + '?' + wcSharedFilter('user_id')
         + '&work_date=gte.' + encodeURIComponent(firstDay)
         + '&work_date=lte.' + encodeURIComponent(lastDay)
         + '&order=work_date.asc';
@@ -4728,6 +4736,7 @@ window.tx_scheduleAutoSave = function(){
       rows.forEach(function(r){
         var dayLabel = r.work_day || wh_dayLabel(r.work_date);
         var dateDisp = (r.work_date||'').replace(/-/g,'.').substring(2); // YY.MM.DD
+        var isOwn = String(r.user_id||'')===String(uid),writer=typeof wcUserName==='function'?wcUserName(r.user_id):String(r.user_id||'');
         var brk = r.break_minutes ? Math.floor(r.break_minutes/60)+'시간 '+(r.break_minutes%60)+'분' : '1시간';
         if(r.break_minutes === 30)  brk = '30분';
         if(r.break_minutes === 60)  brk = '1시간';
@@ -4735,11 +4744,11 @@ window.tx_scheduleAutoSave = function(){
         if(r.break_minutes === 120) brk = '2시간';
         html += '<div style="display:flex;align-items:center;padding:9px 10px;background:#f8f7fc;border-radius:10px;gap:8px;font-size:14px;">'
           + '<span style="font-weight:800;color:#4A3F7A;min-width:62px;">'+dateDisp+'('+dayLabel+')</span>'
+          + '<span style="padding:2px 7px;border-radius:999px;background:'+(isOwn?'#E0F2FE':'#F3F4F6')+';color:'+(isOwn?'#0369A1':'#6B7280')+';font-size:10px;font-weight:800;white-space:nowrap;">'+wh_esc(writer)+'</span>'
           + '<span style="color:#64748b;">'+( r.start_time||'—' )+' ~ '+( r.end_time||'—' )+'</span>'
           + '<span style="margin-left:auto;display:flex;align-items:center;gap:6px;">'
-          + '<button onclick="event.stopPropagation();wh_editByDate(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #c4b5fd;border-radius:7px;font-size:11px;font-weight:700;color:#7C3AED;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">✏️ 수정</button>'
-          // ★ [v2실행] 삭제 버튼 추가
-          + '<button onclick="event.stopPropagation();wh_delete(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;border-radius:7px;font-size:11px;font-weight:700;color:#dc2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🗑️ 삭제</button>'
+          + (isOwn?'<button onclick="event.stopPropagation();wh_editByDate(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #c4b5fd;border-radius:7px;font-size:11px;font-weight:700;color:#7C3AED;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">✏️ 수정</button>':'')
+          + (isOwn?'<button onclick="event.stopPropagation();wh_delete(\''+wh_esc(r.work_date)+'\')" style="padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;border-radius:7px;font-size:11px;font-weight:700;color:#dc2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">🗑️ 삭제</button>':'')
           + '<span style="font-weight:700;color:#334155;">'+wh_minToStr(r.total_minutes)+'</span>'
           + '</span>'
           + '</div>';
@@ -4806,10 +4815,11 @@ window.tx_scheduleAutoSave = function(){
         headers: {
           'apikey':        SUPA_KEY,
           'Authorization': 'Bearer ' + SUPA_KEY,
-          'Prefer':        'return=minimal'
+          'Prefer':        'return=representation'
         }
       });
       if(res.ok){
+        var deleted=await res.json().catch(function(){return[]});if(!deleted.length){if(typeof showT==='function')showT('본인이 저장한 근무기록만 삭제할 수 있습니다.');return;}
         if(typeof showT==='function') showT('🗑️ 근무기록이 삭제되었습니다.');
         wh_loadMonth();
       } else {
@@ -4992,7 +5002,7 @@ window.tx_scheduleAutoSave = function(){
     listEl.innerHTML='<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
     var uid=wt_getUid();
     try{
-      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)
+    var url=_SB_URL+'/rest/v1/work_tasks?'+wcSharedFilter('user_id')
         +'&idea_status=eq.'+encodeURIComponent(_wt_ideaStatus)
         +'&order=created_at.desc';
       var res=await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
@@ -5190,7 +5200,7 @@ window.tx_scheduleAutoSave = function(){
     var uid=wt_getUid();
     try{
       // idea_status 필터 없이 전체 로드
-      var url=_SB_URL+'/rest/v1/work_tasks?user_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc';
+    var url=_SB_URL+'/rest/v1/work_tasks?'+wcSharedFilter('user_id')+'&order=created_at.desc';
       var res=await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
       if(!res.ok){listEl.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:13px;">검색 오류: '+res.status+'</div>';return;}
       var allTasks=await res.json();
@@ -5802,7 +5812,7 @@ window.tx_scheduleAutoSave = function(){
     listEl.innerHTML = '<div style="text-align:center;padding:14px;color:#94a3b8;font-size:13px;">불러오는 중...</div>';
     var uid = wi_getUid();
     // idea_status 필터 + 순서
-    var url = _SB_URL + '/rest/v1/wc_ideas?user_id=eq.' + encodeURIComponent(uid)
+    var url = _SB_URL + '/rest/v1/wc_ideas?' + wcSharedFilter('user_id')
       + '&idea_status=eq.' + encodeURIComponent(_wi_currentStatus)
       + '&order=created_at.desc';
     try {
@@ -5843,6 +5853,7 @@ window.tx_scheduleAutoSave = function(){
       var st = item.idea_status || '아이디어상태';
       var stColor = STATUS_COLOR[st] || '#64748b';
       var idSafe = String(item.id || '').replace(/'/g,'');
+      var isOwn = String(item.user_id||'')===String(wi_getUid());
       var created = item.created_at ? item.created_at.substring(0,10) : '';
       // 상태 이동 버튼
       var nextBtns = (STATUS_NEXT[st] || []).map(function(ns){
@@ -5862,7 +5873,7 @@ window.tx_scheduleAutoSave = function(){
         + '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">'
         + nextBtns
         + '<button onclick="wi_edit(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #FBBF24;border-radius:7px;font-size:11px;font-weight:700;color:#D97706;background:#FEF3C7;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">수정</button>'
-        + '<button onclick="wi_delete(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;color:#94a3b8;background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>'
+        + (isOwn?'<button onclick="wi_delete(\''+idSafe+'\')" style="padding:3px 9px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;color:#94a3b8;background:#fff;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>':'')
         + '</div></div>';
     }).join('');
     listEl.innerHTML = html;
@@ -5925,13 +5936,15 @@ window.tx_scheduleAutoSave = function(){
   // ── 삭제 ──
   window.wi_delete = async function(id){
     if(!id){ return; }
+    var owned=_wi_items.find(function(item){return String(item.id)===String(id)&&String(item.user_id||'')===String(wi_getUid())});
+    if(!owned){if(typeof showT==='function')showT('본인이 저장한 아이디어만 삭제할 수 있습니다.');return;}
     if(!confirm('이 아이디어를 삭제하시겠습니까?')) return;
     if(!wi_supaReady()){
       if(typeof showT==='function') showT('⚠️ Supabase 미연결'); return;
     }
     try {
       var res = await fetch(
-        _SB_URL + '/rest/v1/wc_ideas?id=eq.' + encodeURIComponent(id),
+        _SB_URL + '/rest/v1/wc_ideas?id=eq.' + encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(wi_getUid()),
         {
           method: 'DELETE',
           headers: {
@@ -6886,7 +6899,7 @@ async function agLoad(){
     return;
   }
   try{
-    var res = await fetch(agSbUrl()+'/rest/v1/wd_agents?owner_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc&select=*',{headers:agHeaders()});
+    var res = await fetch(agSbUrl()+'/rest/v1/wd_agents?owner_id=in.('+['kfcyk50','kfcyk30'].map(encodeURIComponent).join(',')+')&order=created_at.desc&select=*',{headers:agHeaders()});
     if(!res.ok) throw new Error('조회 실패 '+res.status);
     _agList = await res.json();
     console.log('[agent] rows count:', _agList.length);
@@ -7331,7 +7344,7 @@ async function agLoadFiles(agentId){
   var uid = agUid();
   _agFiles = [];
   try{
-    var res = await fetch(agSbUrl()+'/rest/v1/wd_agent_files?agent_id=eq.'+encodeURIComponent(agentId)+'&owner_id=eq.'+encodeURIComponent(uid)+'&order=uploaded_at.desc&select=*',{headers:agHeaders()});
+    var res = await fetch(agSbUrl()+'/rest/v1/wd_agent_files?agent_id=eq.'+encodeURIComponent(agentId)+'&owner_id=in.('+['kfcyk50','kfcyk30'].map(encodeURIComponent).join(',')+')&order=uploaded_at.desc&select=*',{headers:agHeaders()});
     if(!res.ok) throw new Error('파일 조회 실패 ('+res.status+')');
     var files = await res.json();
     _agFiles = files; // [v51] 전역 배열에 저장 (보기/다운/삭제 함수에서 참조)
@@ -7453,8 +7466,9 @@ window.agDownloadFile = async function(fileId){
 window.agDeleteFile = async function(fileId){
   var f = _agFiles.find(function(x){ return x.id===fileId; });
   if(!f){ alert('파일 정보를 찾을 수 없습니다.'); return; }
-  if(!confirm('['+f.file_name+']을 삭제하시겠습니까?')) return;
   var uid = agUid();
+  if(String(f.owner_id||'')!==String(uid)){if(typeof showT==='function')showT('본인이 저장한 파일만 삭제할 수 있습니다.');return;}
+  if(!confirm('['+f.file_name+']을 삭제하시겠습니까?')) return;
   try{
     await fetch(agSbUrl()+'/storage/v1/object/wd-agent-files/'+f.file_path,{
       method:'DELETE', headers:{'apikey':agSbKey(),'Authorization':'Bearer '+agSbKey()}
@@ -7471,8 +7485,9 @@ window.agDeleteFile = async function(fileId){
 /* ── 설계사 삭제 ── */
 window.agDelete = async function(){
   if(!_agCurrent) return;
-  if(!confirm('['+_agCurrent.korean_name+'] 설계사를 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.')) return;
   var uid = agUid();
+  if(String(_agCurrent.owner_id||'')!==String(uid)){if(typeof showT==='function')showT('본인이 저장한 설계사 정보만 삭제할 수 있습니다.');return;}
+  if(!confirm('['+_agCurrent.korean_name+'] 설계사를 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.')) return;
   var agentId = _agCurrent.id;
   try{
     // 파일 메타 목록 조회 후 Storage 삭제
