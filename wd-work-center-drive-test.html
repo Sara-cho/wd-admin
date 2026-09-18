@@ -7761,6 +7761,11 @@ function aaDriveInitClient(){
   return true;
 }
 window.aaDriveConnect=function(){
+  /* 업무센터 입구의 공용 Drive 연결을 단일 진입점으로 사용한다. */
+  if(typeof window.wsjConnect==='function'){
+    window.wsjConnect();
+    return;
+  }
   if(!aaDriveInitClient()){
     aaDriveSetStatus('Google 로그인 기능을 불러오는 중입니다. 잠시 후 다시 눌러주세요.','warn');
     setTimeout(aaDriveInitClient,700);return;
@@ -8007,6 +8012,8 @@ async function aaDriveReconcileLinks(){
 }
 window.aaDriveRefresh=async function(manual){
   if(_aaDriveRefreshing)return;
+  /* 입구에서 저장한 공용 세션을 작업결과 보관에서도 그대로 회수한다. */
+  if(!aaDriveTokenValid())aaDriveRestoreSession();
   if(!aaDriveTokenValid()){
     aaDriveUpdateConnectionBadge();
     if(manual){aaOpenDriveConnectModal();}else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
@@ -8164,6 +8171,13 @@ function aaDriveInit(){
   if(aaDriveTokenValid()){aaCloseDriveConnectModal();aaDriveRefresh(false);}
   else{aaDriveSetStatus('Google Drive 확인 전 · 텍스트 자료는 정상 사용할 수 있습니다.','warn');}
 }
+window.addEventListener('wd-work-drive-ready',function(event){
+  if(!(event&&event.detail&&event.detail.ready))return;
+  aaDriveRestoreSession();
+  aaDriveUpdateConnectionBadge();
+  aaCloseDriveConnectModal();
+  if(aaDriveTokenValid()&&!_aaDriveRefreshing)aaDriveRefresh(false);
+});
 
 /* ── [v44] Storage 안전 경로 생성 ── */
 /* 원본 파일명은 file_name에 보관, Storage key는 ASCII 안전 문자만 사용 */
@@ -11096,7 +11110,9 @@ setInterval(function(){
   var FILES_FOLDER_ID='1akIH85_fbbPkshgPLWCkzxv3doMgJU0W';
   var DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com';
   var DRIVE_SCOPE='https://www.googleapis.com/auth/drive';
-  var SESSION_KEY='wd_sujin_journal_drive_v1';
+  /* 업무센터 전체가 작업결과 보관과 같은 하나의 Drive 세션을 사용한다. */
+  var SESSION_KEY='wd_work_company_drive_access_v2';
+  var LEGACY_SESSION_KEY='wd_sujin_journal_drive_v1';
   var DRAFT_KEY_PREFIX='wd_sujin_journal_draft_v1_';
   var STATE={token:'',expiresAt:0,tokenClient:null,date:'',instructionFile:null,journalFile:null,history:[],loading:false,saving:false,refreshTimer:null,draftTimer:null,autoTried:false};
 
@@ -11128,11 +11144,19 @@ setInterval(function(){
   }
   function saveSession(){try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({token:STATE.token,expiresAt:STATE.expiresAt}));}catch(e){}syncSharedDriveToken();scheduleRefresh()}
   function restoreSession(){
-    try{var x=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(x&&x.token&&Number(x.expiresAt)>Date.now()+30000){STATE.token=x.token;STATE.expiresAt=Number(x.expiresAt);syncSharedDriveToken();scheduleRefresh();return true;}}catch(e){}
+    try{
+      var x=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+      if(!(x&&x.token))x=JSON.parse(sessionStorage.getItem(LEGACY_SESSION_KEY)||'null');
+      if(x&&x.token&&Number(x.expiresAt)>Date.now()+30000){
+        STATE.token=x.token;STATE.expiresAt=Number(x.expiresAt);saveSession();
+        try{sessionStorage.removeItem(LEGACY_SESSION_KEY);}catch(ignore){}
+        return true;
+      }
+    }catch(e){}
     try{if(typeof aaDriveRestoreSession==='function')aaDriveRestoreSession();if(typeof aaDriveTokenValid==='function'&&aaDriveTokenValid()){STATE.token=_aaDriveToken;STATE.expiresAt=_aaDriveTokenExp;saveSession();return true;}}catch(e){}
     return false;
   }
-  function clearSession(){STATE.token='';STATE.expiresAt=0;clearTimeout(STATE.refreshTimer);try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}try{if(typeof aaDriveClearSession==='function')aaDriveClearSession();}catch(e){}updateGlobalDriveButton();showEntryGuard('Drive 연결이 만료되었습니다. 다시 연결한 뒤 업무센터를 계속할 수 있습니다.')}
+  function clearSession(){STATE.token='';STATE.expiresAt=0;clearTimeout(STATE.refreshTimer);try{sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(LEGACY_SESSION_KEY);}catch(e){}try{if(typeof aaDriveClearSession==='function')aaDriveClearSession();}catch(e){}updateGlobalDriveButton();showEntryGuard('Drive 연결이 만료되었습니다. 다시 연결한 뒤 업무센터를 계속할 수 있습니다.')}
   function setStatus(message,tone){var el=field('wsj-status');if(!el)return;el.textContent=message;el.className='wsj-status'+(tone?' '+tone:'')}
   function draftKey(date){return DRAFT_KEY_PREFIX+String(date||STATE.date||kstDate())}
   function readDraft(date){try{var x=JSON.parse(localStorage.getItem(draftKey(date))||'null');return x&&typeof x.text==='string'?x:null}catch(e){return null}}
