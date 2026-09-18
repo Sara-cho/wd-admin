@@ -1308,21 +1308,20 @@
     <div id="wcn-panel-ai-archive" class="wcn-tab-content" style="display:none;">
 
       <!-- 헤더 -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
         <div>
-          <div style="font-size:17px;font-weight:800;color:#1C1917;margin-bottom:4px;">🗂 작업결과 보관</div>
-          <div style="font-size:13px;color:#94a3b8;">기존 탭과 목록은 유지하고, 실제 회사 파일은 회사 Google Drive 원본으로 연결합니다.</div>
+          <div style="font-size:17px;font-weight:800;color:#1C1917;">🗂 작업결과 보관</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-          <span id="aa-drive-connection-badge" style="flex-shrink:0;padding:7px 10px;background:#F8FAFC;color:#64748B;border:1px solid #CBD5E1;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;">● Drive 연결 안 됨</span>
-          <a id="aa-drive-folder-link" href="#" onclick="return wdOpenCompanyDrive(event)" aria-disabled="true" style="flex-shrink:0;padding:10px 16px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 회사 Google Drive 열기</a>
-          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:10px 14px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 Drive 동기화</button>
+          <span id="aa-drive-connection-badge" style="display:none;">● Drive 연결 안 됨</span>
+          <a id="aa-drive-folder-link" href="#" onclick="return wdOpenCompanyDrive(event)" aria-disabled="true" style="flex-shrink:0;padding:9px 14px;background:#fff;color:#374151;border:1.5px solid #d7dce4;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;text-decoration:none;">📁 Google Drive 열기</a>
+          <button id="aa-drive-refresh-btn" onclick="aaDriveRefresh(true)" style="flex-shrink:0;padding:9px 13px;background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">🔄 동기화</button>
           <button id="aa-drive-reconcile-btn" onclick="aaDrivePreviewReconcile()" style="display:none;">연결정보 정합화</button>
           <button id="aa-add-btn" onclick="aaOpenModal()" style="flex-shrink:0;padding:11px 20px;background:#FBBF24;color:#1C1917;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;">+ 자료 등록</button>
         </div>
       </div>
 
-      <div id="aa-drive-status" style="margin-bottom:12px;padding:10px 12px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;color:#64748B;font-size:11px;line-height:1.55;">
+      <div id="aa-drive-status" style="display:none;">
         회사 Google Drive 연결 전 · 기존 텍스트 자료와 분류 탭은 그대로 사용할 수 있습니다.
       </div>
 
@@ -1338,8 +1337,9 @@
         </div>
       </div>
 
-      <!-- 업무 자료 분류 탭바 -->
-      <div id="aa-tab-bar" style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:14px;gap:0;overflow-x:auto;">
+      <!-- 업무 자료 분류 탭 + 검색·정렬: 한 줄 압축 -->
+      <div id="aa-controls-row" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;min-width:0;">
+      <div id="aa-tab-bar" style="display:flex;flex:1;min-width:0;border-bottom:2px solid #e2e8f0;margin-bottom:0;gap:0;overflow-x:auto;">
         <button onclick="aaSetTab('회사운영')" id="aa-tab-회사운영" style="padding:11px 22px;border:none;border-bottom:3px solid #FBBF24;background:transparent;color:#1C1917;font-size:14px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">회사운영</button>
         <button onclick="aaSetTab('보험업무')" id="aa-tab-보험업무" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">보험업무</button>
         <button onclick="aaSetTab('퍼스널브랜딩')" id="aa-tab-퍼스널브랜딩" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">퍼스널브랜딩</button>
@@ -1347,20 +1347,21 @@
         <button onclick="aaSetTab('정리이전자료')" id="aa-tab-정리이전자료" style="padding:11px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:-2px;white-space:nowrap;">정리이전자료</button>
       </div>
 
-      <div id="aa-tab-guide" style="margin:-3px 0 12px;color:#64748B;font-size:11px;line-height:1.55;">현재 자료는 네 영역에 저장하고, 고객·프로젝트·자료 종류는 자료명과 검색으로 찾습니다. 정리 전 자료는 별도 탭에서 보존합니다.</div>
+      <div id="aa-tab-guide" style="display:none;">현재 자료는 네 영역에 저장하고, 고객·프로젝트·자료 종류는 자료명과 검색으로 찾습니다. 정리 전 자료는 별도 탭에서 보존합니다.</div>
 
       <!-- 검색 + 상세구분 필터 + 정렬 -->
-      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-        <input id="aa-search" type="text" placeholder="작업결과 전체 검색..." oninput="aaRender()" style="flex:1;min-width:240px;padding:11px 15px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
+      <div id="aa-search-row" style="display:flex;gap:7px;align-items:center;flex:0 0 350px;min-width:0;">
+        <input id="aa-search" type="text" placeholder="자료 검색..." oninput="aaRender()" style="width:100%;min-width:0;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;">
         <select id="aa-detail-filter" onchange="aaRender()" aria-label="상세구분 필터" style="display:none;">
           <option value="전체">상세구분 전체</option>
         </select>
-        <select id="aa-sort" onchange="aaRender()" style="padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;">
+        <select id="aa-sort" onchange="aaRender()" style="padding:8px 9px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#374151;white-space:nowrap;flex-shrink:0;">
           <option value="latest">최신순</option>
           <option value="oldest">오래된순</option>
           <option value="title_asc">이름순 ㄱ-ㅎ</option>
           <option value="title_desc">이름순 ㅎ-ㄱ</option>
         </select>
+      </div>
       </div>
 
       <style id="aa-split-detail-style">
@@ -1370,6 +1371,10 @@
         #aa-detail-pane-inner{scrollbar-gutter:stable}
         #aa-inline-preview-stage img,#aa-preview-stage img{display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 4px 18px rgba(15,23,42,.12)}
         #aa-inline-preview-stage iframe,#aa-preview-stage iframe{width:100%;height:100%;border:0;background:#fff}
+        @media(max-width:1180px){
+          #aa-controls-row{align-items:stretch!important;flex-direction:column!important;gap:7px!important}
+          #aa-search-row{flex:0 0 auto!important;width:100%!important}
+        }
         @media(max-width:900px){
           #aa-layout.aa-detail-open{display:block}
           #aa-detail-modal-overlay{position:fixed!important;inset:0!important;z-index:9250!important;height:auto!important;min-height:0!important;background:rgba(0,0,0,.5)!important;padding:12px!important;align-items:center!important;justify-content:center!important}
@@ -8059,7 +8064,7 @@ window.aaDriveRefresh=async function(manual){
     if(aaDriveTokenValid())aaDriveSetStatus('Google Drive 확인 실패 · 기존 업무센터 자료는 정상 사용 가능합니다.','error');
     console.error('[WD Drive]',e);
   }finally{
-    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 Drive 동기화';}
+    _aaDriveRefreshing=false;if(btn){btn.disabled=false;btn.textContent='🔄 동기화';}
   }
 };
 function aaDriveFileMetadata(file,archiveId,category,detail){
@@ -8369,7 +8374,7 @@ window.aaSetTab = function(type){
   _aaCurrent = null;  // 탭 바뀌면 상세 초기화
   var searchInput=document.getElementById('aa-search');
   if(searchInput){
-    searchInput.placeholder='작업결과 전체 검색...';
+    searchInput.placeholder='자료 검색...';
   }
   var archiveOnly=(type==='정리이전자료');
   var addBtn=document.getElementById('aa-add-btn');
@@ -11112,7 +11117,7 @@ setInterval(function(){
       link.setAttribute('aria-disabled',url?'false':'true');
       link.style.opacity=url?'1':'.62';
       link.title=url?'woori 회사 Google Drive 열기':'회사 Drive 연결 대기';
-      if(url)link.textContent='📁 WD WAVE 회사공통 열기';
+      link.textContent='📁 Google Drive 열기';
     }
     var status=document.getElementById('aa-drive-status');
     if(status){
