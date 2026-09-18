@@ -220,12 +220,6 @@
     <!-- ★ [v53실행] 사이드바: 크기↑, 폰트↑, 순서변경, 명칭변경 -->
     <div id="wcn-sidebar" style="width:170px;min-width:170px;background:#fff;border-right:2px solid #E5E0D5;padding:16px 0 20px;flex-shrink:0;">
 
-      <!-- 독립 회수 첫 화면 -->
-      <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">운영 요약</div>
-      <button onclick="wcnTabSwitch('overview')" id="wcn-tab-overview" class="wc-side-button">
-        <span style="font-size:16px;">🧭</span><span>오늘 운영판</span>
-      </button>
-
       <!-- 그룹1: 일상 업무 -->
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">회사 업무</div>
       <button onclick="wcnTabSwitch('daily-haru')" id="wcn-tab-daily-haru" style="width:100%;padding:11px 16px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:9px;text-align:left;box-sizing:border-box;">
@@ -3074,9 +3068,8 @@ window.tx_scheduleAutoSave = function(){
     var verifiedName = String(localStorage.getItem('wd_user_name') || '').trim();
     var defaultAuthor = (verifiedName === '박수진') ? '박수진' : '최윤경';
     wj_selectAuthor(defaultAuthor);
-    // 업무센터 첫 진입은 기존 기준인 오늘 운영판으로 시작
-    wcnTabSwitch('overview');
-    if(typeof renderWorkcenterOverview==='function') renderWorkcenterOverview(false);
+    // 업무센터 첫 진입은 두 계정 모두 업무일지로 시작
+    wcnTabSwitch('journal');
     // 목록 로드
     wj_loadList();
   };
@@ -8966,8 +8959,8 @@ setInterval(function(){
     window.addEventListener('DOMContentLoaded',function(){
       var hd=document.getElementById('wcn-header-date'),k=wcKstDate();if(hd)hd.textContent=k.getFullYear()+'.'+String(k.getMonth()+1).padStart(2,'0')+'.'+String(k.getDate()).padStart(2,'0');
       if(!_CURRENT_UID){var guard=document.getElementById('wc-auth-guard');if(guard)guard.style.display='flex';var st=document.getElementById('wc-storage-status');if(st){st.className='wc-state warn';st.textContent='본진 로그인 필요'}return}
-      if(typeof wj_init==='function')wj_init();else if(typeof wcnTabSwitch==='function')wcnTabSwitch('overview');
-      setTimeout(function(){if(typeof wcnTabSwitch==='function')wcnTabSwitch('overview');if(typeof renderWorkcenterOverview==='function')renderWorkcenterOverview(false)},80);
+      if(typeof wj_init==='function')wj_init();else if(typeof wcnTabSwitch==='function')wcnTabSwitch('journal');
+      setTimeout(function(){if(typeof wcnTabSwitch==='function')wcnTabSwitch('journal')},80);
     });
   </script>
 
@@ -11390,6 +11383,23 @@ setInterval(function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.__WC_SUJIN_JOURNAL_DRIVE_V1__=true;
+})();
+</script>
+<script id="wc-journal-first-entry-v1">
+(function(){
+  'use strict';
+  /* 오늘 운영판은 사용하지 않고 두 계정 모두 업무일지에서 시작한다. */
+  window.renderWorkcenterOverview=async function(){ return; };
+  function openJournalFirst(){
+    var overview=document.getElementById('wcn-panel-overview');
+    if(overview)overview.style.display='none';
+    if(typeof window.wcnTabSwitch==='function')window.wcnTabSwitch('journal');
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){setTimeout(openJournalFirst,240)},{once:true});
+  }else{
+    setTimeout(openJournalFirst,240);
+  }
 })();
 </script>
 </body>
