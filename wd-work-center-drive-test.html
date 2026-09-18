@@ -1422,6 +1422,11 @@
         #aa-list-pane{min-width:0;overflow-x:auto}
         #aa-detail-modal-overlay{min-width:0}
         #aa-detail-pane-inner{scrollbar-gutter:stable}
+        .aa-detail-action{padding:5px 9px;border-radius:7px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap}
+        .aa-detail-action:disabled{opacity:.38;cursor:not-allowed}
+        .aa-detail-file-row{display:flex;align-items:center;gap:6px;padding:8px 9px;border:1px solid transparent;border-bottom-color:#E5E7EB;border-radius:7px;cursor:pointer;transition:.15s background,.15s border-color}
+        .aa-detail-file-row:hover{background:#fff}
+        .aa-detail-file-row.selected{background:#FFFBEB;border-color:#FDE68A}
         #aa-inline-preview-stage img,#aa-preview-stage img{display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 4px 18px rgba(15,23,42,.12)}
         #aa-inline-preview-stage iframe,#aa-preview-stage iframe{width:100%;height:100%;border:0;background:#fff}
         @media(max-width:1180px){
@@ -1465,9 +1470,11 @@
                 <div id="aa-det-title" style="font-size:15px;font-weight:900;color:#1C1917;word-break:break-all;"></div>
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-                <button id="aa-det-copy-btn" onclick="aaCopyContent()" style="padding:5px 10px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:7px;font-size:11px;font-weight:700;color:#4338CA;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">📋 복사</button>
-                <button id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="padding:5px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:11px;font-weight:700;color:#16A34A;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">✏️ 내용 수정</button>
-                <button id="aa-det-delete-btn" onclick="aaDelete()" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:7px;font-size:11px;font-weight:700;color:#DC2626;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">🗑 자료 전체 삭제</button>
+                <button class="aa-detail-action" id="aa-det-edit-btn" onclick="aaOpenModalEdit()" style="background:#F0FDF4;border:1px solid #BBF7D0;color:#16A34A;">✏️ 수정</button>
+                <button class="aa-detail-action" id="aa-det-delete-btn" onclick="aaDelete()" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;">🗑 삭제</button>
+                <button class="aa-detail-action" id="aa-det-replace-btn" onclick="aaDetailReplace()" disabled style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;">↻ 교체</button>
+                <button class="aa-detail-action" id="aa-det-preview-btn" onclick="aaDetailPreview()" disabled style="background:#F0FDF4;border:1px solid #86EFAC;color:#15803D;">👁 미리보기</button>
+                <button class="aa-detail-action" id="aa-det-download-btn" onclick="aaDetailDownload()" disabled style="background:#166534;border:1px solid #166534;color:#fff;">↓ 다운로드</button>
                 <button onclick="aaCloseDetailModal()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1;padding:0 0 0 4px;">×</button>
               </div>
             </div>
@@ -1486,12 +1493,8 @@
               <input id="aa-drive-replace-input" type="file" style="display:none;" onchange="aaDriveReplaceSelected(this)">
             </div>
             <div id="aa-inline-preview" style="display:none;margin-top:14px;border:1px solid #CBD5E1;border-radius:11px;overflow:hidden;background:#fff;">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid #E2E8F0;background:#F8FAFC;">
+              <div style="padding:9px 11px;border-bottom:1px solid #E2E8F0;background:#F8FAFC;">
                 <div id="aa-inline-preview-title" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:900;color:#334155;">파일 미리보기</div>
-                <div style="display:flex;gap:5px;flex:0 0 auto;">
-                  <button type="button" onclick="aaExpandInlinePreview()" style="padding:5px 8px;border:1px solid #BFDBFE;border-radius:6px;background:#EFF6FF;color:#1D4ED8;font-size:10px;font-weight:800;cursor:pointer;">⛶ 크게 보기</button>
-                  <button type="button" onclick="aaCloseInlinePreview()" style="padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;background:#fff;color:#64748B;font-size:10px;font-weight:800;cursor:pointer;">닫기</button>
-                </div>
               </div>
               <div id="aa-inline-preview-stage" style="height:300px;display:flex;align-items:center;justify-content:center;background:#EEF2F7;overflow:auto;padding:10px;box-sizing:border-box;"></div>
             </div>
@@ -8488,10 +8491,9 @@ window.aaSelectRow = async function(id){
   if(updatedDateEl) updatedDateEl.textContent = aaDateTime(aaFinalModifiedAt(a));
   if(contentEl) contentEl.textContent = a.content || '(내용 없음)';
 
-  var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn'),copyBtn=document.getElementById('aa-det-copy-btn');
+  var editBtn=document.getElementById('aa-det-edit-btn'),deleteBtn=document.getElementById('aa-det-delete-btn');
   if(editBtn)editBtn.style.display=archiveOnly?'none':'';
-  if(deleteBtn){deleteBtn.style.display=archiveOnly?'none':'';deleteBtn.textContent=a.__driveOnly?'🗑 파일 삭제':'🗑 자료 전체 삭제';}
-  if(copyBtn)copyBtn.style.display=a.__driveOnly?'none':'';
+  if(deleteBtn){deleteBtn.style.display=archiveOnly?'none':'';deleteBtn.textContent='🗑 삭제';}
 
   // 파일 목록
   document.getElementById('aa-file-list').innerHTML='<div style="font-size:11px;color:#94a3b8;">파일 불러오는 중...</div>';
@@ -8513,6 +8515,7 @@ window.aaCloseDetailModal = function(){
   var ov=document.getElementById('aa-detail-modal-overlay'),layout=document.getElementById('aa-layout');
   if(ov)ov.style.display='none';
   if(layout)layout.classList.remove('aa-detail-open');
+  _aaDetailSelectedFile=null;
   aaCloseInlinePreview();
 };
 document.addEventListener('keydown', function(e){
@@ -8746,6 +8749,43 @@ window.aaDriveDeleteSingleFile = async function(fileId){
   }catch(e){alert('파일 삭제 실패: '+e.message);}
 };
 
+/* ── 상세 상단 파일 동작 ── */
+var _aaDetailSelectedFile=null;
+var _aaDetailLegacyFiles=[];
+function aaUpdateDetailActions(){
+  var selected=_aaDetailSelectedFile;
+  var archiveOnly=!!(_aaCurrent&&aaDisplayType(_aaCurrent)==='정리이전자료');
+  var replaceBtn=document.getElementById('aa-det-replace-btn');
+  var previewBtn=document.getElementById('aa-det-preview-btn');
+  var downloadBtn=document.getElementById('aa-det-download-btn');
+  if(replaceBtn){replaceBtn.disabled=!selected||selected.source!=='drive'||archiveOnly;replaceBtn.title=replaceBtn.disabled?'Drive 파일을 선택하면 교체할 수 있습니다.':'';}
+  if(previewBtn){previewBtn.disabled=!selected||!selected.previewable;previewBtn.title=previewBtn.disabled?'미리보기 가능한 이미지·PDF를 선택해주세요.':'';}
+  if(downloadBtn)downloadBtn.disabled=!selected;
+  var rows=document.querySelectorAll('.aa-detail-file-row');
+  for(var i=0;i<rows.length;i++)rows[i].classList.toggle('selected',!!selected&&rows[i].getAttribute('data-file-key')===selected.key);
+}
+window.aaSelectDetailDriveFile=function(fileId){
+  var file=_aaDriveFiles.find(function(item){return String(item.id)===String(fileId)});if(!file)return;
+  _aaDetailSelectedFile={key:'drive:'+file.id,source:'drive',id:file.id,name:file.name,mimeType:file.mimeType||'',previewable:!!aaPreviewKind(file.name,file.mimeType)};
+  aaUpdateDetailActions();
+};
+window.aaSelectDetailLegacyFile=function(fileId){
+  var file=_aaDetailLegacyFiles.find(function(item){return String(item.id)===String(fileId)});if(!file)return;
+  _aaDetailSelectedFile={key:'legacy:'+file.id,source:'legacy',id:file.id,path:file.file_path,name:file.file_name,mimeType:file.file_type||'',previewable:!!aaPreviewKind(file.file_name,file.file_type)};
+  aaUpdateDetailActions();
+};
+window.aaDetailReplace=function(){
+  if(_aaDetailSelectedFile&&_aaDetailSelectedFile.source==='drive')aaDrivePromptReplace(_aaDetailSelectedFile.id);
+};
+window.aaDetailPreview=function(){
+  var file=_aaDetailSelectedFile;if(!file||!file.previewable)return;
+  if(file.source==='drive')aaDrivePreviewFile(file.id);else aaPreviewFile(file.path,file.name,file.mimeType);
+};
+window.aaDetailDownload=function(){
+  var file=_aaDetailSelectedFile;if(!file)return;
+  if(file.source==='drive')aaDriveDownloadFile(file.id);else aaDownloadFile(file.path,file.name);
+};
+
 /* ── 파일 목록 로드 ── */
 async function aaLoadFiles(archiveId){
   var driveId=String(archiveId||'').indexOf('drive:')===0?String(archiveId).slice(6):'';
@@ -8759,6 +8799,7 @@ async function aaLoadFiles(archiveId){
       var res = await fetch(aaSbUrl()+'/rest/v1/wd_ai_archive_files?archive_id=eq.'+encodeURIComponent(archiveId)+'&order=uploaded_at.desc&select=*',{headers:aaHeaders()});
       if(res.ok){legacyFiles=(await res.json()).filter(function(f){return !aaDriveIdFromMeta(f.file_path);});}
     }
+    _aaDetailLegacyFiles=legacyFiles.slice();
     var el = document.getElementById('aa-file-list');if(!el)return;
     var html='';
     if(driveFiles.length){
@@ -8766,13 +8807,8 @@ async function aaLoadFiles(archiveId){
         var kb=f.size?Math.round(Number(f.size)/1024)+'KB':'';
         var uploadDate=f.modifiedTime?f.modifiedTime.substring(0,10):'';
         var meta=[kb,uploadDate].filter(Boolean).join(' · ');
-        var previewable=!!aaPreviewKind(f.name,f.mimeType);
-        return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #E5E7EB;flex-wrap:wrap;">'
-          +'<span style="font-size:11.5px;flex:1;min-width:180px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
-          +(previewable?'<button onclick="aaDrivePreviewFile(\''+f.id+'\')" style="padding:5px 10px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;font-size:10px;font-weight:800;color:#15803D;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">미리보기</button>':'')
-          +'<button onclick="aaDriveDownloadFile(\''+f.id+'\')" style="padding:5px 10px;background:#166534;border:1px solid #166534;border-radius:6px;font-size:10px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">원본 다운로드</button>'
-          +(archiveOnly?'':'<button onclick="aaDrivePromptReplace(\''+f.id+'\')" style="padding:5px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:800;color:#1D4ED8;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 교체</button>')
-          +(archiveOnly?'':'<button onclick="aaDriveDeleteSingleFile(\''+f.id+'\')" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:800;color:#DC2626;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 삭제</button>')
+        return '<div class="aa-detail-file-row" data-file-key="drive:'+_aaEsc(f.id)+'" onclick="aaSelectDetailDriveFile(\''+f.id+'\')">'
+          +'<span style="font-size:11.5px;flex:1;min-width:0;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
           +'</div>';
       }).join('');
     }
@@ -8782,15 +8818,8 @@ async function aaLoadFiles(archiveId){
       var kb = f.file_size ? Math.round(f.file_size/1024)+'KB' : '';
       var uploadDate = f.uploaded_at ? f.uploaded_at.substring(0,10) : '';
       var meta = [kb, uploadDate].filter(Boolean).join(' · ');
-      var previewable = !!aaPreviewKind(f.file_name,f.file_type);
-      var filePathArg = aaEncodeArg(f.file_path);
-      var fileNameArg = aaEncodeArg(f.file_name);
-      var fileTypeArg = aaEncodeArg(f.file_type||'');
-      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f1f5f9;">'
+      return '<div class="aa-detail-file-row" data-file-key="legacy:'+_aaEsc(f.id)+'" onclick="aaSelectDetailLegacyFile(\''+f.id+'\')">'
         +'<span style="font-size:11.5px;flex:1;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 '+_aaEsc(f.file_name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
-        +'<button onclick="aaPreviewFile(decodeURIComponent(\''+filePathArg+'\'),decodeURIComponent(\''+fileNameArg+'\'),decodeURIComponent(\''+fileTypeArg+'\'))" style="padding:3px 8px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:5px;font-size:10px;font-weight:700;color:#16A34A;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">'+(previewable?'미리보기':'열기')+'</button>'
-        +'<button onclick="aaDownloadFile(\''+f.file_path+'\',\''+_aaEsc(f.file_name)+'\')" style="padding:3px 8px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;font-size:10px;font-weight:700;color:#4338CA;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">다운로드</button>'
-        +(archiveOnly?'':'<button onclick="aaDeleteFile(\''+f.id+'\',\''+f.file_path+'\')" style="padding:3px 8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:5px;font-size:10px;font-weight:700;color:#DC2626;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">삭제</button>')
         +'</div>';
       }).join('');
     }
@@ -8799,8 +8828,11 @@ async function aaLoadFiles(archiveId){
     aaCloseInlinePreview();
     var firstDrive=driveFiles.find(function(file){return !!aaPreviewKind(file.name,file.mimeType)});
     var firstLegacy=legacyFiles.find(function(file){return !!aaPreviewKind(file.file_name,file.file_type)});
-    if(firstDrive)await aaDrivePreviewFile(firstDrive.id,true);
-    else if(firstLegacy)await aaPreviewFile(firstLegacy.file_path,firstLegacy.file_name,firstLegacy.file_type,true);
+    if(driveFiles.length)aaSelectDetailDriveFile(driveFiles[0].id);
+    else if(legacyFiles.length)aaSelectDetailLegacyFile(legacyFiles[0].id);
+    else{_aaDetailSelectedFile=null;aaUpdateDetailActions();}
+    if(firstDrive){aaSelectDetailDriveFile(firstDrive.id);await aaDrivePreviewFile(firstDrive.id,true);}
+    else if(firstLegacy){aaSelectDetailLegacyFile(firstLegacy.id);await aaPreviewFile(firstLegacy.file_path,firstLegacy.file_name,firstLegacy.file_type,true);}
   } catch(e){
     var el2=document.getElementById('aa-file-list');
     if(el2) el2.innerHTML='<div style="font-size:11px;color:#ef4444;">파일 목록 불러오기 실패</div>';
