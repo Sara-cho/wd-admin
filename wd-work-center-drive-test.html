@@ -8708,30 +8708,20 @@ async function aaLoadFiles(archiveId){
     }
     var el = document.getElementById('aa-file-list');if(!el)return;
     var html='';
-    var driveChecked=!!driveId||!!(_aaDriveLastSync&&aaDriveTokenValid());
-    var folderBtn='<button onclick="aaDriveOpenArchiveFolder()" style="padding:5px 10px;background:#fff;border:1px solid #CBD5E1;border-radius:7px;font-size:10px;font-weight:800;color:#475569;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">📁 폴더 열기</button>';
     if(driveFiles.length){
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:9px;margin-bottom:6px;">'
-        +'<span style="font-size:11px;font-weight:800;color:#166534;">✅ Google Drive에 있음</span>'+folderBtn+'</div>';
       html+=driveFiles.map(function(f){
         var kb=f.size?Math.round(Number(f.size)/1024)+'KB':'';
         var uploadDate=f.modifiedTime?f.modifiedTime.substring(0,10):'';
         var meta=[kb,uploadDate].filter(Boolean).join(' · ');
         var previewable=!!aaPreviewKind(f.name,f.mimeType);
-        return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #DCFCE7;flex-wrap:wrap;">'
-          +'<span style="font-size:11.5px;flex:1;min-width:180px;color:#166534;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">☁️ '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
+        return '<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #E5E7EB;flex-wrap:wrap;">'
+          +'<span style="font-size:11.5px;flex:1;min-width:180px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 '+_aaEsc(f.name)+(meta?' <span style="color:#94a3b8;font-size:10px;">('+meta+')</span>':'')+'</span>'
           +(previewable?'<button onclick="aaDrivePreviewFile(\''+f.id+'\')" style="padding:5px 10px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;font-size:10px;font-weight:800;color:#15803D;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">미리보기</button>':'')
           +'<button onclick="aaDriveDownloadFile(\''+f.id+'\')" style="padding:5px 10px;background:#166534;border:1px solid #166534;border-radius:6px;font-size:10px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">원본 다운로드</button>'
           +(archiveOnly?'':'<button onclick="aaDrivePromptReplace(\''+f.id+'\')" style="padding:5px 10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;font-size:10px;font-weight:800;color:#1D4ED8;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 교체</button>')
           +(archiveOnly?'':'<button onclick="aaDriveDeleteSingleFile(\''+f.id+'\')" style="padding:5px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:10px;font-weight:800;color:#DC2626;cursor:pointer;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;">파일 삭제</button>')
           +'</div>';
       }).join('');
-    }else if(driveChecked){
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:9px;margin-bottom:6px;">'
-        +'<span style="font-size:11px;font-weight:800;color:#64748B;">○ Google Drive에 없음</span>'+folderBtn+'</div>';
-    }else{
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;margin-bottom:6px;">'
-        +'<span style="font-size:11px;font-weight:800;color:#92400E;">● Google Drive 확인 전 · 상단 동기화 필요</span>'+folderBtn+'</div>';
     }
     if(legacyFiles.length){
       html+='<div style="font-size:10px;font-weight:800;color:#64748B;margin:10px 0 5px;">기존 첨부파일</div>';
