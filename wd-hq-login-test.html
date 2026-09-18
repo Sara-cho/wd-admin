@@ -1386,6 +1386,7 @@ const WDHQ_OWNER_LOGIN_ID='kfcyk50';
 const WDHQ_OWNER_EMAIL='kfcyk50@admin.wdwave.kr';
 const WDHQ_STAFF_LOGIN_ID='kfcyk30';
 const WDHQ_STAFF_EMAIL='kfcyk30@admin.wdwave.kr';
+const WDHQ_SHARED_USER_IDS=Object.freeze([WDHQ_OWNER_LOGIN_ID,WDHQ_STAFF_LOGIN_ID]);
 const WDHQ_LOGIN_ALIASES=Object.freeze({});
 const WDHQ_LOGIN_ACCOUNTS=Object.freeze({
   [WDHQ_OWNER_LOGIN_ID]:Object.freeze({email:WDHQ_OWNER_EMAIL,name:'최윤경',greeting:'대표님',roleLabel:'대표'}),
@@ -2648,8 +2649,8 @@ async function wdhqRefreshWorkMoneyMetric(){
   const headers={apikey:WDHQ_SB_PUBLISHABLE_KEY,Authorization:'Bearer '+token};
   try{
     const [fr,sr]=await Promise.all([
-      fetch(WDHQ_SB_URL+'/rest/v1/work_finance_transactions?select=flow_type,amount,money_status,expected_date&user_id=eq.kfcyk50',{headers}),
-      fetch(WDHQ_SB_URL+'/rest/v1/work_subscriptions?select=amount,next_payment_date,auto_payment,decision_status,is_used&user_id=eq.kfcyk50',{headers})
+      fetch(WDHQ_SB_URL+'/rest/v1/work_finance_transactions?select=flow_type,amount,money_status,expected_date&user_id=in.('+WDHQ_SHARED_USER_IDS.join(',')+')',{headers}),
+      fetch(WDHQ_SB_URL+'/rest/v1/work_subscriptions?select=amount,next_payment_date,auto_payment,decision_status,is_used&user_id=in.('+WDHQ_SHARED_USER_IDS.join(',')+')',{headers})
     ]);
     if(!fr.ok||!sr.ok)throw new Error('work money read failed');
     const finance=await fr.json(),subs=await sr.json();
@@ -3258,16 +3259,16 @@ updateConnectionMetric();
       CACHE.loadedSpaces=new Set();
       try{
         const client=wdhqInitSupabase();
-        const ownerId=WDHQ_AUTH_PROFILE.login_id;
+        const sharedUserIds=WDHQ_SHARED_USER_IDS;
         const groups=await Promise.all([
           read('consult_tasks',client.from('consult_tasks').select('id,title,stage,due,memo,created_at,session_id,contract_id'),mapConsultTasks,'brandingBiz'),
           read('consult_contracts',client.from('consult_contracts').select('id,no,service,status,amount,pay_status,contract_status,signature_status,final_contract_amount,created_at'),mapConsultContracts,'brandingBiz'),
           read('wd_lecture_center_state',client.from('wd_lecture_center_state').select('workspace_id,state_data,app_version,updated_at').eq('workspace_id','wd-lecture-center').maybeSingle(),mapLectureState,'lecture'),
-          read('work_tasks',client.from('work_tasks').select('id,user_id,category,content,status,request_date,created_at,updated_at,requester_name,idea_status,raw_content,core_content,next_action,assignee_name,worker_name,worker_key,result_url,result_note,blocked_note').eq('user_id',ownerId),mapWorkTasks,'work'),
-          read('work_finance_transactions',client.from('work_finance_transactions').select('id,user_id,title,amount,expected_date,money_status,evidence_location,next_action,approval_required,created_at,updated_at').eq('user_id',ownerId),mapFinance,'work'),
-          read('work_office_purchases',client.from('work_office_purchases').select('id,user_id,item_name,status,expected_arrival_date,amount,evidence_location,next_action,created_at,updated_at').eq('user_id',ownerId),mapPurchases,'work'),
-          read('work_inventory_items',client.from('work_inventory_items').select('id,user_id,item_name,current_qty,min_qty,unit_price,reorder_needed,created_at,updated_at').eq('user_id',ownerId),mapInventory,'work'),
-          read('work_subscriptions',client.from('work_subscriptions').select('id,user_id,service_name,next_payment_date,amount,is_used,decision_status,evidence_location,next_action,created_at,updated_at').eq('user_id',ownerId),mapSubscriptions,'work')
+          read('work_tasks',client.from('work_tasks').select('id,user_id,category,content,status,request_date,created_at,updated_at,requester_name,idea_status,raw_content,core_content,next_action,assignee_name,worker_name,worker_key,result_url,result_note,blocked_note').in('user_id',sharedUserIds),mapWorkTasks,'work'),
+          read('work_finance_transactions',client.from('work_finance_transactions').select('id,user_id,title,amount,expected_date,money_status,evidence_location,next_action,approval_required,created_at,updated_at').in('user_id',sharedUserIds),mapFinance,'work'),
+          read('work_office_purchases',client.from('work_office_purchases').select('id,user_id,item_name,status,expected_arrival_date,amount,evidence_location,next_action,created_at,updated_at').in('user_id',sharedUserIds),mapPurchases,'work'),
+          read('work_inventory_items',client.from('work_inventory_items').select('id,user_id,item_name,current_qty,min_qty,unit_price,reorder_needed,created_at,updated_at').in('user_id',sharedUserIds),mapInventory,'work'),
+          read('work_subscriptions',client.from('work_subscriptions').select('id,user_id,service_name,next_payment_date,amount,is_used,decision_status,evidence_location,next_action,created_at,updated_at').in('user_id',sharedUserIds),mapSubscriptions,'work')
         ]);
         CACHE.rows=dedupe(groups.flat());
         CACHE.fetchedAt=Date.now();
