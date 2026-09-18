@@ -224,7 +224,7 @@
 
     <!-- 왼쪽 사이드바 -->
     <!-- ★ [v53실행] 사이드바: 크기↑, 폰트↑, 순서변경, 명칭변경 -->
-    <div id="wcn-sidebar" style="width:170px;min-width:170px;background:#fff;border-right:2px solid #E5E0D5;padding:16px 0 20px;flex-shrink:0;">
+    <div id="wcn-sidebar" style="width:190px;min-width:190px;background:#fff;border-right:2px solid #E5E0D5;padding:16px 8px 20px;flex-shrink:0;">
 
       <!-- 그룹1: 일상 업무 -->
       <div style="padding:0 14px 8px;font-size:11px;font-weight:800;color:#A8A29E;letter-spacing:.6px;">회사 업무</div>
@@ -560,8 +560,8 @@
         </header>
         <div class="wm-controls">
           <div class="wm-tabs" role="tablist" aria-label="업무매뉴얼 분류">
-            <button type="button" class="on" data-wm-tab="회사" onclick="wmSetTab('회사')">회사</button>
-            <button type="button" data-wm-tab="보험" onclick="wmSetTab('보험')">보험</button>
+            <button type="button" class="on" data-wm-tab="회사운영" onclick="wmSetTab('회사운영')">회사운영</button>
+            <button type="button" data-wm-tab="보험업무" onclick="wmSetTab('보험업무')">보험업무</button>
             <button type="button" data-wm-tab="퍼스널브랜딩" onclick="wmSetTab('퍼스널브랜딩')">퍼스널브랜딩</button>
             <button type="button" data-wm-tab="AI강의" onclick="wmSetTab('AI강의')">AI강의</button>
           </div>
@@ -11587,8 +11587,8 @@ setInterval(function(){
   var MANUAL_FOLDER_URL='https://drive.google.com/drive/folders/'+MANUAL_FOLDER_ID;
   var SHARED_SESSION_KEY='wd_work_company_drive_access_v2';
   var LEGACY_SESSION_KEY='wd_sujin_journal_drive_v1';
-  var CATEGORIES=['회사','보험','퍼스널브랜딩','AI강의'];
-  var state={files:[],tab:'회사',selectedId:'',loaded:false,loading:false,connectRetries:0};
+  var CATEGORIES=['회사운영','보험업무','퍼스널브랜딩','AI강의'];
+  var state={files:[],tab:'회사운영',selectedId:'',loaded:false,loading:false,connectRetries:0};
   function field(id){return document.getElementById(id)}
   function esc(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
   function sharedSession(){
@@ -11614,8 +11614,8 @@ setInterval(function(){
   function driveReady(){return !!sharedToken()}
   function headers(){return {Authorization:'Bearer '+sharedToken()}}
   async function api(url){var res=await fetch(url,{headers:headers(),cache:'no-store'});if(res.status===401)throw new Error('Drive 연결이 만료되었습니다.');if(!res.ok)throw new Error('Drive '+res.status);return res}
-  function category(file){var match=String((file&&file.name)||'').match(/^\[(회사|보험|퍼스널브랜딩|AI강의|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]/);if(!match)return '기타';return match[1]==='브랜딩'?'퍼스널브랜딩':match[1]==='강의'?'AI강의':match[1]}
-  function cleanTitle(file){return String((file&&file.name)||'업무매뉴얼').replace(/^\[(?:회사|보험|퍼스널브랜딩|AI강의|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]\s*/,'').replace(/\.(pdf|docx?|txt|md|html?)$/i,'')}
+  function category(file){var match=String((file&&file.name)||'').match(/^\[(회사운영|보험업무|회사|보험|퍼스널브랜딩|AI강의|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]/);if(!match)return '기타';if(match[1]==='회사')return '회사운영';if(match[1]==='보험')return '보험업무';if(match[1]==='브랜딩')return '퍼스널브랜딩';if(match[1]==='강의')return 'AI강의';return match[1]}
+  function cleanTitle(file){return String((file&&file.name)||'업무매뉴얼').replace(/^\[(?:회사운영|보험업무|회사|보험|퍼스널브랜딩|AI강의|브랜딩|강의)_(?:업무)?(?:매뉴얼|메뉴얼)\]\s*/,'').replace(/\.(pdf|docx?|txt|md|html?)$/i,'')}
   function creatorName(file){var owners=(file&&file.owners)||[];if(owners[0]&&owners[0].displayName)return owners[0].displayName;return '확인 필요'}
   function typeLabel(file){var mime=String((file&&file.mimeType)||'');if(mime==='application/vnd.google-apps.document')return 'Google Docs';if(mime==='application/pdf')return 'PDF';if(mime.indexOf('image/')===0)return '이미지';if(mime.indexOf('text/')===0)return '텍스트';return '파일'}
   function dateLabel(value){if(!value)return '';try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)).replace(/\. /g,'.').replace(/\.$/,'')}catch(e){return String(value).substring(0,10)}}
@@ -11669,7 +11669,7 @@ setInterval(function(){
       var q="'"+MANUAL_FOLDER_ID+"' in parents and trashed = false";
       var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,createdTime,webViewLink,size,description,owners(displayName,emailAddress))');
       var data=await (await api(url)).json();state.files=(data.files||[]).filter(function(file){return file.mimeType!=='application/vnd.google-apps.folder'});state.loaded=true;
-      if(!state.files.some(function(file){return category(file)===state.tab})){var next=CATEGORIES.find(function(cat){return state.files.some(function(file){return category(file)===cat})});state.tab=next||'회사'}
+      if(!state.files.some(function(file){return category(file)===state.tab})){var next=CATEGORIES.find(function(cat){return state.files.some(function(file){return category(file)===cat})});state.tab=next||'회사운영'}
       document.querySelectorAll('[data-wm-tab]').forEach(function(button){button.classList.toggle('on',button.getAttribute('data-wm-tab')===state.tab)});setStatus('', '',false);window.wmRender();
     }catch(e){console.error('[work-manual load]',e);setStatus('업무매뉴얼을 불러오지 못했습니다 · '+String(e.message||e).substring(0,70),'error',true);var list=field('wm-list');if(list)list.innerHTML='<div class="wm-empty">Drive 연결을 확인한 뒤 새로고침해주세요.</div>'}
     finally{state.loading=false;if(button){button.disabled=false;button.textContent='↻ 새로고침'}}
