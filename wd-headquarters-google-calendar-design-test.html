@@ -3769,16 +3769,16 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     var profile=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/profile');
     if(String(profile.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('Google 연결 계정이 '+ACCOUNT+'과 다릅니다.');
     var inbox=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/labels/INBOX');
-    var unreadCount=Math.max(0,Number(inbox&&inbox.messagesUnread||0));
-    var query='is:unread in:inbox -from:me -in:spam -in:trash';
-    var list=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50&includeSpamTrash=false&q='+encodeURIComponent(query));
-    var refs=list.messages||[],signals=[];
+    var unreadCount=Math.max(0,Number(inbox&&inbox.threadsUnread||0));
+    var query='is:unread in:inbox';
+    var list=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=500&includeSpamTrash=false&q='+encodeURIComponent(query));
+    var refs=list.threads||[],signals=[];
     for(var start=0;start<refs.length;start+=10){
-      var rows=await Promise.all(refs.slice(start,start+10).map(function(ref){return googleApi('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+encodeURIComponent(ref.id)+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date');}));
-      rows.forEach(function(message){
+      var rows=await Promise.all(refs.slice(start,start+10).map(function(ref){return googleApi('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+encodeURIComponent(ref.id)+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date');}));
+      rows.forEach(function(thread){
+        var messages=Array.isArray(thread.messages)?thread.messages:[],message=messages.slice().reverse().find(function(item){var labels=Array.isArray(item.labelIds)?item.labelIds:[];return labels.indexOf('INBOX')>-1&&labels.indexOf('UNREAD')>-1;})||messages[messages.length-1]||{};
         var subject=headerValue(message,'Subject')||'(제목 없음)',from=headerValue(message,'From'),snippet=String(message.snippet||'');
-        if(String(from).toLowerCase().indexOf(ACCOUNT.toLowerCase())>-1)return;
-        var record={id:message.id,source:'Gmail',title:subject,sender:senderLabel(from),searchText:subject+' '+from+' '+snippet,dueDate:extractDue(subject+' '+snippet),originalUrl:gmailOriginal(message.threadId)};
+        var record={id:thread.id,source:'Gmail',title:subject,sender:senderLabel(from),searchText:subject+' '+from+' '+snippet,dueDate:extractDue(subject+' '+snippet),originalUrl:gmailOriginal(thread.id)};
         var signal=detectSignal(record)||{id:record.id,source:'Gmail',title:record.title,sender:record.sender,categories:['안 읽음'],importance:'확인',coreRequest:'안 읽은 메일 확인',dueDate:null,dueText:'기한 없음',centerLabel:'WD 업무센터',centerRoute:'work',nextAction:'메일 원문 확인',representativeRequired:false,originalUrl:record.originalUrl,sortScore:1};
         signals.push(signal);
       });
