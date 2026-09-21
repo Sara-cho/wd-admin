@@ -665,6 +665,24 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 #setupModal .wdhq-drive-root{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:9px 11px;border:1px solid #d8d0ef;border-radius:10px;background:#f8f6ff}
 #setupModal .wdhq-drive-root strong{display:block;color:#372f67;font-size:14px}
 #setupModal .wdhq-drive-root span{display:block;margin-top:2px;color:#64748b;font-size:11.5px;font-weight:650}
+#setupModal .wdhq-file-rule{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin:0 0 8px;padding:9px 11px;border:1px solid #c7d2fe;border-radius:10px;background:#f8faff}
+#setupModal .wdhq-file-rule>span{color:#3730a3;font-size:11px;font-weight:900;white-space:nowrap}
+#setupModal .wdhq-file-rule code{padding:5px 8px;border:1px solid #dbe3ff;border-radius:7px;background:#fff;color:#172554;font:900 12px/1.3 Pretendard,'Noto Sans KR',sans-serif;word-break:break-all}
+#setupModal .wdhq-file-rule small{color:#64748b;font-size:10px;font-weight:700;white-space:nowrap}
+#setupModal .wdhq-drive-table{table-layout:fixed}
+#setupModal .wdhq-drive-table th:nth-child(1){width:18%}
+#setupModal .wdhq-drive-table th:nth-child(2){width:25%}
+#setupModal .wdhq-drive-table th:nth-child(3){width:34%}
+#setupModal .wdhq-drive-table th:nth-child(4){width:23%}
+#setupModal .wdhq-drive-table th{padding:9px 10px;font-size:11px}
+#setupModal .wdhq-drive-table td{padding:10px!important;font-size:11.5px!important;line-height:1.4!important;word-break:keep-all}
+#setupModal .wdhq-drive-table td:first-child{font-size:12px!important;white-space:normal}
+@media(max-width:760px){
+  #setupModal .wdhq-file-rule{grid-template-columns:1fr;gap:5px}
+  #setupModal .wdhq-file-rule small{white-space:normal}
+  #setupModal .wdhq-drive-root{align-items:flex-start}
+  #setupModal .wdhq-drive-table{min-width:760px}
+}
 #setupModal .wdhq-system-map-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 10px;border:1px solid #b9a9e8;border-radius:8px;background:#fff;color:#4f3f86;font:800 12px/1.35 inherit;cursor:pointer;white-space:nowrap}
 #setupModal .wdhq-system-map-btn:hover{background:#f1edff;border-color:#6d5aa7}
 #setupModal .wdhq-system-map-btn.work{border-color:#f4c95d;color:#7c5300;background:#fffdf5}
@@ -1324,20 +1342,25 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
         </div>
         <div class="tablewrap wdhq-setup-tablewrap">
           <table class="wdhq-connection-table system-map">
-            <thead><tr><th>센터</th><th>Google 연결</th><th>사용 API</th><th>운영화면</th><th>Drive</th><th>GitHub</th><th>Supabase</th><th>연결상태</th><th>원본근거</th></tr></thead>
+            <thead><tr><th>센터</th><th>Google 연결</th><th>사용 API</th><th>운영화면</th><th>Drive</th><th>GitHub</th><th>Supabase</th><th>연결상태</th></tr></thead>
             <tbody id="wdhq-space-connection-rows"></tbody>
           </table>
         </div>
       </section>
 
       <section class="wdhq-setup-panel" data-setup-panel="drive">
+        <div class="wdhq-file-rule" aria-label="회사 파일 저장 규칙">
+          <span>파일명 저장규칙</span>
+          <code>[업무영역_자료종류] 대상_내용_YYYYMMDD_v01.확장자</code>
+          <small>수정본은 v02 · v03처럼 번호만 올립니다.</small>
+        </div>
         <div class="wdhq-drive-root">
-          <div><strong>WD WAVE 회사공통</strong><span>현재 사용 중인 회사 공통 Drive 구조</span></div>
+          <div><strong>WD WAVE 회사공통</strong><span>업무 중에는 공유폴더, 완료된 자료는 업무자료폴더에 정리합니다.</span></div>
           <a class="wdhq-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">Drive 열기 ↗</a>
         </div>
         <div class="tablewrap wdhq-setup-tablewrap">
-          <table class="wdhq-connection-table">
-            <thead><tr><th>상위 폴더</th><th>실제 하위 폴더·문서</th><th>무엇을 저장·관리하는 곳인지</th></tr></thead>
+          <table class="wdhq-connection-table wdhq-drive-table">
+            <thead><tr><th>폴더</th><th>구성</th><th>사용방법</th><th>업무 후 정리</th></tr></thead>
             <tbody id="wdhq-drive-connection-rows"></tbody>
           </table>
         </div>
@@ -1918,24 +1941,25 @@ function wdhqEscape(s){
 }
 function renderSetup(){
   const projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[];
-  const driveGroups=[
-    ['01_업무공유폴더',[
-      ['01_업무지시','지점장님이 수진에게 전달한 업무지시를 확인하고 이어서 처리하는 곳'],
-      ['02_업무일지','수진이 진행한 업무와 처리내용, 남은 일과 결과를 기록하는 곳'],
-      ['03_업무공유파일','업무지시와 업무보고 과정에서 실제로 주고받는 파일을 보관하는 곳']
-    ]],
-    ['02_업무자료폴더',[
-      ['01_회사운영','회사 행정·돈·구매·구독·증빙 등 운영에 필요한 공통 자료'],
-      ['02_보험업무','고객·상담·설계·계약·청구 등 보험 실무에 함께 사용하는 자료'],
-      ['03_퍼스널브랜딩','브랜드 기획·콘텐츠·고객 프로젝트 등 퍼스널브랜딩 업무자료'],
-      ['04_AI강의','강의기획·교안·수업자료·교육운영 등 AI 강의 관련 자료'],
-      ['05_정리이전자료','현재 분류체계로 정리하기 전의 과거 자료와 이동 대기 자료']
-    ]],
-    ['03_업무매뉴얼',[
-      ['[브랜딩_매뉴얼] SEO 설정 방법','홈페이지와 브랜딩 페이지의 검색노출 설정 방법을 확인하는 기준문서'],
-      ['[회사운영_매뉴얼] 수진 업무지시·업무공유·자료찾기 규칙','업무지시 확인, 업무공유, 필요한 자료를 찾는 공통 처리기준'],
-      ['[회사운영_매뉴얼] 작업결과 파일 저장·분류·검색 규칙','작업결과의 파일명, 저장위치, 분류방법과 다시 찾는 기준']
-    ]]
+  const driveRows=[
+    {
+      folder:'01_업무공유폴더',
+      structure:'01_업무지시 · 02_업무일지 · 03_업무공유파일',
+      purpose:'대표와 지점장님이 GPT·카톡처럼 그날의 업무를 주고받는 임시 협업공간',
+      finish:'완료 파일은 업무자료폴더로 이동 · 불필요한 파일은 확인 후 삭제'
+    },
+    {
+      folder:'02_업무자료폴더',
+      structure:'회사운영 · 보험업무 · 퍼스널브랜딩 · AI강의',
+      purpose:'완료된 회사 자료와 계속 사용할 업무자산을 분야별로 쌓아두는 원본공간',
+      finish:'완료 자료만 보관 · 새 작업 때 여기의 원본을 찾아 사용'
+    },
+    {
+      folder:'03_업무매뉴얼',
+      structure:'하위 구성 표시 없음',
+      purpose:'회사 업무방법과 저장기준을 확인하는 기준공간',
+      finish:'매뉴얼 목록을 이 화면에 중복해서 펼치지 않음'
+    }
   ];
   const githubRows=[
     ['index.html','WD 본진','본진 전체 화면과 메뉴'],
@@ -1955,11 +1979,11 @@ function renderSetup(){
       const route=connected?`<button type="button" class="wdhq-system-map-btn route" onclick="wdhqOpenSystemCenter(${index})">운영화면 열기</button>`:`<span class="wdhq-system-map-muted">운영화면 미확정</span>`;
       const state=connected?'<span class="wdhq-connection-status ok">운영화면 연결</span>':'<span class="wdhq-connection-status check">경로 미확정</span>';
       const source='<span class="wdhq-system-source">데이터센터 근거</span>';
-      return `<tr><td class="${r.systemKey==='hq'?'wdhq-main-space-name':''}">${wdhqEscape(r.name)}</td><td>${route}</td><td>${source}</td><td>${source}</td><td>${source}</td><td>${state}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`;
-    }).join(''):'<tr><td colspan="7">프로젝트 역할표를 불러오지 못했습니다. 데이터센터에서 원본을 확인해 주세요.</td></tr>';
+      return `<tr><td class="${r.systemKey==='hq'?'wdhq-main-space-name':''}">${wdhqEscape(r.name)}</td><td>${state}</td><td>${source}</td><td>${route}</td><td>${source}</td><td>${source}</td><td>${source}</td><td>${state}</td></tr>`;
+    }).join(''):'<tr><td colspan="8">프로젝트 역할표를 불러오지 못했습니다. 데이터센터에서 원본을 확인해 주세요.</td></tr>';
   }
   const driveBody=document.getElementById('wdhq-drive-connection-rows');
-  if(driveBody)driveBody.innerHTML=driveGroups.map(group=>group[1].map((item,index)=>`<tr>${index===0?`<td rowspan="${group[1].length}">${wdhqEscape(group[0])}</td>`:''}<td>${wdhqEscape(item[0])}</td><td>${wdhqEscape(item[1])}</td></tr>`).join('')).join('');
+  if(driveBody)driveBody.innerHTML=driveRows.map(row=>`<tr><td>${wdhqEscape(row.folder)}</td><td>${wdhqEscape(row.structure)}</td><td>${wdhqEscape(row.purpose)}</td><td>${wdhqEscape(row.finish)}</td></tr>`).join('');
   const githubBody=document.getElementById('wdhq-github-structure-rows');
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
 }
@@ -2003,7 +2027,7 @@ function wdhqSetupTab(tab){
   if(foot){
     const labels={
       spaces:'센터별 운영화면과 실제 연결상태를 확인합니다.',
-      drive:'WD WAVE 회사공통의 현재 Drive 구조입니다.',
+      drive:'공유폴더에서 업무를 주고받고, 완료 자료는 업무자료폴더에 정리합니다.',
       github:'repository · 파일 · commit은 데이터센터, 로그인 · 권한은 계정관리에서 확인합니다.'
     };
     foot.textContent=labels[target]||'연결 상태를 확인합니다.';
@@ -4059,7 +4083,7 @@ if(new URLSearchParams(location.search).get('wdhqQa')==='1'){
   function googleConnectionFor(project,rows){var hub=rows.find(function(row){return normalize(row[0]).indexOf('google공통연결허브')>-1;});if(!hub)return{status:'확인 필요',apis:'데이터센터 근거 미확정',detail:''};var target=normalize(project&&project.name),line=String(hub[6]||'').split('\n').find(function(value){var parts=value.split('|');return parts.length>=3&&normalize(parts[0])===target;});if(!line)return{status:'확인 필요',apis:'데이터센터 근거 미확정',detail:''};var parts=line.split('|').map(function(value){return value.trim();});return{status:parts[1]||'확인 필요',apis:parts[2]||'확인 필요',detail:parts.slice(3).join(' · ')};}
   function googleCells(connection){var tone=connection.status==='연결 완료'?'ok':'check';return '<td class="wdhq-system-live-cell"><span class="wdhq-connection-status '+tone+'">'+esc(connection.status)+'</span><small>'+esc(connection.detail)+'</small></td><td class="wdhq-system-live-cell">'+esc(connection.apis)+'</td>';}
   function routeButton(project,index,row){var url=firstOperatingUrl(row);if(url)return '<a class="wdhq-system-map-btn route" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">운영화면 열기</a>';if(project&&project.centerUrl)return '<button type="button" class="wdhq-system-map-btn route" onclick="wdhqOpenSystemCenter('+index+')">운영화면 열기</button>';return '<span class="wdhq-system-map-muted">운영화면 미확정</span>';}
-  function render(values){var rows=(values||[]).slice(2).filter(function(row){return row&&row[0];});var projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[],body=document.getElementById('wdhq-space-connection-rows');if(!body)return;body.innerHTML=projects.map(function(project,index){var row=sourceRowFor(project,rows),google=googleConnectionFor(project,rows);if(!row)return '<tr><td>'+esc(project.name)+'</td>'+googleCells(google)+'<td>'+routeButton(project,index,[])+'</td><td colspan="4"><span class="wdhq-connection-status check">데이터센터 대응 행 미확정</span></td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>';var verified=row[4]||'마지막 실제 검증일 미기재';return '<tr><td class="'+(project.systemKey==='hq'?'wdhq-main-space-name':'')+'">'+esc(row[0])+'</td>'+googleCells(google)+'<td>'+routeButton(project,index,row)+'</td><td class="wdhq-system-live-cell">'+esc(driveText(row))+'</td><td class="wdhq-system-live-cell">'+esc(githubText(row))+'</td><td class="wdhq-system-live-cell">'+esc(supabaseText(row))+'</td><td class="wdhq-system-live-cell"><span class="wdhq-connection-status ok">'+esc(row[3]||'상태 미기재')+'</span><small>'+esc(verified)+'</small></td><td class="wdhq-system-live-cell">'+esc(row[5]||'관계 미기재')+'<small>'+esc(String(row[6]||'').split('\n').slice(0,2).join('\n'))+'</small><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>';}).join('');}
+  function render(values){var rows=(values||[]).slice(2).filter(function(row){return row&&row[0];});var projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[],body=document.getElementById('wdhq-space-connection-rows');if(!body)return;body.innerHTML=projects.map(function(project,index){var row=sourceRowFor(project,rows),google=googleConnectionFor(project,rows);if(!row)return '<tr><td>'+esc(project.name)+'</td>'+googleCells(google)+'<td>'+routeButton(project,index,[])+'</td><td colspan="4"><span class="wdhq-connection-status check">데이터센터 대응 행 미확정</span></td></tr>';var verified=row[4]||'마지막 실제 검증일 미기재';return '<tr><td class="'+(project.systemKey==='hq'?'wdhq-main-space-name':'')+'">'+esc(row[0])+'</td>'+googleCells(google)+'<td>'+routeButton(project,index,row)+'</td><td class="wdhq-system-live-cell">'+esc(driveText(row))+'</td><td class="wdhq-system-live-cell">'+esc(githubText(row))+'</td><td class="wdhq-system-live-cell">'+esc(supabaseText(row))+'</td><td class="wdhq-system-live-cell"><span class="wdhq-connection-status ok">'+esc(row[3]||'상태 미기재')+'</span><small>'+esc(verified)+'</small></td></tr>';}).join('');}
   function ensureGoogleSdk(){if(window.google&&google.accounts&&google.accounts.oauth2)return Promise.resolve();return new Promise(function(resolve,reject){var existing=document.querySelector('script[src*="accounts.google.com/gsi/client"]');function ready(){resolve();}if(existing){existing.addEventListener('load',ready,{once:true});existing.addEventListener('error',reject,{once:true});setTimeout(function(){if(window.google&&google.accounts)resolve();},300);return;}var script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;script.defer=true;script.onload=ready;script.onerror=reject;document.head.appendChild(script);});}
   function requestToken(){return new Promise(function(resolve,reject){if(token&&Date.now()<expiresAt-30000){resolve(token);return;}if(!(window.google&&google.accounts&&google.accounts.oauth2)){reject(new Error('Google 로그인 기능을 불러오지 못했습니다.'));return;}var tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SHEETS_SCOPE,hint:ACCOUNT,callback:function(response){if(!response||response.error||!response.access_token){reject(new Error('Google Sheets 읽기 권한을 확인하지 못했습니다.'));return;}token=response.access_token;expiresAt=Date.now()+Number(response.expires_in||3600)*1000;resolve(token);},error_callback:function(){reject(new Error('Google Sheets 읽기 권한 연결이 중단되었습니다.'));}});tokenClient.requestAccessToken({prompt:''});});}
   async function refresh(){if(loading)return loading;loading=(async function(){setStatus('실시간 조회 중 · Google Sheets readonly 응답을 기다리고 있습니다.');try{await ensureGoogleSdk();var accessToken=await requestToken();var url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(SHEET_ID)+'/values/'+encodeURIComponent(SHEET_RANGE)+'?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE';var response=await fetch(url,{headers:{Authorization:'Bearer '+accessToken,Accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Google Sheets 조회 실패 · HTTP '+response.status);var data=await response.json();var values=data.values||[];render(values);window.dispatchEvent(new CustomEvent('wdhq:data-center-live',{detail:{values:values}}));setStatus('실시간 조회 성공 · '+new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date())+' · 원본지도 '+values.length+'행 수신 · 본진 저장 없음','ok');return{ok:true,rows:values.length};}catch(error){setStatus('실시간 조회 실패 · '+String(error&&error.message||error)+' · 원본지도 버튼에서 직접 확인할 수 있습니다.','error');return{ok:false,error:String(error&&error.message||error)};}finally{loading=null;}})();return loading;}
@@ -4715,6 +4739,42 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house:hover{
   body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .extgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext{min-height:58px!important;padding:9px!important}
   .wdhq-homepage-options{grid-template-columns:1fr}
+}
+</style>
+<style id="wdhq-system-map-compact-v01">
+/* 공간 연결표: 실제 연결 데이터가 한 화면에 많이 보이도록 밀도만 교정 */
+#setupModal .wdhq-setup-head{padding:14px 18px 10px}
+#setupModal .wdhq-setup-head h2{font-size:20px}
+#setupModal .wdhq-setup-head p{margin-top:2px;font-size:11.5px;line-height:1.35}
+#setupModal .wdhq-setup-tabs{gap:6px;padding:8px 14px}
+#setupModal .wdhq-setup-tab{min-height:40px;padding:7px 10px;font-size:13px}
+#setupModal .wdhq-setup-body{padding:8px 14px 12px}
+#setupModal .wdhq-system-map-note.compact{margin-bottom:7px;padding:5px 7px}
+#setupModal #wdhq-system-map-live-status{margin:0!important;padding:5px 8px!important;font-size:10px!important;line-height:1.25!important}
+#setupModal .wdhq-system-map-note.compact .wdhq-system-map-btn{min-height:30px;padding:5px 8px;font-size:10px}
+#setupModal [data-setup-panel="spaces"] .wdhq-setup-tablewrap{max-height:66vh}
+#setupModal .wdhq-connection-table.system-map{min-width:1040px;table-layout:fixed}
+#setupModal .wdhq-connection-table.system-map th{padding:8px 7px;font-size:10.5px;line-height:1.2}
+#setupModal .wdhq-connection-table.system-map td{padding:7px 7px!important;font-size:10.5px!important;line-height:1.25!important;vertical-align:middle}
+#setupModal .wdhq-connection-table.system-map td:first-child{font-size:11.5px!important;line-height:1.25!important}
+#setupModal .wdhq-connection-table.system-map th:nth-child(1){width:15%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(2){width:10%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(3){width:12%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(4){width:10%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(5){width:14%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(6){width:13%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(7){width:13%;min-width:0}
+#setupModal .wdhq-connection-table.system-map th:nth-child(8){width:13%;min-width:0}
+#setupModal .wdhq-connection-table.system-map .wdhq-system-live-cell{min-width:0;max-width:none;white-space:normal;word-break:keep-all;font-size:10.5px;line-height:1.25}
+#setupModal .wdhq-connection-table.system-map .wdhq-system-live-cell small{display:-webkit-box;margin-top:2px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;color:#6b7788;font-size:9px;line-height:1.25}
+#setupModal .wdhq-connection-table.system-map .wdhq-connection-status{padding:3px 6px;font-size:9px}
+#setupModal .wdhq-connection-table.system-map .wdhq-system-map-btn,
+#setupModal .wdhq-connection-table.system-map .wdhq-system-map-muted{min-height:29px;padding:4px 7px;font-size:9.5px}
+#setupModal .wdhq-setup-foot{padding:8px 14px}
+@media(min-width:521px) and (max-width:760px){
+  #setupModal .wdhq-setup-head{padding:12px 14px 9px}
+  #setupModal .wdhq-setup-tabs{grid-template-columns:repeat(3,minmax(0,1fr));padding:7px 10px}
+  #setupModal .wdhq-setup-tab{min-width:0;font-size:11px}
 }
 </style>
 <script id="wdhq-external-sync-v03-script">
