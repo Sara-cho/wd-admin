@@ -1337,7 +1337,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
         </div>
         <div class="tablewrap wdhq-setup-tablewrap">
           <table class="wdhq-connection-table">
-            <thead><tr><th>현재 폴더</th><th>역할</th><th>하위 구성</th></tr></thead>
+            <thead><tr><th>상위 폴더</th><th>실제 하위 폴더·문서</th><th>무엇을 저장·관리하는 곳인지</th></tr></thead>
             <tbody id="wdhq-drive-connection-rows"></tbody>
           </table>
         </div>
@@ -1918,10 +1918,24 @@ function wdhqEscape(s){
 }
 function renderSetup(){
   const projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[];
-  const driveRows=[
-    ['01_업무공유폴더','업무 지시·일지·공유파일','01_업무지시 · 02_업무일지 · 03_업무공유파일'],
-    ['02_업무자료폴더','회사 공통 업무자료','01_회사운영 · 02_보험업무 · 03_퍼스널브랜딩 · 04_AI강의 · 05_정리이전자료'],
-    ['03_업무매뉴얼','회사 운영 기준 문서','SEO 설정 방법 · 수진 업무지시·업무공유·자료찾기 규칙 · 작업결과 파일 저장·분류·검색 규칙']
+  const driveGroups=[
+    ['01_업무공유폴더',[
+      ['01_업무지시','지점장님이 수진에게 전달한 업무지시를 확인하고 이어서 처리하는 곳'],
+      ['02_업무일지','수진이 진행한 업무와 처리내용, 남은 일과 결과를 기록하는 곳'],
+      ['03_업무공유파일','업무지시와 업무보고 과정에서 실제로 주고받는 파일을 보관하는 곳']
+    ]],
+    ['02_업무자료폴더',[
+      ['01_회사운영','회사 행정·돈·구매·구독·증빙 등 운영에 필요한 공통 자료'],
+      ['02_보험업무','고객·상담·설계·계약·청구 등 보험 실무에 함께 사용하는 자료'],
+      ['03_퍼스널브랜딩','브랜드 기획·콘텐츠·고객 프로젝트 등 퍼스널브랜딩 업무자료'],
+      ['04_AI강의','강의기획·교안·수업자료·교육운영 등 AI 강의 관련 자료'],
+      ['05_정리이전자료','현재 분류체계로 정리하기 전의 과거 자료와 이동 대기 자료']
+    ]],
+    ['03_업무매뉴얼',[
+      ['[브랜딩_매뉴얼] SEO 설정 방법','홈페이지와 브랜딩 페이지의 검색노출 설정 방법을 확인하는 기준문서'],
+      ['[회사운영_매뉴얼] 수진 업무지시·업무공유·자료찾기 규칙','업무지시 확인, 업무공유, 필요한 자료를 찾는 공통 처리기준'],
+      ['[회사운영_매뉴얼] 작업결과 파일 저장·분류·검색 규칙','작업결과의 파일명, 저장위치, 분류방법과 다시 찾는 기준']
+    ]]
   ];
   const githubRows=[
     ['index.html','WD 본진','본진 전체 화면과 메뉴'],
@@ -1945,7 +1959,7 @@ function renderSetup(){
     }).join(''):'<tr><td colspan="7">프로젝트 역할표를 불러오지 못했습니다. 데이터센터에서 원본을 확인해 주세요.</td></tr>';
   }
   const driveBody=document.getElementById('wdhq-drive-connection-rows');
-  if(driveBody)driveBody.innerHTML=driveRows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  if(driveBody)driveBody.innerHTML=driveGroups.map(group=>group[1].map((item,index)=>`<tr>${index===0?`<td rowspan="${group[1].length}">${wdhqEscape(group[0])}</td>`:''}<td>${wdhqEscape(item[0])}</td><td>${wdhqEscape(item[1])}</td></tr>`).join('')).join('');
   const githubBody=document.getElementById('wdhq-github-structure-rows');
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
 }
