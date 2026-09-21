@@ -1355,15 +1355,10 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
           <small>수정본은 v02 · v03처럼 번호만 올립니다.</small>
         </div>
         <div class="wdhq-drive-root">
-          <div><strong>WD WAVE 회사공통</strong><span>업무 중에는 공유폴더, 완료된 자료는 업무자료폴더에 정리합니다.</span></div>
+          <div><strong>WD WAVE 회사공통</strong><span>폴더 이름과 실제 이용방법을 순서대로 확인하는 Drive 안내판입니다.</span></div>
           <a class="wdhq-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">Drive 열기 ↗</a>
         </div>
-        <div class="tablewrap wdhq-setup-tablewrap">
-          <table class="wdhq-connection-table wdhq-drive-table">
-            <thead><tr><th>폴더</th><th>구성</th><th>사용방법</th><th>업무 후 정리</th></tr></thead>
-            <tbody id="wdhq-drive-connection-rows"></tbody>
-          </table>
-        </div>
+        <div class="wdhq-drive-guide" id="wdhq-drive-connection-rows"></div>
       </section>
 
       <section class="wdhq-setup-panel" data-setup-panel="github">
@@ -1941,24 +1936,34 @@ function wdhqEscape(s){
 }
 function renderSetup(){
   const projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[];
-  const driveRows=[
+  const driveGroups=[
     {
       folder:'01_업무공유폴더',
-      structure:'01_업무지시 · 02_업무일지 · 03_업무공유파일',
-      purpose:'대표와 지점장님이 GPT·카톡처럼 그날의 업무를 주고받는 임시 협업공간',
-      finish:'완료 파일은 업무자료폴더로 이동 · 불필요한 파일은 확인 후 삭제'
+      purpose:'대표와 지점장님이 GPT·카톡처럼 출근하는 날의 업무를 주고받는 당일 협업공간입니다.',
+      finish:'업무가 끝나면 다시 사용할 파일만 02_업무자료폴더로 옮기고, 불필요한 파일은 확인 후 정리합니다.',
+      items:[
+        {name:'01_업무지시',desc:'대표가 지점장님이 출근하는 날, 그날 처리할 업무와 우선순위를 전달하는 곳입니다.'},
+        {name:'02_업무일지',desc:'지점장님이 실제로 한 업무, 처리 결과와 남은 일을 기록하는 곳입니다.'},
+        {name:'03_업무공유파일',desc:'업무 중 서로 요청한 파일을 올리고 내려받아 주고받는 곳입니다.'}
+      ]
     },
     {
       folder:'02_업무자료폴더',
-      structure:'회사운영 · 보험업무 · 퍼스널브랜딩 · AI강의',
-      purpose:'완료된 회사 자료와 계속 사용할 업무자산을 분야별로 쌓아두는 원본공간',
-      finish:'완료 자료만 보관 · 새 작업 때 여기의 원본을 찾아 사용'
+      purpose:'완료된 회사 자료와 계속 사용할 업무자산을 분야별로 쌓아두는 회사 공통 원본공간입니다.',
+      finish:'업무공유폴더에서 작업이 끝난 자료 중 다시 사용할 완성 자료만 이곳으로 이동합니다.',
+      items:[
+        {name:'01_회사운영',desc:'회사 행정·구매·구독·증빙 등 회사 운영에 계속 사용하는 자료'},
+        {name:'02_보험업무',desc:'고객·상담·설계·계약·청구 등 보험 실무에서 함께 사용하는 자료'},
+        {name:'03_퍼스널브랜딩',desc:'브랜드 기획·콘텐츠·고객 프로젝트 등 퍼스널브랜딩 완성 자료'},
+        {name:'04_AI강의',desc:'강의기획·교안·수업자료·교육운영 등 AI 강의 완성 자료'},
+        {name:'05_정리이전자료',desc:'현재 분류체계로 옮기기 전의 과거 자료와 정리 대기 자료'}
+      ]
     },
     {
       folder:'03_업무매뉴얼',
-      structure:'하위 구성 표시 없음',
-      purpose:'회사 업무방법과 저장기준을 확인하는 기준공간',
-      finish:'매뉴얼 목록을 이 화면에 중복해서 펼치지 않음'
+      purpose:'회사에서 반복하는 업무의 방법과 파일 저장기준을 확인하는 기준공간입니다.',
+      finish:'이 안내판에서는 하위폴더나 문서 목록을 중복해서 펼치지 않고 폴더 역할만 안내합니다.',
+      items:[]
     }
   ];
   const githubRows=[
@@ -1983,7 +1988,10 @@ function renderSetup(){
     }).join(''):'<tr><td colspan="8">프로젝트 역할표를 불러오지 못했습니다. 데이터센터에서 원본을 확인해 주세요.</td></tr>';
   }
   const driveBody=document.getElementById('wdhq-drive-connection-rows');
-  if(driveBody)driveBody.innerHTML=driveRows.map(row=>`<tr><td>${wdhqEscape(row.folder)}</td><td>${wdhqEscape(row.structure)}</td><td>${wdhqEscape(row.purpose)}</td><td>${wdhqEscape(row.finish)}</td></tr>`).join('');
+  if(driveBody)driveBody.innerHTML=driveGroups.map((group,index)=>{
+    const items=group.items.length?`<div class="wdhq-drive-items">${group.items.map(item=>`<article class="wdhq-drive-item"><span class="wdhq-drive-folder-icon" aria-hidden="true"></span><div><b>${wdhqEscape(item.name)}</b><p>${wdhqEscape(item.desc)}</p></div></article>`).join('')}</div>`:'';
+    return `<section class="wdhq-drive-group"><div class="wdhq-drive-group-head"><div class="wdhq-drive-group-title"><span>${String(index+1).padStart(2,'0')}</span><div><h3>${wdhqEscape(group.folder)}</h3><p>${wdhqEscape(group.purpose)}</p></div></div><div class="wdhq-drive-finish"><b>업무 후 정리</b><span>${wdhqEscape(group.finish)}</span></div></div>${items}</section>`;
+  }).join('');
   const githubBody=document.getElementById('wdhq-github-structure-rows');
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
 }
@@ -4775,6 +4783,50 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house:hover{
   #setupModal .wdhq-setup-head{padding:12px 14px 9px}
   #setupModal .wdhq-setup-tabs{grid-template-columns:repeat(3,minmax(0,1fr));padding:7px 10px}
   #setupModal .wdhq-setup-tab{min-width:0;font-size:11px}
+}
+</style>
+<style id="wdhq-drive-guide-v02">
+/* Drive 안내판: 압축 표가 아니라 폴더별 역할과 구성을 읽는 화면 */
+#setupModal [data-setup-panel="drive"]{padding:4px 0}
+#setupModal [data-setup-panel="drive"] .wdhq-file-rule{
+  grid-template-columns:auto minmax(360px,1fr) auto;gap:14px;margin-bottom:12px;padding:13px 15px;
+}
+#setupModal [data-setup-panel="drive"] .wdhq-file-rule>span{font-size:13px}
+#setupModal [data-setup-panel="drive"] .wdhq-file-rule code{padding:8px 11px;font-size:14px}
+#setupModal [data-setup-panel="drive"] .wdhq-file-rule small{font-size:11.5px}
+#setupModal [data-setup-panel="drive"] .wdhq-drive-root{margin-bottom:12px;padding:12px 14px}
+#setupModal [data-setup-panel="drive"] .wdhq-drive-root strong{font-size:16px}
+#setupModal [data-setup-panel="drive"] .wdhq-drive-root span{font-size:12.5px;line-height:1.5}
+#setupModal .wdhq-drive-guide{display:flex;flex-direction:column;gap:14px;max-height:58vh;overflow:auto;padding:1px 3px 12px 1px}
+#setupModal .wdhq-drive-group{border:1px solid #dfe6ee;border-radius:14px;background:#fff;box-shadow:0 5px 16px rgba(26,46,68,.04);overflow:hidden}
+#setupModal .wdhq-drive-group-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.75fr);gap:18px;align-items:center;padding:17px 18px;background:#f8fafc;border-bottom:1px solid #e6ebf1}
+#setupModal .wdhq-drive-group-title{display:flex;align-items:flex-start;gap:13px;min-width:0}
+#setupModal .wdhq-drive-group-title>span{display:grid;width:38px;height:38px;flex:0 0 38px;place-items:center;border-radius:10px;background:#504184;color:#fff;font-size:13px;font-weight:900}
+#setupModal .wdhq-drive-group-title h3{margin:0 0 5px;color:#0f2742;font-size:17px;line-height:1.25}
+#setupModal .wdhq-drive-group-title p{margin:0;color:#526173;font-size:13.5px;font-weight:650;line-height:1.55;word-break:keep-all}
+#setupModal .wdhq-drive-finish{padding:10px 12px;border:1px solid #e6def9;border-radius:10px;background:#fbf9ff}
+#setupModal .wdhq-drive-finish b{display:block;margin-bottom:4px;color:#5b448f;font-size:11.5px}
+#setupModal .wdhq-drive-finish span{display:block;color:#526173;font-size:12.5px;font-weight:650;line-height:1.45;word-break:keep-all}
+#setupModal .wdhq-drive-items{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;padding:14px 18px 18px}
+#setupModal .wdhq-drive-item{display:flex;align-items:flex-start;gap:11px;min-height:94px;padding:14px;border:1px solid #dce5ee;border-radius:12px;background:#fff}
+#setupModal .wdhq-drive-folder-icon{position:relative;width:27px;height:20px;flex:0 0 27px;margin-top:4px;border-radius:3px;background:#5f74d6}
+#setupModal .wdhq-drive-folder-icon:before{content:"";position:absolute;left:2px;top:-5px;width:12px;height:7px;border-radius:3px 3px 0 0;background:#7588df}
+#setupModal .wdhq-drive-item b{display:block;margin-bottom:6px;color:#142b47;font-size:14px;line-height:1.3}
+#setupModal .wdhq-drive-item p{margin:0;color:#5e6c7d;font-size:12.5px;font-weight:600;line-height:1.55;word-break:keep-all}
+@media(max-width:1024px){
+  #setupModal [data-setup-panel="drive"] .wdhq-file-rule{grid-template-columns:1fr;gap:7px}
+  #setupModal .wdhq-drive-group-head{grid-template-columns:1fr}
+  #setupModal .wdhq-drive-items{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  #setupModal [data-setup-panel="drive"] .wdhq-file-rule{padding:11px}
+  #setupModal [data-setup-panel="drive"] .wdhq-file-rule code{font-size:12px}
+  #setupModal .wdhq-drive-guide{max-height:60vh}
+  #setupModal .wdhq-drive-group-head{padding:14px}
+  #setupModal .wdhq-drive-group-title h3{font-size:15px}
+  #setupModal .wdhq-drive-group-title p{font-size:12.5px}
+  #setupModal .wdhq-drive-items{grid-template-columns:1fr;padding:12px 14px 15px}
+  #setupModal .wdhq-drive-item{min-height:0}
 }
 </style>
 <script id="wdhq-external-sync-v03-script">
