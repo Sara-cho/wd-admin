@@ -1941,12 +1941,12 @@ function renderSetup(){
   const driveGroups=[
     {
       folder:'01_업무공유폴더',
-      purpose:'대표와 지점장님이 GPT·카톡처럼 출근하는 날의 업무를 주고받는 당일 협업공간입니다.',
+      purpose:'지점장님과 직원(수진)이 GPT·카톡처럼 출근하는 날의 업무를 주고받는 당일 협업공간입니다.',
       finish:'업무가 끝나면 다시 사용할 파일만 02_업무자료폴더로 옮기고, 불필요한 파일은 확인 후 정리합니다.',
       items:[
-        {name:'01_업무지시',desc:'대표가 지점장님이 출근하는 날, 그날 처리할 업무와 우선순위를 전달하는 곳입니다.'},
-        {name:'02_업무일지',desc:'지점장님이 실제로 한 업무, 처리 결과와 남은 일을 기록하는 곳입니다.'},
-        {name:'03_업무공유파일',desc:'업무 중 서로 요청한 파일을 올리고 내려받아 주고받는 곳입니다.'}
+        {name:'01_업무지시',desc:'지점장님이 직원(수진)에게 그날 처리할 업무와 우선순위를 지시하는 곳입니다.'},
+        {name:'02_업무일지',desc:'직원(수진)이 그날 실제로 한 업무와 처리 결과, 남은 일을 정리해 기록하는 곳입니다.'},
+        {name:'03_업무공유파일',desc:'지점장님과 직원(수진)이 업무에 필요한 파일을 서로 주고받는 곳입니다.'}
       ]
     },
     {
@@ -1992,7 +1992,8 @@ function renderSetup(){
   const driveBody=document.getElementById('wdhq-drive-connection-rows');
   if(driveBody)driveBody.innerHTML=driveGroups.map((group,index)=>{
     const items=group.items.length?`<div class="wdhq-drive-items">${group.items.map(item=>`<article class="wdhq-drive-item"><span class="wdhq-drive-folder-icon" aria-hidden="true"></span><div><b>${wdhqEscape(item.name)}</b><p>${wdhqEscape(item.desc)}</p></div></article>`).join('')}</div>`:'';
-    return `<section class="wdhq-drive-group ${group.items.length?'has-items':'no-items'}"><div class="wdhq-drive-group-head"><div class="wdhq-drive-group-title"><span>${String(index+1).padStart(2,'0')}</span><div><h3>${wdhqEscape(group.folder)}</h3><p>${wdhqEscape(group.purpose)}</p></div></div><div class="wdhq-drive-finish"><b>업무 후 정리</b><span>${wdhqEscape(group.finish)}</span></div></div>${items}</section>`;
+    const finish=index===0?`<p class="wdhq-drive-warning"><b>업무 후 정리</b> ${wdhqEscape(group.finish)}</p>`:`<div class="wdhq-drive-finish"><b>업무 후 정리</b><span>${wdhqEscape(group.finish)}</span></div>`;
+    return `<section class="wdhq-drive-group ${group.items.length?'has-items':'no-items'} ${index===0?'is-shared-folder':''}"><div class="wdhq-drive-group-head"><div class="wdhq-drive-group-title"><span>${String(index+1).padStart(2,'0')}</span><div><h3>${wdhqEscape(group.folder)}</h3><p>${wdhqEscape(group.purpose)}</p>${index===0?finish:''}</div></div>${index===0?'':finish}</div>${items}</section>`;
   }).join('');
   const githubBody=document.getElementById('wdhq-github-structure-rows');
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
@@ -4884,6 +4885,14 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house:hover{
   #setupModal .wdhq-drive-group.has-items .wdhq-drive-items:after,
   #setupModal .wdhq-drive-group.has-items .wdhq-drive-item:before{display:none}
 }
+</style>
+<style id="wdhq-drive-role-copy-v04">
+#setupModal .wdhq-drive-group.is-shared-folder .wdhq-drive-group-head{grid-template-columns:1fr}
+#setupModal .wdhq-drive-warning{
+  margin:9px 0 0!important;padding:8px 10px;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:8px;
+  background:#fff7f7;color:#b42318!important;font-size:12.5px!important;font-weight:750!important;line-height:1.5!important;
+}
+#setupModal .wdhq-drive-warning b{margin-right:5px;color:#991b1b;font-weight:950}
 </style>
 <script id="wdhq-external-sync-v03-script">
 (function(){
