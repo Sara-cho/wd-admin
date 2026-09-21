@@ -556,7 +556,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 #setupModal .wdhq-setup-body{
   flex:1 1 auto;
   overflow:auto;
-  padding:20px 22px 26px;
+  padding:12px 18px 18px;
   font-size:14px;
 }
 #setupModal .wdhq-setup-panel{display:none}
@@ -660,6 +660,11 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 #setupModal .wdhq-system-map-note b{display:block;margin-bottom:3px;color:#3730a3;font-size:13px}
 #setupModal .wdhq-system-map-note span{display:block;color:#596277;font-size:12px;font-weight:650;line-height:1.55}
 #setupModal .wdhq-system-map-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;flex:0 0 auto}
+#setupModal .wdhq-system-map-note.compact{align-items:center;margin:0 0 10px;padding:7px 9px;border-left-width:3px}
+#setupModal .wdhq-system-map-note.compact span{line-height:1.35}
+#setupModal .wdhq-drive-root{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:9px 11px;border:1px solid #d8d0ef;border-radius:10px;background:#f8f6ff}
+#setupModal .wdhq-drive-root strong{display:block;color:#372f67;font-size:14px}
+#setupModal .wdhq-drive-root span{display:block;margin-top:2px;color:#64748b;font-size:11.5px;font-weight:650}
 #setupModal .wdhq-system-map-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 10px;border:1px solid #b9a9e8;border-radius:8px;background:#fff;color:#4f3f86;font:800 12px/1.35 inherit;cursor:pointer;white-space:nowrap}
 #setupModal .wdhq-system-map-btn:hover{background:#f1edff;border-color:#6d5aa7}
 #setupModal .wdhq-system-map-btn.work{border-color:#f4c95d;color:#7c5300;background:#fffdf5}
@@ -1296,7 +1301,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
     <div class="mhead wdhq-setup-head">
       <div>
         <h2>🔗 시스템 연결지도</h2>
-        <p>센터별 운영화면과 Drive · GitHub · Supabase 연결을 확인하는 본진 배선도입니다. 원본값과 접속정보는 각 소유 공간에서 관리합니다.</p>
+        <p>운영공간과 Drive · GitHub · Supabase의 현재 연결을 한곳에서 확인합니다.</p>
       </div>
       <button class="close" onclick="closeSetup()">×</button>
     </div>
@@ -1310,23 +1315,11 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
     <div class="mbody wdhq-setup-body">
 
       <section class="wdhq-setup-panel active" data-setup-panel="spaces">
-        <div class="wdhq-setup-panel-head">
-          <div>
-            <h3>센터별 시스템 연결</h3>
-            <p>운영화면은 확인된 경로만 열고, 원본 위치 · ID · 상태는 데이터센터에서 확인합니다.</p>
-          </div>
-        </div>
-        <div class="wdhq-system-roles" aria-label="시스템별 역할 구분">
-          <div class="wdhq-system-role"><b>🎛 본진</b><span>센터와 시스템이 어떻게 이어지는지 배선도만 보여줍니다.</span></div>
-          <div class="wdhq-system-role"><b>🗄 데이터센터</b><span>원본 위치 · ID · 상태 · 관계 · 마지막 검증의 실제 근거입니다.</span></div>
-          <div class="wdhq-system-role"><b>🔐 업무센터 계정관리</b><span>로그인 주소 · ID · 비밀번호 · API Key 등 접속 열쇠를 관리합니다.</span></div>
-          <div class="wdhq-system-role"><b>🤖 AI 업무도구함</b><span>Skill · 업무지침 · 체크리스트 · 템플릿 등 일하는 방법을 관리합니다.</span></div>
-        </div>
-        <div class="wdhq-system-map-note">
-          <div><b>같은 값을 본진에 다시 저장하지 않습니다.</b><span id="wdhq-system-map-live-status" class="is-loading" role="status" aria-live="polite">실시간 조회 상태 · 확인 전 — 시스템 연결지도를 열면 Google Sheets readonly로 조회합니다.</span></div>
+        <div class="wdhq-system-map-note compact">
+          <div><span id="wdhq-system-map-live-status" class="is-loading" role="status" aria-live="polite">연결상태 확인 중 · 데이터센터 원본지도를 읽고 있습니다.</span></div>
           <div class="wdhq-system-map-actions">
-            <button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 데이터센터에서 원본 확인</button>
-            <button type="button" class="wdhq-system-map-btn work" onclick="wdhqOpenAccountCenter()">🔐 업무센터 열기 · 계정관리 선택</button>
+            <button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">원본지도</button>
+            <button type="button" class="wdhq-system-map-btn work" onclick="wdhqOpenAccountCenter()">계정관리</button>
           </div>
         </div>
         <div class="tablewrap wdhq-setup-tablewrap">
@@ -1338,22 +1331,13 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       </section>
 
       <section class="wdhq-setup-panel" data-setup-panel="drive">
-        <div class="wdhq-setup-panel-head">
-          <div>
-            <h3>Drive 연결</h3>
-            <p>기존 폴더 바로가기는 유지하고, File ID · 상태 · 마지막 검증은 데이터센터 원본지도를 기준으로 확인합니다.</p>
-          </div>
-        </div>
-        <div class="wdhq-drive-path">
-          <span class="ico" aria-hidden="true">🗄</span>
-          <div>
-            <b>실제 근거: WD 데이터센터 원본지도</b>
-            <span>본진은 Drive 계정명 · 폴더 경로 · Folder ID를 별도 원장으로 보관하지 않습니다.</span>
-          </div>
+        <div class="wdhq-drive-root">
+          <div><strong>WD WAVE 회사공통</strong><span>현재 사용 중인 회사 공통 Drive 구조</span></div>
+          <a class="wdhq-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">Drive 열기 ↗</a>
         </div>
         <div class="tablewrap wdhq-setup-tablewrap">
           <table class="wdhq-connection-table">
-            <thead><tr><th>폴더명</th><th>연결 메뉴</th><th>보관 자료</th><th>바로가기</th><th>원본근거</th></tr></thead>
+            <thead><tr><th>현재 폴더</th><th>역할</th><th>하위 구성</th></tr></thead>
             <tbody id="wdhq-drive-connection-rows"></tbody>
           </table>
         </div>
@@ -1935,13 +1919,9 @@ function wdhqEscape(s){
 function renderSetup(){
   const projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[];
   const driveRows=[
-    ['01_깃허브배포파일','깃허브배포파일','HTML 파일','https://drive.google.com/drive/folders/1CM1ldjMLF90_rmn69AONMh2A3EDwJDXg'],
-    ['02_AI자료실','AI자료실','프롬프트 · 지침','https://drive.google.com/drive/folders/1xgkyH3la2A6lv_Nz4Vp4_eGRIeQho1Kv'],
-    ['03_퍼스널브랜딩','퍼스널브랜딩','업무진행방법 · 양식파일 · 카드뉴스 · 홍보자료 · 기타','https://drive.google.com/drive/folders/1emqe0yMwXXkfwSGyWpJp-5WgVl48ratL'],
-    ['04_유튜브자료실','유튜브자료실','유튜브 관련 자료','https://drive.google.com/drive/folders/1CTUb6AClikAS9InQ5ifLUiBEUFdXpBpI'],
-    ['05_WD회사자료','WD회사자료','양식파일 · HTML파일 · 로고 · 이미지파일 · 기타','https://drive.google.com/drive/folders/1drb7LWuopMlYoilMzHnqciRmU2rE8Sbr'],
-    ['06_지점장님자료','지점장님자료','홍보자료 · 개인자료','https://drive.google.com/drive/folders/1-RrzYRyMn3cHZvnk71oNtjofIjWfzjiS'],
-    ['07_브랜드자산','브랜드자산 관리','회사 로고 · 색상 · 폰트 · 승인 이미지 · AI 직원 자산','https://drive.google.com/drive/folders/1BIRpIt3xdUQXe_cuBKiXohZaz16Wa0Tw']
+    ['01_업무공유폴더','업무 지시·일지·공유파일','01_업무지시 · 02_업무일지 · 03_업무공유파일'],
+    ['02_업무자료폴더','회사 공통 업무자료','01_회사운영 · 02_보험업무 · 03_퍼스널브랜딩 · 04_AI강의 · 05_정리이전자료'],
+    ['03_업무매뉴얼','회사 운영 기준 문서','SEO 설정 방법 · 수진 업무지시·업무공유·자료찾기 규칙 · 작업결과 파일 저장·분류·검색 규칙']
   ];
   const githubRows=[
     ['index.html','WD 본진','본진 전체 화면과 메뉴'],
@@ -1965,7 +1945,7 @@ function renderSetup(){
     }).join(''):'<tr><td colspan="7">프로젝트 역할표를 불러오지 못했습니다. 데이터센터에서 원본을 확인해 주세요.</td></tr>';
   }
   const driveBody=document.getElementById('wdhq-drive-connection-rows');
-  if(driveBody)driveBody.innerHTML=driveRows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><a class="wdhq-drive-link" href="${escapeAttr(r[3])}" target="_blank" rel="noopener noreferrer">폴더 열기 ↗</a></td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
+  if(driveBody)driveBody.innerHTML=driveRows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
   const githubBody=document.getElementById('wdhq-github-structure-rows');
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
 }
@@ -2008,8 +1988,8 @@ function wdhqSetupTab(tab){
   const foot=document.getElementById('wdhq-setup-foot-status');
   if(foot){
     const labels={
-      spaces:'센터별 운영화면과 시스템 연결을 확인합니다. 상세 원본값은 데이터센터가 소유합니다.',
-      drive:'Drive 위치 · Folder ID · 상태는 데이터센터 원본지도에서 확인합니다.',
+      spaces:'센터별 운영화면과 실제 연결상태를 확인합니다.',
+      drive:'WD WAVE 회사공통의 현재 Drive 구조입니다.',
       github:'repository · 파일 · commit은 데이터센터, 로그인 · 권한은 계정관리에서 확인합니다.'
     };
     foot.textContent=labels[target]||'연결 상태를 확인합니다.';
@@ -4709,7 +4689,12 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
 .wdhq-work-logo-custom.tasks{border-radius:50%!important;background:#4285f4!important}
 .wdhq-work-logo-custom.branding{background:linear-gradient(135deg,#7255d9,#dc5b91)!important}
 .wdhq-work-logo-custom.house{background:linear-gradient(135deg,#8b5cf6,#c084fc)!important}
-body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house{background:#fff!important;color:#24364b!important;border-color:#dce5ee!important}
+body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house{
+  background:linear-gradient(180deg,#fbf8ff,#f3ebff)!important;color:#6d3db0!important;border-color:#cdb5f4!important;
+}
+body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house:hover{
+  background:#eee3ff!important;border-color:#ad82eb!important;
+}
 .wdhq-homepage-options{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:1250px){body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .extgrid{grid-template-columns:repeat(5,minmax(0,1fr))!important}}
 @media(max-width:760px){
