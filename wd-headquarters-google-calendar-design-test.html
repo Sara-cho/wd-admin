@@ -3768,7 +3768,9 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   async function fetchGmail(){
     var profile=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/profile');
     if(String(profile.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('Google 연결 계정이 '+ACCOUNT+'과 다릅니다.');
-    var query='newer_than:30d -from:me -in:spam -in:trash';
+    var inbox=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/labels/INBOX');
+    var unreadCount=Math.max(0,Number(inbox&&inbox.messagesUnread||0));
+    var query='is:unread in:inbox -from:me -in:spam -in:trash';
     var list=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50&includeSpamTrash=false&q='+encodeURIComponent(query));
     var refs=list.messages||[],signals=[];
     for(var start=0;start<refs.length;start+=10){
@@ -3780,6 +3782,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
         if(signal)signals.push(signal);
       });
     }
+    signals.unreadCount=unreadCount;
     return signals;
   }
   async function fetchCalendarEvents(from,to,maxResults){
@@ -3859,8 +3862,8 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     try{
       var settled=await Promise.allSettled([fetchGmail(),fetchCalendar(),fetchGoogleTasks(),fetchTodayCalendar()]),gmail=settled[0].status==='fulfilled'?settled[0].value:[],calendar=settled[1].status==='fulfilled'?settled[1].value:[],taskData=settled[2].status==='fulfilled'?settled[2].value:{open:[],completed:[]},todayEvents=settled[3].status==='fulfilled'?settled[3].value:[];
       settled.forEach(function(result){if(result.status==='rejected')STATE.errors.push(String(result.reason&&result.reason.message||result.reason));});
-      STATE.gmailCount=gmail.length;STATE.calendarCount=todayEvents.length;STATE.taskCount=taskData.open.length;STATE.tasks=taskData.open;STATE.completedToday=taskData.completed;STATE.calendarEvents=todayEvents;STATE.signals=uniqueSignals(gmail.concat(calendar));STATE.lastChecked=new Date();
-      if(STATE.errors.length)setStatus('일부 확인 실패 · 확인된 항목 '+(STATE.signals.length+STATE.taskCount)+'건','warn');else setStatus('메일 '+gmail.length+' · 일정 '+calendar.length+' · 할 일 '+STATE.taskCount,'ok');
+      STATE.gmailCount=Number.isFinite(Number(gmail.unreadCount))?Number(gmail.unreadCount):gmail.length;STATE.calendarCount=todayEvents.length;STATE.taskCount=taskData.open.length;STATE.tasks=taskData.open;STATE.completedToday=taskData.completed;STATE.calendarEvents=todayEvents;STATE.signals=uniqueSignals(gmail.concat(calendar));STATE.lastChecked=new Date();
+      if(STATE.errors.length)setStatus('일부 확인 실패 · 확인된 항목 '+(STATE.signals.length+STATE.taskCount)+'건','warn');else setStatus('안 읽은 메일 '+STATE.gmailCount+' · 일정 '+calendar.length+' · 할 일 '+STATE.taskCount,'ok');
       render();
     }catch(error){STATE.errors=[String(error&&error.message||error)];STATE.signals=[];STATE.lastChecked=new Date();setStatus('Google 읽기 실패 · 기존 본진 정상','error');render();console.warn('[WDHQ Google signals]',error);}
     finally{STATE.loading=false;setBusy(false);}
