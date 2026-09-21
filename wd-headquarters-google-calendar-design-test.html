@@ -1349,20 +1349,10 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       </section>
 
       <section class="wdhq-setup-panel" data-setup-panel="drive">
-        <div class="wdhq-file-rule" aria-label="회사 파일 저장 규칙">
-          <span>파일 저장 공지</span>
-          <code>[업무영역_자료종류] 대상_내용_YYYYMMDD</code>
-          <small>파일명은 날짜까지만 작성합니다.</small>
-        </div>
         <div class="wdhq-drive-tree">
           <div class="wdhq-drive-root">
             <div class="wdhq-drive-root-name"><span class="wdhq-drive-folder-icon" aria-hidden="true"></span><div><strong>WD WAVE 회사공통</strong><span>회사의 모든 공통 업무폴더가 여기에서 시작됩니다.</span></div></div>
             <a class="wdhq-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">Drive 열기 ↗</a>
-          </div>
-          <div class="wdhq-drive-flow" aria-label="폴더 이용 순서">
-            <span><b>01</b> 오늘 업무 주고받기</span><i>→</i>
-            <span><b>02</b> 완료 자료 보관하기</span><i>→</i>
-            <span><b>03</b> 업무방법 확인하기</span>
           </div>
           <div class="wdhq-drive-guide" id="wdhq-drive-connection-rows"></div>
         </div>
@@ -1946,7 +1936,6 @@ function renderSetup(){
   const driveGroups=[
     {
       folder:'01_업무공유폴더',
-      step:'오늘 업무 주고받기',
       purpose:'지점장님과 직원(수진)이 GPT·카톡처럼 출근하는 날의 업무를 주고받는 당일 협업공간입니다.',
       finish:'업무가 끝나면 다시 사용할 파일만 02_업무자료폴더로 옮기고, 불필요한 파일은 확인 후 정리합니다.',
       items:[
@@ -1957,7 +1946,6 @@ function renderSetup(){
     },
     {
       folder:'02_업무자료폴더',
-      step:'완료 자료 보관하기',
       purpose:'완료된 회사 자료와 계속 사용할 업무자산을 분야별로 쌓아두는 회사 공통 원본공간입니다.',
       items:[
         {name:'01_회사운영',desc:'회사 행정·구매·구독·증빙 등 회사 운영에 계속 사용하는 자료'},
@@ -1969,7 +1957,6 @@ function renderSetup(){
     },
     {
       folder:'03_업무매뉴얼',
-      step:'업무방법 확인하기',
       purpose:'회사에서 반복하는 업무의 방법과 파일 저장기준을 확인하는 기준공간입니다.',
       items:[]
     }
@@ -1999,7 +1986,7 @@ function renderSetup(){
   if(driveBody)driveBody.innerHTML=driveGroups.map((group,index)=>{
     const items=group.items.length?`<div class="wdhq-drive-items-section"><div class="wdhq-drive-items-label">하위 폴더 구성</div><div class="wdhq-drive-items">${group.items.map(item=>`<article class="wdhq-drive-item"><span class="wdhq-drive-folder-icon" aria-hidden="true"></span><div><b>${wdhqEscape(item.name)}</b><p>${wdhqEscape(item.desc)}</p></div></article>`).join('')}</div></div>`:'';
     const warning=index===0?`<p class="wdhq-drive-warning"><b>업무 후 정리</b> ${wdhqEscape(group.finish)}</p>`:'';
-    return `<section class="wdhq-drive-group ${group.items.length?'has-items':'no-items'} ${index===0?'is-shared-folder':''}"><div class="wdhq-drive-group-head"><div class="wdhq-drive-group-title"><span>${String(index+1).padStart(2,'0')}</span><div><small>${wdhqEscape(group.step)}</small><h3>${wdhqEscape(group.folder)}</h3><p>${wdhqEscape(group.purpose)}</p>${warning}</div></div></div>${items}</section>`;
+    return `<section class="wdhq-drive-group ${group.items.length?'has-items':'no-items'} ${index===0?'is-shared-folder':''}"><div class="wdhq-drive-group-head"><div class="wdhq-drive-group-title"><span>${String(index+1).padStart(2,'0')}</span><div><h3>${wdhqEscape(group.folder)}</h3><p>${wdhqEscape(group.purpose)}</p>${warning}</div></div></div>${items}</section>`;
   }).join('');
   const githubBody=document.getElementById('wdhq-github-structure-rows');
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
@@ -4934,6 +4921,78 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext-house:hover{
   #setupModal .wdhq-drive-group-head{padding:14px}
   #setupModal .wdhq-drive-items-label{padding:9px 14px 0}
   #setupModal .wdhq-drive-group.has-items .wdhq-drive-items{padding:9px 14px 14px}
+}
+</style>
+<style id="wdhq-drive-hierarchy-v06">
+/* Drive 안내판: WD WAVE 회사공통 → 3개 상위 폴더 → 각 하위 구성 */
+#setupModal [data-setup-panel="drive"]{padding:8px 0}
+#setupModal .wdhq-drive-tree{
+  display:grid;grid-template-columns:minmax(220px,260px) minmax(0,1fr);gap:54px;align-items:stretch;
+  min-height:500px;padding:12px 6px 18px;position:relative;
+}
+#setupModal [data-setup-panel="drive"] .wdhq-drive-root{
+  align-self:center;margin:0;padding:18px 16px;min-height:116px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;
+  border:2px solid #cdbff0;border-radius:14px;background:#f7f4ff;box-shadow:0 5px 16px rgba(79,63,134,.06);
+}
+#setupModal [data-setup-panel="drive"] .wdhq-drive-root:after{
+  left:100%;top:50%;bottom:auto;width:54px;height:2px;background:#b9c8d9;
+}
+#setupModal .wdhq-drive-root-name{align-items:flex-start}
+#setupModal .wdhq-drive-root-name strong{display:block;margin-bottom:5px;font-size:17px}
+#setupModal .wdhq-drive-root-name span{font-size:12.5px;line-height:1.45}
+#setupModal .wdhq-drive-link{align-self:flex-end}
+#setupModal .wdhq-drive-guide{
+  position:relative;display:flex;flex-direction:column;justify-content:center;gap:14px;max-height:none;overflow:visible;
+  margin:0;padding:0;border-left:2px solid #b9c8d9;
+}
+#setupModal .wdhq-drive-group{
+  position:relative;display:grid;grid-template-columns:minmax(250px,320px) minmax(0,1fr);align-items:stretch;
+  border:1px solid #dce5ee;border-radius:13px;background:#fff;box-shadow:0 3px 12px rgba(26,46,68,.035);overflow:visible;
+}
+#setupModal .wdhq-drive-group:before{left:-1px;top:50%;width:1px;border-top:0}
+#setupModal .wdhq-drive-group:after{display:none!important}
+#setupModal .wdhq-drive-group-head{
+  display:block;padding:15px 16px;background:#f8fafc;border:0;border-right:1px solid #e5ebf1;border-radius:13px 0 0 13px;
+}
+#setupModal .wdhq-drive-group-title{gap:11px}
+#setupModal .wdhq-drive-group-title>span{width:34px;height:34px;flex-basis:34px;margin-top:1px;border-radius:9px;background:#57438e;font-size:12px}
+#setupModal .wdhq-drive-group-title small{display:none!important}
+#setupModal .wdhq-drive-group-title h3{margin:0 0 5px;font-size:15px}
+#setupModal .wdhq-drive-group-title p{font-size:12px;line-height:1.48}
+#setupModal .wdhq-drive-warning{display:block;max-width:none;margin:9px 0 0!important;padding:7px 9px;font-size:11.5px!important;line-height:1.45!important}
+#setupModal .wdhq-drive-items-section{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:stretch;border:0;background:#fff;border-radius:0 13px 13px 0}
+#setupModal .wdhq-drive-items-label{display:flex;align-items:center;justify-content:center;padding:10px;border-right:1px solid #e8edf3;color:#6b7788;font-size:10.5px;text-align:center}
+#setupModal .wdhq-drive-group.has-items .wdhq-drive-items{
+  display:grid;grid-template-columns:1fr;gap:7px;padding:10px!important;
+}
+#setupModal .wdhq-drive-group.has-items .wdhq-drive-items:before,
+#setupModal .wdhq-drive-group.has-items .wdhq-drive-items:after,
+#setupModal .wdhq-drive-group.has-items .wdhq-drive-item:before{display:none!important}
+#setupModal .wdhq-drive-item{min-height:0;padding:9px 10px;gap:9px;border-radius:9px;background:#fff;box-shadow:none}
+#setupModal .wdhq-drive-item .wdhq-drive-folder-icon{width:21px;height:16px;flex-basis:21px;margin-top:3px}
+#setupModal .wdhq-drive-item .wdhq-drive-folder-icon:before{width:10px;height:6px;top:-4px}
+#setupModal .wdhq-drive-item b{margin-bottom:2px;font-size:12.5px}
+#setupModal .wdhq-drive-item p{font-size:11px;line-height:1.4}
+#setupModal .wdhq-drive-group.no-items{grid-template-columns:minmax(250px,320px);width:min(100%,320px)}
+#setupModal .wdhq-drive-group.no-items .wdhq-drive-group-head{border-right:0;border-radius:13px}
+@media(max-width:1024px){
+  #setupModal .wdhq-drive-tree{grid-template-columns:210px minmax(0,1fr);gap:38px}
+  #setupModal [data-setup-panel="drive"] .wdhq-drive-root:after{width:38px}
+  #setupModal .wdhq-drive-group{grid-template-columns:minmax(220px,280px) minmax(0,1fr)}
+  #setupModal .wdhq-drive-items-section{grid-template-columns:72px minmax(0,1fr)}
+}
+@media(max-width:760px){
+  #setupModal .wdhq-drive-tree{display:block;min-height:0;padding:4px 0 12px}
+  #setupModal [data-setup-panel="drive"] .wdhq-drive-root{min-height:0;margin-bottom:22px;padding:14px}
+  #setupModal [data-setup-panel="drive"] .wdhq-drive-root:after{left:24px;top:100%;width:2px;height:22px}
+  #setupModal .wdhq-drive-guide{gap:11px;margin:0 0 0 24px;padding:0 0 0 20px}
+  #setupModal .wdhq-drive-group{display:block}
+  #setupModal .wdhq-drive-group:before{left:-21px;top:25px;width:21px;border-top:2px solid #b9c8d9}
+  #setupModal .wdhq-drive-group-head{padding:13px;border-right:0;border-bottom:1px solid #e5ebf1;border-radius:12px 12px 0 0}
+  #setupModal .wdhq-drive-items-section{display:block;border-radius:0 0 12px 12px}
+  #setupModal .wdhq-drive-items-label{display:block;padding:8px 12px 0;border-right:0;text-align:left}
+  #setupModal .wdhq-drive-group.no-items{width:100%}
+  #setupModal .wdhq-drive-group.no-items .wdhq-drive-group-head{border-bottom:0;border-radius:12px}
 }
 </style>
 <script id="wdhq-external-sync-v03-script">
