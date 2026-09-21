@@ -3768,11 +3768,9 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   async function fetchGmail(){
     var profile=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/profile');
     if(String(profile.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('Google 연결 계정이 '+ACCOUNT+'과 다릅니다.');
-    var inbox=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/labels/INBOX');
-    var unreadCount=Math.max(0,Number(inbox&&inbox.threadsUnread||0));
-    var query='is:unread in:inbox';
+    var query='is:unread in:inbox category:primary';
     var list=await googleApi('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=500&includeSpamTrash=false&q='+encodeURIComponent(query));
-    var refs=list.threads||[],signals=[];
+    var refs=list.threads||[],unreadCount=refs.length,signals=[];
     for(var start=0;start<refs.length;start+=10){
       var rows=await Promise.all(refs.slice(start,start+10).map(function(ref){return googleApi('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+encodeURIComponent(ref.id)+'?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date');}));
       rows.forEach(function(thread){
