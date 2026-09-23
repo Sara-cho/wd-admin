@@ -5726,6 +5726,7 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
 - public.wd_talk_messages 1개만 사용 · INSERT는 body만 전송 (sender_id/created_at은 DB 자동)
 - 알림 숫자는 메모리만 사용 · 수정/삭제/파일/읽음확인/온라인상태 없음
 - 기존 로그인·Gmail·Calendar·Tasks·노아·Keep·TEST작업실·앱 연결 코드는 변경 없음
+- 2026-09-23 추가: 상대 메시지 알림음(Web Audio) · 🔔/🔕 토글(메모리) · 닫힌 상태 미리보기 5초 · 배지 유지
 -->
 <style id="wdhq-talk-style">
 #wdhq-talk-open{
@@ -5785,6 +5786,18 @@ body.wdhq-talk-ready #wdhq-talk-open{display:inline-flex}
 #wdhq-talk-send{height:42px;border:0;border-radius:12px;background:#1d7a63;color:#fff;font:inherit;font-size:13px;font-weight:900;cursor:pointer}
 #wdhq-talk-send:disabled{opacity:.45;cursor:default}
 .wdhq-talk-foot{margin-top:6px;color:#98a3b2;font-size:10px}
+#wdhq-talk-sound{height:32px;padding:0 10px;border:1px solid #d6e4df;border-radius:10px;background:#f1f8f5;color:#1d6a56;font:inherit;font-size:11px;font-weight:850;white-space:nowrap;cursor:pointer}
+#wdhq-talk-sound[aria-pressed="false"]{border-color:#e1e5ea;background:#f3f5f8;color:#7a8799}
+#wdhq-talk-preview{
+  position:fixed;right:22px;bottom:228px;z-index:2147483150;width:260px;padding:11px 14px 12px;
+  border:1px solid #cfe5dd;border-radius:14px;background:#fff;color:#27364a;text-align:left;font:inherit;
+  box-shadow:0 14px 34px rgba(12,34,58,.20);cursor:pointer;
+  opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s ease;
+}
+#wdhq-talk-preview.show{opacity:1;transform:none;pointer-events:auto}
+#wdhq-talk-preview b{display:block;margin-bottom:3px;color:#1d7a63;font-size:11.5px;font-weight:900}
+#wdhq-talk-preview span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+body.wdhq-auth-locked #wdhq-talk-preview,body.wdhq-auth-checking #wdhq-talk-preview{display:none!important}
 body.wdhq-auth-locked #wdhq-talk-open,body.wdhq-auth-checking #wdhq-talk-open,
 body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{display:none!important}
 @media(max-width:760px){
@@ -5792,6 +5805,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   #wdhq-talk-open .wdhq-talk-mark{width:34px;height:34px;flex-basis:34px}
   #wdhq-talk-open small{display:none}
   #wdhq-talk-panel{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;border:0}
+  #wdhq-talk-preview{right:13px;bottom:264px;width:min(260px,calc(100vw - 26px))}
 }
 </style>
 
@@ -5800,6 +5814,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   <span><b>TALK</b><small id="wdhq-talk-open-sub">WD TALK</small></span>
   <span id="wdhq-talk-badge" aria-live="polite"></span>
 </button>
+<button id="wdhq-talk-preview" type="button" aria-live="polite" aria-label="새 TALK 메시지 열기"><b id="wdhq-talk-preview-name"></b><span id="wdhq-talk-preview-text"></span></button>
 <section id="wdhq-talk-panel" role="dialog" aria-label="WD TALK" aria-hidden="true">
   <header class="wdhq-talk-head">
     <div class="wdhq-talk-head-copy">
@@ -5807,6 +5822,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       <h2 id="wdhq-talk-partner">상대방</h2>
       <p id="wdhq-talk-last">마지막 메시지 없음</p>
     </div>
+    <button id="wdhq-talk-sound" type="button" aria-pressed="true" title="새 메시지 알림음">🔔 소리 켜짐</button>
     <button id="wdhq-talk-close" type="button" aria-label="TALK 닫기">×</button>
   </header>
   <div id="wdhq-talk-list" aria-live="polite"></div>
@@ -5838,6 +5854,10 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   let isOpen=false;
   let sending=false;
   let starting=false;
+  let soundOn=true;       // 메모리 전용 (저장 안 함)
+  let audioCtx=null;
+  let previewTimer=null;
+  const preview=$('wdhq-talk-preview');
 
   function authState(){
     try{
@@ -5908,7 +5928,10 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     seen.add(m.id);
     messages.push({id:m.id,sender_id:m.sender_id,body:String(m.body||''),created_at:m.created_at});
     messages.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    if(fromRealtime&&!isOpen&&m.sender_id!==me?.uid){unread++;setBadge()}
+    if(fromRealtime&&m.sender_id!==me?.uid){
+      if(!isOpen){unread++;setBadge()}
+      try{notify(m)}catch(e){}
+    }
     render();
     return true;
   }
@@ -5954,10 +5977,55 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     try{if(channel)(authState()?.client||WDHQ_SUPABASE)?.removeChannel(channel)}catch(e){}
     channel=null;me=null;messages=[];seen.clear();unread=0;setBadge();
     document.body.classList.remove('wdhq-talk-ready');
-    close();list.replaceChildren();
+    hidePreview();close();list.replaceChildren();
   }
+  // ── 알림음: Web Audio API · 실패해도 수신에는 영향 없음 ──
+  function ensureAudio(){
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;
+      if(!audioCtx)audioCtx=new AC();
+      if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+      return audioCtx;
+    }catch(e){return null}
+  }
+  function chime(){
+    if(!soundOn)return;
+    try{
+      const ctx=ensureAudio();if(!ctx||ctx.state!=='running')return;
+      const t=ctx.currentTime;
+      [[880,0],[1318.5,0.12]].forEach(([f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine';o.frequency.value=f;
+        g.gain.setValueAtTime(0.0001,t+d);
+        g.gain.exponentialRampToValueAtTime(0.18,t+d+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.22);
+        o.connect(g);g.connect(ctx.destination);o.start(t+d);o.stop(t+d+0.25);
+      });
+      window.__wdhqTalkChimeCount=(window.__wdhqTalkChimeCount||0)+1;
+    }catch(e){}
+  }
+  function setSoundBtn(){
+    const b=$('wdhq-talk-sound');b.setAttribute('aria-pressed',String(soundOn));
+    b.textContent=soundOn?'🔔 소리 켜짐':'🔕 소리 끔';
+  }
+  function hidePreview(){clearTimeout(previewTimer);previewTimer=null;preview.classList.remove('show')}
+  function showPreview(m){
+    try{
+      $('wdhq-talk-preview-name').textContent=partnerLabel();
+      $('wdhq-talk-preview-text').textContent=String(m.body||'');
+      preview.classList.add('show');
+      clearTimeout(previewTimer);previewTimer=setTimeout(hidePreview,5000);
+    }catch(e){}
+  }
+  function notify(m){           // 상대 메시지 · 신규 id 1회만 호출됨
+    chime();
+    if(!isOpen)showPreview(m);
+  }
+
   function open(){
     if(!me)return;
+    ensureAudio();
+    hidePreview();
     try{if(window.WDHQNoah&&document.getElementById('wdhq-noah-panel')?.classList.contains('open'))window.WDHQNoah.close()}catch(e){}
     isOpen=true;unread=0;setBadge();
     panel.classList.add('open');panel.setAttribute('aria-hidden','false');
@@ -5989,6 +6057,12 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 
   openBtn.addEventListener('click',()=>isOpen?close():open());
   $('wdhq-talk-close').addEventListener('click',close);
+  $('wdhq-talk-sound').addEventListener('click',()=>{soundOn=!soundOn;setSoundBtn();if(soundOn)ensureAudio()});
+  preview.addEventListener('click',()=>{ensureAudio();open()});
+  // 새로고침 후 TALK를 누르기 전이라도 첫 클릭·키 입력 때 오디오 준비 (브라우저 자동재생 정책)
+  const unlock=()=>{ensureAudio();if(audioCtx&&audioCtx.state==='running'){document.removeEventListener('pointerdown',unlock,true);document.removeEventListener('keydown',unlock,true)}};
+  document.addEventListener('pointerdown',unlock,true);
+  document.addEventListener('keydown',unlock,true);
   sendBtn.addEventListener('click',send);
   input.addEventListener('input',autoSize);
   input.addEventListener('keydown',e=>{
