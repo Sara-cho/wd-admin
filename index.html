@@ -5726,6 +5726,7 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
 - public.wd_talk_messages 1개만 사용 · INSERT는 body만 전송 (sender_id/created_at은 DB 자동)
 - 알림 숫자는 메모리만 사용 · 수정/삭제/파일/읽음확인/온라인상태 없음
 - 기존 로그인·Gmail·Calendar·Tasks·노아·Keep·TEST작업실·앱 연결 코드는 변경 없음
+- 2026-09-23 추가: 파일첨부(A안) · 회사공통 03_업무공유파일(1akIH85_…)에 Drive 업로드 후 [WDFILE] 메시지 · 100MB 상한 · DB 변경 없음
 - 2026-09-23 추가: 상대 메시지 알림음(Web Audio) · 🔔/🔕 토글(메모리) · 닫힌 상태 미리보기 5초 · 배지 유지
 -->
 <style id="wdhq-talk-style">
@@ -5762,7 +5763,7 @@ body.wdhq-talk-ready #wdhq-talk-open{display:inline-flex}
 .wdhq-talk-head-copy{flex:1;min-width:0}
 .wdhq-talk-head-copy .wdhq-talk-brand{display:block;color:#1d7a63;font-size:10.5px;font-weight:950;letter-spacing:.12em}
 .wdhq-talk-head-copy h2{margin:2px 0 0;color:#17243a;font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wdhq-talk-head-copy p{margin:2px 0 0;color:#7a8799;font-size:11px}
+.wdhq-talk-head-copy p{margin:2px 0 0;color:#7a8799;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #wdhq-talk-close{display:grid;width:36px;height:36px;place-items:center;border:0;border-radius:11px;background:#eef2f6;color:#4a5a70;font-size:18px;cursor:pointer}
 #wdhq-talk-close:hover{background:#e2e8ef}
 #wdhq-talk-list{flex:1;min-height:0;overflow-y:auto;padding:14px 14px 18px}
@@ -5776,7 +5777,28 @@ body.wdhq-talk-ready #wdhq-talk-open{display:inline-flex}
 .wdhq-talk-row.theirs .wdhq-talk-bubble{border:1px solid #e0e7ee;border-bottom-left-radius:5px;background:#fff;color:#27364a}
 .wdhq-talk-time{flex:0 0 auto;color:#98a3b2;font-size:10px;white-space:nowrap}
 .wdhq-talk-composer{padding:10px 12px 12px;border-top:1px solid #e3e9f0;background:#fff}
-.wdhq-talk-input-wrap{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:8px;align-items:end}
+.wdhq-talk-input-wrap{display:grid;grid-template-columns:42px minmax(0,1fr) 64px;gap:8px;align-items:end}
+#wdhq-talk-attach{height:42px;border:1px solid #d6dee8;border-radius:12px;background:#fbfcfe;font-size:17px;cursor:pointer}
+#wdhq-talk-attach:hover{background:#eef6f3;border-color:#9fcfbf}
+#wdhq-talk-attach:disabled{opacity:.45;cursor:default}
+#wdhq-talk-filebar{display:none;margin-bottom:8px;padding:9px 11px;border:1px solid #d6e4df;border-radius:12px;background:#f4faf8}
+#wdhq-talk-filebar.show{display:block}
+.wdhq-talk-filebar-text{color:#27364a;font-size:12px;font-weight:700;line-height:1.45;word-break:break-all}
+.wdhq-talk-filebar-text.err{color:#b34444}
+.wdhq-talk-progress{height:6px;margin-top:7px;border-radius:4px;background:#dfe9e5;overflow:hidden}
+.wdhq-talk-progress i{display:block;height:100%;background:#1d7a63;transition:width .15s}
+.wdhq-talk-filebar-acts{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}
+.wdhq-talk-filebar-acts button{height:30px;padding:0 11px;border:1px solid #d6dee8;border-radius:9px;background:#fff;color:#44536a;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
+.wdhq-talk-filebar-acts button.primary{border-color:#1d7a63;background:#1d7a63;color:#fff}
+.wdhq-talk-bubble.file{min-width:210px;white-space:normal}
+.wdhq-talk-file-head{display:flex;align-items:flex-start;gap:7px}
+.wdhq-talk-file-icon{flex:0 0 auto;font-size:17px;line-height:1.3}
+.wdhq-talk-file-name{font-size:13px;line-height:1.4;word-break:break-all}
+.wdhq-talk-file-meta{margin-top:3px;font-size:11px;opacity:.8}
+.wdhq-talk-file-who{margin-top:1px;font-size:10.5px;opacity:.7}
+.wdhq-talk-file-acts{display:flex;gap:6px;margin-top:8px}
+.wdhq-talk-file-acts button{flex:1;height:30px;border:1px solid rgba(0,0,0,.12);border-radius:9px;background:rgba(255,255,255,.92);color:#1d5f4e;font:inherit;font-size:11.5px;font-weight:850;cursor:pointer}
+.wdhq-talk-file-acts button:disabled{opacity:.55}
 #wdhq-talk-input{
   width:100%;min-height:42px;max-height:120px;padding:10px 12px;resize:none;
   border:1px solid #d6dee8;border-radius:12px;background:#fbfcfe;color:#1f2b3d;
@@ -5827,7 +5849,10 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   </header>
   <div id="wdhq-talk-list" aria-live="polite"></div>
   <div class="wdhq-talk-composer">
+    <div id="wdhq-talk-filebar" aria-live="polite"></div>
+    <input id="wdhq-talk-file-input" type="file" hidden>
     <div class="wdhq-talk-input-wrap">
+      <button id="wdhq-talk-attach" type="button" aria-label="파일추가" title="📎 파일추가 (최대 100MB)">📎</button>
       <textarea id="wdhq-talk-input" rows="1" maxlength="2000" placeholder="메시지를 입력하세요"></textarea>
       <button id="wdhq-talk-send" type="button">보내기</button>
     </div>
@@ -5915,7 +5940,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       const k=dayKey(m.created_at);
       if(k!==prevDay){prevDay=k;const d=document.createElement('div');d.className='wdhq-talk-day';d.textContent=fmtDay(m.created_at);frag.appendChild(d)}
       const row=document.createElement('div');row.className='wdhq-talk-row '+(m.sender_id===me?.uid?'mine':'theirs');
-      const bubble=document.createElement('div');bubble.className='wdhq-talk-bubble';bubble.textContent=m.body;
+      const bubble=document.createElement('div');bubble.className='wdhq-talk-bubble';fillBubble(bubble,m);
       const time=document.createElement('span');time.className='wdhq-talk-time';time.textContent=fmtTime(m.created_at);
       row.append(bubble,time);frag.appendChild(row);
     });
@@ -5978,6 +6003,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     channel=null;me=null;messages=[];seen.clear();unread=0;setBadge();
     document.body.classList.remove('wdhq-talk-ready');
     hidePreview();close();list.replaceChildren();
+    try{drive.token='';drive.exp=0;pickedFile=null;uploaded=null;barShow(null)}catch(e){}
   }
   // ── 알림음: Web Audio API · 실패해도 수신에는 영향 없음 ──
   function ensureAudio(){
@@ -6012,7 +6038,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   function showPreview(m){
     try{
       $('wdhq-talk-preview-name').textContent=partnerLabel();
-      $('wdhq-talk-preview-text').textContent=String(m.body||'');
+      $('wdhq-talk-preview-text').textContent=previewText(m);
       preview.classList.add('show');
       clearTimeout(previewTimer);previewTimer=setTimeout(hidePreview,5000);
     }catch(e){}
@@ -6070,6 +6096,249 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isOpen)close()});
   document.getElementById('wdhq-noah-open')?.addEventListener('click',()=>{if(isOpen)close()});
+
+
+  // ───────── TALK 파일첨부 (A안 · DB 변경 없음) ─────────
+  // 원본: WD WAVE 회사공통 > 01_업무공유폴더 > 03_업무공유파일 (업무센터와 같은 폴더 ID)
+  const FILE_PREFIX='[WDFILE]';
+  const DRIVE_FOLDER_ID='1akIH85_fbbPkshgPLWCkzxv3doMgJU0W';
+  const DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com'; // 업무센터와 동일 Client
+  const DRIVE_SCOPE='https://www.googleapis.com/auth/drive';
+  const DRIVE_ACCOUNTS={kfcyk50:'kfcyk20@gmail.com',kfcyk30:'woori08944@gmail.com'};
+  const MAX_FILE=100*1024*1024;
+  const MULTIPART_MAX=5*1024*1024;
+  const FILE_ID_RE=/^[A-Za-z0-9_-]{10,200}$/;
+  const drive={token:'',exp:0,client:null,pending:null};   // 메모리 전용 (업무센터 세션과 분리)
+  let pickedFile=null;      // 선택만 된 파일
+  let uploaded=null;        // Drive 업로드 완료 · TALK 전달 실패 시 재전송용
+  let uploading=false;
+  const fileInput=$('wdhq-talk-file-input'),attachBtn=$('wdhq-talk-attach'),bar=$('wdhq-talk-filebar');
+
+  function parseFileBody(body){
+    const s=String(body||'');
+    if(s.indexOf(FILE_PREFIX)!==0)return null;
+    try{
+      const o=JSON.parse(s.slice(FILE_PREFIX.length));
+      if(!o||typeof o!=='object')return {invalid:true};
+      const id=String(o.id||''),name=String(o.name||'').slice(0,200),size=Number(o.size),mime=String(o.mime||'').slice(0,120);
+      if(!FILE_ID_RE.test(id)||!name||!isFinite(size)||size<0)return {invalid:true};
+      return {id,name,size,mime};
+    }catch(e){return {invalid:true}}
+  }
+  function previewText(m){
+    const f=parseFileBody(m&&m.body);
+    if(!f)return String((m&&m.body)||'');
+    return f.invalid?'📎 파일':'📎 '+f.name;
+  }
+  function fmtSize(n){n=Number(n||0);if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(n<10485760?1:0)+'MB'}
+  function fileKind(f){
+    const m=f.mime||'',ext=(f.name.split('.').pop()||'').toUpperCase();
+    if(m.indexOf('image/')===0)return ['🖼️',ext||'이미지'];
+    if(m==='application/pdf')return ['📕','PDF'];
+    if(m.indexOf('spreadsheet')>=0||m.indexOf('excel')>=0)return ['📊',ext||'시트'];
+    if(m.indexOf('presentation')>=0||m.indexOf('powerpoint')>=0)return ['📽️',ext||'슬라이드'];
+    if(m.indexOf('document')>=0||m.indexOf('word')>=0)return ['📄',ext||'문서'];
+    if(m.indexOf('zip')>=0||m.indexOf('compressed')>=0)return ['🗜️',ext||'압축'];
+    return ['📎',ext&&ext.length<=6?ext:'파일'];
+  }
+  function driveViewUrl(id){return 'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view'}
+  function fillBubble(bubble,m){
+    const f=parseFileBody(m.body);
+    if(!f){bubble.textContent=m.body;return}
+    bubble.classList.add('file');
+    if(f.invalid){bubble.textContent='📎 파일 정보를 읽을 수 없습니다.';return}
+    const [icon,kind]=fileKind(f);
+    const head=document.createElement('div');head.className='wdhq-talk-file-head';
+    const ic=document.createElement('span');ic.className='wdhq-talk-file-icon';ic.textContent=icon;
+    const nm=document.createElement('b');nm.className='wdhq-talk-file-name';nm.textContent=f.name;nm.title=f.name;
+    head.append(ic,nm);
+    const meta=document.createElement('div');meta.className='wdhq-talk-file-meta';meta.textContent=kind+' · '+fmtSize(f.size);
+    const who=document.createElement('div');who.className='wdhq-talk-file-who';
+    who.textContent=(m.sender_id===me?.uid?myLabel():partnerLabel())+' · '+fmtTime(m.created_at);
+    const acts=document.createElement('div');acts.className='wdhq-talk-file-acts';
+    const ob=document.createElement('button');ob.type='button';ob.textContent='열기';
+    ob.addEventListener('click',()=>window.open(driveViewUrl(f.id),'_blank','noopener,noreferrer'));
+    const db=document.createElement('button');db.type='button';db.textContent='다운로드';
+    db.addEventListener('click',()=>downloadFile(f,db));
+    acts.append(ob,db);
+    bubble.append(head,meta,who,acts);
+  }
+  function myLabel(){const a=account(me?.loginId);if(!a)return '나';return me.loginId==='kfcyk50'?(a.name+' 대표'):a.name}
+
+  // ── TALK 전용 Drive 연결 (본진 Gmail/Calendar/Tasks 연결과 별개) ──
+  function driveValid(){return !!drive.token&&Date.now()<drive.exp-60000}
+  function driveApi(url,opts){
+    opts=opts||{};opts.headers=Object.assign({Authorization:'Bearer '+drive.token},opts.headers||{});opts.cache='no-store';
+    return fetch(url,opts).then(async res=>{
+      if(res.status===401){drive.token='';drive.exp=0;throw new Error('Google Drive 연결이 만료되었습니다. 다시 시도해 주세요.')}
+      if(!res.ok){const t=await res.text().catch(()=>'');throw new Error('Drive '+res.status+' '+t.slice(0,100))}
+      return res;
+    });
+  }
+  function driveConnect(){ // 반드시 사용자 클릭 안에서 호출
+    return new Promise((resolve,reject)=>{
+      if(driveValid())return resolve();
+      if(!(window.google&&google.accounts&&google.accounts.oauth2))return reject(new Error('Google 로그인 모듈을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.'));
+      const expected=DRIVE_ACCOUNTS[me?.loginId]||'';
+      drive.pending={resolve,reject};
+      if(!drive.client){
+        drive.client=google.accounts.oauth2.initTokenClient({
+          client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,hint:expected,
+          callback:async resp=>{
+            const p=drive.pending;drive.pending=null;if(!p)return;
+            if(!resp||resp.error||!resp.access_token)return p.reject(new Error('Google Drive 연결이 완료되지 않았습니다.'));
+            drive.token=resp.access_token;drive.exp=Date.now()+Number(resp.expires_in||3600)*1000;
+            try{
+              const who=await (await driveApi('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)')).json();
+              const email=String(who?.user?.emailAddress||'').toLowerCase();
+              const want=DRIVE_ACCOUNTS[me?.loginId]||'';
+              if(want&&email!==want){drive.token='';drive.exp=0;throw new Error('연결된 Google 계정('+email+')이 지정 계정('+want+')과 다릅니다.')}
+              p.resolve();
+            }catch(e){p.reject(e)}
+          },
+          error_callback:()=>{const p=drive.pending;drive.pending=null;if(p)p.reject(new Error('Google 계정 연결 창이 닫혔습니다.'))}
+        });
+      }
+      drive.client.requestAccessToken({prompt:'',hint:expected});
+    });
+  }
+
+  // ── 업로드 (업무센터와 같은 방식: 5MB 이하 multipart / 초과 resumable) ──
+  function xhrSend(method,url,headers,body,onProgress){
+    return new Promise((resolve,reject)=>{
+      const x=new XMLHttpRequest();x.open(method,url);
+      Object.keys(headers).forEach(k=>x.setRequestHeader(k,headers[k]));
+      x.upload.onprogress=e=>{if(e.lengthComputable&&onProgress)onProgress(e.loaded/e.total)};
+      x.onload=()=>{if(x.status>=200&&x.status<300){try{resolve(JSON.parse(x.responseText||'{}'))}catch(e){reject(new Error('Drive 응답을 읽지 못했습니다.'))}}else reject(new Error('Drive '+x.status+' '+String(x.responseText||'').slice(0,100)))};
+      x.onerror=()=>reject(new Error('네트워크 오류로 업로드하지 못했습니다.'));
+      x.send(body);
+    });
+  }
+  const UPLOAD_FIELDS='id,name,mimeType,size,parents';
+  async function uploadToDrive(file,onProgress){
+    const meta={name:file.name,parents:[DRIVE_FOLDER_ID],appProperties:{wdSource:'wd-talk',wdSender:String(me?.loginId||'')}};
+    const type=file.type||'application/octet-stream';
+    let created;
+    if(file.size<=MULTIPART_MAX){
+      const boundary='wdtalk_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      const head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: '+type+'\r\n\r\n';
+      const body=new Blob([head,file,'\r\n--'+boundary+'--'],{type:'multipart/related; boundary='+boundary});
+      created=await xhrSend('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields='+encodeURIComponent(UPLOAD_FIELDS),
+        {Authorization:'Bearer '+drive.token,'Content-Type':'multipart/related; boundary='+boundary},body,onProgress);
+    }else{
+      const init=await driveApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields='+encodeURIComponent(UPLOAD_FIELDS),
+        {method:'POST',headers:{'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':type,'X-Upload-Content-Length':String(file.size)},body:JSON.stringify(meta)});
+      const loc=init.headers.get('Location');if(!loc)throw new Error('업로드 주소를 받지 못했습니다.');
+      created=await xhrSend('PUT',loc,{'Content-Type':type},file,onProgress);
+    }
+    if(!created||!FILE_ID_RE.test(String(created.id||'')))throw new Error('Drive 파일 ID를 확인하지 못했습니다.');
+    if(Array.isArray(created.parents)&&created.parents.indexOf(DRIVE_FOLDER_ID)<0)throw new Error('업로드 위치가 03_업무공유파일이 아닙니다.');
+    return {id:created.id,name:String(created.name||file.name),size:Number(created.size||file.size),mime:String(created.mimeType||type)};
+  }
+  function buildFileBody(f){
+    let name=f.name;
+    let body=FILE_PREFIX+JSON.stringify({v:1,id:f.id,name,size:f.size,mime:f.mime});
+    while(body.length>2000&&name.length>20){name=name.slice(0,name.length-20);body=FILE_PREFIX+JSON.stringify({v:1,id:f.id,name,size:f.size,mime:f.mime})}
+    return body;
+  }
+  async function postBody(body){ // 기존 send()와 같은 INSERT (body만)
+    const a=authState();if(!a)throw new Error('로그인 상태를 확인해 주세요.');
+    const {data,error}=await a.client.from(TABLE).insert({body}).select('id,sender_id,body,created_at').single();
+    if(error)throw error;
+    add(data,false);scrollBottom();
+    return data;
+  }
+
+  // ── 첨부 바 UI ──
+  function barShow(state){
+    // state: {text, tone, progress, actions:[{label,fn,primary}]}
+    bar.replaceChildren();
+    if(!state){bar.classList.remove('show');return}
+    const t=document.createElement('div');t.className='wdhq-talk-filebar-text'+(state.tone?' '+state.tone:'');t.textContent=state.text;
+    bar.appendChild(t);
+    if(typeof state.progress==='number'){
+      const pg=document.createElement('div');pg.className='wdhq-talk-progress';
+      const fill=document.createElement('i');fill.style.width=Math.round(state.progress*100)+'%';pg.appendChild(fill);bar.appendChild(pg);
+    }
+    if(state.actions&&state.actions.length){
+      const row=document.createElement('div');row.className='wdhq-talk-filebar-acts';
+      state.actions.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent=x.label;if(x.primary)b.className='primary';b.addEventListener('click',x.fn);row.appendChild(b)});
+      bar.appendChild(row);
+    }
+    bar.classList.add('show');
+  }
+  function showPicked(){
+    if(!pickedFile)return barShow(null);
+    barShow({text:'📎 '+pickedFile.name+' · '+fmtSize(pickedFile.size),
+      actions:[{label:'취소',fn:()=>{pickedFile=null;barShow(null)}},
+               {label:driveValid()?'보내기':'Google 연결 후 보내기',primary:true,fn:startUpload}]});
+  }
+  function showUploadedFail(msg){
+    barShow({text:'파일은 Drive에 올라갔지만 TALK 전달 실패 · '+uploaded.name,tone:'err',
+      actions:[{label:'닫기',fn:()=>{uploaded=null;barShow(null)}},{label:'다시 보내기',primary:true,fn:resendUploaded}]});
+    if(msg&&typeof toast==='function')toast('TALK 전달 실패: '+msg);
+  }
+  async function resendUploaded(){
+    if(!uploaded)return;
+    barShow({text:'TALK로 다시 보내는 중… · '+uploaded.name});
+    try{await postBody(buildFileBody(uploaded));uploaded=null;barShow(null)}
+    catch(e){showUploadedFail(String(e.message||e))}
+  }
+  async function startUpload(){
+    if(uploading||!pickedFile||!me)return;
+    const file=pickedFile;
+    if(file.size>MAX_FILE){barShow({text:'100MB를 넘는 파일은 보낼 수 없습니다. ('+fmtSize(file.size)+')',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
+    if(!file.size){barShow({text:'빈 파일은 보낼 수 없습니다.',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
+    uploading=true;attachBtn.disabled=true;
+    try{
+      if(!driveValid()){barShow({text:'Google Drive 연결 창을 확인해 주세요.'});await driveConnect()}
+      barShow({text:'업로드 중 0% · '+file.name,progress:0});
+      const f=await uploadToDrive(file,p=>barShow({text:'업로드 중 '+Math.round(p*100)+'% · '+file.name,progress:p}));
+      pickedFile=null;
+      // Drive 업로드가 끝난 뒤에만 TALK 메시지 저장
+      uploaded=f;
+      barShow({text:'TALK로 전달하는 중… · '+f.name,progress:1});
+      try{await postBody(buildFileBody(f));uploaded=null;barShow(null)}
+      catch(e){showUploadedFail(String(e.message||e))}
+    }catch(e){
+      // Drive 업로드 실패 → TALK 메시지 만들지 않음
+      barShow({text:'업로드 실패 · '+String(e.message||e).slice(0,120),tone:'err',
+        actions:[{label:'취소',fn:()=>{pickedFile=null;barShow(null)}},{label:'다시 시도',primary:true,fn:startUpload}]});
+    }finally{uploading=false;attachBtn.disabled=false}
+  }
+  attachBtn.addEventListener('click',()=>{
+    if(uploading)return;
+    if(uploaded){showUploadedFail();return}
+    fileInput.value='';fileInput.click();
+  });
+  fileInput.addEventListener('change',()=>{
+    const f=fileInput.files&&fileInput.files[0];if(!f)return;
+    pickedFile=f;
+    if(f.size>MAX_FILE){barShow({text:'100MB를 넘는 파일은 보낼 수 없습니다. ('+fmtSize(f.size)+')',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
+    showPicked();
+  });
+
+  // ── 다운로드: 받는 사람 본인의 Google Drive 인증 ──
+  async function downloadFile(f,btn){
+    const old=btn.textContent;btn.disabled=true;btn.textContent='준비 중…';
+    try{
+      if(!driveValid())await driveConnect();
+      const exports={
+        'application/vnd.google-apps.document':['application/pdf','.pdf'],
+        'application/vnd.google-apps.spreadsheet':['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.xlsx'],
+        'application/vnd.google-apps.presentation':['application/vnd.openxmlformats-officedocument.presentationml.presentation','.pptx']
+      };
+      let url,name=f.name;
+      if(exports[f.mime]){url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'/export?mimeType='+encodeURIComponent(exports[f.mime][0]);if(!name.toLowerCase().endsWith(exports[f.mime][1]))name+=exports[f.mime][1]}
+      else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'?alt=media';
+      const blob=await (await driveApi(url,{method:'GET'})).blob();
+      const obj=URL.createObjectURL(blob),a=document.createElement('a');a.href=obj;a.download=name;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(obj),1500);
+    }catch(e){
+      if(typeof toast==='function')toast('다운로드하지 못했습니다. [열기]로 Drive에서 확인해 주세요. '+String(e.message||'').slice(0,60));
+    }finally{btn.disabled=false;btn.textContent=old}
+  }
+
 
   // 기존 본진 로그인 흐름은 건드리지 않고, 로그인 상태 변화만 관찰
   function tick(){
