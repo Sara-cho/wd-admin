@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>🏢 LIVE OFFICE · 실제 연결 TEST · WD 본진</title>
+<meta name="description" content="WD 본진 라이브오피스 챕터 — 실제 WD ADMIN Supabase 로그인·work_tasks 읽기 연결, 실제 AI 인력풀 데이터 재사용 TEST"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --ink:#292432;--muted:#746d79;--line:#e7e0e8;--paper:#faf8f5;--panel:#fff;
+  --plum:#675278;--deep:#31283c;--gold:#c59a58;--green:#4c7c69;--red:#a24c45;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+
+.topbar{position:sticky;top:0;z-index:40;background:rgba(250,248,245,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.crumb{display:flex;align-items:center;gap:8px;font-size:12px;color:#9a919d}
+.crumb strong{color:var(--ink)}
+.crumb b{color:#c3bbc5;font-weight:400}
+.badge{border-radius:999px;padding:5px 11px;font-size:11px;font-weight:800;white-space:nowrap}
+.badge.test{background:#fff1dc;color:#876128}
+.badge.live{background:#e5f2ec;color:#3b705c}
+.badge.off{background:#f1ecf3;color:#7a6f83}
+
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 70px}
+
+.notice{border:1px solid #ecdcb9;background:#fffaf0;border-left:5px solid #c09650;border-radius:13px;padding:13px 15px;font-size:12.5px;line-height:1.7;margin-bottom:18px}
+.notice b{color:#725529}
+
+.login-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:22px;box-shadow:0 10px 28px rgba(57,45,63,.06)}
+.login-box h2{margin:0 0 4px;font-size:16px}
+.login-box p{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+.login-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.role-pick{display:flex;gap:7px;margin-bottom:12px}
+.role-pick button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:800}
+.role-pick button.active{background:var(--plum);border-color:var(--plum);color:#fff}
+.login-row input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;min-height:42px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:800;min-height:40px}
+.btn.primary{background:var(--plum);border-color:var(--plum);color:#fff}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.login-status{margin-top:10px;font-size:12px;color:var(--muted)}
+.login-status.err{color:var(--red)}
+.session-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.session-who{font-size:13px;font-weight:800}
+.session-who small{display:block;font-weight:600;color:var(--muted);margin-top:2px}
+
+.hero h1{font-family:Georgia,"Noto Serif KR",serif;font-size:clamp(22px,3.4vw,30px);letter-spacing:-.03em;margin:6px 0 4px}
+.hero p{margin:0 0 20px;color:var(--muted);font-size:13.5px}
+
+.grid{display:grid;gap:12px}
+.grid.people{grid-template-columns:repeat(2,minmax(240px,1fr))}
+@media (max-width:640px){.grid.people{grid-template-columns:1fr}}
+
+.role-badge{display:inline-block;border-radius:999px;padding:3px 9px;font-size:9.5px;font-weight:800;background:#f1ecf3;color:#6b6070;margin-top:4px}
+.delegate-note{font-size:11px;color:#8d858f;margin-top:2px;line-height:1.6}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:0 10px 28px rgba(57,45,63,.06);display:flex;flex-direction:column;gap:9px;text-align:left;position:relative}
+.card.person{border-top:4px solid var(--accent,var(--plum))}
+.top-row{display:flex;align-items:center;gap:11px}
+.avatar{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-weight:900;color:#fff;background:var(--accent,#8d7a97);font-size:16px;flex:none}
+.who b{display:block;font-size:14.5px}
+.who span{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.kind-tag{position:absolute;top:14px;right:14px;font-size:9.5px;font-weight:900;border-radius:999px;padding:4px 9px;background:#f1ecf3;color:#6b6070}
+.role-line{font-size:12px;color:#5b525f;background:#f7f4f8;border-radius:10px;padding:8px 10px;line-height:1.55}
+.status-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.status-pill{border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:800}
+.status-pill.live{background:#e5f2ec;color:#3b705c}
+.status-pill.wait{background:#f1ecf3;color:#7a6f83}
+.status-pill.none{background:#f4eeee;color:#8d6b68}
+.now-line{font-size:11.5px;color:var(--muted)}
+.result-line{font-size:11px;color:#5b525f}
+.card-actions{margin-top:auto;display:flex;gap:7px}
+
+.pool-cta{margin:26px 0 2px;display:flex;justify-content:center}
+.pool-btn{background:transparent;border:1px dashed #d9cfdd;color:#8d7a97;border-radius:14px;padding:11px 16px;font-size:12px;font-weight:800;width:100%;max-width:520px;text-align:center}
+.pool-btn small{display:block;color:#a79bb0;font-weight:600;font-size:10.5px;margin-top:3px}
+
+.info-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:20px}
+.info-box h3{margin:0 0 8px;font-size:13.5px}
+.info-box ul{margin:0;padding-left:18px;font-size:12px;color:#5b525f;line-height:1.9}
+.info-box a{color:var(--plum);font-weight:700;text-decoration:underline}
+
+footer.note{max-width:1180px;margin:30px auto 0;padding:16px 20px 0;border-top:1px solid var(--line);color:#8d858f;font-size:11px;display:flex;gap:14px;flex-wrap:wrap}
+footer.note b{color:#5f5366}
+
+dialog{border:0;border-radius:22px;padding:0;width:min(720px,calc(100% - 24px));max-height:88vh;box-shadow:0 28px 90px rgba(31,22,42,.45)}
+dialog::backdrop{background:rgba(30,22,38,.62)}
+.dlg-inner{overflow-y:auto;max-height:88vh}
+.dlg-head{position:sticky;top:0;background:#fff;z-index:2;display:flex;align-items:center;gap:13px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.dlg-head .avatar{width:52px;height:52px;border-radius:15px}
+.dlg-head .who{flex:1;min-width:0}
+.dlg-head .who b{font-size:16px}
+.dlg-head .who span{font-size:11.5px;color:var(--muted)}
+.dlg-close{border:1px solid var(--line);background:#fff;border-radius:50%;width:32px;height:32px;font-size:17px;flex:none}
+.dlg-body{padding:16px 20px 22px}
+.dlg-section{margin-bottom:15px}
+.dlg-section h4{margin:0 0 7px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#897392;font-weight:900}
+.dlg-box{background:#f7f4f8;border-radius:12px;padding:11px;font-size:12.5px;line-height:1.6}
+.dlg-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dlg-list li{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px}
+.dlg-quick{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.warn-box{background:#fffaf0;border:1px solid #ecdcb9;border-left:4px solid #c09650;border-radius:10px;padding:10px 12px;font-size:11.5px;line-height:1.7;color:#725529;margin-bottom:14px}
+.preview-box{background:#f1edf7;border-radius:12px;padding:12px;font-size:12px;line-height:1.7;margin-top:8px;white-space:pre-wrap}
+.quick-form textarea,.quick-form input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:7px}
+.quick-form textarea{min-height:70px;resize:vertical}
+
+.pool-flow{font-size:11px;color:var(--muted);background:#f7f4f8;border-radius:12px;padding:12px;margin-bottom:14px;line-height:1.7}
+.pool-team{margin-bottom:14px}
+.pool-team h5{margin:0 0 7px;font-size:12px;color:#897392;font-weight:900}
+.pool-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media (max-width:640px){.pool-list{grid-template-columns:1fr 1fr}}
+.pool-chip{background:#f3eff4;border:1px solid #e6ddea;border-radius:10px;padding:7px 9px;font-size:10.5px;color:#6b6270;position:relative}
+.pool-chip b{display:block;color:#463c4e;font-size:11px}
+.pool-chip.active{background:#eaf5ef;border-color:#cfe6da}
+.pool-chip .tag{position:absolute;top:6px;right:6px;font-size:8px;font-weight:900;border-radius:999px;padding:2px 6px}
+.pool-chip.active .tag{background:#3b705c;color:#fff}
+.pool-chip:not(.active) .tag{background:#e6ddea;color:#6b6270}
+
+.toast{position:fixed;z-index:200;left:50%;bottom:18px;transform:translateX(-50%);background:#33283f;color:#fff;padding:11px 18px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:0 12px 30px rgba(31,22,42,.3);opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1}
+
+@media (max-width:640px){
+  .topbar{padding:10px 14px}
+  .wrap{padding:16px 14px 60px}
+  .login-row{flex-direction:column;align-items:stretch}
+  .dlg-head{padding:14px}
+  .dlg-body{padding:12px 14px 18px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="crumb"><span>WD 본진</span><b>›</b><strong>라이브 오피스</strong></div>
+  <span class="badge test">🧪 기능연결 TEST · 실제 Supabase 읽기전용</span>
+</header>
+
+<div class="wrap">
+
+  <div class="notice">
+    <b>이 TEST가 실제로 연결하는 것:</b> wd-headquarters-optimized-test.html과 동일한 WD ADMIN Supabase 프로젝트·동일한 <code>work_tasks</code> 테이블을 읽기전용으로 재사용합니다. 새 Edge Function·새 테이블·새 메신저는 만들지 않았습니다. 로그인 전에는 모든 카드가 미연결 상태로 정직하게 표시됩니다.<br>
+    <b>2026-09-23 대표 최종구조 반영:</b> 사람 직원(수진)은 실제 업무공간이 필요해 메인 카드로 유지하고, AI 전문역할(지안·사라 등)은 별도 업무방을 만들지 않고 노아 내부의 위임 대상으로만 표시합니다.
+  </div>
+
+  <div class="login-box" id="loginBox">
+    <h2>WD ADMIN 계정으로 실제 연결하기</h2>
+    <p>대표님 또는 수진님 실제 회사 계정으로 로그인하면 아래 카드가 실제 work_tasks 상태를 읽어옵니다. (Supabase Auth · 읽기전용)</p>
+    <div class="role-pick">
+      <button type="button" class="active" data-role="owner">대표님 계정</button>
+      <button type="button" data-role="staff">수진님 계정</button>
+    </div>
+    <div class="login-row">
+      <input id="loginEmail" type="email" placeholder="이메일" readonly>
+      <input id="loginPassword" type="password" placeholder="비밀번호">
+      <button class="btn primary" id="loginBtn">로그인</button>
+      <button class="btn ghost" id="skipLoginBtn">TEST 화면만 보기 (로그인 건너뛰기)</button>
+    </div>
+    <div class="login-status" id="loginStatus">아직 로그인하지 않았습니다 · 모든 카드 미연결 상태</div>
+  </div>
+
+  <div class="login-box" id="sessionBox" style="display:none">
+    <div class="session-bar">
+      <div class="session-who">
+        <span id="sessionWhoName">-</span>
+        <small id="sessionWhoEmail">-</small>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge live" id="sessionTaskCount">work_tasks 0건 읽음</span>
+        <button class="btn" id="logoutBtn">로그아웃</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>지금 누가 일하고 있나요?</h1>
+    <p>대표 → 누구에게 일을 시킬지 선택 → 사람 또는 AI가 일함 → 현재 상태 확인 → 결과 제출/회수 → 대표 확인</p>
+  </div>
+
+  <div class="grid people" id="peopleGrid"></div>
+
+  <div class="info-box">
+    <h3>업무센터 연결 (실제 구조 그대로)</h3>
+    <ul>
+      <li>업무 실제 상태: <b>work_tasks</b> 테이블 읽기전용 연결 (위 로그인 시 실제 데이터)</li>
+      <li>업무지시 등록 위치: <a href="https://drive.google.com/drive/folders/1xDDgmq_tgKSvzqwTdMikRoJ3a7PFM4rZ" target="_blank" rel="noopener">회사공통 › 01_업무공유폴더 › 01_업무지시</a></li>
+      <li>업무공유파일 위치: <a href="https://drive.google.com/drive/folders/1akIH85_fbbPkshgPLWCkzxv3doMgJU0W" target="_blank" rel="noopener">회사공통 › 01_업무공유폴더 › 03_업무공유파일</a></li>
+      <li>업무일지: 회사공통 › 01_업무공유폴더 › 02_업무일지 (수진 작성 전용, 이 TEST에서 직접 쓰지 않음)</li>
+      <li><b>참고:</b> 실제 운영규칙(수진 업무지시·업무공유·자료찾기 규칙, 2026-09-18)에 "수진은 Slack·메신저·이메일로 검색하는 수신자가 아니다"라고 명시되어 있어, 이번 TEST의 "업무지시"는 채팅형 메신저가 아니라 이 Drive 문서 등록 흐름을 화면으로 재현한 것입니다.</li>
+    </ul>
+  </div>
+
+  <div class="pool-cta">
+    <button class="pool-btn" id="openPool">전문 AI 인력풀 · 향후 배치 후보 보기 (21명, 참고용)
+      <small>지안·사라 등 역할이 확정된 전문 AI는 위 노아 화면에서 위임 대상으로 연결됩니다 · 이 목록은 아직 실행연결되지 않은 나머지 인력의 배치표입니다 (삭제 아님, 보존)</small>
+    </button>
+  </div>
+
+</div>
+
+<footer class="note">
+  <b>WD 본진 · 라이브오피스 기능연결 TEST</b>
+  <span>운영본·GitHub main·DB·Supabase 스키마 변경 없음 · 읽기전용 연결만 사용</span>
+</footer>
+
+<!-- 박수진 업무방 -->
+<dialog id="sujinDialog">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <div class="avatar" style="background:#558477">수</div>
+      <div class="who"><b>박수진 업무방</b><span>사람 직원 · 업무 인계·회수·누락 관리</span></div>
+      <button class="dlg-close" data-close="sujinDialog">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="dlg-quick">
+        <button class="btn primary" data-sujin-tab="assign">업무지시</button>
+        <button class="btn" data-sujin-tab="progress">진행상태</button>
+        <button class="btn" data-sujin-tab="result">결과</button>
+      </div>
+
+      <div class="warn-box">"업무메신저"라는 별도 채팅 시스템은 실제로 없습니다. 수진에게 전달한다는 것은 Drive 업무지시 문서에 등록한다는 뜻입니다(현재 운영규칙). 이 화면은 그 등록 절차를 그대로 재현했고, 실제 Drive 저장은 하지 않습니다.</div>
+
+      <div id="sujinPane-assign">
+        <div class="dlg-section">
+          <h4>업무지시 등록 (TEST 미리보기)</h4>
+          <div class="quick-form">
+            <input id="sujinTitle" type="text" placeholder="업무 제목">
+            <textarea id="sujinDetail" placeholder="상세 지시 / 완료 기준 / 참고사항"></textarea>
+            <button class="btn primary" id="sujinPreviewBtn">등록 전 미리보기</button>
+          </div>
+          <div class="preview-box" id="sujinPreview" style="display:none"></div>
+        </div>
+      </div>
+      <div id="sujinPane-progress" style="display:none">
+        <div class="dlg-section">
+          <h4>work_tasks 기준 진행상태</h4>
+          <ul class="dlg-list" id="sujinProgressList"></ul>
+        </div>
+      </div>
+      <div id="sujinPane-result" style="display:none">
+        <div class="dlg-section">
+          <h4>최근 결과 / 대표확인</h4>
+          <ul class="dlg-list" id="sujinResultList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- 노아 운영총괄실 -->
+<dialog id="noaDialog">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <div class="avatar" style="background:#745786">노</div>
+      <div class="who"><b>노아 · AI 운영총괄</b><span>AI-HQ-01 · AI 전략·PM 총괄 · R0/R1 연결됨</span></div>
+      <button class="dlg-close" data-close="noaDialog">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="dlg-section">
+        <h4>[노아가 직접]</h4>
+        <div class="dlg-quick">
+          <a class="btn primary" href="https://chat.openai.com" target="_blank" rel="noopener">대화하기 (ChatGPT 열기 ↗)</a>
+          <a class="btn" href="https://claude.ai" target="_blank" rel="noopener">Claude 열기 ↗</a>
+          <button class="btn" data-noa-tab="find">찾기</button>
+          <button class="btn" data-noa-tab="organize">정리하기</button>
+        </div>
+        <div class="dlg-box">찾기 · 정리하기 · 판단보조 · 센터 라우팅 · 결과회수 (AI 인력풀 실제 duties 데이터 기준)</div>
+      </div>
+
+      <div class="dlg-section">
+        <h4>[전문 AI에게 위임]</h4>
+        <ul class="dlg-list" id="noaDelegateList"></ul>
+      </div>
+
+      <div class="dlg-section">
+        <h4>일시키기 (TEST 미리보기 · 실제 저장 없음)</h4>
+        <div class="quick-form">
+          <input id="noaAssignInput" type="text" placeholder="노아에게 시킬 일을 한 줄로">
+          <button class="btn primary" id="noaAssignPreviewBtn">미리보기</button>
+        </div>
+        <div class="preview-box" id="noaAssignPreview" style="display:none"></div>
+      </div>
+      <div class="dlg-section">
+        <h4>work_tasks 기준 · 대표확인 필요</h4>
+        <ul class="dlg-list" id="noaApprovalList"></ul>
+      </div>
+      <div class="dlg-section">
+        <h4>work_tasks 기준 · 최근 결과</h4>
+        <ul class="dlg-list" id="noaResultList"></ul>
+      </div>
+      <div class="dlg-section">
+        <h4>노아 실제 권한 경계 (AI 인력풀 데이터 그대로)</h4>
+        <div class="dlg-box" id="noaBoundaryBox"></div>
+      </div>
+      <div class="dlg-section">
+        <h4>향후 실행연결 구조 후보 (이번 TEST 미구현)</h4>
+        <div class="dlg-box">노아 → 담당 AI → 대상 원본공간 → 결과 위치 → 상태 → 대표확인 필요 여부<br>전문 AI마다 별도 업무센터·업무일지·메신저·DB를 만들지 않고, 공통 AI 작업큐/인계선 1개로만 관리하는 구조를 향후 후보로 둡니다. 이번 TEST는 화면·흐름만 반영했고 새 테이블·Edge Function·Supabase 변경은 하지 않았습니다.</div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- AI 인력풀 -->
+<dialog id="poolDialog">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <div class="avatar" style="background:#8d7a97">21</div>
+      <div class="who"><b>AI 인력풀 · 실제 배치표</b><span>wd-headquarters-optimized-test.html WDHQ_PLACEMENT_V1 재사용</span></div>
+      <button class="dlg-close" data-close="poolDialog">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="pool-flow">노아·새봄·한결·세온 4명만 현재 R0/R1(읽기·정리·검수) 가동 중입니다. 나머지 17명은 배치 준비 상태이며 모든 R2/R3(실행) 권한은 잠겨 있습니다. (파일 근거: wd-headquarters-optimized-test.html)</div>
+      <div id="poolTeams"></div>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ 0. 실제 연결 정보 (wd-headquarters-optimized-test.html에서 그대로 재사용) ============ */
+var SUPABASE_URL = 'https://mzftzadtoepcrwhnwdmn.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh';
+var OWNER_EMAIL = 'kfcyk50@admin.wdwave.kr';
+var STAFF_EMAIL = 'kfcyk30@admin.wdwave.kr';
+var WORK_TASKS_SELECT = 'id,user_id,category,content,status,request_date,created_at,updated_at,requester_name,idea_status,raw_content,core_content,next_action,assignee_name,worker_name,worker_key,result_url,result_note,blocked_note';
+
+var sbClient = null;
+try{
+  if(window.supabase && window.supabase.createClient){
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+}catch(e){ console.error('Supabase client init failed', e); }
+
+/* ============ 1. AI 인력풀 실제 데이터 (그대로 재사용, 임의 생성 없음) ============ */
+var AI_EMPLOYEES = [{"id": "AI-HQ-01", "name": "노아", "role": "AI 전략·PM 총괄", "team": "AI 총괄", "reports_to": "WD AI 관제실", "spaces": ["뉴본진", "전체 최소상태"], "duties": ["우선순위", "범위·순서 판단", "AI 업무조정", "승인건 선별", "이상감지", "대표 브리핑"], "automations": ["아침 관제요약", "승인대기 회수", "지연·중복 탐지", "AI 결과 종합"], "read": ["각 센터 최소상태", "승인대기", "마감", "오류·감사로그"], "write": ["관제요약", "우선순위", "업무배정 제안"], "messaging": {"sms": "초안", "kakao": "초안", "email": "초안"}, "default_risk": "R1", "approval": ["R2 업무배정", "R3 외부발송·배포·삭제"], "prohibited": ["보험 최종판단", "결제·삭제 직접실행", "민감원문 무제한 열람"]}, {"id": "AI-HQ-02", "name": "하라", "role": "AI 자료·원석·근거 총괄", "team": "AI 총괄", "reports_to": "WD AI 관제실", "spaces": ["제작센터", "데이터센터", "콘텐츠 제작실"], "duties": ["음성·영상·긴 원문 정리", "원석 추출", "톤·맥락 검수"], "automations": ["원석 분류", "긴 콘텐츠 핵심추출", "후속 제작소재 묶음"], "read": ["원자료", "영상·음성", "승인 참고자료"], "write": ["원석요약", "태그", "제작요청 메모"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R1", "approval": ["R3 외부공유"], "prohibited": ["사실 단정", "원본삭제", "외부 직접발송"]}, {"id": "AI-HQ-03", "name": "나온", "role": "AI 제작·기술 총괄", "team": "AI 총괄", "reports_to": "WD AI 관제실", "spaces": ["제작센터", "시스템·코딩팀", "데이터센터"], "duties": ["문서·코드·파일 제작", "기술통합", "산출물 패키징", "결과회수"], "automations": ["승인지시 템플릿화", "반복 산출물 초안", "파일규격 검사"], "read": ["제작지시", "브랜드 기준", "원본 위치"], "write": ["제작물 초안", "작업상태", "결과위치"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R1", "approval": ["R3 운영배포", "R2/R3 데이터구조 변경"], "prohibited": ["승인없는 운영배포", "원본 덮어쓰기", "Auth/RLS 임의변경"]}, {"id": "AI-INS-01", "name": "라온", "role": "약관·상품분석 담당", "team": "보험업무팀", "reports_to": "WD AI 관제실", "spaces": ["보험사업부", "보험 자료", "데이터센터"], "duties": ["약관·공시 대조", "조건 비교표", "설명자료 근거확인"], "automations": ["변경자료 비교 후보", "설명 전 근거누락 체크"], "read": ["약관", "상품공시", "승인 고객업무상태"], "write": ["근거메모", "비교표 초안", "확인필요 표시"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R1", "approval": ["R3 고객안내 발송"], "prohibited": ["가입 권유 자동결정", "인수·보상 최종판단", "고객 단독발송"]}, {"id": "AI-INS-02", "name": "이름 미정", "role": "보험 고객관리 AI", "team": "보험업무팀", "reports_to": "WD AI 관제실", "spaces": ["보험사업부", "고객관리", "WD 메시지 게이트웨이"], "duties": ["생일", "자동차 만기", "미연락", "상담 후속", "서류안내", "다음 연락일"], "automations": ["매일 생일 추출", "만기 30/15/7일 추출", "미연락 추적", "템플릿 발송준비", "발송결과 기록"], "read": ["고객명", "연락처", "생일", "자동차 만기일", "수신동의", "연락이력", "담당설계사"], "write": ["연락예정", "연락결과", "다음 연락일", "발송결과"], "messaging": {"sms": "조건부 실행", "kakao": "조건부 실행", "email": "조건부 실행"}, "default_risk": "R2", "approval": ["R3 광고성·비표준 메시지", "R3 민감 고객 외부발송"], "prohibited": ["보험상품 임의추천", "계약변경", "고객삭제", "수신동의 없는 마케팅", "보험판단"]}, {"id": "AI-INS-03", "name": "이름 미정", "role": "보험 업무운영 AI", "team": "보험업무팀", "reports_to": "WD AI 관제실", "spaces": ["보험사업부"], "duties": ["계약·청약", "심사·보완서류", "청구", "마감", "누락·지연"], "automations": ["오늘 마감 추출", "보완서류 추적", "청구지연 체크", "완료 후 다음단계"], "read": ["계약상태", "청약상태", "심사상태", "청구상태", "서류목록", "마감"], "write": ["업무상태", "보완필요", "다음행동", "담당 태스크"], "messaging": {"sms": "초안", "kakao": "초안", "email": "초안"}, "default_risk": "R2", "approval": ["R3 고객·보험사 외부발송", "R3 계약정보 변경"], "prohibited": ["계약 체결·취소", "보험금 판단", "개인정보 삭제", "임의 외부발송"]}, {"id": "AI-DOC-01", "name": "서림", "role": "문서제작팀장", "team": "문서제작팀", "reports_to": "WD AI 관제실", "spaces": ["제작센터", "업무센터"], "duties": ["문서규격", "배정", "품질", "재작업"], "automations": ["문서요청 분류", "템플릿 적용", "누락체크"], "read": ["제작지시", "브랜드기준"], "write": ["작업상태", "검수요청"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R2", "approval": ["R3 외부납품"], "prohibited": ["승인 전 납품", "원본 덮어쓰기"]}, {"id": "AI-DOC-02", "name": "다온", "role": "문서·프레젠테이션 담당", "team": "문서제작팀", "reports_to": "서림", "spaces": ["제작센터"], "duties": ["DOCX", "PPTX", "보고서", "시각화"], "automations": ["템플릿 초안", "표·슬라이드 구조화"], "read": ["제작원석", "브랜드기준"], "write": ["문서·PPT 초안", "버전메모"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R1", "approval": ["R3 최종납품"], "prohibited": ["외부발송", "운영배포"]}, {"id": "AI-DOC-03", "name": "채움", "role": "표·파일 꾸러미 담당", "team": "문서제작팀", "reports_to": "서림", "spaces": ["제작센터", "데이터센터"], "duties": ["표·엑셀", "첨부목록", "납품꾸러미", "파일명"], "automations": ["파일명 검사", "첨부누락", "납품목록"], "read": ["산출물", "파일메타"], "write": ["파일목록", "납품꾸러미"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R1", "approval": ["R3 원본이동·삭제"], "prohibited": ["원본삭제", "승인전 외부공유"]}, {"id": "AI-CB-01", "name": "소담", "role": "콘텐츠·브랜딩팀장", "team": "콘텐츠·브랜딩팀", "reports_to": "WD AI 관제실", "spaces": ["브랜딩센터", "제작센터", "퍼스널브랜딩"], "duties": ["콘텐츠방향", "브랜드일관성", "팀기준"], "automations": ["브랜드 기준 위반체크", "제작요청 분류"], "read": ["브랜드기준", "원석", "프로젝트상태"], "write": ["콘텐츠방향", "브랜드검수", "제작요청"], "messaging": {"sms": "불가", "kakao": "초안", "email": "초안"}, "default_risk": "R1", "approval": ["R3 고객발송·게시"], "prohibited": ["브랜드기준 임의변경", "승인전 게시"]}, {"id": "AI-CB-02", "name": "이음", "role": "대본·콘텐츠 전환 담당", "team": "콘텐츠·브랜딩팀", "reports_to": "소담", "spaces": ["콘텐츠 제작실", "제작센터"], "duties": ["영상·글·카드뉴스 대본", "원석 다중전환"], "automations": ["롱폼→쇼츠", "원석→블로그", "원석→카드뉴스"], "read": ["승인원석", "톤기준"], "write": ["대본·문안 초안", "콘텐츠후보"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R1", "approval": ["R3 게시·외부발송"], "prohibited": ["자동게시", "근거없는 주장"]}, {"id": "AI-CB-03", "name": "다해", "role": "디자인자산 담당", "team": "콘텐츠·브랜딩팀", "reports_to": "소담", "spaces": ["브랜딩센터", "제작센터"], "duties": ["이미지·카드·아이콘·캐릭터 자산"], "automations": ["승인/후보 분류", "중복탐지", "적용현황"], "read": ["브랜드자산", "승인상태"], "write": ["자산상태", "적용위치"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R1", "approval": ["R2/R3 공식자산 교체"], "prohibited": ["미승인 공식등록", "원본삭제"]}, {"id": "AI-SYS-01", "name": "도윤", "role": "시스템·코딩팀장", "team": "시스템·코딩팀", "reports_to": "WD AI 관제실", "spaces": ["뉴본진", "GitHub", "Supabase", "독립센터"], "duties": ["시스템범위", "구조", "오류", "기술인계"], "automations": ["404·링크검사", "버전비교", "상태요약"], "read": ["코드", "배포정보", "스키마", "로그"], "write": ["기술보고", "수정제안"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R2", "approval": ["R3 운영배포·Auth/RLS"], "prohibited": ["운영본 덮어쓰기", "승인없는 DB변경"]}, {"id": "AI-SYS-02", "name": "하민", "role": "화면·프론트엔드 담당", "team": "시스템·코딩팀", "reports_to": "도윤", "spaces": ["뉴본진", "독립센터"], "duties": ["PC·모바일 화면", "상태 UI", "상호작용"], "automations": ["반응형 체크", "버튼·레이아웃 검사"], "read": ["HTML/CSS/JS"], "write": ["프론트 작업본"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R1", "approval": ["R3 운영반영"], "prohibited": ["운영배포", "인증로직 임의변경"]}, {"id": "AI-SYS-03", "name": "유진", "role": "데이터·연결 담당", "team": "시스템·코딩팀", "reports_to": "도윤", "spaces": ["Supabase", "데이터센터", "뉴본진"], "duties": ["데이터필드", "연결선", "동기화", "Agent Contract"], "automations": ["필드매핑", "누락탐지", "adapter 보조"], "read": ["스키마", "저장키", "API구조"], "write": ["adapter", "매핑표", "연결설계"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R2", "approval": ["R3 DB schema/RLS"], "prohibited": ["실데이터삭제", "임의 migration"]}, {"id": "AI-QA-01", "name": "바름", "role": "근거·품질검수팀장", "team": "근거·품질검수팀", "reports_to": "WD AI 관제실", "spaces": ["전체 검수", "데이터센터", "제작센터"], "duties": ["근거·기능·파일 독립검수", "완료판정"], "automations": ["완료기준 체크", "상충탐지", "검수리포트"], "read": ["결과물", "근거", "시험결과"], "write": ["검수판정", "보완요청"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R1", "approval": ["최종승인은 대표"], "prohibited": ["자기작업 자기 최종승인"]}, {"id": "AI-QA-02", "name": "가람", "role": "사실·출처 검수 담당", "team": "근거·품질검수팀", "reports_to": "바름", "spaces": ["자료검수", "콘텐츠", "문서"], "duties": ["공식자료·기준일·인용·수치"], "automations": ["출처누락", "날짜·수치 불일치"], "read": ["참고자료", "산출물"], "write": ["사실검수메모", "출처목록"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R0", "approval": [], "prohibited": ["근거없는 보정", "외부발송"]}, {"id": "AI-QA-03", "name": "세온", "role": "기능·파일 검수 담당", "team": "근거·품질검수팀", "reports_to": "바름", "spaces": ["뉴본진", "독립HTML", "GitHub"], "duties": ["링크·파일·버튼·기기·버전 시험"], "automations": ["왕복링크", "모바일·PC 체크", "해시비교"], "read": ["HTML", "링크", "버전"], "write": ["시험결과", "오류리스트"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R0", "approval": [], "prohibited": ["운영파일 직접수정", "배포"]}, {"id": "AI-OPS-01", "name": "한결", "role": "기록·운영지원팀장", "team": "기록·운영지원팀", "reports_to": "WD AI 관제실", "spaces": ["뉴본진", "업무센터"], "duties": ["업무상태", "인계", "회수", "보고기록"], "automations": ["완료·미완료 요약", "인계묶음", "결과위치 회수"], "read": ["업무상태", "담당", "결과위치"], "write": ["업무기록", "인계기록", "보고상태"], "messaging": {"sms": "불가", "kakao": "불가", "email": "초안"}, "default_risk": "R2", "approval": ["R2 사람 업무배정"], "prohibited": ["대표결정 대행", "외부발송"]}, {"id": "AI-OPS-02", "name": "새봄", "role": "일정·누락관리 담당", "team": "기록·운영지원팀", "reports_to": "한결", "spaces": ["뉴본진", "업무센터", "강의센터"], "duties": ["마감·누락·지연·대기", "다음 연락·일정"], "automations": ["오늘/이번주 마감", "지연경고", "다음연락 알림"], "read": ["마감일", "상태", "다음행동"], "write": ["알림상태", "누락표시", "다음확인일"], "messaging": {"sms": "내부알림", "kakao": "불가", "email": "초안"}, "default_risk": "R1", "approval": ["R3 외부리마인드"], "prohibited": ["외부자동발송", "완료 임의판정"]}, {"id": "AI-OPS-03", "name": "마루", "role": "파일·버전·보고 담당", "team": "기록·운영지원팀", "reports_to": "한결", "spaces": ["데이터센터", "GitHub", "Drive"], "duties": ["파일명", "버전", "수정이유", "보고꾸러미"], "automations": ["버전차이", "파일명 규칙", "최신본 후보"], "read": ["파일메타", "버전", "위치"], "write": ["버전목록", "최신본 표시 제안"], "messaging": {"sms": "불가", "kakao": "불가", "email": "불가"}, "default_risk": "R1", "approval": ["R2 최신본 공식교체", "R3 삭제"], "prohibited": ["원본삭제", "최신본 임의확정"]}];
+var ACTIVE_AI_IDS = ['AI-HQ-01','AI-OPS-01','AI-OPS-02','AI-QA-03']; /* 노아·한결·새봄·세온 = 현재 R0/R1 가동 (파일 근거) */
+
+var TEAM_ORDER = ['AI 총괄','보험업무팀','문서제작팀','콘텐츠·브랜딩팀','시스템·코딩팀','근거·품질검수팀','기록·운영지원팀'];
+
+/* 2026-09-23 대표 최종결정: 지안·사라는 노아 내부의 "전문 AI 위임대상"으로만 표시.
+   두 이름 모두 실제 21명 AI 인력풀 데이터(WDHQ_AI_EMPLOYEES)에는 없어 "역할은 확정,
+   실행연결은 미확인" 상태를 그대로 노출합니다 (임의로 연결됨/작업중으로 표시하지 않음). */
+var DELEGATES = [
+  { name:'지안', domain:'보험업무', context:'설계사허브 원본/맥락 사용 → 결과는 설계사허브에 회수', statusText:'역할 확정 · 실행연결 미확인' },
+  { name:'사라', domain:'삶·개인기록', context:'사라의 집 원본/맥락 사용 → 결과는 사라의 집에 회수', statusText:'역할 확정 · 실행연결 미확인' }
+];
+
+/* ============ 2. 상태 ============ */
+var STATE = { session:null, profile:null, tasks:[], tasksLoaded:false };
+
+function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var toastTimer=null;
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove('show')},2400);
+}
+function openDlg(id){var d=document.getElementById(id); if(d&&d.showModal)d.showModal()}
+function closeDlg(id){var d=document.getElementById(id); if(d&&d.close)d.close()}
+document.addEventListener('click',function(e){
+  var c=e.target.closest('[data-close]');
+  if(c) closeDlg(c.getAttribute('data-close'));
+});
+document.querySelectorAll('dialog').forEach(function(d){
+  d.addEventListener('click',function(e){
+    /* 실제 클릭 target이 dialog 자기 자신(=배경 backdrop 영역)일 때만 닫습니다.
+       bounding-rect 좌표비교 방식은 탭 전환 등으로 다이얼로그 크기가 즉시 바뀌는 경우
+       내부 버튼 클릭인데도 바깥클릭으로 오판해 닫혀버리는 오류가 있어 이 방식으로 교체했습니다. */
+    if(e.target===d) d.close();
+  });
+});
+
+function completedText(status){ return /완료|승인완료|종결|처리완료/.test(String(status||'')); }
+function approvalRequired(row){
+  var s=[row.status,row.next_action,row.result_note].filter(Boolean).join(' ');
+  return !completedText(row.status) && /대표.{0,8}(검수|확인|판단|승인)|승인/.test(s);
+}
+function mapRow(row){
+  return {
+    id: row.id,
+    title: row.content || '업무 요청',
+    status: row.status || row.idea_status || '요청접수',
+    dueAt: row.request_date || null,
+    nextAction: row.next_action || (completedText(row.status) ? null : '현재 원장에 확인되는 다음 행동 없음'),
+    blocker: row.blocked_note || null,
+    approval: approvalRequired(row),
+    worker: row.worker_name || row.assignee_name || null,
+    requester: row.requester_name || null,
+    resultLocation: row.result_url || null,
+    resultNote: row.result_note || null,
+    updatedAt: row.updated_at || row.created_at || null
+  };
+}
+function tasksFor(nameNeedles){
+  return STATE.tasks.filter(function(t){
+    var hay=[t.worker,t.requester].filter(Boolean).join(' ');
+    return nameNeedles.some(function(n){ return hay.indexOf(n) >= 0; });
+  });
+}
+
+/* ============ 3. Supabase 로그인 (실제 wd-admin 계정) ============ */
+var selectedRole='owner';
+document.querySelectorAll('.role-pick button').forEach(function(b){
+  b.addEventListener('click',function(){
+    selectedRole=b.getAttribute('data-role');
+    document.querySelectorAll('.role-pick button').forEach(function(x){x.classList.toggle('active',x===b)});
+    document.getElementById('loginEmail').value = selectedRole==='owner'?OWNER_EMAIL:STAFF_EMAIL;
+  });
+});
+document.getElementById('loginEmail').value = OWNER_EMAIL;
+
+document.getElementById('loginBtn').addEventListener('click', async function(){
+  if(!sbClient){ setLoginStatus('Supabase 클라이언트를 불러오지 못했습니다. 네트워크를 확인해 주세요.', true); return }
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  if(!password){ setLoginStatus('비밀번호를 입력해 주세요.', true); return }
+  setLoginStatus('WD ADMIN 계정 인증 확인 중...');
+  try{
+    var res = await sbClient.auth.signInWithPassword({ email: email, password: password });
+    if(res.error || !res.data || !res.data.session) throw new Error(res.error ? res.error.message : '로그인 실패');
+    STATE.session = res.data.session;
+    STATE.profile = { email: email, role: selectedRole };
+    onLoginSuccess();
+  }catch(err){
+    setLoginStatus('로그인 실패: ' + (err && err.message ? err.message : '아이디 또는 비밀번호를 확인해 주세요.'), true);
+  }
+});
+document.getElementById('skipLoginBtn').addEventListener('click', function(){
+  STATE.session=null; STATE.profile=null; STATE.tasks=[]; STATE.tasksLoaded=false;
+  renderAll();
+  setLoginStatus('TEST 화면만 확인 중 · 모든 카드는 미연결 상태로 표시됩니다.');
+});
+document.getElementById('logoutBtn').addEventListener('click', async function(){
+  try{ if(sbClient) await sbClient.auth.signOut(); }catch(e){}
+  STATE.session=null; STATE.profile=null; STATE.tasks=[]; STATE.tasksLoaded=false;
+  document.getElementById('sessionBox').style.display='none';
+  document.getElementById('loginBox').style.display='block';
+  renderAll();
+});
+function setLoginStatus(msg, isErr){
+  var el=document.getElementById('loginStatus');
+  el.textContent=msg; el.className = 'login-status' + (isErr?' err':'');
+}
+async function onLoginSuccess(){
+  document.getElementById('loginBox').style.display='none';
+  var box=document.getElementById('sessionBox'); box.style.display='block';
+  document.getElementById('sessionWhoName').textContent = STATE.profile.role==='owner' ? '최윤경 대표' : '박수진';
+  document.getElementById('sessionWhoEmail').textContent = STATE.profile.email + ' · 실제 WD ADMIN 세션 연결됨';
+  toast('로그인 성공 · work_tasks 읽기 시도 중');
+  await loadWorkTasks();
+  renderAll();
+}
+async function loadWorkTasks(){
+  if(!sbClient || !STATE.session) return;
+  try{
+    var res = await sbClient.from('work_tasks').select(WORK_TASKS_SELECT).order('updated_at',{ascending:false}).limit(200);
+    if(res.error) throw res.error;
+    STATE.tasks = (res.data||[]).map(mapRow);
+    STATE.tasksLoaded = true;
+    document.getElementById('sessionTaskCount').textContent = 'work_tasks ' + STATE.tasks.length + '건 읽음';
+  }catch(err){
+    STATE.tasks = []; STATE.tasksLoaded = false;
+    document.getElementById('sessionTaskCount').textContent = 'work_tasks 읽기 실패 (권한/RLS 확인 필요)';
+    console.error('work_tasks load error', err);
+  }
+}
+
+/* ============ 4. 홈 카드 렌더 ============ */
+function personCardHtml(opts){
+  var connected = STATE.session != null;
+  var tasks = connected ? tasksFor(opts.needles) : [];
+  var current = tasks.find(function(t){ return !completedText(t.status) }) || null;
+  var recent = tasks.find(function(t){ return completedText(t.status) || t.resultLocation }) || null;
+  var statusHtml;
+  if(!connected){
+    statusHtml = '<span class="status-pill wait">미연결 · 로그인 필요</span>';
+  }else if(!STATE.tasksLoaded){
+    statusHtml = '<span class="status-pill none">work_tasks 읽기 실패</span>';
+  }else if(tasks.length===0){
+    statusHtml = '<span class="status-pill none">현재 작업 없음</span>';
+  }else{
+    statusHtml = '<span class="status-pill live">work_tasks 연결됨 · ' + tasks.length + '건</span>';
+  }
+  var nowLine = connected ? (current ? esc(current.title) : '지금 하는 일: 확인 필요') : '지금 하는 일: 미연결';
+  var resultLine = connected ? (recent ? '최근 결과: ' + esc(recent.title) : '최근 결과: 확인 필요') : '최근 결과: 미연결';
+  return '<div class="card person" style="--accent:'+opts.accent+'">' +
+    '<span class="kind-tag">'+opts.kind+'</span>' +
+    '<div class="top-row"><div class="avatar" style="background:'+opts.accent+'">'+opts.initial+'</div>' +
+    '<div class="who"><b>'+opts.name+'</b><span>'+opts.dept+'</span></div></div>' +
+    '<div class="role-line">'+opts.role+'</div>' +
+    '<div class="status-line">'+statusHtml+'</div>' +
+    '<div class="now-line">'+nowLine+'</div>' +
+    '<div class="result-line">'+resultLine+'</div>' +
+    '<div class="card-actions"><button class="btn primary" data-open="'+opts.id+'">열기</button></div>' +
+    '</div>';
+}
+function renderPeople(){
+  var html = '';
+  html += personCardHtml({id:'sujin', kind:'사람', name:'박수진', dept:'WD 본진 · 사람 직원', role:'업무지시 수신 → 진행 → 결과제출 → 대표확인', accent:'#558477', initial:'수', needles:['수진','박수진']});
+  html += personCardHtml({id:'noa', kind:'AI · R0/R1 연결됨', name:'노아', dept:'AI-HQ-01 · AI 운영총괄', role:'대표 자연어 입력 → 직접 처리 또는 전문 AI 위임 → 원본공간에서 작업 → 결과 회수 → 대표 보고', accent:'#745786', initial:'노', needles:['노아']});
+  document.getElementById('peopleGrid').innerHTML = html;
+}
+document.getElementById('peopleGrid') && document.addEventListener('click', function(e){
+  var b = e.target.closest('[data-open]');
+  if(!b) return;
+  var id = b.getAttribute('data-open');
+  if(id==='sujin') openSujin();
+  else if(id==='noa') openNoa();
+});
+
+/* ============ 5. 박수진 업무방 ============ */
+function openSujin(){
+  switchSujinTab('assign');
+  renderSujinLists();
+  openDlg('sujinDialog');
+}
+function switchSujinTab(tab){
+  ['assign','progress','result'].forEach(function(t){
+    document.getElementById('sujinPane-'+t).style.display = (t===tab?'block':'none');
+  });
+}
+document.querySelectorAll('[data-sujin-tab]').forEach(function(b){
+  b.addEventListener('click', function(){ switchSujinTab(b.getAttribute('data-sujin-tab')); });
+});
+document.getElementById('sujinPreviewBtn').addEventListener('click', function(){
+  var title = document.getElementById('sujinTitle').value.trim() || '(업무 제목 미입력)';
+  var detail = document.getElementById('sujinDetail').value.trim() || '(상세 지시 미입력)';
+  var today = new Date().toISOString().slice(0,10);
+  var preview = '문서명: ' + today + '_수진업무지시\n제목: ' + title + '\n상세지시/완료기준/참고사항: ' + detail +
+    '\n\n[TEST] 실제로는 이 내용을 대표님께 보여드리고 승인 후에만\n01_업무공유폴더 › 01_업무지시 폴더에 등록합니다.\n이 화면에서는 실제 Drive에 저장하지 않았습니다.';
+  var el = document.getElementById('sujinPreview');
+  el.textContent = preview; el.style.display='block';
+  toast('미리보기만 생성했습니다 (TEST · 실제 등록 없음)');
+});
+function renderSujinLists(){
+  var tasks = STATE.session ? tasksFor(['수진','박수진']) : [];
+  var progress = tasks.filter(function(t){ return !completedText(t.status); });
+  var result = tasks.filter(function(t){ return completedText(t.status) || t.resultLocation; });
+  fillList('sujinProgressList', progress.map(function(t){ return t.title + ' · ' + t.status; }), STATE.session ? null : '로그인 후 work_tasks 연결 시 표시됩니다.');
+  fillList('sujinResultList', result.map(function(t){ return t.title + (t.resultLocation? ' · '+t.resultLocation : '') + ' · ' + t.status; }), STATE.session ? null : '로그인 후 work_tasks 연결 시 표시됩니다.');
+}
+function fillList(elId, items, emptyMsg){
+  var el = document.getElementById(elId);
+  if(!items || !items.length){ el.innerHTML = '<li style="color:#a79bb0">' + esc(emptyMsg || '없음') + '</li>'; return; }
+  el.innerHTML = items.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
+}
+
+/* ============ 6. 노아 운영총괄실 ============ */
+function openNoa(){
+  var noa = AI_EMPLOYEES.filter(function(a){ return a.id==='AI-HQ-01'; })[0];
+  var boundary = noa ? (
+    '<b>읽기:</b> ' + (noa.read||[]).join(', ') + '<br>' +
+    '<b>쓰기:</b> ' + (noa.write||[]).join(', ') + '<br>' +
+    '<b>기본 위험도:</b> ' + noa.default_risk + '<br>' +
+    '<b>승인 필요:</b> ' + (noa.approval||[]).join(', ') + '<br>' +
+    '<b>금지:</b> ' + (noa.prohibited||[]).join(', ')
+  ) : '데이터를 찾을 수 없습니다.';
+  document.getElementById('noaBoundaryBox').innerHTML = boundary;
+
+  var tasks = STATE.session ? STATE.tasks : [];
+  var approvals = tasks.filter(function(t){ return t.approval; });
+  var results = tasks.filter(function(t){ return completedText(t.status) || t.resultLocation; }).slice(0,8);
+  fillList('noaApprovalList', approvals.map(function(t){ return t.title + ' · ' + t.status; }), STATE.session ? '현재 대표확인 필요 항목이 없습니다.' : '로그인 후 work_tasks 연결 시 표시됩니다.');
+  fillList('noaResultList', results.map(function(t){ return t.title + (t.resultLocation? ' · '+t.resultLocation:'') ; }), STATE.session ? '최근 결과가 없습니다.' : '로그인 후 work_tasks 연결 시 표시됩니다.');
+  renderNoaDelegates();
+  openDlg('noaDialog');
+}
+document.getElementById('noaAssignPreviewBtn').addEventListener('click', function(){
+  var val = document.getElementById('noaAssignInput').value.trim();
+  if(!val){ toast('시킬 일을 입력해 주세요.'); return; }
+  var el = document.getElementById('noaAssignPreview');
+  el.textContent = '[TEST 미리보기] 노아에게: ' + val + '\n\n실제로는 R2 승인(사람 업무배정) 범위이며, 이번 TEST는 work_tasks에 쓰기 연결을 하지 않았습니다.';
+  el.style.display='block';
+  toast('미리보기만 생성했습니다 (TEST · 실제 저장 없음)');
+});
+
+/* ============ 7. 노아 → 전문 AI 위임 (지안/사라는 별도 업무방을 만들지 않고 이 목록으로만 표시) ============ */
+function renderNoaDelegates(){
+  var html = DELEGATES.map(function(d){
+    return '<li><b>'+esc(d.name)+'</b> — '+esc(d.domain)+'<div class="delegate-note">'+esc(d.context)+'</div><span class="role-badge">'+esc(d.statusText)+'</span></li>';
+  }).join('');
+  html += '<li><b>기타 전문 AI</b> — 필요할 때만 후보로 표시<div class="delegate-note">전문 AI마다 별도 업무방·DB를 만들지 않고, 아래 전문 AI 인력풀 참고용 배치표에서만 확인합니다.</div>' +
+    '<button class="btn" id="noaOpenPoolBtn" type="button" style="margin-top:6px">전문 AI 인력풀에서 확인</button></li>';
+  document.getElementById('noaDelegateList').innerHTML = html;
+  var poolBtn = document.getElementById('noaOpenPoolBtn');
+  if(poolBtn) poolBtn.addEventListener('click', function(){ openDlg('poolDialog'); });
+}
+
+/* ============ 8. AI 인력풀 ============ */
+function renderPool(){
+  var byTeam = {};
+  AI_EMPLOYEES.forEach(function(a){ (byTeam[a.team]=byTeam[a.team]||[]).push(a); });
+  var html='';
+  TEAM_ORDER.forEach(function(team){
+    var list = byTeam[team]; if(!list) return;
+    html += '<div class="pool-team"><h5>'+esc(team)+'</h5><div class="pool-list">' +
+      list.map(function(a){
+        var active = ACTIVE_AI_IDS.indexOf(a.id)>=0;
+        return '<div class="pool-chip'+(active?' active':'')+'"><span class="tag">'+(active?'연결됨':'배치준비')+'</span><b>'+esc(a.name)+'</b>'+esc(a.role)+'</div>';
+      }).join('') +
+      '</div></div>';
+  });
+  document.getElementById('poolTeams').innerHTML = html;
+}
+document.getElementById('openPool').addEventListener('click', function(){ openDlg('poolDialog'); });
+
+/* ============ 9. 초기 렌더 ============ */
+function renderAll(){
+  renderPeople();
+  var box = document.getElementById('sessionBox');
+  if(!STATE.session){ box.style.display='none'; document.getElementById('loginBox').style.display='block'; }
+}
+renderPool();
+renderAll();
+
+})();
+</script>
+</body>
+</html>

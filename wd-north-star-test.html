@@ -1,0 +1,476 @@
+<!--
+  WD WAVE 북극성 · TEST본 (wd-north-star-test.html)
+  기준 원본: [북극성_디자인]_WD_WAVE_북극성_정적HTML시공도면_20260920_v01.html
+            (Drive fileId 1zKgo7806oSWs4zE-_MeQ_RmRUCW0eHtv, 대표 승인 v01)
+  이번 작업: 승인된 색상/배치/카드위계/타이포/구조는 100% 보존.
+            누락·오차 확인된 3건만 최소교정으로 추가/수정함.
+            1) BOUNDARY 섹션 — 기획서(WD_WAVE_북극성_상세기획_현재본) 11-D
+               "현재 방향으로 승격하지 않을 과거 검토안" 텍스트 누락 → 노트로 추가
+            2) 좌측 메뉴 is-active 하이라이트 — CSS는 존재하나 스크롤 시
+               실제로 갱신되지 않던 기능(스크롤스파이) → JS 최소 추가로 연결
+            3) 04 METHOD 흐름 — 기존 7단계(축약)를 기획서 8번 항목의
+               승인 기본흐름 10단계(실제현장→실제사례→반복패턴→가설→
+               반대사례·예외→적용시험→수정→방법론후보→Skill·템플릿·
+               운영자산→선택적확장)로 정확히 교정. 카드 스타일·화살표·
+               모바일 세로배치 등 기존 .wdns-flow 디자인은 그대로 사용.
+            4) 시각위계·가독성 교정("앞은 단순하게 / 뒤는 정확하게") — 내용·정보구조는
+               100% 동일, 레이아웃/타이포/색 강도만 교정:
+               - 01 HOME의 4카드(흰 파스텔 카드)를 다크 네이비 "핵심 요약 밴드"
+                 (.wdns-focus)로 전환. 문구(h3/p)는 승인본과 완전히 동일, 장식용
+                 아이콘 박스만 제거하고 타이포 크기·색 대비로 위계 형성.
+               - 8개 섹션 번호 배지(예: "01 · HOME")에서 불필요한 영문 섹션명 제거,
+                 숫자만 남긴 동그란 배지로 축소(정보량 동일, 장식만 축소).
+               - 카드/일러스트 배경의 밝은 파스텔 그라데이션을 차분한 단색 톤으로 축소.
+               - BOUNDARY 3색 상태(확정/후보/승인)는 의미 유지, 채도만 완화.
+               - 좌측 메뉴 스크롤스파이(기존 기능)에 얹어 상단바(PC)·모바일바에
+                 "지금 보고 있는 곳" 라벨을 추가— 이것은 새 기능이 아니라 기존
+                 스크롤스파이가 이미 계산 중인 현재 섹션 값을 화면에 노출만 한 것.
+               - 그 외 BOUNDARY 문구·근거링크·10단계 방법론·기능은 무변경.
+            5) 스토리·애니메이션 앞단 복원(신규 제안) — 회수 결과: Drive
+               `40_만화·애니메이션 제작실`(00_현재기준/10_기획안/20_장면이미지/
+               30_애니메이션/40_완성본/90_과거보존) 전체 확인 결과, 지시된 5장
+               (01_사라의집~05_그리고더멀리)에 해당하는 실제 장면이미지·애니메이션
+               파일은 Drive 어디에도 존재하지 않음(20_장면이미지/1부_대표일상,
+               30_애니메이션, 40_완성본 모두 실제로 비어 있음). 발견된 유일한
+               관련 자료는 내용이 전혀 다른 "대표일상 만화·애니메이션·Suno 기획안"
+               문서 1건뿐이며(대표 개인 삶 10장 스토리, 문서상 "10장 만화 제작
+               완료"라 적혀 있으나 실제 이미지 파일은 Drive에 없음) — 지시된 5장
+               구조와 다르므로 재사용하지 않음. 따라서 아래 스토리 인트로는
+               "복원"이 아니라 100% 신규 제안이며, 문구 중 회사방향 원본
+               (WD_WAVE_회사방향·북극성_현재본)의 검증된 문장만 그대로 인용함:
+               "한 사람·한 현장에서 검증된 좋은 변화와 해결방식이 필요로 하는
+               다른 사람·업종·지역으로 파도처럼 퍼진다." 그 외 6장면 구성·문구·
+               연출은 신규 제안이며 대표 확인 필요. 북극성 HOME 진입 시 이 인트로가
+               먼저 뜨고(최초 1회, 이후 localStorage로 자동재생 생략) "건너뛰기"/
+               "다시보기"가 항상 가능하며, JS 비작동 시에는 자동 노출되지 않고
+               기존 HOME이 그대로 보임(프로그레시브 인핸스먼트). 기존 HOME 4축·
+               상세정보·10단계·BOUNDARY·근거링크·시각위계는 전혀 변경하지 않음.
+               무거운 영상/이미지·base64 삽입 없이 순수 CSS/SVG로만 구성.
+  운영 index.html 아님. Auth/Supabase/DB/GitHub 배포 미연결. 대표 승인 전까지 운영반영 금지.
+-->
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WD WAVE · 북극성 정적 HTML 시공도면 v01</title>
+<style>
+:root{color-scheme:light;}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:#eef3f8}
+body{margin:0;font-family:Pretendard,"Noto Sans KR","Apple SD Gothic Neo",system-ui,sans-serif;color:#12233b;background:#eef3f8}
+button,a{font:inherit}
+#wdns-v01{--navy:#061f3d;--navy2:#0a315a;--blue:#1769ed;--line:#dce5ef;--ink:#1f2937;--muted:#667085;--paper:#ffffff;--soft:#f6f8fb;--shadow:0 10px 30px rgba(18,42,67,.08);min-height:100vh;background:#eef3f8}
+#wdns-v01 .wdns-shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
+#wdns-v01 .wdns-sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#071d39 0%,#0b294b 58%,#06172e 100%);color:#fff;padding:18px 14px;display:flex;flex-direction:column;z-index:20}
+#wdns-v01 .wdns-brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.12)}
+#wdns-v01 .wdns-logo{width:34px;height:34px;border-radius:50%;border:4px solid #fff;border-left-color:#8fd1ff;transform:rotate(-25deg);position:relative}
+#wdns-v01 .wdns-logo:after{content:"";position:absolute;left:9px;top:-8px;width:8px;height:28px;border-radius:8px;background:#fff;transform:rotate(45deg)}
+#wdns-v01 .wdns-brand strong{font-size:20px;letter-spacing:.2px}
+#wdns-v01 .wdns-brand small{display:block;font-size:9px;opacity:.72;margin-top:2px}
+#wdns-v01 .wdns-menu{display:flex;flex-direction:column;gap:4px;padding-top:12px}
+#wdns-v01 .wdns-menu a{display:flex;gap:10px;align-items:center;text-decoration:none;color:#eaf3ff;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:650}
+#wdns-v01 .wdns-menu a:hover,#wdns-v01 .wdns-menu a.is-active{background:#163d6b}
+#wdns-v01 .wdns-ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+#wdns-v01 .wdns-quote{margin-top:auto;padding:14px 10px 4px;font-size:12px;line-height:1.65;color:#cfe2f7;border-top:1px solid rgba(255,255,255,.12)}
+#wdns-v01 .wdns-mobilebar{display:none;background:#071d39;color:#fff;position:sticky;top:0;z-index:30;padding:10px 12px;align-items:center;gap:10px}
+#wdns-v01 .wdns-mobilebar button{border:0;background:#173f6d;color:#fff;border-radius:9px;width:42px;height:42px}
+#wdns-v01 .wdns-main{min-width:0}
+#wdns-v01 .wdns-topbar{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10}
+#wdns-v01 .wdns-breadcrumb{font-size:12px;color:#6c7d91}.wdns-breadcrumb strong{color:#0d2e54}
+#wdns-v01 .wdns-top-actions{display:flex;align-items:center;gap:10px}.wdns-top-actions button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;color:#234668;font-size:12px}
+#wdns-v01 .wdns-hero{position:relative;overflow:hidden;background:radial-gradient(circle at 65% 18%,rgba(119,207,255,.55) 0 1px,transparent 2px),radial-gradient(circle at 23% 22%,rgba(255,255,255,.9) 0 1px,transparent 1.5px),radial-gradient(circle at 81% 35%,rgba(255,255,255,.7) 0 1px,transparent 2px),linear-gradient(180deg,#07284f 0%,#09213d 50%,#061426 100%);color:#fff;min-height:455px;padding:62px 7vw 52px}
+#wdns-v01 .wdns-hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.55) 0 1px,transparent 1.2px);background-size:52px 52px;opacity:.3}
+#wdns-v01 .wdns-mountains{position:absolute;left:0;right:0;bottom:-2px;height:48%;opacity:.6}
+#wdns-v01 .wdns-hero-inner{position:relative;z-index:2;max-width:950px}
+#wdns-v01 .wdns-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#a9c8e9;font-weight:800}
+#wdns-v01 .wdns-hero h1{font-size:48px;line-height:1.18;margin:16px 0 16px;max-width:800px;letter-spacing:-.02em}
+#wdns-v01 .wdns-hero p{font-size:17px;line-height:1.8;max-width:720px;color:#e2edf8;margin:0 0 24px}
+#wdns-v01 .wdns-hero-tags{display:flex;gap:8px;flex-wrap:wrap}.wdns-hero-tags span{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);padding:8px 11px;border-radius:999px;font-size:12px}
+#wdns-v01 .wdns-content{padding:22px;max-width:1480px;margin:0 auto}
+#wdns-v01 .wdns-section{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;scroll-margin-top:76px}
+#wdns-v01 .wdns-section-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;padding:22px 24px 12px}
+#wdns-v01 .wdns-section-head h2{margin:0;color:#0b2f59;font-size:24px;letter-spacing:-.02em}
+#wdns-v01 .wdns-section-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
+#wdns-v01 .wdns-section-num{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:#eef3fa;color:#4a6a92;font-weight:800;font-size:11.5px;letter-spacing:0}
+#wdns-v01 .wdns-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px 24px 24px}
+#wdns-v01 .wdns-focus{margin:12px 24px 20px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#0b2648 0%,#081d38 100%);box-shadow:var(--shadow)}
+#wdns-v01 .wdns-focus-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+#wdns-v01 .wdns-focus-item{padding:22px 20px;border-right:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)}
+#wdns-v01 .wdns-focus-item small{display:block;font-size:11px;font-weight:800;color:#7fa2cc;letter-spacing:.04em;margin-bottom:9px}
+#wdns-v01 .wdns-focus-item h3{margin:0 0 8px;font-size:18px;line-height:1.35;color:#fff;font-weight:800}
+#wdns-v01 .wdns-focus-item p{margin:0;font-size:12px;line-height:1.62;color:#a7bfdc}
+#wdns-v01 .wdns-pos{margin-left:8px;color:#1769ed;font-weight:700}
+#wdns-v01 .wdns-mobilebar-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+#wdns-v01 .wdns-pos-mobile{font-size:10.5px;color:#9ec3ef;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+#wdns-v01 .wdns-card{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;min-height:180px;display:flex;flex-direction:column}
+#wdns-v01 .wdns-card-visual{height:92px;background:#eef2f7;display:grid;place-items:center;color:#3c5f84}
+#wdns-v01 .wdns-card-visual svg{width:48px;height:48px;stroke:currentColor;fill:none;stroke-width:1.5}
+#wdns-v01 .wdns-card-body{padding:14px 14px 16px}.wdns-card-body small{font-size:10px;font-weight:800;color:#3b75a7}.wdns-card-body h3{margin:6px 0 8px;font-size:17px;color:#0d3159}.wdns-card-body p{font-size:12.5px;line-height:1.6;color:#5c6b7b;margin:0}
+#wdns-v01 .wdns-split{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;padding:12px 24px 24px}
+#wdns-v01 .wdns-illustration{min-height:220px;border-radius:16px;background:#e7edf4;display:grid;place-items:center;color:#2d5680;overflow:hidden;position:relative}
+#wdns-v01 .wdns-illustration svg{width:120px;height:120px;stroke:currentColor;fill:none;stroke-width:1.2}
+#wdns-v01 .wdns-detail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#wdns-v01 .wdns-detail-box{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfcfe}.wdns-detail-box h3{font-size:14px;margin:0 0 9px;color:#123d68}.wdns-detail-box ul{margin:0;padding-left:18px;color:#526170;font-size:12.5px;line-height:1.7}
+#wdns-v01 .wdns-flow{padding:14px 24px 24px;display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+#wdns-v01 .wdns-step{flex:1 1 130px;min-width:120px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdff;text-align:center;font-size:12px;color:#34516e}.wdns-step strong{display:block;color:#10375f;font-size:14px;margin-bottom:4px}.wdns-arrow{align-self:center;color:#87a0b9;font-size:20px;font-weight:900}
+#wdns-v01 .wdns-proof-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px 24px 24px}
+#wdns-v01 .wdns-proof{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff}.wdns-proof .wdns-badge{display:inline-flex;align-items:center;gap:6px;background:#eef1f6;color:#42597a;border-radius:999px;padding:6px 8px;font-size:10px;font-weight:800}.wdns-proof h3{margin:12px 0 6px;color:#0d3159}.wdns-proof p{margin:0;color:#5d6b7a;font-size:12.5px;line-height:1.6}.wdns-proof .wdns-status{margin-top:12px;border-top:1px solid #e8eef5;padding-top:10px;color:#2e5579;font-size:11px;font-weight:700}
+#wdns-v01 .wdns-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 24px 24px}.wdns-panel{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fbfcfe}.wdns-panel h3{margin:0 0 10px;color:#0b315b;font-size:16px}.wdns-panel ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.75;color:#526170}
+#wdns-v01 .wdns-boundary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:12px 24px 24px}.wdns-state{border-radius:16px;padding:16px;border:1px solid}.wdns-state h3{margin:0 0 10px;font-size:15px}.wdns-state ul{margin:0;padding-left:18px;font-size:12px;line-height:1.75}.wdns-state.confirmed{background:#f2f7f3;border-color:#cdddd0;color:#33513c}.wdns-state.candidate{background:#f9f6ec;border-color:#e2d8b6;color:#6b5a26}.wdns-state.approval{background:#f8f0f1;border-color:#ddc3c7;color:#763f47}
+#wdns-v01 .wdns-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 24px 24px}.wdns-link{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff;text-decoration:none;color:#133f69;display:flex;flex-direction:column;gap:6px}.wdns-link small{color:#7b8fa4}.wdns-link strong{font-size:14px}.wdns-link span{font-size:11px;color:#5e6e7f;line-height:1.5}
+#wdns-v01 .wdns-foot{margin-top:20px;background:linear-gradient(180deg,#0a294b,#06172d);color:#fff;border-radius:18px;padding:30px;text-align:center;box-shadow:var(--shadow)}.wdns-foot h2{margin:0 0 8px;font-size:24px}.wdns-foot p{margin:0;color:#c8dcf0;font-size:13px;line-height:1.7}
+#wdns-v01 .wdns-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center}.wdns-meta span{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 9px;font-size:10px;color:#dceafa}
+#wdns-v01 .wdns-floating{position:fixed;right:18px;bottom:18px;z-index:15}.wdns-floating a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#0d3761;color:#fff;border-radius:999px;padding:10px 14px;box-shadow:0 10px 30px rgba(6,31,61,.25);font-size:12px;font-weight:800}
+#wdns-v01 .wdns-note{margin:0 24px 24px;padding:12px 14px;border-radius:12px;background:#f7f9fc;border:1px dashed #cbd8e6;color:#607386;font-size:11px;line-height:1.6}
+/* TEST 추가(신규 제안): 북극성 진입 스토리 인트로 — 기존 HOME/섹션 CSS는 무변경, 아래만 추가 */
+#wdns-v01 .wdns-intro{display:none;position:fixed;inset:0;z-index:50;background:linear-gradient(180deg,#040f22 0%,#081d38 55%,#0b2648 100%);color:#fff;flex-direction:column}
+#wdns-v01 .wdns-intro.is-active{display:flex}
+#wdns-v01 .wdns-intro-top{display:flex;justify-content:flex-end;padding:16px 18px}
+#wdns-v01 .wdns-intro-skip{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#eaf3ff;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer}
+#wdns-v01 .wdns-intro-stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:0 24px}
+#wdns-v01 .wdns-intro-scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;opacity:0;pointer-events:none;transition:opacity .6s ease;padding:0 6vw}
+#wdns-v01 .wdns-intro-scene.is-active{opacity:1;pointer-events:auto}
+#wdns-v01 .wdns-intro-art{width:min(58vw,230px);height:min(58vw,230px)}
+#wdns-v01 .wdns-intro-art svg{width:100%;height:100%;overflow:visible}
+#wdns-v01 .wdns-intro-cap{max-width:520px;text-align:center;font-size:16px;line-height:1.7;color:#e2edf8;margin:0}
+#wdns-v01 .wdns-intro-cap.is-quote{font-size:13px;color:#a9c8e9;font-style:italic;margin-top:-4px}
+#wdns-v01 .wdns-intro-dots{display:flex;justify-content:center;gap:8px;padding:18px 0 26px}
+#wdns-v01 .wdns-intro-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer}
+#wdns-v01 .wdns-intro-dots span.is-active{background:#8fd1ff}
+#wdns-v01 .wdns-pt{fill:#8fd1ff}
+#wdns-v01 .wdns-ping{animation:wdnsPing 2.6s ease-out infinite;transform-origin:center}
+#wdns-v01 .wdns-ripple{animation:wdnsRipple 2.2s ease-out infinite;transform-origin:center}
+#wdns-v01 .wdns-link-line{stroke:#5c86b8;stroke-width:1;opacity:0;animation:wdnsFadeIn .8s ease forwards}
+#wdns-v01 .wdns-wave-dot{animation:wdnsPing 2.4s ease-in-out infinite;transform-origin:center}
+@keyframes wdnsPing{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes wdnsRipple{0%{opacity:.65;transform:scale(.4)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes wdnsFadeIn{to{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+ #wdns-v01 .wdns-intro-scene{transition:opacity .01s linear}
+ #wdns-v01 .wdns-ping,#wdns-v01 .wdns-ripple,#wdns-v01 .wdns-wave-dot{animation:none}
+ #wdns-v01 .wdns-link-line{animation:none;opacity:1}
+}
+@media (max-width:1199px){
+ #wdns-v01 .wdns-shell{grid-template-columns:190px minmax(0,1fr)}
+ #wdns-v01 .wdns-grid4,#wdns-v01 .wdns-proof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wdns-v01 .wdns-focus-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wdns-v01 .wdns-links{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wdns-v01 .wdns-detail{grid-template-columns:1fr 1fr}
+ #wdns-v01 .wdns-hero h1{font-size:42px}
+}
+@media (max-width:767px){
+ #wdns-v01 .wdns-shell{display:block}
+ #wdns-v01 .wdns-sidebar{position:fixed;left:-260px;top:0;width:240px;transition:left .2s ease}.wdns-shell.is-open .wdns-sidebar{left:0}
+ #wdns-v01 .wdns-mobilebar{display:flex}
+ #wdns-v01 .wdns-topbar{display:none}
+ #wdns-v01 .wdns-hero{padding:48px 20px 40px;min-height:390px}
+ #wdns-v01 .wdns-hero h1{font-size:34px}
+ #wdns-v01 .wdns-hero p{font-size:15px}
+ #wdns-v01 .wdns-content{padding:12px}
+ #wdns-v01 .wdns-section{border-radius:14px;margin-bottom:12px}
+ #wdns-v01 .wdns-section-head{padding:18px 16px 8px;display:block}.wdns-section-head h2{font-size:21px}
+ #wdns-v01 .wdns-grid4,#wdns-v01 .wdns-proof-grid,#wdns-v01 .wdns-two,#wdns-v01 .wdns-boundary,#wdns-v01 .wdns-links{grid-template-columns:1fr;padding:10px 16px 16px}
+ #wdns-v01 .wdns-focus{margin:10px 16px 16px}
+ #wdns-v01 .wdns-focus-grid{grid-template-columns:1fr}
+ #wdns-v01 .wdns-focus-item{border-right:none}
+ #wdns-v01 .wdns-pos{display:none}
+ #wdns-v01 .wdns-split{grid-template-columns:1fr;padding:10px 16px 16px}.wdns-illustration{min-height:170px}
+ #wdns-v01 .wdns-detail{grid-template-columns:1fr}
+ #wdns-v01 .wdns-flow{padding:10px 16px 16px}.wdns-arrow{display:none}.wdns-step{flex-basis:100%}
+ #wdns-v01 .wdns-note{margin:0 16px 16px}
+ #wdns-v01 .wdns-floating{right:12px;bottom:12px}
+ #wdns-v01 .wdns-intro-art{width:min(52vw,180px);height:min(52vw,180px)}
+ #wdns-v01 .wdns-intro-cap{font-size:14.5px;max-width:88vw}
+ #wdns-v01 .wdns-intro-cap.is-quote{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div id="wdns-v01">
+  <!-- TEST 추가(신규 제안): 북극성 진입 스토리 인트로. 실제 회수된 5장 장면이미지·
+       애니메이션 자산은 Drive에 없어(상세 근거는 상단 주석 5번 참고) 회사방향 원본의
+       검증 문장만 인용한 신규 제안 구성임. 기존 HOME 이하 본문은 무변경.
+       JS 미작동 시 자동 노출되지 않고 기존 HOME이 그대로 보임. -->
+  <div class="wdns-intro" id="wdns-intro" role="dialog" aria-label="북극성 스토리 인트로" aria-hidden="true">
+    <div class="wdns-intro-top"><button type="button" class="wdns-intro-skip" id="wdns-intro-skip">건너뛰기</button></div>
+    <div class="wdns-intro-stage">
+      <div class="wdns-intro-scene" data-scene="1">
+        <div class="wdns-intro-art"><svg viewBox="0 0 100 100"><circle class="wdns-pt wdns-ping" cx="50" cy="50" r="6"/></svg></div>
+        <p class="wdns-intro-cap">한 사람의 하루에서 시작합니다.</p>
+      </div>
+      <div class="wdns-intro-scene" data-scene="2">
+        <div class="wdns-intro-art"><svg viewBox="0 0 100 100"><line x1="8" y1="70" x2="92" y2="70" stroke="#3f6ea3" stroke-width="1"/><circle class="wdns-pt wdns-ping" cx="50" cy="62" r="6"/></svg></div>
+        <p class="wdns-intro-cap">가까운 현장에서 실제 문제를 마주합니다.</p>
+      </div>
+      <div class="wdns-intro-scene" data-scene="3">
+        <div class="wdns-intro-art"><svg viewBox="0 0 100 100"><circle class="wdns-ripple" cx="50" cy="50" r="14" fill="none" stroke="#8fd1ff" stroke-width="1.4"/><circle class="wdns-pt" cx="50" cy="50" r="6"/></svg></div>
+        <p class="wdns-intro-cap">작더라도 실제로 도움이 되는 방법을 찾습니다.</p>
+      </div>
+      <div class="wdns-intro-scene" data-scene="4">
+        <div class="wdns-intro-art"><svg viewBox="0 0 100 100">
+          <line class="wdns-link-line" x1="50" y1="50" x2="20" y2="30" style="animation-delay:.1s"/>
+          <line class="wdns-link-line" x1="50" y1="50" x2="80" y2="30" style="animation-delay:.3s"/>
+          <line class="wdns-link-line" x1="50" y1="50" x2="18" y2="68" style="animation-delay:.5s"/>
+          <line class="wdns-link-line" x1="50" y1="50" x2="82" y2="68" style="animation-delay:.7s"/>
+          <line class="wdns-link-line" x1="50" y1="50" x2="50" y2="12" style="animation-delay:.9s"/>
+          <circle class="wdns-pt" cx="50" cy="50" r="6"/>
+          <circle class="wdns-pt" cx="20" cy="30" r="3.4"/><circle class="wdns-pt" cx="80" cy="30" r="3.4"/>
+          <circle class="wdns-pt" cx="18" cy="68" r="3.4"/><circle class="wdns-pt" cx="82" cy="68" r="3.4"/>
+          <circle class="wdns-pt" cx="50" cy="12" r="3.4"/>
+        </svg></div>
+        <p class="wdns-intro-cap">사람과 AI, 시스템이 함께 연결됩니다.</p>
+      </div>
+      <div class="wdns-intro-scene" data-scene="5">
+        <div class="wdns-intro-art"><svg viewBox="0 0 100 60">
+          <path d="M0 40 Q15 30 30 40 T60 40 T90 40 T110 40" fill="none" stroke="#3f6ea3" stroke-width="1.2" opacity=".55"/>
+          <path d="M0 48 Q15 40 30 48 T60 48 T90 48 T110 48" fill="none" stroke="#3f6ea3" stroke-width="1.2" opacity=".35"/>
+          <circle class="wdns-pt wdns-wave-dot" cx="14" cy="37" r="2.6" style="animation-delay:0s"/>
+          <circle class="wdns-pt wdns-wave-dot" cx="34" cy="34" r="2.6" style="animation-delay:.3s"/>
+          <circle class="wdns-pt wdns-wave-dot" cx="54" cy="37" r="2.6" style="animation-delay:.6s"/>
+          <circle class="wdns-pt wdns-wave-dot" cx="74" cy="34" r="2.6" style="animation-delay:.9s"/>
+          <circle class="wdns-pt wdns-wave-dot" cx="90" cy="37" r="2.6" style="animation-delay:1.2s"/>
+        </svg></div>
+        <p class="wdns-intro-cap">검증된 좋은 변화가 다른 사람·업종·지역으로 퍼집니다.</p>
+        <p class="wdns-intro-cap is-quote">“한 사람·한 현장에서 검증된 좋은 변화와 해결방식이 필요로 하는 다른 사람·업종·지역으로 파도처럼 퍼진다.”</p>
+      </div>
+      <div class="wdns-intro-scene" data-scene="6">
+        <div class="wdns-intro-art"><svg viewBox="0 0 100 100"><path class="wdns-ping" d="m50 20 9.6 22.5L82 46l-23.8 10.4L50 79l-8.2-22.6L18 46l23.8-3.5z" fill="#8fd1ff"/></svg></div>
+        <p class="wdns-intro-cap">그 방향이 우리의 북극성입니다.</p>
+      </div>
+    </div>
+    <div class="wdns-intro-dots" id="wdns-intro-dots"></div>
+  </div>
+  <div class="wdns-mobilebar"><button id="wdns-menu-toggle" aria-label="메뉴 열기">☰</button><button type="button" id="wdns-story-replay-mobile" aria-label="스토리 다시보기">▶</button><div class="wdns-mobilebar-text"><strong>WD WAVE · 북극성</strong><span id="wdns-pos-mobile" class="wdns-pos-mobile"></span></div></div>
+  <div class="wdns-shell" id="wdns-shell">
+    <aside class="wdns-sidebar" aria-label="북극성 메뉴">
+      <div class="wdns-brand"><div class="wdns-logo" aria-hidden="true"></div><div><strong>WD WAVE</strong><small>People · AI · System · A Better Tomorrow</small></div></div>
+      <nav class="wdns-menu">
+        <a id="wdns-nav-home" class="is-active" href="#wdns-home"><svg class="wdns-ico" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V21H6v-7h12v7"/></svg>홈</a>
+        <a id="wdns-nav-purpose" href="#wdns-purpose"><svg class="wdns-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>존재이유</a>
+        <a id="wdns-nav-star" href="#wdns-star"><svg class="wdns-ico" viewBox="0 0 24 24"><path d="m12 3 2.3 5.4L20 11l-5.7 2.5L12 19l-2.3-5.5L4 11l5.7-2.6z"/></svg>북극성</a>
+        <a id="wdns-nav-method" href="#wdns-method"><svg class="wdns-ico" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="m10 10 4 4"/></svg>일하는 방식</a>
+        <a id="wdns-nav-proof" href="#wdns-proof"><svg class="wdns-ico" viewBox="0 0 24 24"><path d="M4 19V9l5 3 5-7 6 5v9z"/></svg>지금 증명중</a>
+        <a id="wdns-nav-model" href="#wdns-model"><svg class="wdns-ico" viewBox="0 0 24 24"><path d="M4 19h16M6 16V9h4v7M14 16V5h4v11"/></svg>사업모델·우선순위</a>
+        <a id="wdns-nav-boundary" href="#wdns-boundary"><svg class="wdns-ico" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM9 8h6M9 12h6M9 16h4"/></svg>확정·후보·경계</a>
+        <a id="wdns-nav-evidence" href="#wdns-evidence"><svg class="wdns-ico" viewBox="0 0 24 24"><path d="M4 12h16M7 7h10M7 17h10"/></svg>근거·연결</a>
+      </nav>
+      <div class="wdns-quote">“좋은 경험이 더 멀리, 더 많은 사람에게 이어지도록.”</div>
+    </aside>
+
+    <main class="wdns-main">
+      <header class="wdns-topbar"><div class="wdns-breadcrumb"><strong>WD WAVE</strong> / 회사방향·북극성<span id="wdns-pos-desktop" class="wdns-pos"></span></div><div class="wdns-top-actions"><button id="wdns-open-source">회사방향 원본</button><button id="wdns-open-index">원본지도</button><button type="button" id="wdns-story-replay">스토리 다시보기</button></div></header>
+
+      <section class="wdns-hero" id="wdns-home">
+        <svg class="wdns-mountains" viewBox="0 0 1600 400" preserveAspectRatio="none" aria-hidden="true"><path fill="#13385e" d="M0 350 190 210l110 80 160-160 150 135 170-195 160 160 190-120 130 150 170-160 180 250z"/><path fill="#0c2745" d="M0 380 250 275l125 75 170-130 160 120 175-105 170 120 180-95 170 100 220-70 100 90z"/></svg>
+        <div class="wdns-hero-inner">
+          <div class="wdns-kicker">WD WAVE · NORTH STAR</div>
+          <h1>좋은 경험이 더 멀리,<br>더 많은 사람에게 이어지도록.</h1>
+          <p>사람의 경험과 강점이 사라지지 않고, AI와 시스템의 도움을 받아 실제 도움이 되는 지속 가능한 내일로 이어지게 합니다.</p>
+          <div class="wdns-hero-tags"><span>PEOPLE</span><span>AI</span><span>SYSTEM</span><span>A BETTER TOMORROW</span></div>
+        </div>
+      </section>
+
+      <div class="wdns-content">
+        <section class="wdns-section" aria-labelledby="wdns-home-title">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">01</div><h2 id="wdns-home-title">북극성 홈</h2><p>한눈에 우리가 누구이고 어디로 가는지 확인합니다.</p></div></div>
+          <div class="wdns-focus">
+            <div class="wdns-focus-grid">
+              <div class="wdns-focus-item"><small>01</small><h3>우리가 존재하는 이유</h3><p>사람이 자신의 경험과 강점을 잃지 않고 지속 가능하게 삶과 일을 이어가도록 돕습니다.</p></div>
+              <div class="wdns-focus-item"><small>02</small><h3>우리가 향하는 북극성</h3><p>한 사람의 좋은 경험이 검증된 방식과 시스템으로 남아 다른 사람에게도 실제 도움이 되게 합니다.</p></div>
+              <div class="wdns-focus-item"><small>03</small><h3>우리가 일하는 방식</h3><p>현장 → 사례 → 반복패턴 → 적용시험 → 수정 → 방법론 → Skill·운영자산으로 이어갑니다.</p></div>
+              <div class="wdns-focus-item"><small>04</small><h3>지금 실제로 증명하고 있는 것</h3><p>보험, 브랜딩·제작, AI·디지털교육, 사람·AI·시스템 연구에서 실제 검증을 진행합니다.</p></div>
+            </div>
+          </div>
+          <div class="wdns-note">화면 원칙 — 앞은 단순하게: 지금 이 화면은 대표가 판단에 필요한 4가지 핵심(존재이유·북극성·일하는 방식·지금 증명중)만 크게 보여줍니다. 뒤는 정확하게: 아래로 스크롤하거나 좌측 메뉴를 누르면 AI·시스템이 정리해 둔 근거·10단계 방법론·확정/후보/경계·원본 연결이 그대로 이어집니다.</div>
+        </section>
+
+        <section class="wdns-section" id="wdns-purpose">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">02</div><h2>우리가 존재하는 이유</h2><p>사람과 AI를 바라보는 우리의 관점과 출발점</p></div></div>
+          <div class="wdns-split">
+            <div class="wdns-illustration"><svg viewBox="0 0 64 64"><path d="M10 33c9-17 18-18 22-9 4-9 13-8 22 9-6 13-17 20-22 20S16 46 10 33z"/></svg></div>
+            <div class="wdns-detail">
+              <div class="wdns-detail-box"><h3>출발점</h3><ul><li>우리동네보험지킴이</li><li>가까운 현장의 실제 문제</li><li>사람·업무·디지털 장벽 발견</li></ul></div>
+              <div class="wdns-detail-box"><h3>사람에 대한 기준</h3><ul><li>사람을 수단으로 보지 않음</li><li>경험과 강점을 살림</li><li>판단·관계·책임·창조는 사람 중심</li></ul></div>
+              <div class="wdns-detail-box"><h3>AI·시스템의 역할</h3><ul><li>반복·검색·분류 부담 감소</li><li>연결과 누락 방지</li><li>중요한 일에 집중하도록 보조</li></ul></div>
+            </div>
+          </div>
+          <div class="wdns-note">노출 경계: 대표 개인의 신앙·개인철학을 회사 전면 문구로 직접 노출하지 않고, 그 철학에서 나온 사람존중·도움·책임·지속의 기준이 회사철학으로 느껴지게 한다.</div>
+        </section>
+
+        <section class="wdns-section" id="wdns-star">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">03</div><h2>우리가 향하는 북극성</h2><p>슬로건이 아니라 실제 판단 기준으로 사용합니다.</p></div></div>
+          <div class="wdns-two">
+            <div class="wdns-panel"><h3>북극성 판단 질문 3개</h3><ul><li>실제 도움이 되었는가?</li><li>반복 가능한가?</li><li>다른 사람도 안전하게 이어갈 수 있는가?</li></ul></div>
+            <div class="wdns-panel"><h3>확장 원칙</h3><ul><li>가까운 현장에서 실제 도움</li><li>검증</li><li>반복 가능한 방식</li><li>자산화</li><li>자연스러운 확산</li></ul></div>
+          </div>
+        </section>
+
+        <section class="wdns-section" id="wdns-method">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">04</div><h2>우리가 일하는 방식</h2><p>실제 현장에서 검증되는 지속 가능한 방법</p></div></div>
+          <div class="wdns-flow">
+            <div class="wdns-step"><strong>01 현장</strong>실제 현장</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>02 사례</strong>실제 사례</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>03 패턴</strong>반복패턴</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>04 가설</strong>가설</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>05 예외</strong>반대사례·예외</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>06 적용시험</strong>적용시험</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>07 수정</strong>수정</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>08 후보</strong>방법론 후보</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>09 자산화</strong>Skill·템플릿·운영자산</div><div class="wdns-arrow">→</div>
+            <div class="wdns-step"><strong>10 확장</strong>선택적 확장</div>
+          </div>
+          <div class="wdns-two"><div class="wdns-panel"><h3>우리가 하지 않는 것</h3><ul><li>한 사례를 바로 Skill로 확정하지 않음</li><li>생성됨을 검수통과로 보지 않음</li><li>검증되지 않은 결과를 운영승격하지 않음</li></ul></div><div class="wdns-panel"><h3>상태를 분리한다</h3><ul><li>생성 완료 ≠ 검수 통과</li><li>대표 승인 ≠ 운영 확정</li><li>결과물 생성 ≠ 원본 회수 ≠ 회사 자산화</li></ul></div></div>
+        </section>
+
+        <section class="wdns-section" id="wdns-proof">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">05</div><h2>지금 실제로 증명하고 있는 것</h2><p>사업목록이 아니라 현재 실증 상태를 보여줍니다.</p></div></div>
+          <div class="wdns-proof-grid">
+            <article class="wdns-proof"><span class="wdns-badge">🛡 보험</span><h3>현재 현금흐름</h3><p>상담·설계·계약·청구·고객관리·설계사허브에서 실제 문제와 해결방식을 검증합니다.</p><div class="wdns-status">현재: 실제 업무 검증중</div></article>
+            <article class="wdns-proof"><span class="wdns-badge">🎨 브랜딩·제작</span><h3>다음 수입엔진</h3><p>업종분석 → 브랜드전략 → 실제 제작의 흐름이 판매·납품 가능한 반복형 서비스가 되는지 검증합니다.</p><div class="wdns-status">현재: 납품·판매 가능성 검증</div></article>
+            <article class="wdns-proof"><span class="wdns-badge">🎓 AI·디지털교육</span><h3>공공·지역 실증</h3><p>디지털 장벽이 있는 사람도 실제 수행하고 다시 혼자 해볼 수 있게 되는지 검증합니다.</p><div class="wdns-status">현재: 현장 실증·성과근거 축적</div></article>
+            <article class="wdns-proof"><span class="wdns-badge">🔬 연구</span><h3>방법론 전환</h3><p>실제사례 → 패턴 → 가설 → 반대사례 → 적용시험을 거쳐 반복 가능한 방법론 후보로 전환합니다.</p><div class="wdns-status">현재: 사례 기반 연구 진행</div></article>
+          </div>
+        </section>
+
+        <section class="wdns-section" id="wdns-model">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">06</div><h2>현재 사업모델·우선순위</h2><p>지금의 구조와 다음 1년의 방향</p></div></div>
+          <div class="wdns-two">
+            <div class="wdns-panel"><h3>핵심 사업모델</h3><ul><li>현재 현금흐름 엔진: 보험</li><li>다음 수입엔진: 업종분석·브랜딩·제작</li><li>공공 실증·확산 엔진: AI·디지털교육</li><li>공통 자산화 엔진: 기준·템플릿·방법론·Skill</li></ul></div>
+            <div class="wdns-panel"><h3>올해 우선순위</h3><ul><li>보험 현금흐름 안정과 고객업무 회복</li><li>브랜딩 3종 판매·납품 가능성 검증</li><li>AI·디지털교육 현장 실증</li><li>실제 결과를 재사용 가능한 자산으로 회수</li></ul></div>
+            <div class="wdns-panel"><h3>다음 1년</h3><ul><li>검증된 방식만 공식 Skill로 승격</li><li>브랜딩·제작·교육을 서비스 묶음으로 정리</li><li>실증근거 기반 공공사업 연결</li><li>근거가 쌓인 영역부터 선택적 확장</li></ul></div>
+            <div class="wdns-panel"><h3>확장 판단</h3><ul><li>실제 사례가 있는가</li><li>반복성이 확인됐는가</li><li>완료조건이 명확한가</li><li>운영·수입·사람에게 지속 가능한가</li></ul></div>
+          </div>
+        </section>
+
+        <section class="wdns-section" id="wdns-boundary">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">07</div><h2>확정 · 후보 · 별도 승인</h2><p>지금 확정된 것과 검토 중인 것을 반드시 구분합니다.</p></div></div>
+          <div class="wdns-boundary">
+            <div class="wdns-state confirmed"><h3>✅ 확정</h3><ul><li>보험 = 현재 현금흐름</li><li>브랜딩·제작 = 다음 수입엔진</li><li>AI·디지털교육 = 공공·지역 실증</li><li>연구 = 방법론 전환축</li><li>AI·시스템 = 도구</li></ul></div>
+            <div class="wdns-state candidate"><h3>🟡 후보</h3><ul><li>WD 디지털 AI센터 1호점</li><li>현재 사무실 실증 후보</li><li>명칭·개소·운영방식 미확정</li></ul></div>
+            <div class="wdns-state approval"><h3>🔒 별도 승인</h3><ul><li>가격</li><li>계약</li><li>라이선스</li><li>판매방식</li><li>외부배포</li><li>특정 정부사업·협약·예산</li></ul></div>
+          </div>
+          <div class="wdns-note">현재 방향으로 승격하지 않는 과거 검토안(기획서 기준): WAVE OFFICE 명칭 · 6개 수익구조 · 사례 없는 플랫폼 확장안 — 검토안으로만 보존하며 현재 확정 방향에 포함하지 않는다.</div>
+        </section>
+
+        <section class="wdns-section" id="wdns-evidence">
+          <div class="wdns-section-head"><div><div class="wdns-section-num">08</div><h2>근거·연결</h2><p>각 방향을 실제 센터·원본·Skill과 연결합니다.</p></div></div>
+          <div class="wdns-links">
+            <a class="wdns-link" id="wdns-link-insurance" href="#" data-target="insurance"><small>INSURANCE</small><strong>설계사허브·보험업무</strong><span>상담·설계·계약·청구·고객관리 실증 근거</span></a>
+            <a class="wdns-link" id="wdns-link-brand" href="#" data-target="brand"><small>BRAND</small><strong>컨설팅·제작·브랜드</strong><span>업종분석·브랜드전략·실제 제작 근거</span></a>
+            <a class="wdns-link" id="wdns-link-lecture" href="#" data-target="lecture"><small>EDUCATION</small><strong>강의센터</strong><span>AI·디지털 교육 실행자료·성과근거</span></a>
+            <a class="wdns-link" id="wdns-link-lab" href="#" data-target="lab"><small>RESEARCH</small><strong>사람·AI·시스템 연구실</strong><span>소스01~05, 실제사례·가설·검증 흐름</span></a>
+            <a class="wdns-link" id="wdns-link-skill" href="#" data-target="skill"><small>ASSET</small><strong>WD 공용자산·Skill</strong><span>반복 가능한 방법·템플릿·운영자산</span></a>
+            <a class="wdns-link" id="wdns-link-drive" href="https://docs.google.com/spreadsheets/d/1WH0sbNsffP_o7cETaaQbw8i-GoUXDfgV39QJ62_X4B8/edit" target="_blank" rel="noreferrer"><small>SOURCE MAP</small><strong>데이터센터 원본지도</strong><span>원본 위치·File ID·현재상태·관계 확인</span></a>
+            <a class="wdns-link" id="wdns-link-source" href="https://docs.google.com/document/d/14ysBACWBI704dRn4fbAfHvps3fLZGOtE9QuOS1AstqA/edit" target="_blank" rel="noreferrer"><small>CANONICAL</small><strong>회사방향·북극성 현재본</strong><span>북극성 내용의 단일 Drive 원본</span></a>
+            <a class="wdns-link" id="wdns-link-plan" href="https://docs.google.com/document/d/1IL8ePAywFnaa6AKAxtteOl_i-0ribEl6aRhLGnOFYfA/edit" target="_blank" rel="noreferrer"><small>PLAN</small><strong>북극성 상세기획 현재본</strong><span>화면·정보구조·연결·완공기준의 시공 전 기획 원본</span></a>
+          </div>
+          <div class="wdns-note">정적 시공도면 단계: 실제 운영 Auth·Google·Supabase·DB·route는 연결하지 않는다. 링크와 기능 ID는 WORK 연결점을 확인하기 위한 자리만 제공한다.</div>
+        </section>
+
+        <footer class="wdns-foot"><h2>함께, 더 좋은 내일로.</h2><p>가까운 현장에서 실제로 돕고, 좋은 방법을 검증하고, 반복 가능한 자산으로 남겨 필요로 하는 곳까지 자연스럽게 퍼지게 합니다.</p><div class="wdns-meta"><span>정적 HTML 시공도면 v01</span><span>CSS namespace: wdns-*</span><span>운영 DB 변경 없음</span><span>WORK 연결 전 대표 승인 필요</span></div></footer>
+      </div>
+    </main>
+  </div>
+  <div class="wdns-floating"><a href="#wdns-home">↑ 북극성 홈</a></div>
+</div>
+<script>
+(function(){
+ const shell=document.getElementById('wdns-shell');
+ const toggle=document.getElementById('wdns-menu-toggle');
+ if(toggle) toggle.addEventListener('click',()=>shell.classList.toggle('is-open'));
+ document.querySelectorAll('#wdns-v01 .wdns-menu a').forEach(a=>a.addEventListener('click',()=>shell.classList.remove('is-open')));
+ document.getElementById('wdns-open-source').addEventListener('click',()=>window.open('https://docs.google.com/document/d/14ysBACWBI704dRn4fbAfHvps3fLZGOtE9QuOS1AstqA/edit','_blank'));
+ document.getElementById('wdns-open-index').addEventListener('click',()=>window.open('https://docs.google.com/spreadsheets/d/1WH0sbNsffP_o7cETaaQbw8i-GoUXDfgV39QJ62_X4B8/edit','_blank'));
+ document.querySelectorAll('#wdns-v01 .wdns-link[data-target]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault(); alert('WORK 기능연결 자리: '+a.dataset.target); }));
+
+ /* TEST 추가: 좌측 메뉴 is-active 스크롤스파이 연결
+    기존 v01 CSS에는 .wdns-menu a.is-active 스타일이 이미 존재했으나
+    스크롤에 따라 실제로 갱신하는 로직이 없어 홈 항목에 항상 고정돼 있었음.
+    화면 이동(닫기/이동) 기능이 "코드엔 있으나 실제 작동은 안 함" 상태였던
+    부분만 최소 JS로 연결함. 색상·배치·문구는 변경하지 않음. */
+ const sections=['wdns-home','wdns-purpose','wdns-star','wdns-method','wdns-proof','wdns-model','wdns-boundary','wdns-evidence']
+   .map(id=>document.getElementById(id)).filter(Boolean);
+ const navLinks=Array.from(document.querySelectorAll('#wdns-v01 .wdns-menu a'));
+ /* TEST 추가: "지금 보고 있는 곳" 라벨 — 새 기능이 아니라 스크롤스파이가 이미
+    계산해 둔 현재 섹션 값을 상단바(PC)·모바일바에 그대로 노출만 함 */
+ const posLabels={
+   'wdns-home':'북극성 홈','wdns-purpose':'존재이유','wdns-star':'북극성',
+   'wdns-method':'일하는 방식','wdns-proof':'지금 증명중','wdns-model':'사업모델·우선순위',
+   'wdns-boundary':'확정·후보·경계','wdns-evidence':'근거·연결'
+ };
+ const posDesktop=document.getElementById('wdns-pos-desktop');
+ const posMobile=document.getElementById('wdns-pos-mobile');
+ function setActive(id){
+   navLinks.forEach(a=>a.classList.toggle('is-active', a.getAttribute('href')==='#'+id));
+   const label=posLabels[id]||'';
+   if(posDesktop) posDesktop.textContent = label ? ('· 지금 보고 있는 곳: '+label) : '';
+   if(posMobile) posMobile.textContent = label;
+ }
+ setActive('wdns-home');
+ if('IntersectionObserver' in window && sections.length){
+   const io=new IntersectionObserver((entries)=>{
+     let best=null;
+     entries.forEach(en=>{ if(en.isIntersecting){ if(!best || en.intersectionRatio>best.intersectionRatio) best=en; } });
+     if(best) setActive(best.target.id);
+   },{root:null, rootMargin:'-84px 0px -60% 0px', threshold:[0.1,0.25,0.5,0.75]});
+   sections.forEach(s=>io.observe(s));
+ }
+
+ /* TEST 추가(신규 제안): 북극성 진입 스토리 인트로 컨트롤.
+    Drive 회수 결과 기존 5장 장면이미지·애니메이션 실물 자산 없음(상단 주석 5번 참고).
+    회사방향 원본 문장만 그대로 인용, 그 외 장면 구성은 신규 제안이며 대표 확인 필요.
+    최초 1회만 자동 재생(localStorage), 이후에는 상단/모바일바 "스토리 다시보기"로만
+    재생. prefers-reduced-motion 시 자동재생을 끄고 탭/클릭으로만 진행. */
+ const introEl=document.getElementById('wdns-intro');
+ if(introEl){
+   const scenes=Array.from(introEl.querySelectorAll('.wdns-intro-scene'));
+   const dotsWrap=document.getElementById('wdns-intro-dots');
+   const skipBtn=document.getElementById('wdns-intro-skip');
+   const replayBtn=document.getElementById('wdns-story-replay');
+   const replayBtnMobile=document.getElementById('wdns-story-replay-mobile');
+   const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+   let idx=0, timer=null;
+   scenes.forEach((s,i)=>{
+     const dot=document.createElement('span');
+     dot.addEventListener('click',()=>show(i));
+     dotsWrap.appendChild(dot);
+   });
+   const dots=Array.from(dotsWrap.children);
+   function show(i){
+     idx=Math.max(0,Math.min(scenes.length-1,i));
+     scenes.forEach((s,j)=>s.classList.toggle('is-active', j===idx));
+     dots.forEach((d,j)=>d.classList.toggle('is-active', j===idx));
+     clearTimeout(timer);
+     if(!reduceMotion){
+       timer=setTimeout(()=>{ idx<scenes.length-1 ? show(idx+1) : close(); }, idx<scenes.length-1?2600:2200);
+     }
+   }
+   function open(){
+     introEl.classList.add('is-active');
+     introEl.setAttribute('aria-hidden','false');
+     show(0);
+     if(skipBtn) skipBtn.focus();
+   }
+   function close(){
+     clearTimeout(timer);
+     introEl.classList.remove('is-active');
+     introEl.setAttribute('aria-hidden','true');
+     try{ localStorage.setItem('wdns_story_seen','1'); }catch(e){}
+   }
+   introEl.addEventListener('click', function(e){
+     if(e.target===skipBtn || e.target.closest('.wdns-intro-dots')) return;
+     if(!reduceMotion) return; /* 자동재생 중에는 탭으로 방해하지 않음 */
+     idx<scenes.length-1 ? show(idx+1) : close();
+   });
+   if(skipBtn) skipBtn.addEventListener('click', close);
+   if(replayBtn) replayBtn.addEventListener('click', open);
+   if(replayBtnMobile) replayBtnMobile.addEventListener('click', open);
+   let seen=false;
+   try{ seen = localStorage.getItem('wdns_story_seen')==='1'; }catch(e){ seen=false; }
+   if(!seen){ open(); }
+ }
+})();
+</script>
+</body>
+</html>
