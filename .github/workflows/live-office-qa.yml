@@ -37,21 +37,28 @@ jobs:
             echo "저장소 TEST 번호를 찾지 못했습니다."
             exit 1
           fi
+          EXPECTED_SHA="$(sha256sum wd-live-office-test.html | awk '{print $1}')"
           echo "WD_EXPECTED_TEST=$EXPECTED_TEST" >> "$GITHUB_ENV"
-          echo "저장소 기준 TEST $EXPECTED_TEST · Pages 반영 대기"
+          echo "저장소 기준 TEST $EXPECTED_TEST · 파일 해시 $EXPECTED_SHA · Pages 반영 대기"
 
           for attempt in $(seq 1 48); do
-            LIVE_HTML="$(curl -fsSL --max-time 15 "$WD_QA_URL" || true)"
-            LIVE_TEST="$(printf '%s' "$LIVE_HTML" | grep -oE '<title>[^<]*TEST [0-9]+' | grep -oE 'TEST [0-9]+' | awk '{print $2}' | tail -1 || true)"
-            if [ "$LIVE_TEST" = "$EXPECTED_TEST" ]; then
-              echo "배포 화면 TEST $LIVE_TEST 확인"
+            LIVE_FILE="$RUNNER_TEMP/wd-live-office-live.html"
+            if curl -fsSL --max-time 15 "$WD_QA_URL?qa_commit=${GITHUB_SHA}" -o "$LIVE_FILE"; then
+              LIVE_TEST="$(grep -oE '<title>[^<]*TEST [0-9]+' "$LIVE_FILE" | grep -oE 'TEST [0-9]+' | awk '{print $2}' | tail -1 || true)"
+              LIVE_SHA="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
+            else
+              LIVE_TEST=""
+              LIVE_SHA=""
+            fi
+            if [ "$LIVE_TEST" = "$EXPECTED_TEST" ] && [ "$LIVE_SHA" = "$EXPECTED_SHA" ]; then
+              echo "배포 화면 TEST $LIVE_TEST · 최신 파일 해시 일치"
               exit 0
             fi
-            echo "$attempt/48 · 현재 배포 TEST ${LIVE_TEST:-미확인} · TEST $EXPECTED_TEST 대기"
+            echo "$attempt/48 · 현재 TEST ${LIVE_TEST:-미확인} · 최신 파일 반영 대기"
             sleep 10
           done
 
-          echo "Pages 배포 화면이 TEST $EXPECTED_TEST로 바뀌지 않았습니다."
+          echo "Pages 배포 화면이 저장소의 TEST $EXPECTED_TEST 최신 파일과 일치하지 않습니다."
           exit 1
 
       - name: Node 준비
