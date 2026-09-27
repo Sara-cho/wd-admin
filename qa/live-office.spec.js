@@ -7,6 +7,8 @@ const LONG_TITLE = [
   'https://example.invalid/first/really/long/path?source=wdwave',
   'https://example.invalid/second/really/long/path?state=success',
   'https://example.invalid/third/really/long/path?viewport=tablet',
+  'https://example.invalid/fourth/really/long/path?guaranteed=overflow',
+  'https://example.invalid/fifth/really/long/path?screen=desktop-and-tablet',
   '원지시자·현재담당·다음행동 접근성을 함께 확인'
 ].join(' · ');
 
