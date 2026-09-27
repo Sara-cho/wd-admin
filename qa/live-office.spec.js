@@ -85,7 +85,8 @@ async function takeScreenshot(page, testInfo, name) {
 }
 
 async function expectCommonLayout(page) {
-  await expect(page).toHaveTitle(/TEST 06/);
+  const expectedTest = process.env.WD_EXPECTED_TEST || '06';
+  expect(await page.title(), '페이지 제목의 TEST 번호 불일치').toContain('TEST ' + expectedTest);
   const sizes = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     scroll: document.documentElement.scrollWidth,
