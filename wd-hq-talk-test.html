@@ -974,6 +974,21 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 @media(max-width:700px){.wdhq-test-grid{grid-template-columns:1fr}.wdhq-test-card{min-height:104px}.wdhq-settings-modal{height:100%;max-height:none}.wdhq-settings-layout{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.wdhq-settings-nav{display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid #e5e9ef;padding:10px}.wdhq-settings-search{display:none}.wdhq-settings-nav button{width:auto;min-width:max-content}.wdhq-settings-content{padding:20px 18px}.wdhq-settings-row{align-items:flex-start;flex-direction:column}.wdhq-settings-action{width:100%}}
 
 /* 시스템 연결지도 TEST · 밀집 표를 센터 카드 구조로 교정 */
+#setupModal [data-setup-panel="spaces"] .wdhq-observation-layer{margin:0 0 14px;padding:16px;border:1px solid #cbdcf5;border-radius:16px;background:linear-gradient(135deg,#f4f8ff,#fff);box-shadow:0 5px 16px rgba(26,46,68,.045)}
+#setupModal .wdhq-observation-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+#setupModal .wdhq-observation-head h3{margin:4px 0;color:#12315c;font-size:17px;font-weight:950}
+#setupModal .wdhq-observation-head p{margin:0;color:#596b82;font-size:12px;line-height:1.5}
+#setupModal .wdhq-observation-kicker{color:#1769ed;font-size:10px;font-weight:950;letter-spacing:.08em}
+#setupModal .wdhq-observation-open{flex:0 0 auto;min-height:38px;padding:8px 12px;border:1px solid #1769ed;border-radius:9px;background:#1769ed;color:#fff;font-size:11px;font-weight:900}
+#setupModal .wdhq-observation-relations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#setupModal .wdhq-observation-relation{min-width:0;padding:10px;border:1px solid #dfe8f4;border-radius:11px;background:#fff}
+#setupModal .wdhq-observation-relation b{display:block;color:#18375f;font-size:11px;line-height:1.35}
+#setupModal .wdhq-observation-relation span{display:block;margin-top:4px;color:#6b7788;font-size:10px;line-height:1.4}
+#setupModal .wdhq-observation-meaning{margin-top:10px;padding:10px 11px;border-radius:10px;background:#eaf2ff;color:#465a73;font-size:10.5px;line-height:1.5}
+#setupModal .wdhq-observation-meaning strong{color:#163b6b}
+#setupModal .wdhq-observation-northstar{display:block;margin-top:7px;color:#68778b;font-size:10px;line-height:1.4}
+@media(max-width:950px){#setupModal .wdhq-observation-relations{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#setupModal [data-setup-panel="spaces"] .wdhq-observation-layer{padding:13px}#setupModal .wdhq-observation-head{flex-direction:column}#setupModal .wdhq-observation-head h3{font-size:15px}#setupModal .wdhq-observation-head p{font-size:11px}#setupModal .wdhq-observation-open{width:100%}#setupModal .wdhq-observation-relations{grid-template-columns:1fr}#setupModal .wdhq-observation-relation{padding:9px 10px}}
 #setupModal [data-setup-panel="spaces"] .wdhq-system-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 #setupModal .wdhq-system-card{min-width:0;overflow:hidden;border:1px solid #dfe6ef;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(26,46,68,.045)}
 #setupModal .wdhq-system-card-head{display:flex;align-items:center;gap:12px;padding:14px 15px 12px}
@@ -1608,6 +1623,25 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
             <button type="button" class="wdhq-system-map-btn work" onclick="wdhqOpenAccountCenter()">계정관리</button>
           </div>
         </div>
+        <section class="wdhq-observation-layer" aria-label="LIVE OFFICE 회사 현재상태 관제층">
+          <div class="wdhq-observation-head">
+            <div>
+              <span class="wdhq-observation-kicker">본진 연결 관제 · TEST</span>
+              <h3>LIVE OFFICE · 회사 현재상태 관제층</h3>
+              <p>WD 본진과 연결된 관제 화면입니다. 새 업무센터나 별도 사업센터가 아닙니다.</p>
+            </div>
+            <button type="button" class="wdhq-observation-open" onclick="wdhqOpenRepresentativeTest('liveOffice')">LIVE OFFICE 열기</button>
+          </div>
+          <div class="wdhq-observation-relations" aria-label="LIVE OFFICE 연결관계">
+            <div class="wdhq-observation-relation"><b>WD 본진 ↔ LIVE OFFICE</b><span>본진과 연결된 회사 관제 화면</span></div>
+            <div class="wdhq-observation-relation"><b>LIVE OFFICE ↔ 기존 work_tasks</b><span>기존 업무 상태를 읽어 표시</span></div>
+            <div class="wdhq-observation-relation"><b>LIVE OFFICE ↔ 사람·현재 협업 AI</b><span>확인된 담당·협업 참여 상태를 표시</span></div>
+            <div class="wdhq-observation-relation"><b>LIVE OFFICE ↔ WD 업무센터</b><span>원장 소유공간의 현재 상태를 관제</span></div>
+          </div>
+          <div class="wdhq-observation-meaning"><strong>소유와 표시 구분</strong> · WD 업무센터는 업무 원장·기록·결과의 소유공간이고, LIVE OFFICE는 그 상태를 읽어 한눈에 보여주는 관제층입니다. 중복 원장을 만들지 않습니다.
+            <small class="wdhq-observation-northstar">북극성은 회사 방향·판단 기준 공간으로 기존 위치를 유지하며, AI 인력·업무센터로 분류하지 않습니다.</small>
+          </div>
+        </section>
         <div class="wdhq-system-card-grid" id="wdhq-space-connection-rows" aria-live="polite"></div>
       </section>
 
