@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 03</title>
+<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 04</title>
 <meta name="description" content="WD 본진 라이브오피스 챕터 — 실제 WD ADMIN Supabase 로그인·work_tasks 읽기 연결, 실제 AI 인력풀 데이터 재사용 TEST"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -181,7 +181,7 @@ dialog::backdrop{background:rgba(30,22,38,.62)}
       <button type="button" data-role="staff">수진님 계정</button>
     </div>
     <div class="login-row">
-      <input id="loginEmail" type="email" placeholder="이메일" readonly>
+      <input id="loginEmail" type="text" inputmode="text" autocomplete="username" aria-label="WD ADMIN 로그인 아이디" placeholder="아이디" readonly>
       <input id="loginPassword" type="password" placeholder="비밀번호">
       <button class="btn primary" id="loginBtn">로그인</button>
       <button class="btn ghost" id="skipLoginBtn">TEST 화면만 보기 (로그인 건너뛰기)</button>
@@ -403,14 +403,21 @@ dialog::backdrop{background:rgba(30,22,38,.62)}
 /* ============ 0. 실제 연결 정보 (wd-headquarters-optimized-test.html에서 그대로 재사용) ============ */
 var SUPABASE_URL = 'https://mzftzadtoepcrwhnwdmn.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh';
-var OWNER_EMAIL = 'kfcyk50@admin.wdwave.kr';
-var STAFF_EMAIL = 'kfcyk30@admin.wdwave.kr';
+var AUTH_STORAGE_KEY = 'wd-admin-auth-v1';
+var OWNER_LOGIN_ID = 'kfcyk50';
+var STAFF_LOGIN_ID = 'kfcyk30';
+var LOGIN_ACCOUNTS = Object.freeze({
+  kfcyk50:Object.freeze({email:'kfcyk50@admin.wdwave.kr',name:'최윤경',role:'owner'}),
+  kfcyk30:Object.freeze({email:'kfcyk30@admin.wdwave.kr',name:'박수진',role:'staff'})
+});
 var WORK_TASKS_SELECT = 'id,user_id,category,content,status,request_date,created_at,updated_at,requester_name,idea_status,raw_content,core_content,next_action,assignee_name,worker_name,worker_key,result_url,result_note,blocked_note';
 
 var sbClient = null;
 try{
   if(window.supabase && window.supabase.createClient){
-    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth:{autoRefreshToken:true,persistSession:true,storageKey:AUTH_STORAGE_KEY,detectSessionInUrl:false}
+    });
   }
 }catch(e){ console.error('Supabase client init failed', e); }
 
@@ -541,26 +548,30 @@ function tasksFor(nameNeedles){
 
 /* ============ 3. Supabase 로그인 (실제 wd-admin 계정) ============ */
 var selectedRole='owner';
+function selectedLoginId(){return selectedRole==='owner'?OWNER_LOGIN_ID:STAFF_LOGIN_ID}
+function loginAccount(loginId){return LOGIN_ACCOUNTS[String(loginId||'').trim().toLowerCase()]||null}
 document.querySelectorAll('.role-pick button').forEach(function(b){
   b.addEventListener('click',function(){
     selectedRole=b.getAttribute('data-role');
     document.querySelectorAll('.role-pick button').forEach(function(x){x.classList.toggle('active',x===b)});
-    document.getElementById('loginEmail').value = selectedRole==='owner'?OWNER_EMAIL:STAFF_EMAIL;
+    document.getElementById('loginEmail').value = selectedLoginId();
   });
 });
-document.getElementById('loginEmail').value = OWNER_EMAIL;
+document.getElementById('loginEmail').value = OWNER_LOGIN_ID;
 
 document.getElementById('loginBtn').addEventListener('click', async function(){
   if(!sbClient){ setLoginStatus('Supabase 클라이언트를 불러오지 못했습니다. 네트워크를 확인해 주세요.', true); return }
-  var email = document.getElementById('loginEmail').value;
+  var loginId = document.getElementById('loginEmail').value;
+  var account = loginAccount(loginId);
   var password = document.getElementById('loginPassword').value;
+  if(!account){ setLoginStatus('허용된 WD ADMIN 아이디를 확인해 주세요.', true); return }
   if(!password){ setLoginStatus('비밀번호를 입력해 주세요.', true); return }
   setLoginStatus('WD ADMIN 계정 인증 확인 중...');
   try{
-    var res = await sbClient.auth.signInWithPassword({ email: email, password: password });
-    if(res.error || !res.data || !res.data.session) throw new Error(res.error ? res.error.message : '로그인 실패');
+    var res = await sbClient.auth.signInWithPassword({ email: account.email, password: password });
+    if(res.error || !res.data || !res.data.session) throw new Error('아이디 또는 비밀번호를 확인해 주세요.');
     STATE.session = res.data.session;
-    STATE.profile = { email: email, role: selectedRole };
+    STATE.profile = { loginId: loginId, email: account.email, role: account.role };
     onLoginSuccess();
   }catch(err){
     setLoginStatus('로그인 실패: ' + (err && err.message ? err.message : '아이디 또는 비밀번호를 확인해 주세요.'), true);
@@ -586,7 +597,7 @@ async function onLoginSuccess(){
   document.getElementById('loginBox').style.display='none';
   var box=document.getElementById('sessionBox'); box.style.display='block';
   document.getElementById('sessionWhoName').textContent = STATE.profile.role==='owner' ? '최윤경 대표' : '박수진';
-  document.getElementById('sessionWhoEmail').textContent = STATE.profile.email + ' · 실제 WD ADMIN 세션 연결됨';
+  document.getElementById('sessionWhoEmail').textContent = STATE.profile.loginId + ' · 실제 WD ADMIN 세션 연결됨';
   toast('로그인 성공 · work_tasks 읽기 시도 중');
   STATE.tasks=[]; STATE.tasksLoaded=false; STATE.tasksLoadError=false;
   renderAll();
