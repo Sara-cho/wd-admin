@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 06</title>
+<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 07</title>
 <meta name="description" content="WD 본진 라이브오피스 챕터 — 실제 WD ADMIN Supabase 로그인·work_tasks 읽기 연결, 실제 AI 인력풀 데이터 재사용 TEST"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -154,13 +154,18 @@ dialog::backdrop{background:rgba(30,22,38,.62)}
 .baton-chain{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);color:#6f6273;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task-origin{font-size:9px;font-weight:800;color:#8a7d8d}
 .baton-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.baton-field{padding:10px;border:1px solid var(--line);border-radius:11px;background:#fcfbfa}.baton-field dt{font-size:9px;font-weight:850;color:#8a7d8d}.baton-field dd{margin:3px 0 0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.baton-field.wide{grid-column:1/-1}
 #batonDialogTitle{display:-webkit-box;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;line-height:1.35;max-height:2.7em}
-.baton-task-name-value{max-height:4.5em;overflow:hidden}
+.baton-task-name-value{max-height:4.5em;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 .baton-task-name-value.expanded{max-height:none}
 .baton-task-name-toggle{display:block;margin-top:8px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--plum);min-height:40px;padding:7px 11px;font-size:11px;font-weight:850}
 .baton-task-name-toggle[hidden]{display:none}
 .baton-note{margin-top:11px;padding:10px;border-radius:11px;background:#f7f4f8;color:#675c6b;font-size:10px;line-height:1.6}
 @media(max-width:980px){.baton-summary{grid-template-columns:1fr 1fr}.baton-summary .baton-panel:first-child{grid-column:1/-1}.baton-task-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.baton-head{display:block}.baton-source{display:inline-block;margin-top:10px}.baton-summary,.baton-task-grid,.baton-detail-grid{grid-template-columns:1fr}.baton-summary .baton-panel:first-child,.baton-field.wide{grid-column:auto}.worker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* TEST 07 · 상세 모달 3줄 판정·390px 가로폭 보정 */
+dialog{max-width:calc(100vw - 24px);overflow:hidden}
+.dlg-inner,.dlg-body,.baton-detail-grid,.baton-field{min-width:0;max-width:100%}
+.baton-field dd,.baton-field a{max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+@media(max-width:420px){dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px)}.dlg-head,.dlg-body{min-width:0}.baton-field{overflow:hidden}}
 
 </style>
 </head>
@@ -803,12 +808,37 @@ function taskNameField(value){
 function initTaskNameToggle(){
   var value=document.getElementById('batonTaskNameValue'),toggle=document.getElementById('batonTaskNameToggle');
   if(!value||!toggle)return;
-  toggle.hidden=value.scrollHeight<=value.clientHeight+1;
+  function measure(){
+    value.classList.remove('expanded');
+    toggle.textContent='전체 보기';
+    toggle.setAttribute('aria-expanded','false');
+    toggle.hidden=true;
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        var style=window.getComputedStyle(value);
+        var lineHeight=parseFloat(style.lineHeight)||18;
+        value.classList.add('expanded');
+        var fullHeight=value.scrollHeight;
+        value.classList.remove('expanded');
+        var threeLines=lineHeight*3;
+        toggle.hidden=fullHeight<=threeLines+1;
+      });
+    });
+  }
   toggle.onclick=function(){
     var expanded=value.classList.toggle('expanded');
     toggle.textContent=expanded?'접기':'전체 보기';
     toggle.setAttribute('aria-expanded',expanded?'true':'false');
   };
+  measure();
+  if(window.ResizeObserver){
+    var observer=new ResizeObserver(function(){if(!value.classList.contains('expanded'))measure()});
+    observer.observe(value);
+    var dialog=value.closest('dialog');
+    if(dialog)dialog.addEventListener('close',function(){observer.disconnect()},{once:true});
+  }else{
+    window.addEventListener('resize',measure,{once:true});
+  }
 }
 function openBatonTask(id){
   var t=batonTasks().find(function(x){return String(x.id)===String(id)});if(!t)return;
