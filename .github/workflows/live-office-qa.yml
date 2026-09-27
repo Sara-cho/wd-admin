@@ -1,0 +1,48 @@
+name: WD LIVE OFFICE 수동 QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 검수할 기존 HTTPS TEST 주소
+        required: true
+        default: https://admin.wdwave.kr/wd-live-office-test.html
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live-office-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      WD_QA_URL: ${{ inputs.target_url }}
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: QA 패키지 설치
+        run: npm install --no-audit --no-fund
+
+      - name: Chromium 설치
+        run: npx playwright install --with-deps chromium
+
+      - name: 라이브오피스 자동 QA
+        run: npm run qa:live-office
+
+      - name: 화면·결과 보고서 보관
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wd-live-office-qa-${{ github.run_number }}
+          path: |
+            qa-artifacts/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
