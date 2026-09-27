@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 14</title>
+<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 15</title>
 <meta name="description" content="WD 본진 라이브오피스 챕터 — 실제 WD ADMIN Supabase 로그인·work_tasks 읽기 연결, 실제 AI 인력풀 데이터 재사용 TEST"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -170,7 +170,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 .baton-field dd,.baton-field a{max-width:100%;overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:420px){dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px)}.dlg-head,.dlg-body{min-width:0}.baton-field{overflow:hidden}}
 
-/* TEST 14 · 승인된 UX·정보위계 */
+/* TEST 15 · 승인된 UX·정보위계 */
 .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:8px 0 18px}
 .hero h1{margin:0}.hero p{margin:3px 0 0}
 .office-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -205,7 +205,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 
 <header class="topbar">
   <div class="crumb"><span>WD 본진</span><b>›</b><strong>라이브 오피스</strong></div>
-  <span class="badge test">🧪 LIVE OFFICE · TEST 14</span>
+  <span class="badge test">🧪 LIVE OFFICE · TEST 15</span>
 </header>
 
 <div class="wrap">
@@ -316,7 +316,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 </div>
 
 <footer class="note">
-  <b>WD WAVE · LIVE OFFICE TEST 14</b>
+  <b>WD WAVE · LIVE OFFICE TEST 15</b>
   <span>회사 업무상태를 읽어 보여주는 검수 화면입니다.</span>
 </footer>
 
@@ -380,7 +380,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
             <input id="noaAssignInput" type="text" placeholder="노아에게 시킬 일을 자연어로 입력">
             <button class="btn primary" id="noaAssignPreviewBtn">전달 전 확인</button>
           </div>
-          <div class="warn-box">TEST 14에서는 실제 업무배정·저장을 새로 연결하지 않습니다. 현재는 향후 실행연결을 위한 미리보기 상태입니다.</div>
+          <div class="warn-box">TEST 15에서는 실제 업무배정·저장을 새로 연결하지 않습니다. 현재는 향후 실행연결을 위한 미리보기 상태입니다.</div>
           <div class="preview-box" id="noaAssignPreview" style="display:none"></div>
         </div>
         <div class="dlg-section"><h4>대표님이 볼 것</h4><ul class="dlg-list" id="noaApprovalList"></ul></div>
@@ -867,10 +867,10 @@ function renderBatonBoard(){
   document.getElementById('batonSourceLabel').textContent=isDemo?'TEST 예시 · 실제 업무 아님':(mode==='real'?'work_tasks 실데이터 · 읽기전용':(mode==='error'?'work_tasks 읽기 실패 · TEST 예시 제거됨':'work_tasks 실데이터 불러오는 중'));
   var workers={};
   var unassignedCount=0;
-  tasks.filter(activeTask).forEach(function(t){var w=clean(t.worker);if(!w){unassignedCount+=1;return}workers[w]=(workers[w]||0)+1});
+  active.forEach(function(t){var w=clean(t.worker);if(!w){unassignedCount+=1;return}workers[w]=(workers[w]||0)+1});
   var workerNames=Object.keys(workers);
   var workerHtml=workerNames.map(function(w){
-    var states=tasks.filter(function(t){return activeTask(t)&&t.worker===w}).map(function(t){return t.basicState});
+    var states=active.filter(function(t){return t.worker===w}).map(function(t){return t.basicState});
     var actionable=w==='노아';
     return '<div class="worker-chip'+(actionable?' actionable':'')+'"'+(actionable?' data-open-noa="true" role="button" tabindex="0"':'')+'><b>'+esc(isDemo?'TEST 예시 · '+w:w)+'</b><span>'+(isDemo?'예시 ':'')+'현재 '+workers[w]+'건 · '+esc(Array.from(new Set(states)).join('·'))+'</span></div>';
   }).join('');
