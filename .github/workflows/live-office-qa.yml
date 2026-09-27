@@ -1,17 +1,18 @@
-name: WD LIVE OFFICE 수동 QA
+name: WD LIVE OFFICE 자동 QA
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - wd-live-office-test.html
+      - .github/workflows/live-office-qa.yml
   workflow_dispatch:
     inputs:
       target_url:
         description: 검수할 기존 HTTPS TEST 주소
-        required: true
+        required: false
         default: https://admin.wdwave.kr/wd-live-office-test.html
-        type: string
-      expected_test:
-        description: 화면 제목에서 확인할 TEST 번호
-        required: true
-        default: '06'
         type: string
 
 permissions:
@@ -22,11 +23,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      WD_QA_URL: ${{ inputs.target_url }}
-      WD_EXPECTED_TEST: ${{ inputs.expected_test }}
+      WD_QA_URL: ${{ inputs.target_url || 'https://admin.wdwave.kr/wd-live-office-test.html' }}
     steps:
       - name: 저장소 가져오기
         uses: actions/checkout@v4
+
+      - name: 배포 화면 TEST 번호 자동 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_TEST="$(grep -oE '<title>[^<]*TEST [0-9]+' wd-live-office-test.html | grep -oE 'TEST [0-9]+' | awk '{print $2}' | tail -1)"
+          if [ -z "$EXPECTED_TEST" ]; then
+            echo "저장소 TEST 번호를 찾지 못했습니다."
+            exit 1
+          fi
+          echo "WD_EXPECTED_TEST=$EXPECTED_TEST" >> "$GITHUB_ENV"
+          echo "저장소 기준 TEST $EXPECTED_TEST · Pages 반영 대기"
+
+          for attempt in $(seq 1 48); do
+            LIVE_HTML="$(curl -fsSL --max-time 15 "$WD_QA_URL" || true)"
+            LIVE_TEST="$(printf '%s' "$LIVE_HTML" | grep -oE '<title>[^<]*TEST [0-9]+' | grep -oE 'TEST [0-9]+' | awk '{print $2}' | tail -1 || true)"
+            if [ "$LIVE_TEST" = "$EXPECTED_TEST" ]; then
+              echo "배포 화면 TEST $LIVE_TEST 확인"
+              exit 0
+            fi
+            echo "$attempt/48 · 현재 배포 TEST ${LIVE_TEST:-미확인} · TEST $EXPECTED_TEST 대기"
+            sleep 10
+          done
+
+          echo "Pages 배포 화면이 TEST $EXPECTED_TEST로 바뀌지 않았습니다."
+          exit 1
 
       - name: Node 준비
         uses: actions/setup-node@v4
@@ -46,7 +72,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wd-live-office-qa-${{ github.run_number }}
+          name: wd-live-office-TEST-${{ env.WD_EXPECTED_TEST }}-qa-${{ github.run_number }}
           path: |
             qa-artifacts/
             playwright-report/
