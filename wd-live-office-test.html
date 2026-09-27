@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 12</title>
+<title>🏢 LIVE OFFICE · 업무 바통 흐름판 · TEST 13</title>
 <meta name="description" content="WD 본진 라이브오피스 챕터 — 실제 WD ADMIN Supabase 로그인·work_tasks 읽기 연결, 실제 AI 인력풀 데이터 재사용 TEST"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -160,7 +160,8 @@ dialog::backdrop{background:rgba(30,22,38,.62)}
 .baton-task-name-toggle{display:block;margin-top:8px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--plum);min-height:40px;padding:7px 11px;font-size:11px;font-weight:850}
 .baton-task-name-toggle[hidden]{display:none}
 .baton-note{margin-top:11px;padding:10px;border-radius:11px;background:#f7f4f8;color:#675c6b;font-size:10px;line-height:1.6}
-.baton-task h4{min-width:0;overflow-wrap:anywhere;word-break:break-word}
+.baton-task h4{min-width:0;display:-webkit-box;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;line-height:1.45;max-height:2.9em}
+.approval-item b,.blocked-item b,.completed-item b{display:-webkit-box;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
 @media(max-width:980px){.baton-summary{grid-template-columns:1fr 1fr}.baton-summary .baton-panel:first-child{grid-column:1/-1}.baton-task-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.baton-head{display:block}.baton-source{display:inline-block;margin-top:10px}.baton-summary,.baton-task-grid,.baton-detail-grid{grid-template-columns:1fr}.baton-summary .baton-panel:first-child,.baton-field.wide{grid-column:auto}.worker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* TEST 07 · 상세 모달 3줄 판정·390px 가로폭 보정 */
@@ -169,7 +170,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 .baton-field dd,.baton-field a{max-width:100%;overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:420px){dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px)}.dlg-head,.dlg-body{min-width:0}.baton-field{overflow:hidden}}
 
-/* TEST 12 · 승인된 UX·정보위계 */
+/* TEST 13 · 승인된 UX·정보위계 */
 .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:8px 0 18px}
 .hero h1{margin:0}.hero p{margin:3px 0 0}
 .office-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -204,7 +205,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 
 <header class="topbar">
   <div class="crumb"><span>WD 본진</span><b>›</b><strong>라이브 오피스</strong></div>
-  <span class="badge test">🧪 LIVE OFFICE · TEST 12</span>
+  <span class="badge test">🧪 LIVE OFFICE · TEST 13</span>
 </header>
 
 <div class="wrap">
@@ -315,7 +316,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 </div>
 
 <footer class="note">
-  <b>WD WAVE · LIVE OFFICE TEST 12</b>
+  <b>WD WAVE · LIVE OFFICE TEST 13</b>
   <span>회사 업무상태를 읽어 보여주는 검수 화면입니다.</span>
 </footer>
 
@@ -379,7 +380,7 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
             <input id="noaAssignInput" type="text" placeholder="노아에게 시킬 일을 자연어로 입력">
             <button class="btn primary" id="noaAssignPreviewBtn">전달 전 확인</button>
           </div>
-          <div class="warn-box">TEST 12에서는 실제 업무배정·저장을 새로 연결하지 않습니다. 현재는 향후 실행연결을 위한 미리보기 상태입니다.</div>
+          <div class="warn-box">TEST 13에서는 실제 업무배정·저장을 새로 연결하지 않습니다. 현재는 향후 실행연결을 위한 미리보기 상태입니다.</div>
           <div class="preview-box" id="noaAssignPreview" style="display:none"></div>
         </div>
         <div class="dlg-section"><h4>대표님이 볼 것</h4><ul class="dlg-list" id="noaApprovalList"></ul></div>
@@ -561,9 +562,30 @@ function approvalRequired(row){
   var s=[row.status,row.next_action,row.result_note].filter(Boolean).join(' ');
   return !completedText(row.status) && /대표.{0,8}(검수|확인|판단|승인)|승인/.test(s);
 }
+function firstMeaningfulSentence(value){
+  var raw=clean(value);
+  var lines=raw.split(/[\n\r]+/).map(function(line){return line.trim()}).filter(Boolean);
+  var text=(lines[0]||raw).replace(/\s+/g,' ');
+  if(!text)return '';
+  var sentence=text.split(/(?:[.!?。]\s+|\s*[\n\r]+\s*)/)[0]||text;
+  sentence=sentence.replace(/^(업무명|제목|요청|내용)\s*[:：]\s*/,'').trim();
+  if(sentence.length>70)sentence=sentence.slice(0,69).trim()+'…';
+  return sentence;
+}
+function displayTitleFor(row,meta){
+  var explicit=firstMeta(meta,['short_title','display_title','task_title','title','업무명','제목']);
+  if(explicit)return firstMeaningfulSentence(explicit);
+  var core=row.core_content;
+  if(typeof core==='string'&&!/^\s*[\[{]/.test(core)){
+    var fromCore=firstMeaningfulSentence(core);
+    if(fromCore)return fromCore;
+  }
+  return firstMeaningfulSentence(row.content)||'업무 요청';
+}
 function mapRow(row){
   var meta=parseTaskMeta(row);
-  var currentWorker=clean(row.worker_name)||clean(row.assignee_name)||'미확인';
+  var currentWorker=clean(row.worker_name)||clean(row.assignee_name);
+  var rawContent=clean(row.content)||'업무 요청';
   var origin=firstMeta(meta,['origin','original_requester','requester','원지시자'])||clean(row.requester_name)||'미확인';
   var dispatcher=firstMeta(meta,['dispatcher','allocator','배분자'])||'미확인';
   var next=row.next_action || (completedText(row.status) ? '완료 상태 확인' : '현재 원장에 확인되는 다음 행동 없음');
@@ -571,10 +593,11 @@ function mapRow(row){
   var blocker=row.blocked_note || null;
   var space=fixedSpace(currentWorker,firstMeta(meta,['space','work_space','담당공간']));
   var evidence=row.result_url || firstMeta(meta,['evidence','result_location','근거·결과 위치']) || '미확인';
-  var handoff=firstMeta(meta,['handoff','handoff_history','바통 이동기록']) || [origin,dispatcher,currentWorker].join(' → ');
+  var handoff=firstMeta(meta,['handoff','handoff_history','바통 이동기록']) || [origin,dispatcher,currentWorker||'담당 미배정'].join(' → ');
   return {
     id: row.id,
-    title: row.content || '업무 요청',
+    title: displayTitleFor(row,meta),
+    rawContent: rawContent,
     status: row.status || row.idea_status || '요청접수',
     dueAt: row.request_date || null,
     nextAction: next,
@@ -666,7 +689,8 @@ async function loadWorkTasks(){
     STATE.tasks = (res.data||[]).map(mapRow);
     STATE.tasksLoaded = true;
     STATE.tasksLoadError = false;
-    document.getElementById('sessionTaskCount').textContent = '현재 업무 ' + STATE.tasks.length + '건';
+    var activeCount=STATE.tasks.filter(function(t){return t.basicState!=='완료'}).length;
+    document.getElementById('sessionTaskCount').textContent = '현재 업무 ' + activeCount + '건';
   }catch(err){
     STATE.tasks = []; STATE.tasksLoaded = false;
     STATE.tasksLoadError = true;
@@ -829,7 +853,7 @@ document.getElementById('noaManagementToggle').addEventListener('click', functio
 });
 
 /* ============ 9. 업무 바통 흐름판 ============ */
-var BATON_EXAMPLE={id:'test-example',title:'김OO 청구 후속확인',origin:'대표님',originKind:'대표 직접 지시',dispatcher:'노아',worker:'지안',space:'설계사허브',basicState:'진행중',nextAction:'누락서류 확인',approval:false,resultLocation:'설계사허브 고객기록',handoff:'대표님 → 노아 → 지안',updatedAt:null,isExample:true};
+var BATON_EXAMPLE={id:'test-example',title:'김OO 청구 후속확인',rawContent:'김OO 청구 후속확인',origin:'대표님',originKind:'대표 직접 지시',dispatcher:'노아',worker:'지안',space:'설계사허브',basicState:'진행중',nextAction:'누락서류 확인',approval:false,resultLocation:'설계사허브 고객기록',handoff:'대표님 → 노아 → 지안',updatedAt:null,isExample:true};
 function batonMode(){return !STATE.session?'demo':(STATE.tasksLoaded?'real':(STATE.tasksLoadError?'error':'loading'))}
 function batonTasks(){var mode=batonMode();return mode==='real'?STATE.tasks:(mode==='demo'?[BATON_EXAMPLE]:[])}
 function activeTask(t){return t.basicState!=='완료'}
@@ -842,13 +866,16 @@ function renderBatonBoard(){
   document.getElementById('batonDemoBanner').hidden=!isDemo;
   document.getElementById('batonSourceLabel').textContent=isDemo?'TEST 예시 · 실제 업무 아님':(mode==='real'?'work_tasks 실데이터 · 읽기전용':(mode==='error'?'work_tasks 읽기 실패 · TEST 예시 제거됨':'work_tasks 실데이터 불러오는 중'));
   var workers={};
-  tasks.filter(activeTask).forEach(function(t){var w=clean(t.worker)||'미확인';workers[w]=(workers[w]||0)+1});
+  var unassignedCount=0;
+  tasks.filter(activeTask).forEach(function(t){var w=clean(t.worker);if(!w){unassignedCount+=1;return}workers[w]=(workers[w]||0)+1});
   var workerNames=Object.keys(workers);
-  document.getElementById('batonWorkers').innerHTML=workerNames.length?workerNames.map(function(w){
+  var workerHtml=workerNames.map(function(w){
     var states=tasks.filter(function(t){return activeTask(t)&&t.worker===w}).map(function(t){return t.basicState});
     var actionable=w==='노아';
     return '<div class="worker-chip'+(actionable?' actionable':'')+'"'+(actionable?' data-open-noa="true" role="button" tabindex="0"':'')+'><b>'+esc(isDemo?'TEST 예시 · '+w:w)+'</b><span>'+(isDemo?'예시 ':'')+'현재 '+workers[w]+'건 · '+esc(Array.from(new Set(states)).join('·'))+'</span></div>';
-  }).join(''):'<span class="empty">'+(mode==='loading'?'로그인됨 · work_tasks 실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기에 실패했습니다. 권한/RLS를 확인해 주세요.':'현재 담당 업무가 없습니다.'))+'</span>';
+  }).join('');
+  if(unassignedCount)workerHtml+='<div class="worker-chip"><b>담당 미배정 '+unassignedCount+'건</b><span>담당자 지정 전</span></div>';
+  document.getElementById('batonWorkers').innerHTML=workerHtml||'<span class="empty">'+(mode==='loading'?'로그인됨 · work_tasks 실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기에 실패했습니다. 권한/RLS를 확인해 주세요.':'현재 담당 업무가 없습니다.'))+'</span>';
 
   var approvals=tasks.filter(function(t){return t.approval||t.basicState==='대표확인'||t.basicState==='막힘'}).slice(0,6);
   document.getElementById('batonApprovals').innerHTML=approvals.length?('<div class="worker-chip"><b>'+approvals.length+'건</b><span>대표 확인 필요</span></div>'+approvals.map(function(t){return '<div class="approval-item"><b>'+esc(isDemo?'TEST 예시 · '+t.title:t.title)+'</b><br>'+esc(t.basicState)+' · '+esc(t.nextAction)+'<br><button class="btn item-action" type="button" data-baton-id="'+esc(t.id)+'">바로 확인</button></div>'}).join('')):'<span class="empty">'+(isDemo?'TEST 예시 · 대표 확인 항목 없음':(mode==='loading'?'로그인됨 · work_tasks 실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기 실패 · TEST 예시는 제거된 상태입니다.':'대표 확인 항목이 없습니다.')))+'</span>';
@@ -859,15 +886,15 @@ function renderBatonBoard(){
   document.getElementById('batonTaskGrid').innerHTML=active.length?active.map(function(t){
     return '<button type="button" class="baton-task" data-baton-id="'+esc(t.id)+'">'+
       '<div class="baton-task-top"><span class="state-badge '+stateClass(t.basicState)+'">'+esc(t.basicState)+'</span></div>'+
-      '<h4>'+esc(t.title)+'</h4><p><b>현재 담당:</b> '+esc(t.worker)+'</p><p><b>다음 행동:</b> '+esc(t.nextAction)+'</p>'+
+      '<h4>'+esc(t.title)+'</h4><p><b>현재 담당:</b> '+esc(t.worker||'담당 미배정')+'</p><p><b>다음 행동:</b> '+esc(t.nextAction)+'</p>'+
       '<span class="task-detail-link">상세보기</span></button>';
   }).join(''):'<span class="empty">'+(mode==='loading'?'로그인됨 · TEST 예시는 제거됐으며 work_tasks 실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기에 실패했습니다. TEST 예시는 다시 표시하지 않습니다.':'현재 진행 중인 업무가 없습니다.'))+'</span>';
-  document.getElementById('batonBlocked').innerHTML=blocked.length?blocked.map(function(t){return '<div class="blocked-item"><b>'+esc(t.title)+'</b><br>'+esc(t.worker)+' · '+esc(t.nextAction)+'<br><button class="btn item-action" type="button" data-baton-id="'+esc(t.id)+'">상세보기</button></div>'}).join(''):'<span class="empty">'+(mode==='loading'?'실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기에 실패했습니다.':'현재 막힌 일이 없습니다.'))+'</span>';
+  document.getElementById('batonBlocked').innerHTML=blocked.length?blocked.map(function(t){return '<div class="blocked-item"><b>'+esc(t.title)+'</b><br>'+esc(t.worker||'담당 미배정')+' · '+esc(t.nextAction)+'<br><button class="btn item-action" type="button" data-baton-id="'+esc(t.id)+'">상세보기</button></div>'}).join(''):'<span class="empty">'+(mode==='loading'?'실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기에 실패했습니다.':'현재 막힌 일이 없습니다.'))+'</span>';
   document.getElementById('batonCompleted').innerHTML=completed.length?completed.map(function(t){return '<div class="completed-item"><b>'+esc(t.title)+'</b><br>'+esc(t.resultLocation||'결과 위치 미확인')+'<br><button class="btn item-action" type="button" data-baton-id="'+esc(t.id)+'">결과보기</button></div>'}).join(''):'<span class="empty">'+(mode==='loading'?'실데이터를 불러오는 중입니다.':(mode==='error'?'work_tasks 읽기에 실패했습니다.':'최근 완료 업무가 없습니다.'))+'</span>';
 }
 function detailField(label,value,wide){return '<div class="baton-field'+(wide?' wide':'')+'"><dt>'+esc(label)+'</dt><dd>'+esc(value==null||value===''?'미확인':value)+'</dd></div>'}
 function taskNameField(value){
-  return '<div class="baton-field wide"><dt>업무명</dt><dd class="baton-task-name-value" id="batonTaskNameValue">'+esc(value==null||value===''?'미확인':value)+'</dd><button type="button" class="baton-task-name-toggle" id="batonTaskNameToggle" aria-expanded="false" aria-controls="batonTaskNameValue" hidden>전체 보기</button></div>';
+  return '<div class="baton-field wide"><dt>원문 보기</dt><dd class="baton-task-name-value" id="batonTaskNameValue">'+esc(value==null||value===''?'미확인':value)+'</dd><button type="button" class="baton-task-name-toggle" id="batonTaskNameToggle" aria-expanded="false" aria-controls="batonTaskNameValue" hidden>전체 보기</button></div>';
 }
 function initTaskNameToggle(){
   var value=document.getElementById('batonTaskNameValue'),toggle=document.getElementById('batonTaskNameToggle');
@@ -905,7 +932,7 @@ function openBatonTask(id){
   var t=batonTasks().find(function(x){return String(x.id)===String(id)});if(!t)return;
   document.getElementById('batonDialogTitle').textContent=t.title;
   document.getElementById('batonDetail').innerHTML=
-    taskNameField(t.title)+detailField('현재 담당',t.worker)+detailField('현재상태',t.basicState)+
+    detailField('업무명',t.title,true)+taskNameField(t.rawContent||t.title)+detailField('현재 담당',t.worker||'담당 미배정')+detailField('현재상태',t.basicState)+
     detailField('다음 행동 1개',t.nextAction,true)+detailField('대표확인 필요 여부',t.approval?'필요':'불필요 또는 원장 미표시')+
     detailField('업무 흐름',t.handoff,true)+detailField('근거·결과 위치',t.resultLocation,true);
   document.getElementById('batonMoreDetail').innerHTML=
