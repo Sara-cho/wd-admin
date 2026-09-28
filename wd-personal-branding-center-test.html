@@ -6581,10 +6581,26 @@ function cd26Open(kind,id){
  let dialog=document.getElementById('cd26-dialog');
  if(!dialog){dialog=document.createElement('dialog');dialog.id='cd26-dialog';document.body.appendChild(dialog);dialog.addEventListener('close',()=>{cd26Focus?.focus();cd26Context=null;});}
  dialog.setAttribute('aria-labelledby','cd27-title');
- dialog.innerHTML=`<div class="cd26-head"><h2 id="cd27-title">${kind==='quote'?'견적서 전송하기':esc(spec.title)}</h2><button type="button" onclick="document.getElementById('cd26-dialog').close()" aria-label="닫기">✕</button></div><div class="cd26-grid"><div class="cd27-recipient"><span>받는 사람</span><strong>${esc(customer.name||'고객 확인 필요')}</strong><p>${esc(cd29Phone(customer.phone)||'연락처 미등록')}</p></div>${kind==='payment'?`<section><label for="cd26-amount">입금 요청 금액</label><input id="cd26-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="금액 입력 (원)" oninput="cd26Update()"><small>계약금액 ${esc(comma(digits(String(row.finalContractAmount??row.amount??0))))}원</small></section>`:''}<section class="cd26-preview" aria-label="알림톡 내용"><div class="cd26-yellow">WD WAVE · ${esc(spec.title)}</div><pre id="cd26-message"></pre>${spec.button?`<div class="cd26-fakebutton">${esc(spec.button)}</div>`:''}</section></div><div class="cd26-foot"><p class="cd27-pending" id="cd27-pending">발송 연결 준비 중 · 현재는 내용만 확인할 수 있습니다.</p><div class="cd27-footer-actions"><button type="button" onclick="document.getElementById('cd26-dialog').close()">돌아가기</button><button type="button" class="cd27-deliver" disabled aria-describedby="cd27-pending">전달하기</button></div></div>`;
+ dialog.innerHTML=`<div class="cd26-head"><h2 id="cd27-title">${kind==='quote'?'견적서 전송하기':esc(spec.title)}</h2><button type="button" onclick="document.getElementById('cd26-dialog').close()" aria-label="닫기">✕</button></div><div class="cd26-grid"><div class="cd27-recipient"><span>받는 사람</span><strong>${esc(customer.name||'고객 확인 필요')}</strong><p>${esc(cd29Phone(customer.phone)||'연락처 미등록')}</p></div>${kind==='payment'?`<section><label for="cd26-amount">입금 요청 금액</label><input id="cd26-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="금액 입력 (원)" oninput="cd26Update()"><small>계약금액 ${esc(comma(digits(String(row.finalContractAmount??row.amount??0))))}원</small></section>`:''}<section class="cd26-preview" aria-label="알림톡 내용"><div class="cd26-yellow">WD WAVE · ${esc(spec.title)}</div><pre id="cd26-message"></pre>${spec.button?`<div class="cd26-fakebutton">${esc(spec.button)}</div>`:''}</section></div><div class="cd26-foot"><p class="cd27-pending" id="cd27-pending">템플릿 검수 중 · 실제 발송은 잠겨 있습니다.</p><div class="cd27-footer-actions"><button type="button" onclick="document.getElementById('cd26-dialog').close()">돌아가기</button><button type="button" onclick="cd30Check(this)">연결 확인</button><button type="button" class="cd27-deliver" disabled aria-describedby="cd27-pending">전달하기</button></div></div>`;
  cd26Update();if(!dialog.open)dialog.showModal();
 }
 function cd26Update(){if(!cd26Context)return;const {kind,row,customer}=cd26Context;document.getElementById('cd26-message').textContent=cd26Text(kind,row,customer,document.getElementById('cd26-amount')?.value||'');}
+
+// TEST30: connection preparation only; delivery remains disabled.
+async function cd30Check(button){
+ const context=cd26Context;if(!context||button.disabled)return;
+ button.disabled=true;button.textContent='확인 중…';
+ const note=document.getElementById('cd27-pending');
+ try{
+  if(location.protocol!=='https:')throw new Error('본진과 같은 HTTPS 주소에 TEST를 올린 후 확인해 주세요.');
+  if(!await accAuth())throw new Error('본진에서 대표 계정으로 로그인한 후 확인해 주세요.');
+  const {data,error}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'preflight',kind:context.kind}});
+  if(error)throw new Error('연결 확인 실패 · 서버 TEST 설치 또는 본진 로그인 상태를 확인해 주세요.');
+  if(!data||data.can_send!==false)throw new Error('예상과 다른 서버 응답입니다. 발송 잠금을 유지합니다.');
+  if(cd26Context===context)note.textContent=data.message||'점검 결과를 확인하지 못했습니다.';
+ }catch(e){if(cd26Context===context)note.textContent=e.message;}
+ finally{button.disabled=false;button.textContent='연결 확인';}
+}
 
 function cd20Edit(kind,id){
   closeModal('m-cdall');
