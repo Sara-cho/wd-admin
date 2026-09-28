@@ -6593,7 +6593,11 @@ async function cd30Check(button){
  const note=document.getElementById('cd27-pending');
  try{
   if(location.protocol!=='https:')throw new Error('본진과 같은 HTTPS 주소에 TEST를 올린 후 확인해 주세요.');
-  if(!await accAuth())throw new Error('본진에서 대표 계정으로 로그인한 후 확인해 주세요.');
+  if(!_accSb)_accSb=supabase.createClient(SB_URL,SB_KEY,{auth:{storageKey:ACC_AUTH_KEY,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+  const {data:authData,error:authError}=await _accSb.auth.getUser();
+  if(authError||!authData?.user)throw new Error('본진에서 수진님 또는 지점장님 계정으로 로그인한 후 확인해 주세요.');
+  const {data:profile,error:profileError}=await _accSb.from('wd_staff_profiles').select('login_id,is_active').eq('user_id',authData.user.id).maybeSingle();
+  if(profileError||!profile?.is_active||!['kfcyk30','kfcyk50'].includes(profile.login_id))throw new Error('수진님 또는 지점장님 계정으로 확인해 주세요.');
   const {data,error}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'preflight',kind:context.kind}});
   if(error)throw new Error('연결 확인 실패 · 서버 TEST 설치 또는 본진 로그인 상태를 확인해 주세요.');
   if(!data||data.can_send!==false)throw new Error('예상과 다른 서버 응답입니다. 발송 잠금을 유지합니다.');
