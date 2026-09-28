@@ -37,7 +37,7 @@ function mockSupabaseScript(mode) {
 
   return [
     'window.supabase={createClient:function(){return{',
-    'auth:{signInWithPassword:async function(){return {data:{session:{user:{id:"qa-user",email:"qa@invalid.local"}}},error:null}},signOut:async function(){return {error:null}}},',
+    'auth:{getSession:async function(){return {data:{session:'+(mode === 'no-session' ? 'null' : '{user:{id:"qa-user",email:"kfcyk50@admin.wdwave.kr"}}')+'},error:null}}},',
     'from:function(){return{select:function(){return this},order:function(){return this},limit:function(){',
     mode === 'loading' ? 'return new Promise(function(){})' :
       (mode === 'error' ? 'return Promise.resolve({data:null,error:{message:"QA forced read failure"}})' :
@@ -98,11 +98,6 @@ async function expectCommonLayout(page) {
   expect(sizes.body, '본문 가로스크롤 발생').toBeLessThanOrEqual(sizes.viewport + 1);
 }
 
-async function login(page) {
-  await page.locator('#loginPassword').fill('qa-not-a-real-secret');
-  await page.locator('#loginBtn').click();
-}
-
 async function expectModalInsideViewport(page) {
   const result = await page.locator('#batonDialog').evaluate((dialog) => {
     const rect = dialog.getBoundingClientRect();
@@ -120,25 +115,14 @@ async function expectModalInsideViewport(page) {
   expect(result.titleCloseOverlap, '상단 제목과 닫기 버튼 겹침').toBeFalsy();
 }
 
-test('로그인 전 TEST 예시와 기본 레이아웃', async ({ page }, testInfo) => {
-  const diagnostics = await prepare(page, 'success');
-  await expectCommonLayout(page);
-  await expect(page.locator('#batonDemoBanner')).toBeVisible();
-  await expect(page.locator('#batonSourceLabel')).toContainText('TEST 예시');
-  await page.locator('[data-baton-id="test-example"]').click();
-  await expect(page.locator('#batonDialog')).toBeVisible();
-  await expect(page.locator('#batonTaskNameToggle')).toBeHidden();
-  await expectModalInsideViewport(page);
-  await takeScreenshot(page, testInfo, 'login-before-demo');
-  await page.locator('#batonDialog .dlg-close').click();
-  await expect(page.locator('#batonDialog')).not.toBeVisible();
+test('본진 세션이 없으면 본진으로 복귀', async ({ page }, testInfo) => {
+  const diagnostics = await prepare(page, 'no-session');
+  await page.waitForURL(/wd-hq-talk-test\.html/);
   await attachDiagnostics(testInfo, diagnostics);
-  expect(diagnostics, '예상하지 못한 콘솔·런타임 오류').toEqual([]);
 });
 
 test('로그인 직후 로딩 상태에서 TEST 예시 제거', async ({ page }, testInfo) => {
   const diagnostics = await prepare(page, 'loading');
-  await login(page);
   await expect(page.locator('#batonSourceLabel')).toContainText('불러오는 중');
   await expect(page.locator('#batonDemoBanner')).toBeHidden();
   await expect(page.locator('#batonTaskGrid')).not.toContainText('김OO 청구 후속확인');
@@ -151,7 +135,7 @@ test('로그인 직후 로딩 상태에서 TEST 예시 제거', async ({ page },
 
 test('실데이터 성공 모의 상태와 긴 업무명 상세 모달', async ({ page }, testInfo) => {
   const diagnostics = await prepare(page, 'success');
-  await login(page);
+  await expect(page.getByRole('button', { name: '본진으로 돌아가기' })).toBeVisible();
   await expect(page.locator('#batonSourceLabel')).toContainText('실데이터');
   await expect(page.locator('#batonDemoBanner')).toBeHidden();
   await expect(page.locator('#batonTaskGrid')).not.toContainText('김OO 청구 후속확인');
@@ -210,7 +194,6 @@ test('실데이터 성공 모의 상태와 긴 업무명 상세 모달', async (
 
 test('읽기 실패 상태에서 TEST 예시가 다시 나타나지 않음', async ({ page }, testInfo) => {
   const diagnostics = await prepare(page, 'error');
-  await login(page);
   await expect(page.locator('#batonSourceLabel')).toContainText('읽기 실패');
   await expect(page.locator('#batonDemoBanner')).toBeHidden();
   await expect(page.locator('#batonTaskGrid')).not.toContainText('김OO 청구 후속확인');
