@@ -206,30 +206,17 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
 
 <header class="topbar">
   <div class="crumb"><a href="wd-hq-talk-test.html">WD 본진</a><b>›</b><strong>라이브 오피스</strong></div>
-  <span class="badge test">🧪 LIVE OFFICE · TEST 16</span>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <button class="btn" type="button" onclick="location.href='wd-hq-talk-test.html'">본진으로 돌아가기</button>
+    <span class="badge test">🧪 LIVE OFFICE · TEST 16</span>
+  </div>
 </header>
 
-<div class="wrap">
+<div class="wrap" id="officeContent" style="display:none">
 
   <div class="notice" hidden aria-hidden="true">
     <b>이 TEST가 실제로 연결하는 것:</b> wd-headquarters-optimized-test.html과 동일한 WD ADMIN Supabase 프로젝트·동일한 <code>work_tasks</code> 테이블을 읽기전용으로 재사용합니다. 새 Edge Function·새 테이블·새 메신저는 만들지 않았습니다. 로그인 전에는 모든 카드가 미연결 상태로 정직하게 표시됩니다.<br>
     <b>2026-09-26 역할분장 TEST:</b> 대표·수진·민아의 관계와 책임을 분리해 표시합니다. 수진은 직원·제작총괄, 민아는 교육 중인 비직원으로 두며 정식 업무방·근무시간은 아직 확정하지 않습니다. AI 전문역할은 기존처럼 노아 내부 위임 대상으로 유지합니다.
-  </div>
-
-  <div class="login-box" id="loginBox">
-    <h2>WD ADMIN 계정으로 실제 연결하기</h2>
-    <p>대표님 또는 수진님 회사 계정으로 로그인하면 현재 업무상태가 연결됩니다.</p>
-    <div class="role-pick">
-      <button type="button" class="active" data-role="owner">대표님 계정</button>
-      <button type="button" data-role="staff">수진님 계정</button>
-    </div>
-    <div class="login-row">
-      <input id="loginEmail" type="text" inputmode="text" autocomplete="username" aria-label="WD ADMIN 로그인 아이디" placeholder="아이디" readonly>
-      <input id="loginPassword" type="password" placeholder="비밀번호">
-      <button class="btn primary" id="loginBtn">로그인</button>
-      <button class="btn ghost" id="skipLoginBtn">TEST 화면만 보기 (로그인 건너뛰기)</button>
-    </div>
-    <div class="login-status" id="loginStatus">아직 로그인하지 않았습니다 · 모든 카드 미연결 상태</div>
   </div>
 
   <div class="login-box" id="sessionBox" style="display:none">
@@ -240,7 +227,6 @@ dialog{max-width:calc(100vw - 24px);overflow:hidden}
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <span class="badge live" id="sessionTaskCount">현재 업무 0건</span>
-        <button class="btn" id="logoutBtn">로그아웃</button>
       </div>
     </div>
   </div>
@@ -624,63 +610,29 @@ function tasksFor(nameNeedles){
   });
 }
 
-/* ============ 3. Supabase 로그인 (실제 wd-admin 계정) ============ */
-var selectedRole='owner';
-function selectedLoginId(){return selectedRole==='owner'?OWNER_LOGIN_ID:STAFF_LOGIN_ID}
-function loginAccount(loginId){return LOGIN_ACCOUNTS[String(loginId||'').trim().toLowerCase()]||null}
-document.querySelectorAll('.role-pick button').forEach(function(b){
-  b.addEventListener('click',function(){
-    selectedRole=b.getAttribute('data-role');
-    document.querySelectorAll('.role-pick button').forEach(function(x){x.classList.toggle('active',x===b)});
-    document.getElementById('loginEmail').value = selectedLoginId();
-  });
-});
-document.getElementById('loginEmail').value = OWNER_LOGIN_ID;
-
-document.getElementById('loginBtn').addEventListener('click', async function(){
-  if(!sbClient){ setLoginStatus('Supabase 클라이언트를 불러오지 못했습니다. 네트워크를 확인해 주세요.', true); return }
-  var loginId = document.getElementById('loginEmail').value;
-  var account = loginAccount(loginId);
-  var password = document.getElementById('loginPassword').value;
-  if(!account){ setLoginStatus('허용된 WD ADMIN 아이디를 확인해 주세요.', true); return }
-  if(!password){ setLoginStatus('비밀번호를 입력해 주세요.', true); return }
-  setLoginStatus('WD ADMIN 계정 인증 확인 중...');
+/* ============ 3. 본진 WD ADMIN 세션 재사용 ============ */
+async function restoreHeadquartersSession(){
+  if(!sbClient){ location.replace('wd-hq-talk-test.html'); return; }
   try{
-    var res = await sbClient.auth.signInWithPassword({ email: account.email, password: password });
-    if(res.error || !res.data || !res.data.session) throw new Error('아이디 또는 비밀번호를 확인해 주세요.');
-    STATE.session = res.data.session;
-    STATE.profile = { loginId: loginId, email: account.email, role: account.role };
-    onLoginSuccess();
+    var res=await sbClient.auth.getSession();
+    var session=res && res.data && res.data.session;
+    if(res.error || !session || !session.user){ location.replace('wd-hq-talk-test.html'); return; }
+    var email=String(session.user.email||'').toLowerCase();
+    var account=Object.keys(LOGIN_ACCOUNTS).map(function(id){return {id:id,account:LOGIN_ACCOUNTS[id]}}).find(function(entry){return entry.account.email===email});
+    if(!account){ location.replace('wd-hq-talk-test.html'); return; }
+    STATE.session=session;
+    STATE.profile={loginId:account.id,email:email,role:account.account.role};
+    document.getElementById('sessionBox').style.display='block';
+    document.getElementById('sessionWhoName').textContent=account.account.name;
+    document.getElementById('sessionWhoEmail').textContent=account.id+' · WD ADMIN 세션 연결됨';
+    document.getElementById('officeContent').style.display='block';
+    STATE.tasks=[]; STATE.tasksLoaded=false; STATE.tasksLoadError=false;
+    renderAll();
+    await loadWorkTasks();
+    renderAll();
   }catch(err){
-    setLoginStatus('로그인 실패: ' + (err && err.message ? err.message : '아이디 또는 비밀번호를 확인해 주세요.'), true);
+    location.replace('wd-hq-talk-test.html');
   }
-});
-document.getElementById('skipLoginBtn').addEventListener('click', function(){
-  STATE.session=null; STATE.profile=null; STATE.tasks=[]; STATE.tasksLoaded=false; STATE.tasksLoadError=false;
-  renderAll();
-  setLoginStatus('TEST 화면만 확인 중 · 모든 카드는 미연결 상태로 표시됩니다.');
-});
-document.getElementById('logoutBtn').addEventListener('click', async function(){
-  try{ if(sbClient) await sbClient.auth.signOut(); }catch(e){}
-  STATE.session=null; STATE.profile=null; STATE.tasks=[]; STATE.tasksLoaded=false; STATE.tasksLoadError=false;
-  document.getElementById('sessionBox').style.display='none';
-  document.getElementById('loginBox').style.display='block';
-  renderAll();
-});
-function setLoginStatus(msg, isErr){
-  var el=document.getElementById('loginStatus');
-  el.textContent=msg; el.className = 'login-status' + (isErr?' err':'');
-}
-async function onLoginSuccess(){
-  document.getElementById('loginBox').style.display='none';
-  var box=document.getElementById('sessionBox'); box.style.display='block';
-  document.getElementById('sessionWhoName').textContent = STATE.profile.role==='owner' ? '최윤경 대표' : '박수진';
-  document.getElementById('sessionWhoEmail').textContent = STATE.profile.loginId + ' · 실제 WD ADMIN 세션 연결됨';
-  toast('로그인 성공 · work_tasks 읽기 시도 중');
-  STATE.tasks=[]; STATE.tasksLoaded=false; STATE.tasksLoadError=false;
-  renderAll();
-  await loadWorkTasks();
-  renderAll();
 }
 async function loadWorkTasks(){
   if(!sbClient || !STATE.session) return;
@@ -963,10 +915,10 @@ function renderAll(){
   renderPeople();
   renderBatonBoard();
   var box = document.getElementById('sessionBox');
-  if(!STATE.session){ box.style.display='none'; document.getElementById('loginBox').style.display='block'; }
+  if(!STATE.session){ box.style.display='none'; }
 }
 renderPool();
-renderAll();
+restoreHeadquartersSession();
 
 })();
 </script>
