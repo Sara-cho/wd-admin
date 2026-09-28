@@ -6479,22 +6479,76 @@ async function cd22Request(id,button){
   }catch(e){toast('서명 요청을 처리하지 못했습니다. '+(e.message||''));}finally{CD18_BUSY.delete(lock);button.disabled=false;}
 }
 function cd20Toolbar(kind,row){
-  return `<div class="w20-toolbar"><div class="w20-meta"><strong>${esc(row.no|| (kind==='quote'?'견적서':'계약서'))}</strong><span>작성일 ${esc(row.date||'미등록')}</span></div><div class="w20-actions"><button class="primary" onclick="cd20Download('${kind}','${row.id}')">PDF 다운로드</button><button onclick="cd20Edit('${kind}','${row.id}')">수정</button><button class="danger" onclick="cd20Delete('${kind}','${row.id}',this)">삭제</button></div></div>`;
+  return `<div class="w20-toolbar"><div class="w20-meta"><strong>${esc(row.no|| (kind==='quote'?'견적서':'계약서'))}</strong><span>작성일 ${esc(row.date||'미등록')}</span></div><div class="w20-actions"><button class="primary" onclick="cd20Download('${kind}','${row.id}',this)">PDF 다운로드</button><button onclick="cd20Edit('${kind}','${row.id}')">수정</button><button class="danger" onclick="cd20Delete('${kind}','${row.id}',this)">삭제</button></div></div>`;
 }
 function cd20Edit(kind,id){
   closeModal('m-cdall');
   if(kind==='quote')openQuote(id);else openContractEditor(id);
 }
-async function cd20Download(kind,id){
-  const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);if(!row)return;
-  const w=window.open('','_blank');if(!w){toast('다운로드 창을 열 수 없습니다. 팝업 허용을 확인해 주세요.');return;}
-  const html=kind==='quote'?buildQuoteA4({...row,items:row.items||[]}):buildContractA4HTML(row);
-  const styles=Array.from(document.querySelectorAll('style,link[rel="stylesheet"]')).map(x=>x.outerHTML).join('');
-  w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>'+esc((row.no||'문서')+'.pdf')+'</title>'+styles+'<style>body{margin:0;background:#fff}.a4,.cedit-a4{zoom:1!important;transform:none!important;margin:0 auto!important;box-shadow:none!important}@media print{body>main{display:block!important}header{display:block!important}.a4,.cedit-a4{break-after:page}.a4:last-child,.cedit-a4:last-child{break-after:auto}}</style></head><body><main>'+html+'</main></body></html>');
-  w.document.close();
-  const loaded=new Promise(resolve=>{if(w.document.readyState==='complete')resolve();else w.addEventListener('load',resolve,{once:true});});
-  await loaded;if(w.document.fonts)await w.document.fonts.ready;
-  if(!w.closed){w.focus();w.print();}
+let cd25PdfBusy=false;
+let cd25PdfLibraries=null;
+function cd25LoadPdf(){
+  if(window.html2canvas&&window.jspdf?.jsPDF)return Promise.resolve();
+  if(cd25PdfLibraries)return cd25PdfLibraries;
+  const load=(src,ready)=>new Promise((resolve,reject)=>{
+    if(ready()){resolve();return;}
+    const script=document.createElement('script');script.src=src;script.crossOrigin='anonymous';
+    const timer=setTimeout(()=>{script.remove();reject(new Error('PDF 도구를 불러오지 못했습니다. 다시 눌러 주세요.'));},20000);
+    script.onload=()=>{clearTimeout(timer);if(ready())resolve();else reject(new Error('PDF 도구를 준비하지 못했습니다.'));};
+    script.onerror=()=>{clearTimeout(timer);script.remove();reject(new Error('PDF 도구 연결에 실패했습니다. 인터넷 연결을 확인해 주세요.'));};
+    document.head.appendChild(script);
+  });
+  cd25PdfLibraries=Promise.all([
+    load('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',()=>!!window.html2canvas),
+    load('https://cdn.jsdelivr.net/npm/jspdf@3.0.4/dist/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF)
+  ]).catch(e=>{cd25PdfLibraries=null;throw e;});
+  return cd25PdfLibraries;
+}
+async function cd20Download(kind,id,button){
+  const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);
+  if(!row||cd25PdfBusy)return;
+  cd25PdfBusy=true;const label=button?.textContent;
+  if(button){button.disabled=true;button.textContent='PDF 준비 중…';}
+  let frame;
+  try{
+    await cd25LoadPdf();
+    // Prefer the saved inline signature so it cannot disappear due to an image CORS failure.
+    const source={...row};if(source.signatureDataUrl)source.signatureUrl=source.signatureDataUrl;
+    const html=kind==='quote'?buildQuoteA4({...source,items:source.items||[]}):buildContractA4HTML(source);
+    const styles=Array.from(document.querySelectorAll('style,link[rel="stylesheet"]')).map(x=>x.outerHTML).join('');
+    frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;
+    frame.style.cssText='position:fixed;left:-12000px;top:0;width:1000px;height:1200px;border:0;pointer-events:none';
+    document.body.appendChild(frame);
+    const doc=frame.contentDocument;
+    doc.open();doc.write('<!doctype html><html lang="ko"><head><meta charset="utf-8">'+styles+'<style>html,body{margin:0!important;padding:0!important;background:#fff!important;width:1000px!important}body>main{display:block!important}header{display:block!important}.a4,.cedit-a4{display:block!important;width:210mm!important;height:auto!important;min-height:297mm!important;zoom:1!important;transform:none!important;margin:0!important;box-shadow:none!important;overflow:visible!important;box-sizing:border-box!important}</style></head><body><main>'+html+'</main></body></html>');doc.close();
+    await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error('문서 로딩 시간이 초과되었습니다. 다시 눌러 주세요.')),20000);
+      const ready=()=>{clearTimeout(timer);resolve();};
+      if(doc.readyState==='complete')ready();else frame.addEventListener('load',ready,{once:true});
+    });
+    if(doc.fonts)await doc.fonts.ready;
+    await Promise.all(Array.from(doc.images).map(img=>new Promise((resolve,reject)=>{
+      if(img.complete){img.naturalWidth?resolve():reject(new Error('서명 또는 이미지를 불러오지 못했습니다.'));return;}
+      img.onload=resolve;img.onerror=()=>reject(new Error('서명 또는 이미지를 불러오지 못했습니다.'));
+    })));
+    const pages=Array.from(doc.querySelectorAll('.a4,.cedit-a4'));
+    if(!pages.length)throw new Error('저장할 문서가 없습니다.');
+    const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    for(let i=0;i<pages.length;i++){
+      if(button)button.textContent='PDF 생성 '+(i+1)+' / '+pages.length;
+      const canvas=await window.html2canvas(pages[i],{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,windowWidth:1000,windowHeight:1200,scrollX:0,scrollY:0});
+      if(!canvas.width||!canvas.height)throw new Error('문서 화면을 생성하지 못했습니다.');
+      if(i)pdf.addPage();
+      const ratio=Math.min(210/canvas.width,297/canvas.height);
+      const width=canvas.width*ratio,height=canvas.height*ratio;
+      pdf.addImage(canvas.toDataURL('image/png'),'PNG',(210-width)/2,0,width,height,undefined,'FAST');
+      canvas.width=0;canvas.height=0;
+    }
+    const filename=String(row.no||(kind==='quote'?'견적서':'계약서')).replace(/[\\/:*?"<>|]/g,'_')+'.pdf';
+    await pdf.save(filename,{returnPromise:true});
+    toast('PDF 다운로드를 요청했습니다.');
+  }catch(e){toast(e.message||'PDF를 만들지 못했습니다. 다시 시도해 주세요.');}
+  finally{frame?.remove();cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
 }
 async function cd20Delete(kind,id,button){
   if(!['quote','contract'].includes(kind))return;
