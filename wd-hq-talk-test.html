@@ -2859,7 +2859,15 @@ async function wdhqVerifyLogin(){
 async function wdhqLogout(){
   if(WDHQ_AUTH_CHECKING)return false;
   WDHQ_AUTH_CHECKING=true;
-  try{wdhqInitSupabase();await WDHQ_SUPABASE.auth.signOut({scope:'local'})}catch(ignore){}
+  try{
+    wdhqInitSupabase();
+    await Promise.race([
+      WDHQ_SUPABASE.auth.signOut({scope:'local'}),
+      new Promise(resolve=>setTimeout(resolve,1800))
+    ]);
+  }catch(ignore){}
+  try{localStorage.removeItem(WDHQ_AUTH_STORAGE_KEY)}catch(ignore){}
+  try{sessionStorage.removeItem(WDHQ_AUTH_STORAGE_KEY)}catch(ignore){}
   WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;wdhqClearDisplayState();WDHQ_AUTH_CHECKING=false;
   wdhqShowLogin('정상 로그아웃되었습니다.');
   return true;
