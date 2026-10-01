@@ -969,7 +969,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 .wdhq-settings-panel h3{margin:0 0 8px;color:#101828;font-size:21px}.wdhq-settings-panel>p{margin:0 0 20px;color:#667085;font-size:13px;line-height:1.6}
 .wdhq-settings-row{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:64px;padding:14px 0;border-top:1px solid #eaecf0}
 .wdhq-settings-row:first-of-type{border-top:0}.wdhq-settings-row div{min-width:0}.wdhq-settings-row b{display:block;color:#1d2939;font-size:14px}.wdhq-settings-row small{display:block;margin-top:4px;color:#667085;font-size:11.5px;line-height:1.45}
-.wdhq-settings-action{flex:0 0 auto;min-height:38px;padding:8px 12px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#344054;font-size:11px;font-weight:800;cursor:pointer}.wdhq-settings-action.primary{border-color:#1769ed;background:#1769ed;color:#fff}
+.wdhq-settings-action{position:relative;z-index:1;pointer-events:auto;flex:0 0 auto;min-height:38px;padding:8px 12px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#344054;font-size:11px;font-weight:800;cursor:pointer}.wdhq-settings-action.primary{border-color:#1769ed;background:#1769ed;color:#fff}
 .wdhq-settings-status{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;color:#475467;font-size:11px;font-weight:800}.wdhq-settings-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#f04438}.wdhq-settings-status.connected:before{background:#12b76a}
 @media(max-width:700px){.wdhq-test-grid{grid-template-columns:1fr}.wdhq-test-card{min-height:104px}.wdhq-settings-modal{height:100%;max-height:none}.wdhq-settings-layout{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.wdhq-settings-nav{display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid #e5e9ef;padding:10px}.wdhq-settings-search{display:none}.wdhq-settings-nav button{width:auto;min-width:max-content}.wdhq-settings-content{padding:20px 18px}.wdhq-settings-row{align-items:flex-start;flex-direction:column}.wdhq-settings-action{width:100%}}
 
@@ -1267,6 +1267,9 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
           </span>
           <span>새로고침</span>
         </button>
+        <button class="topbtn" id="wdhq-account-logout" type="button" onclick="wdhqLogout()" aria-label="대표 계정 로그아웃">
+          <span>로그아웃</span>
+        </button>
       </div>
     </header>
 
@@ -1531,7 +1534,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
         <section class="wdhq-settings-panel active" data-wdhq-settings-panel="google">
           <h3>Google 계정·OAuth</h3><p>현재 본진에서 사용하는 Google 연결 상태를 확인합니다. 인증값은 화면에 표시하지 않습니다.</p>
           <div class="wdhq-settings-row"><div><b>Google 동기화</b><small>Gmail · Calendar · Tasks 연결을 다시 확인합니다.</small></div><span class="wdhq-settings-status" id="wdhqSettingsGoogleStatus">연결 확인 전</span></div>
-          <div class="wdhq-settings-row"><div><b>OAuth 연결 확인</b><small>기존 OAuth 구성을 변경하지 않고 현재 응답만 확인합니다.</small></div><button class="wdhq-settings-action primary" type="button" onclick="wdhqSettingsCheckGoogle()">연결 확인</button></div>
+          <div class="wdhq-settings-row"><div><b>OAuth 연결 확인</b><small>기존 OAuth 구성을 변경하지 않고 현재 응답만 확인합니다.</small></div><button class="wdhq-settings-action primary" id="wdhq-settings-google-check" type="button">연결 확인</button></div>
         </section>
         <section class="wdhq-settings-panel" data-wdhq-settings-panel="api">
           <h3>API·외부서비스</h3><p>본진과 연결된 외부 서비스의 운영 상태와 근거 위치를 확인합니다.</p>
@@ -2147,6 +2150,11 @@ function wdhqOpenRepresentativeTest(target){
 function wdhqOpenSettings(){
   const modal=document.getElementById('wdhqSettingsModal');
   if(!modal)return;
+  const googleCheck=document.getElementById('wdhq-settings-google-check');
+  if(googleCheck&&!googleCheck.dataset.wdhqBound){
+    googleCheck.dataset.wdhqBound='1';
+    googleCheck.addEventListener('click',wdhqSettingsCheckGoogle);
+  }
   modal.classList.add('show');
   wdhqSettingsTab('google');
   wdhqPaintSettingsGoogleStatus();
