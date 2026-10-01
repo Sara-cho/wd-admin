@@ -5559,62 +5559,34 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
     statusText.textContent = text;
   }
 
-  function deepToken(value){
-    if(!value) return "";
-    if(typeof value === "string"){
-      if(value.split(".").length === 3 && value.length > 100) return value;
-      try { return deepToken(JSON.parse(value)); } catch(_) { return ""; }
-    }
-    if(Array.isArray(value)){
-      for(const v of value){ const token = deepToken(v); if(token) return token; }
+  function jwtExpiresSoon(token){
+    try{
+      const payload = JSON.parse(atob(String(token).split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
+      return !payload.exp || payload.exp <= Math.floor(Date.now()/1000) + 60;
+    }catch(_){ return true; }
+  }
+
+  async function getAccessToken(forceRefresh=false){
+    if(typeof wdhqInitSupabase === "function") wdhqInitSupabase();
+    if(typeof WDHQ_SUPABASE === "undefined" || !WDHQ_SUPABASE?.auth?.getSession){
       return "";
     }
-    if(typeof value === "object"){
-      if(typeof value.access_token === "string" && value.access_token) return value.access_token;
-      if(typeof value.accessToken === "string" && value.accessToken) return value.accessToken;
-      for(const key of ["session","currentSession","data","auth","user"]){
-        if(value[key]){ const token = deepToken(value[key]); if(token) return token; }
-      }
-      for(const key of Object.keys(value)){
-        const token = deepToken(value[key]); if(token) return token;
-      }
-    }
-    return "";
-  }
 
-  function localStorageToken(){
-    const preferred = ["wd-admin-auth-v1","sb-mzftzadtoepcrwhnwdmn-auth-token"];
-    for(const key of preferred){
-      try{
-        const token = deepToken(localStorage.getItem(key));
-        if(token) return token;
-      }catch(_){}
-    }
-    try{
-      for(let i=0;i<localStorage.length;i++){
-        const key = localStorage.key(i) || "";
-        if(!/auth|session|supabase|wd-admin/i.test(key)) continue;
-        const token = deepToken(localStorage.getItem(key));
-        if(token) return token;
-      }
-    }catch(_){}
-    return "";
-  }
+    let result = await WDHQ_SUPABASE.auth.getSession();
+    if(result.error) throw new Error("본진 로그인 세션을 확인하지 못했습니다.");
+    let session = result.data?.session || null;
+    if(!session?.access_token) return "";
 
-  async function getAccessToken(){
-    try{
-      if(typeof WDHQ_AUTH_SESSION !== "undefined" && WDHQ_AUTH_SESSION && WDHQ_AUTH_SESSION.access_token){
-        return WDHQ_AUTH_SESSION.access_token;
+    if(forceRefresh || jwtExpiresSoon(session.access_token)){
+      const refreshed = await WDHQ_SUPABASE.auth.refreshSession(session);
+      if(refreshed.error || !refreshed.data?.session?.access_token){
+        throw new Error("본진 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
       }
-    }catch(_){}
-    try{
-      if(typeof WDHQ_SUPABASE !== "undefined" && WDHQ_SUPABASE && WDHQ_SUPABASE.auth && WDHQ_SUPABASE.auth.getSession){
-        const result = await WDHQ_SUPABASE.auth.getSession();
-        const token = result && result.data && result.data.session && result.data.session.access_token;
-        if(token) return token;
-      }
-    }catch(_){}
-    return localStorageToken();
+      session = refreshed.data.session;
+    }
+
+    try { WDHQ_AUTH_SESSION = session; } catch(_) {}
+    return session.access_token;
   }
 
   async function checkSession(){
@@ -5707,23 +5679,26 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
         }
         googleAccessToken = await googleReader.getAccessToken(true);
       }
-      const response = await fetch(WDHQ_NOAH_FUNCTION_URL,{
+      const invokeNoah = supabaseToken => fetch(WDHQ_NOAH_FUNCTION_URL,{
         method:"POST",
         headers:{
           "Content-Type":"application/json",
           "apikey":WDHQ_NOAH_PUBLISHABLE_KEY,
-          "Authorization":"Bearer " + token,
+          "Authorization":"Bearer " + supabaseToken,
           ...(googleAccessToken ? {"X-Google-Access-Token":googleAccessToken} : {})
         },
-        body:JSON.stringify({
-          message,
-          mode,
-          history:history.slice(-10)
-        })
+        body:JSON.stringify({message,mode,history:history.slice(-10)})
       });
 
+      let response = await invokeNoah(token);
       let body = {};
       try { body = await response.json(); } catch(_) {}
+      if(response.status === 401){
+        const refreshedToken = await getAccessToken(true);
+        response = await invokeNoah(refreshedToken);
+        body = {};
+        try { body = await response.json(); } catch(_) {}
+      }
 
       if(!response.ok){
         throw new Error(body.message || ("요청 실패 (" + response.status + ")"));
