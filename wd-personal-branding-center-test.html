@@ -6636,7 +6636,7 @@ async function cd30Check(button){
   if(authError||!authData?.user)throw new Error('본진에서 수진님 또는 지점장님 계정으로 로그인한 후 확인해 주세요.');
   const {data:profile,error:profileError}=await _accSb.from('wd_staff_profiles').select('login_id,is_active').eq('user_id',authData.user.id).maybeSingle();
   if(profileError||!profile?.is_active||!['kfcyk30','kfcyk50'].includes(profile.login_id))throw new Error('수진님 또는 지점장님 계정으로 확인해 주세요.');
-  const {data,error}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'preflight',kind:context.kind}});
+  const {data,error}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'preflight',kind:context.kind,id:context.row.id}});
   if(error)throw new Error('연결 확인 실패 · 서버 TEST 설치 또는 본진 로그인 상태를 확인해 주세요.');
   if(!data||data.can_send!==false)throw new Error('예상과 다른 서버 응답입니다. 발송 잠금을 유지합니다.');
   if(cd26Context===context)note.textContent=data.message||'점검 결과를 확인하지 못했습니다.';
