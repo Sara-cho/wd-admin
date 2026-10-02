@@ -166,6 +166,12 @@ input,select,textarea{font-family:inherit;}
 /* A4 문서 미리보기 */
 .doc-wrap{display:none;}
 .doc-toolbar{display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+#quote-wrap{position:fixed;inset:0;z-index:9999;overflow:auto;background:#eeeef6;padding:22px 12px 60px;box-sizing:border-box;}
+#quote-wrap .quote-head{max-width:900px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#31275c;}
+#quote-wrap .quote-head h1{font-size:20px;margin:0;}
+#quote-wrap .quote-head button{border:0;border-radius:9px;background:#4a3f7a;color:#fff;padding:10px 16px;font:inherit;cursor:pointer;}
+#quote-wrap .quote-pages{overflow-x:auto;}
+#quote-wrap .quote-error{max-width:600px;margin:60px auto;padding:30px;background:#fff;border-radius:12px;text-align:center;}
 .a4{width:210mm;height:297mm;background:#fff;margin:0 auto 14px;padding:14mm 16mm;box-shadow:0 8px 40px rgba(0,0,0,.16);position:relative;overflow:hidden;}
 .doc-head2{font-size:13px;font-weight:800;color:var(--p);border-bottom:2px solid var(--p);padding-bottom:6px;margin:0 0 8mm;}
 .doc-head2 span{font-weight:600;color:var(--s500);font-size:11px;}
@@ -766,7 +772,7 @@ input,select,textarea{font-family:inherit;}
 #sign-wrap .sg-error{text-align:center;padding:60px 20px;color:var(--s500);}
 /* [v35] 서명 페이지 인쇄 전용 CSS */
 @media print{
-  body>*:not(#sign-wrap){display:none!important;}
+  body:has(#sign-wrap)>*:not(#sign-wrap){display:none!important;}
   #sign-wrap{position:static!important;padding:0!important;background:#fff!important;overflow:visible!important;}
   #sign-wrap .sg-card{max-width:100%!important;box-shadow:none!important;padding:10px!important;border-radius:0!important;}
   #sign-wrap .sg-preview{display:block!important;border:none!important;padding:0!important;margin:10px 0!important;background:#fff!important;}
@@ -774,6 +780,10 @@ input,select,textarea{font-family:inherit;}
   #sign-wrap .sg-preview .cedit-a4{padding:0!important;font-size:11px!important;}
   #sign-wrap .sg-dl-btn,#sign-wrap .sg-agree,#sign-wrap .sg-canvas-wrap,#sign-wrap .sg-canvas-actions,#sign-wrap .sg-btn-row,#sign-wrap .sg-brand{display:none!important;}
   #sign-wrap .sg-row{font-size:12px!important;}
+  body:has(#quote-wrap)>*:not(#quote-wrap){display:none!important;}
+  #quote-wrap{position:static!important;overflow:visible!important;background:#fff!important;padding:0!important;}
+  #quote-wrap .quote-head{display:none!important;}
+  #quote-wrap .quote-pages{overflow:visible!important;}
 }
 
 /* TEST33: consistent delivery actions and stage progression */
@@ -6575,10 +6585,10 @@ async function cd22Request(id,button){
   }catch(e){toast('서명 요청을 처리하지 못했습니다. '+(e.message||''));}finally{CD18_BUSY.delete(lock);button.disabled=false;}
 }
 function cd20Toolbar(kind,row){
-  return `<div class="w20-toolbar"><div class="w20-meta"><strong>${esc(row.no|| (kind==='quote'?'견적서':'계약서'))}</strong><span>작성일 ${esc(row.date||'미등록')}</span></div><div class="w20-actions">${kind==='quote'?`<button onclick="cd28CreateQuoteLink('${row.id}',this)">견적서 링크 만들기</button><button class="cd27-send" onclick="cd26Open('quote','${row.id}')">견적서 전송하기</button>`:''}<button onclick="cd20Download('${kind}','${row.id}',this)">PDF 다운로드</button><button onclick="cd20Edit('${kind}','${row.id}')">수정</button><button class="danger" onclick="cd20Delete('${kind}','${row.id}',this)">삭제</button></div></div>`;
+  return `<div class="w20-toolbar"><div class="w20-meta"><strong>${esc(row.no|| (kind==='quote'?'견적서':'계약서'))}</strong><span>작성일 ${esc(row.date||'미등록')}</span></div><div class="w20-actions">${kind==='quote'?`<button class="cd27-send" onclick="cd26Open('quote','${row.id}')">견적서 전송하기</button>`:''}<button onclick="cd20Download('${kind}','${row.id}',this)">PDF 다운로드</button><button onclick="cd20Edit('${kind}','${row.id}')">수정</button><button class="danger" onclick="cd20Delete('${kind}','${row.id}',this)">삭제</button></div></div>`;
 }
 
-// TEST26: review-only Alimtalk preparation. No transport, credentials or DB writes.
+// 승인된 알림톡 템플릿과 문서 전송 화면.
 const CD26_TEMPLATES={quote:{code:'UL_8379',title:'견적서 전달',action:'견적서 전송하기',button:'견적서 확인'},sign:{code:'UL_8383',title:'계약서 서명 요청',action:'계약서 전송하기',button:'계약서 확인·서명'},signed:{code:'UL_8404',title:'서명 완료 안내',action:'서명 완료 안내 전송하기',button:'계약서 확인 및 다운로드'},payment:{code:'UL_8408',title:'입금 안내',action:'입금 안내 전송하기',button:''}};
 let cd26Context=null,cd26Focus=null;
 function cd26Text(kind,row,customer,amount){
@@ -6598,6 +6608,7 @@ function cd26Open(kind,id){
  if(!dialog){dialog=document.createElement('dialog');dialog.id='cd26-dialog';document.body.appendChild(dialog);dialog.addEventListener('close',()=>{cd26Focus?.focus();cd26Context=null;});}
  dialog.setAttribute('aria-labelledby','cd27-title');
  dialog.innerHTML=`<div class="cd26-head"><h2 id="cd27-title">${esc(spec.action)}</h2><button type="button" onclick="document.getElementById('cd26-dialog').close()" aria-label="닫기">✕</button></div><div class="cd26-grid"><div class="cd27-recipient"><span>받는 사람</span><strong>${esc(customer.name||'고객 확인 필요')}</strong><p>${esc(cd29Phone(customer.phone)||'연락처 미등록')}</p></div>${kind==='payment'?`<section><label for="cd26-amount">입금 요청 금액</label><input id="cd26-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="금액 입력 (원)" value="${esc(String(Number(digits(String(row.finalContractAmount??row.amount??0)))||''))}" oninput="cd26Update()"><small>계약금액 ${esc(comma(digits(String(row.finalContractAmount??row.amount??0))))}원</small></section>`:''}<p class="cd33-docref">${esc(row.no||'문서번호 미등록')} · ${esc(spec.title)}</p><section class="cd26-preview" aria-label="알림톡 내용"><div class="cd26-yellow">WD WAVE · ${esc(spec.title)}</div><pre id="cd26-message"></pre>${spec.button?`<div class="cd26-fakebutton">${esc(spec.button)}</div>`:''}</section><p class="cd33-help" id="cd33-validation" role="status"></p></div><div class="cd26-foot"><p class="cd27-pending" id="cd33-server" role="status" aria-live="polite">연결확인을 눌러 알리고 연결 상태를 확인해 주세요.</p><p class="cd27-pending" id="cd27-pending">실제 발송 연결 전 · 전송 대기</p><div class="cd27-footer-actions"><button type="button" class="cd34-check" onclick="cd30Check(this)">연결확인</button><button type="button" class="cd27-deliver" disabled aria-describedby="cd27-pending">${esc(spec.action)}</button></div></div>`;
+ if(kind==='quote')dialog.querySelector('.cd26-foot').innerHTML='<p class="cd27-pending" id="cd33-server" role="status" aria-live="polite">받는 사람과 내용을 확인한 뒤 전송해 주세요.</p><div class="cd27-footer-actions"><button type="button" class="cd27-deliver" onclick="cd30SendQuote(this)">견적서 전송하기</button></div>';
  cd26Update();if(!dialog.open)dialog.showModal();
 }
 function cd26Update(){
@@ -6606,6 +6617,7 @@ function cd26Update(){
  document.getElementById('cd26-message').textContent=cd26Text(kind,row,customer,amount);
  const issues=cd33Issues(kind,row,customer,amount);
  document.getElementById('cd33-validation').textContent=issues.length?issues.join(' · '):'고객과 안내 내용 확인 완료';
+ if(kind==='quote'&&!cd30Sending){const button=document.querySelector('#cd26-dialog .cd27-deliver');if(button)button.disabled=issues.length>0;}
 }
 function cd33Signed(row){return row.signatureStatus==='서명완료'||['서명완료','계약완료','체결'].includes(row.contractStatus||row.status);}
 function cd33Issues(kind,row,customer,amount){
@@ -6614,7 +6626,7 @@ function cd33Issues(kind,row,customer,amount){
  if(!/^01[016789]\d{7,8}$/.test(String(customer.phone||'').replace(/\D/g,'')))issues.push('고객 휴대전화번호 확인 필요');
  if(!row.no)issues.push('문서번호 확인 필요');
  if(kind==='quote'&&!row.svc)issues.push('서비스명 확인 필요');
- if(kind==='quote')issues.push('고객용 견적서 링크 연결 대기');
+ if(kind==='quote'&&(!row.id||location.protocol!=='https:'))issues.push('저장된 견적서 주소 확인 필요');
  if(kind==='sign'||kind==='signed'){
   const expiry=row.signTokenExpiresAt?new Date(row.signTokenExpiresAt).getTime():0;
   if(!row.signToken||expiry&&expiry<Date.now())issues.push('유효한 고객 문서 링크 준비 필요');
@@ -6624,7 +6636,41 @@ function cd33Issues(kind,row,customer,amount){
  return issues;
 }
 
-// TEST30: connection preparation only; delivery remains disabled.
+let cd30Sending=false;
+async function cd30ServerError(error,fallback){
+ try{const body=await error?.context?.json();if(body?.message)return body.message;if(body?.message_status)return body.message_status;}catch(_){}
+ return error?.message||fallback;
+}
+async function cd30SendQuote(button){
+ const context=cd26Context;
+ if(!context||context.kind!=='quote'||button.disabled||cd30Sending)return;
+ const issues=cd33Issues('quote',context.row,context.customer,'');
+ const note=document.getElementById('cd33-server');
+ if(issues.length){note.textContent=issues.join(' · ');return;}
+ cd30Sending=true;button.disabled=true;button.textContent='전송 중…';note.textContent='견적서와 승인 템플릿을 확인하고 전송 중입니다.';
+ let retry=false;
+ try{
+  if(!_accSb)_accSb=supabase.createClient(SB_URL,SB_KEY,{auth:{storageKey:ACC_AUTH_KEY,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+  const {data:auth,error:authError}=await _accSb.auth.getUser();
+  if(authError||!auth?.user)throw new Error('본진에서 업무 계정으로 로그인한 뒤 다시 시도해 주세요.');
+  const {data:prepared,error:prepareError}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'preflight',kind:'quote',id:context.row.id,base_url:location.origin+location.pathname}});
+  if(prepareError)throw new Error(await cd30ServerError(prepareError,'견적서 전송 준비에 실패했습니다.'));
+  if(!prepared?.can_send||!prepared.ticket){
+   if(prepared?.receipt){note.textContent=prepared.receipt.message||'이 견적서의 이전 전송 기록을 확인해 주세요.';button.textContent='전송 기록 있음';return;}
+   throw new Error(prepared?.message_status||prepared?.message||'견적서 전송 준비가 완료되지 않았습니다.');
+  }
+  if(cd26Context===context&&prepared.message)document.getElementById('cd26-message').textContent=prepared.message;
+  const {data:sent,error:sendError}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'send',ticket:prepared.ticket}});
+  if(sendError)throw new Error(await cd30ServerError(sendError,'견적서 발송 결과를 확인하지 못했습니다.'));
+  if(!sent?.ok||!sent.receipt)throw new Error(sent?.message||'견적서 발송 기록을 확인하지 못했습니다.');
+  note.textContent=sent.receipt.message||'알림톡 발송 요청을 접수했습니다.';
+  if(sent.receipt.state==='rejected'){retry=true;button.textContent='다시 전송하기';}
+  else button.textContent=sent.receipt.state==='accepted'?'발송 접수됨':'전송 상태 확인 필요';
+ }catch(e){note.textContent=e.message||'전송하지 못했습니다.';retry=true;button.textContent='다시 전송하기';}
+ finally{cd30Sending=false;if(retry&&cd26Context===context)button.disabled=false;}
+}
+
+// 다른 문서 단계의 기존 연결 점검.
 async function cd30Check(button){
  const context=cd26Context;if(!context||button.disabled)return;
  button.disabled=true;button.textContent='확인 중…';
@@ -6667,7 +6713,11 @@ function cd25LoadPdf(){
   ]).catch(e=>{cd25PdfLibraries=null;throw e;});
   return cd25PdfLibraries;
 }
-async function cd25BuildPdf(kind,row,button){
+async function cd20Download(kind,id,button){
+  const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);
+  if(!row||cd25PdfBusy)return;
+  cd25PdfBusy=true;const label=button?.textContent;
+  if(button){button.disabled=true;button.textContent='PDF 준비 중…';}
   let frame;
   try{
     await cd25LoadPdf();
@@ -6703,50 +6753,11 @@ async function cd25BuildPdf(kind,row,button){
       pdf.addImage(canvas.toDataURL('image/png'),'PNG',(210-width)/2,0,width,height,undefined,'FAST');
       canvas.width=0;canvas.height=0;
     }
-    return pdf;
-  }finally{frame?.remove();}
-}
-async function cd20Download(kind,id,button){
-  const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);
-  if(!row||cd25PdfBusy)return;
-  cd25PdfBusy=true;const label=button?.textContent;
-  if(button){button.disabled=true;button.textContent='PDF 준비 중…';}
-  try{
-    const pdf=await cd25BuildPdf(kind,row,button);
     const filename=String(row.no||(kind==='quote'?'견적서':'계약서')).replace(/[\\/:*?"<>|]/g,'_')+'.pdf';
     await pdf.save(filename,{returnPromise:true});
     toast('PDF 다운로드를 요청했습니다.');
   }catch(e){toast(e.message||'PDF를 만들지 못했습니다. 다시 시도해 주세요.');}
-  finally{cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
-}
-// 고객에게 전달할 PDF를 기존 파일 저장소에 올리고, 30일간 열리는 전용 주소를 만든다.
-async function cd28CreateQuoteLink(id,button){
-  const row=DB.quotes.find(x=>x.id===id);
-  if(!row||cd25PdfBusy)return;
-  cd25PdfBusy=true;const label=button?.textContent;
-  if(button){button.disabled=true;button.textContent='링크 만드는 중…';}
-  try{
-    if(!sb||location.protocol!=='https:')throw new Error('배포된 HTTPS 주소에서 다시 시도해 주세요.');
-    const pdf=await cd25BuildPdf('quote',row,button);
-    const blob=pdf.output('blob');
-    const random=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
-    const path=`quotes/${encodeURIComponent(id)}/${Date.now()}-${random}.pdf`;
-    const bucket=sb.storage.from('consulting-files');
-    const {error:uploadError}=await bucket.upload(path,blob,{contentType:'application/pdf',upsert:false});
-    if(uploadError)throw new Error('견적서 파일 저장 실패: '+uploadError.message);
-    const {data,error:linkError}=await bucket.createSignedUrl(path,30*24*60*60);
-    if(linkError||!data?.signedUrl)throw new Error('견적서 주소 생성 실패: '+(linkError?.message||'주소 없음'));
-    cd28ShowQuoteLink(data.signedUrl,row);
-  }catch(e){alert(e.message||'견적서 링크를 만들지 못했습니다.');}
-  finally{cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
-}
-function cd28ShowQuoteLink(url,row){
-  let dialog=document.getElementById('cd28-link-dialog');
-  if(!dialog){dialog=document.createElement('dialog');dialog.id='cd28-link-dialog';document.body.appendChild(dialog);}
-  dialog.style.cssText='width:min(520px,calc(100vw - 32px));border:0;border-radius:16px;padding:24px;box-shadow:0 18px 65px #0004;font-family:inherit';
-  dialog.innerHTML=`<h2 style="margin:0 0 10px;font-size:20px">견적서 링크가 만들어졌습니다</h2><p style="margin:0 0 12px">${esc(row.no||'견적서')} · 고객이 바로 PDF를 볼 수 있습니다.</p><input id="cd28-link" readonly style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd2da;border-radius:8px" aria-label="고객용 견적서 링크"><p style="font-size:12px;color:#596579">30일간 열 수 있습니다. 견적서를 수정하면 새 링크를 만들어 주세요.</p><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" onclick="document.getElementById('cd28-link-dialog').close()">닫기</button><button type="button" onclick="window.open(document.getElementById('cd28-link').value,'_blank','noopener')">열어보기</button><button type="button" onclick="copyToClipboard(document.getElementById('cd28-link').value,'견적서 링크가 복사되었습니다.')">링크 복사</button></div>`;
-  dialog.querySelector('#cd28-link').value=url;
-  if(!dialog.open)dialog.showModal();
+  finally{frame?.remove();cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
 }
 async function cd20Delete(kind,id,button){
   if(!['quote','contract'].includes(kind))return;
@@ -8133,16 +8144,33 @@ function seedDemo(){
 
 /* ====================== 초기화 ====================== */
 (async()=>{
-  /* 서명 링크로 들어온 경우: 관리자 UI를 로딩 전에 즉시 숨김 */
-  if(location.hash.indexOf('#contract-sign')===0){
+  /* 고객용 문서 링크로 들어온 경우: 관리자 UI를 로딩 전에 즉시 숨김 */
+  const quoteRoute=location.hash.indexOf('#quote-view?')===0;
+  if(quoteRoute||location.hash.indexOf('#contract-sign')===0){
     var w=document.querySelector('.wrap'); if(w) w.style.display='none';
     var hdr=document.getElementById('ccHeader'); if(hdr) hdr.style.display='none';
     var sb=document.getElementById('ccSidebar'); if(sb) sb.style.display='none';
   }
+  if(quoteRoute){await cd28RenderQuoteRoute();return;}
   await loadAll();
   if(location.hash.indexOf('#contract-sign')===0){ renderSignRoute(); return; }
   renderDash(); if(typeof renderCustomers==='function')renderCustomers(); updateNavCounts();
 })();
+
+async function cd28RenderQuoteRoute(){
+  const token=new URLSearchParams(location.hash.split('?')[1]||'').get('token')||'';
+  const root=document.createElement('div');root.id='quote-wrap';
+  root.innerHTML='<div class="quote-error">견적서를 불러오는 중입니다…</div>';
+  document.body.appendChild(root);
+  try{
+    if(!sb||!token)throw new Error('견적서 주소를 확인해 주세요.');
+    const {data,error}=await sb.functions.invoke('branding-alimtalk-test',{body:{action:'quote_view',token}});
+    if(error)throw new Error(await cd30ServerError(error,'견적서를 불러오지 못했습니다.'));
+    if(!data?.ok||!data.row)throw new Error(data?.message||'견적서를 찾을 수 없습니다.');
+    const q=fromRow(data.row);
+    root.innerHTML=`<div class="quote-head"><h1>WD WAVE 견적서 · ${esc(q.no||'')}</h1><button type="button" onclick="window.print()">인쇄 / PDF 저장</button></div><div class="quote-pages">${buildQuoteA4({...q,items:Array.isArray(q.items)?q.items:[]})}</div>`;
+  }catch(e){root.innerHTML=`<div class="quote-error">${esc(e.message||'견적서를 열지 못했습니다.')}</div>`;}
+}
 
 /* ====================== 고객 서명 전용 화면 (v32) ====================== */
 let _sgCanvasHasDraw=false, _sgCtx=null, _sgContract=null;
