@@ -6575,7 +6575,7 @@ async function cd22Request(id,button){
   }catch(e){toast('서명 요청을 처리하지 못했습니다. '+(e.message||''));}finally{CD18_BUSY.delete(lock);button.disabled=false;}
 }
 function cd20Toolbar(kind,row){
-  return `<div class="w20-toolbar"><div class="w20-meta"><strong>${esc(row.no|| (kind==='quote'?'견적서':'계약서'))}</strong><span>작성일 ${esc(row.date||'미등록')}</span></div><div class="w20-actions">${kind==='quote'?`<button class="cd27-send" onclick="cd26Open('quote','${row.id}')">견적서 전송하기</button>`:''}<button onclick="cd20Download('${kind}','${row.id}',this)">PDF 다운로드</button><button onclick="cd20Edit('${kind}','${row.id}')">수정</button><button class="danger" onclick="cd20Delete('${kind}','${row.id}',this)">삭제</button></div></div>`;
+  return `<div class="w20-toolbar"><div class="w20-meta"><strong>${esc(row.no|| (kind==='quote'?'견적서':'계약서'))}</strong><span>작성일 ${esc(row.date||'미등록')}</span></div><div class="w20-actions">${kind==='quote'?`<button onclick="cd28CreateQuoteLink('${row.id}',this)">견적서 링크 만들기</button><button class="cd27-send" onclick="cd26Open('quote','${row.id}')">견적서 전송하기</button>`:''}<button onclick="cd20Download('${kind}','${row.id}',this)">PDF 다운로드</button><button onclick="cd20Edit('${kind}','${row.id}')">수정</button><button class="danger" onclick="cd20Delete('${kind}','${row.id}',this)">삭제</button></div></div>`;
 }
 
 // TEST26: review-only Alimtalk preparation. No transport, credentials or DB writes.
@@ -6667,11 +6667,7 @@ function cd25LoadPdf(){
   ]).catch(e=>{cd25PdfLibraries=null;throw e;});
   return cd25PdfLibraries;
 }
-async function cd20Download(kind,id,button){
-  const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);
-  if(!row||cd25PdfBusy)return;
-  cd25PdfBusy=true;const label=button?.textContent;
-  if(button){button.disabled=true;button.textContent='PDF 준비 중…';}
+async function cd25BuildPdf(kind,row,button){
   let frame;
   try{
     await cd25LoadPdf();
@@ -6707,11 +6703,50 @@ async function cd20Download(kind,id,button){
       pdf.addImage(canvas.toDataURL('image/png'),'PNG',(210-width)/2,0,width,height,undefined,'FAST');
       canvas.width=0;canvas.height=0;
     }
+    return pdf;
+  }finally{frame?.remove();}
+}
+async function cd20Download(kind,id,button){
+  const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);
+  if(!row||cd25PdfBusy)return;
+  cd25PdfBusy=true;const label=button?.textContent;
+  if(button){button.disabled=true;button.textContent='PDF 준비 중…';}
+  try{
+    const pdf=await cd25BuildPdf(kind,row,button);
     const filename=String(row.no||(kind==='quote'?'견적서':'계약서')).replace(/[\\/:*?"<>|]/g,'_')+'.pdf';
     await pdf.save(filename,{returnPromise:true});
     toast('PDF 다운로드를 요청했습니다.');
   }catch(e){toast(e.message||'PDF를 만들지 못했습니다. 다시 시도해 주세요.');}
-  finally{frame?.remove();cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
+  finally{cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
+}
+// 고객에게 전달할 PDF를 기존 파일 저장소에 올리고, 30일간 열리는 전용 주소를 만든다.
+async function cd28CreateQuoteLink(id,button){
+  const row=DB.quotes.find(x=>x.id===id);
+  if(!row||cd25PdfBusy)return;
+  cd25PdfBusy=true;const label=button?.textContent;
+  if(button){button.disabled=true;button.textContent='링크 만드는 중…';}
+  try{
+    if(!sb||location.protocol!=='https:')throw new Error('배포된 HTTPS 주소에서 다시 시도해 주세요.');
+    const pdf=await cd25BuildPdf('quote',row,button);
+    const blob=pdf.output('blob');
+    const random=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+    const path=`quotes/${encodeURIComponent(id)}/${Date.now()}-${random}.pdf`;
+    const bucket=sb.storage.from('consulting-files');
+    const {error:uploadError}=await bucket.upload(path,blob,{contentType:'application/pdf',upsert:false});
+    if(uploadError)throw new Error('견적서 파일 저장 실패: '+uploadError.message);
+    const {data,error:linkError}=await bucket.createSignedUrl(path,30*24*60*60);
+    if(linkError||!data?.signedUrl)throw new Error('견적서 주소 생성 실패: '+(linkError?.message||'주소 없음'));
+    cd28ShowQuoteLink(data.signedUrl,row);
+  }catch(e){alert(e.message||'견적서 링크를 만들지 못했습니다.');}
+  finally{cd25PdfBusy=false;if(button){button.disabled=false;button.textContent=label;}}
+}
+function cd28ShowQuoteLink(url,row){
+  let dialog=document.getElementById('cd28-link-dialog');
+  if(!dialog){dialog=document.createElement('dialog');dialog.id='cd28-link-dialog';document.body.appendChild(dialog);}
+  dialog.style.cssText='width:min(520px,calc(100vw - 32px));border:0;border-radius:16px;padding:24px;box-shadow:0 18px 65px #0004;font-family:inherit';
+  dialog.innerHTML=`<h2 style="margin:0 0 10px;font-size:20px">견적서 링크가 만들어졌습니다</h2><p style="margin:0 0 12px">${esc(row.no||'견적서')} · 고객이 바로 PDF를 볼 수 있습니다.</p><input id="cd28-link" readonly style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd2da;border-radius:8px" aria-label="고객용 견적서 링크"><p style="font-size:12px;color:#596579">30일간 열 수 있습니다. 견적서를 수정하면 새 링크를 만들어 주세요.</p><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" onclick="document.getElementById('cd28-link-dialog').close()">닫기</button><button type="button" onclick="window.open(document.getElementById('cd28-link').value,'_blank','noopener')">열어보기</button><button type="button" onclick="copyToClipboard(document.getElementById('cd28-link').value,'견적서 링크가 복사되었습니다.')">링크 복사</button></div>`;
+  dialog.querySelector('#cd28-link').value=url;
+  if(!dialog.open)dialog.showModal();
 }
 async function cd20Delete(kind,id,button){
   if(!['quote','contract'].includes(kind))return;
