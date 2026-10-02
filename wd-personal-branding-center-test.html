@@ -6627,6 +6627,7 @@ function cd33Issues(kind,row,customer,amount){
  if(!row.no)issues.push('문서번호 확인 필요');
  if(kind==='quote'&&!row.svc)issues.push('서비스명 확인 필요');
  if(kind==='quote'&&(!row.id||location.protocol!=='https:'))issues.push('저장된 견적서 주소 확인 필요');
+ if(kind==='sign'&&(!row.id||location.protocol!=='https:'))issues.push('저장된 계약서 주소 확인 필요');
  if(kind==='signed'&&(!row.id||location.protocol!=='https:'))issues.push('저장된 계약서 주소 확인 필요');
  if(kind==='payment'&&(!Number.isSafeInteger(Number(amount))||Number(amount)<=0))issues.push('입금 요청 금액을 1원 이상 입력해 주세요');
  if(kind==='payment'&&row.pay_status==='입금완료')issues.push('이미 입금 완료된 계약입니다');
@@ -6651,30 +6652,6 @@ async function cd30Send(button){
   if(!_accSb)_accSb=supabase.createClient(SB_URL,SB_KEY,{auth:{storageKey:ACC_AUTH_KEY,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
   const {data:auth,error:authError}=await _accSb.auth.getUser();
   if(authError||!auth?.user)throw new Error('본진에서 업무 계정으로 로그인한 뒤 다시 시도해 주세요.');
-  if(context.kind==='sign'){
-   const current=await cd22Read(context.row.id);
-   if(cd33Signed(current))throw new Error('이미 서명이 완료된 계약서입니다. 서명 완료 안내를 이용해 주세요.');
-   const expiry=current.signTokenExpiresAt?(typeof current.signTokenExpiresAt==='number'?current.signTokenExpiresAt:Date.parse(current.signTokenExpiresAt)):0;
-   if(!current.signToken||(expiry&&Date.now()>expiry)){
-    const bytes=crypto.getRandomValues(new Uint8Array(24));
-    const patch={signToken:Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join(''),signTokenExpiresAt:Date.now()+SIGN_TOKEN_EXPIRE_DAYS*86400000,contractStatus:'서명요청',signatureStatus:'서명요청'};
-    const {data,error}=await sb.from(TBL.contracts).update(toRow(patch)).eq('id',current.id).select('*').single();
-    if(error)throw error;if(!data)throw new Error('서명 링크를 저장하지 못했습니다.');
-    Object.assign(context.row,fromRow(data));save();
-   }
-  }
-  if(context.kind==='signed'){
-   const current=await cd22Read(context.row.id);
-   if(!cd33Signed(current))throw new Error('저장된 계약서에 고객 서명이 확인되지 않습니다. 서명 도착 확인 후 다시 시도해 주세요.');
-   const expiry=current.signTokenExpiresAt?(typeof current.signTokenExpiresAt==='number'?current.signTokenExpiresAt:Date.parse(current.signTokenExpiresAt)):0;
-   if(!current.signToken||(expiry&&Date.now()>expiry)){
-    const bytes=crypto.getRandomValues(new Uint8Array(24));
-    const patch={signToken:Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join(''),signTokenExpiresAt:Date.now()+SIGN_TOKEN_EXPIRE_DAYS*86400000};
-    const {data,error}=await sb.from(TBL.contracts).update(toRow(patch)).eq('id',current.id).select('*').maybeSingle();
-    if(error)throw error;if(!data)throw new Error('서명된 계약서 링크가 서버에 저장되지 않았습니다.');
-    Object.assign(context.row,fromRow(data));save();
-   }
-  }
   const {data:prepared,error:prepareError}=await _accSb.functions.invoke('branding-alimtalk-test',{body:{action:'preflight',kind:context.kind,id:context.row.id,base_url:location.origin+location.pathname,...(context.kind==='payment'?{amount:Number(amount)}:{})}});
   if(prepareError)throw new Error(await cd30ServerError(prepareError,'전송 준비에 실패했습니다.'));
   if(!prepared?.can_send||!prepared.ticket){
@@ -8145,16 +8122,19 @@ function seedDemo(){
   DB.customers.forEach(x=>sbUpsert(TBL.customers,x)); DB.tasks.forEach(x=>sbUpsert(TBL.tasks,x)); DB.quotes.forEach(x=>sbUpsert(TBL.quotes,x)); save(); renderDash(); renderCustomers(); updateNavCounts(); toast('✅ 예시 데이터를 채웠습니다');
 }
 
+var _sgCapability='';
 /* ====================== 초기화 ====================== */
 (async()=>{
   /* 고객용 문서 링크로 들어온 경우: 관리자 UI를 로딩 전에 즉시 숨김 */
   const quoteRoute=location.hash.indexOf('#quote-view?')===0;
-  if(quoteRoute||location.hash.indexOf('#contract-sign')===0){
+  const documentRoute=location.hash.indexOf('#customer-document?')===0;
+  if(quoteRoute||documentRoute||location.hash.indexOf('#contract-sign')===0){
     var w=document.querySelector('.wrap'); if(w) w.style.display='none';
     var hdr=document.getElementById('ccHeader'); if(hdr) hdr.style.display='none';
     var sb=document.getElementById('ccSidebar'); if(sb) sb.style.display='none';
   }
   if(quoteRoute){await cd28RenderQuoteRoute();return;}
+  if(documentRoute){await cd30RenderDocumentRoute();return;}
   await loadAll();
   if(location.hash.indexOf('#contract-sign')===0){ renderSignRoute(); return; }
   renderDash(); if(typeof renderCustomers==='function')renderCustomers(); updateNavCounts();
@@ -8173,6 +8153,26 @@ async function cd28RenderQuoteRoute(){
     const q=fromRow(data.row);
     root.innerHTML=`<div class="quote-head"><h1>WD WAVE 견적서 · ${esc(q.no||'')}</h1><button type="button" onclick="window.print()">인쇄 / PDF 저장</button></div><div class="quote-pages">${buildQuoteA4({...q,items:Array.isArray(q.items)?q.items:[]})}</div>`;
   }catch(e){root.innerHTML=`<div class="quote-error">${esc(e.message||'견적서를 열지 못했습니다.')}</div>`;}
+}
+
+// 알림톡 버튼이 가리키는 서버 검증 문서 링크. 고객 정보는 링크 토큰으로 서버에서 읽는다.
+async function cd30RenderDocumentRoute(){
+ const token=new URLSearchParams(location.hash.split('?')[1]||'').get('token')||'';
+ const root=document.createElement('div');root.id='sign-wrap';
+ root.innerHTML='<div class="sg-card">계약서를 불러오는 중입니다…</div>';
+ document.body.appendChild(root);
+ try{
+  if(!sb||!token)throw new Error('계약서 주소를 확인해 주세요.');
+  const {data,error}=await sb.functions.invoke('branding-alimtalk-test',{body:{action:'document',token}});
+  if(error)throw new Error(await cd30ServerError(error,'계약서를 불러오지 못했습니다.'));
+  if(!data?.ok||!data.row||!data.customer)throw new Error(data?.message||'계약서를 찾을 수 없습니다.');
+  const k=fromRow(data.row);
+  DB.customers=[data.customer];DB.contracts=[k];DB.quotes=data.quote?[fromRow(data.quote)]:[];
+  _sgCapability=token;_sgContract=k;
+  if(!data.can_sign){root.innerHTML=signDoneHTML(k);return;}
+  root.innerHTML=`<div class="sg-card"><div class="sg-brand">WD WAVE 계약서 서명</div><h2>${esc(k.no||'')} 계약서</h2><div class="sg-sub">계약서 내용을 확인하신 뒤 서명해 주세요.</div><div class="sg-preview">${buildContractA4HTML(k)}</div><button class="sg-dl-btn" onclick="sgDownloadContract()">계약서 전문 보기</button><label class="sg-agree"><input type="checkbox" id="sg-agree" onchange="sgUpdateBtn()"> 계약 내용을 확인했으며 계약 조건에 동의합니다.</label><div class="sg-canvas-wrap"><canvas id="sg-canvas"></canvas></div><div class="sg-canvas-actions"><span>위 칸에 서명해 주세요.</span><button class="sg-btn sg-btn-ghost" onclick="sgClearCanvas()">다시 쓰기</button></div><div class="sg-btn-row"><button class="sg-btn sg-btn-main" id="sg-submit" disabled onclick="sgSubmit()">서명 완료</button></div></div>`;
+  sgInitCanvas();
+ }catch(e){root.innerHTML=`<div class="sg-card"><div class="sg-error">${esc(e.message||'계약서를 열지 못했습니다.')}</div></div>`;}
 }
 
 /* ====================== 고객 서명 전용 화면 (v32) ====================== */
@@ -8298,6 +8298,14 @@ async function sgSubmit(){
   const btn=$('sg-submit'); btn.disabled=true; btn.textContent='저장 중...';
   const k=_sgContract;
   try{
+    if(_sgCapability){
+      const {data,error}=await sb.functions.invoke('branding-alimtalk-test',{body:{action:'sign_document',token:_sgCapability,agreed:true,signature:$('sg-canvas').toDataURL('image/png')}});
+      if(error)throw new Error(await cd30ServerError(error,'서명을 저장하지 못했습니다.'));
+      if(!data?.ok||!data.row)throw new Error(data?.message||'서명 저장 결과를 확인하지 못했습니다.');
+      Object.assign(k,fromRow(data.row));
+      document.getElementById('sign-wrap').innerHTML=signDoneHTML(k);
+      return;
+    }
     const {id,token}=parseSignHash();
     const {data:latest,error:readError}=await sb.from(TBL.contracts).select('*').eq('id',id).eq('sign_token',token).single();
     if(readError||!latest)throw new Error('서명 링크를 확인하지 못했습니다. 다시 열어 주세요.');
