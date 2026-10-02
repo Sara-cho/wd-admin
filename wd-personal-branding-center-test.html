@@ -4999,8 +4999,8 @@ function renderDash(){
   const _kst=k=>k.contractStatus||k.status||'작성중';
   const kSigned=ks.filter(k=>['서명완료','계약완료','체결'].includes(_kst(k))); const kSum=kSigned.reduce((a,k)=>a+Number(digits(k.finalContractAmount||k.amount||'0')),0);
   if($('s-contract'))$('s-contract').textContent=kSigned.length; if($('s-contract-sub'))$('s-contract-sub').textContent=`계약금액 ${comma(kSum)}원`;
-  /* 이번 달 매출: 입금일 컬럼이 없어 월 기준 산정 불가 → 누적 입금완료(pay_status)만 보조 표시. 기준 확정 전 임의 계산하지 않음 */
-  const kPaid=ks.filter(k=>k.pay_status==='입금완료'); const paidSum=kPaid.reduce((a,k)=>a+Number(digits(k.finalContractAmount||k.amount||'0')),0);
+  /* 이번 달 매출: 입금일 컬럼이 없어 월 기준 산정 불가 → 누적 입금완료(payStatus)만 보조 표시. 기준 확정 전 임의 계산하지 않음 */
+  const kPaid=ks.filter(k=>k.payStatus==='입금완료'); const paidSum=kPaid.reduce((a,k)=>a+Number(digits(k.finalContractAmount||k.amount||'0')),0);
   if($('s-revenue-sub'))$('s-revenue-sub').textContent=`누적 입금완료 ${comma(paidSum)}원`;
 
   const recent=[...cs].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
@@ -5606,9 +5606,9 @@ function wkRenderWork(custId, tasks, contracts){
     var tot=0,n=0;
     g.tasks.forEach(function(t){ if(t.setupType){ tot+=wkTotal(t.setupType); n+=wkDone(t); } });
     var pct=tot?Math.round(n/tot*100):0;
-    var paid=k?((k.pay_status||'입금대기')===PAID):true;
+    var paid=k?((k.payStatus||'입금대기')===PAID):true;
     if(k && !paid && !g.tasks.length){
-      return '<div class="wk_empty" style="margin:13px 0;">💰 입금이 완료되면 작업을 추가하세요<br><span>'+esc(k.no||'')+' · '+esc(k.pay_status||'입금대기')+'</span></div>';
+      return '<div class="wk_empty" style="margin:13px 0;">💰 입금이 완료되면 작업을 추가하세요<br><span>'+esc(k.no||'')+' · '+esc(k.payStatus||'입금대기')+'</span></div>';
     }
     if(!g.tasks.length){
       return '<div class="wk_empty" style="margin:13px 0;">등록된 작업이 없습니다<br><span>'+(k?esc(k.no||''):'계약 미연결')+'</span></div>';
@@ -5636,7 +5636,7 @@ function wkRenderWork(custId, tasks, contracts){
     var html='<div class="wk_split" data-wk-split data-wk-k="'+kid+'">'
       +'<div class="wk_left">'
         +'<div class="wk_left-hd">'
-          +'<div class="kno">'+(k?(esc(k.no||'')+' · '+esc(k.pay_status||'입금대기')):'계약 미연결')+'</div>'
+          +'<div class="kno">'+(k?(esc(k.no||'')+' · '+esc(k.payStatus||'입금대기')):'계약 미연결')+'</div>'
           +'<div class="knm">'+(k?esc(k.service||'계약'):'분류되지 않은 작업')+'</div>'
           +'<div class="wk_left-pg">'
             +'<div class="row"><span class="pct">'+(tot?pct+'%':'—')+'</span><span class="cnt">'+(tot?(n+' / '+tot+' 완료'):'체크리스트 없음')+'</span></div>'
@@ -5808,7 +5808,7 @@ function getSessionFlow(s){
   const contracts=(DB.contracts||[]).filter(k=>k.sessionId===sid||(sNo&&k.sessionNo===sNo));
   const tasks=(DB.tasks||[]).filter(t=>t.sessionId===sid||(sNo&&t.sessionNo===sNo));
   const files=(DB.files||[]).filter(f=>f.sessionId===sid||(sNo&&f.sessionNo===sNo));
-  const payStatus=contracts.length?contracts[0].pay_status||'입금대기':null;
+  const payStatus=contracts.length?contracts[0].payStatus||'입금대기':null;
   return {quotes,contracts,tasks,files,payStatus};
 }
 /* 테이블 행에 표시할 간단 진행흐름 배지 — 칩 스타일 */
@@ -5944,11 +5944,11 @@ async function updateSessionBrandingStatus(sessionId, status){
     toast('✅ 브랜딩보고서 제작 상태가 저장되었습니다');
   }catch(e){ console.error('branding_report_status exception',e); toast('⚠️ 제작상태 저장 오류'); }
 }
-/* 계약별 입금 상태 업데이트 (pay_status 컬럼, 새 테이블 없음) */
+/* 계약별 입금 상태 업데이트 (payStatus 컬럼, 새 테이블 없음) */
 function updatePayStatus(contractId, status){
   const k=DB.contracts.find(x=>x.id===contractId);
   if(!k) return;
-  k.pay_status=status;
+  k.payStatus=status;
   sbUpsert(TBL.contracts,k); save(); toast('✅ 입금 상태가 저장되었습니다');
 }
 /* ── 고객소통관리 (localStorage 기반 1차 구현) ── */
@@ -6225,13 +6225,13 @@ function showCustDetail(id){
     _groups.push({name:ks[0]?_kName(ks[0]):_qName(q),q,ks,t:Math.max(q.createdAt||0,...ks.map(k=>k.createdAt||0))});
   });
   contracts.filter(k=>!_usedK[k.id]).forEach(k=>_groups.push({name:_kName(k),q:null,ks:[k],t:k.createdAt||0}));
-  const _done=g=>g.ks.length&&g.ks.every(k=>(k.pay_status||'입금대기')==='입금완료');
+  const _done=g=>g.ks.length&&g.ks.every(k=>(k.payStatus||'입금대기')==='입금완료');
   _groups.sort((a,b)=>(_done(a)-_done(b))||(b.t-a.t));
   const _qSel=(q)=>{const s=q.sent||'미전달';return `<select class="cd7-sel ${_toneQ(s)}" onchange="updateQuoteSent('${q.id}',this.value)">${['미전달','전달완료'].map(v=>`<option value="${v}" ${s===v?'selected':''}>${v}</option>`).join('')}</select>`};
-  const _paySel=(k)=>{const s=k.pay_status||'입금대기';return `<select class="cd7-sel ${_toneP(s)}" onchange="updatePayStatus('${k.id}',this.value)">${['입금대기','입금안내','입금진행','입금완료'].map(v=>`<option value="${v}" ${s===v?'selected':''}>${v}</option>`).join('')}</select>`};
+  const _paySel=(k)=>{const s=k.payStatus||'입금대기';return `<select class="cd7-sel ${_toneP(s)}" onchange="updatePayStatus('${k.id}',this.value)">${['입금대기','입금안내','입금진행','입금완료'].map(v=>`<option value="${v}" ${s===v?'selected':''}>${v}</option>`).join('')}</select>`};
   const _next=(g,pre)=>{
     if(g.q&&!g.ks.length) return `<button class="cd7-next" onclick="${pre}openContractFromQuote('${g.q.id}')">계약 진행 →</button>`;
-    const k=g.ks[0]; if(!k) return ''; const st=k.contractStatus||k.status||'작성중', sig=k.signatureStatus||'', ps=k.pay_status||'입금대기';
+    const k=g.ks[0]; if(!k) return ''; const st=k.contractStatus||k.status||'작성중', sig=k.signatureStatus||'', ps=k.payStatus||'입금대기';
     const signed=cd33Signed(k);
     if(!signed&&(st==='서명요청'||sig==='서명요청')) return `<button class="cd7-next sub" onclick="copySignLink('${k.id}')">서명링크 복사</button>`;
     if(!signed) return `<button class="cd7-next" onclick="requestSignature('${k.id}')">서명 요청 →</button>`;
@@ -6244,12 +6244,12 @@ function showCustDetail(id){
     const st=k?(k.contractStatus||k.status||'작성중'):'계약 전';
     const signed=!!k&&cd33Signed(k);
     const sent=!!k&&(signed||['전달완료','서명요청'].includes(st)||k.signatureStatus==='서명요청');
-    const paid=!!k&&k.pay_status==='입금완료';
+    const paid=!!k&&k.payStatus==='입금완료';
     const linked=k?tasks.filter(t=>t.contractId===k.id):[];
     const complete=linked.length>0&&linked.every(t=>t.stage==='완료');
     const working=linked.some(t=>['진행중','검토','완료'].includes(t.stage));
-    const current=paid?(complete?'작업 완료':working?'작업 진행중':'작업 대기'):signed?(k.pay_status||'입금대기'):sent?'고객 서명 대기':k?'계약서 전송 준비':q&&q.sent==='전달완료'?'계약서 작성':'견적 전달 대기';
-    const steps=[['견적서',q?(q.sent||'미전달'):'연결 없음',!!q&&q.sent==='전달완료'],['계약서',k?st:'계약 전',signed],['입금',k?(k.pay_status||'입금대기'):'대기',paid],['작업',linked.length?cd10Progress(linked)+'% · '+linked.filter(t=>cd10Delivery(t)==='최종 완료').length+'/'+linked.length+'건 완료':'등록 전',complete]];
+    const current=paid?(complete?'작업 완료':working?'작업 진행중':'작업 대기'):signed?(k.payStatus||'입금대기'):sent?'고객 서명 대기':k?'계약서 전송 준비':q&&q.sent==='전달완료'?'계약서 작성':'견적 전달 대기';
+    const steps=[['견적서',q?(q.sent||'미전달'):'연결 없음',!!q&&q.sent==='전달완료'],['계약서',k?st:'계약 전',signed],['입금',k?(k.payStatus||'입금대기'):'대기',paid],['작업',linked.length?cd10Progress(linked)+'% · '+linked.filter(t=>cd10Delivery(t)==='최종 완료').length+'/'+linked.length+'건 완료':'등록 전',complete]];
     const active=cd28ActiveStep(q,k,linked);
     const amount=k?(k.finalContractAmount??k.amount??0):(q.finalQuoteAmount??calcQuoteFinalAmount(q));
     const amt=comma(digits(String(amount)));
@@ -6456,14 +6456,14 @@ function cd18Refresh(){
 }
 const CD18_BUSY=new Set();
 function cd18Select(kind,row){
-  const value=kind==='quote'?(row.sent||'미전달'):kind==='payment'?(row.pay_status||'입금대기'):(row.contractStatus||row.status||'작성중');
+  const value=kind==='quote'?(row.sent||'미전달'):kind==='payment'?(row.payStatus||'입금대기'):(row.contractStatus||row.status||'작성중');
   const choices=kind==='quote'?['미전달','전달완료']:kind==='payment'?['입금대기','입금안내','입금진행','입금완료']:['작성중','전달완료','서명요청','계약완료'];
   if(!choices.includes(value))choices.unshift(value);
   return `<select class="w18-state" aria-label="${{quote:'견적서',contract:'계약서',payment:'입금'}[kind]} 상태" onchange="cd18Save('${kind}','${row.id}',this)">${choices.map(v=>`<option value="${esc(v)}" ${v===value?'selected':''}>${esc(v)}</option>`).join('')}</select>`;
 }
 async function cd18Save(kind,id,input){
   const row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);if(!row)return;
-  const old=kind==='quote'?(row.sent||'미전달'):kind==='payment'?(row.pay_status||'입금대기'):(row.contractStatus||row.status||'작성중');
+  const old=kind==='quote'?(row.sent||'미전달'):kind==='payment'?(row.payStatus||'입금대기'):(row.contractStatus||row.status||'작성중');
   const allowed={quote:['미전달','전달완료'],contract:['작성중','전달완료','서명요청','계약완료'],payment:['입금대기','입금안내','입금진행','입금완료']};
   const value=input.value,lock=(kind==='quote'?'q:':'k:')+id;
   if(!allowed[kind]?.includes(value)||CD18_BUSY.has(lock)){input.value=old;return;}
@@ -6471,7 +6471,7 @@ async function cd18Save(kind,id,input){
   CD18_BUSY.add(lock);input.disabled=true;
   try{
     if(!sb)throw new Error('저장소 연결을 확인해 주세요.');
-    const patch=kind==='quote'?{sent:value}:kind==='payment'?{pay_status:value}:{contractStatus:value,status:value};
+    const patch=kind==='quote'?{sent:value}:kind==='payment'?{payStatus:value}:{contractStatus:value,status:value};
     const next={...row,...patch};
     const {error}=await sb.from(kind==='quote'?TBL.quotes:TBL.contracts).upsert(toRow(next));if(error)throw error;
     Object.assign(row,patch);save();
@@ -6513,7 +6513,7 @@ document.addEventListener('keydown',e=>{
 
 function cd28ActiveStep(q,k,linked=[]){
  if(k){
-  if(k.pay_status==='입금완료')return 3;
+  if(k.payStatus==='입금완료')return 3;
   if(cd33Signed(k))return 2;
   return 1;
  }
@@ -6531,7 +6531,7 @@ function cd9OpenStage(qid,kid,index){
   }else if(index===1&&k){
     body=cd20Toolbar('contract',k)+cd22SignPanel(k)+`<div class="w18-document">${buildContractA4HTML(k)}</div>`;
   }else if(index===2&&k){
-    body=`<div class="w18-payment"><span>${esc(k.no||'계약')}</span><h3>${esc(k.scope||k.service||'계약금액')}</h3><p class="w9-stage-amount">${comma(digits(String(k.finalContractAmount??k.amount??0)))}원 <small>계약금액</small></p><p class="cd33-help">입금 요청 금액과 받는 고객을 확인한 후 안내를 보내세요.</p><div class="cd33-payment-actions"><span class="w18-pay-status">${esc(k.pay_status||'입금대기')}</span><button class="cd33-primary" onclick="cd26Open('payment','${k.id}')" ${k.pay_status==='입금완료'?'disabled':''}>${k.pay_status==='입금완료'?'입금 확인 완료':'입금 안내 전송하기'}</button></div><p class="cd33-help">입금 안내 전송과 실제 입금 확인은 별개입니다.</p></div>`;
+    body=`<div class="w18-payment"><span>${esc(k.no||'계약')}</span><h3>${esc(k.scope||k.service||'계약금액')}</h3><p class="w9-stage-amount">${comma(digits(String(k.finalContractAmount??k.amount??0)))}원 <small>계약금액</small></p><p class="cd33-help">입금 요청 금액과 받는 고객을 확인한 후 안내를 보내세요.</p><div class="cd33-payment-actions"><span class="w18-pay-status">${esc(k.payStatus||'입금대기')}</span><button class="cd33-primary" onclick="cd26Open('payment','${k.id}')" ${k.payStatus==='입금완료'?'disabled':''}>${k.payStatus==='입금완료'?'입금 확인 완료':'입금 안내 전송하기'}</button></div><p class="cd33-help">입금 안내 전송과 실제 입금 확인은 별개입니다.</p></div>`;
   }else{
     body='<div class="w12-empty">'+(index===0?'연결된 견적서 없음':'등록된 계약서 없음')+'</div>';
   }
@@ -6629,7 +6629,7 @@ function cd33Issues(kind,row,customer,amount){
  if(kind==='sign'&&(!row.id||location.protocol!=='https:'))issues.push('저장된 계약서 주소 확인 필요');
  if(kind==='signed'&&(!row.id||location.protocol!=='https:'))issues.push('저장된 계약서 주소 확인 필요');
  if(kind==='payment'&&(!Number.isSafeInteger(Number(amount))||Number(amount)<=0))issues.push('입금 요청 금액을 1원 이상 입력해 주세요');
- if(kind==='payment'&&row.pay_status==='입금완료')issues.push('이미 입금 완료된 계약입니다');
+ if(kind==='payment'&&row.payStatus==='입금완료')issues.push('이미 입금 완료된 계약입니다');
  return issues;
 }
 
@@ -6774,7 +6774,7 @@ async function cd9SaveStage(kind,id){
   if(!allowed[kind]||!allowed[kind].includes(value))return;
   const list=kind==='quote'?DB.quotes:DB.contracts, row=list.find(x=>x.id===id);if(!row)return;
   if(kind==='contract'&&row.signatureStatus==='서명완료'&&!['서명완료','계약완료'].includes(value)){$('cd9-message').textContent='고객 서명이 완료된 계약입니다. 서명 기록과 충돌하는 이전 상태로 변경할 수 없습니다.';return;}
-  const next={...row};if(kind==='quote')next.sent=value;else if(kind==='payment')next.pay_status=value;else {next.contractStatus=value;next.status=value;}
+  const next={...row};if(kind==='quote')next.sent=value;else if(kind==='payment')next.payStatus=value;else {next.contractStatus=value;next.status=value;}
   const btn=$('cd9-save');btn.disabled=true;
   try{
     if(!sb)throw new Error('저장소 연결을 확인해 주세요.');
