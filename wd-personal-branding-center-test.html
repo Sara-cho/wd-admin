@@ -6232,7 +6232,7 @@ function showCustDetail(id){
   const _next=(g,pre)=>{
     if(g.q&&!g.ks.length) return `<button class="cd7-next" onclick="${pre}openContractFromQuote('${g.q.id}')">계약 진행 →</button>`;
     const k=g.ks[0]; if(!k) return ''; const st=k.contractStatus||k.status||'작성중', sig=k.signatureStatus||'', ps=k.pay_status||'입금대기';
-    const signed=(st==='서명완료'||st==='계약완료'||sig==='서명완료');
+    const signed=cd33Signed(k);
     if(!signed&&(st==='서명요청'||sig==='서명요청')) return `<button class="cd7-next sub" onclick="copySignLink('${k.id}')">서명링크 복사</button>`;
     if(!signed) return `<button class="cd7-next" onclick="requestSignature('${k.id}')">서명 요청 →</button>`;
     if(ps!=='입금완료') return `<button class="cd7-next" onclick="cd7PayDone('${k.id}')">입금 처리 →</button>`;
@@ -6242,7 +6242,7 @@ function showCustDetail(id){
   const _grp=(g,full)=>{
     const pre=full?CX:'', k=g.ks[0], q=g.q;
     const st=k?(k.contractStatus||k.status||'작성중'):'계약 전';
-    const signed=!!k&&(['서명완료','계약완료','체결'].includes(st)||k.signatureStatus==='서명완료');
+    const signed=!!k&&cd33Signed(k);
     const sent=!!k&&(signed||['전달완료','서명요청'].includes(st)||k.signatureStatus==='서명요청');
     const paid=!!k&&k.pay_status==='입금완료';
     const linked=k?tasks.filter(t=>t.contractId===k.id):[];
@@ -6514,8 +6514,7 @@ document.addEventListener('keydown',e=>{
 function cd28ActiveStep(q,k,linked=[]){
  if(k){
   if(k.pay_status==='입금완료')return 3;
-  const status=k.contractStatus||k.status||'작성중';
-  if(k.signatureStatus==='서명완료'||['서명완료','계약완료','체결'].includes(status))return 2;
+  if(cd33Signed(k))return 2;
   return 1;
  }
  return q?.sent==='전달완료'?1:0;
@@ -6602,7 +6601,7 @@ function cd26Text(kind,row,customer,amount){
 function cd26Open(kind,id){
  const spec=CD26_TEMPLATES[kind],row=(kind==='quote'?DB.quotes:DB.contracts).find(x=>x.id===id);if(!spec||!row)return;
  if(kind==='signed'&&!cd33Signed(row)){toast('고객 서명이 도착한 후 안내할 수 있습니다.');return;}
- if(kind==='payment'&&!cd33Signed(row)){toast('계약 완료 후 입금 안내를 진행해 주세요.');return;}
+ if(kind==='payment'&&!cd33Signed(row)){toast('고객 서명 기록 확인 후 입금 안내를 진행해 주세요.');return;}
  const customer=DB.customers.find(x=>x.id===row.customerId)||{};
  cd26Context={kind,row,customer};cd26Focus=document.activeElement;
  let dialog=document.getElementById('cd26-dialog');
@@ -6619,7 +6618,7 @@ function cd26Update(){
  document.getElementById('cd33-validation').textContent=issues.length?issues.join(' · '):'고객과 안내 내용 확인 완료';
  if(!cd30Sending){const button=document.querySelector('#cd26-dialog .cd27-deliver');if(button)button.disabled=issues.length>0;}
 }
-function cd33Signed(row){return row.signatureStatus==='서명완료'||['서명완료','계약완료','체결'].includes(row.contractStatus||row.status);}
+function cd33Signed(row){return row.signatureStatus==='서명완료'||(row.contractStatus==='서명완료'&&row.agreementChecked===true&&!!row.signedAt&&!!(row.signatureDataUrl||row.signatureUrl));}
 function cd33Issues(kind,row,customer,amount){
  const issues=[];
  if(!customer.name?.trim())issues.push('고객명 확인 필요');
