@@ -1230,7 +1230,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       <button type="button" onclick="wdhqOpenRepresentativeTest('liveOffice')"><span class="ico">🏢</span>LIVE OFFICE</button>
       <button class="wdhq-north-star-trigger" type="button" data-wdhq-north-star-open onclick="WDHQNorthStar.open()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z"/></svg></span>WD WAVE 방향</button>
       <button id="wdhq-house-menu" data-wdhq-owner-only="true" onclick="openSpace('house')"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3Z"/><path d="M9 20v-6h6v6"/></svg></span>사라의 집</button>
-      <button id="wdhq-representative-tests-menu" data-wdhq-owner-only="true" type="button" onclick="wdhqOpenRepresentativeTests()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 9h8M8 13h5"/></svg></span>대표 TEST작업실</button>
+      <button id="wdhq-representative-tests-menu" type="button" onclick="wdhqOpenRepresentativeTests()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 9h8M8 13h5"/></svg></span>대표 TEST작업실</button>
     </nav>
 
     <div class="navlabel">수진 운영</div>
@@ -1776,15 +1776,12 @@ function wdhqApplyRoleBoundary(profile=WDHQ_AUTH_PROFILE){
   if(!profile)return;
   const owner=wdhqIsOwner(profile);
   document.querySelectorAll('[data-wdhq-owner-only="true"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
-  const noahButton=document.getElementById('wdhq-noah-open');if(noahButton){noahButton.hidden=!owner;noahButton.setAttribute('aria-hidden',owner?'false':'true');}
-  document.querySelectorAll('a[href*="authuser=kfcyk20"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
-  document.querySelectorAll('.wdm-board,#wdhq-google-signal-panel').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  document.querySelectorAll('[data-wdhq-north-star-open],button[onclick*="openSpace(\'house\')"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  document.querySelectorAll('[data-wdhq-test="house"],[data-wdhq-test="northStar"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  document.querySelectorAll('.wdhq-observation-northstar').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
   if(!owner){
-    document.querySelectorAll('a[href*="mail.google.com"],a[href*="calendar.google.com"],a[href*="tasks.google.com"]').forEach(node=>node.remove());
-    document.querySelectorAll('.wdm-board,#wdhq-google-signal-panel').forEach(node=>node.remove());
-    ['wdhq-noah-open','wdhq-noah-panel','wdhq-noah-backdrop'].forEach(id=>document.getElementById(id)?.remove());
-    const heading=document.querySelector('.wdm-heading p');if(heading)heading.textContent='회사 공유업무와 허용된 Drive 자료만 확인합니다.';
-    try{window.WDHQNoah?.close?.()}catch(e){}try{wdhqCloseRepresentativeTests()}catch(e){}
+    document.getElementById('wdhq-north-star-view')?.remove();
+    try{wdhqCloseRepresentativeTests()}catch(e){}
   }
 }
 function wdhqRequireOwner(feature){if(wdhqIsOwner())return true;toast((feature||'대표 전용 기능')+'은 대표 계정에서만 사용할 수 있습니다.');window.WDHQBridge?.audit('owner_only_blocked','hq',String(feature||''),'R1',{loginId:WDHQ_AUTH_PROFILE?.login_id||'',result:'blocked'});return false;}
@@ -2148,7 +2145,7 @@ function wdhqOpenNoahFromRepresentativeTest(){
   toast('노아 TEST 버튼을 찾지 못했습니다.');
 }
 function wdhqOpenRepresentativeTest(target){
-  if(!wdhqRequireOwner('대표 TEST작업실'))return;
+  if(!wdhqRequireOwner(target==='house'?'사라의 집':(target==='northStar'?'북극성':'대표 TEST작업실')))return;
   wdhqCloseRepresentativeTests();
   const route=WDHQ_REPRESENTATIVE_TEST_ROUTES[target];
   if(!route){
@@ -2407,7 +2404,7 @@ function wdhqConnectionProjects(projects){
   const selected=[
     take('hq'),take('house'),take('insurance'),take('brandingBiz'),take('lecture'),take('work'),take('creation'),take(null,project=>String(project.name||'').includes('연구실'))
   ].filter(Boolean);
-  return selected.map(project=>{
+  return selected.filter(project=>wdhqIsOwner()||project.systemKey!=='house').map(project=>{
     if(project.systemKey==='creation')return {...project,name:'제작·브랜드센터',role:'제작 · 콘텐츠 · 품질검수 · 브랜드자산'};
     if(project.systemKey==='hq')return {...project,name:'본진·시스템',role:'전체 운영 허브 · 기준 · 배포계보'};
     if(project.systemKey==='insurance')return {...project,name:'설계사허브',role:'보험 고객 · 상담 · 설계 · 계약 · 청구'};
@@ -4416,7 +4413,6 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   function setStatus(message,tone){var node=document.getElementById('wdhq-google-signal-status');if(!node)return;node.textContent=message;node.className='wdhq-google-signal-status'+(tone?' '+tone:'');}
   function setBusy(value){var button=document.getElementById('wdhq-google-signal-refresh');if(!button)return;button.disabled=!!value;button.textContent=value?'중요신호 확인 중…':'Google 중요신호 확인';}
   function ensurePanel(){
-    if(resolvedGoogleRole()!=='owner'){document.getElementById('wdhq-google-signal-panel')?.remove();return;}
     var home=document.getElementById('wdhq-v202-home');if(!home||document.getElementById('wdhq-google-signal-panel'))return;
     var panel=document.createElement('section');panel.id='wdhq-google-signal-panel';panel.className='v202-panel wdhq-google-signal-panel';panel.setAttribute('aria-label','Google 중요업무 신호');
     panel.innerHTML='<div class="wdhq-google-signal-head"><div class="wdhq-google-signal-title"><i aria-hidden="true">!</i><div><h2>Google 중요업무 신호</h2><p>메일함이 아니라 지금 필요한 예외·요청·마감·다음 행동만 보여줍니다.</p></div></div><div class="wdhq-google-signal-controls"><span class="wdhq-google-signal-status" id="wdhq-google-signal-status">Google 읽기 연결 준비 중</span><button class="wdhq-google-signal-refresh" id="wdhq-google-signal-refresh" type="button">Google 중요신호 확인</button></div></div><div class="wdhq-google-signal-note"><b>Gmail·Calendar 원본 유지</b><span>본문·일정 복제 없음 · Supabase/localStorage/sessionStorage 자동 저장 없음</span></div><div class="wdhq-google-signal-list" id="wdhq-google-signal-list"><div class="wdhq-google-signal-empty">읽기 전용 연결 후 중요 신호만 이 화면에 표시합니다.</div></div>';
@@ -4424,7 +4420,6 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     var button=document.getElementById('wdhq-google-signal-refresh');if(button){button.disabled=!STATE.sdkReady;button.addEventListener('click',checkSignals);}
   }
   function render(){
-    if(resolvedGoogleRole()!=='owner'){document.getElementById('wdhq-google-signal-panel')?.remove();return;}
     ensurePanel();var list=document.getElementById('wdhq-google-signal-list');if(!list)return;list.textContent='';
     if(!STATE.lastChecked){var intro=document.createElement('div');intro.className='wdhq-google-signal-empty';intro.textContent=STATE.sdkReady?'Google 중요신호 확인을 눌러 읽기 전용으로 확인하세요.':'Google 읽기 기능을 불러오고 있습니다.';list.appendChild(intro);return;}
     if(!STATE.signals.length){var empty=document.createElement('div');empty.className='wdhq-google-signal-empty';empty.textContent='현재 기준에 해당하는 중요 Gmail·Calendar 신호가 없습니다.';list.appendChild(empty);return;}
@@ -4653,7 +4648,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
       results.innerHTML=renderDataCenterHandoff(q);
       setRouteCard({currentProject:'🎛 WD 본진',room:'자동확인 불가',task:q,status:'본진에서 데이터센터 근거 확인',last:'기존 데이터센터 근거 재사용 · 외부 자동회수 연결은 미지원',destination:'처리 위치: 🎛 WD 본진 · 근거: 🗄 WD 데이터센터',nextAction:'본진 AI가 데이터센터 원본·ID·상태 근거 확인',dataCenter:true,linkNote:'데이터센터 근거 화면은 열 수 있지만 이 정적 화면의 외부 자동조회 연결은 아직 없습니다.',where:'처리 위치: 🎛 WD 본진 · 근거원장: 🗄 WD 데이터센터',copy:'없음 — 대표에게 파일 검색을 시키지 않고 본진에서 근거 확인',action:'대표님 행동 없음'});return;
     }
-    const mode=modeFor(q);const ranked=ROUTES.map(p=>({p,score:scoreProject(p,q)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,3);
+    const mode=modeFor(q);const ranked=ROUTES.filter(p=>wdhqIsOwner()||p.systemKey!=='house').map(p=>({p,score:scoreProject(p,q)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,3);
     if(!ranked.length){results.innerHTML='<div class="wdhq-find-empty">현재 역할표만으로 담당 공간을 확정하지 못했습니다. 새 방을 만들지 않고 본진에서 먼저 범위를 판단합니다.</div>';setRouteCard({currentProject:'🎛 WD 본진',room:'자동확인 불가',task:q,status:'담당 공간 판단 필요',last:'일치 항목 없음',destination:'처리 위치: 🎛 WD 본진',nextAction:'본진에서 담당센터 판단',url:'#top',linkNote:'이동 없음',where:'처리 위치: 🎛 WD 본진',copy:'없음 — 본진에서 판단',action:'대표님 행동 없음'});return;}
     results.innerHTML=ranked.map(x=>renderCard(x.p,mode)).join('');const first=ranked[0].p;const copy=minimalCopy(first,mode,q);const workLabel=mode==='WORK'?'기존 WORK 재사용 우선':'기존 CHAT 재사용 우선';const action='대표님 → '+first.name+'｜'+mode+' → 아래 복붙코드 전송';
     setRouteCard({currentProject:'🎛 WD 본진',room:'자동확인 불가',task:q,status:'다음 목적지 판정 완료',last:'이번 판정: '+first.name+'｜'+mode,destination:first.name+'｜'+mode+' · '+workLabel+' · 작업명 자동확인 불가',nextAction:action,url:first.centerUrl,linkNote:first.centerUrl?'확인된 것은 센터 화면 URL뿐입니다. 실제 ChatGPT 방 이름/URL은 자동확인 불가입니다.':'실제 ChatGPT 방 이름/URL은 자동확인 불가입니다.',where:'보낼 곳: '+first.name+'｜'+mode+' · '+workLabel+' · 실제 방 자동확인 불가',copy:copy,action:action});
@@ -4792,6 +4787,7 @@ body.wdhq-north-star-open .content>#wdhq-north-star-view{display:block!important
     });
   }
   function ensureNorthStar(){
+    if(WDHQ_AUTH_PROFILE&&!wdhqIsOwner()){document.getElementById('wdhq-north-star-view')?.remove();return false;}
     var content=document.querySelector('.content');
     if(!content)return false;
     var view=document.getElementById('wdhq-north-star-view');
@@ -4822,6 +4818,7 @@ body.wdhq-north-star-open .content>#wdhq-north-star-view{display:block!important
     return true;
   }
   function openNorthStar(){
+    if(!wdhqRequireOwner('북극성'))return false;
     if(!ensureNorthStar())return false;
     var view=document.getElementById('wdhq-north-star-view');
     if(view)view.hidden=false;
