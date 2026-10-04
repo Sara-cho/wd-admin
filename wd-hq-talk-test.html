@@ -4242,8 +4242,8 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   var GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
   var CALENDAR_SCOPE='https://www.googleapis.com/auth/calendar.readonly';
   var TASKS_SCOPE='https://www.googleapis.com/auth/tasks';
-  var DRIVE_METADATA_SCOPE='https://www.googleapis.com/auth/drive.metadata.readonly';
-  var SCOPES=GMAIL_SCOPE+' '+CALENDAR_SCOPE+' '+TASKS_SCOPE+' '+DRIVE_METADATA_SCOPE;
+  var DRIVE_READ_SCOPE='https://www.googleapis.com/auth/drive.readonly';
+  var SCOPES=GMAIL_SCOPE+' '+CALENDAR_SCOPE+' '+TASKS_SCOPE+' '+DRIVE_READ_SCOPE;
   var RESPONSE_TERMS=['회신','답변','회답','재전송','다시 보내','다시 한번 첨부','다시 첨부','첨부하여 보내','자료 요청','자료 재요청','확인 요청','확인 부탁','승인 요청','파일이 열리지','열리지 않아'];
   var DEADLINE_TERMS=['마감','기한','제출','납부','납입','세금','원천세','부가세','종합소득세','4대보험','급여','갱신','만료','결제일'];
   var EXCEPTION_TERMS=['오류','실패','미납','자동이체 실패','로그인 경고','보안 경고','권한 문제','권한 필요','반려','누락','정지','파일이 열리지','열리지 않아'];
@@ -4422,7 +4422,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     STATE.tokenAccount=ACCOUNT;
     STATE.tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPES,hint:ACCOUNT,callback:function(response){
       if(!response||response.error||!response.access_token){setStatus('Google 읽기 권한 연결 실패','error');setBusy(false);return;}
-      if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE,DRIVE_METADATA_SCOPE)){setStatus('Gmail·Calendar·Tasks·Drive 읽기 권한 확인 필요','warn');setBusy(false);return;}
+      if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE,DRIVE_READ_SCOPE)){setStatus('Gmail·Calendar·Tasks·Drive 읽기 권한 확인 필요','warn');setBusy(false);return;}
       STATE.token=response.access_token;STATE.expiresAt=Date.now()+Number(response.expires_in||3600)*1000;loadSignals();
     },error_callback:function(){setStatus('Google 권한 연결이 중단되었습니다.','warn');setBusy(false);}});return true;
   }
@@ -4452,6 +4452,49 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
       },120);
     });
   }
+  var DRIVE_ID_RE=/^[A-Za-z0-9_-]{10,200}$/;
+  function requireDriveId(value,label){var id=String(value||'').trim();if(!DRIVE_ID_RE.test(id))throw new Error((label||'Drive ID')+'가 올바르지 않습니다.');return id;}
+  async function driveFetch(url){
+    var token=await getAccessToken(true);
+    var response=await fetch(url,{method:'GET',headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});
+    if(!response.ok){var detail='';try{detail=await response.text();}catch(e){}throw new Error('Drive '+response.status+' · '+String(detail||'읽기 실패').replace(/\s+/g,' ').slice(0,160));}
+    return response;
+  }
+  async function verifyDriveOwner(){
+    var response=await driveFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile');
+    var profile=await response.json(),email=String(profile&&profile.emailAddress||'').toLowerCase();
+    if(email!==ACCOUNT.toLowerCase())throw new Error('연결된 Google 계정이 대표 계정과 다릅니다.');
+  }
+  async function listDriveFolder(folderId){
+    var id=requireDriveId(folderId,'폴더 ID');await verifyDriveOwner();
+    var files=[],pageToken='';
+    do{
+      var params=new URLSearchParams({q:"'"+id+"' in parents and trashed=false",pageSize:'100',orderBy:'folder,name',fields:'nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,parents)'});
+      if(pageToken)params.set('pageToken',pageToken);
+      var data=await (await driveFetch('https://www.googleapis.com/drive/v3/files?'+params.toString())).json();
+      files=files.concat((data.files||[]).map(function(file){return{id:file.id,name:file.name,mimeType:file.mimeType,size:file.size==null?null:Number(file.size),modifiedTime:file.modifiedTime||null,webViewLink:file.webViewLink||null,parents:Array.isArray(file.parents)?file.parents.slice():[]};}));
+      pageToken=String(data.nextPageToken||'');
+    }while(pageToken&&files.length<1000);
+    return{folderId:id,count:files.length,files:files};
+  }
+  async function readDriveFile(fileId){
+    var id=requireDriveId(fileId,'파일 ID');await verifyDriveOwner();
+    var fields='id,name,mimeType,size,modifiedTime,webViewLink,parents';
+    var meta=await (await driveFetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields='+encodeURIComponent(fields))).json();
+    var exports={
+      'application/vnd.google-apps.document':['text/plain','.txt',true],
+      'application/vnd.google-apps.spreadsheet':['text/csv','.csv',true],
+      'application/vnd.google-apps.presentation':['application/pdf','.pdf',false],
+      'application/vnd.google-apps.drawing':['application/pdf','.pdf',false]
+    };
+    var spec=exports[meta.mimeType],url,returnedMime,name=String(meta.name||'');
+    if(spec){returnedMime=spec[0];url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'/export?mimeType='+encodeURIComponent(returnedMime);if(spec[1]&&!name.toLowerCase().endsWith(spec[1]))name+=spec[1];}
+    else{returnedMime=String(meta.mimeType||'application/octet-stream');url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?alt=media';}
+    var blob=await (await driveFetch(url)).blob(),text=null;
+    if((spec&&spec[2])||/^text\//i.test(returnedMime)||/json|xml|csv|javascript/i.test(returnedMime)){text=await blob.text();}
+    return{id:meta.id,name:String(meta.name||''),downloadName:name,mimeType:String(meta.mimeType||''),returnedMimeType:returnedMime,byteLength:blob.size,modifiedTime:meta.modifiedTime||null,webViewLink:meta.webViewLink||null,blob:blob,text:text};
+  }
+  window.WDHQDriveRead=Object.freeze({listDriveFolder:listDriveFolder,readDriveFile:readDriveFile});
   window.WDHQGoogleImportantSignals={check:checkSignals,refresh:function(interactive){return tokenValid()?loadSignals():checkSignals(!!interactive);},getAccessToken:getAccessToken,completeTask:completeGoogleTask,getState:function(){return{lastChecked:STATE.lastChecked,signalCount:STATE.signals.length,gmailCount:STATE.gmailCount,calendarCount:STATE.calendarCount,taskCount:STATE.taskCount,signals:STATE.signals.slice(),calendarEvents:STATE.calendarEvents.slice(),tasks:STATE.tasks.slice(),completedToday:STATE.completedToday.slice(),errors:STATE.errors.slice()};},classifySample:function(sample){return detectSignal(sample);}};
   window.__WDHQ_GOOGLE_IMPORTANT_SIGNALS_V1__=true;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
@@ -6399,7 +6442,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   window.addEventListener('pageshow',()=>setTimeout(tick,300));
   tick();
 
-  window.WDHQTalk=Object.freeze({open,close});
+  window.WDHQTalk=Object.freeze({open,close,listDriveFolder:function(folderId){return window.WDHQDriveRead.listDriveFolder(folderId);},readDriveFile:function(fileId){return window.WDHQDriveRead.readDriveFile(fileId);}});
 })();
 </script>
 
