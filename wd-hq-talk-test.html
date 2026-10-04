@@ -4504,6 +4504,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     document.documentElement.setAttribute('data-wdhq-drive-read-check',JSON.stringify(result));
     window.dispatchEvent(new CustomEvent('wdhq:drive-read-check-result',{detail:result}));
   });
+  setTimeout(function(){var params=new URLSearchParams(location.search),kind=params.get('driveReadCheck'),id=params.get('driveId');if((kind==='folder'||kind==='file')&&id)window.dispatchEvent(new CustomEvent('wdhq:drive-read-check',{detail:{kind:kind,id:id}}));},2500);
   window.WDHQGoogleImportantSignals={check:checkSignals,refresh:function(interactive){return tokenValid()?loadSignals():checkSignals(!!interactive);},getAccessToken:getAccessToken,completeTask:completeGoogleTask,getState:function(){return{lastChecked:STATE.lastChecked,signalCount:STATE.signals.length,gmailCount:STATE.gmailCount,calendarCount:STATE.calendarCount,taskCount:STATE.taskCount,signals:STATE.signals.slice(),calendarEvents:STATE.calendarEvents.slice(),tasks:STATE.tasks.slice(),completedToday:STATE.completedToday.slice(),errors:STATE.errors.slice()};},classifySample:function(sample){return detectSignal(sample);}};
   window.__WDHQ_GOOGLE_IMPORTANT_SIGNALS_V1__=true;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
