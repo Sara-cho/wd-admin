@@ -23,6 +23,7 @@
   --shadow2:0 5px 16px rgba(22,34,54,.05);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Noto Sans KR","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif}
 body{min-height:100vh}
@@ -1771,6 +1772,20 @@ let WDHQ_AUTH_SESSION=null;
 let WDHQ_AUTH_PROFILE=null;
 let WDHQ_AUTH_CHECKING=false;
 function wdhqIsOwner(profile=WDHQ_AUTH_PROFILE){return !!(profile&&profile.login_id===WDHQ_OWNER_LOGIN_ID&&profile.staff_role==='owner'&&profile.is_active===true);}
+function wdhqApplyRoleBoundary(profile=WDHQ_AUTH_PROFILE){
+  if(!profile)return;
+  const owner=wdhqIsOwner(profile);
+  document.querySelectorAll('[data-wdhq-owner-only="true"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  const noahButton=document.getElementById('wdhq-noah-open');if(noahButton){noahButton.hidden=!owner;noahButton.setAttribute('aria-hidden',owner?'false':'true');}
+  document.querySelectorAll('a[href*="authuser=kfcyk20"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  document.querySelectorAll('.wdm-board,#wdhq-google-signal-panel').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  if(!owner){
+    ['wdm-mail-count','wdm-cal-count','wdm-task-count','wdm-done-count'].forEach(id=>{const node=document.getElementById(id);if(node)node.textContent='0';});
+    ['wdm-news','wdm-schedule','wdm-active-list','wdm-done-list'].forEach(id=>{const node=document.getElementById(id);if(node)node.replaceChildren();});
+    const heading=document.querySelector('.wdm-heading p');if(heading)heading.textContent='회사 공유업무와 허용된 Drive 자료만 확인합니다.';
+    try{window.WDHQNoah?.close?.()}catch(e){}try{wdhqCloseRepresentativeTests()}catch(e){}
+  }
+}
 function wdhqRequireOwner(feature){if(wdhqIsOwner())return true;toast((feature||'대표 전용 기능')+'은 대표 계정에서만 사용할 수 있습니다.');window.WDHQBridge?.audit('owner_only_blocked','hq',String(feature||''),'R1',{loginId:WDHQ_AUTH_PROFILE?.login_id||'',result:'blocked'});return false;}
 const WDHQ_STAFF_DRIVE_ROOTS=Object.freeze(['17Sca0e7QuMRMNNYWxAlzMhDNhyxydS48']);
 const WDHQ_EMBEDDED_LECTURE_ROUTE='embedded:lecture-center-v1.3';
@@ -2607,10 +2622,9 @@ function wdhqApplyUserCopy(profile=WDHQ_AUTH_PROFILE){
   if(label)label.textContent=`${name}님 · ${account.roleLabel} 계정`;
   const greeting=document.getElementById('wdhq-user-greeting')||document.querySelector('.content>.head h1');
   if(greeting)greeting.textContent=`${account.greeting}, 오늘 먼저 이것만 보시면 됩니다.`;
-  const owner=wdhqIsOwner(profile);
-  document.querySelectorAll('[data-wdhq-owner-only="true"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
-  const noahButton=document.getElementById('wdhq-noah-open');if(noahButton){noahButton.hidden=!owner;noahButton.setAttribute('aria-hidden',owner?'false':'true');}
-  if(!owner){try{window.WDHQNoah?.close?.()}catch(e){}try{wdhqCloseRepresentativeTests()}catch(e){}}
+  wdhqApplyRoleBoundary(profile);
+  [0,300,1500].forEach(delay=>setTimeout(()=>wdhqApplyRoleBoundary(profile),delay));
+  if(!window.__WDHQ_ROLE_BOUNDARY_OBSERVER__){window.__WDHQ_ROLE_BOUNDARY_OBSERVER__=new MutationObserver(()=>wdhqApplyRoleBoundary(WDHQ_AUTH_PROFILE));window.__WDHQ_ROLE_BOUNDARY_OBSERVER__.observe(document.body,{childList:true,subtree:true});}
   setTimeout(()=>window.WDHQGoogleImportantSignals?.syncAuthorizedAccount?.(),0);
 }
 function wdhqReadTodos(){
