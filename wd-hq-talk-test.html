@@ -1228,8 +1228,8 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       <button onclick="openSpace('insurance')"><span class="ico">🛡️</span>설계사허브</button>
       <button type="button" onclick="wdhqOpenRepresentativeTest('liveOffice')"><span class="ico">🏢</span>LIVE OFFICE</button>
       <button class="wdhq-north-star-trigger" type="button" data-wdhq-north-star-open onclick="WDHQNorthStar.open()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z"/></svg></span>WD WAVE 방향</button>
-      <button onclick="openSpace('house')"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3Z"/><path d="M9 20v-6h6v6"/></svg></span>사라의 집</button>
-      <button type="button" onclick="wdhqOpenRepresentativeTests()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 9h8M8 13h5"/></svg></span>대표 TEST작업실</button>
+      <button id="wdhq-house-menu" data-wdhq-owner-only="true" onclick="openSpace('house')"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3Z"/><path d="M9 20v-6h6v6"/></svg></span>사라의 집</button>
+      <button id="wdhq-representative-tests-menu" data-wdhq-owner-only="true" type="button" onclick="wdhqOpenRepresentativeTests()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 9h8M8 13h5"/></svg></span>대표 TEST작업실</button>
     </nav>
 
     <div class="navlabel">수진 운영</div>
@@ -1770,6 +1770,9 @@ let WDHQ_SUPABASE=null;
 let WDHQ_AUTH_SESSION=null;
 let WDHQ_AUTH_PROFILE=null;
 let WDHQ_AUTH_CHECKING=false;
+function wdhqIsOwner(profile=WDHQ_AUTH_PROFILE){return !!(profile&&profile.login_id===WDHQ_OWNER_LOGIN_ID&&profile.staff_role==='owner'&&profile.is_active===true);}
+function wdhqRequireOwner(feature){if(wdhqIsOwner())return true;toast((feature||'대표 전용 기능')+'은 대표 계정에서만 사용할 수 있습니다.');window.WDHQBridge?.audit('owner_only_blocked','hq',String(feature||''),'R1',{loginId:WDHQ_AUTH_PROFILE?.login_id||'',result:'blocked'});return false;}
+const WDHQ_STAFF_DRIVE_ROOTS=Object.freeze(['17Sca0e7QuMRMNNYWxAlzMhDNhyxydS48']);
 const WDHQ_EMBEDDED_LECTURE_ROUTE='embedded:lecture-center-v1.3';
 const WDHQ_LECTURE_EXTERNAL_ROUTE='lecture_center.html';
 const WDHQ_EMBEDDED_DATA_ROUTE='embedded:data-center-v1.3';
@@ -2103,6 +2106,7 @@ window.addEventListener('message',function(event){
   if(event&&event.data&&event.data.type==='wdhq:return-home-brand')wdhqCloseEmbeddedBrand();
 });
 function wdhqOpenRepresentativeTests(){
+  if(!wdhqRequireOwner('대표 TEST작업실'))return;
   const modal=document.getElementById('wdhqRepresentativeTestModal');
   if(!modal)return;
   modal.classList.add('show');
@@ -2121,12 +2125,14 @@ const WDHQ_REPRESENTATIVE_TEST_ROUTES=Object.freeze({
   northStar:'wd-north-star-test.html'
 });
 function wdhqOpenNoahFromRepresentativeTest(){
+  if(!wdhqRequireOwner('노아 대표총괄'))return;
   wdhqCloseRepresentativeTests();
   const btn=document.getElementById('wdhq-noah-open');
   if(btn){ btn.click(); return; }
   toast('노아 TEST 버튼을 찾지 못했습니다.');
 }
 function wdhqOpenRepresentativeTest(target){
+  if(!wdhqRequireOwner('대표 TEST작업실'))return;
   wdhqCloseRepresentativeTests();
   const route=WDHQ_REPRESENTATIVE_TEST_ROUTES[target];
   if(!route){
@@ -2189,6 +2195,7 @@ function wdhqOpenAccountFromSettings(){
   openSpace('work');
 }
 function openSpace(key){
+  if(key==='house'&&!wdhqRequireOwner('사라의 집'))return;
   const target=String(key==='lecture'?WDHQ_LECTURE_EXTERNAL_ROUTE:(config.links[key]||'')).trim();
   const state=wdhqEffectiveStatus(key);
   if(!target){
@@ -2600,6 +2607,11 @@ function wdhqApplyUserCopy(profile=WDHQ_AUTH_PROFILE){
   if(label)label.textContent=`${name}님 · ${account.roleLabel} 계정`;
   const greeting=document.getElementById('wdhq-user-greeting')||document.querySelector('.content>.head h1');
   if(greeting)greeting.textContent=`${account.greeting}, 오늘 먼저 이것만 보시면 됩니다.`;
+  const owner=wdhqIsOwner(profile);
+  document.querySelectorAll('[data-wdhq-owner-only="true"]').forEach(node=>{node.hidden=!owner;node.setAttribute('aria-hidden',owner?'false':'true');});
+  const noahButton=document.getElementById('wdhq-noah-open');if(noahButton){noahButton.hidden=!owner;noahButton.setAttribute('aria-hidden',owner?'false':'true');}
+  if(!owner){try{window.WDHQNoah?.close?.()}catch(e){}try{wdhqCloseRepresentativeTests()}catch(e){}}
+  setTimeout(()=>window.WDHQGoogleImportantSignals?.syncAuthorizedAccount?.(),0);
 }
 function wdhqReadTodos(){
   const uid=wdhqCurrentUser().uid||'default';
@@ -4235,15 +4247,16 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
 (function(){
   if(window.__WDHQ_GOOGLE_IMPORTANT_SIGNALS_V1__)return;
 
-  // 30·50 어느 계정으로 보더라도 운영판의 Google 원본은 지점장 계정 하나만 사용합니다.
-  function resolvedGoogleAccount(){return 'kfcyk20@gmail.com';}
+  // 본진 인증 프로필에 따라 Google 계정을 분리합니다. 대표 토큰은 직원 세션에서 만들거나 재사용하지 않습니다.
+  function resolvedGoogleRole(){return WDHQ_AUTH_PROFILE?.login_id===WDHQ_OWNER_LOGIN_ID&&WDHQ_AUTH_PROFILE?.staff_role==='owner'?'owner':(WDHQ_AUTH_PROFILE?.login_id===WDHQ_STAFF_LOGIN_ID?'staff':'');}
+  function resolvedGoogleAccount(){var role=resolvedGoogleRole();return role==='owner'?'kfcyk20@gmail.com':(role==='staff'?'woori08944@gmail.com':'');}
   var ACCOUNT=resolvedGoogleAccount();
   var CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps.googleusercontent.com';
   var GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
   var CALENDAR_SCOPE='https://www.googleapis.com/auth/calendar.readonly';
   var TASKS_SCOPE='https://www.googleapis.com/auth/tasks';
   var DRIVE_READ_SCOPE='https://www.googleapis.com/auth/drive.readonly';
-  var SCOPES=GMAIL_SCOPE+' '+CALENDAR_SCOPE+' '+TASKS_SCOPE+' '+DRIVE_READ_SCOPE;
+  function resolvedGoogleScopes(){return resolvedGoogleRole()==='owner'?GMAIL_SCOPE+' '+CALENDAR_SCOPE+' '+TASKS_SCOPE+' '+DRIVE_READ_SCOPE:DRIVE_READ_SCOPE;}
   var RESPONSE_TERMS=['회신','답변','회답','재전송','다시 보내','다시 한번 첨부','다시 첨부','첨부하여 보내','자료 요청','자료 재요청','확인 요청','확인 부탁','승인 요청','파일이 열리지','열리지 않아'];
   var DEADLINE_TERMS=['마감','기한','제출','납부','납입','세금','원천세','부가세','종합소득세','4대보험','급여','갱신','만료','결제일'];
   var EXCEPTION_TERMS=['오류','실패','미납','자동이체 실패','로그인 경고','보안 경고','권한 문제','권한 필요','반려','누락','정지','파일이 열리지','열리지 않아'];
@@ -4406,6 +4419,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     });
   }
   async function loadSignals(){
+    if(resolvedGoogleRole()!=='owner'){STATE.loading=false;STATE.errors=[];STATE.gmailCount=0;STATE.calendarCount=0;STATE.taskCount=0;STATE.signals=[];STATE.calendarEvents=[];STATE.tasks=[];STATE.completedToday=[];STATE.lastChecked=new Date();setBusy(false);setStatus('회사 Drive 읽기 전용 연결','ok');render();return;}
     STATE.loading=true;STATE.errors=[];setBusy(true);setStatus('Gmail·Calendar·Tasks 확인 중','warn');
     try{
       var settled=await Promise.allSettled([fetchGmail(),fetchCalendar(),fetchGoogleTasks(),fetchTodayCalendar()]),gmail=settled[0].status==='fulfilled'?settled[0].value:[],calendar=settled[1].status==='fulfilled'?settled[1].value:[],taskData=settled[2].status==='fulfilled'?settled[2].value:{open:[],completed:[]},todayEvents=settled[3].status==='fulfilled'?settled[3].value:[];
@@ -4418,15 +4432,20 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   }
   function tokenValid(){return !!(STATE.token&&Date.now()<STATE.expiresAt-30000);}
   function initTokenClient(){
+    var scopes=resolvedGoogleScopes();if(!ACCOUNT||!scopes)return false;
     if(STATE.tokenClient&&STATE.tokenAccount===ACCOUNT)return true;if(!(window.google&&google.accounts&&google.accounts.oauth2))return false;
     STATE.tokenAccount=ACCOUNT;
-    STATE.tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPES,hint:ACCOUNT,callback:function(response){
+    STATE.tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:scopes,hint:ACCOUNT,callback:async function(response){
       if(!response||response.error||!response.access_token){setStatus('Google 읽기 권한 연결 실패','error');setBusy(false);return;}
-      if(google.accounts.oauth2.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE,DRIVE_READ_SCOPE)){setStatus('Gmail·Calendar·Tasks·Drive 읽기 권한 확인 필요','warn');setBusy(false);return;}
-      STATE.token=response.access_token;STATE.expiresAt=Date.now()+Number(response.expires_in||3600)*1000;loadSignals();
+      var granted=resolvedGoogleRole()==='owner'?(!google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE,DRIVE_READ_SCOPE)):(!google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(response,DRIVE_READ_SCOPE));
+      if(!granted){setStatus('현재 계정의 Drive 읽기 권한 확인 필요','warn');setBusy(false);return;}
+      STATE.token=response.access_token;STATE.expiresAt=Date.now()+Number(response.expires_in||3600)*1000;
+      try{var who=await googleApi('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)');if(String(who?.user?.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('허용된 Google 계정과 다릅니다.');}catch(error){STATE.token='';STATE.expiresAt=0;setStatus('Google 계정 불일치','error');setBusy(false);return;}
+      loadSignals();
     },error_callback:function(){setStatus('Google 권한 연결이 중단되었습니다.','warn');setBusy(false);}});return true;
   }
-  function checkSignals(interactive){var nextAccount=resolvedGoogleAccount();if(nextAccount!==ACCOUNT){ACCOUNT=nextAccount;STATE.token='';STATE.expiresAt=0;STATE.tokenClient=null;STATE.tokenAccount='';}if(STATE.loading)return;if(tokenValid()){loadSignals();return;}if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중','warn');return;}setBusy(true);setStatus('읽기 전용 권한 확인 중','warn');STATE.tokenClient.requestAccessToken({prompt:interactive?'consent':''});}
+  function clearGoogleState(){STATE.token='';STATE.expiresAt=0;STATE.tokenClient=null;STATE.tokenAccount='';STATE.gmailCount=0;STATE.calendarCount=0;STATE.taskCount=0;STATE.signals=[];STATE.calendarEvents=[];STATE.tasks=[];STATE.completedToday=[];STATE.errors=[];STATE.lastChecked=null;render();}
+  function checkSignals(interactive){var nextAccount=resolvedGoogleAccount();if(nextAccount!==ACCOUNT){ACCOUNT=nextAccount;clearGoogleState();}if(!ACCOUNT){setStatus('회사 로그인 확인 필요','warn');return;}if(STATE.loading)return;if(tokenValid()){loadSignals();return;}if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중','warn');return;}setBusy(true);setStatus('읽기 전용 권한 확인 중','warn');STATE.tokenClient.requestAccessToken({prompt:interactive?'consent':''});}
   function loadGoogleSdk(){
     if(window.google&&google.accounts&&google.accounts.oauth2){STATE.sdkReady=true;return Promise.resolve();}
     return new Promise(function(resolve,reject){
@@ -4460,13 +4479,20 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     if(!response.ok){var detail='';try{detail=await response.text();}catch(e){}throw new Error('Drive '+response.status+' · '+String(detail||'읽기 실패').replace(/\s+/g,' ').slice(0,160));}
     return response;
   }
-  async function verifyDriveOwner(){
-    var response=await driveFetch('https://gmail.googleapis.com/gmail/v1/users/me/profile');
-    var profile=await response.json(),email=String(profile&&profile.emailAddress||'').toLowerCase();
-    if(email!==ACCOUNT.toLowerCase())throw new Error('연결된 Google 계정이 대표 계정과 다릅니다.');
+  async function verifyDriveAccount(){
+    var response=await driveFetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)');
+    var profile=await response.json(),email=String(profile&&profile.user&&profile.user.emailAddress||'').toLowerCase(),expected=resolvedGoogleAccount().toLowerCase();
+    if(!expected||email!==expected)throw new Error('현재 사용자에게 허용된 Google 계정과 다릅니다.');
+  }
+  async function driveMeta(id){return(await driveFetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?supportsAllDrives=true&fields='+encodeURIComponent('id,name,mimeType,parents,shortcutDetails'))).json();}
+  async function requireStaffDriveBoundary(id){
+    if(resolvedGoogleRole()!=='staff')return true;
+    var roots=WDHQ_STAFF_DRIVE_ROOTS,current=requireDriveId(id,'Drive ID'),seen={},depth=0;
+    while(current&&depth++<30){if(roots.indexOf(current)>-1)return true;if(seen[current])break;seen[current]=true;var meta=await driveMeta(current);if(meta.mimeType==='application/vnd.google-apps.shortcut'&&meta.shortcutDetails?.targetId){current=String(meta.shortcutDetails.targetId);continue;}current=Array.isArray(meta.parents)&&meta.parents[0]?String(meta.parents[0]):'';}
+    throw new Error('직원 계정은 WD WAVE 회사공유 허용 폴더만 읽을 수 있습니다.');
   }
   async function listDriveFolder(folderId){
-    var id=requireDriveId(folderId,'폴더 ID');await verifyDriveOwner();
+    var id=requireDriveId(folderId,'폴더 ID');await verifyDriveAccount();await requireStaffDriveBoundary(id);
     var files=[],pageToken='';
     do{
       var params=new URLSearchParams({q:"'"+id+"' in parents and trashed=false",pageSize:'100',orderBy:'folder,name',fields:'nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,parents)'});
@@ -4478,7 +4504,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     return{folderId:id,count:files.length,files:files};
   }
   async function readDriveFile(fileId){
-    var id=requireDriveId(fileId,'파일 ID');await verifyDriveOwner();
+    var id=requireDriveId(fileId,'파일 ID');await verifyDriveAccount();await requireStaffDriveBoundary(id);
     var fields='id,name,mimeType,size,modifiedTime,webViewLink,parents';
     var meta=await (await driveFetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields='+encodeURIComponent(fields))).json();
     var exports={
@@ -4505,7 +4531,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     window.dispatchEvent(new CustomEvent('wdhq:drive-read-check-result',{detail:result}));
   });
   setTimeout(function(){var params=new URLSearchParams(location.search),kind=params.get('driveReadCheck'),id=params.get('driveId');if((kind==='folder'||kind==='file')&&id)window.dispatchEvent(new CustomEvent('wdhq:drive-read-check',{detail:{kind:kind,id:id}}));},2500);
-  window.WDHQGoogleImportantSignals={check:checkSignals,refresh:function(interactive){return tokenValid()?loadSignals():checkSignals(!!interactive);},getAccessToken:getAccessToken,completeTask:completeGoogleTask,getState:function(){return{lastChecked:STATE.lastChecked,signalCount:STATE.signals.length,gmailCount:STATE.gmailCount,calendarCount:STATE.calendarCount,taskCount:STATE.taskCount,signals:STATE.signals.slice(),calendarEvents:STATE.calendarEvents.slice(),tasks:STATE.tasks.slice(),completedToday:STATE.completedToday.slice(),errors:STATE.errors.slice()};},classifySample:function(sample){return detectSignal(sample);}};
+  window.WDHQGoogleImportantSignals={check:checkSignals,refresh:function(interactive){return tokenValid()?loadSignals():checkSignals(!!interactive);},getAccessToken:getAccessToken,completeTask:function(listId,taskId){if(resolvedGoogleRole()!=='owner')return Promise.reject(new Error('대표 Google Tasks는 직원 계정에서 사용할 수 없습니다.'));return completeGoogleTask(listId,taskId);},syncAuthorizedAccount:function(){var next=resolvedGoogleAccount();if(next!==ACCOUNT){ACCOUNT=next;clearGoogleState();}if(resolvedGoogleRole()!=='owner')loadSignals();},getState:function(){return{accountRole:resolvedGoogleRole(),lastChecked:STATE.lastChecked,signalCount:STATE.signals.length,gmailCount:STATE.gmailCount,calendarCount:STATE.calendarCount,taskCount:STATE.taskCount,signals:STATE.signals.slice(),calendarEvents:STATE.calendarEvents.slice(),tasks:STATE.tasks.slice(),completedToday:STATE.completedToday.slice(),errors:STATE.errors.slice()};},classifySample:function(sample){return detectSignal(sample);}};
   window.__WDHQ_GOOGLE_IMPORTANT_SIGNALS_V1__=true;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
@@ -5663,6 +5689,7 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
   }
 
   async function openPanel(){
+    if(!wdhqIsOwner()){if(typeof toast==='function')toast('노아 대표총괄은 대표 계정에서만 사용할 수 있습니다.');return;}
     panel.classList.add("open");
     backdrop.classList.add("open");
     panel.setAttribute("aria-hidden","false");
@@ -5719,6 +5746,7 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
   });
 
   async function askNoah(){
+    if(!wdhqIsOwner()){addMessage("noah","노아 대표총괄은 대표 계정에서만 사용할 수 있습니다.");return;}
     const message = input.value.trim();
     if(!message || send.disabled) return;
 
