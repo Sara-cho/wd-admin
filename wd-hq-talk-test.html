@@ -4495,6 +4495,15 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     return{id:meta.id,name:String(meta.name||''),downloadName:name,mimeType:String(meta.mimeType||''),returnedMimeType:returnedMime,byteLength:blob.size,modifiedTime:meta.modifiedTime||null,webViewLink:meta.webViewLink||null,blob:blob,text:text};
   }
   window.WDHQDriveRead=Object.freeze({listDriveFolder:listDriveFolder,readDriveFile:readDriveFile});
+  window.addEventListener('wdhq:drive-read-check',async function(event){
+    var detail=event&&event.detail||{},result;
+    try{
+      if(detail.kind==='folder'){var listed=await listDriveFolder(detail.id);result={ok:true,kind:'folder',folderId:listed.folderId,count:listed.count,files:listed.files.slice(0,20)};}
+      else{var read=await readDriveFile(detail.id);result={ok:true,kind:'file',id:read.id,name:read.name,mimeType:read.mimeType,returnedMimeType:read.returnedMimeType,byteLength:read.byteLength,modifiedTime:read.modifiedTime,webViewLink:read.webViewLink,textPreview:read.text==null?null:read.text.slice(0,200)};}
+    }catch(error){result={ok:false,kind:detail.kind||'',error:String(error&&error.message||error)};}
+    document.documentElement.setAttribute('data-wdhq-drive-read-check',JSON.stringify(result));
+    window.dispatchEvent(new CustomEvent('wdhq:drive-read-check-result',{detail:result}));
+  });
   window.WDHQGoogleImportantSignals={check:checkSignals,refresh:function(interactive){return tokenValid()?loadSignals():checkSignals(!!interactive);},getAccessToken:getAccessToken,completeTask:completeGoogleTask,getState:function(){return{lastChecked:STATE.lastChecked,signalCount:STATE.signals.length,gmailCount:STATE.gmailCount,calendarCount:STATE.calendarCount,taskCount:STATE.taskCount,signals:STATE.signals.slice(),calendarEvents:STATE.calendarEvents.slice(),tasks:STATE.tasks.slice(),completedToday:STATE.completedToday.slice(),errors:STATE.errors.slice()};},classifySample:function(sample){return detectSignal(sample);}};
   window.__WDHQ_GOOGLE_IMPORTANT_SIGNALS_V1__=true;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
