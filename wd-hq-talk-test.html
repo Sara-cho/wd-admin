@@ -4488,7 +4488,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
       'application/vnd.google-apps.drawing':['application/pdf','.pdf',false]
     };
     var spec=exports[meta.mimeType],url,returnedMime,name=String(meta.name||'');
-    if(spec){returnedMime=spec[0];url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'/export?mimeType='+encodeURIComponent(returnedMime);if(spec[1]&&!name.toLowerCase().endsWith(spec[1]))name+=spec[1];}
+    if(spec){returnedMime=spec[0];url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'/export?alt=media&mimeType='+encodeURIComponent(returnedMime);if(spec[1]&&!name.toLowerCase().endsWith(spec[1]))name+=spec[1];}
     else{returnedMime=String(meta.mimeType||'application/octet-stream');url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?alt=media';}
     var blob=await (await driveFetch(url)).blob(),text=null;
     if((spec&&spec[2])||/^text\//i.test(returnedMime)||/json|xml|csv|javascript/i.test(returnedMime)){text=await blob.text();}
