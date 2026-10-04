@@ -4332,6 +4332,7 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   function uniqueSignals(items){var seen={};return items.filter(function(item){var key=item.source+':'+item.id;if(seen[key])return false;seen[key]=true;return true;}).sort(function(a,b){return b.sortScore-a.sortScore;});}
   async function googleApi(url){
     var response=await fetch(url,{method:'GET',headers:{Authorization:'Bearer '+STATE.token,Accept:'application/json'}});
+    if(epoch!==driveRelayEpoch||account!==resolvedGoogleAccount())throw new Error('SESSION_CHANGED');
     if(!response.ok){var detail='';try{detail=await response.text();}catch(e){}var error=new Error('Google API '+response.status+' · '+String(detail||'요청 실패').replace(/\s+/g,' ').slice(0,120));error.httpStatus=response.status;throw error;}
     return response.json();
   }
@@ -4449,16 +4450,20 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     var scopes=resolvedGoogleScopes();if(!ACCOUNT||!scopes)return false;
     if(STATE.tokenClient&&STATE.tokenAccount===ACCOUNT)return true;if(!(window.google&&google.accounts&&google.accounts.oauth2))return false;
     STATE.tokenAccount=ACCOUNT;
+    var oauthEpoch=driveRelayEpoch,oauthAccount=ACCOUNT;
     STATE.tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:scopes,hint:ACCOUNT,callback:async function(response){
+      if(oauthEpoch!==driveRelayEpoch||oauthAccount!==resolvedGoogleAccount())return;
       if(!response||response.error||!response.access_token){setStatus('Google 읽기 권한 연결 실패','error');setBusy(false);return;}
       var granted=resolvedGoogleRole()==='owner'?(!google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_SCOPE,CALENDAR_SCOPE,TASKS_SCOPE,DRIVE_READ_SCOPE)):(!google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(response,DRIVE_READ_SCOPE));
       if(!granted){setStatus('현재 계정의 Drive 읽기 권한 확인 필요','warn');setBusy(false);return;}
       STATE.token=response.access_token;STATE.expiresAt=Date.now()+Number(response.expires_in||3600)*1000;
       try{var who=await googleApi('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)');if(String(who?.user?.emailAddress||'').toLowerCase()!==ACCOUNT.toLowerCase())throw new Error('허용된 Google 계정과 다릅니다.');}catch(error){STATE.token='';STATE.expiresAt=0;setStatus('Google 계정 불일치','error');setBusy(false);return;}
+      if(oauthEpoch!==driveRelayEpoch||oauthAccount!==resolvedGoogleAccount())return;
       loadSignals();
     },error_callback:function(){setStatus('Google 권한 연결이 중단되었습니다.','warn');setBusy(false);}});return true;
   }
-  function clearGoogleState(){STATE.token='';STATE.expiresAt=0;STATE.tokenClient=null;STATE.tokenAccount='';STATE.gmailCount=0;STATE.calendarCount=0;STATE.taskCount=0;STATE.signals=[];STATE.calendarEvents=[];STATE.tasks=[];STATE.completedToday=[];STATE.errors=[];STATE.lastChecked=null;render();}
+  var driveRelayEpoch=0;
+  function clearGoogleState(){driveRelayEpoch++;STATE.loading=false;STATE.token='';STATE.expiresAt=0;STATE.tokenClient=null;STATE.tokenAccount='';STATE.gmailCount=0;STATE.calendarCount=0;STATE.taskCount=0;STATE.signals=[];STATE.calendarEvents=[];STATE.tasks=[];STATE.completedToday=[];STATE.errors=[];STATE.lastChecked=null;render();}
   function checkSignals(interactive){var nextAccount=resolvedGoogleAccount();if(nextAccount!==ACCOUNT){ACCOUNT=nextAccount;clearGoogleState();}if(!ACCOUNT){setStatus('회사 로그인 확인 필요','warn');return;}if(STATE.loading)return;if(tokenValid()){loadSignals();return;}if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중','warn');return;}setBusy(true);setStatus('읽기 전용 권한 확인 중','warn');STATE.tokenClient.requestAccessToken({prompt:interactive?'consent':''});}
   function loadGoogleSdk(){
     if(window.google&&google.accounts&&google.accounts.oauth2){STATE.sdkReady=true;return Promise.resolve();}
@@ -4488,7 +4493,9 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   var DRIVE_ID_RE=/^[A-Za-z0-9_-]{10,200}$/;
   function requireDriveId(value,label){var id=String(value||'').trim();if(!DRIVE_ID_RE.test(id))throw new Error((label||'Drive ID')+'가 올바르지 않습니다.');return id;}
   async function driveFetch(url){
+    var epoch=driveRelayEpoch,account=resolvedGoogleAccount();
     var token=await getAccessToken(true);
+    if(epoch!==driveRelayEpoch||account!==resolvedGoogleAccount())throw new Error('SESSION_CHANGED');
     var response=await fetch(url,{method:'GET',headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});
     if(!response.ok){var detail='';try{detail=await response.text();}catch(e){}throw new Error('Drive '+response.status+' · '+String(detail||'읽기 실패').replace(/\s+/g,' ').slice(0,160));}
     return response;
@@ -4535,6 +4542,84 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
     return{id:meta.id,name:String(meta.name||''),downloadName:name,mimeType:String(meta.mimeType||''),returnedMimeType:returnedMime,byteLength:blob.size,modifiedTime:meta.modifiedTime||null,webViewLink:meta.webViewLink||null,blob:blob,text:text};
   }
   window.WDHQDriveRead=Object.freeze({listDriveFolder:listDriveFolder,readDriveFile:readDriveFile});
+  // TEST-only read relay. Callers must retain the HQ popup/iframe Window reference.
+  // request: {type:'WDHQ_DRIVE_REQUEST',version:1,requestId,userId,center,
+  //           method:'listDriveFolder'|'readDriveFile',folderId|fileId}
+  // response: {type:'WDHQ_DRIVE_RESPONSE',version:1,requestId,ok,result|error}
+  var driveRelayOrigins=Object.freeze(['https://admin.wdwave.kr','https://pro.wdwave.kr']);
+  var driveRelayBusy=false;
+  function relayError(code){var error=new Error(code);error.relayCode=code;return error;}
+  function relayLocalIdentity(){
+    var p=WDHQ_AUTH_PROFILE;
+    return !WDHQ_AUTH_CHECKING&&WDHQ_AUTH_SESSION?.user?.id&&p?
+      [WDHQ_AUTH_SESSION.user.id,p.user_id,p.login_id,p.staff_role,p.is_active].join('|'):'';
+  }
+  async function relayIdentity(userId,center){
+    var before=relayLocalIdentity();if(!before)throw relayError('AUTH_REQUIRED');
+    var client=wdhqInitSupabase(),u=await client.auth.getUser();
+    if(u.error||!u.data?.user||u.data.user.id!==userId)throw relayError('USER_MISMATCH');
+    var p=await wdhqReadAuthorizedProfile(u.data.user.id);
+    var owner=p.login_id===WDHQ_OWNER_LOGIN_ID&&p.staff_role==='owner';
+    var staff=p.login_id===WDHQ_STAFF_LOGIN_ID&&typeof p.staff_role==='string'&&p.staff_role.length>0&&p.staff_role!=='owner';
+    if(p.is_active!==true||(!owner&&!staff))throw relayError('ROLE_DENIED');
+    if(String(u.data.user.email||'').toLowerCase()!==wdhqLoginAccount(p.login_id).email)throw relayError('USER_MISMATCH');
+    if(center==='sara'&&!owner)throw relayError('PERSONAL_AREA_DENIED');
+    var verified=[u.data.user.id,p.user_id,p.login_id,p.staff_role,p.is_active].join('|');
+    if(before!==verified||before!==relayLocalIdentity())throw relayError('SESSION_CHANGED');
+    var expected=owner?'kfcyk20@gmail.com':'woori08944@gmail.com';
+    if(ACCOUNT!==expected||STATE.tokenAccount!==expected||!tokenValid())throw relayError('GOOGLE_CONNECT_REQUIRED');
+    return verified;
+  }
+  function relaySafeError(error){
+    var code=error?.relayCode||(/SESSION_CHANGED/.test(String(error?.message))?'SESSION_CHANGED':'DRIVE_READ_FAILED');
+    var status=String(error?.message||'').match(/^Drive (\d{3})/);
+    if(status)code='DRIVE_HTTP_'+status[1];
+    // Never serialize an exception, OAuth response, response body or credentials.
+    return {code:code,reason:code==='GOOGLE_CONNECT_REQUIRED'?'본진 TEST에서 기존 Google 연결을 먼저 승인해 주세요.':'읽기 요청이 거부되었거나 완료되지 않았습니다.'};
+  }
+  if(location.origin==='https://admin.wdwave.kr'&&location.pathname==='/wd-hq-talk-test.html'){
+    wdhqInitSupabase().auth.onAuthStateChange(function(event,session){
+      if(event==='SIGNED_OUT'||(event==='SIGNED_IN'&&session?.user?.id!==WDHQ_AUTH_SESSION?.user?.id)||event==='USER_UPDATED')clearGoogleState();
+    });
+    window.addEventListener('message',async function(event){
+      if(!driveRelayOrigins.includes(event.origin)||!event.source||
+        !(event.source===window.opener||(window.parent!==window&&event.source===window.parent)))return;
+      var d=event.data;
+      if(!d||d.type!=='WDHQ_DRIVE_REQUEST'||d.version!==1||typeof d.requestId!=='string'||! /^[A-Za-z0-9_-]{1,80}$/.test(d.requestId))return;
+      var source=event.source,origin=event.origin;
+      function reply(payload){source.postMessage(Object.assign({type:'WDHQ_DRIVE_RESPONSE',version:1,requestId:d.requestId},payload),origin);}
+      if(driveRelayBusy){reply({ok:false,error:{code:'BUSY',reason:'이전 읽기 요청이 진행 중입니다.'}});return;}
+      driveRelayBusy=true;
+      var epoch=driveRelayEpoch;
+      try{
+        if(!['noah','jian','sara'].includes(d.center)||!['listDriveFolder','readDriveFile'].includes(d.method)||typeof d.userId!=='string')throw relayError('INVALID_REQUEST');
+        var id=requireDriveId(d.method==='listDriveFolder'?d.folderId:d.fileId,'Drive ID');
+        var identity=await relayIdentity(d.userId,d.center);
+        await verifyDriveAccount();
+        if(epoch!==driveRelayEpoch||identity!==relayLocalIdentity())throw relayError('SESSION_CHANGED');
+        var read=await window.WDHQDriveRead[d.method](id),result;
+        if(d.method==='listDriveFolder'){
+          var files=[];
+          for(var f of read.files){
+            if(resolvedGoogleRole()==='staff'){
+              // Do not expose out-of-root shortcut names/links in a folder listing.
+              try{await requireStaffDriveBoundary(f.id);}catch(e){if(/회사공유 허용/.test(String(e.message)))continue;throw e;}
+            }
+            files.push({fileId:f.id,name:f.name,mimeType:f.mimeType,byteLength:f.size});
+          }
+          result={folderId:id,count:files.length,files:files};
+        }else{
+          result={fileId:read.id,name:read.name,mimeType:read.mimeType,returnedMimeType:read.returnedMimeType,byteLength:read.byteLength,blob:read.blob};
+          if(typeof read.text==='string')result.text=read.text;
+        }
+        var after=await relayIdentity(d.userId,d.center);
+        if(epoch!==driveRelayEpoch||after!==identity||identity!==relayLocalIdentity())throw relayError('SESSION_CHANGED');
+        reply({ok:true,result:result});
+      }catch(error){reply({ok:false,error:relaySafeError(error)});}
+      finally{driveRelayBusy=false;}
+    });
+  }
+
   window.addEventListener('wdhq:drive-read-check',async function(event){
     var detail=event&&event.detail||{},result;
     try{
@@ -6502,3 +6587,4 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 
 </body>
 </html>
+
