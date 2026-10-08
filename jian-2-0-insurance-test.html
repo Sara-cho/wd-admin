@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="wdh-mobile-qa-build" content="261007-MQA-R2">
 <title>지안 2.0 보험업무 | WD WAVE</title>
+<meta name="jian-correction" content="261008-customer-flow-r1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2546,10 +2547,10 @@ else document.documentElement.classList.add('jian20-hosted');
         <!-- ===================== VIEW: 고객목록 ===================== -->
         <section class="view" id="view-customer-list">
 <section id="jian20-readonly-customers" aria-label="지안 2.0 실제 고객 읽기 전용" style="margin:12px 0 18px;padding:16px;border:1px solid #ccd7ef;border-radius:14px;background:#fff">
- <h3 style="font-size:17px;margin:0 0 6px">지안 2.0 · 실제 고객DB 읽기 <small style="font-weight:normal;font-size:12px">(읽기 전용)</small></h3>
+ <h3 style="font-size:17px;margin:0 0 6px">고객목록 연결 <small style="font-weight:normal;font-size:12px">(읽기 전용)</small></h3>
  <p id="jian20-read-status" role="status" aria-live="polite" style="margin:0 0 10px;color:#42536d">본진 대표 로그인 검증 후 연결됩니다. 로컬 미리보기에서는 고객정보를 읽지 않습니다.</p>
  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><button id="jian20-read-load" type="button" class="tiny-btn" disabled>실제 고객목록 읽기</button><button id="jian20-read-more" type="button" class="tiny-btn" hidden>다음 50명</button></div>
- <div id="jian20-read-list" style="display:grid;gap:8px"></div>
+ <details><summary>읽기 전용 API 진단</summary><div id="jian20-read-list" style="display:grid;gap:8px"></div></details>
  <div id="jian20-read-detail" aria-live="polite" hidden style="margin-top:12px;padding:12px;border:1px solid #ddd;border-radius:9px;background:#f7f9fc"></div>
  <p style="margin:10px 0 0;color:#667085;font-size:12px">고객의 이름·분류·연락처만 조회합니다. 주민번호·메모·계약·상담·청구기록은 이번 API에서 가져오지 않습니다. 데이터 변경·외부발송 없음.</p>
 </section>
@@ -3940,6 +3941,7 @@ const stageLabels = ["상담","설계","계약","청구·후속"];
 
 function renderCustomer(c) {
   if (!c) return;
+  if(c.__jianReadOnly && window.JIAN20_RENDER_PARTIAL){window.JIAN20_RENDER_PARTIAL(c);return;}
   const custId = c.id;
   const name = c.name || '이름 없음';
   const initial = name.charAt(0);
@@ -10665,6 +10667,7 @@ async function t11LoadContactDates(){
  }catch(e){t11ContactsError=true;}finally{t11ContactsLoading=false;t11RenderCustomers(false);}
 }
 function t11RenderCustomers(load){
+ if(window.JIAN20_DRAW_CUSTOMERS){window.JIAN20_DRAW_CUSTOMERS();return;}
  var body=document.getElementById('custListBody'),meta=document.getElementById('custListMeta');if(!body)return;
  var custs=typeof getCusts==='function'?(getCusts()||[]):[],q=(document.getElementById('custListSearch').value||'').trim();
  var filtered=q?custs.filter(function(c){return t11Match(c,q);}):custs.slice();
@@ -11599,6 +11602,12 @@ window.T12_PROSPECTS={load,route,criteria,saveConversion,cancelConversion,isConv
 (function(){
 'use strict';
 const local=window.JIAN20_PREVIEW===true;
+// TEST bridge uses only the owner-verified read gateway. No insurance session substitution.
+window.getSbClientForUid=function(){return null};
+window.getSbClient=function(){return null};
+window.wdhAuthRestore=async function(){return false};
+window.wdhRestoreSession=async function(){return false};
+
 const label=()=>document.getElementById('jian20-independent-status');
 const detail=()=>document.getElementById('jian20-independent-detail');
 const setStatus=(x,y)=>{if(label())label().textContent=x;if(detail())detail().textContent=y;};
@@ -11646,7 +11655,7 @@ async function verifyWDAdmin(){
   if(p.error||p.data?.user_id!==u.data.user.id||p.data.login_id!=='kfcyk50'||p.data.staff_role!=='owner'||p.data.is_active!==true)throw Error('NOT_OWNER');
   window.JIAN20_OWNER_VERIFIED=true;window.dispatchEvent(new Event("jian20:owner-ready"));
   document.documentElement.classList.remove('jian20-pending');
-  setStatus('WD ADMIN 대표 확인 · 업무화면 열림','보험 고객DB는 별도 인증/RLS 사용 · 안전한 연동 아직 미구현');
+  setStatus('WD ADMIN 대표 확인 · 업무화면 열림','고객 기본정보 읽기 전용 · 상담·설계·계약·청구 서버 연결 미구현');
   client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){window.JIAN20_OWNER_VERIFIED=false;window.dispatchEvent(new Event('jian20:owner-signed-out'));window.location.replace('https://admin.wdwave.kr/')}});
   return true;
 }
@@ -11669,7 +11678,7 @@ verifyWDAdmin().catch(e=>{
  const setStatus=t=>status.textContent=t;
  const showDetail=()=>{detail.hidden=false;detail.replaceChildren();};
  const appendField=(host,key,value)=>{let r=document.createElement('div');r.style.padding='4px 0';let b=document.createElement('strong');b.textContent=key+' : ';r.append(b,document.createTextNode(value||'미기록'));host.append(r);};
- function clear(reason){requestVersion++;items=[];offset=0;hasMore=false;list.replaceChildren();detail.hidden=true;detail.replaceChildren();moreBtn.hidden=true;loadBtn.disabled=true;if(reason)setStatus(reason);}
+ function clear(reason){requestVersion++;items=[];CURRENT_CUSTOMERS=[];if(el('custListBody'))el('custListBody').replaceChildren();if(el('custName'))window.JIAN20_RENDER_PARTIAL?.({name:'인증 재확인 필요',phone:'',ctype:''});offset=0;hasMore=false;list.replaceChildren();detail.hidden=true;detail.replaceChildren();moreBtn.hidden=true;loadBtn.disabled=true;if(reason)setStatus(reason);}
  const hosted=location.origin==='https://admin.wdwave.kr';
  if(!hosted){clear('로컬 화면 확인용 · 고객DB 실조회는 WD ADMIN의 독립 HTML 배포 후 가능');return;}
  if(window.JIAN20_PREVIEW){clear('미리보기에서는 개인정보 조회를 실행하지 않습니다.');return;}
@@ -11693,14 +11702,41 @@ verifyWDAdmin().catch(e=>{
   return result;
  }
  function draw(rows){
-  list.replaceChildren();
-  for(const c of rows){
+  const host=el('custListBody');host.replaceChildren();list.textContent='표시된 고객의 기본정보만 조회됨 · 관련 업무기록 미조회';
+  const q=(el('custListSearch').value||'').trim().toLowerCase();
+  const filtered=rows.filter(c=>[c.name,c.id,c.phone||''].some(v=>String(v).toLowerCase().includes(q)));
+  el('custListMeta').textContent='조회된 '+rows.length+'명'+(hasMore?' · 다음 페이지 있음':'')+' / 검색 '+filtered.length+'명 · 최근 접촉기록 미조회';
+  el('t11AllCustomers').textContent='조회된 고객 보기';
+  for(const c of filtered){
    const id=String(c.id||'');if(!/^[1-9][0-9]{0,14}$/.test(id)||typeof c.name!=='string')continue;
-   const b=document.createElement('button');b.type='button';b.className='tiny-btn';b.style.cssText='display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;align-items:center';
-   const label=document.createElement('span');label.textContent=c.name+' · '+(c.ctype||'분류 미기록');const arrow=document.createElement('span');arrow.textContent='상세 읽기 →';
-   b.append(label,arrow);b.addEventListener('click',()=>showCustomer(id,b));list.append(b);
+   const row=document.createElement('div');row.className='list-row';
+   const label=document.createElement('div');label.className='row-mid';label.textContent=c.name+' · '+(c.ctype||'분류 미기록');
+   const button=document.createElement('button');button.type='button';button.className='tiny-btn';button.textContent='고객상세 열기';
+   button.addEventListener('click',()=>showCustomer(id));row.append(label,button);host.append(row);
   }
+  if(!filtered.length){host.textContent=rows.length?'조회된 고객 중 검색 결과 없음':'고객목록 조회 미완료';}
  }
+ window.JIAN20_DRAW_CUSTOMERS=()=>draw(items);
+ const originalOpen=window.wdh_openCustomer;
+ window.wdh_openCustomer=function(id){return showCustomer(String(id));};
+ window.JIAN20_RENDER_PARTIAL=function(c){
+  const set=(id,text)=>{if(el(id))el(id).textContent=text;};
+  set('crumbName',c.name+' · 고객상세');set('custName',c.name);set('custPhoto',c.name.charAt(0));
+  set('custStatusPill','기본정보 읽기 전용');
+  set('custMeta','연락처: '+(c.phone||'미기록')+' · 분류: '+(c.ctype||'미기록')+' · 생년월일·주소·직업: 미조회');
+  set('custQuote','고객 메모 미조회 · 기록 없음으로 판정하지 않습니다.');
+  set('custStepper','상담 → 설계 → 계약 → 청구·후속 · 실제 진행단계 미조회');
+  ['todoBox','nextContact','lastResult','memoList','followList','accInsPreview','accInsBody','accWorkPreview','accWorkBody','accDocsPreview','accDocsBody','accCarPreview','accCarBody','accTimelineBody'].forEach(id=>set(id,'미조회 · 기존 업무기록 서버 연결 범위 밖'));
+  ['accInsCount','accWorkCount','accDocsCount','accCarCount'].forEach(id=>set(id,'미조회'));
+ };
+ document.addEventListener('click',function(e){
+  const t=e.target.closest('button,a,input[type=submit]');if(!t)return;
+  const label=(t.textContent||'')+' '+(t.getAttribute('onclick')||'')+' '+(t.id||'');
+  if(/저장|삭제|전송|발송|결제|서명요청|완료 처리|최종완료|(?:save|delete|submit|upload)/i.test(label)){
+   e.preventDefault();e.stopImmediatePropagation();setStatus('현재 읽기 전용 연결입니다. 저장·발송·업무변경은 연결 미구현입니다.');
+   if(typeof wdh_showToast==='function')wdh_showToast('읽기 전용 · 업무 저장·발송 연결 미구현');
+  }
+ },true);
  async function load(next){
   if(busy||!window.JIAN20_OWNER_VERIFIED)return;
   busy=true;loadBtn.disabled=true;moreBtn.disabled=true;
@@ -11711,34 +11747,26 @@ verifyWDAdmin().catch(e=>{
    const res=await request({action:'list',offset:want});
    if(seq!==requestVersion||!window.JIAN20_OWNER_VERIFIED)return;
    if(!next){items=[];detail.hidden=true;detail.replaceChildren();}
-   items.push(...res.items);offset=want+res.items.length;hasMore=res.hasMore===true;
+   items.push(...res.items);CURRENT_CUSTOMERS=items.map(c=>Object.assign({},c,{__jianReadOnly:true}));offset=want+res.items.length;hasMore=res.hasMore===true;
    draw(items);moreBtn.hidden=!hasMore;setStatus('기존 보험DB에서 '+items.length+'명 조회 · 목록 표시 성공 (이 화면에서 수정·발송 불가)');
   }catch(e){if(seq===requestVersion)setStatus(e.message||'조회 실패');}
   finally{busy=false;loadBtn.disabled=!window.JIAN20_OWNER_VERIFIED;moreBtn.disabled=false;}
  }
- async function showCustomer(customerId,button){
-  if(!window.JIAN20_OWNER_VERIFIED)return;
-  const seq=++requestVersion;
-  list.querySelectorAll('[data-jian20-detail]').forEach(x=>x.remove());
-  const resultBox=document.createElement('div');
-  resultBox.dataset.jian20Detail='true';
-  resultBox.setAttribute('role','status');
-  resultBox.style.cssText='display:block!important;visibility:visible!important;padding:14px;margin:4px 0 14px;background:#fff;border:2px solid #6542d8;border-radius:12px;color:#17213a';
-  resultBox.textContent='고객상세를 읽고 있습니다…';
-  button.insertAdjacentElement('afterend',resultBox);
-  resultBox.scrollIntoView({behavior:'smooth',block:'center'});
+ async function showCustomer(customerId){
+  if(!window.JIAN20_OWNER_VERIFIED||!items.some(c=>String(c.id)===customerId))return;
+  const seq=++requestVersion;setStatus('고객 기본정보 확인 중…');
   try{
    const res=await request({action:'detail',customerId});
-   if(seq!==requestVersion||!window.JIAN20_OWNER_VERIFIED||!resultBox.isConnected)return;
+   if(seq!==requestVersion||!window.JIAN20_OWNER_VERIFIED)return;
    const c=res.items[0];
-   if(!c||String(c.id)!==customerId||typeof c.name!=='string')throw Error('고객 응답이 일치하지 않습니다.');
-   resultBox.replaceChildren();
-   appendField(resultBox,'고객',c.name);
-   appendField(resultBox,'분류',c.ctype);
-   appendField(resultBox,'연락처',c.phone);
-  }catch(e){
-   if(seq===requestVersion&&resultBox.isConnected)resultBox.textContent=e.message||'상세 조회 실패';
-  }
+   if(res.items.length!==1||!c||String(c.id)!==customerId||typeof c.name!=='string'||typeof c.phone!=='string')throw Error('고객 응답이 일치하지 않습니다.');
+   const row={id:c.id,name:c.name,ctype:c.ctype,phone:c.phone,__jianReadOnly:true};
+   const i=CURRENT_CUSTOMERS.findIndex(x=>String(x.id)===customerId);
+   if(i<0)CURRENT_CUSTOMERS.push(row);else CURRENT_CUSTOMERS[i]=Object.assign({},CURRENT_CUSTOMERS[i],row);
+   originalOpen(customerId);
+   setStatus('고객상세 연결 · 기본정보 조회됨 / 상담·설계·계약·청구 미조회');
+   detail.hidden=false;detail.textContent='기본정보 응답 확인 · 관련 업무기록 미조회';
+  }catch(e){if(seq===requestVersion)setStatus(e.message||'상세 조회 실패');}
  }
  loadBtn.addEventListener('click',()=>load(false));moreBtn.addEventListener('click',()=>load(true));
  window.addEventListener('jian20:owner-ready',()=>{loadBtn.disabled=false;setStatus('대표 로그인 확인 · 실제 고객목록 읽기를 시작합니다.');load(false);},{once:true});
