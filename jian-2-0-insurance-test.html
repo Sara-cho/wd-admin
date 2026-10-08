@@ -2549,8 +2549,8 @@ else document.documentElement.classList.add('jian20-hosted');
  <h3 style="font-size:17px;margin:0 0 6px">지안 2.0 · 실제 고객DB 읽기 <small style="font-weight:normal;font-size:12px">(읽기 전용)</small></h3>
  <p id="jian20-read-status" role="status" aria-live="polite" style="margin:0 0 10px;color:#42536d">본진 대표 로그인 검증 후 연결됩니다. 로컬 미리보기에서는 고객정보를 읽지 않습니다.</p>
  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><button id="jian20-read-load" type="button" class="tiny-btn" disabled>실제 고객목록 읽기</button><button id="jian20-read-more" type="button" class="tiny-btn" hidden>다음 50명</button></div>
+ <div id="jian20-read-detail" aria-live="polite" hidden style="margin:0 0 12px;padding:12px;border:1px solid #ddd;border-radius:9px;background:#f7f9fc"></div>
  <div id="jian20-read-list" style="display:grid;gap:8px"></div>
- <div id="jian20-read-detail" aria-live="polite" hidden style="margin-top:12px;padding:12px;border:1px solid #ddd;border-radius:9px;background:#f7f9fc"></div>
  <p style="margin:10px 0 0;color:#667085;font-size:12px">고객의 이름·분류·연락처만 조회합니다. 주민번호·메모·계약·상담·청구기록은 이번 API에서 가져오지 않습니다. 데이터 변경·외부발송 없음.</p>
 </section>
           <div class="greet-row">
@@ -11667,7 +11667,7 @@ verifyWDAdmin().catch(e=>{
  const loadBtn=el('jian20-read-load'),moreBtn=el('jian20-read-more'),status=el('jian20-read-status'),list=el('jian20-read-list'),detail=el('jian20-read-detail');
  let items=[],offset=0,hasMore=false,busy=false,authClient=null,requestVersion=0;
  const setStatus=t=>status.textContent=t;
- const showDetail=()=>{detail.hidden=false;detail.replaceChildren();};
+ const showDetail=()=>{detail.hidden=false;detail.replaceChildren();detail.scrollIntoView({behavior:'smooth',block:'center'});};
  const appendField=(host,key,value)=>{let r=document.createElement('div');r.style.padding='4px 0';let b=document.createElement('strong');b.textContent=key+' : ';r.append(b,document.createTextNode(value||'미기록'));host.append(r);};
  function clear(reason){requestVersion++;items=[];offset=0;hasMore=false;list.replaceChildren();detail.hidden=true;detail.replaceChildren();moreBtn.hidden=true;loadBtn.disabled=true;if(reason)setStatus(reason);}
  const hosted=location.origin==='https://admin.wdwave.kr';
@@ -11725,7 +11725,7 @@ verifyWDAdmin().catch(e=>{
    const c=res.items[0];if(!c||String(c.id)!==customerId||typeof c.name!=='string')throw Error('다른 고객의 결과가 돌아왔습니다.');
    detail.replaceChildren();appendField(detail,'고객',c.name);appendField(detail,'분류',c.ctype);appendField(detail,'연락처',c.phone);
    const note=document.createElement('p');note.style.cssText='font-size:12px;color:#667085;margin-top:10px';note.textContent='기존 고객DB 실제 조회 · 계약·상담·청구기록은 미조회(연결 범위 밖)';detail.append(note);
-  }catch(e){if(seq===requestVersion){detail.textContent=e.message||'상세 조회 실패';}}
+  }catch(e){if(seq===requestVersion){detail.textContent=e.message||'상세 조회 실패';detail.scrollIntoView({behavior:'smooth',block:'center'});}}
  }
  loadBtn.addEventListener('click',()=>load(false));moreBtn.addEventListener('click',()=>load(true));
  window.addEventListener('jian20:owner-ready',()=>{loadBtn.disabled=false;setStatus('대표 로그인 확인 · 실제 고객목록 읽기를 시작합니다.');load(false);},{once:true});
