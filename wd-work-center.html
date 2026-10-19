@@ -11375,8 +11375,8 @@ setInterval(function(){
     if(!initTokenClient()){setTimeout(silentConnect,700);return;}
     STATE.autoTried=true;setBusy(true);STATE.tokenClient.requestAccessToken({prompt:''});
   }
-  async function listTodayFile(folderId,kind){
-    var name=STATE.date+'_수진'+kind;
+  async function listTodayFile(folderId,kind,searchDate){
+    var name=(searchDate||STATE.date)+'_수진'+kind;
     var q="'"+folderId+"' in parents and name contains '"+name.replace(/'/g,"\\'")+"' and trashed = false";
     var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size)');
     var data=await (await api(url,{method:'GET'})).json(),files=data.files||[];
@@ -11400,7 +11400,20 @@ setInterval(function(){
     content.textContent=source.textContent||'표시할 업무지시가 없습니다.';if(date)date.textContent=STATE.date+' 업무지시';modal.className='wsj-instruction-modal show';document.body.style.overflow='hidden';
   };
   window.wsjCloseInstruction=function(){var modal=field('wsj-instruction-modal');if(modal)modal.className='wsj-instruction-modal';document.body.style.overflow=''};
-  async function loadInstruction(){STATE.instructionFile=await listTodayFile(INSTRUCTION_FOLDER_ID,'업무지시');renderInstruction(await readTextFile(STATE.instructionFile))}
+  async function loadInstruction(){
+    var viewDate=STATE.date;
+    STATE.instructionFile=await listTodayFile(INSTRUCTION_FOLDER_ID,'업무지시',viewDate);
+    var todayText=await readTextFile(STATE.instructionFile);
+    if(viewDate!==kstDate()){renderInstruction(todayText);return;}
+    var ymd=viewDate.split('-').map(Number);
+    var nextDate=new Date(Date.UTC(ymd[0],ymd[1]-1,ymd[2]+1)).toISOString().slice(0,10);
+    var tomorrowFile=await listTodayFile(INSTRUCTION_FOLDER_ID,'업무지시',nextDate);
+    var tomorrowText=await readTextFile(tomorrowFile);
+    if(!tomorrowText){renderInstruction(todayText);return;}
+    var combined=(todayText?'【오늘 업무지시 · '+viewDate+'】\n'+todayText+'\n\n':'')
+      +'【내일 업무지시 · '+nextDate+' (미리보기)】\n'+tomorrowText;
+    renderInstruction(combined);
+  }
   function sharedFileById(id){return STATE.sharedFiles.find(function(file){return String(file.id)===String(id)})||null}
   function fileIcon(file){var type=String((file&&file.mimeType)||'');if(type.indexOf('image/')===0)return '🖼️';if(type.indexOf('pdf')>=0)return '📕';if(type.indexOf('spreadsheet')>=0||type.indexOf('excel')>=0)return '📊';if(type.indexOf('document')>=0||type.indexOf('word')>=0)return '📄';if(type.indexOf('presentation')>=0||type.indexOf('powerpoint')>=0)return '📽️';return '📎'}
   function fileSize(value){var n=Number(value||0);if(!n)return '';if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(n<10485760?1:0)+' MB'}
