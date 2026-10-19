@@ -11245,7 +11245,7 @@ setInterval(function(){
   var STATE={token:'',expiresAt:0,tokenClient:null,date:'',instructionFile:null,journalFile:null,sharedFiles:[],history:[],loading:false,saving:false,refreshTimer:null,draftTimer:null,autoTried:false};
 
   function workRole(){
-    var uid=String((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||localStorage.getItem('wd_current_uid')||'').trim();
+    var uid=String(localStorage.getItem('wd_current_uid')||((typeof _CURRENT_UID!=='undefined'&&_CURRENT_UID)||'')).trim();
     if(uid==='kfcyk50')return {uid:uid,label:'대표',email:'kfcyk20@gmail.com'};
     if(uid==='kfcyk30')return {uid:uid,label:'수진',email:'woori08944@gmail.com'};
     return null;
@@ -11373,7 +11373,9 @@ setInterval(function(){
         if(isSujin())await loadAll();else if(typeof aaDriveRefresh==='function')await aaDriveRefresh(false);
         hideEntryGuard();setStatus('업무공유폴더 연결 확인 완료 · 업무센터를 시작합니다.','ok');
       }
-      catch(e){console.error('[work-center-drive entry check]',e);setStatus('Drive 연결을 다시 확인해주세요 · '+String(e.message||e).substring(0,70),'error');showEntryGuard('연결 확인에 실패했습니다. Google Drive 연결을 다시 확인해주세요.');}
+      catch(e){console.error('[work-center-drive entry check]',e);setStatus('Drive 연결을 다시 확인해주세요 · '+String(e.message||e).substring(0,70),'error');
+        if(String(e.message||'').includes('Google 계정으로 연결해야')){clearSession();showEntryGuard('현재 계정이 아닙니다. Google Drive 연결 버튼을 다시 눌러 올바른 Google 계정을 선택해주세요.');}
+        else showEntryGuard('연결 확인에 실패했습니다. Google Drive 연결을 다시 확인해주세요.');}
       finally{setBusy(false);setEntryGuardBusy(false)}return;
     }
     if(!initTokenClient()){setStatus('Google 로그인 기능을 불러오는 중입니다. 잠시 후 다시 눌러주세요.','warn');setTimeout(initTokenClient,700);return;}
@@ -11387,8 +11389,12 @@ setInterval(function(){
   async function listTodayFile(folderId,kind,searchDate){
     var name=(searchDate||STATE.date)+'_'+(kind==='업무일지'?assertWorkRole().label:'수진')+kind;
     var q="'"+folderId+"' in parents and name contains '"+name.replace(/'/g,"\\'")+"' and trashed = false";
-    var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size)');
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size,owners(emailAddress))');
     var data=await (await api(url,{method:'GET'})).json(),files=data.files||[];
+    if(kind==='업무일지'){
+      var expectedOwner=assertWorkRole().email;
+      files=files.filter(function(file){return (file.owners||[]).some(function(o){return String(o.emailAddress||'').trim().toLowerCase()===expectedOwner})});
+    }
     return files.find(function(file){return file.mimeType==='application/vnd.google-apps.document'})||files[0]||null;
   }
   async function readTextFile(file){
@@ -11499,9 +11505,10 @@ setInterval(function(){
     await verifyWorkAccount();
     var suffix='_'+assertWorkRole().label+'업무일지';
     var q="'"+JOURNAL_FOLDER_ID+"' in parents and name contains '"+suffix+"' and trashed = false";
-    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size)');
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size,owners(emailAddress))');
     var data=await (await api(url,{method:'GET'})).json(),byDate={};
     (data.files||[]).forEach(function(file){
+      if(!(file.owners||[]).some(function(o){return String(o.emailAddress||'').trim().toLowerCase()===assertWorkRole().email}))return;
       var match=String(file.name||'').match(new RegExp('^(\\d{4}-\\d{2}-\\d{2})'+suffix+'(?:\\.txt)?$'));if(!match)return;
       var date=match[1],current=byDate[date];
       if(!current||(current.mimeType!=='application/vnd.google-apps.document'&&file.mimeType==='application/vnd.google-apps.document'))byDate[date]=file;
@@ -11547,6 +11554,10 @@ setInterval(function(){
     return res.json();
   }
   async function updateJournal(file,text){
+    await verifyWorkAccount();
+    var detail=await (await api('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?fields='+encodeURIComponent('id,name,owners(emailAddress)'),{method:'GET'})).json();
+    if(![STATE.date+'_'+assertWorkRole().label+'업무일지',STATE.date+'_'+assertWorkRole().label+'업무일지.txt'].includes(String(detail.name||'')))throw new Error('업무일지 이름이 현재 역할과 일치하지 않습니다.');
+    if(!(detail.owners||[]).some(function(o){return String(o.emailAddress||'').trim().toLowerCase()===assertWorkRole().email}))throw new Error('다른 계정이 작성한 업무일지는 덮어쓸 수 없습니다.');
     if(file.mimeType==='application/vnd.google-apps.document'){
       var res=await api('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(file.id)+'?uploadType=media&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'PATCH',headers:{'Content-Type':'text/plain; charset=UTF-8'},body:text});
       return res.json();
