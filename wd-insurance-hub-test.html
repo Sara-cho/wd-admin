@@ -4,10 +4,19 @@
 <meta http-equiv="Content-Security-Policy" content="connect-src https://tiwgzmmizmkbvbyfgmyw.supabase.co https://zkgvcxyrrtdnsxukihdv.supabase.co; form-action 'none'; object-src 'none'">
 <script id="work-body-boundary">/* Non-operating review: verified personal-project GET only; shared data scope is not inferred. */
 (function(){'use strict';
+ let paintedIdentity=null;
  let epoch=0,record=null,readDepth=0,listEpoch=-1,message='로그인 필요 · 업무 데이터 미조회';
   const watched=new WeakSet(),verifying=new Map(),nativeFetch=window.fetch.bind(window);
  const origins=['https://tiwgzmmizmkbvbyfgmyw.supabase.co','https://zkgvcxyrrtdnsxukihdv.supabase.co'];
-  function ready(){return !!(record&&['WD23000','WD26002'].includes(record.uid)&&record.uid===window._UID&&record.epoch===epoch&&(record.uid!=='WD26002'||record.shared));}
+  function ready(){return !!(record&&['WD23000','WD26002','WD26003','WD26000'].includes(record.uid)&&record.uid===window._UID&&record.epoch===epoch&&(record.uid!=='WD26002'||record.shared));}
+ function canCustomer(){return ready()&&['WD23000','WD26002'].includes(record.uid);}
+ function roleKey(){return ({WD23000:'yj',WD26002:'hm',WD26003:'ge',WD26000:'yk'})[ready()?record.uid:'']||'yj';}
+ function canMenu(name){
+  if(!ready())return ['today','manage'].includes(name);
+  if(record.uid==='WD26003')return ['today','workroom','manage'].includes(name);
+  if(record.uid==='WD26000')return ['today','manage'].includes(name);
+  return true; // existing planner F1 menu guard remains in force
+ }
  function clear(reason){epoch++;record=null;listEpoch=-1;message=reason||'계정 확인 필요';window.WD_AUTH_CONTEXT=null;window.__WDH_LOGIN_UID=null;window._UID=null;
   try{_UID=null;_ROLE='';_wdh_vid=null;CURRENT_CUSTOMERS=[];_custUidLoaded=null;TODO_CACHE=[];DESIGN_REQ_CACHE=[];COMM_CACHE_BY_CUST_ID={};CONTRACT_CACHE_BY_CUST_ID={};CLAIMD_CACHE_BY_CUST_ID={};t11Contacts={};t11ContactsUid=null;}catch(_){}
   ['custListBody','t11GlobalResults','j59-today-rows','workDueList','wr-detail'].forEach(id=>{const e=document.getElementById(id);if(e)e.replaceChildren();});
@@ -51,6 +60,16 @@
   // 통합조회 모듈의 클로저 캐시도 무효화해 재로그인 시 최신 목록을 다시 읽는다.
   try{window.WDH_HUB?.reload();}catch(_){}
   try{HUB_SYSTEM_SAVED={};window.WDH_CARRIER?.reset();}catch(_){}
+  try{window.WDH_WORKROOM?.reset();}catch(_){}
+  try{window.WDJ_BATCH_PREP?.reset();}catch(_){}
+  try{window.dispatchEvent(new CustomEvent('wd:auth-reset'));}catch(_){}
+  try{if(typeof t12ClearDraft==='function')t12ClearDraft();t12State=null;t12LoadToken++;}catch(_){}
+  document.querySelectorAll('dialog, #jdRolePanel, #jdRoleJian, #jian-panel, #wdtalk-modal').forEach(e=>{
+    e.querySelectorAll('input,textarea,select').forEach(x=>{if(x.type==='checkbox'||x.type==='radio')x.checked=false;else x.value='';});
+    if(e.tagName==='DIALOG'&&e.open)e.close();
+  });
+
+  try{window.closeJian?.();window.jdRoleJianClose?.();}catch(_){}
 
   // 로그아웃·인증 변경 후에는 이전 계정의 읽기전용 건수도 화면에서 즉시 제거.
   const readCard=document.getElementById('jian-live-read-check');if(readCard)readCard.hidden=true;
@@ -83,7 +102,7 @@
    return {id:user.id,token:s.access_token};
   }
   async function verify(uid){const ticket=epoch;verifying.set(uid,(verifying.get(uid)||0)+1);try{
-   if(!['WD23000','WD26002'].includes(uid)||LEGACY_PROJECT_UIDS[uid]||USERS[uid]?.accountStatus!=='active')throw Error('실제 Auth 계정이 필요합니다.');
+   if(!['WD23000','WD26002','WD26003','WD26000'].includes(uid)||LEGACY_PROJECT_UIDS[uid]||USERS[uid]?.accountStatus!=='active')throw Error('실제 Auth 계정이 필요합니다.');
    const sb=getSbClientForUid(uid);
    let personal=await checked(sb,AUTH_USER_ID_BY_UID[uid],SUPABASE_CONFIG_BY_UID[uid]?.url),shared=null;
    if(uid==='WD26002'){
@@ -105,20 +124,37 @@
     'wd_partners_prospects','wd_partners_consultations','wd_partners_claim_records',
     'wd_partners_communications','wd_partners_design_requests',
     'wd_partners_todos','wd_partners_work_orders']);
-  const ok=ready()&&url.origin===SUPABASE_CONFIG_BY_UID[record.uid].url&&
-    method==='GET'&&(readable.has(table)||(table==='wd_partners_hub_system_accounts'&&record.uid==='WD26002'&&url.searchParams.getAll('select').length===1&&url.searchParams.get('select')==='uid,company_type,company_name,carrier_code'))&&
-    url.searchParams.getAll('uid').length===1&&url.searchParams.get('uid')==='eq.'+record.uid&&
-    (table!=='wd_partners_customers'||readDepth>0)&&
-    headers.get('authorization')==='Bearer '+record.token;
+  const isWork=table==='wd_partners_work_orders',isActor=table==='rpc/wd_wo_actor';
+  const primary=ready()&&headers.get('authorization')==='Bearer '+record.token&&url.origin===SUPABASE_CONFIG_BY_UID[record.uid].url;
+  const shared=ready()&&record.shared&&url.origin===SUPABASE_CONFIG_BY_UID.WD23000.url&&headers.get('authorization')==='Bearer '+record.shared.token;
+  const ownScope=url.searchParams.getAll('uid').length===1&&url.searchParams.get('uid')==='eq.'+record?.uid;
+  const workScope=url.searchParams.getAll('uid').length===1&&url.searchParams.get('uid')==='eq.WD23000';
+  const workAuth=ready()&&(record.uid==='WD26002'?shared:primary);
+  const workActorId=record?.uid==='WD26002'?record.shared?.id:record?.id;
+  const workAllowed=ready()&&['WD23000','WD26002','WD26003'].includes(record.uid)&&workAuth&&url.origin===SUPABASE_CONFIG_BY_UID.WD23000.url&&workScope&&
+    (record.uid==='WD23000'||(url.searchParams.getAll('assignee_auth_id').length===1&&url.searchParams.get('assignee_auth_id')==='eq.'+workActorId));
+  // GET-only retained. Only the verified STABLE, argument-free identity RPC is readable.
+  const actorAllowed=ready()&&(primary||shared)&&url.origin===SUPABASE_CONFIG_BY_UID.WD23000.url&&[...url.searchParams.keys()].length===0;
+  const personalAllowed=canCustomer()&&primary&&ownScope&&!isWork&&
+    (readable.has(table)||(table==='wd_partners_hub_system_accounts'&&record.uid==='WD26002'&&url.searchParams.getAll('select').length===1&&url.searchParams.get('select')==='uid,company_type,company_name,carrier_code'))&&
+    (table!=='wd_partners_customers'||readDepth>0);
+  const ok=ready()&&method==='GET'&&(isActor?actorAllowed:isWork?workAllowed:personalAllowed);
    if(!ok)throw Error('비운영 검수: 실인증·본인 uid 지정 읽기만 허용하며 저장/타계정 조회는 차단');
-   const ticket=epoch,personalToken=record.token,sharedToken=record.shared?.token,res=await nativeFetch(input,init);if(ticket!==epoch||!ready()||personalToken!==record.token||sharedToken!==record.shared?.token)throw Error('계정이 변경되어 이전 응답을 폐기했습니다.');return res;
+   const ticket=epoch,personalToken=record.token,sharedToken=record.shared?.token;
+   const assertResponse=()=>{if(ticket!==epoch||!ready()||personalToken!==record.token||sharedToken!==record.shared?.token)throw Error('계정이 변경되어 이전 응답을 폐기했습니다.');};
+   const res=await nativeFetch(input,init);assertResponse();
+   ['json','text'].forEach(kind=>{if(typeof res[kind]==='function'){const read=res[kind].bind(res);res[kind]=async()=>{const data=await read();assertResponse();return data;};}});
+   return res;
  };
  function paint(){const p=ready()?USERS[record.uid]:null;
-  const roleKey=ready()&&record.uid==='WD26002'?'hm':'yj';
-  if(window.jdApplyRole&&window.jdCur&&window.jdCur()!==roleKey)window.jdApplyRole(roleKey);const map={bodyAccountStatus:message,topUserName:p?p.name:'로그인 필요',topUserAvatar:p?p.name.charAt(0):'?',mgUidStatus:p?record.uid:'인증 미확인',mgConnStatus:message};Object.keys(map).forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=map[id];});
-  const role=document.querySelector('.user-chip .user-role');if(role)role.textContent=p?(p.role==='branch_manager'?'지점장':'설계사')+' · 기존 프로필':'인증 미확인';
+  const role=roleKey();
+  const identity=(ready()?record.uid:'signed-out')+':'+epoch;
+  if(window.jdApplyRole&&window.jdCur&&(paintedIdentity!==identity||window.jdCur()!==role)){paintedIdentity=identity;window.jdApplyRole(role);}const map={bodyAccountStatus:message,topUserName:p?p.name:'로그인 필요',topUserAvatar:p?p.name.charAt(0):'?',mgUidStatus:p?record.uid:'인증 미확인',mgConnStatus:message};Object.keys(map).forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=map[id];});
+  document.querySelectorAll('[data-body-action="customer"]').forEach(e=>{e.hidden=!canCustomer();});
+  const hq=document.querySelector('#body-account-flow a');if(hq)hq.hidden=!ready()||record.uid!=='WD23000';
+  const roleEl=document.querySelector('.user-chip .user-role');if(roleEl)roleEl.textContent=p?({branch_manager:'지점장',planner:'설계사',staff:'총무',observer:'참관'})[p.role]+' · 기존 프로필':'인증 미확인';
  }
-  window.WORK_BODY={ready,clear,attach,verify,paint,uid:()=>ready()?record.uid:'',stamp:()=>epoch,valid:t=>ready()&&epoch===t,canCustomer:()=>ready(),loaded:()=>ready()&&listEpoch===epoch,markLoaded:()=>{listEpoch=epoch;},read:async fn=>{readDepth++;try{return await fn();}finally{readDepth--; }},status:t=>{message=t;paint();}};
+  window.WORK_BODY={ready,clear,attach,verify,paint,uid:()=>ready()?record.uid:'',stamp:()=>epoch,valid:t=>ready()&&epoch===t,canCustomer,canMenu,roleKey,loaded:()=>ready()&&listEpoch===epoch,markLoaded:()=>{listEpoch=epoch;},read:async fn=>{readDepth++;try{return await fn();}finally{readDepth--; }},status:t=>{message=t;paint();}};
 })();
 </script>
 <meta charset="UTF-8">
@@ -8838,12 +8874,15 @@ var SUPABASE_CONFIG_BY_UID={
   }
 };
 
+// Existing SARA Auth, separate uid-keyed sessions; no staff customer capability.
+SUPABASE_CONFIG_BY_UID.WD26003=Object.assign({},SUPABASE_CONFIG_BY_UID.WD23000);
+SUPABASE_CONFIG_BY_UID.WD26000=Object.assign({},SUPABASE_CONFIG_BY_UID.WD23000);
 /* ── 3. 데이터엔진 함수 27개 ── */
 
 /* getSbClientForUid  (원본 line 18177~18194) */
 function getSbClientForUid(uid){
   uid=String(uid||'').trim().toUpperCase();
-  if(!['WD23000','WD26002'].includes(uid))return null; // 데이터 읽기는 실인증 후 본인 프로젝트만 허용
+  if(!['WD23000','WD26002','WD26003','WD26000'].includes(uid))return null; // 데이터 읽기는 실인증 후 본인 프로젝트만 허용
   if(_sbClientByUid[uid])return _sbClientByUid[uid];
   if(!window.supabase||!window.supabase.createClient)return null;
   var cfg=SUPABASE_CONFIG_BY_UID[uid];
@@ -9432,7 +9471,7 @@ async function saveContracts(d){
       return null;
     }
     /* 명시적 로그인(3인 로그인 카드) 직후 — 레거시(WD26001) 포함 */
-    if (['WD23000','WD26002'].includes(window.__WDH_LOGIN_UID)) {
+    if (['WD23000','WD26002','WD26003','WD26000'].includes(window.__WDH_LOGIN_UID)) {
       window._UID = window.__WDH_LOGIN_UID;
       if (typeof _UID !== 'undefined') _UID = window.__WDH_LOGIN_UID;
       return window.__WDH_LOGIN_UID;
@@ -11946,10 +11985,16 @@ var USERS={
   'WD26001':{name:'김지영',role:'planner',accountRole:'external_planner',accountStatus:'active',authMode:'legacy_project'},
   'WD26002':{name:'형민',role:'planner',accountRole:'external_planner',accountStatus:'active',authMode:'supabase_auth'}
 };
+USERS.WD26003={name:'고은희',role:'staff',accountRole:'staff',accountStatus:'active',authMode:'supabase_auth'};
+USERS.WD26000={name:'육근성',role:'observer',accountRole:'observer',accountStatus:'active',authMode:'supabase_auth'};
 var REPRESENTATIVE_UID='WD23000';
 var AUTH_EMAIL_BY_UID={WD23000:'saraunni.tv@gmail.com',WD26002:'shshml@naver.com'};
 var AUTH_USER_ID_BY_UID={WD23000:'8515240b-19db-4aec-9a7b-e50c6c070a1d',WD26002:'45e2af18-417f-4759-84dd-451a2c68c54d'};
 var MANAGER_SHARED_AUTH_USER_ID_BY_UID={WD26002:'23717b8f-e6d2-4333-b3dc-89078b8ea9ea'};
+AUTH_USER_ID_BY_UID.WD26003='cec2291e-38de-411e-9ffc-b3a9dd681a26';
+AUTH_USER_ID_BY_UID.WD26000='297a4365-eb28-4a35-a768-a3b3ff3d5165';
+AUTH_EMAIL_BY_UID.WD26003='merong725@gmail.com';
+AUTH_EMAIL_BY_UID.WD26000='yyks1969@gmail.com';
 var LEGACY_PROJECT_UIDS={WD26001:true};
 var WD_HQ_EMBEDDED_OWNER_MODE=!!window.__WD_HQ_EMBEDDED_OWNER__;
 var _mgrSharedSbClient=null;
@@ -11960,7 +12005,7 @@ var LS_REMEMBER_ID='WD_PARTNERS_REMEMBER_ID';
 function getManagerSbClient(uid){
   uid=String(uid||_UID||'').trim().toUpperCase();
   // 대표는 현재 인증된 자기 프로젝트 세션으로 읽기/수정
-  if(uid==='WD23000')return getSbClientForUid(uid);
+  if(['WD23000','WD26003','WD26000'].includes(uid))return getSbClientForUid(uid);
   if(uid!=='WD26002')return null;
 
   // 외부 설계사는 대표 프로젝트의 공용 원본을 별도 Auth 세션으로 읽는다.
@@ -12034,7 +12079,7 @@ async function sha256HexLegacy(str){
 }
 
 async function clearOtherUidSessions(currentUid){
-  if(currentUid!=='WD26002'&&_mgrSharedSbClient){try{await _mgrSharedSbClient.auth.signOut({scope:'local'});}catch(e){}}
+  if(currentUid!=='WD26002'&&_mgrSharedSbClient){var out=await _mgrSharedSbClient.auth.signOut({scope:'local'});if(out?.error)throw out.error;}
   var uids=Object.keys(SUPABASE_CONFIG_BY_UID);
   for(var i=0;i<uids.length;i++){
     var otherUid=uids[i];
@@ -12044,9 +12089,9 @@ async function clearOtherUidSessions(currentUid){
       if(!otherClient)continue;
       var s=await otherClient.auth.getSession();
       if(s&&s.data&&s.data.session){
-        await otherClient.auth.signOut({scope:'local'});
+        var out=await otherClient.auth.signOut({scope:'local'});if(out?.error)throw out.error;
       }
-    }catch(e){ /* 세션 정리 실패는 현재 로그인 자체를 막지 않는다 */ }
+    }catch(e){WORK_BODY.clear('이전 세션 정리 실패 · 다시 인증하세요.');throw e;}
   }
 }
 
@@ -12066,7 +12111,7 @@ function wdhAuthShow(on){
   if(w)w.classList.toggle('on',!!on);
 }
 function wdhAuthSetContext(uid,userId,verified,mode){
-  if(!['WD23000','WD26002'].includes(uid)||!verified||!WORK_BODY.ready()||WORK_BODY.uid()!==uid||!authUserMatchesUid({id:userId},uid)||USERS[uid]?.accountStatus!=='active'){WORK_BODY.clear('실제 인증 미확인');return false;}
+  if(!['WD23000','WD26002','WD26003','WD26000'].includes(uid)||!verified||!WORK_BODY.ready()||WORK_BODY.uid()!==uid||!authUserMatchesUid({id:userId},uid)||USERS[uid]?.accountStatus!=='active'){WORK_BODY.clear('실제 인증 미확인');return false;}
   var acct=USERS[uid]||{};
   var role=acct.role||'planner';
   _ROLE=role;
@@ -12076,7 +12121,7 @@ function wdhAuthSetContext(uid,userId,verified,mode){
   if(nm)nm.textContent=acct.name||uid;
   if(av)av.textContent=(acct.name||uid).charAt(0);
   var rl=document.querySelector('.user-chip .user-role');
-  if(rl)rl.textContent=(role==='branch_manager'?'지점장':'설계사')+' · '+uid;
+  if(rl)rl.textContent=({branch_manager:'지점장',planner:'설계사',staff:'총무',observer:'참관'})[role]+' · '+uid;
   return true;
 }
 /* 운영 initLoginScreen 세션 복원 규칙 (wdhRestoreSession에서 호출) */
@@ -12095,7 +12140,7 @@ async function wdhAuthRestore(){
       return REPRESENTATIVE_UID;
     }catch(e){console.error('[hq owner auth restore]',e&&e.message);return null;}
   }
-  var uids=['WD23000','WD26002'],found=null,multiple=false;
+  var uids=['WD23000','WD26002','WD26003','WD26000'],found=null,multiple=false;
   for(var i=0;i<uids.length;i++){
     var uid=uids[i];
     if(LEGACY_PROJECT_UIDS[uid])continue;
@@ -12120,7 +12165,7 @@ async function wdhAuthLogin(){
   if((btn&&btn.disabled)||_wdhAuthPending)return;
   var uid=WD_HQ_EMBEDDED_OWNER_MODE?REPRESENTATIVE_UID:String((document.getElementById('ml-uid')||{}).value||'').trim().toUpperCase();
   var pwEl=document.getElementById('ml-pw');var pw=(pwEl||{}).value||'';
-  if(!['WD23000','WD26002'].includes(uid)||!USERS[uid]||USERS[uid].accountStatus!=='active'||LEGACY_PROJECT_UIDS[uid]){WORK_BODY.clear('허용된 계정이 아닙니다.');wdhAuthMsg('등록된 활성 계정만 로그인할 수 있습니다.','bad');return;}
+  if(!['WD23000','WD26002','WD26003','WD26000'].includes(uid)||!USERS[uid]||USERS[uid].accountStatus!=='active'||LEGACY_PROJECT_UIDS[uid]){WORK_BODY.clear('허용된 계정이 아닙니다.');wdhAuthMsg('등록된 활성 계정만 로그인할 수 있습니다.','bad');return;}
   if(!pw){wdhAuthMsg('비밀번호를 입력해주세요.','bad');return;}
   if(typeof getSbClientForUid!=='function'){wdhAuthMsg('데이터엔진이 로드되지 않았습니다.','bad');return;}
   if(btn){btn.disabled=true;btn.textContent='확인 중...';}
@@ -13179,7 +13224,7 @@ async function saveConversion(d,fam,editId){
  }catch(e){wdhcu_msg(e.message,'bad');return {ok:false,prospectReason:e.message};}
 }
 async function route(raw){const t=String(raw||'');if(!/가망|제공\s*DB|재통화|한 번도 연락|상담으로 넘어/.test(t))return null;try{await load();}catch(e){return {answer:e.message};}if(!ready||owner!==uid())return {answer:'가망고객 실제 명단을 조회하지 못했습니다. 독립 저장소 연결이 필요합니다. 고객 명단으로 대신 답하지 않았습니다.'};let f=/오늘.*연락/.test(t)?'today':/한 번도|미접촉/.test(t)?'new':/재통화|재접촉/.test(t)?'recall':/상담.*(?:넘어|전환)/.test(t)?'consult':/이번달|이번 달/.test(t)?'focus':'all';let source=/제공\s*DB/.test(t)?'제공DB':'';if(/메가/.test(t)){const matches=[...new Set(rows.flatMap(r=>[r.source,r.source_detail]).filter(Boolean))].filter(s=>/메가/.test(s)&&(!/대전/.test(t)||/대전/.test(s)));if(matches.length===1)source=matches[0];else return {answer:'해당 출처를 하나로 확인할 수 없습니다. 가망고객 화면에서 출처를 선택해 주세요.'};}const list=filtered(f,source,'');return {answer:(source||'현재 계정 가망고객')+' · '+list.length+'명',sections:[['조회결과',list.map(r=>{const d=r.data||{},c=(d.contacts||[]).slice(-1)[0];return r.name+' · '+sourceLabel(r.source)+' / '+(sourceLabel(r.source_detail)||'상세출처 미기록')+' · '+r.status+' · 최근 '+(c?c.date+' '+c.result:'미접촉')+' · 다음 '+(d.nextDate||'미기록')+' '+(d.nextAction||'')+' · 이번달 집중 '+((d.focusMonths||[]).includes(month())?'예':'아니오');}).join('\n')||'현재 조건에 해당하는 기록 없음']],source:'독립 가망고객 저장소 전체 재조회 / 자동 고객전환 없음'};}
-window.T12_PROSPECTS={load,route,criteria,saveConversion,cancelConversion,isConverting:()=>!!pending};el('pl-sourceText').innerHTML=['제공DB','지인','소개','직접발굴','기타'].map(s=>'<option>'+s+'</option>').join('');el('pl-status').innerHTML=states.map(s=>'<option>'+s+'</option>').join('');el('pl-add').onclick=()=>open(null);el('pl-refresh').onclick=()=>load().catch(e=>message(e.message));el('pl-list').onclick=e=>{const b=e.target.closest('[data-id]');if(b)open(b.dataset.id);};['pl-filter','pl-source','pl-search'].forEach(id=>el(id).addEventListener('input',render));el('pl-form').onsubmit=save;el('pl-close').onclick=()=>{if(!busy)el('pl-dialog').close();};el('pl-dialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});el('pl-convert').onclick=convert;el('j59-pl-cancel').onclick=()=>el('pl-close').click();el('j59-pl-new').onclick=()=>{if(!busy&&window.confirm('입력 중인 변경을 저장하지 않고 신규 등록을 열까요?'))open(null);};
+window.T12_PROSPECTS={load,route,criteria,saveConversion,cancelConversion,isConverting:()=>!!pending,batchList:()=>ready&&owner===uid()?rows.map(r=>({id:r.id,name:r.name,status:r.status,customer_id:r.customer_id||null})):[]};el('pl-sourceText').innerHTML=['제공DB','지인','소개','직접발굴','기타'].map(s=>'<option>'+s+'</option>').join('');el('pl-status').innerHTML=states.map(s=>'<option>'+s+'</option>').join('');el('pl-add').onclick=()=>open(null);el('pl-refresh').onclick=()=>load().catch(e=>message(e.message));el('pl-list').onclick=e=>{const b=e.target.closest('[data-id]');if(b)open(b.dataset.id);};['pl-filter','pl-source','pl-search'].forEach(id=>el(id).addEventListener('input',render));el('pl-form').onsubmit=save;el('pl-close').onclick=()=>{if(!busy)el('pl-dialog').close();};el('pl-dialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});el('pl-convert').onclick=convert;el('j59-pl-cancel').onclick=()=>el('pl-close').click();el('j59-pl-new').onclick=()=>{if(!busy&&window.confirm('입력 중인 변경을 저장하지 않고 신규 등록을 열까요?'))open(null);};
 })();
 </script><script id="jian20-reactions">
 (function(){'use strict';
@@ -17476,19 +17521,29 @@ var STS=['요청','배정','처리중','보완요청','완료','반려'];
 var CONNECTED_STS=['배정','처리중','보완요청','완료'];   // 담당자 연결(auth) 필요
 var MAX_THREAD=10;
 var ROSTER=[
-  {name:'최윤경 지점장',role:'대표',auth:REP_AUTH,mapped:true},
-  {name:'고은희 총무',role:'총무',auth:null,mapped:false},
-  {name:'형민',role:'설계사',auth:null,mapped:false},
-  {name:'육근성 대표',role:'외부',auth:null,mapped:false},
-  {name:'박수진',role:'AI대리',auth:null,mapped:false,ai:true}
+ {uid:'WD23000',name:'최윤경 지점장',role:'대표',auth:REP_AUTH,mapped:true},
+ {uid:'WD26003',name:'고은희 총무',role:'총무',auth:'cec2291e-38de-411e-9ffc-b3a9dd681a26',mapped:true},
+ {uid:'WD26002',name:'형민',role:'설계사',auth:'23717b8f-e6d2-4333-b3dc-89078b8ea9ea',mapped:true},
+ {uid:'WD26000',name:'육근성 대표',role:'참관',auth:null,mapped:false},
+ {uid:null,name:'박수진',role:'AI대리',auth:null,mapped:false,ai:true}
 ];
+var workEpoch=0;
+function ticket(){return {epoch:workEpoch,auth:WORK_BODY.stamp(),uid:U()};}
+function current(t){return t.epoch===workEpoch&&WORK_BODY.valid(t.auth)&&t.uid===U();}
+function check(t){if(!current(t))throw Error('계정 변경 · 이전 업무 응답 폐기');}
+function targetAssignment(name){
+ var x=ROSTER.find(function(v){return v.name===name;});
+ if(!x||!x.mapped||!x.uid||!x.auth||x.ai||x.role==='참관')throw Error('배정 가능한 실제 담당자 연결을 확인하세요.');
+ return {uid:x.uid,auth:x.auth,name:x.name,role:x.role};
+}
+
 var S={rows:null,noTable:false,err:'',notice:'',loading:false,filter:'전체',open:'',form:false,
        saving:false,actor:null,actorErr:'',uidSeen:null,projSeen:null,busy:false};
 
 function g(id){return document.getElementById(id);}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c==='"'?'&quot;':'&#39;';});}
 function U(){try{if(window.WDH_DATA&&WDH_DATA.currentUid){var v=WDH_DATA.currentUid();if(v)return String(v);}}catch(e){}return String(window._UID||'');}
-function SB(){try{return getSbClient();}catch(e){return null;}}
+function SB(){try{return getManagerSbClient(U());}catch(e){return null;}}
 function sbUrl(){try{var sb=SB();if(!sb)return '';return String(sb.supabaseUrl||(sb.rest&&sb.rest.url)||(sb.auth&&sb.auth.url)||'');}catch(e){return '';}}
 function isRepProject(){var u=sbUrl();return !!u&&u.indexOf(REP_PROJECT)>=0;}
 function fmtD(ts){if(!ts)return '';var d=new Date(ts);if(isNaN(d))return String(ts);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
@@ -17500,7 +17555,7 @@ function myRole(){if(!S.actor)return '';if(isOwner())return '대표';return S.ac
 function myName(){return S.actor?(S.actor.name||S.actor.uid||''):'';}
 function isAssignee(r){return !!auth()&&!!r.assignee_auth_id&&r.assignee_auth_id===auth();}
 function isRequester(r){return !!auth()&&!!r.requester_auth_id&&r.requester_auth_id===auth();}
-function canEdit(r){return isOwner()||isRequester(r)||isAssignee(r);}
+function canEdit(r){return S.actor?.uid==='WD26002'?(r.uid===BRANCH&&isAssignee(r)&&!isRequester(r)):(isOwner()||isRequester(r)||isAssignee(r));}
 function allowedSts(r){
   if(isOwner()){
     if(r.assignee_auth_id)return STS.slice();
@@ -17584,7 +17639,7 @@ function detailBox(rows){
     +'<div class="wr-th"><h4>진행 이력</h4>'+(ev||'<div class="wr-ev">기록 없음</div>')+'</div>';
   if(ce){
     h+='<div class="wr-reply">'
-      +(as.length>1?'<select id="wr-rs">'+as.map(function(s){return '<option'+(s===r.status?' selected':'')+'>'+esc(s)+'</option>';}).join('')+'</select>':'<span class="wr-note">상태 변경 권한 없음</span>')
+      +(as.length>1?'<select id="wr-rs">'+(S.actor?.uid==='WD26002'&&!as.includes(r.status)?'<option value="'+esc(r.status)+'" selected>현재 상태 유지 ('+esc(r.status)+')</option>':'')+as.map(function(s){return '<option'+(s===r.status?' selected':'')+'>'+esc(s)+'</option>';}).join('')+'</select>':'<span class="wr-note">상태 변경 권한 없음</span>')
       +'<textarea id="wr-rp" placeholder="답장·처리내용을 적어주세요"></textarea>'
       +'<button class="wr-btn pri" type="button" id="wr-rep" onclick="WDH_WORKROOM.reply()">기록 남기기</button>'
       +(isOwner()&&!r.approved_by_name?'<button class="wr-btn" type="button" id="wr-app" onclick="WDH_WORKROOM.approve()">대표 승인 표시</button>':'')
@@ -17624,28 +17679,25 @@ function isConflict(e){var m=String((e&&(e.message||e.code||e.details))||'');ret
 
 /* ── 인증된 실제 사용자 확인 (이름 비교 금지) ── */
 async function resolveActor(){
-  var sb=SB();
-  S.actor=null;S.actorErr='';
-  if(!U()){S.actorErr='로그인 필요';return;}
-  if(!sb||!isRepProject()){S.actorErr='대표 프로젝트 세션 아님';return;}
-  var sid=null;
-  try{var s=await sb.auth.getSession();var u=s&&s.data&&s.data.session&&s.data.session.user;sid=u?u.id:null;}catch(e){}
-  if(!sid){S.actorErr='세션 없음';return;}
-  try{
-    var r=await sb.rpc('wd_wo_actor');
-    if(!r.error){
-      var a=r.data;if(Array.isArray(a))a=a[0];
-      if(a&&(a.uid||a.actor_uid)){
-        S.actor={uid:a.uid||a.actor_uid,name:a.name||a.actor_name||'',role:a.role||a.actor_role||'',auth:a.auth_id||a.actor_auth_id||sid};
-        return;
-      }
-    }
-  }catch(e){}
-  if(sid===REP_AUTH){S.actor={uid:BRANCH,name:'최윤경 지점장',role:'대표',auth:sid};return;}
-  S.actor=null;S.actorErr='업무함 사용 권한 매핑 미확인';
+ var t=ticket(),sb=SB();S.actor=null;S.actorErr='';
+ if(!U()||!sb||!isRepProject()){S.actorErr='공용 업무 인증 확인 필요';return;}
+ try{
+  var u=await sb.auth.getUser();check(t);
+  var sr=await sb.auth.getSession();check(t);
+  var ses=sr.data&&sr.data.session,expected=U()==='WD26002'?MANAGER_SHARED_AUTH_USER_ID_BY_UID[U()]:AUTH_USER_ID_BY_UID[U()];
+  if(u.error||sr.error||!ses||!u.data?.user||u.data.user.is_anonymous||u.data.user.id!==expected||ses.user?.id!==expected)throw Error('업무 인증 주체 불일치');
+  var r=await sb.rpc('wd_wo_actor',{}, {get:true});check(t);
+  var after=await sb.auth.getSession();check(t);
+  if(after.error||after.data?.session?.access_token!==ses.access_token||after.data?.session?.user?.id!==expected)throw Error('업무 인증 세션 변경');
+  var a=Array.isArray(r.data)?r.data[0]:r.data;
+  var roles={WD23000:'대표',WD26002:'설계사',WD26003:'총무',WD26000:'참관'};
+  if(r.error||!a||a.uid!==U()||a.branch!==BRANCH||a.role!==roles[U()]||!roles[U()])throw Error('서버 업무함 매핑 미확인');
+  S.actor={uid:a.uid,name:a.name,role:a.role,auth:expected,can_request:a.can_request===true};
+ }catch(e){if(current(t)){S.actor=null;S.actorErr=e.message;}}
 }
 /* ── 캐시 초기화 (계정/프로젝트 전환 시 이전 사용자 업무 노출 방지) ── */
 function resetCache(reason){
+  workEpoch++;S.busy=false;S.loading=false;S.saving=false;
   S.rows=null;S.open='';S.form=false;S.noTable=false;S.err='';
   S.notice=reason||'계정 또는 프로젝트가 바뀌어 업무함을 초기화했습니다.';
   S.filter='전체';S.actor=null;S.actorErr='';
@@ -17654,6 +17706,7 @@ function resetCache(reason){
   render();
 }
 async function load(force){
+  var t=ticket();
   var sb=SB();
   if(!U()){S.rows=[];S.err='';render();return;}
   if(!sb){S.rows=[];S.err='데이터 연결을 확인해 주세요.';render();return;}
@@ -17661,14 +17714,18 @@ async function load(force){
   if(!force&&S.rows&&!S.noTable)return;
   S.busy=true;S.loading=true;S.err='';render();
   try{
-    if(!S.actor)await resolveActor();
-    var res=await sb.from(TBL).select('*').eq('uid',BRANCH).order('updated_at',{ascending:false}).limit(500);
+    if(!S.actor)await resolveActor();check(t);
+    if(!S.actor||!['대표','설계사','총무'].includes(S.actor.role))throw Error(S.actorErr||'원본 업무 조회 권한 없음');
+    var query=sb.from(TBL).select('*').eq('uid',BRANCH);
+    if(['총무','설계사'].includes(S.actor.role))query=query.eq('assignee_auth_id',S.actor.auth);
+    var res=await query.order('updated_at',{ascending:false}).limit(500);check(t);
     if(res.error)throw res.error;
     S.rows=res.data||[];S.noTable=false;
   }catch(e){
+    if(!current(t))return;
     if(isMissing(e)){S.rows=[];S.noTable=true;}
     else {S.rows=[];S.err='조회 실패: '+(e&&e.message?e.message:'알 수 없는 오류');}
-  }finally{S.loading=false;S.busy=false;render();}
+  }finally{if(current(t)){S.loading=false;S.busy=false;render();}}
 }
 /* ── 서버 반환행만 화면 상태로 사용 ── */
 function applyRow(row){
@@ -17679,54 +17736,59 @@ function applyRow(row){
   if(!hit)S.rows.unshift(row);
 }
 async function fetchRow(id){
+  var t=ticket();
   var sb=SB();
-  var r=await sb.from(TBL).select('*').eq('uid',BRANCH).eq('id',id).single();
+  var q=sb.from(TBL).select('*').eq('uid',BRANCH).eq('id',id);if(['총무','설계사'].includes(S.actor?.role))q=q.eq('assignee_auth_id',S.actor.auth);var r=await q.single();check(t);
   if(r.error)throw r.error;
   return r.data;
 }
 async function submit(){
+  var opTicket=ticket();
   if(S.saving)return;
   if(!S.actor){alert('인증 연결이 확인되지 않아 저장할 수 없습니다. 로그인 상태를 확인해 주세요.');return;}
-  var t=g('wr-t'),b=g('wr-b'),a=g('wr-a'),k=g('wr-k'),d=g('wr-d'),cid=g('wr-c'),ai=g('wr-ai'),ain=g('wr-ain');
-  var title=(t&&t.value||'').trim();
-  if(!title){alert('업무 제목을 입력해 주세요.');if(t)t.focus();return;}
+  var titleEl=g('wr-t'),b=g('wr-b'),a=g('wr-a'),k=g('wr-k'),d=g('wr-d'),cid=g('wr-c'),ai=g('wr-ai'),ain=g('wr-ain');
+  var title=(titleEl&&titleEl.value||'').trim();
+  if(!title){alert('업무 제목을 입력해 주세요.');if(titleEl)titleEl.focus();return;}
   if(title.length>500){alert('제목은 500자 이내로 입력해 주세요.');return;}
   var body=(b&&b.value||'');
   if(body.length>30000){alert('내용은 30,000자 이내로 입력해 주세요.');return;}
-  var asg=null;ROSTER.forEach(function(x){if(x.name===(a&&a.value))asg=x;});
+  if(!S.actor.can_request||!isOwner()){alert('현재 계정은 업무 배정 요청을 만들 수 없습니다.');return;}
+  var asg=null;try{if(a&&a.value)asg=targetAssignment(a.value);}catch(e){alert(e.message);return;}
   var aiOn=!!(ai&&ai.checked);
   var row={
     id:newId(),uid:BRANCH,
     requester_uid:S.actor.uid,requester_auth_id:auth(),
     requester_name:myName(),requester_role:myRole(),
-    assignee_uid:(asg&&asg.mapped)?S.actor.uid:null,
-    assignee_auth_id:(asg&&asg.mapped)?asg.auth:null,
+    assignee_uid:asg?asg.uid:null,
+    assignee_auth_id:asg?asg.auth:null,
     assignee_name:asg?asg.name:null,assignee_role:asg?asg.role:null,
     owner_auth_id:REP_AUTH,
     title:title,body:body,kind:(k&&k.value)||'기타',status:'요청',priority:'보통',
     customer_id:(cid&&cid.value||'').trim()||null,due_date:(d&&d.value)||null,
     ai_drafted:aiOn,ai_note:(ain&&ain.value||'').trim()||null,
-    thread:[{kind:'request',text:'요청 등록'+(asg?(' · 희망 담당 '+asg.name+(asg.mapped?'':' (연결대기)')):'')+(aiOn?' · 지안 AI 정리 포함':'')}]
+    thread:[{kind:'request',text:'요청 등록'+(asg?(' · 희망 담당 '+asg.name+''):'')+(aiOn?' · 지안 AI 정리 포함':'')}]
   };
   S.saving=true;S.notice='';S.err='';
   var btn=g('wr-send');if(btn){btn.disabled=true;btn.textContent='저장 중…';}
   try{
     var sb=SB();
     var res=await sb.from(TBL).insert(row).select('*').single();
-    if(res.error)throw res.error;
+    check(opTicket);if(res.error)throw res.error;
     if(!res.data)throw new Error('서버가 저장 행을 반환하지 않았습니다.');
     var srv=res.data;
     S.form=false;S.filter='전체';S.open=srv.id;
-    await load(true);
+    await load(true);check(opTicket);
     if(S.err||S.noTable){S.notice='';}
     else{
       S.notice=(srv.assignee_auth_id?'요청을 저장했습니다. 담당자에게 전달되었습니다.':'요청 저장 · 담당자 연결대기 ('+esc0(srv.assignee_name||'미지정')+') — 담당자 인증 연결이 확인되면 배정으로 바뀝니다.');
       S.notice=esc0(S.notice);
     }
   }catch(e){
+    if(!current(opTicket))return;
     if(isMissing(e)){S.noTable=true;S.form=false;}
     else S.err='요청 저장 실패: '+(e&&e.message?e.message:'알 수 없는 오류')+' — 저장된 것으로 표시하지 않습니다.';
   }finally{
+    if(!current(opTicket))return;
     S.saving=false;
     if(btn){btn.disabled=false;btn.textContent='요청 저장';}
     render();
@@ -17734,40 +17796,51 @@ async function submit(){
 }
 function esc0(v){return String(v==null?'':v);}
 async function reply(){
+  var t=ticket();
   var r=null;(S.rows||[]).forEach(function(x){if(x.id===S.open)r=x;});
   if(!r||S.saving)return;
   if(!S.actor){alert('인증 연결이 확인되지 않아 저장할 수 없습니다.');return;}
+  if(!canEdit(r)){alert('본인에게 배정된 업무만 처리할 수 있습니다.');return;}
   var rp=g('wr-rp'),rs=g('wr-rs');
   var text=(rp&&rp.value||'').trim();
   var ns=(rs&&rs.value)||r.status;
+  if(ns!==r.status&&!allowedSts(r).includes(ns)){alert('허용되지 않은 상태 변경입니다.');return;}
   if(text.length>10000){alert('답장은 10,000자 이내로 입력해 주세요.');return;}
   if(!text&&ns===r.status){alert('답장 내용을 입력하거나 상태를 바꿔주세요.');return;}
   S.saving=true;S.err='';S.notice='';
   var btn=g('wr-rep');if(btn){btn.disabled=true;btn.textContent='저장 중…';}
   try{
     var sb=SB();
-    var cur=await fetchRow(r.id);                       // ① 서버 최신행으로 thread·version 확보
+    var cur=await fetchRow(r.id);check(t);                       // ① 서버 최신행으로 thread·version 확보
+    if(!canEdit(cur)||cur.uid!==BRANCH||cur.id!==r.id)throw Error('업무 담당 권한이 변경되었습니다.');
+    if(cur.version!==r.version)throw Error('CONFLICT');
+    if(ns!==cur.status&&!allowedSts(cur).includes(ns))throw Error('허용되지 않은 상태 변경입니다.');
     var th=(cur.thread||[]).slice();
     if(th.length>=MAX_THREAD)throw new Error('이 업무의 이력이 최대치('+MAX_THREAD+'개)에 도달했습니다.');
     th.push({kind:(ns!==cur.status?'status':'reply'),text:(ns!==cur.status?('상태 '+cur.status+' → '+ns+(text?' · '+text:'')):text)});
-    var upd=await sb.from(TBL).update({status:ns,thread:th})
-      .eq('uid',BRANCH).eq('id',r.id).eq('version',cur.version)   // ② 동시변경 보호
-      .select('*').single();
-    if(upd.error||!upd.data)throw upd.error||new Error('CONFLICT');
+    var writeQuery=sb.from(TBL).update({status:ns,thread:th})
+      .eq('uid',BRANCH).eq('id',r.id).eq('version',cur.version);   // ② 동시변경 보호
+    if(S.actor.uid==='WD26002')writeQuery=writeQuery.eq('assignee_auth_id',auth());
+    var upd=await writeQuery.select('*').single();
+    check(t);if(upd.error||!upd.data)throw upd.error||new Error('CONFLICT');
     applyRow(upd.data);                                 // ③ 서버 반환행 사용
     S.notice='기록을 저장했습니다.';
   }catch(e){
+    if(!current(t))return;
     var msg=(e&&e.message)||'';
     var notice=(isConflict(e)||/CONFLICT/.test(msg))?'다른 곳에서 먼저 변경되어 저장하지 않았습니다. 최신 내용으로 다시 불러왔습니다.':'기록 저장 실패: '+(msg||'알 수 없는 오류');
     try{await load(true);}catch(_){}
+    if(!current(t))return;
     S.err=notice;
   }finally{
+    if(!current(t))return;
     S.saving=false;
     if(btn){btn.disabled=false;btn.textContent='기록 남기기';}
     render();
   }
 }
 async function approve(){
+  var t=ticket();
   var r=null;(S.rows||[]).forEach(function(x){if(x.id===S.open)r=x;});
   if(!r||S.saving)return;
   if(!isOwner()){alert('대표만 승인 표시할 수 있습니다.');return;}
@@ -17775,22 +17848,25 @@ async function approve(){
   var btn=g('wr-app');if(btn){btn.disabled=true;btn.textContent='저장 중…';}
   try{
     var sb=SB();
-    var cur=await fetchRow(r.id);
+    var cur=await fetchRow(r.id);check(t);
     var th=(cur.thread||[]).slice();
     if(th.length>=MAX_THREAD)throw new Error('이 업무의 이력이 최대치에 도달했습니다.');
     th.push({kind:'approve',text:'대표 승인 확인'});
     var upd=await sb.from(TBL).update({approved_at:new Date().toISOString(),thread:th})
       .eq('uid',BRANCH).eq('id',r.id).eq('version',cur.version)
       .select('*').single();
-    if(upd.error||!upd.data)throw upd.error||new Error('CONFLICT');
+    check(t);if(upd.error||!upd.data)throw upd.error||new Error('CONFLICT');
     applyRow(upd.data);
     S.notice='승인을 기록했습니다.';
   }catch(e){
+    if(!current(t))return;
     var msg=(e&&e.message)||'';
     var notice2=(isConflict(e)||/CONFLICT/.test(msg))?'다른 곳에서 먼저 변경되어 승인하지 않았습니다. 최신 내용으로 다시 불러왔습니다.':'승인 저장 실패: '+(msg||'알 수 없는 오류');
     try{await load(true);}catch(_){}
+    if(!current(t))return;
     S.err=notice2;
   }finally{
+    if(!current(t))return;
     S.saving=false;
     if(btn){btn.disabled=false;btn.textContent='대표 승인 표시';}
     render();
@@ -17807,11 +17883,11 @@ document.addEventListener('click',function(e){
 window.WDH_WORKROOM={
   open:function(){load(false);},
   reload:function(){load(true);},
-  form:function(v){S.form=(v===undefined?true:!!v);render();},
+  form:function(v){if(!S.actor?.can_request||!isOwner())return false;S.form=(v===undefined?true:!!v);render();},
   close:function(){S.open='';render();},
   submit:submit,reply:reply,approve:approve,
   reset:function(){resetCache('계정 또는 프로젝트가 바뀌어 업무함을 초기화했습니다.');render();},
-  _state:S,_load:load,_submit:submit,_reply:reply,_actor:resolveActor,_reset:resetCache
+  _targetAssignment:targetAssignment,_state:S,_load:load,_submit:submit,_reply:reply,_actor:resolveActor,_reset:resetCache
 };
 /* ── 계정/프로젝트 전환 감시 → 캐시 즉시 초기화 (이전 사용자 업무 잔존 방지) ── */
 setInterval(function(){
@@ -18424,7 +18500,7 @@ R.hm={name:'형민',role:'보험설계사',login:'cherrymin80',ident:'WD26002',i
   note('demo','lock',BASE);},
  jian:{label:'설계사 업무 파트너 · 본인 담당 범위',initial:'형',
   intro:'형민 설계사님 본인 업무만 정리했습니다. (시연 예시)',
-  items:[{t:'받은 업무요청 1건',b:'— 지안: "형민 설계사님, 고고은희 총무님이 고객 A 계약 서류 접수 완료 결과를 보냈습니다." (시연 예시)'},{t:'오늘 상담 3건',b:'— 10:00 / 14:00 / 16:30'},
+  items:[{t:'받은 업무요청 1건',b:'— 지안: "형민 설계사님, 고은희 총무님이 고객 A 계약 서류 접수 완료 결과를 보냈습니다." (시연 예시)'},{t:'오늘 상담 3건',b:'— 10:00 / 14:00 / 16:30'},
    {t:'계약 서류 보완 1건',b:'— 오늘 마감(D-1), 고객 A'},
    {t:'총무 요청 2건',b:'— 처리 완료 1건 / 처리 대기 1건'},
    {t:'청구 안내 초안 1건',b:'— 고객 B, 초안 준비 중'}],
@@ -18523,12 +18599,12 @@ R.yk={name:'육근성',role:'메가종합금융 대표',login:'yks8752',ident:'�
   {ic:'user',tone:'purple',n:'2',l:'본인 관련 업무',s:'확인 필요'},
   {ic:'clock',tone:'green',n:'7',l:'이번 주 답변',s:'처리 완료'}])+
  rows('확인 · 답변 필요 (본인 관련)','승인권한 없음',[
-  {n:'자료 배포 의견 회신',s:'요청자 고고은희 총무님 · 대표 의견 회신',v:'답변 필요',b:'wait',c:'#B34A4A'},
+  {n:'자료 배포 의견 회신',s:'요청자 고은희 총무님 · 대표 의견 회신',v:'답변 필요',b:'wait',c:'#B34A4A'},
   {n:'계약 조건 변경 의견',s:'요청자 형민 설계사님 · 의견 회신',v:'답변 필요',b:'wait',c:'#B34A4A'},
   {n:'AI 업무대리 초안 확인',s:'요청자 박수진 운영실장님 · 확인만, 승인은 지점장님',v:'확인 필요',b:'wait',c:'#D97706'},
   {n:'신규 가망고객 배정 의견',s:'요청자 형민 설계사님 · 의견 회신',v:'답변 필요',b:'wait',c:'#B34A4A'}])+
  rows('협업 요청 진행상황','본인 관련만',[
-  {n:'9월 지점 자료 정리',s:'담당 고고은희 총무님 · 진행 80%',v:'진행 80%',b:'info',c:'#2563EB',bar:80},
+  {n:'9월 지점 자료 정리',s:'담당 고은희 총무님 · 진행 80%',v:'진행 80%',b:'info',c:'#2563EB',bar:80},
   {n:'AI 업무대리 도입 검토',s:'담당 박수진 운영실장님 · 진행 45%',v:'진행 45%',b:'ai',c:'#62549A',bar:45},
   {n:'신규 설계사 온보딩',s:'담당 지점장님 · 진행 60%',v:'진행 60%',b:'info',c:'#2D7A62',bar:60}])+
  note('approve','warn','<b>최종 승인은 최윤경 지점장 권한입니다.</b> 육근성 대표님은 본인 관련 요청의 확인·진행·답변만 합니다. 보험설계사 계약·청구 화면은 표시하지 않습니다.')+
@@ -18545,7 +18621,7 @@ R.yk={name:'육근성',role:'메가종합금융 대표',login:'yks8752',ident:'�
  views:{
   'jd-recv':{t:'받은 요청',s:'본인에게 온 협업 요청 (보험설계사 계약·청구 아님)',h:function(){
     return rows('받은 요청 4건','본인 관련',[
-      {n:'자료 배포 의견 요청',s:'요청자 고고은희 총무님 · 10-15',v:'답변 필요',b:'wait',c:'#B34A4A'},
+      {n:'자료 배포 의견 요청',s:'요청자 고은희 총무님 · 10-15',v:'답변 필요',b:'wait',c:'#B34A4A'},
       {n:'계약 조건 변경 의견 요청',s:'요청자 형민 설계사님 · 10-15',v:'답변 필요',b:'wait',c:'#B34A4A'},
       {n:'AI 초안 관련 확인 요청',s:'요청자 박수진 운영실장님 · 10-14',v:'확인 필요',b:'wait',c:'#D97706'},
       {n:'가망고객 배정 의견 요청',s:'요청자 형민 설계사님 · 10-14',v:'답변 필요',b:'wait',c:'#B34A4A'}])+
@@ -18553,15 +18629,15 @@ R.yk={name:'육근성',role:'메가종합금융 대표',login:'yks8752',ident:'�
      note('demo','lock',BASE);}},
   'jd-prog':{t:'진행현황',s:'본인 관련 협업 진행',h:function(){
     return rows('진행 중 5건','본인 관련',[
-      {n:'9월 지점 자료 정리',s:'담당 고고은희 총무님 · 80%',v:'진행 80%',b:'info',c:'#2563EB',bar:80},
+      {n:'9월 지점 자료 정리',s:'담당 고은희 총무님 · 80%',v:'진행 80%',b:'info',c:'#2563EB',bar:80},
       {n:'AI 업무대리 도입 검토',s:'담당 박수진 운영실장님 · 45%',v:'진행 45%',b:'ai',c:'#62549A',bar:45},
       {n:'신규 설계사 온보딩',s:'담당 지점장님 · 60%',v:'진행 60%',b:'info',c:'#2D7A62',bar:60},
-      {n:'지점 자료 배포 준비',s:'담당 고고은희 총무님 · 30%',v:'진행 30%',b:'info',c:'#2563EB',bar:30},
+      {n:'지점 자료 배포 준비',s:'담당 고은희 총무님 · 30%',v:'진행 30%',b:'info',c:'#2563EB',bar:30},
       {n:'가망고객 배정 검토',s:'담당 지점장님 · 20%',v:'진행 20%',b:'info',c:'#2563EB',bar:20}])+
      note('demo','lock',BASE);}},
   'jd-reply':{t:'답변',s:'본인 의견·답변 작성 (자동 발송 아님)',h:function(){
     return rows('답변 필요 3건','본인',[
-      {n:'자료 배포 의견',s:'수신 고고은희 총무님',v:'작성 필요',b:'wait',c:'#B34A4A'},
+      {n:'자료 배포 의견',s:'수신 고은희 총무님',v:'작성 필요',b:'wait',c:'#B34A4A'},
       {n:'계약 조건 변경 의견',s:'수신 형민 설계사님',v:'작성 필요',b:'wait',c:'#B34A4A'},
       {n:'가망고객 배정 의견',s:'수신 형민 설계사님',v:'작성 필요',b:'wait',c:'#B34A4A'}])+
      note('info','pencil','답변 문장은 <b>수정 가능한 창</b>에서 다듬습니다. <b>자동 발송하지 않습니다.</b>')+
@@ -18569,14 +18645,14 @@ R.yk={name:'육근성',role:'메가종합금융 대표',login:'yks8752',ident:'�
   'jd-done':{t:'완료 현황',s:'본인 관련 완료',h:function(){
     return rows('완료','본인 관련',[
       {n:'이번 주 지점 보고 확인',s:'지점장님 제출 · 확인 완료',v:'확인 완료',b:'ok',c:'#2D7A62'},
-      {n:'지점 자료 정리 의견 제출',s:'고고은희 총무님 요청 · 답변 완료',v:'답변 완료',b:'ok',c:'#2D7A62'}])+
+      {n:'지점 자료 정리 의견 제출',s:'고은희 총무님 요청 · 답변 완료',v:'답변 완료',b:'ok',c:'#2D7A62'}])+
      note('demo','lock',BASE);}}
  }};
 
 /* ───────── 고은희 eunbly · 메가종합금융 총무 (배정업무 중심) ───────── */
 R.ge={name:'고은희',role:'메가종합금융 총무',login:'eunbly',ident:'신규 고유 사용자 식별 필요',initial:'고',
  greet:'배정된 총무 업무를 안내해 드릴게요.',
- greetSub:'고고은희 총무님, <b>배정받은 업무</b>만 표시합니다. 전체 고객DB·타인 계약원장·지점장 승인 기능은 표시하지 않습니다.',
+ greetSub:'고은희 총무님, <b>배정받은 업무</b>만 표시합니다. 전체 고객DB·타인 계약원장·지점장 승인 기능은 표시하지 않습니다.',
  allow:['today','workroom','roles','manage'],
  extra:[{id:'jd-newreq',label:'새 요청',ic:'chat'},{id:'jd-intake',label:'계약 접수',ic:'doc'},{id:'jd-docs',label:'보완서류',ic:'pencil'},{id:'jd-report',label:'완료 보고',ic:'check'}],
  extraGroup:'총무 업무',
@@ -18596,8 +18672,8 @@ R.ge={name:'고은희',role:'메가종합금융 총무',login:'eunbly',ident:'�
  note('lock','lock','전체 고객DB · 타인 계약원장 · <b>지점장 승인 기능</b>은 이 계정에서 표시하지 않습니다. 총무는 배정받은 업무만 처리합니다. (화면 숨김만으로 차단 판단하지 않으며 실제 차단은 DB RLS 유지)')+
  note('demo','lock',BASE);},
  jian:{label:'총무 업무 도우미 · 배정 업무 범위',initial:'고',
-  intro:'고고은희 총무님께 배정된 업무만 정리했습니다. (시연 예시)',
-  items:[{t:'받은 업무요청 1건',b:'— 지안: "고고은희 총무님, 형민 설계사님이 요청한 서류 확인 업무가 있습니다." (시연 예시)'},
+  intro:'고은희 총무님께 배정된 업무만 정리했습니다. (시연 예시)',
+  items:[{t:'받은 업무요청 1건',b:'— 지안: "고은희 총무님, 형민 설계사님이 요청한 서류 확인 업무가 있습니다." (시연 예시)'},
    {t:'배정 업무 6건',b:'— 접수 3 · 보완 2 · 완료 보고 4'},
    {t:'접수 대기 3건',b:'— 형민 설계사님 요청, 오늘 처리'},
    {t:'보완 요청 2건',b:'— 오늘 마감, 회신 필요'},
@@ -18636,7 +18712,7 @@ R.ge={name:'고은희',role:'메가종합금융 총무',login:'eunbly',ident:'�
  }};
 
 /* ══════════ 업무방 (공동업무함 · 업무요청·서류 송수신) 261015 ══════════ */
-var MR={"yj": {"partners": ["형민 설계사님", "고고은희 총무님", "육근성 대표님", "박수진 AI"], "quick": [{"t": "업무 배정", "s": "담당자를 골라 업무를 배정합니다."}, {"t": "진행 확인 요청", "s": "담당자에게 진행상태 회신을 요청합니다."}, {"t": "최종 승인 통보", "s": "승인 결과를 요청자에게 통보합니다."}], "scope": "지점장님은 <b>업무 요청·배정·진행 확인·최종 승인</b>을 합니다. 모든 담당자에게 업무를 보낼 수 있습니다.", "attach": [{"n": "9월_지점자료_요약.pdf", "t": "PDF", "s": "3.1MB", "to": "육근성 대표님", "st": "전송됨", "stcls": "ok"}, {"n": "이달_접수목록.pdf", "t": "PDF", "s": "680KB", "to": "고고은희 총무님", "st": "전송됨", "stcls": "ok"}, {"n": "주간요약_초안.docx", "t": "DOC", "s": "96KB", "to": "지점장님", "st": "초안", "stcls": "ai"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-04", "from": "형민 설계사님", "to": "지점장님", "subject": "계약 조건 변경 승인 요청", "body": "고객 D 계약 조건 변경 건 승인 요청드립니다.", "time": "10-14 17:30", "status": "승인 대기", "stcls": "wait", "files": [{"n": "고객D_조건변경_요청서.pdf", "t": "PDF", "s": "520KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}, {"id": "TH-07", "from": "육근성 대표님", "to": "지점장님", "subject": "AI 업무대리 초안 확인 요청", "body": "AI 업무대리 초안 중 본사 관련 항목 확인 부탁드립니다. (확인만, 승인 아님)", "time": "10-14 14:10", "status": "확인 요청", "stcls": "wait", "files": [{"n": "AI초안_본사관련_확인.pdf", "t": "PDF", "s": "150KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}], "out": [{"id": "TH-02", "from": "지점장님", "to": "육근성 대표님", "subject": "본사 협업 요청 — 9월 지점 자료 검토", "body": "9월 지점 자료 요약을 검토해 주시고 의견 부탁드립니다.", "time": "10-15 08:40", "status": "답변 대기", "stcls": "wait", "files": [{"n": "9월_지점자료_요약.pdf", "t": "PDF", "s": "3.1MB", "to": "육근성 대표님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "육근성 대표님", "body": "검토 의견 회신드립니다. 본사 반영 항목 2건을 정리했습니다.", "files": [{"n": "본사_검토의견서.pdf", "t": "PDF", "s": "410KB", "to": "지점장님", "st": "회신됨", "stcls": "ok"}], "status": "답변 완료"}}, {"id": "TH-03", "from": "지점장님", "to": "고고은희 총무님", "subject": "이달 지점 자료 접수 정리 요청", "body": "이달 접수 서류 정리 후 완료 보고 부탁드립니다.", "time": "10-15 08:05", "status": "처리중", "stcls": "", "files": [{"n": "이달_접수목록.pdf", "t": "PDF", "s": "680KB", "to": "고고은희 총무님", "st": "전송됨", "stcls": "ok"}]}, {"id": "TH-06", "from": "지점장님", "to": "박수진 AI", "subject": "지점 주간 요약 정리 요청", "body": "지점 주간 요약 초안 정리 부탁합니다. (AI 대리 — 사람 승인 필요)", "time": "10-14 15:00", "status": "초안 작성", "stcls": "ai", "files": [{"n": "주간요약_초안.docx", "t": "DOC", "s": "96KB", "to": "지점장님", "st": "초안", "stcls": "ai"}]}], "replyTo": ["AI 업무대리 초안 확인 요청"], "flow": [{"who": "지점장님 → 육근성 대표님", "st": "답변 완료", "cls": "ok", "d": "본사 협업 요청을 보냈고 육근성 대표님이 답변·의견서를 회신했습니다."}, {"who": "지점장님 → 고고은희 총무님", "st": "처리중", "cls": "", "d": "접수 정리 요청 — 완료 보고 대기 중입니다."}], "inNote": "지점장님에게 온 요청만 표시합니다. 승인 처리는 지점장님 권한입니다.", "outNote": "지점장님이 보낸 업무 요청과 회신 상태입니다.", "replyNote": "승인·반려 결과를 요청자에게 회신합니다. 최종 승인은 지점장님만 합니다.", "arch": [{"t": "10-15 08:40", "j": "본사 협업 요청 — 9월 지점 자료 검토", "p": "육근성 대표님", "s": "답변 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-15 08:05", "j": "이달 지점 자료 접수 정리 요청", "p": "고고은희 총무님", "s": "처리중", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 17:30", "j": "계약 조건 변경 승인 요청", "p": "형민 설계사님", "s": "승인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 15:00", "j": "지점 주간 요약 정리 요청", "p": "박수진 AI", "s": "초안 작성", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 14:10", "j": "AI 업무대리 초안 확인 요청", "p": "육근성 대표님", "s": "확인 요청", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "review", "note": "지점장님 검토함에는 <b>요청자가 전송을 확인한 요청서 초안</b>만 표시합니다. 승인·반려는 지점장님 권한이며, <b>승인해도 운영팀 전달·개발 완료로 간주하지 않습니다.</b>", "actions": ["보류", "반려", "추가질문", "승인·배정"], "states": [{"k": "제출됨", "v": "제출됨", "cls": "wait", "d": "요청자가 전송을 확인해 지점장님 검토함에 접수된 상태입니다. (접수 ≠ 승인)"}, {"k": "추가질문", "v": "추가질문", "cls": "wait", "d": "지점장님이 내용 보완을 요청한 상태입니다."}, {"k": "보류", "v": "보류", "cls": "", "d": "지점장님이 검토를 잠시 보류한 상태입니다."}, {"k": "반려", "v": "반려", "cls": "dday", "d": "지점장님이 이번에는 진행하지 않기로 한 상태입니다."}, {"k": "승인·배정", "v": "승인·배정", "cls": "ok", "d": "지점장님이 승인하고 담당자를 배정한 상태입니다. (승인 ≠ 개발완료·운영팀 전달)"}], "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "inbox": [{"from": "형민 설계사님", "title": "계약 서류 접수 전 누락 확인 사전 점검 요청", "body": "접수 전 확인을 전화로 반복 문의하는 불편을 줄이고, 지안이 누락·보완 서류를 미리 안내해 주기를 요청합니다.", "kind": "불편·개선제안", "urg": "보통", "att": "없음", "state": "제출됨", "stcls": "wait", "time": "10-15 09:40"}, {"from": "고고은희 총무님", "title": "접수 서류 목록 자동 정리 요청", "body": "접수 서류 목록을 매번 다시 정리하는 반복 작업을 줄여 달라는 개선 의견입니다.", "kind": "개선제안", "urg": "보통", "att": "없음", "state": "추가질문", "stcls": "wait", "time": "10-15 09:05"}, {"from": "육근성 대표님", "title": "본사 협업 요청 유형 구분 표시 요청", "body": "본사 협업 요청이 승인 건인지 확인 건인지 구분이 어렵다는 의견입니다.", "kind": "업무문의·개선제안", "urg": "낮음", "att": "없음", "state": "제출됨", "stcls": "wait", "time": "10-14 18:20"}], "hist": [{"title": "10-14 고객 안내문 초안 개선 요청", "d": "지점장님 승인·배정 → 담당 형민 설계사 배정 (운영팀 전달·개발 완료 아님)"}, {"title": "10-13 접수 알림 문구 개선 요청", "d": "지점장님 반려 — 기존 기능으로 해결 가능 안내"}]}}, "hm": {"partners": ["고고은희 총무님", "지점장님", "육근성 대표님"], "quick": [{"t": "서류 확인 요청", "s": "고고은희 총무님께 접수 전 서류 확인을 요청합니다."}, {"t": "총무 협업 요청", "s": "접수·보완·완료보고를 요청합니다."}, {"t": "본사 협업 요청", "s": "육근성 대표님께 의견을 요청합니다."}], "scope": "형민 설계사님은 <b>본인 보험업무</b>와 필요한 <b>총무·본사 협업 요청</b>을 보냅니다. 타 설계사 고객정보는 표시하지 않습니다.", "attach": [{"n": "고객A_계약서류_3종.pdf", "t": "PDF", "s": "1.2MB", "to": "고고은희 총무님", "st": "전송됨", "stcls": "ok"}, {"n": "고객D_조건변경_요청서.pdf", "t": "PDF", "s": "520KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-05", "from": "고고은희 총무님", "to": "형민 설계사님", "subject": "고객 A 서류 접수 완료 회신", "body": "고객 A 계약 서류 접수 완료했습니다. 결과 첨부합니다.", "time": "10-14 16:20", "status": "회신 완료", "stcls": "ok", "files": [{"n": "고객A_접수완료_확인서.pdf", "t": "PDF", "s": "180KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}]}], "out": [{"id": "TH-01", "from": "형민 설계사님", "to": "고고은희 총무님", "subject": "고객 A 계약 서류 확인 요청", "body": "고객 A 계약 서류 3종 접수 전 확인 부탁드립니다. 누락 여부와 보완 필요 서류를 알려 주세요.", "time": "10-15 09:12", "status": "확인 대기", "stcls": "wait", "files": [{"n": "고객A_계약서류_3종.pdf", "t": "PDF", "s": "1.2MB", "to": "고고은희 총무님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "고고은희 총무님", "body": "서류 3종 확인 완료했습니다. 접수 결과와 확인서를 첨부해 회신합니다.", "files": [{"n": "고객A_접수확인_결과.pdf", "t": "PDF", "s": "240KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}], "status": "회신 완료"}}, {"id": "TH-04", "from": "형민 설계사님", "to": "지점장님", "subject": "계약 조건 변경 승인 요청", "body": "고객 D 계약 조건 변경 건 승인 요청드립니다.", "time": "10-14 17:30", "status": "승인 대기", "stcls": "wait", "files": [{"n": "고객D_조건변경_요청서.pdf", "t": "PDF", "s": "520KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}], "replyTo": ["고객 A 서류 접수 완료 회신"], "flow": [{"who": "형민 설계사님 → 고고은희 총무님", "st": "회신 완료", "cls": "ok", "d": "서류 확인 요청 후 접수 결과 파일을 회신받았습니다."}, {"who": "형민 설계사님 → 지점장님", "st": "승인 대기", "cls": "wait", "d": "계약 조건 변경 승인 요청 — 지점장님 검토 대기."}], "inNote": "형민 설계사님 본인 관련 요청만 표시합니다. 타 설계사 요청은 보이지 않습니다.", "outNote": "형민 설계사님이 보낸 요청과 회신 상태입니다.", "replyNote": "확인 결과를 받아 후속 업무를 진행합니다. 발송·확정은 형민 설계사님이 합니다.", "arch": [{"t": "10-15 09:12", "j": "고객 A 계약 서류 확인 요청", "p": "고고은희 총무님", "s": "확인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 17:30", "j": "계약 조건 변경 승인 요청", "p": "지점장님", "s": "승인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 16:20", "j": "고객 A 서류 접수 완료 회신", "p": "고고은희 총무님", "s": "회신 완료", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ask", "askBy": "형민 설계사님", "origPh": "불편한 점이나 개선 의견을 편하게 적어 주세요. (예: 서류 확인할 때마다 전화하는 게 번거로워요)", "orig": "계약 서류 확인할 때마다 고고은희 총무님께 전화로 물어봐야 해서 번거로워요. 접수 전에 누락 서류를 미리 짚어주면 좋겠어요.", "jianLine": "형민 설계사님, 불편하신 내용을 지점장님께 전달하기 좋게 정리해 드릴게요. 요청 초안을 확인하시겠어요?", "draft": {"title": "계약 서류 접수 전 누락 확인 사전 점검 요청", "fields": [["배경·불편", "접수 전 서류 확인을 전화·메신저로 반복 문의"], ["원하는 결과", "접수 전 누락·보완 서류를 지안이 사전 점검해 안내"], ["업무 종류", "불편·개선제안"], ["긴급도", "보통"], ["요청자", "형민 설계사님"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (검토)"]]}, "draftNote": "지안이 원문 의미를 <b>왜곡하거나 확정하지 않고</b> 정리한 초안입니다. <b>수정 가능한 창</b>에서 요청자가 고친 뒤 전송합니다. 초안은 <b>계정별 임시 상태</b>이며 접속을 끊으면 사라집니다(전송 전 서버 저장 없음).", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "내 요청서", "v": "제출됨", "cls": "wait", "d": "전송 확인 완료 — 지점장님 검토 대기 (접수 ≠ 승인)"}, {"k": "지점장님 검토", "v": "검토 중", "cls": "wait", "d": "승인·반려·보류·추가질문 중 하나로 결정됩니다."}], "result": {"who": "최윤경 지점장님 → 형민 설계사님", "st": "검토 대기", "cls": "wait", "d": "아직 검토 결과가 없습니다. 승인되어도 운영팀 전달·개발 완료와는 다릅니다."}}}, "ge": {"partners": ["형민 설계사님", "지점장님"], "quick": [{"t": "접수 확인 회신", "s": "형민 설계사님께 접수 결과를 회신합니다."}, {"t": "보완 서류 요청", "s": "누락·불일치 서류를 요청합니다."}, {"t": "완료 보고", "s": "처리 결과를 지점장님께 보고합니다."}], "scope": "고고은희 총무님은 <b>배정된 총무업무</b>만 주고받습니다. 전체 고객DB·타인 계약원장은 이 화면에 없습니다.", "attach": [{"n": "고객A_접수완료_확인서.pdf", "t": "PDF", "s": "180KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}, {"n": "고객A_접수확인_결과.pdf", "t": "PDF", "s": "240KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-01", "from": "형민 설계사님", "to": "고고은희 총무님", "subject": "고객 A 계약 서류 확인 요청", "body": "고객 A 계약 서류 3종 접수 전 확인 부탁드립니다. 누락 여부와 보완 필요 서류를 알려 주세요.", "time": "10-15 09:12", "status": "확인 대기", "stcls": "wait", "files": [{"n": "고객A_계약서류_3종.pdf", "t": "PDF", "s": "1.2MB", "to": "고고은희 총무님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "고고은희 총무님", "body": "서류 3종 확인 완료했습니다. 접수 결과와 확인서를 첨부해 회신합니다.", "files": [{"n": "고객A_접수확인_결과.pdf", "t": "PDF", "s": "240KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}], "status": "회신 완료"}}, {"id": "TH-03", "from": "지점장님", "to": "고고은희 총무님", "subject": "이달 지점 자료 접수 정리 요청", "body": "이달 접수 서류 정리 후 완료 보고 부탁드립니다.", "time": "10-15 08:05", "status": "처리중", "stcls": "", "files": [{"n": "이달_접수목록.pdf", "t": "PDF", "s": "680KB", "to": "고고은희 총무님", "st": "전송됨", "stcls": "ok"}]}], "out": [{"id": "TH-05", "from": "고고은희 총무님", "to": "형민 설계사님", "subject": "고객 A 서류 접수 완료 회신", "body": "고객 A 계약 서류 접수 완료했습니다. 결과 첨부합니다.", "time": "10-14 16:20", "status": "회신 완료", "stcls": "ok", "files": [{"n": "고객A_접수완료_확인서.pdf", "t": "PDF", "s": "180KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}]}], "replyTo": ["고객 A 계약 서류 확인 요청", "이달 지점 자료 접수 정리 요청"], "flow": [{"who": "형민 설계사님 → 고고은희 총무님", "st": "회신 완료", "cls": "ok", "d": "서류 확인 요청을 받아 확인 후 결과파일을 회신했습니다."}, {"who": "지점장님 → 고고은희 총무님", "st": "처리중", "cls": "", "d": "접수 정리 요청 — 처리 후 완료 보고 예정."}], "inNote": "배정받은 업무의 요청만 표시합니다. 업무에 필요한 최소 정보만 보입니다.", "outNote": "고고은희 총무님이 회신·보고한 내역입니다.", "replyNote": "확인 결과와 결과파일을 요청자에게 회신합니다. 자동 발송하지 않습니다.", "arch": [{"t": "10-15 09:12", "j": "고객 A 계약 서류 확인 요청", "p": "형민 설계사님", "s": "확인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-15 08:05", "j": "이달 지점 자료 접수 정리 요청", "p": "지점장님", "s": "처리중", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 16:20", "j": "고객 A 서류 접수 완료 회신", "p": "형민 설계사님", "s": "회신 완료", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ask", "askBy": "고고은희 총무님", "origPh": "총무 업무에서 불편한 점이나 개선 의견을 적어 주세요. (예: 접수 목록을 매번 다시 정리하는 게 번거로워요)", "orig": "접수 서류 목록을 매번 엑셀로 다시 정리하는 게 번거로워요. 목록이 자동으로 정리되면 좋겠어요.", "jianLine": "고고은희 총무님, 총무 업무 개선 의견을 정리했습니다. 보내시기 전에 수정하실 수 있어요.", "draft": {"title": "접수 서류 목록 자동 정리 요청", "fields": [["배경·불편", "접수 목록을 매번 수작업으로 다시 정리"], ["원하는 결과", "접수 목록 자동 정리·중복 표시"], ["업무 종류", "개선제안"], ["긴급도", "보통"], ["요청자", "고고은희 총무님"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (검토)"]]}, "draftNote": "지안이 원문 의미를 <b>왜곡하거나 확정하지 않고</b> 정리한 초안입니다. <b>수정 가능한 창</b>에서 요청자가 고친 뒤 전송합니다. 초안은 <b>계정별 임시 상태</b>이며 접속을 끊으면 사라집니다(전송 전 서버 저장 없음).", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "내 요청서", "v": "제출됨", "cls": "wait", "d": "전송 확인 완료 — 지점장님 검토 대기"}, {"k": "지점장님 검토", "v": "추가질문", "cls": "wait", "d": "지점장님이 내용 보완을 요청했습니다."}], "result": {"who": "최윤경 지점장님 → 고고은희 총무님", "st": "추가질문", "cls": "wait", "d": "예상 사용 빈도·대상 범위를 보완해 다시 회신해 주세요."}}}, "yk": {"partners": ["지점장님"], "quick": [{"t": "협업 답변", "s": "지점장님께 검토 의견을 회신합니다."}, {"t": "자료 확인 요청", "s": "추가 자료를 요청합니다."}], "scope": "육근성 대표님은 <b>본사 협업 요청 수신·답변·진행 확인</b>만 합니다. 보험계약·청구 화면은 이 화면에 없습니다.", "attach": [{"n": "AI초안_본사관련_확인.pdf", "t": "PDF", "s": "150KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}, {"n": "본사_검토의견서.pdf", "t": "PDF", "s": "410KB", "to": "지점장님", "st": "회신됨", "stcls": "ok"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-02", "from": "지점장님", "to": "육근성 대표님", "subject": "본사 협업 요청 — 9월 지점 자료 검토", "body": "9월 지점 자료 요약을 검토해 주시고 의견 부탁드립니다.", "time": "10-15 08:40", "status": "답변 대기", "stcls": "wait", "files": [{"n": "9월_지점자료_요약.pdf", "t": "PDF", "s": "3.1MB", "to": "육근성 대표님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "육근성 대표님", "body": "검토 의견 회신드립니다. 본사 반영 항목 2건을 정리했습니다.", "files": [{"n": "본사_검토의견서.pdf", "t": "PDF", "s": "410KB", "to": "지점장님", "st": "회신됨", "stcls": "ok"}], "status": "답변 완료"}}], "out": [{"id": "TH-07", "from": "육근성 대표님", "to": "지점장님", "subject": "AI 업무대리 초안 확인 요청", "body": "AI 업무대리 초안 중 본사 관련 항목 확인 부탁드립니다. (확인만, 승인 아님)", "time": "10-14 14:10", "status": "확인 요청", "stcls": "wait", "files": [{"n": "AI초안_본사관련_확인.pdf", "t": "PDF", "s": "150KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}], "replyTo": ["본사 협업 요청 — 9월 지점 자료 검토"], "flow": [{"who": "지점장님 → 육근성 대표님", "st": "답변 완료", "cls": "ok", "d": "본사 협업 요청을 받아 검토 의견서를 회신했습니다."}], "inNote": "본인 관련 협업 요청만 표시합니다. 승인 항목은 표시되지 않습니다.", "outNote": "육근성 대표님이 회신한 협업 답변 내역입니다.", "replyNote": "확인·검토 의견을 회신합니다. 승인·반영은 지점장님이 합니다.", "arch": [{"t": "10-15 08:40", "j": "본사 협업 요청 — 9월 지점 자료 검토", "p": "지점장님", "s": "답변 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 14:10", "j": "AI 업무대리 초안 확인 요청", "p": "지점장님", "s": "확인 요청", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ask", "askBy": "육근성 대표님", "origPh": "본사 협업에서 불편한 점이나 개선 의견을 적어 주세요. (예: 승인 건인지 확인 건인지 헷갈려요)", "orig": "본사 협업 요청이 오면 어떤 게 승인 건인지 확인만 필요한 건지 헷갈려요. 구분이 표시되면 좋겠어요.", "jianLine": "육근성 대표님, 본사 협업 요청 초안을 만들어 드릴게요. 최종 진행 여부는 지점장님 검토 후 결정됩니다.", "draft": {"title": "본사 협업 요청 유형 구분 표시 요청", "fields": [["배경·불편", "승인 건과 확인 건의 구분이 어려움"], ["원하는 결과", "요청 유형(승인/확인) 라벨 표시"], ["업무 종류", "업무문의·개선제안"], ["긴급도", "낮음"], ["요청자", "육근성 대표님"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (검토)"]]}, "draftNote": "지안이 원문 의미를 <b>왜곡하거나 확정하지 않고</b> 정리한 초안입니다. <b>수정 가능한 창</b>에서 요청자가 고친 뒤 전송합니다. 초안은 <b>계정별 임시 상태</b>이며 접속을 끊으면 사라집니다(전송 전 서버 저장 없음).", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "내 요청서", "v": "제출됨", "cls": "wait", "d": "전송 확인 완료 — 지점장님 검토 대기"}, {"k": "지점장님 검토", "v": "검토 중", "cls": "wait", "d": "최종 진행 여부는 지점장님 검토 후 결정됩니다."}], "result": {"who": "최윤경 지점장님 → 육근성 대표님", "st": "검토 대기", "cls": "wait", "d": "아직 검토 결과가 없습니다."}}}, "sj": {"partners": ["지점장님", "형민 설계사님"], "quick": [{"t": "업무 정리 초안", "s": "요청 업무를 정리한 초안을 만듭니다. (사람 승인 필요)"}, {"t": "답변 초안", "s": "답변 문장 초안을 만듭니다. (사람이 전송)"}], "scope": "박수진 AI는 <b>업무 정리·답변 초안</b>까지만 지원합니다. 사람 대신 실제 전송하거나 승인하지 않습니다.", "attach": [], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-06", "from": "지점장님", "to": "박수진 AI", "subject": "지점 주간 요약 정리 요청", "body": "지점 주간 요약 초안 정리 부탁합니다. (AI 대리 — 사람 승인 필요)", "time": "10-14 15:00", "status": "초안 작성", "stcls": "ai", "files": [{"n": "주간요약_초안.docx", "t": "DOC", "s": "96KB", "to": "지점장님", "st": "초안", "stcls": "ai"}]}], "out": [], "replyTo": ["지점 주간 요약 정리 요청"], "flow": [{"who": "지점장님 → 박수진 AI", "st": "초안 작성", "cls": "ai", "d": "정리 요청을 받아 초안만 작성했습니다. 전송·승인은 사람이 합니다."}], "inNote": "AI에게 온 정리·초안 요청만 표시합니다. 실제 전송·승인은 사람이 합니다.", "outNote": "AI가 만든 초안은 '보낸 업무'가 아니라 <b>사람 승인 대기</b>로 구분합니다.", "replyNote": "AI는 답변 <b>초안</b>만 만듭니다. 실제 회신은 사람이 확인 후 전송합니다.", "arch": [{"t": "10-14 15:00", "j": "지점 주간 요약 정리 요청", "p": "지점장님", "s": "초안 작성", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ai", "askBy": "박수진 AI", "origPh": "사람이 정리를 요청한 내용을 붙여넣으면 초안을 만듭니다. (AI는 전송하지 않습니다)", "orig": "지점장님이 요청한 업무 정리 건 — 초안만 작성합니다.", "jianLine": "박수진 AI, 요청 내용을 초안으로 정리했습니다. <b>전송·승인은 사람이</b> 확인 후 진행합니다.", "draft": {"title": "지안 요청서 초안 (AI 정리)", "fields": [["배경·불편", "사람이 입력한 원문을 정리"], ["원하는 결과", "사람이 검토할 초안 문장"], ["업무 종류", "사람 지정"], ["긴급도", "사람 지정"], ["요청자", "사람 (AI 아님)"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (사람이 전송)"]]}, "draftNote": "AI는 <b>초안·정리까지만</b> 합니다. AI가 사람 대신 전송하거나 승인하지 않습니다. 초안은 <b>사람 승인 대기</b>로 구분합니다.", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "AI 초안", "v": "사람 승인 대기", "cls": "ai", "d": "AI가 만든 초안은 요청 접수가 아닙니다."}, {"k": "전송", "v": "사람이 실행", "cls": "", "d": "전송은 반드시 사람이 확인 후 합니다."}], "result": {"who": "사람 → 지점장님", "st": "사람 처리", "cls": "", "d": "AI는 최종 전송·승인을 대신하지 않습니다."}}}};
+var MR={"yj": {"partners": ["형민 설계사님", "고은희 총무님", "육근성 대표님", "박수진 AI"], "quick": [{"t": "업무 배정", "s": "담당자를 골라 업무를 배정합니다."}, {"t": "진행 확인 요청", "s": "담당자에게 진행상태 회신을 요청합니다."}, {"t": "최종 승인 통보", "s": "승인 결과를 요청자에게 통보합니다."}], "scope": "지점장님은 <b>업무 요청·배정·진행 확인·최종 승인</b>을 합니다. 모든 담당자에게 업무를 보낼 수 있습니다.", "attach": [{"n": "9월_지점자료_요약.pdf", "t": "PDF", "s": "3.1MB", "to": "육근성 대표님", "st": "전송됨", "stcls": "ok"}, {"n": "이달_접수목록.pdf", "t": "PDF", "s": "680KB", "to": "고은희 총무님", "st": "전송됨", "stcls": "ok"}, {"n": "주간요약_초안.docx", "t": "DOC", "s": "96KB", "to": "지점장님", "st": "초안", "stcls": "ai"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-04", "from": "형민 설계사님", "to": "지점장님", "subject": "계약 조건 변경 승인 요청", "body": "고객 D 계약 조건 변경 건 승인 요청드립니다.", "time": "10-14 17:30", "status": "승인 대기", "stcls": "wait", "files": [{"n": "고객D_조건변경_요청서.pdf", "t": "PDF", "s": "520KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}, {"id": "TH-07", "from": "육근성 대표님", "to": "지점장님", "subject": "AI 업무대리 초안 확인 요청", "body": "AI 업무대리 초안 중 본사 관련 항목 확인 부탁드립니다. (확인만, 승인 아님)", "time": "10-14 14:10", "status": "확인 요청", "stcls": "wait", "files": [{"n": "AI초안_본사관련_확인.pdf", "t": "PDF", "s": "150KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}], "out": [{"id": "TH-02", "from": "지점장님", "to": "육근성 대표님", "subject": "본사 협업 요청 — 9월 지점 자료 검토", "body": "9월 지점 자료 요약을 검토해 주시고 의견 부탁드립니다.", "time": "10-15 08:40", "status": "답변 대기", "stcls": "wait", "files": [{"n": "9월_지점자료_요약.pdf", "t": "PDF", "s": "3.1MB", "to": "육근성 대표님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "육근성 대표님", "body": "검토 의견 회신드립니다. 본사 반영 항목 2건을 정리했습니다.", "files": [{"n": "본사_검토의견서.pdf", "t": "PDF", "s": "410KB", "to": "지점장님", "st": "회신됨", "stcls": "ok"}], "status": "답변 완료"}}, {"id": "TH-03", "from": "지점장님", "to": "고은희 총무님", "subject": "이달 지점 자료 접수 정리 요청", "body": "이달 접수 서류 정리 후 완료 보고 부탁드립니다.", "time": "10-15 08:05", "status": "처리중", "stcls": "", "files": [{"n": "이달_접수목록.pdf", "t": "PDF", "s": "680KB", "to": "고은희 총무님", "st": "전송됨", "stcls": "ok"}]}, {"id": "TH-06", "from": "지점장님", "to": "박수진 AI", "subject": "지점 주간 요약 정리 요청", "body": "지점 주간 요약 초안 정리 부탁합니다. (AI 대리 — 사람 승인 필요)", "time": "10-14 15:00", "status": "초안 작성", "stcls": "ai", "files": [{"n": "주간요약_초안.docx", "t": "DOC", "s": "96KB", "to": "지점장님", "st": "초안", "stcls": "ai"}]}], "replyTo": ["AI 업무대리 초안 확인 요청"], "flow": [{"who": "지점장님 → 육근성 대표님", "st": "답변 완료", "cls": "ok", "d": "본사 협업 요청을 보냈고 육근성 대표님이 답변·의견서를 회신했습니다."}, {"who": "지점장님 → 고은희 총무님", "st": "처리중", "cls": "", "d": "접수 정리 요청 — 완료 보고 대기 중입니다."}], "inNote": "지점장님에게 온 요청만 표시합니다. 승인 처리는 지점장님 권한입니다.", "outNote": "지점장님이 보낸 업무 요청과 회신 상태입니다.", "replyNote": "승인·반려 결과를 요청자에게 회신합니다. 최종 승인은 지점장님만 합니다.", "arch": [{"t": "10-15 08:40", "j": "본사 협업 요청 — 9월 지점 자료 검토", "p": "육근성 대표님", "s": "답변 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-15 08:05", "j": "이달 지점 자료 접수 정리 요청", "p": "고은희 총무님", "s": "처리중", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 17:30", "j": "계약 조건 변경 승인 요청", "p": "형민 설계사님", "s": "승인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 15:00", "j": "지점 주간 요약 정리 요청", "p": "박수진 AI", "s": "초안 작성", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 14:10", "j": "AI 업무대리 초안 확인 요청", "p": "육근성 대표님", "s": "확인 요청", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "review", "note": "지점장님 검토함에는 <b>요청자가 전송을 확인한 요청서 초안</b>만 표시합니다. 승인·반려는 지점장님 권한이며, <b>승인해도 운영팀 전달·개발 완료로 간주하지 않습니다.</b>", "actions": ["보류", "반려", "추가질문", "승인·배정"], "states": [{"k": "제출됨", "v": "제출됨", "cls": "wait", "d": "요청자가 전송을 확인해 지점장님 검토함에 접수된 상태입니다. (접수 ≠ 승인)"}, {"k": "추가질문", "v": "추가질문", "cls": "wait", "d": "지점장님이 내용 보완을 요청한 상태입니다."}, {"k": "보류", "v": "보류", "cls": "", "d": "지점장님이 검토를 잠시 보류한 상태입니다."}, {"k": "반려", "v": "반려", "cls": "dday", "d": "지점장님이 이번에는 진행하지 않기로 한 상태입니다."}, {"k": "승인·배정", "v": "승인·배정", "cls": "ok", "d": "지점장님이 승인하고 담당자를 배정한 상태입니다. (승인 ≠ 개발완료·운영팀 전달)"}], "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "inbox": [{"from": "형민 설계사님", "title": "계약 서류 접수 전 누락 확인 사전 점검 요청", "body": "접수 전 확인을 전화로 반복 문의하는 불편을 줄이고, 지안이 누락·보완 서류를 미리 안내해 주기를 요청합니다.", "kind": "불편·개선제안", "urg": "보통", "att": "없음", "state": "제출됨", "stcls": "wait", "time": "10-15 09:40"}, {"from": "고은희 총무님", "title": "접수 서류 목록 자동 정리 요청", "body": "접수 서류 목록을 매번 다시 정리하는 반복 작업을 줄여 달라는 개선 의견입니다.", "kind": "개선제안", "urg": "보통", "att": "없음", "state": "추가질문", "stcls": "wait", "time": "10-15 09:05"}, {"from": "육근성 대표님", "title": "본사 협업 요청 유형 구분 표시 요청", "body": "본사 협업 요청이 승인 건인지 확인 건인지 구분이 어렵다는 의견입니다.", "kind": "업무문의·개선제안", "urg": "낮음", "att": "없음", "state": "제출됨", "stcls": "wait", "time": "10-14 18:20"}], "hist": [{"title": "10-14 고객 안내문 초안 개선 요청", "d": "지점장님 승인·배정 → 담당 형민 설계사 배정 (운영팀 전달·개발 완료 아님)"}, {"title": "10-13 접수 알림 문구 개선 요청", "d": "지점장님 반려 — 기존 기능으로 해결 가능 안내"}]}}, "hm": {"partners": ["고은희 총무님", "지점장님", "육근성 대표님"], "quick": [{"t": "서류 확인 요청", "s": "고은희 총무님께 접수 전 서류 확인을 요청합니다."}, {"t": "총무 협업 요청", "s": "접수·보완·완료보고를 요청합니다."}, {"t": "본사 협업 요청", "s": "육근성 대표님께 의견을 요청합니다."}], "scope": "형민 설계사님은 <b>본인 보험업무</b>와 필요한 <b>총무·본사 협업 요청</b>을 보냅니다. 타 설계사 고객정보는 표시하지 않습니다.", "attach": [{"n": "고객A_계약서류_3종.pdf", "t": "PDF", "s": "1.2MB", "to": "고은희 총무님", "st": "전송됨", "stcls": "ok"}, {"n": "고객D_조건변경_요청서.pdf", "t": "PDF", "s": "520KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-05", "from": "고은희 총무님", "to": "형민 설계사님", "subject": "고객 A 서류 접수 완료 회신", "body": "고객 A 계약 서류 접수 완료했습니다. 결과 첨부합니다.", "time": "10-14 16:20", "status": "회신 완료", "stcls": "ok", "files": [{"n": "고객A_접수완료_확인서.pdf", "t": "PDF", "s": "180KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}]}], "out": [{"id": "TH-01", "from": "형민 설계사님", "to": "고은희 총무님", "subject": "고객 A 계약 서류 확인 요청", "body": "고객 A 계약 서류 3종 접수 전 확인 부탁드립니다. 누락 여부와 보완 필요 서류를 알려 주세요.", "time": "10-15 09:12", "status": "확인 대기", "stcls": "wait", "files": [{"n": "고객A_계약서류_3종.pdf", "t": "PDF", "s": "1.2MB", "to": "고은희 총무님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "고은희 총무님", "body": "서류 3종 확인 완료했습니다. 접수 결과와 확인서를 첨부해 회신합니다.", "files": [{"n": "고객A_접수확인_결과.pdf", "t": "PDF", "s": "240KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}], "status": "회신 완료"}}, {"id": "TH-04", "from": "형민 설계사님", "to": "지점장님", "subject": "계약 조건 변경 승인 요청", "body": "고객 D 계약 조건 변경 건 승인 요청드립니다.", "time": "10-14 17:30", "status": "승인 대기", "stcls": "wait", "files": [{"n": "고객D_조건변경_요청서.pdf", "t": "PDF", "s": "520KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}], "replyTo": ["고객 A 서류 접수 완료 회신"], "flow": [{"who": "형민 설계사님 → 고은희 총무님", "st": "회신 완료", "cls": "ok", "d": "서류 확인 요청 후 접수 결과 파일을 회신받았습니다."}, {"who": "형민 설계사님 → 지점장님", "st": "승인 대기", "cls": "wait", "d": "계약 조건 변경 승인 요청 — 지점장님 검토 대기."}], "inNote": "형민 설계사님 본인 관련 요청만 표시합니다. 타 설계사 요청은 보이지 않습니다.", "outNote": "형민 설계사님이 보낸 요청과 회신 상태입니다.", "replyNote": "확인 결과를 받아 후속 업무를 진행합니다. 발송·확정은 형민 설계사님이 합니다.", "arch": [{"t": "10-15 09:12", "j": "고객 A 계약 서류 확인 요청", "p": "고은희 총무님", "s": "확인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 17:30", "j": "계약 조건 변경 승인 요청", "p": "지점장님", "s": "승인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 16:20", "j": "고객 A 서류 접수 완료 회신", "p": "고은희 총무님", "s": "회신 완료", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ask", "askBy": "형민 설계사님", "origPh": "불편한 점이나 개선 의견을 편하게 적어 주세요. (예: 서류 확인할 때마다 전화하는 게 번거로워요)", "orig": "계약 서류 확인할 때마다 고은희 총무님께 전화로 물어봐야 해서 번거로워요. 접수 전에 누락 서류를 미리 짚어주면 좋겠어요.", "jianLine": "형민 설계사님, 불편하신 내용을 지점장님께 전달하기 좋게 정리해 드릴게요. 요청 초안을 확인하시겠어요?", "draft": {"title": "계약 서류 접수 전 누락 확인 사전 점검 요청", "fields": [["배경·불편", "접수 전 서류 확인을 전화·메신저로 반복 문의"], ["원하는 결과", "접수 전 누락·보완 서류를 지안이 사전 점검해 안내"], ["업무 종류", "불편·개선제안"], ["긴급도", "보통"], ["요청자", "형민 설계사님"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (검토)"]]}, "draftNote": "지안이 원문 의미를 <b>왜곡하거나 확정하지 않고</b> 정리한 초안입니다. <b>수정 가능한 창</b>에서 요청자가 고친 뒤 전송합니다. 초안은 <b>계정별 임시 상태</b>이며 접속을 끊으면 사라집니다(전송 전 서버 저장 없음).", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "내 요청서", "v": "제출됨", "cls": "wait", "d": "전송 확인 완료 — 지점장님 검토 대기 (접수 ≠ 승인)"}, {"k": "지점장님 검토", "v": "검토 중", "cls": "wait", "d": "승인·반려·보류·추가질문 중 하나로 결정됩니다."}], "result": {"who": "최윤경 지점장님 → 형민 설계사님", "st": "검토 대기", "cls": "wait", "d": "아직 검토 결과가 없습니다. 승인되어도 운영팀 전달·개발 완료와는 다릅니다."}}}, "ge": {"partners": ["형민 설계사님", "지점장님"], "quick": [{"t": "접수 확인 회신", "s": "형민 설계사님께 접수 결과를 회신합니다."}, {"t": "보완 서류 요청", "s": "누락·불일치 서류를 요청합니다."}, {"t": "완료 보고", "s": "처리 결과를 지점장님께 보고합니다."}], "scope": "고은희 총무님은 <b>배정된 총무업무</b>만 주고받습니다. 전체 고객DB·타인 계약원장은 이 화면에 없습니다.", "attach": [{"n": "고객A_접수완료_확인서.pdf", "t": "PDF", "s": "180KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}, {"n": "고객A_접수확인_결과.pdf", "t": "PDF", "s": "240KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-01", "from": "형민 설계사님", "to": "고은희 총무님", "subject": "고객 A 계약 서류 확인 요청", "body": "고객 A 계약 서류 3종 접수 전 확인 부탁드립니다. 누락 여부와 보완 필요 서류를 알려 주세요.", "time": "10-15 09:12", "status": "확인 대기", "stcls": "wait", "files": [{"n": "고객A_계약서류_3종.pdf", "t": "PDF", "s": "1.2MB", "to": "고은희 총무님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "고은희 총무님", "body": "서류 3종 확인 완료했습니다. 접수 결과와 확인서를 첨부해 회신합니다.", "files": [{"n": "고객A_접수확인_결과.pdf", "t": "PDF", "s": "240KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}], "status": "회신 완료"}}, {"id": "TH-03", "from": "지점장님", "to": "고은희 총무님", "subject": "이달 지점 자료 접수 정리 요청", "body": "이달 접수 서류 정리 후 완료 보고 부탁드립니다.", "time": "10-15 08:05", "status": "처리중", "stcls": "", "files": [{"n": "이달_접수목록.pdf", "t": "PDF", "s": "680KB", "to": "고은희 총무님", "st": "전송됨", "stcls": "ok"}]}], "out": [{"id": "TH-05", "from": "고은희 총무님", "to": "형민 설계사님", "subject": "고객 A 서류 접수 완료 회신", "body": "고객 A 계약 서류 접수 완료했습니다. 결과 첨부합니다.", "time": "10-14 16:20", "status": "회신 완료", "stcls": "ok", "files": [{"n": "고객A_접수완료_확인서.pdf", "t": "PDF", "s": "180KB", "to": "형민 설계사님", "st": "회신됨", "stcls": "ok"}]}], "replyTo": ["고객 A 계약 서류 확인 요청", "이달 지점 자료 접수 정리 요청"], "flow": [{"who": "형민 설계사님 → 고은희 총무님", "st": "회신 완료", "cls": "ok", "d": "서류 확인 요청을 받아 확인 후 결과파일을 회신했습니다."}, {"who": "지점장님 → 고은희 총무님", "st": "처리중", "cls": "", "d": "접수 정리 요청 — 처리 후 완료 보고 예정."}], "inNote": "배정받은 업무의 요청만 표시합니다. 업무에 필요한 최소 정보만 보입니다.", "outNote": "고은희 총무님이 회신·보고한 내역입니다.", "replyNote": "확인 결과와 결과파일을 요청자에게 회신합니다. 자동 발송하지 않습니다.", "arch": [{"t": "10-15 09:12", "j": "고객 A 계약 서류 확인 요청", "p": "형민 설계사님", "s": "확인 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-15 08:05", "j": "이달 지점 자료 접수 정리 요청", "p": "지점장님", "s": "처리중", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 16:20", "j": "고객 A 서류 접수 완료 회신", "p": "형민 설계사님", "s": "회신 완료", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ask", "askBy": "고은희 총무님", "origPh": "총무 업무에서 불편한 점이나 개선 의견을 적어 주세요. (예: 접수 목록을 매번 다시 정리하는 게 번거로워요)", "orig": "접수 서류 목록을 매번 엑셀로 다시 정리하는 게 번거로워요. 목록이 자동으로 정리되면 좋겠어요.", "jianLine": "고은희 총무님, 총무 업무 개선 의견을 정리했습니다. 보내시기 전에 수정하실 수 있어요.", "draft": {"title": "접수 서류 목록 자동 정리 요청", "fields": [["배경·불편", "접수 목록을 매번 수작업으로 다시 정리"], ["원하는 결과", "접수 목록 자동 정리·중복 표시"], ["업무 종류", "개선제안"], ["긴급도", "보통"], ["요청자", "고은희 총무님"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (검토)"]]}, "draftNote": "지안이 원문 의미를 <b>왜곡하거나 확정하지 않고</b> 정리한 초안입니다. <b>수정 가능한 창</b>에서 요청자가 고친 뒤 전송합니다. 초안은 <b>계정별 임시 상태</b>이며 접속을 끊으면 사라집니다(전송 전 서버 저장 없음).", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "내 요청서", "v": "제출됨", "cls": "wait", "d": "전송 확인 완료 — 지점장님 검토 대기"}, {"k": "지점장님 검토", "v": "추가질문", "cls": "wait", "d": "지점장님이 내용 보완을 요청했습니다."}], "result": {"who": "최윤경 지점장님 → 고은희 총무님", "st": "추가질문", "cls": "wait", "d": "예상 사용 빈도·대상 범위를 보완해 다시 회신해 주세요."}}}, "yk": {"partners": ["지점장님"], "quick": [{"t": "협업 답변", "s": "지점장님께 검토 의견을 회신합니다."}, {"t": "자료 확인 요청", "s": "추가 자료를 요청합니다."}], "scope": "육근성 대표님은 <b>본사 협업 요청 수신·답변·진행 확인</b>만 합니다. 보험계약·청구 화면은 이 화면에 없습니다.", "attach": [{"n": "AI초안_본사관련_확인.pdf", "t": "PDF", "s": "150KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}, {"n": "본사_검토의견서.pdf", "t": "PDF", "s": "410KB", "to": "지점장님", "st": "회신됨", "stcls": "ok"}], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-02", "from": "지점장님", "to": "육근성 대표님", "subject": "본사 협업 요청 — 9월 지점 자료 검토", "body": "9월 지점 자료 요약을 검토해 주시고 의견 부탁드립니다.", "time": "10-15 08:40", "status": "답변 대기", "stcls": "wait", "files": [{"n": "9월_지점자료_요약.pdf", "t": "PDF", "s": "3.1MB", "to": "육근성 대표님", "st": "전송됨", "stcls": "ok"}], "reply": {"by": "육근성 대표님", "body": "검토 의견 회신드립니다. 본사 반영 항목 2건을 정리했습니다.", "files": [{"n": "본사_검토의견서.pdf", "t": "PDF", "s": "410KB", "to": "지점장님", "st": "회신됨", "stcls": "ok"}], "status": "답변 완료"}}], "out": [{"id": "TH-07", "from": "육근성 대표님", "to": "지점장님", "subject": "AI 업무대리 초안 확인 요청", "body": "AI 업무대리 초안 중 본사 관련 항목 확인 부탁드립니다. (확인만, 승인 아님)", "time": "10-14 14:10", "status": "확인 요청", "stcls": "wait", "files": [{"n": "AI초안_본사관련_확인.pdf", "t": "PDF", "s": "150KB", "to": "지점장님", "st": "전송됨", "stcls": "ok"}]}], "replyTo": ["본사 협업 요청 — 9월 지점 자료 검토"], "flow": [{"who": "지점장님 → 육근성 대표님", "st": "답변 완료", "cls": "ok", "d": "본사 협업 요청을 받아 검토 의견서를 회신했습니다."}], "inNote": "본인 관련 협업 요청만 표시합니다. 승인 항목은 표시되지 않습니다.", "outNote": "육근성 대표님이 회신한 협업 답변 내역입니다.", "replyNote": "확인·검토 의견을 회신합니다. 승인·반영은 지점장님이 합니다.", "arch": [{"t": "10-15 08:40", "j": "본사 협업 요청 — 9월 지점 자료 검토", "p": "지점장님", "s": "답변 대기", "f": "1건", "a": "보관 위치 미확인 (시연)"}, {"t": "10-14 14:10", "j": "AI 업무대리 초안 확인 요청", "p": "지점장님", "s": "확인 요청", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ask", "askBy": "육근성 대표님", "origPh": "본사 협업에서 불편한 점이나 개선 의견을 적어 주세요. (예: 승인 건인지 확인 건인지 헷갈려요)", "orig": "본사 협업 요청이 오면 어떤 게 승인 건인지 확인만 필요한 건지 헷갈려요. 구분이 표시되면 좋겠어요.", "jianLine": "육근성 대표님, 본사 협업 요청 초안을 만들어 드릴게요. 최종 진행 여부는 지점장님 검토 후 결정됩니다.", "draft": {"title": "본사 협업 요청 유형 구분 표시 요청", "fields": [["배경·불편", "승인 건과 확인 건의 구분이 어려움"], ["원하는 결과", "요청 유형(승인/확인) 라벨 표시"], ["업무 종류", "업무문의·개선제안"], ["긴급도", "낮음"], ["요청자", "육근성 대표님"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (검토)"]]}, "draftNote": "지안이 원문 의미를 <b>왜곡하거나 확정하지 않고</b> 정리한 초안입니다. <b>수정 가능한 창</b>에서 요청자가 고친 뒤 전송합니다. 초안은 <b>계정별 임시 상태</b>이며 접속을 끊으면 사라집니다(전송 전 서버 저장 없음).", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "내 요청서", "v": "제출됨", "cls": "wait", "d": "전송 확인 완료 — 지점장님 검토 대기"}, {"k": "지점장님 검토", "v": "검토 중", "cls": "wait", "d": "최종 진행 여부는 지점장님 검토 후 결정됩니다."}], "result": {"who": "최윤경 지점장님 → 육근성 대표님", "st": "검토 대기", "cls": "wait", "d": "아직 검토 결과가 없습니다."}}}, "sj": {"partners": ["지점장님", "형민 설계사님"], "quick": [{"t": "업무 정리 초안", "s": "요청 업무를 정리한 초안을 만듭니다. (사람 승인 필요)"}, {"t": "답변 초안", "s": "답변 문장 초안을 만듭니다. (사람이 전송)"}], "scope": "박수진 AI는 <b>업무 정리·답변 초안</b>까지만 지원합니다. 사람 대신 실제 전송하거나 승인하지 않습니다.", "attach": [], "statdef": [{"k": "전송 전", "v": "첨부됨", "cls": "", "d": "파일을 골랐지만 아직 보내지 않은 상태입니다."}, {"k": "전송됨", "v": "전송됨", "cls": "ok", "d": "상대에게 전달된 것으로 표시합니다. (시연 표시)"}, {"k": "회신됨", "v": "회신됨", "cls": "ok", "d": "결과파일까지 회신이 완료된 상태입니다."}, {"k": "보관 미확인", "v": "보관 미확인", "cls": "wait", "d": "실제 Drive 저장이 확인되기 전 상태입니다. '보관완료'로 표시하지 않습니다."}], "in": [{"id": "TH-06", "from": "지점장님", "to": "박수진 AI", "subject": "지점 주간 요약 정리 요청", "body": "지점 주간 요약 초안 정리 부탁합니다. (AI 대리 — 사람 승인 필요)", "time": "10-14 15:00", "status": "초안 작성", "stcls": "ai", "files": [{"n": "주간요약_초안.docx", "t": "DOC", "s": "96KB", "to": "지점장님", "st": "초안", "stcls": "ai"}]}], "out": [], "replyTo": ["지점 주간 요약 정리 요청"], "flow": [{"who": "지점장님 → 박수진 AI", "st": "초안 작성", "cls": "ai", "d": "정리 요청을 받아 초안만 작성했습니다. 전송·승인은 사람이 합니다."}], "inNote": "AI에게 온 정리·초안 요청만 표시합니다. 실제 전송·승인은 사람이 합니다.", "outNote": "AI가 만든 초안은 '보낸 업무'가 아니라 <b>사람 승인 대기</b>로 구분합니다.", "replyNote": "AI는 답변 <b>초안</b>만 만듭니다. 실제 회신은 사람이 확인 후 전송합니다.", "arch": [{"t": "10-14 15:00", "j": "지점 주간 요약 정리 요청", "p": "지점장님", "s": "초안 작성", "f": "1건", "a": "보관 위치 미확인 (시연)"}], "archNote": "업무별 대화·서류·처리상태·시간을 한 줄로 확인합니다. <b>실제 Drive 저장이 확인되기 전에는 '보관완료'로 표시하지 않습니다.</b> 현재 보관 위치는 모두 <b>미확인(시연)</b>입니다. 원본 보관·전송은 노아 WORK 담당입니다.", "review": {"kind": "ai", "askBy": "박수진 AI", "origPh": "사람이 정리를 요청한 내용을 붙여넣으면 초안을 만듭니다. (AI는 전송하지 않습니다)", "orig": "지점장님이 요청한 업무 정리 건 — 초안만 작성합니다.", "jianLine": "박수진 AI, 요청 내용을 초안으로 정리했습니다. <b>전송·승인은 사람이</b> 확인 후 진행합니다.", "draft": {"title": "지안 요청서 초안 (AI 정리)", "fields": [["배경·불편", "사람이 입력한 원문을 정리"], ["원하는 결과", "사람이 검토할 초안 문장"], ["업무 종류", "사람 지정"], ["긴급도", "사람 지정"], ["요청자", "사람 (AI 아님)"], ["첨부", "없음"], ["수신자", "최윤경 지점장님 (사람이 전송)"]]}, "draftNote": "AI는 <b>초안·정리까지만</b> 합니다. AI가 사람 대신 전송하거나 승인하지 않습니다. 초안은 <b>사람 승인 대기</b>로 구분합니다.", "boundary": "<b>초안 작성 ≠ 요청 접수 ≠ 지점장 승인 ≠ 운영팀 전달 ≠ 개발 완료</b>를 구분해 표시합니다. 요청자가 전송을 확인하기 전에는 <b>외부로 발송하지 않습니다.</b> 지점장님 승인 전 운영팀에 자동 전송하거나 구현을 약속하지 않습니다.", "usage": "같은 내용이 <b>이미 있는 기능</b>으로 해결되면 지안이 먼저 <b>사용법을 안내</b>하고, 새 개발 제안으로 확대하지 않습니다.", "status": [{"k": "AI 초안", "v": "사람 승인 대기", "cls": "ai", "d": "AI가 만든 초안은 요청 접수가 아닙니다."}, {"k": "전송", "v": "사람이 실행", "cls": "", "d": "전송은 반드시 사람이 확인 후 합니다."}], "result": {"who": "사람 → 지점장님", "st": "사람 처리", "cls": "", "d": "AI는 최종 전송·승인을 대신하지 않습니다."}}}};
 function mresc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function mrTab(id){
   [].forEach.call(document.querySelectorAll('.mr-tab'),function(b){b.classList.toggle('on',b.getAttribute('data-mt')===id);});
@@ -18733,7 +18809,7 @@ window.JD_ROLES=R;
 var CUR='yj';
 function roleFromUrl(){try{var m=(location.search+location.hash).match(/role=(yj|hm|ge|yk|sj)/);return m?m[1]:null;}catch(e){return null;}}
 function applyRole(k){
-  if(window.WORK_BODY)k=WORK_BODY.uid()==='WD26002'?'hm':'yj'; // verified identity owns presentation; URL roles cannot grant access
+  if(window.WORK_BODY)k=WORK_BODY.roleKey(); // verified identity owns presentation; URL roles cannot grant access
   if(!R[k]) return;
   try{if(window.closeJian)window.closeJian();if(window.t12CloseMobileSidebar)window.t12CloseMobileSidebar();}catch(e){}
   CUR=k; var r=R[k];
@@ -18744,7 +18820,7 @@ function applyRole(k){
       var tr=document.querySelector('.topbar .user-role'); if(tr) tr.textContent=window.WORK_BODY&&WORK_BODY.ready()?r.role:'계정 확인 필요';}catch(e){}
   [].forEach.call(document.querySelectorAll('.nav-item[data-nav]'),function(b){
     var n=b.getAttribute('data-nav');
-    var ok=(r.allow.indexOf(n)>=0)&&(!r.deny||r.deny.indexOf(n)<0);
+    var ok=(r.allow.indexOf(n)>=0)&&(!r.deny||r.deny.indexOf(n)<0)&&(!window.WORK_BODY||WORK_BODY.canMenu(n));
     b.style.display=ok?'':'none';
     b.setAttribute('aria-hidden',ok?'false':'true');
   });
@@ -18827,7 +18903,8 @@ window.jdRoleJianClose=function(){var o=document.getElementById('jdRoleJian');va
   if(window.__jdGoMenuGuard) return; window.__jdGoMenuGuard=true;
   var orig=window.goMenu; if(typeof orig!=='function') return;
   window.goMenu=function(name){
-    var actual=WORK_BODY.uid(),key=actual==='WD23000'?'yj':actual==='WD26002'?'hm':null;
+    if(!WORK_BODY.canMenu(name))return false;
+    var actual=WORK_BODY.uid(),key=actual?WORK_BODY.roleKey():null;
     var r=key?R[key]:null;
     if(r&&key!=='yj'){
       var target=name==='customer-detail'?'customer':name;var ok=(r.allow.indexOf(target)>=0)&&(!r.deny||r.deny.indexOf(target)<0);
@@ -18837,7 +18914,7 @@ window.jdRoleJianClose=function(){var o=document.getElementById('jdRoleJian');va
   };
 })();
 var ROLEJIAN={
- 'ge':{greet:'고고은희 총무님, 배정된 총무 업무만 정리했습니다. 접수·보완·결과 회신 순서로 안내합니다.',
+ 'ge':{greet:'고은희 총무님, 배정된 총무 업무만 정리했습니다. 접수·보완·결과 회신 순서로 안내합니다.',
   scope:'전체 고객DB·타인 계약원장·지점장 승인 기능은 안내하지 않습니다.',
   items:[{'t':'오늘 접수할 서류 3건','b':'— 고객 A 계약서류 3종 · 이달 접수목록 · 고객 E 보완 서류'},
    {'t':'보완 확인 필요 2건','b':'— 고객 A 누락 확인, 고객 C 불일치 확인 (오늘 마감)'},
@@ -18864,6 +18941,7 @@ var ROLEJIAN={
   asks:['오늘 정리할 업무 알려줘','초안 만들 것 있어?','사람이 확인할 항목 알려줘']}
 };
 function showView(id,keep){
+  if(window.WORK_BODY&&(!WORK_BODY.ready()||(!WORK_BODY.canMenu(id)&&!(R[WORK_BODY.roleKey()].views||{})[id])))return false;
   [].forEach.call(document.querySelectorAll('.view'),function(v){v.classList.remove('active');});
   var el=document.getElementById('view-'+id);
   if(el) el.classList.add('active');
@@ -18873,6 +18951,7 @@ function showView(id,keep){
   if(!keep){try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}
 }
 function goRole(id){
+  if(window.WORK_BODY&&(!WORK_BODY.ready()||CUR!==WORK_BODY.roleKey()))return false;
   var r=R[CUR], v=r.views&&r.views[id];
   if(!v) return;
   var host=document.querySelector('.content .max')||document.querySelector('.content');
@@ -20056,7 +20135,8 @@ html[data-jd-recovery] #t12MobileQA{display:none!important}
  let loading=false;
  const sourceMenu=window.goMenu;
  window.goMenu=function(name){
-  if((name==='customer'||name==='customer-detail')&&!WORK_BODY.canCustomer()&&!window._UID){wdh_showToast('현재 계정 인증을 먼저 확인하세요.');wdhAuthShow(true);return false;}
+  if(!WORK_BODY.canMenu(name))return false;
+  if((name==='customer'||name==='customer-detail')&&!WORK_BODY.canCustomer()){wdh_showToast('현재 계정 인증을 먼저 확인하세요.');wdhAuthShow(true);return false;}
   if(name==='customer-detail'&&!WORK_BODY.loaded()){wdh_showToast('권한 범위의 고객목록을 먼저 조회하세요.');return false;}
   if(name==='contracts-hub'&&!WORK_BODY.ready()){wdh_showToast('현재 계정 인증을 먼저 확인하세요.');wdhAuthShow(true);return false;}
   const result=sourceMenu.apply(this,arguments);if(result===false)return false;
@@ -20124,6 +20204,89 @@ function boot(){clean();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 setTimeout(clean,700);setTimeout(clean,1600);setTimeout(clean,3000);
 window.MANA_TODAY_FIX={version:'261018',clean:clean};
+})();
+</script>
+<style id="wdj-batch-prep-style">
+.wdj-batch-open{min-height:42px!important;border:1px solid #bca9e3!important;color:#462a7e!important;background:#f7f3ff!important;font-weight:700!important}
+#wdj-batch-dialog{box-sizing:border-box;width:min(940px,96vw);max-height:90dvh;margin:auto;padding:0;border:1px solid #ded5f0;border-radius:18px;box-shadow:0 26px 90px rgba(30,23,55,.24);background:#fcfbff;color:#292338;font-family:inherit}
+#wdj-batch-dialog::backdrop{background:rgba(25,18,45,.52)}
+#wdj-batch-dialog *{box-sizing:border-box}
+#wdj-batch-dialog .wdj-wrap{padding:20px 22px 26px}
+#wdj-batch-dialog .wdj-title{font-size:22px;font-weight:800;margin:0 0 6px}
+#wdj-batch-dialog .wdj-desc{font-size:14px;line-height:1.65;color:#5b5367;margin:0 0 14px}
+#wdj-batch-dialog .wdj-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+#wdj-batch-dialog .wdj-close{background:#fff;border:1px solid #d9cfea;border-radius:9px;min-height:42px;padding:8px 14px;font-size:15px;cursor:pointer}
+#wdj-batch-dialog .wdj-grid{display:grid;grid-template-columns:minmax(250px,1fr) minmax(250px,1fr);gap:12px}
+#wdj-batch-dialog .wdj-card{padding:14px 15px;border-radius:13px;border:1px solid #e3ddec;background:#fff;min-width:0}
+#wdj-batch-dialog h3{font-size:17px;margin:0 0 8px;color:#30264c}
+#wdj-batch-dialog .wdj-note{font-size:13px;color:#675d77;line-height:1.5;margin:6px 0}
+#wdj-batch-dialog input[type=search],#wdj-batch-dialog textarea{width:100%;padding:10px;border:1px solid #ccc1dd;border-radius:8px;font-size:15px;line-height:1.5;background:#fff;color:#292338}
+#wdj-batch-dialog textarea{min-height:75px;resize:vertical}
+#wdj-batch-dialog .wdj-list{max-height:200px;overflow:auto;border:1px solid #eee9f6;border-radius:9px;margin-top:8px;padding:4px}
+#wdj-batch-dialog .wdj-item{display:flex;align-items:flex-start;gap:9px;padding:9px 7px;border-bottom:1px solid #f0edf5;font-size:15px;line-height:1.4}
+#wdj-batch-dialog .wdj-item:last-child{border-bottom:0}
+#wdj-batch-dialog .wdj-item input{flex:0 0 auto;margin-top:3px;min-width:17px;min-height:17px}
+#wdj-batch-dialog .wdj-item small{color:#6c637b;font-size:12px}
+#wdj-batch-dialog .wdj-insurers{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow:auto}
+#wdj-batch-dialog .wdj-insurers label{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid #e0d6ee;border-radius:9px;font-size:13px;background:#faf8ff}
+#wdj-batch-dialog button.wdj-primary{background:#563397;color:#fff;border:1px solid #563397;border-radius:10px;font-weight:700;padding:10px 17px;min-height:44px;cursor:pointer;font-size:15px}
+#wdj-batch-dialog .wdj-table-wrap{max-height:220px;overflow:auto;border:1px solid #e5dfee;border-radius:10px}
+#wdj-batch-dialog table{width:100%;border-collapse:collapse;font-size:14px}
+#wdj-batch-dialog th,#wdj-batch-dialog td{text-align:left;padding:10px 8px;border-bottom:1px solid #eee9f5;vertical-align:middle;overflow-wrap:anywhere}
+#wdj-batch-dialog th{position:sticky;top:0;background:#f4f0fa;font-weight:700}
+#wdj-batch-dialog .wdj-table-action{border:1px solid #bfa9df;background:#f9f6ff;color:#432b73;border-radius:8px;padding:7px 9px;font-size:13px;min-height:36px;cursor:pointer}
+#wdj-batch-dialog .wdj-table-action:disabled{opacity:.7;cursor:default}
+#wdj-batch-dialog .wdj-status{min-height:21px;font-size:14px;color:#573b82;margin:8px 0}
+#wdj-batch-dialog .wdj-rowcount{font-weight:700;font-size:15px}
+@media(max-width:700px){#wdj-batch-dialog .wdj-wrap{padding:14px}#wdj-batch-dialog .wdj-grid{grid-template-columns:1fr}#wdj-batch-dialog .wdj-title{font-size:19px}#wdj-batch-dialog th,#wdj-batch-dialog td{padding:8px 5px;font-size:13px}}
+</style>
+<script id="wdj-batch-prep-runtime">
+(function(){'use strict';
+  if(window.WDJ_BATCH_PREP)return;
+  let boundUid='',selected=new Map(),chosenInsurers=new Set(),intake=[],requests=[];
+  const X=id=>document.getElementById(id),txt=(s)=>String(s??''),kCustomer=id=>'customer:'+id,kProspect=id=>'prospect:'+id;
+  function esc(s){return txt(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function owner(){try{return txt(WDH_DATA.currentUid()||'');}catch(e){return '';}}
+  function ready(){try{return !!(owner()&&WORK_BODY.canCustomer()&&WORK_BODY.loaded()&&WDH_DATA.isConnected());}catch(e){return false;}}
+  function customers(){if(!ready()||typeof getCusts!=='function')return [];try{return (getCusts()||[]).filter(c=>c&&c.id!=null);}catch(e){return [];}}
+  function prospects(){try{return ready()&&window.T12_PROSPECTS?.batchList?T12_PROSPECTS.batchList():[];}catch(e){return [];}}
+  function notify(t){X('wdj-batch-status').textContent=t;}
+  let boundStamp=-1;
+  function reset(){boundUid='';boundStamp=-1;selected.clear();chosenInsurers.clear();requests=[];intake=[];
+    ['wdj-batch-intake','wdj-batch-search'].forEach(id=>{if(X(id))X(id).value='';});
+    ['wdj-batch-output','wdj-batch-clients','wdj-batch-insurers'].forEach(id=>X(id)?.replaceChildren());
+    ['wdj-batch-total','wdj-batch-count','wdj-batch-intakecount','wdj-batch-status'].forEach(id=>{if(X(id))X(id).textContent='';});
+    if(X('wdj-batch-dialog')?.open)X('wdj-batch-dialog').close();
+  }
+  function checkOwner(){const u=owner(),stamp=WORK_BODY.stamp();if(u!==boundUid||stamp!==boundStamp||!ready()){reset();boundUid=u;boundStamp=stamp;}return ready();}
+  function makeDialog(){if(X('wdj-batch-dialog'))return;
+    const d=document.createElement('dialog');d.id='wdj-batch-dialog';d.setAttribute('aria-label','일괄 설계의뢰 준비');
+    d.innerHTML=`<div class="wdj-wrap"><div class="wdj-tools"><h2 class="wdj-title">일괄 고객등록 · 설계의뢰 준비</h2><button id="wdj-batch-close" type="button" class="wdj-close">닫기</button></div><p class="wdj-desc">기존 고객·가망고객·전화 접수를 한 판에서 준비합니다. <b>실제 등록/전송은 일어나지 않으며, 임시 준비 내용은 새로고침하면 사라집니다.</b> 인증된 고객별로 기존 설계의뢰를 열어 별도 최종 확인합니다.</p>
+    <div class="wdj-grid"><section class="wdj-card"><h3>1. 등록된 고객·가망고객</h3><input id="wdj-batch-search" type="search" placeholder="현재 계정 내 고객명 검색" aria-label="고객명 검색"><div id="wdj-batch-clients" class="wdj-list" aria-live="polite"></div><p id="wdj-batch-count" class="wdj-note">로그인·조회 후 표시</p></section>
+    <section class="wdj-card"><h3>2. 전화로 들어온 신규 의뢰 취합</h3><p class="wdj-note">한 줄에 이름 | 전화번호 | 요청 목적 순서. 개인정보 이용 목적과 동의 확인 후에만 작성하세요. 서버에 저장하지 않습니다.</p><textarea id="wdj-batch-intake" placeholder="예: 가상고객 | 01000000000 | 암보장 검토 (예시는 입력하지 않아도 됩니다)" spellcheck="false"></textarea><div class="wdj-tools"><button id="wdj-batch-parse" type="button" class="wdj-close">내용 확인·임시 추가</button><span id="wdj-batch-intakecount" class="wdj-note">0명 임시</span></div></section></div>
+    <section class="wdj-card" style="margin-top:12px"><h3>3. 의뢰할 보험사 선택</h3><div id="wdj-batch-insurers" class="wdj-insurers"></div><p class="wdj-note">보험사 목록은 기존 지안 설계의뢰 화면을 재사용합니다. 실제 상품·접수 요건은 원수사 또는 설계담당자가 다시 확인하세요.</p></section>
+    <section class="wdj-card" style="margin-top:12px"><div class="wdj-tools"><h3 style="margin:0">4. 고객 × 보험사 의뢰 준비표</h3><button id="wdj-batch-build" type="button" class="wdj-primary">의뢰 준비표 만들기</button></div><p id="wdj-batch-status" class="wdj-status" role="status">고객과 보험사를 선택해 주세요.</p><p id="wdj-batch-total" class="wdj-rowcount"></p><div id="wdj-batch-output" class="wdj-table-wrap" aria-live="polite"></div><p class="wdj-note">기존 고객은 '설계의뢰 열기'에서 보험사별 조건·중복·고지사항을 검토합니다. 가망/신규는 고객등록 완료 후 의뢰할 수 있습니다. 대량 일괄 발송/개인정보 외부 전송 없음.</p></section></div>`;
+    document.body.appendChild(d);
+    d.addEventListener('close',reset);
+    X('wdj-batch-close').addEventListener('click',()=>d.close());
+    X('wdj-batch-search').addEventListener('input',renderCustomers);
+    X('wdj-batch-clients').addEventListener('change',e=>{const v=e.target.closest('input[data-client]');if(!v||!checkOwner())return;if(v.checked)selected.set(v.dataset.client,{kind:v.dataset.kind,id:v.dataset.id,name:v.dataset.name,customerId:v.dataset.cid||''});else selected.delete(v.dataset.client);X('wdj-batch-count').textContent=selected.size+'명 선택됨';});
+    X('wdj-batch-insurers').addEventListener('change',e=>{const v=e.target.closest('input[data-insurer]');if(!v||!checkOwner())return;v.checked?chosenInsurers.add(v.value):chosenInsurers.delete(v.value);});
+    X('wdj-batch-parse').addEventListener('click',parseIntake);
+    X('wdj-batch-build').addEventListener('click',build);
+    X('wdj-batch-output').addEventListener('click',e=>{const v=e.target.closest('button[data-customer-id]');if(v)openExisting(v.dataset.customerId);});
+  }
+  function renderCustomers(){const q=X('wdj-batch-search').value.trim();const cs=customers().map(c=>({key:kCustomer(c.id),kind:'customer',id:txt(c.id),name:txt(c.name||'이름 미기록'),source:'등록 고객',cid:''}));const ps=prospects().map(p=>({key:kProspect(p.id),kind:'prospect',id:txt(p.id),name:txt(p.name||'이름 미기록'),source:'가망고객 · '+txt(p.status||'미기록'),cid:txt(p.customer_id||'')}));const all=cs.concat(ps),show=all.filter(v=>!q||v.name.includes(q)).slice(0,200);X('wdj-batch-clients').innerHTML=show.map(v=>`<label class="wdj-item"><input type="checkbox" data-client="${esc(v.key)}" data-kind="${esc(v.kind)}" data-id="${esc(v.id)}" data-name="${esc(v.name)}" data-cid="${esc(v.cid)}" ${selected.has(v.key)?'checked':''}><span><b>${esc(v.name)}</b> <small>${esc(v.source)}</small></span></label>`).join('')||'<p class="wdj-note">현재 조회된 고객이 없어요. 로그인·고객목록·가망고객 조회 상태를 확인하세요.</p>';X('wdj-batch-count').textContent=`${all.length}명 중 ${show.length}명 표시 · ${selected.size}명 선택`;
+  }
+  function renderInsurers(){let list=[];try{list=[...WDH_DESIGN_NONLIFE,...WDH_DESIGN_LIFE]}catch(e){};X('wdj-batch-insurers').innerHTML=list.map(c=>`<label><input type="checkbox" data-insurer value="${esc(c)}" ${chosenInsurers.has(c)?'checked':''}>${esc(c)}</label>`).join('')||'<p class="wdj-note">기존 지안 보험사 목록을 불러오지 못했습니다. 임의로 이름을 만들어 넣지 않았습니다.</p>';}
+  function parseIntake(){if(!checkOwner())return notify('현재 로그인 확인 전입니다. 실제 고객을 다루지 않습니다.');const lines=X('wdj-batch-intake').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(lines.length>80)return notify('한 번에 80줄 이하로 나누어 확인해 주세요.');const out=[],errors=[];const phones=new Set();const existing=customers().map(c=>txt(c.phone||'').replace(/\D/g,''));for(let i=0;i<lines.length;i++){const f=lines[i].split('|').map(x=>x.trim());const pn=txt(f[1]||'').replace(/\D/g,'');if(f.length!==3||!f[0]||!/^(\d{9,15})$/.test(pn)||!f[2]){errors.push(i+1+'행 형식 확인');continue}if(phones.has(pn)||existing.includes(pn)){errors.push(i+1+'행 기존·중복 전화번호 확인');continue;}phones.add(pn);out.push({kind:'intake',id:'call-'+i,name:f[0],phone:pn,purpose:f[2]});}intake=out;X('wdj-batch-intakecount').textContent=intake.length+'명 임시';notify(errors.length?`입력 ${intake.length}명 임시 준비 · ${errors.join(', ')}`:`${intake.length}명 임시 등록 준비. 실제 고객 DB 저장은 하지 않았습니다.`);}
+  function build(){if(!checkOwner())return notify('로그인·고객 원본 연결이 확인되지 않았습니다.');const names=[...chosenInsurers];if(!names.length)return notify('보험사를 먼저 선택하세요.');const cs=customers();const chosen=[...selected.values(),...intake];if(!chosen.length)return notify('고객 또는 전화 의뢰를 먼저 취합하세요.');if(chosen.length*names.length>500)return notify('500건을 초과했습니다. 검수 가능한 묶음으로 나누어 주세요.');requests=[];const pairs=new Set();for(const c of chosen){const cust=c.kind==='customer'?cs.find(x=>txt(x.id)===txt(c.id)):c.kind==='prospect'&&c.customerId?cs.find(x=>txt(x.id)===c.customerId):null;const state=cust?'확인 후 의뢰 가능':'고객등록·동의 확인 필요';for(const company of names){const key=JSON.stringify([cust?'customer:'+txt(cust.id):c.kind+':'+txt(c.id),company]);if(pairs.has(key))continue;pairs.add(key);requests.push({kind:c.kind,name:c.name,company,customerId:cust?txt(cust.id):'',state});}}const readyCount=requests.filter(x=>x.customerId).length;X('wdj-batch-total').textContent=`선택 ${chosen.length}항목 · 보험사 ${names.length}곳 · 중복 제외 ${requests.length}건 의뢰 준비 · ${readyCount}건 고객연결됨`;
+    const table=document.createElement('table');const head=document.createElement('thead');head.innerHTML='<tr><th>고객</th><th>보험사</th><th>상태</th><th>다음 행동</th></tr>';table.appendChild(head);const body=document.createElement('tbody');requests.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(r.name)}</td><td>${esc(r.company)}</td><td>${esc(r.state)}</td><td>${r.customerId?`<button class="wdj-table-action" type="button" data-customer-id="${esc(r.customerId)}">설계의뢰 열기</button>`:'<button class="wdj-table-action" type="button" disabled>등록 후 의뢰</button>'}</td>`;body.appendChild(tr);});table.appendChild(body);X('wdj-batch-output').replaceChildren(table);notify('임시 의뢰표 준비. 보험사 접수·DB 등록·실제 계약 반영 0건.');}
+  function openExisting(id){if(!checkOwner())return notify('계정 연결을 다시 확인하세요.');const c=customers().find(v=>txt(v.id)===id);if(!c)return notify('선택한 기존 고객을 재조회할 수 없습니다.');const names=requests.filter(r=>r.customerId===id).map(r=>r.company);const unique=[...new Set(names)];X('wdj-batch-dialog').close();try{wdh_openDesign(c.id);if(typeof t12QuickOpen==='function')t12QuickOpen(c,{names:unique,narrative:''});else if(typeof window.t12QuickOpen==='function')window.t12QuickOpen(c,{names:unique,narrative:''});}catch(err){if(typeof wdh_showToast==='function')wdh_showToast('기존 설계의뢰 연결 확인이 필요합니다.');}}
+  function open(){makeDialog();if(!checkOwner()){notify('현재 계정의 고객조회 권한을 먼저 확인하세요.');return false;}renderCustomers();renderInsurers();X('wdj-batch-dialog').showModal();X('wdj-batch-search').focus();}
+  function mount(){const a=X('view-prospects')?.querySelector('.greet-row');const b=X('t12-design')?.querySelector('.t12-heading');[[a,'가망고객 일괄 설계의뢰'],[b,'여러 고객 설계의뢰']].forEach(([host,label])=>{if(!host||host.querySelector('.wdj-batch-open'))return;const btn=document.createElement('button');btn.className='tiny-btn wdj-batch-open';btn.type='button';btn.textContent=label;btn.addEventListener('click',open);host.appendChild(btn);});}
+  window.WDJ_BATCH_PREP={open,mount,reset};window.addEventListener('wd:auth-reset',reset);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+  window.addEventListener('pagehide',reset);
 })();
 </script>
 </body>
