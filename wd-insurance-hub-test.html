@@ -138,8 +138,24 @@
   const personalAllowed=canCustomer()&&primary&&ownScope&&!isWork&&
     (readable.has(table)||(table==='wd_partners_hub_system_accounts'&&record.uid==='WD26002'&&url.searchParams.getAll('select').length===1&&url.searchParams.get('select')==='uid,company_type,company_name,carrier_code'))&&
     (table!=='wd_partners_customers'||readDepth>0);
-  const ok=ready()&&method==='GET'&&(isActor?actorAllowed:isWork?workAllowed:personalAllowed);
-   if(!ok)throw Error('비운영 검수: 실인증·본인 uid 지정 읽기만 허용하며 저장/타계정 조회는 차단');
+  /* 261021 저장복구 후보: 읽기 판정(readOk)은 기존 바이트 그대로 두고 쓰기 판정만 아래에 추가한다. */
+  const readOk=ready()&&method==='GET'&&(isActor?actorAllowed:isWork?workAllowed:personalAllowed);
+  const wTables=new Set(['wd_partners_customers','wd_partners_contracts','wd_partners_prospects','wd_partners_consultations','wd_partners_claim_records','wd_partners_communications','wd_partners_design_requests','wd_partners_todos']);
+  const wBody=()=>{try{const b=typeof init?.body==='string'?JSON.parse(init.body):null;return Array.isArray(b)?b:(b&&typeof b==='object'?[b]:[]);}catch(_){return null;}};
+  const wRows=()=>{const r=method==='POST'?wBody():null;return r||[];};
+  const wOwnUid=()=>{const r=wRows();return r.length>0&&r.every(x=>x&&String(x.uid)===String(record?.uid));};
+  const wNoForeignUid=()=>{const r=method==='POST'?wBody():[];return !r||r.every(x=>!x||x.uid==null||String(x.uid)===String(record?.uid));};
+  // 개인 고객데이터 쓰기: 본인 프로젝트·본인 토큰·본인 uid 행만. 계정 간 격리는 기존 GET 판정과 동일 기준.
+  const personalWrite=ready()&&primary&&!isWork&&!isActor&&canCustomer()&&wTables.has(table)&&
+    ((method==='POST'&&wOwnUid())||(method==='PATCH'&&ownScope&&wNoForeignUid()));
+  // 업무함 쓰기: 지점 공용테이블(uid=WD23000) + 요청자=본인 + (대표는 전체 / 지점장·총무는 본인 배정건만)
+  const wWorkRows=()=>{const r=method==='POST'?wBody():[];return r||[];};
+  const workWrite=ready()&&['WD23000','WD26002','WD26003'].includes(record.uid)&&workAuth&&url.origin===SUPABASE_CONFIG_BY_UID.WD23000.url&&
+    ((method==='POST'&&wWorkRows().length>0&&wWorkRows().every(x=>x&&String(x.uid)==='WD23000'&&String(x.requester_uid)===String(record.uid)&&(record.uid==='WD23000'||String(x.assignee_auth_id)===String(workActorId))))||
+     (method==='PATCH'&&workAllowed));
+  const writeOk=personalWrite||workWrite;
+  const ok=readOk||writeOk;
+   if(!ok)throw Error('비운영 검수: 실인증·본인 uid 지정 읽기와 허용된 본인 저장만 통과하며 타계정 조회·권한밖 저장은 차단');
    const ticket=epoch,personalToken=record.token,sharedToken=record.shared?.token;
    const assertResponse=()=>{if(ticket!==epoch||!ready()||personalToken!==record.token||sharedToken!==record.shared?.token)throw Error('계정이 변경되어 이전 응답을 폐기했습니다.');};
    const res=await nativeFetch(input,init);assertResponse();
