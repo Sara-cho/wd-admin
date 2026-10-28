@@ -1608,9 +1608,10 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
             <button type="button" class="wdhq-system-map-btn route" onclick="wdhqRequestDataCenterMapRefresh()">실시간 조회</button>
             <button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">원본지도</button>
             <button type="button" class="wdhq-system-map-btn work" onclick="wdhqOpenAccountCenter()">계정관리</button>
+            <button type="button" class="wdhq-system-map-btn" data-wdhq-north-star-open onclick="closeSetup();WDHQNorthStar.open()">WD WAVE 방향</button>
           </div>
         </div>
-        <p class="wdhq-map-source-note">저장 안내 = 기존 정적 정보 · 원본 조회 = 데이터센터에서 읽은 안내. 화면 버튼은 바로가기이며 로그인·DB·Google 연결 성공을 뜻하지 않습니다.</p>
+        <p class="wdhq-map-source-note">운영 메뉴 대조: 2026-10-28 · TEST 확인값. 현재 본진 메뉴의 운영공간만 표시하며 과거·미확인 항목은 자동 추가하지 않습니다.<br>저장 안내 = 기존 정적 정보 · 원본 조회 = 데이터센터에서 읽은 안내. 바로가기는 로그인·DB·Google 연결 성공을 뜻하지 않습니다.</p>
         <div class="wdhq-system-card-grid" id="wdhq-space-connection-rows" aria-live="polite"></div>
       </section>
 
@@ -2343,7 +2344,8 @@ function wdhqConnectionProjects(projects){
     return {...source[originalIndex],originalIndex};
   };
   const selected=[
-    take('hq'),take('house'),take('insurance'),take('brandingBiz'),take('lecture'),take('work'),take('creation'),take(null,project=>String(project.name||'').includes('연구실'))
+    // DEC-011 + current HQ menus: archived assets must not become operating centers.
+    take('hq'),take('house'),take('insurance'),take('brandingBiz'),take('lecture'),take('work')
   ].filter(Boolean);
   return selected.map(project=>{
     if(project.systemKey==='creation')return {...project,name:'제작·브랜드센터',role:'제작 · 콘텐츠 · 품질검수 · 브랜드자산'};
@@ -4547,7 +4549,7 @@ if(new URLSearchParams(location.search).get('wdhqQa')==='1'){
   function supabaseText(row){var text=String(row[6]||''),ref=text.match(/project ref:\s*([a-z0-9]+)/i);if(!ref)return 'Supabase 근거 미확정';var name=(text.slice(Math.max(0,ref.index-80),ref.index).split('\n').pop()||'').replace(/^\[[^\]]+\]\s*/,'').trim();return (name?name+' · ':'')+'project ref: '+ref[1];}
   function googleConnectionFor(project,rows){var hub=rows.find(function(row){return normalize(row[0]).indexOf('google공통연결허브')>-1;});if(!hub)return{status:'확인 필요',apis:'데이터센터 근거 미확정',detail:''};var target=normalize(project&&project.name),line=String(hub[6]||'').split('\n').find(function(value){var parts=value.split('|');return parts.length>=3&&normalize(parts[0])===target;});if(!line)return{status:'확인 필요',apis:'데이터센터 근거 미확정',detail:''};var parts=line.split('|').map(function(value){return value.trim();});return{status:parts[1]||'확인 필요',apis:parts[2]||'확인 필요',detail:parts.slice(3).join(' · ')};}
   function googleCells(connection){var tone=connection.status==='연결 완료'?'ok':'check';return '<td class="wdhq-system-live-cell"><span class="wdhq-connection-status '+tone+'">'+esc(connection.status)+'</span><small>'+esc(connection.detail)+'</small></td><td class="wdhq-system-live-cell">'+esc(connection.apis)+'</td>';}
-  function routeButton(project,index,row){var url=firstOperatingUrl(row);if(url)return '<a class="wdhq-system-map-btn route" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">운영화면 열기</a>';if(project&&project.centerUrl)return '<button type="button" class="wdhq-system-map-btn route" onclick="wdhqOpenSystemCenter('+index+')">운영화면 열기</button>';return '<span class="wdhq-system-map-muted">운영화면 미확정</span>';}
+  function routeButton(project,index,row){/* Source-sheet history must not override the current HQ route. */if(project&&project.centerUrl)return '<button type="button" class="wdhq-system-map-btn route" onclick="wdhqOpenSystemCenter('+index+')">운영화면 열기</button>';return '<span class="wdhq-system-map-muted">운영화면 미확정</span>';}
   function render(values){var rows=(values||[]).slice(2).filter(function(row){return row&&row[0];});var projects=wdhqConnectionProjects(Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[]),body=document.getElementById('wdhq-space-connection-rows');if(!body)return;body.innerHTML=projects.length?projects.map(function(project){var row=sourceRowFor(project,rows);if(!row)return wdhqRenderConnectionCard(project,{status:'확인필요',drive:'데이터센터 대응 행 미확정',github:'근거 미확정',supabase:'근거 미확정',routeHtml:routeButton(project,project.originalIndex,[])});return wdhqRenderConnectionCard(project,{status:row[3]||'확인필요',drive:driveText(row),github:githubText(row),supabase:supabaseText(row),routeHtml:routeButton(project,project.originalIndex,row)});}).join(''):'<div class="wdhq-system-card-empty">연결 공간을 불러오지 못했습니다. 원본지도에서 확인해 주세요.</div>';}
   function ensureGoogleSdk(){if(window.google&&google.accounts&&google.accounts.oauth2)return Promise.resolve();return new Promise(function(resolve,reject){var existing=document.querySelector('script[src*="accounts.google.com/gsi/client"]');function ready(){resolve();}if(existing){existing.addEventListener('load',ready,{once:true});existing.addEventListener('error',reject,{once:true});setTimeout(function(){if(window.google&&google.accounts)resolve();},300);return;}var script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;script.defer=true;script.onload=ready;script.onerror=reject;document.head.appendChild(script);});}
   function requestToken(){return new Promise(function(resolve,reject){if(token&&Date.now()<expiresAt-30000){resolve(token);return;}if(!(window.google&&google.accounts&&google.accounts.oauth2)){reject(new Error('Google 로그인 기능을 불러오지 못했습니다.'));return;}var tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SHEETS_SCOPE,hint:ACCOUNT,callback:function(response){if(!response||response.error||!response.access_token){reject(new Error('Google Sheets 읽기 권한을 확인하지 못했습니다.'));return;}token=response.access_token;expiresAt=Date.now()+Number(response.expires_in||3600)*1000;resolve(token);},error_callback:function(){reject(new Error('Google Sheets 읽기 권한 연결이 중단되었습니다.'));}});tokenClient.requestAccessToken({prompt:''});});}
@@ -6092,6 +6094,8 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 <style id="wdhq-map-after-261028">
 /* TEST only: keep floating tools intact underneath the map's modal layer. */
 #setupModal{z-index:2147483300}
+/* Preserve the existing direction view against the later home-only hide rule. */
+body.wdhq-mockup-board.wdhq-north-star-open .content>#wdhq-north-star-view{display:block!important}
 body:has(#setupModal.show){overflow:hidden}
 #setupModal .wdhq-setup-modal{height:92vh;height:92dvh;max-height:92vh;max-height:92dvh}
 #setupModal .wdhq-setup-tab{min-height:44px}
