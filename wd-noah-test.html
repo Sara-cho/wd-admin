@@ -1253,6 +1253,10 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
         </button>
       </div>
     </header>
+    <nav class="wdhq-map-mobile-shortcuts" aria-label="본진 기존 도구 바로가기">
+      <button type="button" onclick="openSetup()">시스템 연결지도</button>
+      <button type="button" onclick="wdhqOpenRepresentativeTests()">대표 TEST작업실</button>
+    </nav>
 
     <div class="content">
       <div class="head">
@@ -1606,6 +1610,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
             <button type="button" class="wdhq-system-map-btn work" onclick="wdhqOpenAccountCenter()">계정관리</button>
           </div>
         </div>
+        <p class="wdhq-map-source-note">저장 안내 = 기존 정적 정보 · 원본 조회 = 데이터센터에서 읽은 안내. 화면 버튼은 바로가기이며 로그인·DB·Google 연결 성공을 뜻하지 않습니다.</p>
         <div class="wdhq-system-card-grid" id="wdhq-space-connection-rows" aria-live="polite"></div>
       </section>
 
@@ -2364,13 +2369,12 @@ function wdhqSystemCardIcon(key,name){
 }
 function wdhqRenderConnectionCard(project,detail={}){
   const key=project.systemKey||'research';
-  const defaults={hq:'운영중',house:'확인필요',insurance:'확인필요',brandingBiz:'운영중',lecture:'운영중',work:'확인필요',creation:'운영중',research:'확인필요'};
-  const rawStatus=String(detail.status||defaults[key]||'확인필요');
-  const isOk=/운영|정상|유지|연결 완료/.test(rawStatus)&&!/확인|미연결|오류|실패/.test(rawStatus);
-  const state=isOk?'운영중':'확인필요';
+  // A saved route or a source row is not a successful connection health check.
+  const state=detail.status?'원본 조회':'저장 안내';
+  const isOk=false;
   const route=detail.routeHtml||(project.centerUrl?`<button type="button" class="wdhq-system-map-btn route" onclick="wdhqOpenSystemCenter(${project.originalIndex})">운영화면 열기</button>`:'<span class="wdhq-system-map-muted">운영화면 미확정</span>');
   const tone=key==='house'||key==='lecture'||key==='creation'||key==='research'?'purple':key==='work'?'coral':'';
-  return `<article class="wdhq-system-card"><header class="wdhq-system-card-head"><span class="wdhq-system-card-icon ${tone}">${wdhqSystemCardIcon(key,project.name)}</span><div class="wdhq-system-card-title"><b>${wdhqEscape(project.name)}</b><small>${wdhqEscape(project.role||'운영공간')}</small></div><span class="wdhq-system-card-state ${isOk?'':'check'}">${state}</span></header><div class="wdhq-system-card-meta"><div class="wdhq-system-card-cell"><label>운영화면</label>${route}</div><div class="wdhq-system-card-cell"><label>Drive</label><span title="${wdhqEscape(detail.drive||'연결정보 확인 중')}">${wdhqEscape(detail.drive||'연결정보 확인 중')}</span></div><div class="wdhq-system-card-cell"><label>GitHub</label><span title="${wdhqEscape(detail.github||'근거 확인 중')}">${wdhqEscape(detail.github||'근거 확인 중')}</span></div><div class="wdhq-system-card-cell"><label>Supabase</label><span title="${wdhqEscape(detail.supabase||'근거 확인 중')}">${wdhqEscape(detail.supabase||'근거 확인 중')}</span></div></div></article>`;
+  return `<article class="wdhq-system-card"><header class="wdhq-system-card-head"><span class="wdhq-system-card-icon ${tone}">${wdhqSystemCardIcon(key,project.name)}</span><div class="wdhq-system-card-title"><b>${wdhqEscape(project.name)}</b><small>${wdhqEscape(project.role||'운영공간')}</small></div><span class="wdhq-system-card-state ${isOk?'':'check'}" title="${wdhqEscape(detail.status||'실시간 미조회')}">${state}</span></header><div class="wdhq-system-card-meta"><div class="wdhq-system-card-cell"><label>운영화면</label>${route}</div><div class="wdhq-system-card-cell"><label>Drive</label><span title="${wdhqEscape(detail.drive||'미조회 · 원본 확인 필요')}">${wdhqEscape(detail.drive||'미조회 · 원본 확인 필요')}</span></div><div class="wdhq-system-card-cell"><label>GitHub</label><span title="${wdhqEscape(detail.github||'미조회 · 원본 확인 필요')}">${wdhqEscape(detail.github||'미조회 · 원본 확인 필요')}</span></div><div class="wdhq-system-card-cell"><label>Supabase</label><span title="${wdhqEscape(detail.supabase||'미조회 · 원본 확인 필요')}">${wdhqEscape(detail.supabase||'미조회 · 원본 확인 필요')}</span></div></div></article>`;
 }
 function renderSetup(){
   const projects=Array.isArray(window.WDHQ_SYSTEM_PROJECTS)?window.WDHQ_SYSTEM_PROJECTS:[];
@@ -2410,7 +2414,7 @@ function renderSetup(){
     ['lecture_center.html','AI 강의센터','AI 강의 업무 화면'],
     ['sara-house.html','사라의 집','개인 삶 · 기록 · 말씀 공간'],
     ['wd-production-center.html','WD 제작센터','제작센터 독립 화면 · 기존 저장 · Supabase 연결 유지'],
-    ['지점장님 확인 필요','WD 데이터센터','독립 원본 HTML 확인 후 연결'],
+    ['중앙 Google Sheet','WD 데이터센터','기존 원본지도 · 원본 확인 버튼으로 열기'],
     ['CNAME','운영주소','운영주소 연결 안내']
   ];
   const spaceBody=document.getElementById('wdhq-space-connection-rows');
@@ -2428,7 +2432,7 @@ function renderSetup(){
   if(githubBody)githubBody.innerHTML=githubRows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><button type="button" class="wdhq-system-map-btn" onclick="wdhqOpenDataCenterMap()">🗄 원본 확인</button></td></tr>`).join('');
 }
 function wdhqOpenDataCenterMap(){
-  const target=String(window.WDHQ_DATA_CENTER_URL||'').trim();
+  const target='https://docs.google.com/spreadsheets/d/1WH0sbNsffP_o7cETaaQbw8i-GoUXDfgV39QJ62_X4B8/edit';
   if(!target){toast('데이터센터 운영주소를 확인해 주세요.');return}
   window.open(target,'_blank','noopener,noreferrer');
 }
@@ -2486,7 +2490,7 @@ function wdhqSetupTab(tab){
   const foot=document.getElementById('wdhq-setup-foot-status');
   if(foot){
     const labels={
-      spaces:'센터별 운영화면과 실제 연결상태를 확인합니다.',
+      spaces:'기존 바로가기 · 저장 안내입니다. 실제 연결 성공은 별도 검수가 필요합니다.',
       drive:'공유폴더에서 업무를 주고받고, 완료 자료는 업무자료폴더에 정리합니다.',
       github:'repository · 파일 · commit은 데이터센터, 로그인 · 권한은 계정관리에서 확인합니다.'
     };
@@ -6085,5 +6089,41 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 })();
 </script>
 
+<style id="wdhq-map-after-261028">
+/* TEST only: keep floating tools intact underneath the map's modal layer. */
+#setupModal{z-index:2147483300}
+body:has(#setupModal.show){overflow:hidden}
+#setupModal .wdhq-setup-modal{height:92vh;height:92dvh;max-height:92vh;max-height:92dvh}
+#setupModal .wdhq-setup-tab{min-height:44px}
+#setupModal .wdhq-setup-body{min-height:0;overscroll-behavior:contain}
+#setupModal .wdhq-setup-head .close{flex:0 0 44px;min-width:44px;min-height:44px}
+#setupModal .wdhq-setup-foot .mbtn,
+#setupModal .wdhq-system-card-cell .wdhq-system-map-btn,
+#setupModal .wdhq-system-map-note.compact .wdhq-system-map-btn,
+#setupModal .wdhq-system-map-btn{min-height:44px;white-space:normal;overflow-wrap:anywhere}
+#setupModal .wdhq-system-card-title b,
+#setupModal .wdhq-system-card-title small,
+#setupModal .wdhq-system-card-cell span{white-space:normal;overflow-wrap:anywhere;text-overflow:clip}
+#setupModal .wdhq-map-source-note{margin:0 0 12px;color:#596579;font-size:12px;line-height:1.6}
+.wdhq-map-mobile-shortcuts{display:none}
+@media(max-width:620px){
+  .wdhq-map-mobile-shortcuts{display:flex;gap:8px;padding:10px 16px 0}
+  .wdhq-map-mobile-shortcuts button{flex:1;min-width:0;min-height:44px;padding:8px;border:1px solid #d9e0ea;border-radius:10px;background:#fff;color:#4a3f7a;font:inherit;font-size:13px;font-weight:700;line-height:1.4}
+
+  #setupModal .wdhq-setup-modal{width:calc(100vw - 24px);height:94vh;height:94dvh;max-height:94vh;max-height:94dvh}
+  #setupModal .wdhq-setup-head{padding:12px;gap:8px}
+  #setupModal .wdhq-setup-head h2{font-size:19px}
+  #setupModal .wdhq-setup-head p{font-size:12px}
+  #setupModal .wdhq-setup-tabs{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 12px;gap:6px}
+  #setupModal .wdhq-setup-tab{min-height:44px;font-size:12px;padding:8px}
+  #setupModal .wdhq-setup-tab:last-child{grid-column:1/-1}
+  #setupModal .wdhq-setup-body{padding:10px 12px}
+  #setupModal .wdhq-system-card-head{flex-wrap:wrap;gap:9px}
+  #setupModal .wdhq-system-card-title{flex:1 1 140px}
+  #setupModal .wdhq-system-card-state{margin-left:auto;font-size:11px}
+  #setupModal .wdhq-setup-foot{padding:10px 12px;gap:8px}
+  #setupModal .wdhq-setup-foot>div{display:flex;flex-wrap:wrap;gap:6px}
+}
+</style>
 </body>
 </html>
