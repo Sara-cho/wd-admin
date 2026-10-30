@@ -466,9 +466,9 @@ views.write=()=>writeBeforeAI().replace('<button onclick="quickDraft()">작성 �
 quickDraft=generateAIArticle;
 
 const inlineWriterView=views.write;
-views.write=function(){if(s.aiPending&&!s.draft){const a=s.aiPending;Object.assign(s,a.context||{});s.title=a.title;s.draft=a.body;s.aiChecks=a.checks||[];s.aiTags=a.tags||[];s.aiPending=null;s.activeManuscriptId=null;save()}return inlineWriterView().replace(/(<textarea[^>]*id="draft"[^>]*>[\\s\\S]*?<\\/textarea>)/,'$1'+writerNotesView())};
+views.write=function(){if(s.aiPending&&!s.draft){const a=s.aiPending;Object.assign(s,a.context||{});s.title=a.title;s.draft=a.body;s.aiChecks=a.checks||[];s.aiTags=a.tags||[];s.aiPending=null;s.activeManuscriptId=null;save()}return inlineWriterView().replace(/(<textarea[^>]*id="draft"[^>]*>[\s\S]*?<\/textarea>)/,match=>match+writerNotesView())};
 const friendlyPrompt=editorialPrompt;
-editorialPrompt=function(){return friendlyPrompt()+'\\n\\n[대표님 최신 문체 요청 — 이전 예시의 딱딱한 말투보다 우선]\\n본문은 독자에게 편안하게 설명하는 해요체로 써요. ~해요, ~예요, ~있어요, ~볼까요?를 자연스럽게 섞고 ~합니다, ~됩니다를 반복하지 않아요. 인사말은 안녕하세요. WD WAVE예요. 💜처럼 친근하게 시작해요. 반말·과장·유아체는 피하고 전문성과 정확성은 유지해요. 무슨 일이 있었나, 근거와 해석 구분 같은 편집 지침을 그대로 소제목이나 본문에 노출하지 말고 구체적인 이야기로 풀어요. 출처와 사실을 확인하면서도 보고서 같은 딱딱한 나열은 피하세요.'};
+editorialPrompt=function(){return friendlyPrompt()+'\n\n[대표님 최신 문체 요청 — 이전 예시의 딱딱한 말투보다 우선]\n본문은 독자에게 편안하게 설명하는 해요체로 써요. ~해요, ~예요, ~있어요, ~볼까요?를 자연스럽게 섞고 ~합니다, ~됩니다를 반복하지 않아요. 인사말은 안녕하세요. WD WAVE예요. 💜처럼 친근하게 시작해요. 반말·과장·유아체는 피하고 전문성과 정확성은 유지해요. 무슨 일이 있었나, 근거와 해석 구분 같은 편집 지침을 그대로 소제목이나 본문에 노출하지 말고 구체적인 이야기로 풀어요. 출처와 사실을 확인하면서도 보고서 같은 딱딱한 나열은 피하세요.'};
 // Revision 16: first-person cases, event reports and free topic editing.
 const CASE_TYPES={lecture:'강의 사례',event:'행사·교육 참여 후기',free:'자유주제·초안 다듬기'};
 const CASE_STYLE=`[대표님이 제공한 실제 강의 글 — 문체·구성 참고]
