@@ -3,11 +3,30 @@
 <style>body{font:18px/1.65 system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 20px;color:#242033}button,input{font:inherit;padding:12px;margin:6px 0;min-height:48px;max-width:100%;box-sizing:border-box}button{cursor:pointer}pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f3f8;padding:20px}label{display:block}small{display:block;color:#554f65}h1{font-size:28px}#status{min-height:4em}button:disabled{cursor:default;opacity:.6}</style></head>
 <body data-runtime-mode="hq-relay-only"><h1>합성 일기 실제 조회 검수</h1><p>비운영 · 읽기 전용 · 합성자료 전용</p><small>개인 일기와 TEST11을 읽거나 바꾸지 않습니다. 이 페이지에 비밀번호나 키를 입력하지 않습니다.</small>
 <p>① 아래 본진 TEST에서 기존 대표 인증만 확인합니다. Google 중요신호 버튼은 누르지 않습니다.<br>② 본진 TEST 아래의 Drive 읽기 연결 버튼을 누릅니다.<br>③ 이 화면의 실제 합성 일기 조회를 누릅니다. 새 동의 화면이 나타나면 승인하지 말고 중단합니다.</p>
-<button id="connect" type="button">본진 TEST 연결 열기</button> <button id="google-connect" type="button">Drive 연결 상태 확인</button>
+<p id="runtime-status" role="status" data-build="android-runtime-20261102-02">검수 버전 android-runtime-20261102-02 · 실행 코드 확인 대기. 이 문구가 그대로면 연결 버튼을 사용할 수 없습니다. [RUNTIME_NOT_READY]</p>
+<noscript><p role="alert">이 화면에서는 JavaScript가 실행되지 않습니다. Drive 연결과 일지 조회를 진행할 수 없습니다. [SCRIPT_DISABLED]</p></noscript>
+<button id="connect" type="button" disabled>본진 TEST 연결 열기</button> <button id="google-connect" type="button" disabled>Drive 연결 상태 확인</button>
 <label for="date">합성 일기 날짜</label><input id="date" type="date" value="2026-11-01">
-<div><button id="read" type="button">실제 합성 일기 조회</button> <button id="clear" type="button">표시 비우기</button></div>
+<div><button id="read" type="button" disabled>실제 합성 일기 조회</button> <button id="clear" type="button" disabled>표시 비우기</button></div>
 <p id="status" role="status" aria-live="polite" data-result="not-run">아직 인증·조회를 검수하지 않았습니다.</p><section id="hq-panel" hidden aria-label="본진 TEST 연결"><h2 style="font-size:22px">본진 TEST · 같은 화면에서 연결</h2><p>이 안에서 기존 대표 인증과 Drive 읽기 연결만 확인하세요.</p><div id="hq-frame-slot"></div></section><pre id="entry" aria-label="Drive에서 조회한 합성 일기"></pre>
 <small>실제 Drive 응답을 받기 전에는 본문과 PASS를 표시하지 않습니다. 이 페이지에는 모의 일기나 저장 기능이 없습니다.</small>
+<script id="sara-runtime-guard">
+// A separate, small boot guard: never expose exception details or tokens.
+(function(){
+  var booted=false,timer;
+  function blocked(code){
+    var node=document.getElementById('runtime-status');
+    if(node){node.setAttribute('data-runtime','blocked');node.textContent='검수 버전 android-runtime-20261102-02 · 실행 코드가 준비되지 않아 연결·조회를 중단했습니다. ['+code+']';}
+    ['connect','google-connect','read','clear'].forEach(function(id){var button=document.getElementById(id);if(button)button.disabled=true;});
+    var entry=document.getElementById('entry');if(entry)entry.textContent='';
+  }
+  window.saraReadCheckBooted=function(){booted=true;clearTimeout(timer);};
+  window.saraReadCheckBootFailed=function(){blocked('RUNTIME_INIT_FAILED');};
+  window.addEventListener('error',function(event){if(!booted&&event.target===window)blocked('RUNTIME_SCRIPT_ERROR');});
+  window.addEventListener('securitypolicyviolation',function(event){if(!booted&&String(event.effectiveDirective||'').indexOf('script-src')===0)blocked('SCRIPT_POLICY_BLOCKED');});
+  timer=setTimeout(function(){if(!booted)blocked('RUNTIME_INIT_TIMEOUT');},3000);
+})();
+</script>
 <script id="sara-synthetic-reader">
 // Non-operating synthetic-only reader. No tokens, storage writes or TEST11 hooks.
 const SOURCE_FILE_ID = '1nBv061FDmYTIszH9dgwx0SHMXGiGlufU';
@@ -102,13 +121,14 @@ function initSaraReadCheck(host, doc) {
   const $ = id => doc.getElementById(id);
   const date = $('date'), status = $('status'), entry = $('entry');
   const connect = $('connect'), googleConnect = $('google-connect'), read = $('read'), clear = $('clear');
-  let hq = null, generation = 0, shownUser = null, stopped = false, hqFrame = null, hqLoaded = false;
+  let hq = null, generation = 0, shownUser = null, stopped = false, hqFrame = null, hqLoaded = false, loadTimer = null;
   const messages = {
     ORIGIN_NOT_ALLOWED:'허용된 admin.wdwave.kr HTTPS 검수 주소에서 열어 주세요.',
     CONNECTION_REQUIRED:'본진 TEST 연결을 다시 열어 주세요.',
     HQ_CONTEXT_UNAVAILABLE:'본진 TEST 연결이 차단됐거나 다른 페이지로 이동했습니다. 보안설정을 바꾸지 않고 중단합니다.',
     POPUP_BLOCKED:'본진 TEST 창을 열지 못했습니다. 창 열기 상태를 확인해 주세요.',
     HQ_LOADING:'본진 TEST를 같은 화면에서 불러오는 중입니다. 로딩 후 Drive 연결 상태 확인을 눌러 주세요.',
+    HQ_LOAD_TIMEOUT:'본진 TEST 로딩이 완료되지 않아 중단했습니다. 인증·권한을 바꾸거나 조회 성공으로 처리하지 않습니다.',
     AUTH_REQUIRED:'본진 TEST에서 기존 대표 계정으로 로그인한 뒤 이 화면으로 돌아와 조회해 주세요.',
     ROLE_DENIED:'대표 계정에서만 합성자료를 조회할 수 있습니다.',
     GOOGLE_CONNECT_REQUIRED:'사라 Drive 읽기 연결 대기입니다. 추가 동의는 진행하지 마세요.',
@@ -134,12 +154,14 @@ function initSaraReadCheck(host, doc) {
     requireOrigin();
     $('hq-panel').hidden=false;
     if(hqFrame&&hqFrame.isConnected&&hq&&!hq.closed)return false;
+    host.clearTimeout(loadTimer);
     hqLoaded=false;
     hqFrame=doc.createElement('iframe');hqFrame.id='sara-hq-frame';hqFrame.title='사라 전용 본진 TEST';
     hqFrame.style.cssText='display:block;width:100%;height:70vh;min-height:480px;border:1px solid #ccc;border-radius:8px';
     const currentFrame=hqFrame;
     hqFrame.addEventListener('load',()=>{
       if(currentFrame!==hqFrame)return;
+      host.clearTimeout(loadTimer);
       ++generation;wipe();
       hqLoaded=true;hq=currentFrame.contentWindow;
       if(stopped)return;
@@ -151,6 +173,7 @@ function initSaraReadCheck(host, doc) {
     hqFrame.src=ORIGIN+HQ_PATH;
     $('hq-frame-slot').replaceChildren(hqFrame);hq=hqFrame.contentWindow;
     status.dataset.result='loading';status.textContent='본진 TEST 연결을 같은 화면에서 여는 중입니다. 새 창이나 추가 동의는 요청하지 않습니다.';
+    loadTimer=host.setTimeout(()=>{if(currentFrame===hqFrame&&!hqLoaded){wipe();note('HQ_LOAD_TIMEOUT');}},15000);
     return true;
   }
   function session() {
@@ -175,7 +198,7 @@ function initSaraReadCheck(host, doc) {
     } catch(e) { note(e.code); }
   });
   googleConnect.addEventListener('click',async()=>{
-    if(stopped)return;
+    if(stopped){note('SARA_OAUTH_INTERRUPTED');return;}
     const current=++generation;wipe();read.disabled=true;connect.disabled=true;googleConnect.disabled=true;
     status.dataset.result='pending';status.textContent='Drive 읽기 기존 승인만 확인합니다. 새 동의 화면에서는 중단하세요.';
     try {
@@ -219,8 +242,16 @@ function initSaraReadCheck(host, doc) {
     try{if(session().userId!==shownUser)throw new ReadError('SESSION_CHANGED');}
     catch {++generation;wipe();note('SESSION_CHANGED');}
   });
-  try {requireOrigin();} catch(e) {note(e.code);connect.disabled=true;read.disabled=true;googleConnect.disabled=true;}
+  requireOrigin();
+  [connect,googleConnect,read,clear].forEach(button=>{button.disabled=false;});
+  const runtime=$('runtime-status');
+  runtime.dataset.runtime='ready';runtime.textContent='검수 버전 android-runtime-20261102-02 · 실행 코드 준비 완료 · 버튼 이벤트 연결 완료. 아직 인증·Drive 조회 성공은 아닙니다.';
 }
 
-initSaraReadCheck(window, document);
+try {
+  initSaraReadCheck(window, document);
+  window.saraReadCheckBooted();
+} catch {
+  window.saraReadCheckBootFailed();
+}
 </script></body></html>
