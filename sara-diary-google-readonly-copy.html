@@ -2,11 +2,11 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="same-origin"><title>사라 · 합성 일기 실제 조회 검수</title>
 <style>body{font:18px/1.65 system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 20px;color:#242033}button,input{font:inherit;padding:12px;margin:6px 0;min-height:48px;max-width:100%;box-sizing:border-box}button{cursor:pointer}pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f3f8;padding:20px}label{display:block}small{display:block;color:#554f65}h1{font-size:28px}#status{min-height:4em}button:disabled{cursor:default;opacity:.6}</style></head>
 <body data-runtime-mode="hq-relay-only"><h1>합성 일기 실제 조회 검수</h1><p>비운영 · 읽기 전용 · 합성자료 전용</p><small>개인 일기와 TEST11을 읽거나 바꾸지 않습니다. 이 페이지에 비밀번호나 키를 입력하지 않습니다.</small>
-<p>① 본진 TEST 창에서 기존 대표 인증만 확인합니다. Google 중요신호 버튼은 누르지 않습니다.<br>② 본진 TEST 창 아래의 Drive 읽기 연결 버튼을 누릅니다.<br>③ 이 화면으로 돌아와 실제 합성 일기 조회를 누릅니다. 새 동의 화면이 나타나면 승인하지 말고 중단합니다.</p>
-<button id="connect" type="button">본진 TEST 창 열기</button> <button id="google-connect" type="button">Drive 연결 상태 확인</button>
+<p>① 아래 본진 TEST에서 기존 대표 인증만 확인합니다. Google 중요신호 버튼은 누르지 않습니다.<br>② 본진 TEST 아래의 Drive 읽기 연결 버튼을 누릅니다.<br>③ 이 화면의 실제 합성 일기 조회를 누릅니다. 새 동의 화면이 나타나면 승인하지 말고 중단합니다.</p>
+<button id="connect" type="button">본진 TEST 연결 열기</button> <button id="google-connect" type="button">Drive 연결 상태 확인</button>
 <label for="date">합성 일기 날짜</label><input id="date" type="date" value="2026-11-01">
 <div><button id="read" type="button">실제 합성 일기 조회</button> <button id="clear" type="button">표시 비우기</button></div>
-<p id="status" role="status" aria-live="polite" data-result="not-run">아직 인증·조회를 검수하지 않았습니다.</p><pre id="entry" aria-label="Drive에서 조회한 합성 일기"></pre>
+<p id="status" role="status" aria-live="polite" data-result="not-run">아직 인증·조회를 검수하지 않았습니다.</p><section id="hq-panel" hidden aria-label="본진 TEST 연결"><h2 style="font-size:22px">본진 TEST · 같은 화면에서 연결</h2><p>이 안에서 기존 대표 인증과 Drive 읽기 연결만 확인하세요.</p><div id="hq-frame-slot"></div></section><pre id="entry" aria-label="Drive에서 조회한 합성 일기"></pre>
 <small>실제 Drive 응답을 받기 전에는 본문과 PASS를 표시하지 않습니다. 이 페이지에는 모의 일기나 저장 기능이 없습니다.</small>
 <script id="sara-synthetic-reader">
 // Non-operating synthetic-only reader. No tokens, storage writes or TEST11 hooks.
@@ -102,12 +102,13 @@ function initSaraReadCheck(host, doc) {
   const $ = id => doc.getElementById(id);
   const date = $('date'), status = $('status'), entry = $('entry');
   const connect = $('connect'), googleConnect = $('google-connect'), read = $('read'), clear = $('clear');
-  let hq = null, generation = 0, shownUser = null, stopped = false;
+  let hq = null, generation = 0, shownUser = null, stopped = false, hqFrame = null, hqLoaded = false;
   const messages = {
     ORIGIN_NOT_ALLOWED:'허용된 admin.wdwave.kr HTTPS 검수 주소에서 열어 주세요.',
-    CONNECTION_REQUIRED:'먼저 본진 TEST 창을 열어 주세요.',
+    CONNECTION_REQUIRED:'본진 TEST 연결을 다시 열어 주세요.',
+    HQ_CONTEXT_UNAVAILABLE:'본진 TEST 연결이 차단됐거나 다른 페이지로 이동했습니다. 보안설정을 바꾸지 않고 중단합니다.',
     POPUP_BLOCKED:'본진 TEST 창을 열지 못했습니다. 창 열기 상태를 확인해 주세요.',
-    HQ_LOADING:'본진 TEST가 로딩 중입니다. 로딩 후 다시 조회해 주세요.',
+    HQ_LOADING:'본진 TEST를 같은 화면에서 불러오는 중입니다. 로딩 후 Drive 연결 상태 확인을 눌러 주세요.',
     AUTH_REQUIRED:'본진 TEST에서 기존 대표 계정으로 로그인한 뒤 이 화면으로 돌아와 조회해 주세요.',
     ROLE_DENIED:'대표 계정에서만 합성자료를 조회할 수 있습니다.',
     GOOGLE_CONNECT_REQUIRED:'사라 Drive 읽기 연결 대기입니다. 추가 동의는 진행하지 마세요.',
@@ -129,15 +130,39 @@ function initSaraReadCheck(host, doc) {
   function wipe() { entry.textContent=''; shownUser=null; }
   function note(code) { status.dataset.result='incomplete'; status.textContent=(messages[code]||'실제 조회를 완료하지 못했습니다.')+' ['+(Object.hasOwn(messages,code)?code:'READ_FAILED')+']'; }
   function requireOrigin() { if(host.location.origin!==ORIGIN) throw new ReadError('ORIGIN_NOT_ALLOWED'); }
+  function ensureHQ() {
+    requireOrigin();
+    $('hq-panel').hidden=false;
+    if(hqFrame&&hqFrame.isConnected&&hq&&!hq.closed)return false;
+    hqLoaded=false;
+    hqFrame=doc.createElement('iframe');hqFrame.id='sara-hq-frame';hqFrame.title='사라 전용 본진 TEST';
+    hqFrame.style.cssText='display:block;width:100%;height:70vh;min-height:480px;border:1px solid #ccc;border-radius:8px';
+    const currentFrame=hqFrame;
+    hqFrame.addEventListener('load',()=>{
+      if(currentFrame!==hqFrame)return;
+      ++generation;wipe();
+      hqLoaded=true;hq=currentFrame.contentWindow;
+      if(stopped)return;
+      try{session();const state=hq.WDHQSaraDriveReadOnly?.status();
+        if(state?.ready){status.dataset.result='connected';status.textContent='본진 TEST와 Drive 토큰 연결을 확인했습니다. 실제 합성 일기 조회를 눌러 주세요. 아직 조회 PASS는 아닙니다.';}
+        else {status.dataset.result='not-run';status.textContent='본진 TEST 연결이 열렸습니다. 아래 본진 TEST의 Drive 읽기 연결 버튼을 눌러 주세요.';}
+      }catch(e){note(e.code);}
+    });
+    hqFrame.src=ORIGIN+HQ_PATH;
+    $('hq-frame-slot').replaceChildren(hqFrame);hq=hqFrame.contentWindow;
+    status.dataset.result='loading';status.textContent='본진 TEST 연결을 같은 화면에서 여는 중입니다. 새 창이나 추가 동의는 요청하지 않습니다.';
+    return true;
+  }
   function session() {
     requireOrigin();
-    if(!hq||hq.closed) throw new ReadError('CONNECTION_REQUIRED');
+    if(!hq||hq.closed||!hqFrame?.isConnected) throw new ReadError('CONNECTION_REQUIRED');
+    if(!hqLoaded) throw new ReadError('HQ_LOADING');
     let value;
     try {
-      if(hq.location.origin!==ORIGIN||hq.location.pathname!==HQ_PATH) throw new Error();
+      if(hq.location.origin!==ORIGIN||hq.location.pathname!==HQ_PATH) throw new ReadError('HQ_CONTEXT_UNAVAILABLE');
       if(typeof hq.wdhqReadSession!=='function') throw new ReadError('HQ_LOADING');
       value=hq.wdhqReadSession();
-    } catch(e) { throw new ReadError(e instanceof ReadError?e.code:'CONNECTION_REQUIRED'); }
+    } catch(e) { throw new ReadError(e instanceof ReadError?e.code:'HQ_CONTEXT_UNAVAILABLE'); }
     if(!value||value.verified!==true||typeof value.userId!=='string'||!value.userId) throw new ReadError('AUTH_REQUIRED');
     if(value.role!=='owner') throw new ReadError('ROLE_DENIED');
     return {userId:value.userId,role:value.role};
@@ -145,12 +170,8 @@ function initSaraReadCheck(host, doc) {
   connect.addEventListener('click',()=>{
     ++generation;wipe();
     try {
-      requireOrigin();
-      if(!hq||hq.closed) hq=host.open(ORIGIN+HQ_PATH,'_blank');
-      if(!hq) throw new ReadError('POPUP_BLOCKED');
-      hq.focus();
-      status.dataset.result='not-run';
-      status.textContent='기존 본진 TEST 창을 열었습니다. 기존 대표 인증을 확인한 뒤, 이 TEST 창 아래의 Drive 읽기 연결 버튼만 눌러 주세요. Google 중요신호 버튼이나 새 동의는 진행하지 않습니다. 아직 인증·조회 PASS가 아닙니다.';
+      if(ensureHQ())return;
+      session();status.dataset.result='not-run';status.textContent='본진 TEST 연결을 유지하고 있습니다. 아래에서 Drive 읽기 연결을 확인하세요.';
     } catch(e) { note(e.code); }
   });
   googleConnect.addEventListener('click',async()=>{
@@ -158,11 +179,12 @@ function initSaraReadCheck(host, doc) {
     const current=++generation;wipe();read.disabled=true;connect.disabled=true;googleConnect.disabled=true;
     status.dataset.result='pending';status.textContent='Drive 읽기 기존 승인만 확인합니다. 새 동의 화면에서는 중단하세요.';
     try {
+      if(ensureHQ())return;
       const before=session(),api=hq.WDHQSaraDriveReadOnly;
       if(!api||typeof api.connect!=='function')throw new ReadError('HQ_LOADING');
       const connected=api.status();
       if(connected.stopReason)throw new ReadError(connected.stopReason);
-      if(!connected.ready){hq.focus();status.dataset.result='not-run';status.textContent='본진 TEST 창 아래의 Drive 읽기 연결 버튼을 직접 누른 뒤 이 화면으로 돌아와 주세요.';return;}
+      if(!connected.ready){status.dataset.result='not-run';status.textContent='아래 본진 TEST의 Drive 읽기 연결 버튼을 직접 누른 뒤 실제 합성 일기 조회를 눌러 주세요.';return;}
       if(current!==generation)return;
       if(session().userId!==before.userId)throw new ReadError('SESSION_CHANGED');
       if(!connected.ready)throw new ReadError('SARA_DRIVE_CONNECT_REQUIRED');
@@ -177,6 +199,7 @@ function initSaraReadCheck(host, doc) {
     const current=++generation;wipe();read.disabled=true;connect.disabled=true;googleConnect.disabled=true;
     status.dataset.result='pending';status.textContent='기존 대표 세션과 HQ 릴레이 응답을 확인하고 있습니다.';
     try {
+      if(ensureHQ())return;
       const before=session();
       const transport=createHQReadTransport({host,relayWindow:hq,userId:before.userId});
       const result=await readOne(date.value,{readFile:transport});
