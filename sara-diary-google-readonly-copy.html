@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="same-origin"><title>사라 · 합성 일기 실제 조회 검수</title>
+<style>body{font:18px/1.65 system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 20px;color:#242033}button,input{font:inherit;padding:12px;margin:6px 0;min-height:48px;max-width:100%;box-sizing:border-box}button{cursor:pointer}pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f3f8;padding:20px}label{display:block}small{display:block;color:#554f65}h1{font-size:28px}#status{min-height:4em}button:disabled{cursor:default;opacity:.6}</style></head>
+<body data-runtime-mode="hq-relay-only"><h1>합성 일기 실제 조회 검수</h1><p>비운영 · 읽기 전용 · 합성자료 전용</p><small>개인 일기와 TEST11을 읽거나 바꾸지 않습니다. 이 페이지에 비밀번호나 키를 입력하지 않습니다.</small>
+<p>① 본진 TEST 창에서 기존 대표 인증만 확인합니다. Google 중요신호 버튼은 누르지 않습니다.<br>② 본진 TEST 창 아래의 Drive 읽기 연결 버튼을 누릅니다.<br>③ 이 화면으로 돌아와 실제 합성 일기 조회를 누릅니다. 새 동의 화면이 나타나면 승인하지 말고 중단합니다.</p>
+<button id="connect" type="button">본진 TEST 창 열기</button> <button id="google-connect" type="button">Drive 연결 상태 확인</button>
+<label for="date">합성 일기 날짜</label><input id="date" type="date" value="2026-11-01">
+<div><button id="read" type="button">실제 합성 일기 조회</button> <button id="clear" type="button">표시 비우기</button></div>
+<p id="status" role="status" aria-live="polite" data-result="not-run">아직 인증·조회를 검수하지 않았습니다.</p><pre id="entry" aria-label="Drive에서 조회한 합성 일기"></pre>
+<small>실제 Drive 응답을 받기 전에는 본문과 PASS를 표시하지 않습니다. 이 페이지에는 모의 일기나 저장 기능이 없습니다.</small>
+<script id="sara-synthetic-reader">
+// Non-operating synthetic-only reader. No tokens, storage writes or TEST11 hooks.
+const SOURCE_FILE_ID = '1nBv061FDmYTIszH9dgwx0SHMXGiGlufU';
+const TAB = '09_삶의일지_날짜별';
+const BEGIN = 'SARA_SYNTHETIC_DIARY_READ_V1_BEGIN';
+const END = 'SARA_SYNTHETIC_DIARY_READ_V1_END';
+const COLUMNS = Object.freeze(['날짜','출처 프로젝트','분류','그날 중요한 일·발언(비민감 요약)','대표 결정·의미','사실/해석/미확인','원본 링크(보호위치)','담당','저장 상태','후속 행동','공개 범위']);
+class ReadError extends Error { constructor(code) { super(code); this.code = code; } }
+const fail = code => { throw new ReadError(code); };
+function validDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(value + 'T00:00:00Z');
+  return Number.isFinite(d.getTime()) && d.toISOString().slice(0,10) === value;
+}
+function extractFixture(text) {
+  if (typeof text !== 'string' || text.length > 1000000) fail('SOURCE_FORMAT');
+  const parts = text.split(BEGIN);
+  if (parts.length !== 2) fail('FIXTURE_MISSING_OR_DUPLICATE');
+  const rest = parts[1].split(END);
+  if (rest.length !== 2) fail('FIXTURE_MISSING_OR_DUPLICATE');
+  let data;
+  try { data = JSON.parse(rest[0]); } catch { fail('SOURCE_FORMAT'); }
+  if (data.schema !== 'sara-diary-synthetic-v1' || data.synthetic !== true || data.tab !== TAB ||
+      JSON.stringify(data.columns) !== JSON.stringify(COLUMNS) || !Array.isArray(data.rows) || data.rows.length > 50) fail('SCHEMA_MISMATCH');
+  for (const row of data.rows) {
+    if (!Array.isArray(row) || row.length !== 11 || row.some(cell => typeof cell !== 'string') ||
+        !validDate(row[0]) || row[10] !== '합성자료·비운영' || row[3].length > 100000) fail('SCHEMA_MISMATCH');
+  }
+  return data;
+}
+async function readOne(date, {readFile, fileId = SOURCE_FILE_ID} = {}) {
+  if (!validDate(date)) fail('INVALID_DATE');
+  if (fileId !== SOURCE_FILE_ID) fail('SOURCE_NOT_ALLOWED');
+  if (typeof readFile !== 'function') fail('CONNECTION_REQUIRED');
+  let result;
+  try { result = await readFile(fileId); } catch (error) {
+    if (error instanceof ReadError) throw error;
+    fail('DRIVE_READ_FAILED'); // Never forward provider exceptions or bodies.
+  }
+  if (!result || result.fileId !== fileId) fail('SOURCE_MISMATCH');
+  // HQ native Sheets cannot choose/attest a tab. Do not pretend it can.
+  if (result.mimeType === 'application/vnd.google-apps.spreadsheet') fail('TAB_SELECTION_UNSUPPORTED');
+  if (result.mimeType !== 'text/plain') fail('SOURCE_FORMAT');
+  const fixture = extractFixture(result.text);
+  const matches = fixture.rows.filter(row => row[0] === date);
+  if (!matches.length) fail('NOT_FOUND');
+  if (matches.length !== 1) fail('DUPLICATE_DATE');
+  const row = Object.freeze(matches[0].slice());
+  return Object.freeze({date: row[0], text: row[3], row, synthetic: true, tab: TAB, fileId, readOnly: true});
+}
+// Wire-compatible reuse of the existing HQ relay. It owns real auth/owner checks.
+// Pass the userId from the established HQ session; never copy OAuth/Supabase tokens.
+function createHQReadTransport({host = globalThis.window, relayWindow, userId, timeoutMs = 15000} = {}) {
+  const origin = 'https://admin.wdwave.kr';
+  const callers = ['https://admin.wdwave.kr', 'https://pro.wdwave.kr'];
+  if (!host || !callers.includes(host.location?.origin)) fail('ORIGIN_NOT_ALLOWED');
+  if (!relayWindow || relayWindow.closed) fail('CONNECTION_REQUIRED');
+  if (typeof userId !== 'string' || !userId || userId.length > 100) fail('AUTH_REQUIRED');
+  let busy = false;
+  return async fileId => {
+    if (fileId !== SOURCE_FILE_ID) fail('SOURCE_NOT_ALLOWED');
+    if (busy) fail('BUSY');
+    busy = true;
+    try {
+      return await new Promise((resolve, reject) => {
+        const requestId = host.crypto.randomUUID().replaceAll('-', '');
+        const cleanup = () => { host.clearTimeout(timer); host.removeEventListener('message', receive); };
+        const receive = event => {
+          const d = event.data;
+          if (event.origin !== origin || event.source !== relayWindow || !d ||
+              d.type !== 'WDHQ_DRIVE_RESPONSE' || d.version !== 1 || d.requestId !== requestId) return;
+          cleanup();
+          if (d.ok === true && d.result) resolve(d.result);
+          else {
+            const codes = ['AUTH_REQUIRED','USER_MISMATCH','ROLE_DENIED','PERSONAL_AREA_DENIED','SESSION_CHANGED','GOOGLE_CONNECT_REQUIRED','SARA_DRIVE_CONNECT_REQUIRED','SARA_OAUTH_APPROVAL_REQUIRED','BUSY'];
+            reject(new ReadError(codes.includes(d.error?.code) ? d.error.code : 'DRIVE_READ_FAILED'));
+          }
+        };
+        const timer = host.setTimeout(() => { cleanup(); reject(new ReadError('TIMEOUT')); }, timeoutMs);
+        host.addEventListener('message', receive);
+        try { relayWindow.postMessage({type:'WDHQ_DRIVE_REQUEST',version:1,requestId,userId,center:'sara',method:'readDriveFile',fileId}, origin); }
+        catch { cleanup(); reject(new ReadError('CONNECTION_REQUIRED')); }
+      });
+    } finally { busy = false; }
+  };
+}
+
+// Uses the existing HQ session helper and relay; never reads/copies tokens.
+function initSaraReadCheck(host, doc) {
+  const ORIGIN = 'https://admin.wdwave.kr';
+  const HQ_PATH = '/sara-hq-drive-readonly-test.html';
+  const $ = id => doc.getElementById(id);
+  const date = $('date'), status = $('status'), entry = $('entry');
+  const connect = $('connect'), googleConnect = $('google-connect'), read = $('read'), clear = $('clear');
+  let hq = null, generation = 0, shownUser = null, stopped = false;
+  const messages = {
+    ORIGIN_NOT_ALLOWED:'허용된 admin.wdwave.kr HTTPS 검수 주소에서 열어 주세요.',
+    CONNECTION_REQUIRED:'먼저 본진 TEST 창을 열어 주세요.',
+    POPUP_BLOCKED:'본진 TEST 창을 열지 못했습니다. 창 열기 상태를 확인해 주세요.',
+    HQ_LOADING:'본진 TEST가 로딩 중입니다. 로딩 후 다시 조회해 주세요.',
+    AUTH_REQUIRED:'본진 TEST에서 기존 대표 계정으로 로그인한 뒤 이 화면으로 돌아와 조회해 주세요.',
+    ROLE_DENIED:'대표 계정에서만 합성자료를 조회할 수 있습니다.',
+    GOOGLE_CONNECT_REQUIRED:'사라 Drive 읽기 연결 대기입니다. 추가 동의는 진행하지 마세요.',
+    SARA_DRIVE_CONNECT_REQUIRED:'먼저 Drive 읽기 연결 버튼으로 기존 승인 확인을 진행해 주세요.',
+    SARA_EXISTING_GRANT_UNAVAILABLE:'기존 승인만으로 토큰을 받지 못해 중단했습니다. 추가 로그인·동의는 진행하지 않습니다.',
+    SARA_SCOPE_EXPANSION_BLOCKED:'요청 범위를 넘는 토큰이 반환되어 중단했습니다.',
+    SARA_OAUTH_INTERRUPTED:'Google 연결이 중단됐습니다. 추가 동의나 재시도는 진행하지 않습니다.',
+    GOOGLE_SDK_REQUIRED:'본진 TEST의 Google 모듈 로딩 후 다시 확인해 주세요.',
+    SARA_OAUTH_APPROVAL_REQUIRED:'OAuth 요청은 별도 승인 전 차단됩니다.',
+    SESSION_CHANGED:'인증 상태가 바뀌어 본문을 표시하지 않았습니다. 다시 확인해 주세요.',
+    USER_MISMATCH:'본진 사용자 확인이 일치하지 않아 조회를 중단했습니다.',
+    PERSONAL_AREA_DENIED:'이 계정은 사라 영역을 조회할 수 없습니다.',
+    TIMEOUT:'HQ 응답을 받지 못했습니다. 조회 성공으로 처리하지 않았습니다.',
+    BUSY:'이전 조회가 진행 중입니다.',
+    INVALID_DATE:'조회 날짜를 확인해 주세요.',
+    NOT_FOUND:'선택한 날짜의 합성 일기가 없습니다.',
+    DUPLICATE_DATE:'같은 날짜의 기록이 둘 이상이어서 표시하지 않았습니다.'
+  };
+  function wipe() { entry.textContent=''; shownUser=null; }
+  function note(code) { status.dataset.result='incomplete'; status.textContent=(messages[code]||'실제 조회를 완료하지 못했습니다.')+' ['+(Object.hasOwn(messages,code)?code:'READ_FAILED')+']'; }
+  function requireOrigin() { if(host.location.origin!==ORIGIN) throw new ReadError('ORIGIN_NOT_ALLOWED'); }
+  function session() {
+    requireOrigin();
+    if(!hq||hq.closed) throw new ReadError('CONNECTION_REQUIRED');
+    let value;
+    try {
+      if(hq.location.origin!==ORIGIN||hq.location.pathname!==HQ_PATH) throw new Error();
+      if(typeof hq.wdhqReadSession!=='function') throw new ReadError('HQ_LOADING');
+      value=hq.wdhqReadSession();
+    } catch(e) { throw new ReadError(e instanceof ReadError?e.code:'CONNECTION_REQUIRED'); }
+    if(!value||value.verified!==true||typeof value.userId!=='string'||!value.userId) throw new ReadError('AUTH_REQUIRED');
+    if(value.role!=='owner') throw new ReadError('ROLE_DENIED');
+    return {userId:value.userId,role:value.role};
+  }
+  connect.addEventListener('click',()=>{
+    ++generation;wipe();
+    try {
+      requireOrigin();
+      if(!hq||hq.closed) hq=host.open(ORIGIN+HQ_PATH,'_blank');
+      if(!hq) throw new ReadError('POPUP_BLOCKED');
+      hq.focus();
+      status.dataset.result='not-run';
+      status.textContent='기존 본진 TEST 창을 열었습니다. 기존 대표 인증을 확인한 뒤, 이 TEST 창 아래의 Drive 읽기 연결 버튼만 눌러 주세요. Google 중요신호 버튼이나 새 동의는 진행하지 않습니다. 아직 인증·조회 PASS가 아닙니다.';
+    } catch(e) { note(e.code); }
+  });
+  googleConnect.addEventListener('click',async()=>{
+    if(stopped)return;
+    const current=++generation;wipe();read.disabled=true;connect.disabled=true;googleConnect.disabled=true;
+    status.dataset.result='pending';status.textContent='Drive 읽기 기존 승인만 확인합니다. 새 동의 화면에서는 중단하세요.';
+    try {
+      const before=session(),api=hq.WDHQSaraDriveReadOnly;
+      if(!api||typeof api.connect!=='function')throw new ReadError('HQ_LOADING');
+      const connected=api.status();
+      if(connected.stopReason)throw new ReadError(connected.stopReason);
+      if(!connected.ready){hq.focus();status.dataset.result='not-run';status.textContent='본진 TEST 창 아래의 Drive 읽기 연결 버튼을 직접 누른 뒤 이 화면으로 돌아와 주세요.';return;}
+      if(current!==generation)return;
+      if(session().userId!==before.userId)throw new ReadError('SESSION_CHANGED');
+      if(!connected.ready)throw new ReadError('SARA_DRIVE_CONNECT_REQUIRED');
+      status.dataset.result='connected';status.textContent='Drive 토큰 연결을 확인했습니다. 실제 합성 일기 조회를 눌러 본문을 검수해 주세요. 아직 일기 조회 PASS가 아닙니다.';
+    } catch(e) {
+      if(['SARA_EXISTING_GRANT_UNAVAILABLE','SARA_SCOPE_EXPANSION_BLOCKED','SARA_OAUTH_INTERRUPTED'].includes(e.relayCode||e.code))stopped=true;
+      if(current===generation){wipe();note(e.relayCode||e.code);}
+    } finally {connect.disabled=false;read.disabled=stopped;googleConnect.disabled=stopped;}
+  });
+  read.addEventListener('click',async()=>{
+    if(stopped)return;
+    const current=++generation;wipe();read.disabled=true;connect.disabled=true;googleConnect.disabled=true;
+    status.dataset.result='pending';status.textContent='기존 대표 세션과 HQ 릴레이 응답을 확인하고 있습니다.';
+    try {
+      const before=session();
+      const transport=createHQReadTransport({host,relayWindow:hq,userId:before.userId});
+      const result=await readOne(date.value,{readFile:transport});
+      if(current!==generation) return;
+      const after=session();
+      if(before.userId!==after.userId) throw new ReadError('SESSION_CHANGED');
+      entry.textContent=result.text;shownUser=after.userId;
+      status.dataset.result='pass';
+      status.textContent=result.date+' · 대표 인증 → 실제 Drive 합성 일기 1건 조회 → 본문 표시 PASS. 개인원장·쓰기·운영 반영 검수는 포함하지 않습니다.';
+    } catch(e) { if(current===generation){wipe();note(e.code);} }
+    finally {read.disabled=stopped;connect.disabled=false;googleConnect.disabled=stopped;}
+  });
+  function reset() {++generation;wipe();status.dataset.result='not-run';status.textContent='표시를 비웠습니다. 원본이나 저장 상태는 변경하지 않았습니다.';}
+  clear.addEventListener('click',reset);date.addEventListener('change',reset);
+  host.addEventListener('focus',()=>{
+    if(!shownUser)return;
+    try{if(session().userId!==shownUser)throw new ReadError('SESSION_CHANGED');}
+    catch {++generation;wipe();note('SESSION_CHANGED');}
+  });
+  try {requireOrigin();} catch(e) {note(e.code);connect.disabled=true;read.disabled=true;googleConnect.disabled=true;}
+}
+
+initSaraReadCheck(window, document);
+</script></body></html>
