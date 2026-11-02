@@ -1256,9 +1256,9 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
     <header class="topbar">
       <div class="identity"><strong>WD WAVE · 통합 본진</strong><small id="wdhq-user-label">회사 계정 인증 확인 중</small></div>
       <div class="topactions">
-        <button class="topbtn wdhq-google-sync-status is-disconnected" id="wdhq-google-sync-status" type="button" onclick="wdhqCheckGoogleSync()" aria-label="Google 동기화 상태 확인" title="눌러서 Google 동기화 상태 확인">
+        <button class="topbtn wdhq-google-sync-status is-disconnected" id="wdhq-google-sync-status" type="button" onclick="wdhqCheckGoogleSync()" aria-label="업무 Google 동기화 상태 확인 · 사라 Drive와 별개" title="눌러서 Google 동기화 상태 확인">
           <span class="wdhq-google-sync-dot" aria-hidden="true"></span>
-          <span id="wdhq-google-sync-label">Google · 연결안됨</span>
+          <span id="wdhq-google-sync-label">업무 Google · 연결안됨</span>
         </button>
         <button class="topbtn wdhq-data-refresh" id="wdhq-data-refresh" type="button" onclick="wdhqRefreshHomeData()" aria-label="본진 데이터 새로고침">
           <span class="wdhq-data-refresh-icon" aria-hidden="true">
@@ -5809,7 +5809,7 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
   function paintGoogleStatus(){
     const button=statusButton(),label=statusLabel();if(!button||!label)return;
     const connected=isConnected();button.classList.remove('is-checking');button.classList.toggle('is-connected',connected);button.classList.toggle('is-disconnected',!connected);button.disabled=false;
-    label.textContent=connected?'Google · 연결됨':'Google · 연결안됨';button.title=connected?'Google 동기화 연결됨 · 눌러서 다시 확인':'Google 동기화 연결안됨 · 눌러서 연결 확인';
+    label.textContent=connected?'업무 Google · 연결됨':'업무 Google · 연결안됨';button.title=connected?'Google 동기화 연결됨 · 눌러서 다시 확인':'Google 동기화 연결안됨 · 눌러서 연결 확인';
   }
   window.wdhqCheckGoogleSync=async function(){
     const button=statusButton(),label=statusLabel();if(!button||!label)return;
@@ -6708,17 +6708,17 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     if(location.origin!=='https://admin.wdwave.kr'||location.pathname!=='/sara-hq-drive-readonly-test.html')return;
     var panel=document.createElement('section');panel.id='sara-drive-test-panel';
     panel.style.cssText='position:fixed;bottom:14px;left:14px;right:14px;z-index:99990;background:white;border:2px solid #68518f;border-radius:12px;padding:12px;color:#242033;font:16px/1.5 system-ui;box-shadow:0 3px 18px #0002';
-    var text=document.createElement('p');text.textContent='사라 합성자료 읽기 TEST입니다. 기존 대표 로그인 후 아래 버튼만 사용하세요. Google 중요신호 버튼은 누르지 않습니다.';text.style.margin='0 0 8px';
+    var text=document.createElement('p');text.textContent='사라 Drive 전용 검수입니다. 상단 업무 Google은 Gmail·Calendar·Tasks 조회 상태이며 이 연결과 별개입니다. 기존 대표 로그인 후 아래 버튼만 사용하고 새 동의는 진행하지 마세요.';text.style.margin='0 0 8px';
     var button=document.createElement('button');button.id='sara-drive-connect';button.type='button';button.textContent='Drive 읽기 연결 · 기존 승인만';button.style.cssText='font:inherit;padding:10px;min-height:48px';
-    var status=document.createElement('p');status.id='sara-drive-connect-status';status.setAttribute('role','status');status.textContent='아직 토큰을 확인하지 않았습니다. 새 동의 화면이 나타나면 승인하지 말고 중단하세요.';status.style.margin='8px 0 0';
+    var status=document.createElement('p');status.id='sara-drive-connect-status';status.setAttribute('role','status');status.textContent='사라 Drive · 확인 전. 상단 업무 Google 표시로 이 연결을 판단하지 않습니다. 새 동의 화면에서는 중단하세요.';status.style.margin='8px 0 0';
     panel.append(text,button,status);document.body.appendChild(panel);
     button.addEventListener('click',async function(){
       button.disabled=true;status.textContent='기존 Drive 승인으로만 토큰을 요청합니다.';
       try{
         var result=await window.WDHQSaraDriveReadOnly.connect();
         if(!result.ready)throw new Error('not-ready');
-        status.textContent='Drive 연결 확인. 이전 합성 일기 검수 화면으로 돌아가 실제 합성 일기 조회를 눌러 주세요.';
-        button.textContent='Drive 연결 확인됨';
+        status.textContent='사라 Drive · 연결 확인. 상단 업무 Google 상태와 별개입니다. 이전 검수 화면의 실제 합성 일기 조회로 본문을 확인하세요.';
+        button.textContent='사라 Drive 연결 확인됨';
       }catch(error){
         var code=error.relayCode||'';
         status.textContent=['SARA_EXISTING_GRANT_UNAVAILABLE','SARA_SCOPE_EXPANSION_BLOCKED','SARA_OAUTH_INTERRUPTED'].includes(code)?'중단했습니다. 추가 로그인·동의·권한 확대는 진행하지 않습니다.':'연결을 확인하지 못했습니다. 기존 대표 로그인 상태를 확인해 주세요.';
