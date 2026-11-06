@@ -313,7 +313,7 @@ const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g
 function notify(msg){let n=document.createElement('div');n.className='toast';n.textContent=msg;document.body.append(n);setTimeout(()=>n.remove(),2800)}
 function status(t){if(t.parentId){let value=unitState(t);return value==='승인'?'업무 완료':value==='보완 요청'?'보완 요청':value==='제출됨'?'보고서 제출':'미제출'}let hasReports=dayReportCount(t)>0;if(!hasReports)return '미제출';let own=t.feedback.at(-1);if(own&&(own.totalReportCount!==undefined?own.totalReportCount===dayReportCount(t):(!own.reportCount||own.reportCount===t.reports.length))){if(own.decision==='approved')return '업무 완료';return '보완 요청'}let units=taskUnits(t),reviewed=units.map(u=>u.feedback.at(-1)).filter(f=>f&&f.dailyReportCount===t.reports.length);if(reviewed.some(f=>f.decision!=='approved'))return '보완 요청';if(units.length&&units.every(u=>{let f=u.feedback.at(-1);return f&&f.dailyReportCount===t.reports.length&&f.decision==='approved'}))return '업무 완료';return '보고서 제출'}
 function sel(){return S.tasks.find(t=>t.id===S.selected)||S.tasks[0]}
-function setNav(x){S.nav=x==='reports'?'month':x;if(S.nav==='month')staffTasksOpen=false;if(S.nav!=='staff'&&editingStaff){editingStaff=false;staffDetailOpen=!!managerStaffId}save();render()}
+function setNav(x,instructionRecipient=null){if(x==='instructions')instructionStaffId=instructionRecipient;S.nav=x==='reports'?'month':x;if(S.nav==='month')staffTasksOpen=false;if(S.nav!=='staff'&&editingStaff){editingStaff=false;staffDetailOpen=!!managerStaffId}save();render()}
 function setTask(id){S.selected=id;S.nav='dashboard';save();render()}
 function loginView(){
   const manager=pickRole==='manager';
@@ -369,7 +369,7 @@ function logout(){
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
   closeNoteDock();acknowledgedWork.clear();
   for(const id of ['todayWorkGate','modalLayer'])$(id)?.remove();
-  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;homeWeekAnchor=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionDrafts.clear();
+  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;homeWeekAnchor=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
   materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
   S=migrateStaffState(load());
@@ -860,6 +860,7 @@ function bindReviewView(){
   bindTaskReports();
 }
 
+let instructionStaffId = null;
 const instructionDrafts = new Map();
 let staffTasksOpen = false;
 function staffTable() {
@@ -1280,7 +1281,7 @@ function bindStaffManagement(){
   if($('assignFromStaff'))$('assignFromStaff').onclick=()=>{
     managerStaffId=profile.id;
     instructionDraftFor(profile.id,staffSummaryMonth===localDay().slice(0,7)?localDay():staffSummaryMonth+'-01');
-    setNav('instructions');$('instructionInput')?.focus();
+    setNav('instructions',profile.id);$('instructionInput')?.focus();
   };
   bindStaffPayroll(profile,staffSummaryMonth);
 }
@@ -1383,18 +1384,19 @@ function instructionEditor(d){
 
 function instructionView(){
   const profiles=activeProfiles();
-  const profile=profiles.find(p=>p.id===managerStaffId);
-  const d=profile?instructionDraftFor(profile.id):null;
-  const tasks=profile?tasksForStaff(profile.id).sort((a,b)=>a.date.localeCompare(b.date)):[];
-  const simple=profile?.workType==='employee';
-  return `<div class="titleRow wd75-heading"><h1>업무지시</h1>
+  const profile=profiles.find(p=>p.id===instructionStaffId);
+  const heading=`<div class="titleRow wd75-heading"><h1>업무지시</h1>
     <div class="wd77-staff-picker"><label for="instructionStaff">직원 선택</label><select id="instructionStaff" ${profiles.length?'':'disabled'}>
       <option value="">직원·스탭 선택</option>
       ${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===profile?.id?'selected':''}>${esc(p.name)} · ${p.workType==='employee'?'직원':'스탭'}</option>`).join('')}
-    </select></div></div>
-    <div class="wd75-split">
+    </select></div></div>`;
+  if(!profile)return heading+`<p class="muted">${profiles.length?'업무를 배정할 직원을 먼저 선택하세요.':'직원·스탭을 등록한 뒤 업무를 배정하세요.'}</p>`;
+  const d=instructionDraftFor(profile.id);
+  const tasks=tasksForStaff(profile.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const simple=profile.workType==='employee';
+  return heading+`<div class="wd75-split">
       <section class="card"><h2>업무 배정</h2>
-        ${d?`<label for="instructionDate">기본 배정일</label><input id="instructionDate" type="date" value="${esc(d.date)}">
+        <label for="instructionDate">기본 배정일</label><input id="instructionDate" type="date" value="${esc(d.date)}">
         <label for="instructionInput">${simple?'업무지시 내용':'할 일을 말하듯 적어주세요'}</label>
         <textarea id="instructionInput" ${simple?'rows="10"':'maxlength="4000" rows="5"'} placeholder="${simple?'이미 작성한 업무지시를 그대로 붙여넣으세요.':'예) 우리 회사 유튜브 현황을 정리하고 참고 채널과 비교해서 한 달 콘텐츠 계획을 만들어줘.'}">${esc(d.raw)}</textarea>
         ${simple?'<p class="smallText">입력한 내용이 그대로 직원에게 전달돼요.</p>':`<div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating?'disabled':''}>GPT로 업무지시 만들기</button></div>
@@ -1408,12 +1410,12 @@ function instructionView(){
         ${tasks.length?`<details class="instruction-step wd75-history"><summary>배정 이력 ${tasks.length}건</summary>
           <div class="wd60-inner-scroll"><table class="wd60-detail-table"><thead><tr><th scope="col">배정일</th><th scope="col">업무</th><th scope="col">진행 현황</th></tr></thead><tbody>
           ${tasks.map(task=>`<tr><td>${esc(task.date)}</td><td><button class="small" type="button" data-instruction-task="${esc(task.id)}">${esc(task.title)}</button></td><td>${esc(status(task))}</td></tr>`).join('')}
-          </tbody></table></div></details>`:''}`:`<p class="wd68-empty">${profiles.length?'위에서 업무를 배정할 사람을 먼저 선택하세요.':'직원·스탭을 등록한 뒤 업무를 배정하세요.'}</p>`}
+          </tbody></table></div></details>`:''}
       </section>
-      <section class="card"><h2>${profile?esc(profile.name)+' 님이 볼 업무지시':'받는 사람 화면 미리보기'}</h2>
-        <p class="smallText">${profile?(simple?'직원 · 내 업무':'스탭 · 업무진행판'):'담당자가 받을 업무지시를 확인하고 배정하세요.'}</p>
+      <section class="card"><h2>${esc(profile.name)} 님이 볼 업무지시</h2>
+        <p class="smallText">${simple?'직원 · 내 업무':'스탭 · 업무진행판'}</p>
         <div id="instructionPreview" class="wd75-preview" tabindex="-1">${instructionPreview(d,simple)}</div>
-        ${d&&(simple||d.analysis)?`<p class="smallText">내용을 확인하고 필요한 부분을 수정한 뒤 배정하세요.</p>
+        ${simple||d.analysis?`<p class="smallText">내용을 확인하고 필요한 부분을 수정한 뒤 배정하세요.</p>
           ${simple?'':instructionEditor(d)}
           <div class="wd75-action"><button id="assignInstruction" class="primary" type="button">업무지시 배정하기</button></div>`:''}
       </section>
@@ -1449,7 +1451,7 @@ async function generateInstructionDraft(d){
     if(d.raw.trim()!==request||JSON.stringify(d.analysis)!==previous)throw new Error('요청이나 업무지시가 바뀌었어요. 새 내용으로 다시 만들어 주세요.');
     d.analysis=payload.draft;
     d.generating=false;
-    if($('generateInstruction')&&managerStaffId===d.staffId){
+    if($('generateInstruction')&&instructionStaffId===d.staffId){
       render();
       $('instructionPreview').focus();
     }
@@ -1457,7 +1459,7 @@ async function generateInstructionDraft(d){
     if(currentUser==='manager'&&instructionDrafts.get(d.staffId)===d)notify(error?.name==='TimeoutError'?'GPT 응답이 지연됐어요. 다시 시도해 주세요.':error.message||'GPT 연결에 실패했어요.');
   }finally{
     d.generating=false;
-    if($('generateInstruction')&&managerStaffId===d.staffId){
+    if($('generateInstruction')&&instructionStaffId===d.staffId){
       $('generateInstruction').disabled=false;
       $('instructionAiStatus').textContent='';
     }
@@ -1466,10 +1468,10 @@ async function generateInstructionDraft(d){
 
 function bindInstructionView(){
   const staff=$('instructionStaff');
-  staff.onchange=()=>{managerStaffId=staff.value||null;render();$('instructionStaff').focus();};
+  staff.onchange=()=>{instructionStaffId=staff.value||null;render();$('instructionStaff').focus();};
   document.querySelectorAll('[data-instruction-task]').forEach(button=>button.onclick=()=>taskPreview(button.dataset.instructionTask));
   if(!$('instructionInput'))return;
-  const d=instructionDrafts.get(managerStaffId),simple=staffById(d.staffId)?.workType==='employee';
+  const d=instructionDrafts.get(instructionStaffId),simple=staffById(d.staffId)?.workType==='employee';
   const updatePreview=()=>{$('instructionPreview').innerHTML=instructionPreview(d,simple);};
   $('instructionInput').oninput=()=>{d.raw=$('instructionInput').value;if(simple)updatePreview();};
   $('instructionDate').oninput=()=>{d.date=$('instructionDate').value;updatePreview();};
@@ -1513,7 +1515,7 @@ function bindInstructionView(){
     if(!plan)return notify('업무지시 내용을 입력하세요');
     const goal=plan.goal.trim();
     if(d.generating)return notify('GPT가 업무지시를 만든 뒤 확인하고 배정하세요');
-    if(!profile||profile.archivedAt||managerStaffId!==d.staffId)return notify('배정할 사람을 다시 선택하세요');
+    if(!profile||profile.archivedAt||instructionStaffId!==d.staffId)return notify('배정할 사람을 다시 선택하세요');
     if(!goal)return notify('오늘의 목표를 입력하세요');
     const groups=instructionGroups(d,plan);
     for(const [date,items] of groups){
