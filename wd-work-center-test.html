@@ -625,6 +625,10 @@ window.addEventListener('storage',event=>{
   if(currentUser==='manager'&&((event.key==='wd_current_uid'&&event.newValue!==managerHqAccount.uid)||(event.key==='wd-admin-auth-v1'&&!event.newValue))){
     managerDriveSession=null;driveConnectGeneration++;render();return;
   }
+  if(event.key==='wd-admin-auth-v1'&&event.newValue&&currentUser==='manager'&&$('employeeHqRecovery')){
+    $('connectEmployeeDrive')?.refreshOwnerSession?.();
+    return;
+  }
   if(['wd-admin-auth-v1','wd_current_uid'].includes(event.key)&&($('adminLegacyModule')||$('nativeDrivePage')))render();
 });
 const navEmployee=[['attendance','근무기록'],['dashboard','업무보고']];
@@ -887,14 +891,18 @@ function bindEmployeeDrive(onConnected,scope=driveSessionScope(),expected=worksp
   const button=$('connectEmployeeDrive'),statusLine=$('employeeDriveStatus')||$('nativeDriveStatus');
   if(!button)return;
   const recovery=$('employeeHqRecovery');
-  let verifiedDrive=null,popupTimer;
+  const owner=hqAccount===managerHqAccount;
+  let verifiedDrive=null,popupTimer,ownerToken='',ownerCheck;
   const generation=driveConnectGeneration;
   const active=()=>generation===driveConnectGeneration&&$('connectEmployeeDrive')===button&&
     (hqAccount===managerHqAccount?currentUser==='manager':hqAccount?workspaceModuleAccount(S.nav)?.uid===hqAccount.uid:workspaceDriveAccount()===expected);
   const status=message=>{if(active()){statusLine.hidden=false;statusLine.textContent=message;}};
-  const hqFailure=()=>{
-    status('본진 로그인이 만료됐거나 연결된 계정을 확인할 수 없어요. 로그인한 뒤 다시 눌러주세요.');
-    if(active()&&recovery)recovery.hidden=false;
+  const hqFailure=error=>{
+    status(owner?(error?.message||'WD 본진에서 지점장님 계정으로 로그인한 뒤 다시 확인해 주세요.'):
+      '본진 로그인이 만료됐거나 연결된 계정을 확인할 수 없어요. 로그인한 뒤 다시 눌러주세요.');
+    if(!active())return;
+    if(owner)button.textContent='본진 로그인 확인';
+    if(recovery)recovery.hidden=false;
   };
   const prepare=()=>{
     button.disabled=true;
@@ -905,25 +913,48 @@ function bindEmployeeDrive(onConnected,scope=driveSessionScope(),expected=worksp
       status('Google 연결을 불러오지 못했어요. 잠시 뒤 다시 눌러주세요.');
     }).finally(()=>{if(active())button.disabled=false;});
   };
+  const checkOwner=()=>{
+    if(ownerCheck)return ownerCheck;
+    button.disabled=true;status('지점장님 본진 계정을 확인하고 있어요…');
+    ownerCheck=verifyManagerHqSession().then(token=>{
+      if(!active())return;
+      ownerToken=token;
+      button.textContent='Drive 연결 확인하고 시작';
+      if(recovery)recovery.hidden=true;
+      status('지점장님 본진 계정을 확인했어요.');
+    }).catch(error=>{
+      ownerToken='';hqFailure(error);
+    }).finally(()=>{
+      ownerCheck=null;
+      if(active())button.disabled=false;
+    });
+    return ownerCheck;
+  };
   const enter=async session=>{
     try{
-      if(hqAccount&&!await verifyAdminWorkspace(await attendanceHqToken(),hqAccount))throw hqLoginError();
+      if(owner)ownerToken=await verifyManagerHqSession();
+      else if(hqAccount&&!await verifyAdminWorkspace(await attendanceHqToken(),hqAccount))throw hqLoginError();
       if(!active())return;
       await onConnected(session,active);
     }catch(error){
       if(!active())return;
-      if(error.code==='HQ_LOGIN_REQUIRED')hqFailure();
+      if(error.code==='HQ_LOGIN_REQUIRED'){ownerToken='';hqFailure(error);}
       else{
         if(error.code==='DRIVE_PERMISSION')verifiedDrive=null;
         status(error.message||'업무센터 연결을 확인하지 못했어요.');
       }
     }finally{if(active())button.disabled=false;}
   };
-  if(!window.google?.accounts?.oauth2)void prepare();
+  if(owner){
+    button.refreshOwnerSession=checkOwner;
+    void checkOwner();
+    if(!window.google?.accounts?.oauth2)void loadEmployeeDriveClient().catch(()=>{});
+  }else if(!window.google?.accounts?.oauth2)void prepare();
   button.onclick=()=>{
     if(!active()||button.disabled)return;
+    if(owner&&(!ownerToken||ownerToken!==readHqToken())){void checkOwner();return;}
     if(recovery)recovery.hidden=true;
-    if(!readHqToken()){
+    if(!owner&&!readHqToken()){
       button.disabled=true;
       void refreshEmbeddedHqSession().then(token=>{
         if(!active())return;
@@ -1766,18 +1797,44 @@ const adminAuthBase='https://mzftzadtoepcrwhnwdmn.supabase.co';
 const adminAuthPublic='sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh';
 let adminModuleTimer;
 
-async function verifyAdminWorkspace(token,account){
-  if(!account||location.origin!==adminLegacyOrigin||!token||localStorage.getItem('wd_current_uid')!==account.uid)return false;
+async function verifyWorkspaceIdentity(token,account){
+  if(!account||location.origin!==adminLegacyOrigin||!token)return 'login';
   const options={headers:{Authorization:'Bearer '+token,apikey:adminAuthPublic},cache:'no-store',signal:AbortSignal.timeout(8000)};
   const response=await fetch(adminAuthBase+'/auth/v1/user',options);
-  if(!response.ok)return false;
+  if(response.status===401||response.status===403)return 'login';
+  if(!response.ok)return 'unavailable';
   const user=await response.json();
-  if(!user.id||user.email?.toLowerCase()!==account.uid+'@admin.wdwave.kr')return false;
+  if(!user.id||user.email?.toLowerCase()!==account.uid+'@admin.wdwave.kr')return 'account';
   const query=new URLSearchParams({select:'login_id,staff_role,is_active',user_id:'eq.'+user.id,limit:'1'});
   const profiles=await fetch(adminAuthBase+'/rest/v1/wd_staff_profiles?'+query,options);
-  if(!profiles.ok)return false;
+  if(!profiles.ok)return 'unavailable';
   const [profile]=await profiles.json();
-  return profile?.login_id===account.uid&&profile.staff_role===account.role&&profile.is_active===true;
+  return profile?.login_id===account.uid&&profile.staff_role===account.role&&profile.is_active===true?'verified':'permission';
+}
+
+async function verifyAdminWorkspace(token,account){
+  if(!account||(account!==managerHqAccount&&localStorage.getItem('wd_current_uid')!==account.uid))return false;
+  return await verifyWorkspaceIdentity(token,account)==='verified';
+}
+
+async function verifyManagerHqSession(){
+  let token,result;
+  try{
+    token=await attendanceHqToken();
+    result=await verifyWorkspaceIdentity(token,managerHqAccount);
+    if(result==='login'&&token){
+      token=await attendanceHqToken(token);
+      result=await verifyWorkspaceIdentity(token,managerHqAccount);
+    }
+  }catch{result='unavailable';}
+  if(result==='verified'&&readHqToken()===token)return token;
+  const message={
+    account:'현재 WD 본진에 다른 계정이 연결돼 있어요. 본진에서 로그아웃한 뒤 지점장님 계정으로 로그인해 주세요.',
+    permission:'지점장님 계정의 본진 관리자 권한을 확인하지 못했어요.',
+    unavailable:'본진 계정 확인에 연결하지 못했어요. 잠시 뒤 다시 눌러주세요.'
+  }[result]||'WD 본진에서 지점장님 계정으로 로그인한 뒤 다시 확인해 주세요.';
+  const error=hqLoginError();
+  error.message=message;throw error;
 }
 
 function prepareAdminFrame(frame,tab,token,account){
@@ -2060,7 +2117,7 @@ function workCenterEntry(){
     <ul>${manager?'<li>업무매뉴얼·작업결과 보관 연결</li><li>본진 관리 메뉴 열기</li>':linkedStaff?'<li>관리자가 허용한 업무센터 메뉴 연결</li>':'<li>날짜별 업무지시 불러오기</li><li>업무공유파일·업무매뉴얼·작업결과 보관</li><li>기존 업무센터 근무기록 조회·저장</li>'}</ul>
     <button class="primary" id="connectEmployeeDrive" type="button">Drive 연결 확인하고 시작</button>
     <p id="employeeDriveStatus" role="status" class="smallText"></p>
-    <div class="wd93-entry-actions"><a id="employeeHqRecovery" class="small" href="./" target="_blank" rel="noopener" hidden>로그인 다시 연결 ↗</a><button type="button" class="small" id="exitWorkEntry">돌아가기</button></div></div></section>`;
+    <div class="wd93-entry-actions"><a id="employeeHqRecovery" class="small" href="./" target="_blank" rel="noopener" hidden>${manager?'WD 본진 계정 확인 ↗':'로그인 다시 연결 ↗'}</a><button type="button" class="small" id="exitWorkEntry">돌아가기</button></div></div></section>`;
   $('exitWorkEntry').onclick=logout;
   if(manager){
     bindEmployeeDrive(async(session,stillCurrent)=>{
