@@ -254,10 +254,8 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd67-view{font-size:12px;min-height:32px}
 .wd60-summary-table .wd62-status{width:112px;max-width:100%;justify-content:center;text-align:center}
 .wd67-payslip-pdf{width:100%;height:55vh;border:0}.wd67-payslip-img{display:block;max-width:100%;max-height:55vh;margin:auto}
-.wd68-overview{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;padding:18px 22px;background:#fff;border:1px solid #eee7f5;border-radius:14px;border-left:4px solid #6433d8}
-.wd68-overview h1{margin:4px 0 0}
-.wd68-overview-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.wd68-overview-actions button{min-height:44px}
+.topbar .wd88-work-title{min-width:0;margin:0;font-size:clamp(16px,2vw,21px);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.topbar.wd88-home-topbar+.content{padding-top:16px}
 .wd68-header-review{display:flex;align-items:center;gap:9px;background:#f4eefc;color:#392363;border-color:#e4d8f3}
 .wd68-header-review strong{font-size:19px;color:#4b25aa}
 .wd68-attendance small{display:block;margin-top:4px;color:#655677;font-size:12px}
@@ -278,8 +276,10 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd67-day .wd86-check-row{display:flex;justify-content:space-between;align-items:center;gap:4px}
 .wd68-roster-form label{display:flex;align-items:center;gap:8px;margin:0;padding:10px;border-top:1px solid #eee7f5}
 .wd68-roster-form input{width:auto}.wd68-roster-form>button{margin-top:12px}
-@media(max-width:600px){.wd68-overview{padding:14px}.wd68-overview-actions{gap:7px}.wd68-header-review{gap:6px;padding-inline:8px}}
-.wd70-planned{background:#f2edfb;color:#542a9b}
+@media(max-width:600px){.wd68-header-review{gap:6px;padding-inline:8px}}
+.wd88-person{background:hsl(var(--staff-hue) 65% 93%);color:hsl(var(--staff-hue) 62% 29%)}
+strong.wd88-person{display:inline-block;padding:2px 7px;border-radius:5px}
+.wd67-day[aria-pressed=true] .wd86-check.wd88-person{background:hsl(var(--staff-hue) 58% 40%);border-color:hsl(var(--staff-hue) 58% 40%)}
 .wd70-roster-person{min-width:0;border:1px solid #eee7f5;border-radius:8px;margin:10px 0;padding:9px 11px}
 .wd70-roster-person legend{font-weight:700}.wd70-roster-form .wd70-roster-person label{border:0;padding:4px 0}
 .wd70-time-fields{display:flex;flex-wrap:wrap;gap:6px 12px}.wd70-time-fields input{padding:5px}
@@ -418,7 +418,7 @@ window.addEventListener('storage',event=>{
   if(event.key===KEY&&event.newValue!==storageVersion)location.reload();
 });
 const navEmployee=[['attendance','근무기록','◷'],['dashboard','내 업무','◫']];const navEmp=[['attendance','근무기록','◷'],['dashboard','업무진행판','◫'],['month','업무목록','▦'],['drive','자료실','▣'],['ideas','스티커노트','✦']];const navMgr=[['managerHome','관리자 홈','⌂'],['staff','직원관리','♙'],['instructions','업무지시','✎'],['review','보고서 검토','▦'],['drive','자료실','▣']];
-function shell(content){let nav=currentUser==='manager'?navMgr:isEmployeeWorkspace()?navEmployee:navEmp;let labels={managerHome:'관리자 홈',staff:'직원관리',instructions:'업무지시',review:'보고서 검토',attendance:'근무기록',dashboard:isEmployeeWorkspace()?'내 업무':'업무진행판',month:'업무목록',reports:'업무목록',ideas:'스티커노트',drive:'자료실'};const pendingReview=currentUser==='manager'?reviewQueueCount():0;let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':x[0]==='drive'?'<div class="nav-section">자료 · 연결</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}"><span class="symbol">${x[2]}</span>${x[1]}${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div><button class="primary nav-action" data-nav="${currentUser==='manager'?'managerHome':'dashboard'}">${currentUser==='manager'?'관리자 홈':'오늘 업무 보기'}</button><nav class="nav">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 배정업무 ${S.tasks.length}건<br>완료 ${S.tasks.filter(t=>status(t)==='업무 완료').length}건 · 보고서 제출 ${S.tasks.filter(t=>status(t)==='보고서 제출').length}건</div></aside><main class="main"><header class="topbar"><div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div><div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content">${content}</div></main></div>${currentUser==='employee'&&!isEmployeeWorkspace()?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커노트 열기" aria-label="스티커노트 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
+function shell(content){let nav=currentUser==='manager'?navMgr:isEmployeeWorkspace()?navEmployee:navEmp;let labels={managerHome:'관리자 홈',staff:'직원관리',instructions:'업무지시',review:'보고서 검토',attendance:'근무기록',dashboard:isEmployeeWorkspace()?'내 업무':'업무진행판',month:'업무목록',reports:'업무목록',ideas:'스티커노트',drive:'자료실'};const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':x[0]==='drive'?'<div class="nav-section">자료 · 연결</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}"><span class="symbol">${x[2]}</span>${x[1]}${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div><button class="primary nav-action" data-nav="${currentUser==='manager'?'managerHome':'dashboard'}">${currentUser==='manager'?'관리자 홈':'오늘 업무 보기'}</button><nav class="nav">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 배정업무 ${S.tasks.length}건<br>완료 ${S.tasks.filter(t=>status(t)==='업무 완료').length}건 · 보고서 제출 ${S.tasks.filter(t=>status(t)==='보고서 제출').length}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content">${content}</div></main></div>${currentUser==='employee'&&!isEmployeeWorkspace()?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커노트 열기" aria-label="스티커노트 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
 function dayReportCount(t){return t.reports.length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.reports.length,0)}
 function dayFeedbackCount(t){return t.feedback.filter(f=>!f.reviewedOnly).length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.feedback.length,0)}
 function taskButton(t,i){return `<button class="taskTile ${S.selected===t.id?'selected':''}" data-task="${t.id}"><small>DAY ${String(i+1).padStart(2,'0')} · ${esc(t.date)}</small><b>${esc(t.title)}</b><span class="pill ${status(t)==='업무 완료'?'green':status(t)==='보완 요청'?'orange':''}">${status(t)}</span><small style="display:block;margin-top:8px">${dayReportCount(t)}회 제출 · ${dayFeedbackCount(t)}건 피드백</small></button>`}
@@ -781,11 +781,11 @@ function homeRosterAssigned(staffId,date){
   return S.tasks.some(task=>taskStaffId(task)===staffId&&task.date===date);
 }
 
-function homeRosterEditor(profiles,day,today){
+function homeRosterEditor(profiles,day){
   if(!homeRosterDraft)return '';
   const {staffId,changes,showTimes}=homeRosterDraft;
   const selected=changes.get(day)||homeRosterDate(staffId,day);
-  const canEditTime=staffId&&day>=today&&(selected.manual||homeRosterAssigned(staffId,day));
+  const canEditTime=staffId&&(selected.manual||homeRosterAssigned(staffId,day));
   return `<section class="wd86-roster-editor" aria-label="출근일 지정">
     <div class="wd86-roster-controls"><label for="homeRosterStaff">출근할 직원</label>
       <select id="homeRosterStaff"><option value="">직원·스탭 선택</option>${profiles.map(profile=>`<option value="${esc(profile.id)}" ${profile.id===staffId?'selected':''}>${esc(profile.name)}</option>`).join('')}</select>
@@ -819,37 +819,34 @@ function managerHomeView(){
     weeklyStaff.get(profile.id).push(date);
   }
   const editing=!!homeRosterDraft,editingStaffId=homeRosterDraft?.staffId;
+  const hues=[263,214,330,28,190,290,347,43];
+  const staffHues=new Map(S.staffProfiles.map((profile,i)=>[profile.id,hues[i]??Math.round((72+i*137.508)%360)]));
+  const staffColor=id=>`style="--staff-hue:${staffHues.get(id)??263}"`;
   const count=reviewQueueCount();
   const attendanceState=row=>row.record?(row.record.outAt?'퇴근 완료':'출근 완료'):day<today?'출근 기록 없음':'출근 예정';
   const stamp=value=>esc(clockLabel(timeOnly(value)));
-  return `<header class="wd68-overview">
-    <div><div class="eyebrow">${esc(attendanceDate(today))} · 지점장</div><h1>관리자 홈</h1></div>
-    <div class="wd68-overview-actions">
-      <button type="button" class="primary" data-nav="instructions">+ 업무 배정</button>
-    </div>
-  </header>
-  <div class="wd67-home">
+  return `<div class="wd67-home">
     <section class="card wd67-calendar"><div class="wd65-section-head"><div><h2>${esc(staffMonthLabel(month))} 일정</h2></div>
       <div class="wd67-month-nav"><button class="small" id="prevHomeMonth" aria-label="이전 달">‹</button><button class="small" id="todayHomeMonth">오늘</button><button class="small" id="nextHomeMonth" aria-label="다음 달">›</button>
       ${profiles.length?`<button type="button" class="small ${editing?'':'primary'}" id="editHomeRoster" aria-expanded="${editing}">출근일 지정하기</button>`:''}</div></div>
-    ${homeRosterEditor(profiles,day,today)}
+    ${homeRosterEditor(profiles,day)}
     <div class="wd87-month-grid" aria-label="${esc(staffMonthLabel(month))} 출근 달력">
       ${'월화수목금토일'.split('').map(label=>`<span class="wd87-weekday">${label}</span>`).join('')}
       ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(firstColumn)}
       ${days.map(date=>{
-      const staff=calendar.get(date).staff.filter(row=>row.record||date>=today);
+      const staff=calendar.get(date).staff;
       const assigned=editingStaffId&&calendar.get(date).tasks.some(task=>taskStaffId(task)===editingStaffId);
       const checked=!!(assigned||(editingStaffId&&(homeRosterDraft.changes.get(date)||homeRosterDate(editingStaffId,date)).manual));
       return `<button type="button" class="wd67-day" data-home-day="${date}" aria-pressed="${editing?checked:date===day}" ${date===today?'aria-current="date"':''}
-        ${editing&&(!editingStaffId||date<today)?'disabled':''} aria-label="${esc(attendanceDate(date))}${editing?(assigned?' 업무 배정으로 출근 예정':' 출근일 선택'):''}">
+        ${editing&&!editingStaffId?'disabled':''} aria-label="${esc(attendanceDate(date))}${editing?(assigned?' 업무 배정으로 출근 예정':' 출근일 선택'):''}">
         ${date===today?'<small>오늘</small>':''}
-        ${editing?`<span class="wd86-check-row"><strong>${Number(date.slice(8))}</strong><span class="wd86-check" aria-hidden="true">${checked?'✓':''}</span></span>`:`<strong>${Number(date.slice(8))}</strong>`}
+        ${editing?`<span class="wd86-check-row"><strong>${Number(date.slice(8))}</strong><span class="wd86-check wd88-person" ${staffColor(editingStaffId)} aria-hidden="true">${checked?'✓':''}</span></span>`:`<strong>${Number(date.slice(8))}</strong>`}
         ${editing&&assigned?'<small>업무 배정 · 자동</small>':''}
         ${staff.map(({profile,record,hours})=>{
           const time=record
             ? timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):' · 퇴근 미기록')
             : hours?.start&&hours?.end?'예정 '+hours.start+' ~ '+hours.end:'예정 시간 미정';
-          return `<span class="wd67-day-staff${record?'':' wd70-planned'}"><b>${esc(profile.name)}</b><span>${esc(time)}</span></span>`;
+          return `<span class="wd67-day-staff wd88-person" ${staffColor(profile.id)}><b>${esc(profile.name)}</b><span>${esc(time)}</span></span>`;
         }).join('')}
       </button>`;
     }).join('')}
@@ -862,14 +859,14 @@ function managerHomeView(){
       <section class="card"><h2>이번 주 출근</h2>
         <p class="smallText">${esc(thisWeek[0].slice(5).replace('-','/'))} ~ ${esc(thisWeek.at(-1).slice(5).replace('-','/'))}</p>
         ${profiles.filter(profile=>weeklyStaff.has(profile.id)).map(profile=>`<div class="wd87-summary-row">
-          <strong>${esc(profile.name)}</strong><span>${weeklyStaff.get(profile.id).map(date=>esc(attendanceDate(date))).join(' · ')}</span>
+          <strong class="wd88-person" ${staffColor(profile.id)}>${esc(profile.name)}</strong><span>${weeklyStaff.get(profile.id).map(date=>esc(attendanceDate(date))).join(' · ')}</span>
         </div>`).join('')||'<p class="wd68-empty">이번 주 출근 일정이 없어요.</p>'}
       </section>
     </div>
     <dialog id="homeDayDialog" class="wd62-month-dialog wd87-day-dialog wd67-day-panel" aria-labelledby="homeDayTitle">
     <div class="wd62-month-dialog-head"><h2 id="homeDayTitle">${esc(attendanceDate(day))} 일정</h2><form method="dialog"><button type="submit">닫기</button></form></div>
     <div class="wd68-day-heading"><h3>출근 인원 <span class="pill">${selected.staff.length}명</span></h3></div>
-    ${selected.staff.map(row=>`<div class="wd67-line"><strong>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText">${attendanceState(row)}</span>
+    ${selected.staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${staffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText">${attendanceState(row)}</span>
       ${row.planned?`<small>예정 ${esc(scheduledHoursLabel(row.hours))}</small>`:''}
       ${row.record?`<small>출근 ${stamp(row.record.inAt)}${row.record.outAt?' · 퇴근 '+stamp(row.record.outAt):''}</small>`:''}</div></div>`).join('')||'<p class="wd68-empty">출근 예정이나 기록이 없습니다.</p>'}
     <h3>배정 업무 <span class="pill">${selected.tasks.length}건</span></h3>
@@ -885,7 +882,7 @@ function bindManagerHome(){
     const date=button.dataset.homeDay;
     if(homeRosterDraft){
       const {staffId,changes}=homeRosterDraft;
-      if(!staffId||date<localDay())return;
+      if(!staffId)return;
       if(!homeRosterAssigned(staffId,date)){
         const previous=changes.get(date)||homeRosterDate(staffId,date);
         const next=previous.manual?{manual:false,start:'',end:''}:{...previous,manual:true};
@@ -945,7 +942,6 @@ function bindManagerHome(){
     const priorRoster=S.workRoster,priorHours=S.workSchedule;
     const roster={...priorRoster},schedule={...priorHours};
     for(const [date,{manual,start,end}] of changes){
-      if(date<localDay())return notify('오늘 또는 이후의 출근일만 지정할 수 있어요.');
       if((start||end)&&(!attendanceISO(date,start)||!attendanceISO(date,end)||end<=start))
         return notify(attendanceDate(date)+' 예정 출근·퇴근 시간을 확인해 주세요.');
       const ids=new Set(roster[date]||[]);
