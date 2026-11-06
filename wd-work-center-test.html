@@ -636,10 +636,13 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 #officeCardForm{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 @media(max-width:820px){.wd109-office-split{grid-template-columns:minmax(0,1fr)}.wd109-tabs{gap:4px}.wd109-tabs [role="tab"]{padding:10px}.wd109-office-tabs [role="tab"]{min-width:65px}}
 @media print{
-  body.wd109-print-payroll *{visibility:hidden}
-  body.wd109-print-payroll #payrollPreview,body.wd109-print-payroll #payrollPreview *{visibility:visible}
-  body.wd109-print-payroll #payrollPreview{position:absolute;left:0;top:0;width:100%;border:0}
+  #printReport .wd111-payroll-paper{padding:0;border:0;border-radius:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  #printReport .wd111-payroll-paper tr{break-inside:avoid}
 }
+.wd111-payroll-reminder{width:min(460px,calc(100vw - 32px))}
+.wd111-payroll-reminder h2{margin:4px 0 0;font-size:21px}
+.wd111-payroll-reminder #payrollReminderStatus{padding:10px 12px;border-radius:8px;background:#f4eff9}
+
 </style><style>.wd110-instruction-actions,.wd110-talk-controls,.wd110-talk-attachment{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .wd109-assigned-work>header,.wd110-cancelled-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .wd110-cancelled-list{list-style:none;padding:0}
@@ -664,6 +667,19 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd110-account-secret-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .wd110-account-secret-row span{overflow-wrap:anywhere;min-width:0}
 .wd110-account-memo{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+</style><style>.wd111-talk-search{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:6px}
+.wd111-talk-search input{width:100%;min-width:0}
+.wd111-talk-search button{border-color:#d8c8ee;color:#4d2683}
+#workspaceTalkSearchStatus{margin:0;padding:4px 8px;color:#5b3b81}
+#workspaceTalkSound{border:1px solid #d9d0e4;background:#f6f3f9;color:#594c66;font-weight:700}
+#workspaceTalkSound[aria-pressed="true"]{border-color:#c6a7ee;background:#efe3ff;color:#4e2186}
+.wd111-talk-message-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wd111-talk-copy{padding:4px 8px;border-color:#d8c8ee;background:#fff;color:#562c8a;font-weight:700;white-space:nowrap}
+.wd109-talk-dock .wd108-talk-log details{margin-top:4px}
+.wd109-talk-dock .wd108-talk-log details summary{max-width:100%;color:#58279b;font-size:12px;font-weight:750;cursor:pointer}
+.wd111-talk-excerpt{white-space:pre-wrap;overflow-wrap:anywhere;color:#2d233b;font-size:14px;font-weight:400;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.wd109-talk-dock details[open] .wd111-talk-excerpt,.wd109-talk-dock details[open] .wd111-talk-expand,.wd109-talk-dock details:not([open]) .wd111-talk-collapse{display:none}
+.wd111-talk-clipboard{position:fixed;left:-10000px;top:0}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -794,7 +810,9 @@ function logout(){
   if(liveAttendanceSaving)return notify('근무기록 저장이 끝난 뒤 로그아웃하세요');
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
   closeWorkspaceTalk();stopWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
-  for(const id of ['todayWorkGate','modalLayer'])$(id)?.remove();
+  for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
+  payrollReminderShown='';
+  clearPrintDocument?.();
   currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
   employeeReportDate=null;attendanceRecordDay=null;editingAttendanceTime=null;materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
@@ -902,7 +920,29 @@ function dayFeedbackCount(t){return t.feedback.filter(f=>!f.reviewedOnly).length
 function taskButton(t,i){return `<button class="taskTile ${S.selected===t.id?'selected':''}" data-task="${t.id}"><small>DAY ${String(i+1).padStart(2,'0')} · ${esc(t.date)}</small><b>${esc(t.title)}</b><span class="pill ${status(t)==='업무 완료'?'green':status(t)==='보완 요청'?'orange':''}">${status(t)}</span><small style="display:block;margin-top:8px">${dayReportCount(t)}회 제출 · ${dayFeedbackCount(t)}건 피드백</small></button>`}
 function submittedReportEntries(day){taskUnits(day);return [day,...Object.values(day.workUnits||{})].flatMap(owner=>owner.reports.map((report,index)=>({owner,report,index}))) }
 function openSubmittedReport(owner,report,index,toolbar=''){if($('modalLayer'))$('modalLayer').remove();showModal(`<div class="wd47-reporttools">${toolbar}<button class="primary small" id="saveReportPdf">PDF 저장</button></div><div class="wd47-reportbody">${reportDocument(owner,report)}</div>`,'제출 업무보고서');if($('modalLayer')?.classList)$('modalLayer').classList.add('wd47-reportlayer');$('saveReportPdf').onclick=()=>printReportPdf(owner,report,index);document.querySelectorAll('[data-download]').forEach(b=>b.onclick=()=>downloadFile(b.dataset.download))}
-function printReportPdf(owner,report,index){if($('printReport'))$('printReport').remove();let page=document.createElement('div');page.id='printReport';page.innerHTML=reportDocument(owner,report).replace(/<button\b[^>]*>[\s\S]*?<\/button>/g,'');let oldTitle=document.title;document.title=`업무보고_${(report.snapshot||owner).date}_${index+1}차`;document.body.append(page);let cleanup=()=>{page.remove();document.title=oldTitle;window.removeEventListener('afterprint',cleanup)};window.addEventListener('afterprint',cleanup);try{window.print()}catch(e){cleanup();notify('인쇄 창을 열지 못했습니다. 브라우저의 인쇄 기능을 확인하세요')}}
+let clearPrintDocument;
+function printDocument(markup,title){
+  clearPrintDocument?.();
+  const page=document.createElement('div'),oldTitle=document.title;
+  page.id='printReport';
+  page.innerHTML=markup;
+  document.body.append(page);
+  document.title=title;
+  const cleanup=()=>{
+    page.remove();
+    document.title=oldTitle;
+    window.removeEventListener('afterprint',cleanup);
+    clearPrintDocument=null;
+  };
+  clearPrintDocument=cleanup;
+  window.addEventListener('afterprint',cleanup,{once:true});
+  try{window.print();}
+  catch{cleanup();notify('인쇄 창을 열지 못했어요. 브라우저의 인쇄 기능을 확인해 주세요.');}
+}
+function printReportPdf(owner,report,index){
+  const markup=reportDocument(owner,report).replace(/<button\b[^>]*>[\s\S]*?<\/button>/g,'');
+  printDocument(markup,`업무보고_${(report.snapshot||owner).date}_${index+1}차`);
+}
 
 function dayReportsPopup(id,selected=null){let day=S.tasks.find(t=>t.id===id);if(!day)return;let entries=submittedReportEntries(day);if(!entries.length){showModal('<div class="empty">아직 제출한 보고서가 없습니다.</div>','제출 업무보고서');return}let chosen=selected===null?(day.reports.length?day.reports.length-1:entries.length-1):Number(selected);chosen=Math.max(0,Math.min(chosen,entries.length-1));let entry=entries[chosen];let picker=entries.length>1?`<label class="wd47-version">제출 이력<select id="reportVersion">${entries.map((e,i)=>`<option value="${i}" ${i===chosen?'selected':''}>${e.owner.parentId?'이전 개별 보고 · ':''}${e.index+1}차 · ${esc(e.report.at)}</option>`).join('')}</select></label>`:'<span class="smallText">제출한 보고서</span>';openSubmittedReport(entry.owner,entry.report,entry.index,picker);if($('reportVersion'))$('reportVersion').onchange=()=>dayReportsPopup(id,Number($('reportVersion').value))}
 function bindTaskReports(){document.querySelectorAll('[data-day-reports]').forEach(b=>b.onclick=()=>dayReportsPopup(b.dataset.dayReports))}
@@ -939,7 +979,7 @@ revise_2:{method:'항목별로 수정한 뒤 요청 내용과 비교하세요. �
 revise_3:{method:'수정 요청이 모두 반영됐는지 확인하세요. 미반영 항목은 이유와 확인할 내용을 남기세요.',format:"1. 반영 완료한 항목 : 수정 요청과 확인 결과\n2. 최종 수정본 : 검토할 파일명·링크\n3. 추가 확인이 필요한 항목 : 남은 내용과 이유\n4. 다음 작업 : 승인 후 진행할 일",evidence:'검토받을 수정 결과물과 열람 가능한 링크를 남기세요.'}
 };
 function recordFormat(step){return step.recordFormat&&!/[|「→]/.test(step.recordFormat)?step.recordFormat:GUIDE_DETAILS[step.id]?.format||'1. 수행한 일 :\n2. 작업한 방법 :\n3. 확인한 결과 :\n4. 적용하거나 사용할 부분 :\n5. 추가 확인할 사항 :'}
-function recordOutline(step){return recordFormat(step).split('\n').filter(line=>/^\d+\./.test(line)).map(line=>line.split(/\s*[:：]\s*/)[0]+' : ').join('\n')}
+function recordOutline(step){return recordFormat(step).split('\n').filter(line=>/^\d+\./.test(line)).map(line=>line.split(/\s+\(|\s*[:：]\s*/)[0]+' : ').join('\n')}
 function guideDetail(step){return {method:step.method||GUIDE_DETAILS[step.id]?.method||'안내에 따라 필요한 자료를 확인하고 지시된 순서로 작업하세요. 진행 중 판단이 필요한 내용은 확인 요청으로 남기세요.',format:recordFormat(step),evidence:step.evidence||GUIDE_DETAILS[step.id]?.evidence||'파일·사진·링크가 필요한 작업이면 해당 단계에 첨부하세요. 결과물 형식이 지정됐다면 그 형식에 맞춰 저장하세요.'}}
 function guideBook(t){return `<section class="wd40-guide">${workSteps(t).map((step,i)=>{let detail=guideDetail(step);return `<section class="wd40-guidesection"><h3><span>${String(i+1).padStart(2,'0')}</span>${esc(step.title)}</h3>${step.instruction&&step.instruction!==detail.method?`<p class="wd40-intro">${nl(step.instruction)}</p>`:''}<h4>진행 방법</h4><p>${nl(detail.method)}</p><h4>업무보고에 적을 내용</h4><p>${nl(detail.format)}</p>${t.workflow?.reportInApp?'':`<h4>남길 자료 · 파일</h4><p>${nl(detail.evidence)}</p>`}</section>`}).join('')}</section>`}
 function bindGuide(t){document.querySelectorAll('[data-guide-step]').forEach(b=>b.onclick=()=>{if(activeStepUploads)return notify('첨부 저장이 끝난 뒤 이동하세요');let index=Number(b.dataset.guideStep);t.guideView=index;if(currentUser==='employee'){let f=reportFlow(t),steps=workSteps(t),first=steps.findIndex((_,i)=>!f.confirmed[i]),reachable=first<0?steps.length-1:first;if(index<=reachable){f.step=index;S.tab=1}}save();render()})}
@@ -1612,8 +1652,9 @@ function retainCompanyDriveSession(session){
 function talkAvailable(){
   return !!readHqToken()&&(currentUser==='manager'||currentUser==='employee'&&hqStaffLoginId===legacyStaffHqLogin);
 }
-async function talkRequest(token,body){
+async function talkRequest(token,body,search=''){
   const query=new URLSearchParams({select:'id,sender_id,body,created_at',...(!body?{order:'created_at.desc,id.desc',limit:'100'}:{})});
+  if(search&&!body)query.set('body','ilike.%'+search.replace(/[\\%_]/g,'\\$&').replace(/\*/g,'%')+'%');
   const response=await fetch(adminAuthBase+'/rest/v1/wd_talk_messages?'+query,{
     headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json',Prefer:'return=representation'}:{})},
     ...(body?{method:'POST',body:JSON.stringify(body)}:{}),cache:'no-store',signal:AbortSignal.timeout(12000)
@@ -1621,14 +1662,33 @@ async function talkRequest(token,body){
   if(!response.ok)throw new Error('WD TALK에 연결하지 못했어요. 로그인 상태를 확인해 주세요.');
   return response.json();
 }
+function talkFile(body){
+  if(!body.startsWith('[WDFILE]'))return null;
+  try{
+    const file=JSON.parse(body.slice(8));
+    if(file.v===1&&safeDriveId(file.id))return file;
+  }catch{}
+  return null;
+}
 function talkBody(body){
-  if(body.startsWith('[WDFILE]')){
-    try{
-      const file=JSON.parse(body.slice(8));
-      if(file.v===1&&safeDriveId(file.id))return `<a href="${driveFileUrl(file.id)}" target="_blank" rel="noopener noreferrer">${esc(file.name||'Drive 첨부파일')}</a>`;
-    }catch{}
-  }
-  return esc(body);
+  const file=talkFile(body);
+  return file?`<a href="${driveFileUrl(file.id)}" target="_blank" rel="noopener noreferrer">${esc(file.name||'Drive 첨부파일')}</a>`:esc(body);
+}
+function talkCopyText(body){
+  const file=talkFile(body);
+  return file?(file.name||'Drive 첨부파일')+'\n'+driveFileUrl(file.id):body;
+}
+function talkBubble(row,mine,unread){
+  const body=row.body||'',lines=body.split('\n');
+  const excerpt=Array.from(lines.slice(0,5).join('\n')).slice(0,240).join('').trimEnd();
+  const content=!talkFile(body)&&(lines.length>5||body.length>260)?
+    `<details data-talk-expand="${esc(row.id)}"><summary>
+      <span class="wd111-talk-excerpt">${esc(excerpt)}…</span>
+      <span class="wd111-talk-expand">전체 보기</span><span class="wd111-talk-collapse">접기</span></summary><p>${esc(body)}</p></details>`:
+    `<p>${talkBody(body)}</p>`;
+  return `<article class="${mine?'mine':''}"><div class="wd111-talk-message-head">
+    <small>${mine?'나':talkSender()} · ${esc(new Date(row.created_at).toLocaleString('ko-KR'))}${unread?' · 안 읽음':''}</small>
+    <button type="button" class="small wd111-talk-copy" data-talk-copy="${esc(row.id)}">복사</button></div>${content}</article>`;
 }
 let workspaceTalkState=null,talkAudio=null;
 function talkRole(){
@@ -1808,6 +1868,11 @@ function openWorkspaceTalk(){
   panel.innerHTML=`<header><div><h2 id="workspaceTalkTitle">WD TALK</h2><span class="smallText">${talkSender()} 님과 대화</span></div>
     <div class="wd110-talk-controls"><button type="button" class="small" id="workspaceTalkSound"></button>
     <button type="button" class="small" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button></div></header>
+    <form id="workspaceTalkSearchForm" class="wd111-talk-search" role="search" aria-label="TALK 대화 검색">
+      <input id="workspaceTalkSearch" type="search" maxlength="100" aria-label="대화 내용 검색" placeholder="이전 대화에서 검색">
+      <button type="submit" class="small">검색</button><button type="button" class="small" id="clearWorkspaceTalkSearch" hidden>검색 닫기</button>
+    </form>
+    <p class="smallText" id="workspaceTalkSearchStatus" role="status" hidden></p>
     <p class="smallText" id="workspaceTalkStatus" role="status">대화 불러오는 중…</p>
     <div class="wd108-talk-log" id="workspaceTalkLog" tabindex="0" aria-label="대화 내역"></div>
     <form id="workspaceTalkForm"><label for="workspaceTalkText">메시지</label><textarea id="workspaceTalkText" maxlength="2000" rows="2"></textarea>
@@ -1820,28 +1885,80 @@ function openWorkspaceTalk(){
   const log=$('workspaceTalkLog'),status=$('workspaceTalkStatus'),form=$('workspaceTalkForm'),input=$('workspaceTalkText'),send=$('workspaceTalkSend');
   const sound=$('workspaceTalkSound'),fileInput=$('workspaceTalkFile'),attach=$('workspaceTalkAttach'),remove=$('workspaceTalkRemoveFile');
   const active=()=>panel.isConnected&&workspaceTalkState===state&&talkAvailable();
-  let ids='',sending=false,picked=null,uploaded='',requestId='';
+  const searchForm=$('workspaceTalkSearchForm'),searchInput=$('workspaceTalkSearch'),searchStatus=$('workspaceTalkSearchStatus'),clearSearch=$('clearWorkspaceTalkSearch');
+  let ids='',sending=false,picked=null,uploaded='',requestId='',searchTerm='',searchRows=[],searchVersion=0;
   const atBottom=()=>log.scrollHeight-log.scrollTop-log.clientHeight<60;
   const controls=()=>{send.disabled=!state.uid||sending;attach.disabled=remove.disabled=sending;};
   panel.paintTalk=()=>{
     if(!active()||!state.uid)return;
-    const previous=log.scrollTop,stick=!ids||atBottom();
+    const rows=searchTerm?searchRows:state.rows;
+    const previous=log.scrollTop,stick=!searchTerm&&(!ids||atBottom());
     if(stick&&document.visibilityState!=='hidden')markTalkRead(state);
-    const unread=new Set(talkUnreadRows(state).map(row=>row.id));
-    const next=state.rows.map(row=>row.id+(unread.has(row.id)?'u':'r')).join(',');
+    const unread=row=>row.sender_id!==state.uid&&talkReadPoint(row)>state.readPoint;
+    const next=searchTerm+'|'+rows.map(row=>row.id+(unread(row)?'u':'r')).join(',');
     if(ids!==next||!log.childNodes.length){
-      log.innerHTML=state.rows.slice().reverse().map(row=>{
-        const mine=row.sender_id===state.uid;
-        return `<article class="${mine?'mine':''}"><small>${mine?'나':talkSender()} · ${esc(new Date(row.created_at).toLocaleString('ko-KR'))}${unread.has(row.id)?' · 안 읽음':''}</small>
-          <p>${talkBody(row.body)}</p></article>`;
-      }).join('')||'<p class="empty">아직 대화가 없어요.</p>';
+      const expanded=new Set([...log.querySelectorAll('details[open]')].map(item=>item.dataset.talkExpand));
+      log.innerHTML=rows.slice().reverse().map(row=>talkBubble(row,row.sender_id===state.uid,unread(row))).join('')||
+        (searchTerm?'':'<p class="empty">아직 대화가 없어요.</p>');
+      log.querySelectorAll('details').forEach(item=>{item.open=expanded.has(item.dataset.talkExpand);});
       log.scrollTop=stick?log.scrollHeight:previous;ids=next;
     }
     sound.textContent=state.sound?'소리 켜짐':'소리 꺼짐';sound.setAttribute('aria-pressed',String(state.sound));
     if(!sending&&!picked&&!uploaded)status.textContent='';
     controls();
   };
-  const markVisible=()=>{if(active()&&atBottom()&&document.visibilityState!=='hidden'){markTalkRead(state);panel.paintTalk();paintWorkspaceTalkBadge(state);}};
+  const resetSearch=()=>{
+    searchVersion++;searchTerm='';searchRows=[];searchInput.value='';
+    clearSearch.hidden=searchStatus.hidden=true;ids='';panel.paintTalk();
+  };
+  clearSearch.onclick=()=>{resetSearch();searchInput.focus();};
+  searchInput.oninput=()=>{if(!searchInput.value.trim())resetSearch();};
+  searchForm.onsubmit=async event=>{
+    event.preventDefault();
+    const term=searchInput.value.trim();
+    if(!term){resetSearch();return;}
+    const version=++searchVersion;
+    searchTerm=term;searchRows=[];
+    clearSearch.hidden=searchStatus.hidden=false;
+    searchStatus.textContent='이전 대화를 검색하고 있어요.';
+    panel.paintTalk();
+    const current=()=>active()&&version===searchVersion;
+    try{
+      const {token,uid}=await workspaceTalkIdentity();
+      if(!current())return;
+      if(state.uid&&uid!==state.uid)throw new Error('계정이 바뀌었어요. TALK를 다시 열어 주세요.');
+      const rows=await talkRequest(token,null,term);
+      if(!current())return;
+      const needle=term.toLocaleLowerCase('ko-KR');
+      searchRows=rows.filter(row=>talkCopyText(row.body||'').toLocaleLowerCase('ko-KR').includes(needle));
+      panel.paintTalk();
+      log.scrollTop=log.scrollHeight;
+      searchStatus.textContent=searchRows.length?
+        (rows.length===100?'최근 일치 대화 ':'일치하는 대화 ')+searchRows.length+'건':'일치하는 대화가 없어요.';
+    }catch(error){if(current())searchStatus.textContent=error.message||'대화 검색에 실패했어요.';}
+  };
+  log.onclick=async event=>{
+    const button=event.target.closest('[data-talk-copy]');
+    if(!button||!active())return;
+    const rows=searchTerm?searchRows:state.rows,row=rows.find(item=>String(item.id)===button.dataset.talkCopy);
+    if(!row)return;
+    const message=talkCopyText(row.body||'');
+    try{await navigator.clipboard.writeText(message);}
+    catch{
+      if(!active())return;
+      const field=document.createElement('textarea');
+      field.className='wd111-talk-clipboard';field.value=message;field.readOnly=true;
+      panel.append(field);field.select();
+      let copied=false;
+      try{copied=document.execCommand('copy');}catch{}
+      field.remove();button.focus();
+      if(!copied){notify('복사하지 못했어요. 전체 보기에서 내용을 선택해 주세요.');return;}
+    }
+    if(!active())return;
+    button.textContent='복사됨';
+    setTimeout(()=>{if(button.isConnected)button.textContent='복사';},1400);
+  };
+  const markVisible=()=>{if(active()&&!searchTerm&&atBottom()&&document.visibilityState!=='hidden'){markTalkRead(state);panel.paintTalk();paintWorkspaceTalkBadge(state);}};
   log.onscroll=markVisible;document.addEventListener('visibilitychange',markVisible);
   sound.onclick=()=>{state.sound=!state.sound;talkPreference(state,'sound',state.sound?'on':'off');if(state.sound)primeTalkAudio();panel.paintTalk();};
   attach.onclick=()=>{if(!uploaded)fileInput.click();else status.textContent='저장된 첨부를 다시 보내거나 첨부를 취소해 주세요.';};
@@ -2574,7 +2691,21 @@ function bindTaxPayroll(){
     if(!active()||$('modalLayer'))return;
     showModal('<div id="payrollHistoryBody" role="region" aria-label="누적 내역" tabindex="0">누적 내역을 불러오는 중…</div>','급여명세서 누적 내역');
     const target=$('payrollHistoryBody'),{columns}=nativeAdminData.payroll[0];
-    void verifyManagerHqSession().then(token=>readNativeAdminData(nativeAdminData.payroll[0],token)).then(rows=>{
+    void verifyManagerHqSession().then(async token=>{
+      const rows=await readNativeAdminData(nativeAdminData.payroll[0],token);
+      const monthOf=row=>String(row.pay_month||'').replace(/^(\d{4})년\s*(\d{1,2})월$/,(_,year,month)=>year+'-'+month.padStart(2,'0'));
+      const months=[...new Set(rows.map(monthOf).filter(month=>validAttendanceDay(month+'-01')))];
+      if(!months.length||!active()||!target.isConnected)return rows;
+      try{
+        const deposits=await readPayrollDeposits(token,'in.('+months.join(',')+')');
+        const matches=new Map(deposits.map(row=>[row.staff_key+'|'+row.slot,row]));
+        return rows.map(row=>{
+          const people=S.staffProfiles.filter(profile=>profile.name===row.employee_name);
+          const deposit=people.length===1?matches.get(people[0].id+'|'+monthOf(row)):null;
+          return deposit?{...row,pay_date:payrollDepositDate(deposit)}:row;
+        });
+      }catch{return rows;}
+    }).then(rows=>{
       if(!active()||!target.isConnected)return;
       target.innerHTML=rows.length?`<div class="wd105-admin-table"><table class="wd58-list-table"><thead><tr>${columns.map(([,label])=>`<th scope="col">${label}</th>`).join('')}</tr></thead>
         <tbody>${rows.map(row=>`<tr>${columns.map(([name,,format])=>`<td>${esc(adminCell(row[name],format))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<p class="empty">저장된 급여명세서가 없어요.</p>';
@@ -2587,6 +2718,73 @@ const sujinPayrollDefaults={position:'사무직',scheduled_hours:68,overtime_rat
 
 function payrollMonthName(month){
   return month.slice(0,4)+'년 '+month.slice(5)+'월';
+}
+
+const payrollCalendar=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
+function payrollDepositDate(row){
+  const timestamp=row?.confirmed_at?new Date(row.confirmed_at):null;
+  return timestamp&&Number.isFinite(timestamp.getTime())?payrollCalendar.format(timestamp):'';
+}
+
+function readPayrollDeposits(token,slot){
+  return staffRecordRequest(token,new URLSearchParams({select:'staff_key,slot,confirmed_at',kind:'eq.deposit',slot}));
+}
+
+function payrollReminderFor(date=new Date()){
+  const today=payrollCalendar.format(date);
+  const [year,month,day]=today.split('-').map(Number);
+  if(day===1){
+    const previous=new Date(Date.UTC(year,month-1,0,12));
+    return {today,month:payrollCalendar.format(previous).slice(0,7),verify:true};
+  }
+  if(day===27||day===new Date(Date.UTC(year,month,0)).getUTCDate())
+    return {today,month:today.slice(0,7),verify:false};
+  return null;
+}
+
+let payrollReminderShown='';
+function maybeShowPayrollReminder(){
+  if(currentUser!=='manager'||$('modalLayer')||$('payrollReminder'))return;
+  const period=payrollReminderFor();
+  if(!period||payrollReminderShown===period.today)return;
+  const people=activeProfiles();
+  const dialog=document.createElement('dialog');
+  dialog.id='payrollReminder';
+  dialog.className='wd62-month-dialog wd111-payroll-reminder';
+  dialog.setAttribute('aria-labelledby','payrollReminderTitle');
+  dialog.innerHTML=`<div class="wd62-month-dialog-head"><div><p>${esc(payrollMonthName(period.month))}</p>
+    <h2 id="payrollReminderTitle">${period.verify?'지난달 급여 입금 확인':'급여 지급 확인'}</h2></div>
+    <form method="dialog"><button type="submit" autofocus>닫기</button></form></div>
+    <p>${period.verify?'지난달 급여가 정상 입금됐는지 확인해 주세요.':'이번 달 급여 지급 여부를 확인해 주세요.'}</p>
+    <p class="smallText" id="payrollReminderStatus" role="status">${people.length?'입금 확인 기록을 불러오는 중이에요.':'등록된 직원·스탭이 없어요.'}</p>
+    <div class="actions"><button type="button" class="primary" id="openPayrollStaff">직원관리에서 확인</button></div>`;
+  document.body.append(dialog);
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+  dialog.showModal();
+  payrollReminderShown=period.today;
+  const openStaff=person=>{
+    dialog.close();
+    staffSummaryMonth=period.month;
+    managerStaffId=person?.id||null;
+    staffDetailOpen=!!person;
+    editingStaff=false;
+    setNav('staff');
+  };
+  $('openPayrollStaff').onclick=()=>openStaff(people[0]);
+  if(!people.length)return;
+  const status=$('payrollReminderStatus');
+  void verifyManagerHqSession().then(token=>readPayrollDeposits(token,'eq.'+period.month)).then(rows=>{
+    if(!dialog.open||!dialog.isConnected)return;
+    const deposits=new Map(rows.map(row=>[row.staff_key,row]));
+    const pending=people.filter(profile=>{
+      const row=deposits.get(profile.id);
+      return row?!payrollDepositDate(row):profile.payroll?.[period.month]!=='paid';
+    });
+    status.textContent=`입금 확인 완료 ${people.length-pending.length}명 · 확인 기록 없음 ${pending.length}명`;
+    $('openPayrollStaff').onclick=()=>openStaff(pending[0]||people[0]);
+  }).catch(()=>{
+    if(dialog.open&&dialog.isConnected)status.textContent='입금 확인 기록을 불러오지 못했어요. 직원관리에서 확인해 주세요.';
+  });
 }
 
 function payrollEmployeeLogin(profile){
@@ -2609,22 +2807,22 @@ async function payrollWorkMinutes(profile,month){
   return {minutes:[...days.values()].reduce((a,b)=>a+b,0),records:days.size};
 }
 
-function payrollPreviewMarkup(fields,result){
+function payrollPreviewMarkup(fields,result,depositLabel=''){
   const won=value=>Number(value||0).toLocaleString('ko-KR')+'원';
   const rows=(list,values)=>list.map(([key,label])=>`<tr><th scope="row">${label}</th><td>${won(values[key])}</td></tr>`).join('');
   const deductions={...result,income_tax:result.raw_data.incomeTax,local_income_tax:result.raw_data.localIncomeTax};
   return `<header><span>초안</span><h2>급여명세서</h2><p>${esc(fields.get('pay_month')||'')} · ${esc(fields.get('employee_name')||'직원 선택')}</p></header>
     <dl class="wd109-payroll-summary"><div><dt>총 지급액</dt><dd>${won(result.gross_pay)}</dd></div><div><dt>실수령액</dt><dd>${won(result.net_pay)}</dd></div></dl>
-    <p>${esc(fields.get('company_name'))} · ${esc(fields.get('position')||'—')}<br>지급일 ${esc(fields.get('pay_date')||'—')} · 실근로 ${result.actual_hours}시간</p>
+    <p>${esc(fields.get('company_name'))} · ${esc(fields.get('position')||'—')}<br>실근로 ${result.actual_hours}시간${depositLabel?' · '+esc(depositLabel):''}</p>
     <table><caption>지급 내역</caption><tbody>${rows([...payrollPayFields,['overtime_pay','시간외수당']],result)}</tbody></table>
     <table><caption>공제 내역</caption><tbody>${rows(payrollDeductionFields,deductions)}<tr><th scope="row">총 공제액</th><td>${won(result.total_deduction)}</td></tr></tbody></table>`;
 }
 
-function printPayrollDraft(){
-  document.body.classList.add('wd109-print-payroll');
-  const restore=()=>document.body.classList.remove('wd109-print-payroll');
-  window.addEventListener('afterprint',restore,{once:true});
-  try{window.print();}finally{restore();}
+function printPayrollDraft(fields,depositLabel){
+  const month=fields.get('pay_month'),employee=fields.get('employee_name');
+  const markup=payrollPreviewMarkup(fields,payrollCalculation(fields),depositLabel);
+  printDocument(`<article class="wd109-payroll-preview wd111-payroll-paper">${markup}</article>`,
+    `급여명세서_초안_${month}_${employee}`);
 }
 
 function payrollCalculator(){
@@ -2638,7 +2836,6 @@ function payrollCalculator(){
         </select></label><input type="hidden" name="employee_name">
         <label>직위<input name="position" maxlength="60"></label>
         <label>급여월<input name="pay_month" type="month" value="${localDay().slice(0,7)}" required></label>
-        <label>지급일<input name="pay_date" type="date" required></label>
       </div></fieldset>
       <fieldset><legend>근무시간</legend><div class="wd108-payroll-fields">${payrollAmountFields(payrollWorkFields,true)}
         <label id="payrollOvertimeManual" hidden>시간외 근로(h)<input name="overtime_hours" type="number" min="0" max="744" step="0.01" placeholder="0"></label>
@@ -2679,10 +2876,11 @@ function bindPayrollCalculator(active,onSaved){
   const fileInput=$('taxFinalPdf'),download=$('downloadTaxFinal');
   const field=name=>form.elements.namedItem(name);
   const employee=()=>staffById(employeeSelect.value);
+  let depositLabel='';
   const paint=()=>{
     const data=new FormData(form),result=payrollCalculation(data);
     $('payrollOvertimeManual').hidden=data.has('auto_overtime');
-    $('payrollPreview').innerHTML=payrollPreviewMarkup(data,result);
+    $('payrollPreview').innerHTML=payrollPreviewMarkup(data,result,depositLabel);
   };
   let request=0,workMinutesValue=null,actualRevision=0;
   const refresh=async reset=>{
@@ -2694,7 +2892,7 @@ function bindPayrollCalculator(active,onSaved){
       if(profile&&payrollEmployeeLogin(profile)===legacyStaffHqLogin)
         for(const [key,value] of Object.entries(sujinPayrollDefaults))field(key).value=value;
     }
-    workMinutesValue=null;download.hidden=true;finalStatus.textContent='';fileInput.disabled=!profile;
+    workMinutesValue=null;depositLabel='';download.hidden=true;finalStatus.textContent='';fileInput.disabled=!profile;
     paint();
     if(!profile||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){
       workStatus.textContent='직원과 급여월을 선택해 주세요.';return;
@@ -2703,8 +2901,8 @@ function bindPayrollCalculator(active,onSaved){
     const current=()=>active()&&request===id&&employee()===profile&&field('pay_month').value===month;
     const [work,final]=await Promise.allSettled([payrollWorkMinutes(profile,month),(async()=>{
       const token=await verifyManagerHqSession(),query=staffRecordQuery(profile.id);
-      query.set('kind','eq.payslip');query.set('slot','eq.'+month);
-      return (await staffRecordRequest(token,query))[0];
+      query.set('kind','in.(payslip,deposit)');query.set('slot','eq.'+month);
+      return staffRecordRequest(token,query);
     })()]);
     if(!current())return;
     if(work.status==='fulfilled'){
@@ -2712,7 +2910,12 @@ function bindPayrollCalculator(active,onSaved){
       if(revision===actualRevision)field('actual_hours').value=work.value.records?Number((workMinutesValue/60).toFixed(2)):'';
       workStatus.textContent=work.value.records?'근무기록 합계 '+minutesLabel(workMinutesValue):'이 달에 등록된 근무기록이 없어요.';
     }else workStatus.textContent=work.reason?.message||'근무기록을 확인하지 못했어요.';
-    const row=final.status==='fulfilled'?final.value:null;
+    const rows=final.status==='fulfilled'?final.value:[];
+    const deposit=rows.find(item=>item.kind==='deposit');
+    const confirmedDate=payrollDepositDate(deposit);
+    depositLabel=confirmedDate?'입금 확인일 '+confirmedDate:
+      !deposit&&profile.payroll?.[month]==='paid'?'입금 확인 완료':'';
+    const row=rows.find(item=>item.kind==='payslip');
     const file=row?(row.file_name?cloudStaffFile(row):null):profile.payslips?.[month];
     finalStatus.textContent=file?file.name:final.status==='rejected'?final.reason.message:'등록된 최종 PDF가 없어요.';
     download.hidden=!file;
@@ -2722,7 +2925,7 @@ function bindPayrollCalculator(active,onSaved){
   form.oninput=event=>{if(event.target.name==='actual_hours')actualRevision++;paint();};
   employeeSelect.onchange=()=>void refresh(true);
   field('pay_month').onchange=()=>void refresh(false);
-  $('printTaxDraft').onclick=()=>{if(form.reportValidity())printPayrollDraft();};
+  $('printTaxDraft').onclick=()=>{if(form.reportValidity())printPayrollDraft(new FormData(form),depositLabel);};
   $('copyTaxHours').onclick=async()=>{
     if(!employee()||workMinutesValue===null)return notify('근무기록을 먼저 확인해 주세요.');
     const text=payrollMonthName(field('pay_month').value)+' · '+employee().name+' · 실근로 '+minutesLabel(workMinutesValue);
@@ -2747,9 +2950,9 @@ function bindPayrollCalculator(active,onSaved){
     if(button.disabled||!active())return;
     const fields=new FormData(form),result=payrollCalculation(fields);
     const employee=fields.get('employee_name').trim(),company=fields.get('company_name').trim();
-    const month=fields.get('pay_month'),date=fields.get('pay_date');
-    if(!employee||!company||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||!validAttendanceDay(date)||result.net_pay<0){
-      status.textContent='회사명·직원명·급여월·지급일과 공제액을 확인해 주세요.';return;
+    const month=fields.get('pay_month');
+    if(!employee||!company||!validAttendanceDay(month+'-01')||result.net_pay<0){
+      status.textContent='회사명·직원명·급여월과 공제액을 확인해 주세요.';return;
     }
     button.disabled=true;activeMaterialUploads++;status.textContent='기존 명세서를 확인하는 중…';
     try{
@@ -2763,7 +2966,7 @@ function bindPayrollCalculator(active,onSaved){
       if(!active()||!form.isConnected)return;
       if(!window.confirm(month+' '+employee+' 급여명세서를 '+(existing?'수정할까요?':'저장할까요?'))){status.textContent='';return;}
       const payload={...result,user_id:managerHqAccount.uid,employee_name:employee,company_name:company,position:fields.get('position').trim(),
-        pay_month:existing?.pay_month||payrollMonthName(month),pay_date:date,updated_at:new Date().toISOString()};
+        pay_month:existing?.pay_month||payrollMonthName(month),updated_at:new Date().toISOString()};
       const match=new URLSearchParams({select:'id'});
       if(existing){match.set('id','eq.'+existing.id);match.set('user_id','eq.'+managerHqAccount.uid);
         match.set('updated_at',existing.updated_at?'eq.'+existing.updated_at:'is.null');}
@@ -4234,12 +4437,14 @@ function staffWorkTotal(rows){
 
 function staffPayrollActions(profile,month){
   const file=staffPayslip(profile,month),paid=staffDeposit(profile,month);
+  const confirmedDate=payrollDepositDate(staffDepositRow(profile,month));
   return `<div class="wd62-payroll">
     ${file?`<button type="button" class="small wd62-status wd62-done" id="viewPayslip" title="${esc(file.name)}">명세서 보기</button>`:''}
     ${file?'':profile.archivedAt?'<span class="wd62-status wd62-pending">명세서 미등록</span>':
       `<button type="button" class="small wd62-status wd62-pending" id="uploadPayslip">명세서 등록</button><input type="file" id="payslipFile" hidden aria-label="급여명세서 파일">`}
     ${profile.archivedAt?`<span class="wd62-status ${paid?'wd62-done':'wd62-pending'}">${paid?'입금 완료':'입금 미완료'}</span>`:
       `<button type="button" class="small wd62-status wd62-deposit" id="toggleDeposit" aria-pressed="${paid}">${paid?'입금 확인 완료':'입금 확인'}</button>`}
+    <small id="staffDepositDate" ${confirmedDate?'':'hidden'}>${confirmedDate?'입금 확인일 '+esc(confirmedDate):''}</small>
   </div>`;
 }
 
@@ -4305,8 +4510,11 @@ function staffPayslip(profile,month){
   const row=staffRecordRows(profile).find(item=>item.kind==='payslip'&&item.slot===month);
   return row?(row.file_name?cloudStaffFile(row):null):profile.payslips?.[month];
 }
+function staffDepositRow(profile,month){
+  return staffRecordRows(profile).find(item=>item.kind==='deposit'&&item.slot===month);
+}
 function staffDeposit(profile,month){
-  const row=staffRecordRows(profile).find(item=>item.kind==='deposit'&&item.slot===month);
+  const row=staffDepositRow(profile,month);
   return row?!!row.confirmed_at:profile.payroll?.[month]==='paid';
 }
 async function loadStaffRecords(profile,month){
@@ -4548,9 +4756,14 @@ function bindStaffPayroll(profile,month){
     if(!window.confirm(paid?'이 달의 입금을 확인 완료로 기록할까요?':'입금 확인 완료를 취소할까요?'))return;
     deposit.disabled=true;activeMaterialUploads++;
     try{
-      await saveStaffRecord(profile,'deposit',month,{confirmed_at:paid?new Date().toISOString():null});
+      const confirmed_at=paid?new Date().toISOString():null;
+      await saveStaffRecord(profile,'deposit',month,{confirmed_at});
+      if(!deposit.isConnected)return;
       deposit.setAttribute('aria-pressed',String(paid));
       deposit.textContent=paid?'입금 확인 완료':'입금 확인';
+      const date=$('staffDepositDate');
+      date.hidden=!paid;
+      date.textContent=paid?'입금 확인일 '+payrollDepositDate({confirmed_at}):'';
     }catch(error){notify(error.message);}
     finally{activeMaterialUploads--;deposit.disabled=false;}
   };
@@ -4682,19 +4895,90 @@ function bindAdminFilters(){
   query.oninput=apply;filter.onchange=apply;
 }
 
-const instructionReportStandard='업무보고에 바로 적을 구체적 질문을 단계마다 작성한다. 무엇을 어디서 어떻게 찾았는지, 확인한 근거·지표, 왜 효과적이라고 판단했는지, 우리 업무에 무엇을 어떤 방식으로 적용할지 적게 한다. 회사 파악은 핵심서비스·핵심타깃·핵심강점과 자료 근거를 각각 묻는다. SNS 사례는 원문·Meta 공식 참고 자료, 같은 기준의 여러 게시물 기간·조회·반응 수치와 일관성을 비교하며 비공개 수치는 미확인으로 구분한다. 별도 요약 문서나 목록 파일은 요구하지 않는다.';
+const instructionReportStandard='recordFormat은 줄마다 "1. 항목 이름 (무엇을 어떻게 자세히 적을지)" 형식으로 번호와 짧은 괄호 가이드만 작성. 말줄임표, 빈칸 예시, 한 문장 분량 지시, 사내지표 접근 여부, 별도 문서 제출은 금지. 확인한 사례·수치와 선택 이유를 항목으로 구체화하고 회차마다 실제 수행 내용에 맞게 적는다.';
+const companyReportItems=[
+  '확인한 회사 자료 (회사소개서·제안서·홈페이지에서 확인한 페이지나 메뉴와 링크)',
+  '핵심 서비스 (서비스별로 해결하는 고객 문제, 제공하는 내용, 고객이 받는 결과)',
+  '핵심 타깃 (가장 필요한 고객 유형, 그 고객이 겪는 상황과 필요한 도움)',
+  '핵심 강점 (고객이 우리를 선택할 이유, 다른 곳과 구분되는 점, 그 차이를 보여 주는 작업 사례)'
+];
+const benchmarkReportItems=[
+  '찾아본 성공 사례 (Meta 공식 자료와 채널 원문을 어디서 어떤 검색어로 찾았는지, 비교한 계정과 게시물 링크)',
+  '성과 비교 (같은 기간 여러 게시물의 게시일·공개 조회수·반응 수를 비교해 꾸준히 잘 나온 사례인지)',
+  '효과가 좋았던 이유 (첫 장면·문구·전개·댓글 반응 중 무엇이 눈에 띄었고 왜 효과적이라고 봤는지)',
+  '우리 채널 적용안 (우리 고객과 서비스에 맞춰 사례의 어떤 부분을 어떻게 바꿀지)'
+];
+
+function numberedReportItems(items){
+  return items.map((item,index)=>(index+1)+'. '+item).join('\n');
+}
+
 function instructionReportFormat(step,item){
-  const format=step.recordFormat||'';
-  const topic=[step.title,step.method,item.text].join(' ');
-  const criteria=[];
-  if(/핵심서비스|회사소개서|회사\s*(?:파악|이해)|서비스.*타깃/.test(topic)&&!(/핵심\s*서비스/.test(format)&&/핵심\s*타깃/.test(format)&&/핵심\s*강점/.test(format)&&/근거/.test(format))){
-    criteria.push('자료 이름과 확인한 페이지·메뉴를 적으세요. 핵심 서비스는 고객 문제와 제공 방식, 핵심 타깃은 고객 유형과 필요, 핵심 강점은 차별점과 이를 뒷받침하는 근거를 각각 설명하세요.');
-  }
-  if(/인스타|스레드|Threads|Meta|SNS/i.test(topic)&&/사례|경쟁|벤치마킹|레퍼런스/.test(step.title+' '+step.method)&&
-    !(/기간/.test(format)&&/조회/.test(format)&&/반응/.test(format)&&/적용/.test(format))){
-    criteria.push('Meta 공식 자료나 게시물 원문에서 어떤 검색어와 기준으로 사례를 찾았는지 적으세요. 같은 기간의 여러 게시물 링크·게시일·공개 조회수와 반응 수를 비교해 꾸준한 성과인지 판단하고, 확인할 수 없는 지표는 미확인으로 표시하세요. 효과적이라고 본 첫 장면·문구·구성의 이유와 우리 고객에게 맞게 무엇을 어떻게 바꿀지 설명하세요.');
-  }
-  return [format,...criteria].filter(Boolean).join('\n\n');
+  const format=String(step.recordFormat||'')
+    .replace(/\(\s*(?:(?:한|1)\s*문장(?:씩|으로)?|목록\s*형태)\s*\)/g,'')
+    .replace(/(?:[:：]\s*)?(?:…+|\.{3,})(?=\s|$)/g,'').trim();
+  const numbered=format.split(/\r?\n|\s+(?=\d+[.)]\s)/)
+    .filter(line=>/^\s*\d+[.)]\s+/.test(line))
+    .map(line=>line.replace(/^\s*\d+[.)]\s+/,'').trim())
+    .filter(line=>line&&!/사내\s*지표\s*접근|미확인\s*표기|요약\s*문서/.test(line));
+  const subject=step.title+' '+step.method;
+  const topic=subject+' '+item.text;
+  if(/사례|경쟁|벤치마킹|레퍼런스/.test(subject)&&/인스타|스레드|Threads|Meta|SNS/i.test(topic)&&
+    !(/조회수/.test(format)&&/이유/.test(format)&&/적용/.test(format)))return numberedReportItems(benchmarkReportItems);
+  if(/핵심\s*서비스|회사소개서|회사\s*(?:파악|이해)|서비스.*타깃/.test(topic)&&
+    !(/핵심\s*서비스/.test(format)&&/핵심\s*타깃/.test(format)&&/핵심\s*강점/.test(format))&&!numbered.length)
+    return numberedReportItems(companyReportItems);
+  if(numbered.length)return numberedReportItems(numbered);
+  return numberedReportItems([
+    '진행한 작업 (이번 단계에서 실제로 한 일과 사용한 자료·방법)',
+    '확인한 결과 (확인한 내용과 선택하거나 바꾼 부분, 그렇게 판단한 이유)',
+    '다음에 적용할 내용 (확인 결과를 바탕으로 어떤 작업을 어떻게 이어갈지)'
+  ]);
+}
+
+function socialInstructionPhases(raw,total){
+  const social=/인스타/.test(raw)&&/쓰레드|스레드|Threads/i.test(raw);
+  return social&&total>=3?
+    '인스타그램·스레드 운영 업무라면 첫 회차에 회사 파악, 벤치마킹 성공 사례, 콘텐츠 계획을 함께 배치. 중간 회차마다 직접 제작·게시. 마지막 회차에 게시물 성과와 다음 달 적용안. 지정된 순서·주제·수량을 우선 반영.': '';
+}
+
+function sevenSessionSocialPlan(raw,dates){
+  const simpleBrief=/^(?:우리\s*회사\s*)?(?:인스타(?:그램)?\s*(?:랑|하고|와|·|,|\s)\s*(?:쓰레드|스레드|Threads)).{0,16}(?:운영|마케팅|콘텐츠).{0,12}$/i.test(raw);
+  const detailedBrief=/회사/.test(raw)&&/벤치마킹|성공\s*사례/.test(raw)&&/2\s*(?:회차)?\s*[~～–-]\s*6\s*회차/.test(raw)&&/7\s*회차.{0,20}(?:정산|결산|성과)/.test(raw);
+  if(dates.length!==7||!socialInstructionPhases(raw,dates.length)||!(simpleBrief||detailedBrief))return null;
+  const step=(title,method,report)=>({title,method,instruction:method,recordFormat:numberedReportItems(report)});
+  const day=(text,steps)=>({text,workflow:{type:'general',steps:steps.map((entry,index)=>({...entry,id:'custom'+index}))}});
+  const start=day('우리 회사 파악 · 성공 사례 조사 · 한 달 콘텐츠 계획',[
+    step('우리 회사 파악','회사소개서, 제안서, 홈페이지를 열어 우리가 제공하는 서비스와 고객이 선택하는 이유를 찾아 정리하세요.',companyReportItems),
+    step('벤치마킹 성공 사례 조사','Meta 공식 자료와 비슷한 채널의 게시물 원문을 확인하세요. 같은 기간 여러 게시물에서 반복되는 성과와 구성에 주목하세요.',benchmarkReportItems),
+    step('한 달 콘텐츠 계획','조사 결과로 어떤 서비스부터 알릴지 정하고, 2~6회차에 올릴 주제와 형식을 회차별로 정하세요. 참고 링크나 캡처는 업무보고에 넣으세요.',[
+      '이번 달 우선 소개할 서비스 (선택한 서비스와 그 서비스부터 알리기로 한 이유)',
+      '채널별 목표와 타깃 (인스타그램·스레드에서 각각 누구에게 무엇을 알릴지)',
+      '2~6회차 게시 계획 (회차별 주제, 핵심 메시지, 인스타그램 형식과 스레드 글 방향)',
+      '참고한 시안과 방법 (콘텐츠에 적용할 구성·표현과 참고 링크 또는 캡처)'
+    ])
+  ]);
+  const production=Array.from({length:5},(_,i)=>day('인스타그램·스레드 콘텐츠 '+(i+1)+'차 제작 및 게시',[
+    step('콘텐츠 제작','첫 회차 계획에서 이번 주제를 확인하고 인스타그램 숏폼 또는 카드뉴스와 스레드용 글을 각각 만드세요.',[
+      '이번에 선택한 주제 (어떤 서비스와 고객 고민을 다루고, 지금 이 주제를 선택한 이유)',
+      '인스타그램 제작 내용 (첫 장면이나 첫 카드 문구, 본문 흐름, 고객에게 요청하는 행동)',
+      '스레드 제작 내용 (첫 문장, 전달할 메시지, 인스타그램과 다르게 표현한 부분)',
+      '참고한 사례와 적용 방식 (사례에서 가져온 요소를 우리 서비스와 타깃에 맞춰 바꾼 부분)'
+    ]),
+    step('게시하고 반응 기록','게시 전 내용을 확인받고 두 채널에 게시하세요. 각 원문을 열어 정상 표시와 확인할 수 있는 반응을 확인하세요.',[
+      '게시한 콘텐츠 (채널별 게시일과 원문 링크 또는 캡처)',
+      '초기 반응과 다음 변경점 (확인 시점과 채널별 조회·반응, 다음 콘텐츠에서 바꿔 볼 부분)'
+    ])
+  ]));
+  const close=day('한 달 게시물 성과 정산과 다음 달 운영안',[
+    step('성과 정산','2~6회차 게시물의 원문과 확인 가능한 인사이트를 같은 기준으로 비교하세요. 게시 후 경과 시간이 다르면 함께 적으세요.',[
+      '게시 실적 (채널별 계획과 실제 게시 건수, 게시물 링크)',
+      '콘텐츠별 성과 (집계 시점, 조회·도달·댓글·저장 등 확인한 지표와 게시 후 경과 시간)',
+      '잘된 콘텐츠와 아쉬운 콘텐츠 (어떤 게시물이 어느 지표에서 달랐고, 어떤 주제·첫 문구·형식이 영향을 줬다고 보는지)',
+      '다음 달 운영안 (계속할 형식, 바꿀 부분, 다음에 확인할 지표와 확인 방법)'
+    ])
+  ]);
+  return {goal:'회사에 맞는 인스타그램·스레드 콘텐츠를 한 달간 기획·게시하고 성과를 정산한다.',items:[start,...production,close]};
 }
 function visibleInstructionItems(d){
   const items=d.analysis?.items||[];
@@ -4703,13 +4987,15 @@ function visibleInstructionItems(d){
 
 function analysisRequest(d) {
   return `아래 자연어 업무 요청을 할 일별로 나눠 스탭이 실행할 지시와 가이드로 정리해줘. 요청에 없는 업무는 추가하지 말고, 순서와 필요한 준비물, 결과물 및 확인 항목을 명확히 적어줘. 문서파쇄처럼 되돌리기 어려운 업무는 지정 문서와 승인 여부를 먼저 확인하도록 써줘. 확인되지 않은 실적과 승인 여부는 추정하지 마. 게시·결제·외부 발송은 지점장 확인 단계로 남겨줘. 날짜와 회차는 아직 배정하지 마.
-아래 양식을 반복해 평문으로만 써줘. 각 항목은 한 줄씩 작성해줘. 각 업무에 맞는 실행 순서, 비교 기준과 결과물 형태를 구체적으로 채워줘. 요청에 나온 기간과 작업 범위를 빠뜨리지 말고, 모르는 자료나 수치는 확인할 항목으로 남겨줘. 모든 단계에 같은 문구를 반복하지 마.
-목표: 한 문장
+아래 양식을 반복해 평문으로만 써줘. 입력이 짧아도 출근일 수에 맞춰 첫 회차 준비·계획, 중간 회차 실행, 마지막 회차 결과 정리로 분할하되 요청에 정해진 순서와 일을 우선한다. ${socialInstructionPhases(d.raw,instructionDates(d).length)}
+목표: 전체 업무의 목표
 할 일: 업무명
 단계: 단계 제목
 진행 방법: 구체적으로 할 작업과 순서
-업무보고에 적을 내용: 수행한 일·확인 결과 등 이 단계에서 보고할 구체적인 항목
-다음 단계나 다음 할 일도 같은 형식으로 이어서 작성해줘. 보고 항목마다 ${instructionReportStandard}
+업무보고에 적을 내용:
+1. 항목 이름 (무엇을 구체적으로 적을지)
+2. 항목 이름 (무엇을 구체적으로 적을지)
+다음 단계나 할 일도 같은 형식으로 작성. ${instructionReportStandard}
 
 업무 요청
 ${d.raw}`;
@@ -4721,7 +5007,11 @@ function parseAnalysis(text) {
   const keys={'진행 방법':'method','업무보고에 적을 내용':'recordFormat','정리 형식':'recordFormat','남길 자료':'evidence'};
   for(const line of text.split(/\r?\n/)){
     const match=line.trim().match(/^(목표|할 일|단계|진행 방법|업무보고에 적을 내용|정리 형식|남길 자료)\s*[:：]\s*(.+)$/);
-    if(!match) continue;
+    if(!match){
+      if(step&&/^\d+[.)]\s/.test(line.trim()))
+        step.recordFormat=[step.recordFormat,line.trim()].filter(Boolean).join('\n');
+      continue;
+    }
     const [,label,value]=match;
     if(label==='목표')result.goal=value;
     else if(label==='할 일'){item={text:value,workflow:{type:'general',steps:[]}};result.items.push(item);step=null;}
@@ -4776,7 +5066,7 @@ function instructionGroups(d,plan=d.analysis){
 
 function instructionPreview(d,simple){
   const plan=simple&&d?employeeInstructionPlan(d.raw):d?.analysis;
-  if(!plan)return `<p class="wd68-empty">${simple?'왼쪽에 지시문을 넣으면 그대로 표시돼요.':'GPT로 업무지시를 만들면 할 일과 단계별 가이드가 표시돼요.'}</p>`;
+  if(!plan)return `<p class="wd68-empty">${simple?'왼쪽에 지시문을 넣으면 그대로 표시돼요.':'업무지시를 만들면 회차별 할 일과 보고 항목이 표시돼요.'}</p>`;
   const groups=instructionGroups(d,plan),selected=plan.bySession?(d.previewSession||0):0;
   const visible=plan.bySession?groups.slice(selected,selected+1):groups;
   return visible.map(([date,items],index)=>`<article class="wd75-sheet wd71-simple-work">
@@ -4997,7 +5287,7 @@ function instructionView(){
         </fieldset>
         <label for="instructionInput">할 일을 말하듯 적어주세요</label>
         <textarea id="instructionInput" maxlength="3200" rows="5" placeholder="예) 유튜브 현황을 정리하고 참고 채널과 비교해서 콘텐츠 계획을 만들어줘.">${esc(d.raw)}</textarea>
-        <div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating||!dates.length?'disabled':''}>GPT로 업무지시 만들기</button></div>
+        <div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating||!dates.length?'disabled':''}>회차별 업무지시 만들기</button></div>
         <p id="instructionAiStatus" class="smallText" role="status">${d.generating?'GPT가 업무지시를 정리하고 있어요.':''}</p>
         <details class="instruction-step"><summary>GPT 답변 직접 불러오기</summary>
         <div class="actions"><button id="copyPlanningPrompt" type="button">GPT 요청문 복사</button></div>
@@ -5029,7 +5319,8 @@ function instructionBatchRequest(raw,dates,offset,batch,previous){
   const datesLabel=batch.join(', ');
   const prior=previous.slice(-2).map(item=>String(item.text).slice(0,50)).join(' / ');
   return raw+'\n\n[업무 분할] 전체 '+dates.length+'일 중 '+(offset+1)+'~'+(offset+batch.length)+'회차만 작성. '+datesLabel+
-    '. 일정 순서대로 다른 일을 배정. '+(prior?'이전 업무 '+prior+'. 그 결과를 이어서 사용. ':'')+instructionReportStandard;
+    '. 사용자 지정 순서를 우선. 요청이 짧아도 첫 회차에는 조사·준비와 실행 계획, 중간 회차에는 구체적인 실행, 마지막 회차에는 결과 확인과 다음 적용안을 배치. '+
+    socialInstructionPhases(raw,dates.length)+' '+(prior?'이전 업무 '+prior+'. 그 결과를 이어서 사용. ':'')+instructionReportStandard;
 }
 
 async function generateInstructionDraft(d){
@@ -5037,6 +5328,12 @@ async function generateInstructionDraft(d){
   const raw=d.raw.trim(),dates=instructionDates(d);
   if(!dates.length)return notify('선택한 기간에 출근 예정일을 먼저 등록해 주세요.');
   if(!raw)return notify('할 일을 먼저 입력하세요.');
+  const socialPlan=d.period==='month'?sevenSessionSocialPlan(raw,dates):null;
+  if(socialPlan){
+    d.analysis=scheduledInstruction(d,socialPlan);
+    render();$('instructionPreview')?.focus();
+    return;
+  }
   if(location.origin!==adminLegacyOrigin)return notify('GPT는 본진에서 업무센터 TEST를 열어 사용할 수 있어요.');
   const button=$('generateInstruction'),status=$('instructionAiStatus');
   const snapshot=JSON.stringify([d.period,d.start,dates,d.analysis]);
@@ -5192,7 +5489,7 @@ function commitInstruction(d,plan,simple){
 function render(){releaseNativeDrivePreview();if(!currentUser){loginView();return}
 if((currentUser==='manager'&&!managerHqReady&&!managerDriveSession)||(realAttendanceProfile()&&!liveAttendanceReady)){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
-let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
+let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
 }else if(currentUser==='manager'&&S.nav==='instructions'){bindInstructionView()}else if(S.nav==='dashboard'&&isEmployeeWorkspace()){bindEmployeeInstructions()}else if(S.nav==='dashboard'&&t){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=Number(b.dataset.tab);save();document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('primary',x===b))});document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));bindBoard(t)}else if(S.nav==='month'){bindTaskReports();bindAdminFilters();document.querySelectorAll('[data-staff-tasks]').forEach(b=>b.onclick=()=>{managerStaffId=b.dataset.staffTasks;staffTasksOpen=true;render()});if($('addTask'))$('addTask').onclick=()=>{setNav('instructions')}}else if(['drive','manual','archive'].includes(S.nav)){bindMaterials()}else if(S.nav==='reports'){bindReportButtons()}else if(S.nav==='ideas'){bindNotes()}document.querySelectorAll('[data-download]').forEach(x=>x.onclick=()=>downloadFile(x.dataset.download))}
 function bindEmployee(t){if($('saveDraft'))$('saveDraft').onclick=()=>{save();notify('수행 기록을 저장했습니다')}}
