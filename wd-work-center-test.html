@@ -439,6 +439,23 @@ strong.wd88-person{display:inline-block;padding:2px 7px;border-radius:5px}
 .wd97-order-scroll .wd92-order-body,.wd97-share-scroll #employeeDriveFiles{max-height:none;overflow:visible}
 .wd97-share-scroll .empty{margin:0}
 @media(max-width:1000px){.wd91-report-left{min-height:480px}}
+</style><style>
+.wd93-entry .wd93-entry-actions{justify-content:flex-end}
+.wd96-drive-tools input:disabled{background:#f4f1f7}
+.wd96-drive-list:has(.wd98-drive-table){padding:0}
+.wd98-drive-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+.wd98-drive-table th,.wd98-drive-table td{padding:11px 14px;border-bottom:1px solid #eee9f3}
+.wd98-drive-table th{position:sticky;top:0;z-index:1;background:#f7f3fa;color:#574466}
+.wd98-drive-table th span{font-weight:500;color:#756784;margin-left:3px}
+.wd98-drive-table td:first-child{width:100%}
+.wd98-drive-table th:not(:first-child),.wd98-drive-table td:not(:first-child){white-space:nowrap}
+.wd98-drive-table td button{border:0;background:none;padding:0;font:inherit;font-weight:650;color:inherit;overflow-wrap:anywhere;text-align:left}
+.wd98-drive-table td button:hover{text-decoration:underline}
+.wd98-drive-table tr.wd98-selected{background:#f2e8fc;color:#4e207e}
+.wd98-native-preview{display:block;width:100%;border:0;border-radius:8px;background:#faf8fd}
+img.wd98-native-preview{height:auto;max-height:540px;object-fit:contain}
+iframe.wd98-native-preview{height:clamp(320px,60vh,540px)}
+@media(max-width:520px){.wd98-drive-table th,.wd98-drive-table td{padding:9px 7px}.wd98-drive-table{font-size:12px}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -1067,7 +1084,7 @@ function nativeDrivePage(){
       <p id="nativeDriveStatus" class="smallText" role="status">불러오는 중…</p>
       <button id="connectEmployeeDrive" class="primary small" type="button" hidden>Drive 연결 확인</button>
       <div class="wd96-drive-tools"><div id="nativeDriveCategories" class="wd96-drive-tabs" aria-label="분류"></div>
-        <input id="nativeDriveSearch" type="search" aria-label="${title} 검색" placeholder="제목 검색"></div>
+        <input id="nativeDriveSearch" type="search" aria-label="${title} 제목 또는 파일명 검색" placeholder="제목 또는 파일명 검색" disabled></div>
       <div class="wd96-drive-columns"><section class="card wd96-drive-list" id="nativeDriveList" aria-label="자료 목록"></section>
         <section class="card wd96-drive-reader" id="nativeDriveReader" aria-label="자료 본문"></section></div>
     </section>`;
@@ -1079,9 +1096,16 @@ function driveCategory(file){
   return aliases[group]||group||'기타';
 }
 const cleanManualTitle=name=>(name||'업무매뉴얼').replace(/^\[[^\]]+_(?:업무)?(?:매뉴얼|메뉴얼)\]\s*/,'').replace(/\.(txt|md|pdf|docx?)$/i,'');
-function archiveCategory(value){
-  const group=String(value||'').split('|')[0];
-  return ({'WD회사자료':'회사운영','지점장님자료':'보험업무','AI자료실':'AI강의'})[group]||group||'기타';
+function archiveCategory(row){
+  const created=Date.parse(row.created_at||'');
+  if(Number.isFinite(created)&&created<Date.parse('2026-09-17T00:00:00+09:00'))return '정리이전자료';
+  const value=String(row.data_type||''),group=value.split('|')[0];
+  const mapped={'WD회사자료':'회사운영','지점장님자료':'보험업무','AI자료실':'AI강의','업무진행방식':'퍼스널브랜딩','참고자료':'AI강의'}[group]||group;
+  if(workArchiveFolders.some(([name])=>name===mapped))return mapped;
+  if(/보험/.test(value))return '보험업무';
+  if(/퍼스널|브랜딩|콘텐츠|유튜브|블로그|홍보|카드뉴스/.test(value))return '퍼스널브랜딩';
+  if(/AI|강의|교육|프롬프트|스킬|지침/.test(value))return 'AI강의';
+  return '회사운영';
 }
 async function listNativeDriveFolder(folder,token){
   const rows=[];
@@ -1104,25 +1128,39 @@ async function archiveRegisterRows(account){
   if(!response.ok)throw new Error('업무센터 보관 원장을 읽지 못했어요.');
   return response.json();
 }
-async function readNativeDriveRows(menu,token,account){
+async function readNativeDriveRows(menu,token,account,category){
   if(menu==='manual'){
-    return (await listNativeDriveFolder(companyManualFolder,token)).map(file=>({...file,title:cleanManualTitle(file.name),category:driveCategory(file),driveId:file.id}));
+    return (await listNativeDriveFolder(companyManualFolder,token))
+      .filter(file=>driveCategory(file)===category)
+      .map(file=>({...file,title:cleanManualTitle(file.name),category,driveId:file.id}));
   }
-  const results=await Promise.allSettled([
-    archiveRegisterRows(account),...workArchiveFolders.map(async([category,folder])=>(await listNativeDriveFolder(folder,token)).map(file=>({...file,title:file.name,category,driveId:file.id})))
-  ]);
-  if(!results.some(result=>result.status==='fulfilled'))throw new Error('작업결과 보관을 불러오지 못했어요.');
+  const folder=workArchiveFolders.find(([name])=>name===category)?.[1];
+  if(!folder)return {rows:[],incomplete:false};
+  const results=await Promise.allSettled([archiveRegisterRows(account),listNativeDriveFolder(folder,token)]);
+  if(results.every(result=>result.status==='rejected'))throw new Error('작업결과 보관을 불러오지 못했어요.');
   const ledger=results[0].status==='fulfilled'?results[0].value:[];
-  const files=results.slice(1).flatMap(result=>result.status==='fulfilled'?result.value:[]);
+  const files=results[1].status==='fulfilled'?results[1].value.map(file=>({...file,title:file.name,category,driveId:file.id})):[];
   const linked=new Map();
   for(const file of files){
     const id=file.appProperties?.wdArchiveId;
     if(id){if(!linked.has(id))linked.set(id,[]);linked.get(id).push(file);}
   }
-  const ids=new Set(ledger.map(row=>row.id));
-  const rows=[...ledger.map(row=>({...row,category:archiveCategory(row.data_type),modifiedTime:row.modified||row.created_at,attachments:linked.get(row.id)||[]})),
+  const scoped=ledger.filter(row=>archiveCategory(row)===category);
+  const ids=new Set(scoped.map(row=>row.id));
+  const rows=[...scoped.map(row=>({...row,category,modifiedTime:row.modified||row.created_at,attachments:linked.get(row.id)||[]})),
     ...files.filter(file=>!ids.has(file.appProperties?.wdArchiveId))];
   return {rows,incomplete:results.some(result=>result.status==='rejected')};
+}
+async function readArchiveDriveAttachments(id){
+  const token=readHqToken();
+  if(!token||!safeDriveId(id))return [];
+  const query=new URLSearchParams({select:'file_name,file_path,file_type',owner_id:'eq.kfcyk50',archive_id:'eq.'+id});
+  const response=await fetch(adminAuthBase+'/rest/v1/wd_ai_archive_files?'+query,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},cache:'no-store'});
+  if(!response.ok)return [];
+  return (await response.json()).flatMap(file=>{
+    const driveId=String(file.file_path||'').match(/^gdrive:([A-Za-z0-9_-]+)$/)?.[1];
+    return driveId?[{driveId,title:file.file_name||'첨부파일',mimeType:file.file_type||''}]:[];
+  });
 }
 async function nativeDriveDocument(row,token){
   if(!row.driveId)return row.content||'등록된 본문이 없어요.';
@@ -1184,57 +1222,145 @@ function openNativeDriveAdd(menu,session,active,onSaved){
   };
 }
 
+let nativeDrivePreviewUrl='';
+function releaseNativeDrivePreview(){
+  if(nativeDrivePreviewUrl){URL.revokeObjectURL(nativeDrivePreviewUrl);nativeDrivePreviewUrl='';}
+}
+function nativeDriveFileKind(row){
+  const type=row.mimeType||'';
+  if(!row.driveId)return '업무 기록';
+  if(type==='application/vnd.google-apps.document')return 'Google 문서';
+  if(type.startsWith('image/'))return '이미지';
+  if(type.startsWith('text/'))return '텍스트';
+  return row.title?.match(/\.([a-z0-9]{1,8})$/i)?.[1].toUpperCase()||(type==='application/pdf'?'PDF':'파일');
+}
+async function nativeDrivePreview(row,token){
+  const type=row.mimeType||'';
+  if(!row.driveId||type.startsWith('text/')||type==='application/vnd.google-apps.document'){
+    return {text:await nativeDriveDocument(row,token)};
+  }
+  const raster=/^image\/(?:png|jpeg|gif|webp|avif|bmp)$/.test(type);
+  if(raster||type==='application/pdf'){
+    const response=await employeeDriveRequest(driveFileApi+'/'+row.driveId+'?alt=media&supportsAllDrives=true',token);
+    const data=await response.blob();
+    return {blob:new Blob([data],{type}),raster};
+  }
+  return {frameUrl:'https://drive.google.com/file/d/'+encodeURIComponent(row.driveId)+'/preview'};
+}
 function bindNativeDrivePage(){
   const panel=$('nativeDrivePage'),status=$('nativeDriveStatus'),refresh=$('nativeDriveRefresh'),add=$('nativeDriveAdd'),connect=$('connectEmployeeDrive');
   const menu=S.nav,account=workspaceModuleAccount(menu),manual=menu==='manual';
   const active=()=>panel.isConnected&&S.nav===menu&&workspaceModuleAccount(menu)?.uid===account?.uid;
   const session=()=>currentUser==='manager'?managerDriveSession:employeeDrive;
-  let rows=[],category='',selected='',readId=0;
+  const groups=manual?companyManualCategories:workArchiveFolders.map(([name])=>name);
+  let rows=[],category='',selected='',readId=0,listRequest=0;
   const reader=$('nativeDriveReader'),list=$('nativeDriveList'),search=$('nativeDriveSearch'),tabs=$('nativeDriveCategories');
-  const groups=()=>['전체',...(manual?companyManualCategories:workArchiveFolders.map(([name])=>name)),...new Set(rows.map(row=>row.category))].filter((value,i,all)=>all.indexOf(value)===i);
-  const driveLink=file=>`<a href="${driveFileUrl(file.driveId)}" target="_blank" rel="noopener noreferrer">${esc(file.title)} 열기 ↗</a>`;
-  const choose=async row=>{
-    const request=++readId;
-    selected=row?.id||'';
-    list.querySelectorAll('[data-native-file]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.nativeFile===selected)));
-    if(!row){reader.innerHTML='<p class="empty">표시할 자료가 없어요.</p>';return;}
-    const links=[...(row.driveId?[row]:[]),...(row.attachments||[])].map(driveLink).join('');
-    reader.innerHTML=`<div class="eyebrow">${esc(row.category)}</div><h2>${esc(row.title)}</h2><div class="wd96-drive-links">${links}</div><div class="wd96-drive-text" role="status">본문을 불러오는 중…</div>`;
-    const body=reader.querySelector('.wd96-drive-text');
-    try{const text=await nativeDriveDocument(row,session().token);if(active()&&readId===request)body.textContent=text||'원본에서 파일을 확인할 수 있어요.';}
-    catch{if(active()&&readId===request)body.textContent='본문을 불러오지 못했어요. 새로고침해 주세요.';}
+  const driveLink=file=>`<a href="${driveFileUrl(file.driveId)}" target="_blank" rel="noopener noreferrer">${esc(file.title)} 원본 열기 ↗</a>`;
+  const clearReader=()=>{
+    ++readId;selected='';releaseNativeDrivePreview();
+    reader.innerHTML='<div class="empty">왼쪽 표에서 자료를 선택하면 여기에 표시돼요.</div>';
   };
-  const paint=()=>{
-    const query=search.value.trim().toLowerCase();
-    const filtered=rows.filter(row=>(!category||category===row.category)&&String(row.title||'').toLowerCase().includes(query));
-    tabs.innerHTML=groups().map(group=>`<button class="small" type="button" data-native-category="${esc(group)}" aria-pressed="${(category||'전체')===group}">${esc(group)}</button>`).join('');
-    list.innerHTML=filtered.length?filtered.map(row=>`<button class="wd96-drive-row" type="button" data-native-file="${esc(row.id)}" aria-pressed="false"><strong>${esc(row.title)}</strong><small>${esc(row.category)} · ${esc(String(row.modifiedTime||'').slice(0,10))}</small></button>`).join(''):'<p class="empty">표시할 자료가 없어요.</p>';
-    tabs.querySelectorAll('[data-native-category]').forEach(button=>button.onclick=()=>{category=button.dataset.nativeCategory==='전체'?'':button.dataset.nativeCategory;paint();});
-    list.querySelectorAll('[data-native-file]').forEach(button=>button.onclick=()=>void choose(filtered.find(row=>row.id===button.dataset.nativeFile)));
-    void choose(filtered.find(row=>row.id===selected)||filtered[0]);
+  const displayPreview=async(row,body,request)=>{
+    releaseNativeDrivePreview();
+    body.textContent='미리보기를 불러오는 중…';
+    try{
+      const result=await nativeDrivePreview(row,session().token);
+      if(!active()||request!==readId)return;
+      body.replaceChildren();
+      if('text' in result){body.textContent=result.text||'본문이 비어 있어요.';return;}
+      if(result.blob)nativeDrivePreviewUrl=URL.createObjectURL(result.blob);
+      const node=document.createElement(result.raster?'img':'iframe');
+      node.className='wd98-native-preview';
+      if(result.raster)node.alt=row.title;
+      else{
+        node.title=row.title+' 미리보기';
+        if(result.frameUrl)node.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');
+      }
+      node.src=result.frameUrl||nativeDrivePreviewUrl;body.append(node);
+      if(result.frameUrl){
+        const hint=document.createElement('p');hint.className='smallText';hint.textContent='Drive에서 미리보기가 지원되지 않으면 위의 원본을 열어주세요.';body.append(hint);
+      }
+    }catch{if(active()&&request===readId)body.textContent='미리보기를 불러오지 못했어요. 원본을 열어 확인해 주세요.';}
+  };
+  const choose=async row=>{
+    if(!row)return;
+    const request=++readId;
+    selected=row.id;
+    list.querySelectorAll('[data-native-file]').forEach(button=>{
+      const current=button.dataset.nativeFile===selected;
+      button.setAttribute('aria-pressed',String(current));
+      button.closest('tr').classList.toggle('wd98-selected',current);
+    });
+    reader.innerHTML=`<div class="eyebrow">${esc(row.category)}</div><h2>${esc(row.title)}</h2>
+      <div class="wd96-drive-links"></div><div class="wd96-drive-text" aria-label="자료 미리보기"></div>`;
+    const body=reader.querySelector('.wd96-drive-text'),actions=reader.querySelector('.wd96-drive-links');
+    void displayPreview(row,body,request);
+    const files=row.driveId?[row]:[...(row.attachments||[])];
+    if(!row.driveId){
+      try{files.push(...await readArchiveDriveAttachments(row.id));}catch{}
+    }
+    if(!active()||request!==readId)return;
+    const unique=[...new Map(files.map(file=>[file.driveId,file])).values()];
+    const links=unique.map(driveLink).join('');
+    const previews=row.driveId?'':unique.map((file,index)=>`<button type="button" class="small" data-native-attachment="${index}">${esc(file.title)} 미리보기</button>`).join('');
+    actions.innerHTML=links+previews;
+    actions.querySelectorAll('[data-native-attachment]').forEach(button=>button.onclick=()=>void displayPreview(unique[Number(button.dataset.nativeAttachment)],body,++readId));
+  };
+  const paintTable=()=>{
+    if(!category){list.innerHTML='<p class="empty">위에서 분류를 먼저 선택해 주세요.</p>';return;}
+    const words=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const filtered=rows.filter(row=>{
+      const searchable=[row.title,...(row.attachments||[]).map(file=>file.title)].join(' ').toLowerCase();
+      return words.every(word=>searchable.includes(word));
+    });
+    if(selected&&!filtered.some(row=>row.id===selected))clearReader();
+    list.innerHTML=filtered.length?`<table class="wd98-drive-table"><thead><tr><th scope="col">제목 <span>${filtered.length}건</span></th><th scope="col">형식</th><th scope="col">수정일</th></tr></thead>
+      <tbody>${filtered.map(row=>`<tr class="${row.id===selected?'wd98-selected':''}">
+        <td><button type="button" data-native-file="${esc(row.id)}" aria-pressed="${row.id===selected}">${esc(row.title)}</button></td>
+        <td>${esc(nativeDriveFileKind(row))}</td><td>${esc(String(row.modifiedTime||'').slice(0,10)||'—')}</td></tr>`).join('')}</tbody></table>`:
+      `<p class="empty">${words.length?'검색 조건에 맞는 자료가 없어요.':'이 분류에 표시할 자료가 없어요.'}</p>`;
+    list.querySelectorAll('[data-native-file]').forEach(button=>button.onclick=()=>choose(filtered.find(row=>row.id===button.dataset.nativeFile)));
+  };
+  const paintTabs=()=>{
+    tabs.innerHTML=groups.map(group=>`<button class="small" type="button" data-native-category="${esc(group)}" aria-pressed="${category===group}">${esc(group)}</button>`).join('');
+    tabs.querySelectorAll('[data-native-category]').forEach(button=>button.onclick=()=>{
+      const next=button.dataset.nativeCategory;
+      if(next===category)return;
+      category=next;rows=[];search.value='';search.disabled=true;
+      clearReader();paintTabs();tabs.querySelector('[aria-pressed="true"]')?.focus();void load();
+    });
   };
   const load=async()=>{
-    const verified=session();
-    if(!active()||refresh.disabled)return;
-    if(!verified||verified.expires<=Date.now()){status.hidden=false;status.textContent='업무센터 Drive 연결을 확인해 주세요.';add.hidden=true;connect.hidden=currentUser!=='manager';return;}
-    refresh.disabled=true;status.hidden=false;status.textContent='Drive에서 불러오는 중…';
+    const verified=session(),requestedCategory=category,request=++listRequest;
+    if(!active())return;
+    if(!verified||verified.expires<=Date.now()){
+      refresh.disabled=true;add.hidden=true;connect.hidden=currentUser!=='manager';
+      status.hidden=false;status.textContent='업무센터 Drive 연결을 확인해 주세요.';return;
+    }
+    connect.hidden=true;add.hidden=verified.scope!==driveWriteScope;
+    if(!category){refresh.disabled=true;status.hidden=true;paintTable();return;}
+    refresh.disabled=true;search.disabled=true;
+    list.innerHTML='<p class="empty">이 분류의 자료를 불러오는 중…</p>';
+    status.hidden=true;
     try{
-      const result=await readNativeDriveRows(menu,verified.token,account);
-      if(!active()||session()!==verified)return;
+      const result=await readNativeDriveRows(menu,verified.token,account,requestedCategory);
+      if(!active()||session()!==verified||listRequest!==request)return;
       rows=(manual?result:result.rows).sort((a,b)=>String(b.modifiedTime||'').localeCompare(String(a.modifiedTime||'')));
-      status.hidden=manual||!result.incomplete;
-      if(!status.hidden)status.textContent='일부 자료를 불러오지 못했어요. 접근 권한을 확인하거나 새로고침해 주세요.';
-      add.hidden=verified.scope!==driveWriteScope;paint();
-    }catch(error){if(active())status.textContent=error.message||'자료를 불러오지 못했어요.';}
-    finally{refresh.disabled=false;}
+      if(!manual&&result.incomplete){status.hidden=false;status.textContent='일부 자료를 불러오지 못했어요. 권한을 확인하거나 새로고침해 주세요.';}
+      paintTable();
+    }catch(error){
+      if(active()&&listRequest===request){status.hidden=false;status.textContent=error.message||'자료를 불러오지 못했어요.';paintTable();}
+    }finally{
+      if(active()&&listRequest===request){refresh.disabled=false;search.disabled=false;}
+    }
   };
-  refresh.onclick=load;search.oninput=paint;
-  add.onclick=()=>openNativeDriveAdd(menu,session(),active,async group=>{category=group;selected='';await load();});
+  refresh.onclick=load;search.oninput=paintTable;
+  add.onclick=()=>openNativeDriveAdd(menu,session(),active,async group=>{category=group;rows=[];search.value='';clearReader();paintTabs();await load();});
   if(currentUser==='manager'){
     connect.hidden=!!session()&&session().expires>Date.now();
-    bindEmployeeDrive(async verified=>{managerDriveSession=verified;if(active()){connect.hidden=true;await load();}},driveWriteScope,'kfcyk20@gmail.com',account);
+    bindEmployeeDrive(async verified=>{managerDriveSession=verified;if(active())await load();},driveWriteScope,'kfcyk20@gmail.com',account);
   }
-  void load();
+  paintTabs();clearReader();paintTable();void load();
 }
 
 const adminLegacyOrigin='https://admin.wdwave.kr';
@@ -1462,7 +1588,7 @@ function workCenterEntry(){
     <ul><li>날짜별 업무지시 불러오기</li><li>업무공유파일·업무매뉴얼·작업결과 보관</li><li>기존 업무센터 근무기록 조회·저장</li></ul>
     <button class="primary" id="connectEmployeeDrive" type="button">Drive 연결 확인하고 시작</button>
     <p id="employeeDriveStatus" role="status" class="smallText"></p>
-    <div class="wd93-entry-actions"><a href="./" target="_blank" rel="noopener">WD 본진 로그인 ↗</a><button type="button" class="small" id="exitWorkEntry">돌아가기</button></div></div></section>`;
+    <div class="wd93-entry-actions"><button type="button" class="small" id="exitWorkEntry">돌아가기</button></div></div></section>`;
   $('exitWorkEntry').onclick=logout;
   bindEmployeeDrive(async(session,stillCurrent)=>{
     await checkEntryDrive(session.token);
@@ -2665,7 +2791,7 @@ function bindInstructionView(){
   };
 }
 
-function render(){clearTimeout(adminModuleTimer);if(!currentUser){loginView();return}
+function render(){releaseNativeDrivePreview();clearTimeout(adminModuleTimer);if(!currentUser){loginView();return}
 if(realAttendanceProfile()&&!liveAttendanceReady){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
 let content=drivePageAllowed(S.nav)?nativeDrivePage():workspaceModuleAccount(S.nav)?legacyWorkspaceModuleView():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('adminLegacyModule'))bindAdminModule();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
