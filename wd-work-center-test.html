@@ -1593,7 +1593,12 @@ const liveAttendanceMonths=new Map(),liveAttendanceLoading=new Set();
 const realAttendanceProfile=()=>!!expectedEmployeeDriveAccount();
 const attendanceMonthRows=month=>liveAttendanceMonths.get(month)||[];
 const myAttendanceRows=()=>liveAttendanceReady?[...liveAttendanceMonths.values()].flat():S.attendance;
-const readHqToken=()=>{try{return JSON.parse(localStorage.getItem('wd-admin-auth-v1')||'null')?.access_token||'';}catch{return '';}};
+const hqSessionKey='wd-admin-auth-v1';
+function readHqSession(){
+  try{return JSON.parse(localStorage.getItem(hqSessionKey)||'null');}
+  catch{return null;}
+}
+const readHqToken=()=>readHqSession()?.access_token||'';
 
 function hqLoginError(){
   const error=new Error('본진에 로그인한 뒤 다시 연결해 주세요.');
@@ -1609,17 +1614,57 @@ async function refreshEmbeddedHqSession(){
   }catch{return '';}
 }
 
+function usableHqToken(session,rejectedToken){
+  const token=session?.access_token;
+  const expires=Number(session?.expires_at);
+  return token&&token!==rejectedToken&&(!expires||expires*1000>Date.now()+30000)?token:'';
+}
+async function attendanceHqToken(rejectedToken=''){
+  const saved=readHqSession();
+  const token=usableHqToken(saved,rejectedToken);
+  if(token)return token;
+  const embedded=await refreshEmbeddedHqSession();
+  if(embedded&&embedded!==saved?.access_token&&embedded!==rejectedToken)return embedded;
+  if(!navigator.locks)return '';
+  try{
+    // Use the same storage lock as the HQ Supabase client when rotating the session.
+    return await navigator.locks.request('lock:'+hqSessionKey,{signal:AbortSignal.timeout(5000)},async()=>{
+      const raw=localStorage.getItem(hqSessionKey);
+      const session=JSON.parse(raw||'null');
+      const current=usableHqToken(session,rejectedToken);
+      if(current)return current;
+      if(!session?.refresh_token||!session.user?.id)return '';
+      const response=await fetch(adminAuthBase+'/auth/v1/token?grant_type=refresh_token',{
+        method:'POST',headers:{apikey:adminAuthPublic,'Content-Type':'application/json'},
+        body:JSON.stringify({refresh_token:session.refresh_token}),cache:'no-store',signal:AbortSignal.timeout(8000)
+      });
+      if(!response.ok)return '';
+      const refreshed=await response.json();
+      const expiresIn=Number(refreshed.expires_in);
+      if(!refreshed.access_token||!refreshed.refresh_token||!Number.isFinite(expiresIn)||expiresIn<=30||
+        refreshed.user?.id!==session.user.id)return '';
+      if(localStorage.getItem(hqSessionKey)!==raw){
+        const latest=readHqSession();
+        return latest?.user?.id===session.user.id?usableHqToken(latest,rejectedToken):'';
+      }
+      const expiresAt=Number(refreshed.expires_at)||Math.floor(Date.now()/1000)+expiresIn;
+      localStorage.setItem(hqSessionKey,JSON.stringify({...session,...refreshed,expires_at:expiresAt}));
+      return refreshed.access_token;
+    });
+  }catch{return '';}
+}
+
 async function attendanceLedger(month,change){
-  const token=readHqToken()||await refreshEmbeddedHqSession();
+  const token=await attendanceHqToken();
   if(!token)throw hqLoginError();
-  const request=credential=>fetch('https://mzftzadtoepcrwhnwdmn.supabase.co/functions/v1/work-hours-test?month='+encodeURIComponent(month),{
-    method:change?'POST':'GET',headers:{Authorization:'Bearer '+credential,apikey:'sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh','Content-Type':'application/json'},
+  const request=credential=>fetch(adminAuthBase+'/functions/v1/work-hours-test-v2?month='+encodeURIComponent(month),{
+    method:change?'POST':'GET',headers:{Authorization:'Bearer '+credential,apikey:adminAuthPublic,'Content-Type':'application/json'},
     ...(change?{body:JSON.stringify(change)}:{}),cache:'no-store',signal:AbortSignal.timeout(14000)
   });
   let response=await request(token);
   if(response.status===401){
-    const updated=await refreshEmbeddedHqSession()||readHqToken();
-    if(updated&&updated!==token)response=await request(updated);
+    const updated=await attendanceHqToken(token);
+    if(updated)response=await request(updated);
   }
   const data=await response.json().catch(()=>({}));
   if(!response.ok){
