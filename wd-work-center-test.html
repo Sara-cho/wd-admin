@@ -183,6 +183,20 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd80-calendar-grid>button[data-planned=true]{background:#f2eafa;border-color:#dac8ef}
 .wd80-calendar-grid>button[aria-pressed=true]{outline:2px solid #6235ce;outline-offset:-2px;background:#ece0ff}
 .wd80-selected-day{margin:14px 0 4px;font-weight:700}
+.wd84-schedule{margin:12px 0 18px;padding:12px;border:1px solid #e8e0f4;border-radius:10px;background:#faf8fd}
+.wd84-schedule-head,.wd84-schedule-nav,.wd84-date-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wd84-schedule-head{justify-content:space-between;margin-bottom:8px}
+.wd84-schedule-head h3{margin:0;font-size:15px}
+.wd84-schedule-nav button{min-width:36px;min-height:36px;padding:4px 8px}
+.wd84-date-list{max-height:260px;overflow:auto;margin:0;padding:0;list-style:none}
+.wd84-date-list>li{padding:8px 0;border-top:1px solid #e8e0f4}
+.wd84-date-line button{min-height:40px;padding:5px 9px;font-weight:650}
+.wd84-date-line button[aria-pressed=true]{background:#eee7f9;color:#4d289a;border-color:#d3c3ed}
+.wd84-date-tasks{padding-left:15px;margin:4px 0}
+.wd84-date-tasks button{border:0;background:transparent;color:#45247f;text-align:left;min-height:34px;padding:3px 0;overflow-wrap:anywhere}
+.wd84-date-tasks button:hover{text-decoration:underline}
+.wd84-session-target{margin:6px 0 10px}
+.wd84-session-target select{width:min(190px,100%)}
 .wd75-split{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,5fr);gap:16px;align-items:start}
 .wd75-split>.card{min-width:0;overflow-wrap:anywhere}
 .wd75-split h2{margin:0 0 6px}
@@ -1360,10 +1374,44 @@ function scheduledInstruction(d,draft,count){
   const mentionedMonth=d.raw.match(/(?:^|[^\d])(1[0-2]|[1-9])\s*월/);
   const base=d.date||localDay();
   const month=mentionedMonth?base.slice(0,4)+'-'+mentionedMonth[1].padStart(2,'0'):base.slice(0,7);
-  const known=new Set(tasksForStaff(d.staffId).map(t=>t.date));
-  Object.entries(S.workRoster||{}).forEach(([date,ids])=>{if(ids.includes(d.staffId))known.add(date);});
-  const dates=[...known].filter(date=>date.startsWith(month+'-')).sort();
+  const dates=instructionSchedule(d.staffId,month).map(row=>row.date);
+  d.scheduleSession=0;
   return {...draft,bySession:true,items:draft.items.map((item,i)=>({...item,date:dates.length===count?dates[i]:''}))};
+}
+
+function instructionSchedule(staffId,month){
+  const days=new Map();
+  const rowFor=date=>{
+    if(!days.has(date))days.set(date,{date,tasks:[],hours:S.workSchedule?.[date]?.[staffId]});
+    return days.get(date);
+  };
+  for(const task of tasksForStaff(staffId))if(task.date.startsWith(month+'-'))rowFor(task.date).tasks.push(task);
+  for(const [date,ids] of Object.entries(S.workRoster||{})){
+    if(date.startsWith(month+'-')&&ids.includes(staffId))rowFor(date);
+  }
+  return [...days.values()].sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function instructionScheduleTarget(d,simple){
+  return !simple&&d.analysis?.bySession?d.analysis.items[d.scheduleSession||0]:null;
+}
+
+function instructionScheduleView(d,simple){
+  const month=d.scheduleMonth||(d.date||localDay()).slice(0,7);
+  const rows=instructionSchedule(d.staffId,month);
+  const target=instructionScheduleTarget(d,simple);
+  const selected=target?target.date:d.date;
+  return `<div class="wd84-schedule-head"><h3>출근 일정 · 배정된 업무</h3><div class="wd84-schedule-nav">
+    <button type="button" data-instruction-month="-1" aria-label="이전 달">‹</button><strong>${esc(staffMonthLabel(month))}</strong><button type="button" data-instruction-month="1" aria-label="다음 달">›</button>
+    </div></div>
+    ${target?`<div class="wd84-session-target"><label for="instructionScheduleSession">날짜를 고를 회차</label>
+      <select id="instructionScheduleSession">${d.analysis.items.map((_,i)=>`<option value="${i}" ${i===(d.scheduleSession||0)?'selected':''}>${i+1}회차 배정일</option>`).join('')}</select></div>`:''}
+    <p class="smallText">${target?'아래에서 고른 날짜가 선택한 회차의 배정일로 들어가요.':'아래에서 날짜를 고르면 기본 배정일로 들어가요.'}</p>
+    ${rows.length?`<ul class="wd84-date-list">${rows.map(row=>`<li>
+      <div class="wd84-date-line"><button type="button" data-instruction-date="${esc(row.date)}" aria-pressed="${selected===row.date}">${esc(attendanceDate(row.date))}</button>
+      <span class="smallText">출근 예정 · ${esc(scheduledHoursLabel(row.hours))}</span><span class="pill">${row.tasks.length?'배정 '+row.tasks.length+'건':'배정 없음'}</span></div>
+      ${row.tasks.length?`<ul class="wd84-date-tasks">${row.tasks.map(task=>`<li><button type="button" data-schedule-task="${esc(task.id)}">${esc(task.title)}</button></li>`).join('')}</ul>`:''}
+    </li>`).join('')}</ul>`:'<p class="wd68-empty">이 달에는 출근 예정일이 없어요. 아래에서 배정일을 직접 고를 수 있어요.</p>'}`;
 }
 
 function instructionGroups(d,plan=d.analysis){
@@ -1418,6 +1466,7 @@ function instructionView(){
   const simple=profile.workType==='employee';
   return heading+`<div class="wd75-split">
       <section class="card"><h2>업무 배정</h2>
+        <section id="instructionSchedule" class="wd84-schedule" aria-label="선택한 직원의 출근 일정과 배정 업무">${instructionScheduleView(d,simple)}</section>
         <label for="instructionDate">기본 배정일</label><input id="instructionDate" type="date" value="${esc(d.date)}">
         <label for="instructionInput">${simple?'업무지시 내용':'할 일을 말하듯 적어주세요'}</label>
         <textarea id="instructionInput" ${simple?'rows="10"':'maxlength="4000" rows="5"'} placeholder="${simple?'이미 작성한 업무지시를 그대로 붙여넣으세요.':'예) 우리 회사 유튜브 현황을 정리하고 참고 채널과 비교해서 한 달 콘텐츠 계획을 만들어줘.'}">${esc(d.raw)}</textarea>
@@ -1505,9 +1554,47 @@ function bindInstructionView(){
   if(!$('instructionInput'))return;
   const d=instructionDrafts.get(instructionStaffId),simple=staffById(d.staffId)?.workType==='employee';
   const updatePreview=()=>{$('instructionPreview').innerHTML=instructionPreview(d,simple);};
+  const schedule=$('instructionSchedule');
+  const paintSchedule=()=>{schedule.innerHTML=instructionScheduleView(d,simple);};
+  schedule.onchange=event=>{
+    if(event.target.id!=='instructionScheduleSession')return;
+    d.scheduleSession=Number(event.target.value);
+    paintSchedule();
+    $('instructionScheduleSession').focus();
+  };
+  schedule.onclick=event=>{
+    const button=event.target.closest('button');
+    if(!button)return;
+    if(button.dataset.scheduleTask){taskPreview(button.dataset.scheduleTask);return;}
+    if(button.dataset.instructionMonth){
+      const month=d.scheduleMonth||(d.date||localDay()).slice(0,7);
+      const first=new Date(month+'-01T12:00:00');
+      first.setMonth(first.getMonth()+Number(button.dataset.instructionMonth));
+      d.scheduleMonth=localDay(first).slice(0,7);
+      paintSchedule();
+      schedule.querySelector('[data-instruction-month="'+button.dataset.instructionMonth+'"]')?.focus();
+      return;
+    }
+    const date=button.dataset.instructionDate;
+    if(!date)return;
+    const target=instructionScheduleTarget(d,simple);
+    if(target){
+      target.date=date;
+      $('instructionItemDate'+(d.scheduleSession||0)).value=date;
+    }else{
+      d.date=date;
+      $('instructionDate').value=date;
+    }
+    paintSchedule();updatePreview();
+    schedule.querySelector('[aria-pressed="true"]')?.focus();
+  };
   const updateSessionHint=()=>{$('instructionSessionHint').textContent=instructionSessionCount(d)+'회분으로 만들어요. 필요하면 횟수를 직접 바꿀 수 있어요.';};
   $('instructionInput').oninput=()=>{d.raw=$('instructionInput').value;if(simple)updatePreview();else updateSessionHint();};
-  $('instructionDate').oninput=()=>{d.date=$('instructionDate').value;updatePreview();};
+  $('instructionDate').oninput=()=>{
+    d.date=$('instructionDate').value;
+    if(d.date)d.scheduleMonth=d.date.slice(0,7);
+    paintSchedule();updatePreview();
+  };
   if(!simple){
     $('instructionSessionCount').oninput=event=>{d.sessionCount=event.target.value;updateSessionHint();};
     $('analysisAnswer').oninput=()=>{d.answer=$('analysisAnswer').value;};
@@ -1515,7 +1602,7 @@ function bindInstructionView(){
     $('copyPlanningPrompt').onclick=async()=>{
       if(!d.raw.trim())return notify('할 일을 먼저 입력하세요');
       const field=$('planningPrompt'),sessions=instructionSessionCount(d);
-    field.value=analysisRequest(d)+(sessions>1?'\n출근 '+sessions+'회에 정확히 나누고, 회차별 할 일 한 줄과 그날의 단계 가이드를 작성해줘.':'');
+      field.value=analysisRequest(d)+(sessions>1?'\n출근 '+sessions+'회에 정확히 나누고, 회차별 할 일 한 줄과 그날의 단계 가이드를 작성해줘.':'');
       try{await navigator.clipboard.writeText(field.value);notify('요청문을 복사했습니다');}
       catch{field.hidden=false;field.select();notify('선택된 요청문을 복사하세요');}
     };
@@ -1538,7 +1625,15 @@ function bindInstructionView(){
         $('instructionItemLabel'+i).textContent=(i+1)+'. '+item.text;
         updatePreview();
       };
-      $('instructionItemDate'+i).oninput=event=>{item.date=event.target.value;updatePreview();};
+      $('instructionItemDate'+i).oninput=event=>{
+        item.date=event.target.value;
+        if(d.analysis.bySession){
+          d.scheduleSession=i;
+          if(item.date)d.scheduleMonth=item.date.slice(0,7);
+          paintSchedule();
+        }
+        updatePreview();
+      };
       (item.workflow?.steps||[]).forEach((step,j)=>instructionStepFields.forEach(([key])=>{
         $('instructionStep'+i+'_'+j+'_'+key).oninput=event=>{
           step[key]=event.target.value;
