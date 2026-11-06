@@ -213,9 +213,27 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd67-nav-count{margin-left:auto;border-radius:7px;padding:2px 7px;background:#6433d8;color:#fff;font-size:12px}
 .wd67-home{display:grid;grid-template-columns:minmax(0,2.4fr) minmax(240px,1fr);gap:16px;align-items:start}
 .wd67-home>.card{min-width:0}
-.wd67-week-nav,.wd67-review-actions{display:flex;gap:6px;flex-wrap:wrap}
-.wd67-week-scroll{overflow:auto}
-.wd67-week{display:grid;grid-template-columns:repeat(7,minmax(79px,1fr));gap:5px;min-width:583px}
+.wd67-month-nav,.wd67-review-actions{display:flex;gap:6px;flex-wrap:wrap}
+.wd87-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.wd87-month-grid .wd67-day{min-height:82px}
+.wd87-weekday{text-align:center;color:#655677;font-size:13px;font-weight:650;padding:2px 0}
+.wd87-empty-day{border-radius:8px;background:#f8f6fa}
+.wd87-home-summary{display:grid;gap:18px;min-width:0}
+.wd87-home-summary h2{margin:0 0 10px;font-size:17px}
+.wd87-summary-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #eee7f5}
+.wd87-summary-row:last-child{border-bottom:0;padding-bottom:0}
+.wd87-summary-row span{color:#655677;font-size:13px}
+.wd87-day-dialog{width:min(540px,calc(100% - 24px))}
+@media(max-width:640px){
+  .wd87-month-grid{gap:3px}
+  .wd87-month-grid .wd67-day{padding:3px;min-height:58px}
+  .wd87-month-grid .wd67-day strong{font-size:14px}
+  .wd87-month-grid .wd67-day-staff{padding:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px}
+  .wd87-month-grid .wd67-day-staff b,.wd87-month-grid .wd67-day-staff span{overflow:hidden;text-overflow:ellipsis;font-size:9px}
+  .wd87-month-grid .wd86-check{min-width:13px;height:14px;font-size:10px}
+  .wd87-month-grid .wd86-check-row{gap:0}
+  .wd87-month-grid .wd67-day small{font-size:8px;overflow-wrap:anywhere}
+}
 .wd67-day{display:flex;min-height:142px;min-width:0;flex-direction:column;align-items:stretch;gap:4px;text-align:left;padding:8px;border-radius:8px}
 .wd67-day small{color:#655677}.wd67-day strong{font-size:19px;margin-bottom:4px}
 .wd67-day[aria-pressed=true]{background:#f3edfc;border-color:#9d7cdb}
@@ -261,10 +279,6 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd68-roster-form label{display:flex;align-items:center;gap:8px;margin:0;padding:10px;border-top:1px solid #eee7f5}
 .wd68-roster-form input{width:auto}.wd68-roster-form>button{margin-top:12px}
 @media(max-width:600px){.wd68-overview{padding:14px}.wd68-overview-actions{gap:7px}.wd68-header-review{gap:6px;padding-inline:8px}}
-.wd69-week-section+.wd69-week-section{margin-top:12px}
-.wd69-week-section h3{margin:0 0 6px;font-size:14px;color:#392363}
-.wd69-week-section h3 small{margin-left:5px;color:#655677;font-size:12px;font-weight:400}
-.wd69-week-section .wd67-day{min-height:105px}
 .wd70-planned{background:#f2edfb;color:#542a9b}
 .wd70-roster-person{min-width:0;border:1px solid #eee7f5;border-radius:8px;margin:10px 0;padding:9px 11px}
 .wd70-roster-person legend{font-weight:700}.wd70-roster-form .wd70-roster-person label{border:0;padding:4px 0}
@@ -393,7 +407,7 @@ function logout(){
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
   closeNoteDock();acknowledgedWork.clear();
   for(const id of ['todayWorkGate','modalLayer'])$(id)?.remove();
-  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;homeWeekAnchor=null;homeRosterDraft=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
+  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;homeRosterDraft=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
   materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
   S=migrateStaffState(load());
@@ -644,7 +658,7 @@ function parseClockInput(hour,minute,period){if(!/^\d{1,2}$/.test(hour)||!/^\d{1
 function updateClockInput(id){let get=part=>document.querySelector('[data-clock="'+id+'"][data-part="'+part+'"]'),hour=get('hour'),minute=get('minute'),period=get('period');let value=parseClockInput(hour.value,minute.value,period.value);hour.setAttribute('aria-invalid',String(!/^\d{1,2}$/.test(hour.value)||Number(hour.value)<1||Number(hour.value)>12));minute.setAttribute('aria-invalid',String(!/^\d{1,2}$/.test(minute.value)||Number(minute.value)>59));$(id).value=value||'';if(value){let [h,m]=value.split(':').map(Number);$(id+'Face').querySelector('[data-hour]').style.transform='rotate('+(h*30+m*.5)+'deg)';$(id+'Face').querySelector('[data-minute]').style.transform='rotate('+(m*6)+'deg)'}return value}
 function bindAttendance(){if(currentUser==='employee')bindEmployeeSchedule();['attendanceYear','attendanceMonth'].forEach(id=>{if($(id))$(id).onchange=()=>{attendanceMonth=$('attendanceYear').value+'-'+$('attendanceMonth').value;render()}});document.querySelectorAll('[data-clock]').forEach(el=>{let update=()=>updateClockInput(el.dataset.clock);if(el.dataset.part==='period')el.onchange=update;else{el.oninput=()=>{el.value=el.value.replace(/[^0-9]/g,'').slice(0,2);update()};el.onfocus=()=>el.select();el.onblur=()=>{if(el.value!==''&&el.getAttribute('aria-invalid')!=='true')el.value=el.value.padStart(2,'0');update()}}});if($('clockIn'))$('clockIn').onclick=()=>{let day=localDay(),iso=attendanceISO(day,$('workInTime').value);if(!iso)return notify('출근 시각을 오전·오후, 1~12시, 0~59분으로 입력하세요');let r=S.attendance.find(x=>x.day===day);if(r){if(r.outAt&&new Date(iso)>=new Date(r.outAt))return notify('출근 시간은 퇴근 시간보다 빨라야 합니다');r.inAt=iso}else S.attendance.push({day,inAt:iso,outAt:null});save();render();notify('입력한 출근 시간을 저장했습니다')};if($('clockOut'))$('clockOut').onclick=()=>{let r=S.attendance.find(x=>x.day===localDay());if(!r)return notify('출근 시간을 먼저 저장하세요');let iso=attendanceISO(r.day,$('workOutTime').value);if(!iso)return notify('퇴근 시각을 오전·오후, 1~12시, 0~59분으로 입력하세요');if(new Date(iso)<=new Date(r.inAt))return notify('퇴근 시간은 출근 시간보다 늦어야 합니다');r.outAt=iso;save();render();notify('입력한 퇴근 시간을 저장했습니다')}}
 
-let homeDay=null,homeWeekAnchor=null,homeRosterDraft=null,reviewStaffId='',reviewStatus='보고서 제출';
+let homeDay=null,homeRosterDraft=null,reviewStaffId='',reviewStatus='보고서 제출';
 const reviewTabs=[['보고서 제출','검토 대기'],['보완 요청','보완 요청'],['업무 완료','업무 완료'],['','전체 제출 이력']];
 const activeProfiles=()=>S.staffProfiles.filter(p=>!p.archivedAt).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
 const visibleAdminTasks=()=>S.tasks.filter(t=>!staffById(taskStaffId(t))?.hiddenAt);
@@ -789,12 +803,21 @@ function homeRosterEditor(profiles,day,today){
 
 function managerHomeView(){
   const today=localDay(),day=homeDay||today,profiles=activeProfiles();
-  const firstWeek=weeklyDays(homeWeekAnchor||today),weeks=[firstWeek,weeklyDays(moveCalendarDay(firstWeek[0],7))];
-  const days=weeks.flat(),currentMonday=weeklyDays(today)[0],nextMonday=moveCalendarDay(currentMonday,7);
-  const week=new Map(days.map(date=>[date,{staff:[],tasks:[]}]));
-  for(const task of visibleAdminTasks())week.get(task.date)?.tasks.push(task);
-  for(const [date,entry] of week)entry.staff=dayAttendance(date,profiles,entry.tasks);
-  const selected=week.get(day);
+  const month=day.slice(0,7),first=new Date(month+'-01T12:00:00');
+  const firstColumn=(first.getDay()+6)%7;
+  const countDays=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
+  const days=Array.from({length:countDays},(_,i)=>month+'-'+String(i+1).padStart(2,'0'));
+  const trailing=(7-(firstColumn+days.length)%7)%7;
+  const thisWeek=weeklyDays(today);
+  const calendar=new Map([...days,...thisWeek].map(date=>[date,{staff:[],tasks:[]}]));
+  for(const task of visibleAdminTasks())calendar.get(task.date)?.tasks.push(task);
+  for(const [date,entry] of calendar)entry.staff=dayAttendance(date,profiles,entry.tasks);
+  const selected=calendar.get(day);
+  const weeklyStaff=new Map();
+  for(const date of thisWeek)for(const {profile} of calendar.get(date).staff){
+    if(!weeklyStaff.has(profile.id))weeklyStaff.set(profile.id,[]);
+    weeklyStaff.get(profile.id).push(date);
+  }
   const editing=!!homeRosterDraft,editingStaffId=homeRosterDraft?.staffId;
   const count=reviewQueueCount();
   const attendanceState=row=>row.record?(row.record.outAt?'퇴근 완료':'출근 완료'):day<today?'출근 기록 없음':'출근 예정';
@@ -802,24 +825,24 @@ function managerHomeView(){
   return `<header class="wd68-overview">
     <div><div class="eyebrow">${esc(attendanceDate(today))} · 지점장</div><h1>관리자 홈</h1></div>
     <div class="wd68-overview-actions">
-      <button type="button" id="homeReviewQueue" class="wd68-header-review"><span>보고서 검토 대기</span><strong>${count}건</strong><span aria-hidden="true">›</span></button>
       <button type="button" class="primary" data-nav="instructions">+ 업무 배정</button>
     </div>
   </header>
   <div class="wd67-home">
-    <section class="card wd67-calendar"><div class="wd65-section-head"><div><h2>주간 일정</h2><p class="smallText">${esc(days[0])} ~ ${esc(days.at(-1))}</p></div>
-      <div class="wd67-week-nav"><button class="small" id="prevHomeWeek" aria-label="지난 주">‹</button><button class="small" id="todayHomeWeek">오늘</button><button class="small" id="nextHomeWeek" aria-label="다음 주">›</button>
+    <section class="card wd67-calendar"><div class="wd65-section-head"><div><h2>${esc(staffMonthLabel(month))} 일정</h2></div>
+      <div class="wd67-month-nav"><button class="small" id="prevHomeMonth" aria-label="이전 달">‹</button><button class="small" id="todayHomeMonth">오늘</button><button class="small" id="nextHomeMonth" aria-label="다음 달">›</button>
       ${profiles.length?`<button type="button" class="small ${editing?'':'primary'}" id="editHomeRoster" aria-expanded="${editing}">출근일 지정하기</button>`:''}</div></div>
     ${homeRosterEditor(profiles,day,today)}
-    <div class="wd67-week-scroll">${weeks.map(dates=>`<section class="wd69-week-section">
-      <h3>${dates[0]===currentMonday?'이번 주':dates[0]===nextMonday?'다음 주':'주간 일정'} <small>${Number(dates[0].slice(5,7))}월 ${Number(dates[0].slice(8))}일 ~ ${Number(dates[6].slice(5,7))}월 ${Number(dates[6].slice(8))}일</small></h3>
-      <div class="wd67-week">${dates.map((date,i)=>{
-      const staff=week.get(date).staff.filter(row=>row.record||date>=today);
-      const assigned=editingStaffId&&week.get(date).tasks.some(task=>taskStaffId(task)===editingStaffId);
+    <div class="wd87-month-grid" aria-label="${esc(staffMonthLabel(month))} 출근 달력">
+      ${'월화수목금토일'.split('').map(label=>`<span class="wd87-weekday">${label}</span>`).join('')}
+      ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(firstColumn)}
+      ${days.map(date=>{
+      const staff=calendar.get(date).staff.filter(row=>row.record||date>=today);
+      const assigned=editingStaffId&&calendar.get(date).tasks.some(task=>taskStaffId(task)===editingStaffId);
       const checked=!!(assigned||(editingStaffId&&(homeRosterDraft.changes.get(date)||homeRosterDate(editingStaffId,date)).manual));
       return `<button type="button" class="wd67-day" data-home-day="${date}" aria-pressed="${editing?checked:date===day}" ${date===today?'aria-current="date"':''}
-        ${editing&&(!editingStaffId||date<today)?'disabled':''} ${editing?`aria-label="${esc(attendanceDate(date))}${assigned?' 업무 배정으로 출근 예정':' 출근일 선택'}"`:''}>
-        <small>${'월화수목금토일'[i]}${date===today?' · 오늘':''}</small>
+        ${editing&&(!editingStaffId||date<today)?'disabled':''} aria-label="${esc(attendanceDate(date))}${editing?(assigned?' 업무 배정으로 출근 예정':' 출근일 선택'):''}">
+        ${date===today?'<small>오늘</small>':''}
         ${editing?`<span class="wd86-check-row"><strong>${Number(date.slice(8))}</strong><span class="wd86-check" aria-hidden="true">${checked?'✓':''}</span></span>`:`<strong>${Number(date.slice(8))}</strong>`}
         ${editing&&assigned?'<small>업무 배정 · 자동</small>':''}
         ${staff.map(({profile,record,hours})=>{
@@ -829,15 +852,29 @@ function managerHomeView(){
           return `<span class="wd67-day-staff${record?'':' wd70-planned'}"><b>${esc(profile.name)}</b><span>${esc(time)}</span></span>`;
         }).join('')}
       </button>`;
-    }).join('')}</div></section>`).join('')}</div><p class="smallText wd67-legend">업무 배정일은 출근 예정에 자동 반영됩니다. 예정 시간은 본인이 근무기록에서 입력할 수 있습니다.</p></section>
-    <section class="card wd67-day-panel"><div class="wd65-section-head"><h2>${esc(attendanceDate(day))} 일정</h2></div>
+    }).join('')}
+    ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(trailing)}
+    </div><p class="smallText wd67-legend">업무 배정일은 출근 예정에 자동 반영됩니다. 날짜를 누르면 상세 일정이 열려요.</p></section>
+    <div class="wd87-home-summary" role="region" aria-label="업무 확인과 이번 주 출근">
+      <section class="card"><h2>검토·피드백 대기</h2>
+        <button type="button" id="homeReviewQueue" class="wd68-header-review"><strong>${count}건</strong><span>보고서 검토</span><span aria-hidden="true">›</span></button>
+      </section>
+      <section class="card"><h2>이번 주 출근</h2>
+        <p class="smallText">${esc(thisWeek[0].slice(5).replace('-','/'))} ~ ${esc(thisWeek.at(-1).slice(5).replace('-','/'))}</p>
+        ${profiles.filter(profile=>weeklyStaff.has(profile.id)).map(profile=>`<div class="wd87-summary-row">
+          <strong>${esc(profile.name)}</strong><span>${weeklyStaff.get(profile.id).map(date=>esc(attendanceDate(date))).join(' · ')}</span>
+        </div>`).join('')||'<p class="wd68-empty">이번 주 출근 일정이 없어요.</p>'}
+      </section>
+    </div>
+    <dialog id="homeDayDialog" class="wd62-month-dialog wd87-day-dialog wd67-day-panel" aria-labelledby="homeDayTitle">
+    <div class="wd62-month-dialog-head"><h2 id="homeDayTitle">${esc(attendanceDate(day))} 일정</h2><form method="dialog"><button type="submit">닫기</button></form></div>
     <div class="wd68-day-heading"><h3>출근 인원 <span class="pill">${selected.staff.length}명</span></h3></div>
     ${selected.staff.map(row=>`<div class="wd67-line"><strong>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText">${attendanceState(row)}</span>
       ${row.planned?`<small>예정 ${esc(scheduledHoursLabel(row.hours))}</small>`:''}
       ${row.record?`<small>출근 ${stamp(row.record.inAt)}${row.record.outAt?' · 퇴근 '+stamp(row.record.outAt):''}</small>`:''}</div></div>`).join('')||'<p class="wd68-empty">출근 예정이나 기록이 없습니다.</p>'}
     <h3>배정 업무 <span class="pill">${selected.tasks.length}건</span></h3>
     ${selected.tasks.map(task=>`<button type="button" class="wd65-task wd67-task-line" data-home-task="${esc(task.id)}"><strong>${esc(taskStaffName(task))}</strong> · ${esc(task.title)}</button>`).join('')||'<p class="wd68-empty">배정된 업무가 없습니다.</p>'}
-    </section>
+    </dialog>
   </div>`;
 }
 
@@ -857,12 +894,17 @@ function bindManagerHome(){
     }
     select(date);
     document.querySelector('[data-home-day="'+date+'"]')?.focus();
+    if(!homeRosterDraft)$('homeDayDialog')?.showModal();
   });
-  document.querySelectorAll('[data-home-task]').forEach(b=>b.onclick=()=>taskPreview(b.dataset.homeTask));
-  const shift=amount=>{homeWeekAnchor=moveCalendarDay(homeWeekAnchor||localDay(),amount);select(homeWeekAnchor);};
-  $('prevHomeWeek').onclick=()=>{shift(-7);$('prevHomeWeek').focus();};
-  $('nextHomeWeek').onclick=()=>{shift(7);$('nextHomeWeek').focus();};
-  $('todayHomeWeek').onclick=()=>{homeWeekAnchor=null;select(localDay());$('todayHomeWeek').focus();};
+  document.querySelectorAll('[data-home-task]').forEach(b=>b.onclick=()=>{const dialog=$('homeDayDialog');if(dialog?.open)dialog.close();taskPreview(b.dataset.homeTask);});
+  const shiftMonth=amount=>{
+    const first=new Date(day.slice(0,7)+'-01T12:00:00');
+    first.setMonth(first.getMonth()+amount);
+    select(localDay(first));
+  };
+  $('prevHomeMonth').onclick=()=>{shiftMonth(-1);$('prevHomeMonth').focus();};
+  $('nextHomeMonth').onclick=()=>{shiftMonth(1);$('nextHomeMonth').focus();};
+  $('todayHomeMonth').onclick=()=>{select(localDay());$('todayHomeMonth').focus();};
   const openReview=()=>{reviewStaffId='';reviewStatus='보고서 제출';setNav('review');};
   $('homeReviewQueue').onclick=openReview;
   if($('editHomeRoster'))$('editHomeRoster').onclick=()=>{
