@@ -173,6 +173,16 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd77-staff-picker label{margin:0;white-space:nowrap;font-size:13px;font-weight:750;color:#614711}
 .wd77-staff-picker select{flex:1;min-width:0;min-height:44px;padding:6px 8px;background:#fffaf0;border-color:#dac479;font-weight:700;color:#4b350f}
 .wd77-staff-picker select:focus-visible{outline:2px solid #7953c6;outline-offset:2px}
+.wd80-instruction-text{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:10px}
+.wd80-schedule-dialog{width:min(540px,calc(100% - 24px))}
+.wd80-calendar-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+.wd80-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.wd80-calendar-grid>span{color:#62576f;font-size:12px}
+.wd80-calendar-grid>button{min-height:44px;min-width:0;padding:3px 0;line-height:1.1}
+.wd80-calendar-grid>button small{display:block;color:#5a3d8a;font-size:9px;margin-top:3px}
+.wd80-calendar-grid>button[data-planned=true]{background:#f2eafa;border-color:#dac8ef}
+.wd80-calendar-grid>button[aria-pressed=true]{outline:2px solid #6235ce;outline-offset:-2px;background:#ece0ff}
+.wd80-selected-day{margin:14px 0 4px;font-weight:700}
 .wd75-split{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,5fr);gap:16px;align-items:start}
 .wd75-split>.card{min-width:0;overflow-wrap:anywhere}
 .wd75-split h2{margin:0 0 6px}
@@ -384,7 +394,7 @@ function monthView(){let t=currentUser==='manager'?tasksForStaff(managerStaffId)
 function taskPreview(id){
   let t=S.tasks.find(x=>x.id===id);if(!t)return;
   if(currentUser==='manager'&&isEmployeeTask(t)){
-    showModal(`<p>${esc(t.date)} · ${esc(taskStaffName(t))}</p><h3>${esc(t.title)}</h3><ul>${(t.todos||[]).map(item=>`<li>${nl(item.text)}</li>`).join('')||`<li>${nl(t.objective||t.title)}</li>`}</ul>`,'직원 업무지시');
+    showModal(`<p>${esc(t.date)} · ${esc(taskStaffName(t))}</p><h3>${esc(t.title)}</h3>${employeeInstructionList(t.todos||[],t.objective||t.title,t.directInstruction)}`,'직원 업무지시');
     return;
   }
   let refs=t.references||[];
@@ -415,7 +425,7 @@ revise_3:{method:'수정 요청이 모두 반영됐는지 확인하세요. 미�
 function recordFormat(step){return step.recordFormat&&!/[|「→]/.test(step.recordFormat)?step.recordFormat:GUIDE_DETAILS[step.id]?.format||'1. 수행한 일 :\n2. 작업한 방법 :\n3. 확인한 결과 :\n4. 적용하거나 사용할 부분 :\n5. 추가 확인할 사항 :'}
 function recordOutline(step){return recordFormat(step).split('\n').filter(line=>/^\d+\./.test(line)).map(line=>line.split(/\s*[:：]\s*/)[0]+' : ').join('\n')}
 function guideDetail(step){return {method:step.method||GUIDE_DETAILS[step.id]?.method||'안내에 따라 필요한 자료를 확인하고 지시된 순서로 작업하세요. 진행 중 판단이 필요한 내용은 확인 요청으로 남기세요.',format:recordFormat(step),evidence:step.evidence||GUIDE_DETAILS[step.id]?.evidence||'파일·사진·링크가 필요한 작업이면 해당 단계에 첨부하세요. 결과물 형식이 지정됐다면 그 형식에 맞춰 저장하세요.'}}
-function guideBook(t){return `<section class="wd40-guide">${workSteps(t).map((step,i)=>{let detail=guideDetail(step);return `<section class="wd40-guidesection"><h3><span>${String(i+1).padStart(2,'0')}</span>${esc(step.title)}</h3><p class="wd40-intro">${nl(step.instruction)}</p><h4>진행 방법</h4><p>${nl(detail.method)}</p><h4>정리 형식</h4><p>${nl(detail.format)}</p><h4>남길 자료 · 파일</h4><p>${nl(detail.evidence)}</p></section>`}).join('')}</section>`}
+function guideBook(t){return `<section class="wd40-guide">${workSteps(t).map((step,i)=>{let detail=guideDetail(step);return `<section class="wd40-guidesection"><h3><span>${String(i+1).padStart(2,'0')}</span>${esc(step.title)}</h3>${step.instruction&&step.instruction!==detail.method?`<p class="wd40-intro">${nl(step.instruction)}</p>`:''}<h4>진행 방법</h4><p>${nl(detail.method)}</p><h4>업무보고에 적을 내용</h4><p>${nl(detail.format)}</p><h4>남길 자료 · 파일</h4><p>${nl(detail.evidence)}</p></section>`}).join('')}</section>`}
 function bindGuide(t){document.querySelectorAll('[data-guide-step]').forEach(b=>b.onclick=()=>{if(activeStepUploads)return notify('첨부 저장이 끝난 뒤 이동하세요');let index=Number(b.dataset.guideStep);t.guideView=index;if(currentUser==='employee'){let f=reportFlow(t),steps=workSteps(t),first=steps.findIndex((_,i)=>!f.confirmed[i]),reachable=first<0?steps.length-1:first;if(index<=reachable){f.step=index;S.tab=1}}save();render()})}
 
 function empLeft(t){return `<section class="pane wd40-manual"><div class="paneHead"><h2>업무가이드북</h2><p class="smallText">안내를 읽으며 작업하고 오른쪽에 기록하세요.</p></div><div class="paneBody">${guideBook(t)}<h3>참고 홈페이지 · 참고 시안</h3>${refHtml(t)}${currentUser==='manager'?'<div class="actions"><button id="editTaskInline">오늘 업무지시 수정</button></div>':''}${currentUser==='manager'||t.feedback.length?`<div class="actions"><button class="small" id="openFeedback">${currentUser==='manager'?'피드백 작성·확인':'지점장 피드백 보기'}${t.feedback.length?' · '+t.feedback.length+'건':''}</button></div>`:''}</div></section>`}
@@ -458,7 +468,7 @@ function dailyFooter(day){let units=taskUnits(day),done=units.filter(isUnitCompl
 
 function reportFlow(t){let steps=workSteps(t);if(!t.reportFlow)t.reportFlow={step:0,confirmed:[]};let f=t.reportFlow;f.confirmed=Array.isArray(f.confirmed)?f.confirmed:[];let first=steps.findIndex((_,i)=>!f.confirmed[i]);f.step=Math.max(0,Math.min(Number(f.step)||0,first<0?steps.length:first));return f}
 function stageRail(t){let steps=workSteps(t),flow=reportFlow(t);return `<nav class="wd41-rail" aria-label="현재 할 일 안의 작업순서"><span class="wd41-raillabel">${t.order}번 할 일의 작업순서</span>${steps.map((item,i)=>`<button data-report-step="${i}" title="${esc(item.title)}" class="${i===(currentUser==='manager'&&Number.isInteger(t.guideView)?t.guideView:Math.min(flow.step,steps.length-1))?'active':''} ${flow.confirmed[i]?'done':''}" ${currentUser==='employee'&&i>flow.step&&!Array.from({length:i},(_,j)=>flow.confirmed[j]).every(Boolean)?'disabled':''} ${i===flow.step?'aria-current="step"':''}><span>${flow.confirmed[i]?'✓':i+1}</span><div><b>순서 ${i+1}</b><small>${esc(item.title)}</small></div></button>`).join('')}${currentUser==='manager'?'<button class="small" id="editTaskInline">업무지시 수정</button>':''}${currentUser==='manager'||t.feedback.length?`<button class="small wd41-feedback" id="openFeedback">피드백${t.feedback.length?' '+t.feedback.length+'건':''}</button>`:''}</nav>`}
-function empMid(t){let steps=workSteps(t),flow=reportFlow(t),step=flow.step,ready=step===steps.length,active=steps[Math.min(step,steps.length-1)],detail=guideDetail(active),answers=t.stepAnswers||{};return `<section class="pane wd41-work"><div class="wd41-stagehead"><div><small>${ready?t.order+'번 할 일 완료':t.order+'번 할 일 · 작업순서 '+(step+1)+' / '+steps.length}</small><h2>${ready?'수행 기록이 저장됐습니다':esc(active.title)}</h2></div><div class="wd41-save"><button class="small" id="saveDraft">임시저장</button><div class="wd34-savestate" id="draftSaveStatus" role="status" aria-live="polite">${t.draftSavedAt?'자동저장됨 · '+esc(t.draftSavedAt):'입력하면 자동 저장됩니다.'}</div></div></div>${ready?`<div class="wd41-donebody"><div class="wd28-done"><p>${t.order}번 할 일을 마쳤습니다. 다음 할 일을 시작하려면 아래 버튼을 누르세요. 모든 할 일을 마친 뒤 상단에서 업무보고서를 제출합니다.</p><div class="actions wd35-readyactions"><button id="reportPrev">기록 다시 보기</button>${taskUnits(sel()).some(u=>u.order>t.order)?`<button class="primary wd35-complete" id="nextUnit">${t.order+1}번 할 일 시작 →</button>`:''}</div></div></div>`:`<div class="wd41-stagebody"><section class="wd41-guidance"><p class="wd41-purpose">${nl(active.instruction)}</p><h3>진행 방법</h3><p>${nl(detail.method)}</p><h3>정리 형식</h3><p>${nl(detail.format)}</p><h3>남길 자료 · 파일</h3><p>${nl(detail.evidence)}</p>${t.references?.length?`<h3>참고자료</h3>${refHtml(t)}`:''}</section><section class="wd41-record"><label for="stepAnswer">수행 내용 · 확인 결과</label><textarea id="stepAnswer" data-step-answer="${esc(active.id)}" aria-label="현재 단계 수행 기록" placeholder="${esc(recordOutline(active))}">${esc(answers[active.id]||'')}</textarea>${stepAttachmentHTML(t,active.id)}<div class="actions wd23-actions wd35-stepactions"><button id="reportPrev" ${step===0?'disabled':''}>이전 순서</button><button class="primary ${step===steps.length-1?'wd35-complete':''}" id="reportNext" ${activeStepUploads?'disabled':''}>${step===steps.length-1?t.order+'번 할 일 완료':'다음 순서 · '+esc(steps[step+1].title)}</button></div></section></div>`}${oldDraft(t)}${t.reports.length?`<details class="wd41-legacy"><summary>이전 개별 제출 기록</summary>${reportList(t)}</details>`:''}</section>`}
+function empMid(t){let steps=workSteps(t),flow=reportFlow(t),step=flow.step,ready=step===steps.length,active=steps[Math.min(step,steps.length-1)],detail=guideDetail(active),answers=t.stepAnswers||{};return `<section class="pane wd41-work"><div class="wd41-stagehead"><div><small>${ready?t.order+'번 할 일 완료':t.order+'번 할 일 · 작업순서 '+(step+1)+' / '+steps.length}</small><h2>${ready?'수행 기록이 저장됐습니다':esc(active.title)}</h2></div><div class="wd41-save"><button class="small" id="saveDraft">임시저장</button><div class="wd34-savestate" id="draftSaveStatus" role="status" aria-live="polite">${t.draftSavedAt?'자동저장됨 · '+esc(t.draftSavedAt):'입력하면 자동 저장됩니다.'}</div></div></div>${ready?`<div class="wd41-donebody"><div class="wd28-done"><p>${t.order}번 할 일을 마쳤습니다. 다음 할 일을 시작하려면 아래 버튼을 누르세요. 모든 할 일을 마친 뒤 상단에서 업무보고서를 제출합니다.</p><div class="actions wd35-readyactions"><button id="reportPrev">기록 다시 보기</button>${taskUnits(sel()).some(u=>u.order>t.order)?`<button class="primary wd35-complete" id="nextUnit">${t.order+1}번 할 일 시작 →</button>`:''}</div></div></div>`:`<div class="wd41-stagebody"><section class="wd41-guidance"><p class="wd41-purpose">${nl(active.instruction)}</p><h3>진행 방법</h3><p>${nl(detail.method)}</p><h3>정리 형식</h3><p>${nl(detail.format)}</p><h3>남길 자료 · 파일</h3><p>${nl(detail.evidence)}</p>${t.references?.length?`<h3>참고자료</h3>${refHtml(t)}`:''}</section><section class="wd41-record"><label for="stepAnswer">업무보고에 적을 내용</label><p class="smallText">${nl(detail.format)}</p><textarea id="stepAnswer" data-step-answer="${esc(active.id)}" aria-label="현재 단계 수행 기록" placeholder="${esc(recordOutline(active))}">${esc(answers[active.id]||'')}</textarea>${stepAttachmentHTML(t,active.id)}<div class="actions wd23-actions wd35-stepactions"><button id="reportPrev" ${step===0?'disabled':''}>이전 순서</button><button class="primary ${step===steps.length-1?'wd35-complete':''}" id="reportNext" ${activeStepUploads?'disabled':''}>${step===steps.length-1?t.order+'번 할 일 완료':'다음 순서 · '+esc(steps[step+1].title)}</button></div></section></div>`}${oldDraft(t)}${t.reports.length?`<details class="wd41-legacy"><summary>이전 개별 제출 기록</summary>${reportList(t)}</details>`:''}</section>`}
 function bindReportFlow(t){let f=reportFlow(t),steps=workSteps(t);let go=step=>{if(activeStepUploads)return notify('첨부 저장이 끝난 뒤 이동하세요');f.step=step;t.guideView=null;save();render()};if($('reportPrev'))$('reportPrev').onclick=()=>go(Math.max(0,f.step-1));if($('reportNext'))$('reportNext').onclick=()=>{if(activeStepUploads)return notify('첨부 저장 중입니다');if(!t.ack)return notify('업무 내용을 먼저 확인하세요');let item=steps[f.step];if(!String(t.stepAnswers?.[item.id]||'').trim())return notify('이번 단계에서 수행한 내용을 기록하세요');if(!flushStepLinks(t,item.id))return;f.confirmed[f.step]=true;if(f.step===steps.length-1){t.completedAt=now();t.completionVersion=(t.completionVersion||0)+1;t.completedSignature=t.workflowSignature}go(f.step+1)};document.querySelectorAll('[data-report-step]').forEach(el=>el.onclick=()=>{let step=Number(el.dataset.reportStep);if(step<=f.step||Array.from({length:step},(_,j)=>f.confirmed[j]).every(Boolean))go(step)});document.querySelectorAll('[data-step-answer]').forEach(el=>el.oninput=()=>{t.stepAnswers=t.stepAnswers||{};t.stepAnswers[el.dataset.stepAnswer]=el.value;invalidateUnit(t,f.step);save()});document.querySelectorAll('[data-extra-note]').forEach(el=>el.oninput=()=>{t.work.issues=el.value;if(isUnitComplete(t))t.completionVersion=(t.completionVersion||0)+1;save()});bindStepAttachments(t)}
 function fileSummary(r,prefix){return `<div class="smallText">${(r.files||[]).map(f=>`<div class="mediaRow"><span>📎 ${esc(f.name)}</span><button class="small" data-download="${esc(f.id)}">열기</button></div>`).join('')}${(r.links||[]).map(u=>`<div><a href="${esc(u)}" rel="noopener noreferrer" target="_blank">${esc(u)}</a></div>`).join('')}</div>`}
 function feedbackHTML(t){const notes=t.feedback.filter(f=>!f.reviewedOnly);return notes.length?notes.map((f,i)=>`<div class="feedback"><b>${i+1}. ${f.decision==='approved'?'승인':f.decision==='revision'?'수정 요청':'추가 확인'} · ${esc(f.at)}</b><p>${nl(f.text)}</p>${fileSummary(f,'feedback')}</div>`).join(''):'<div class="empty">아직 등록된 피드백이 없습니다.</div>'}
@@ -477,7 +487,8 @@ function workAcknowledgementKey(day){return localDay()+'|'+day.id+'|'+JSON.strin
 function hasAcknowledgedWork(day){return acknowledgedWork.has(workAcknowledgementKey(day))}
 function todayWorkPopup(day,required=false){if($('todayWorkGate'))$('todayWorkGate').remove();let layer=document.createElement('div');layer.id='todayWorkGate';layer.className='modalBackdrop wd44-today';layer.setAttribute('role','dialog');layer.setAttribute('aria-modal','true');layer.setAttribute('aria-labelledby','todayWorkTitle');let units=taskUnits(day);layer.innerHTML=`<section class="modal wd44-todaybox"><div class="eyebrow">${attendanceDate(day.date)} · 오늘 업무</div><h2 id="todayWorkTitle">오늘의 목표와 할 일</h2><h3>${esc(day.title)}</h3><div class="info">${nl(day.objective)}</div><div class="wd44-count">오늘 할 일 <strong>${units.length}개</strong></div><ol class="wd44-todos">${units.map(u=>`<li>${esc(u.title)}</li>`).join('')}</ol><div class="wd44-confirm"><button class="primary" id="confirmTodayWork">${required?'확인하고 업무 시작':'확인'}</button></div></section>`;document.body.append(layer);$('confirmTodayWork').onclick=()=>{day.startedAt=day.startedAt||now();day.ack=day.ack||day.startedAt;day.lastConfirmedAt=now();day.showOverview=false;taskUnits(day).forEach(u=>u.ack=u.ack||day.lastConfirmedAt);acknowledgedWork.add(workAcknowledgementKey(day));save();layer.remove();render()};$('confirmTodayWork').focus()}
 
-function employeeInstructionList(items,fallback){
+function employeeInstructionList(items,fallback,direct=false){
+  if(direct)return `<div class="wd80-instruction-text">${esc(items[0]?.text||fallback)}</div>`;
   return `<ul>${items.map(item=>`<li>${nl(item.text)}</li>`).join('')||`<li>${nl(fallback)}</li>`}</ul>`;
 }
 
@@ -487,7 +498,7 @@ function employeeInstructions(){
     <div class="adm56-layout"><section class="card wd64-staff"><h2>업무 목록</h2>
       ${tasks.map(t=>`<button type="button" data-task="${esc(t.id)}" aria-pressed="${t.id===task?.id}"><strong>${esc(t.title)}</strong><small>${esc(attendanceDate(t.date))} · ${esc(status(t))}</small></button>`).join('')||'<p class="smallText">배정된 업무가 없습니다.</p>'}</section>
     ${task?`<section class="card wd71-simple-work"><div class="eyebrow">${esc(attendanceDate(task.date))}</div><h2>${esc(task.title)}</h2>
-      ${employeeInstructionList(task.todos||[],task.objective||task.title)}
+      ${employeeInstructionList(task.todos||[],task.objective||task.title,task.directInstruction)}
       ${task.feedback.some(f=>!f.reviewedOnly)?`<h3>피드백</h3>${feedbackHTML(task)}`:''}
       ${dayReportCount(task)?`<button type="button" class="small" data-day-reports="${esc(task.id)}">제출한 보고서 보기</button>`:''}
       ${['미제출','보완 요청'].includes(status(task))?`<form id="employeeReportForm" class="wd71-simple-report"><h3>업무보고</h3>
@@ -635,10 +646,13 @@ function employeeScheduleView(today){
   const end=moveCalendarDay(today,14),upcoming=(S.plannedWork||[]).filter(row=>row.day>=today&&row.day<end);
   return `<section class="card wd70-my-plan"><div class="wd65-section-head"><h2>예정 근무</h2><button class="small primary" type="button" id="editEmployeeSchedule">출근 일정 체크</button></div>
     ${upcoming.length?`<div class="wd70-my-scroll"><table class="wd65-table"><thead><tr><th scope="col">근무일</th><th scope="col">예정 시간</th><th scope="col">관리</th></tr></thead><tbody>${upcoming.map(row=>`<tr><td>${esc(attendanceDate(row.day))}</td><td>${esc(scheduledHoursLabel(row.hours))}</td><td><button class="small" type="button" data-edit-plan="${esc(row.day)}">수정</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="smallText">앞으로 2주간 예정된 근무가 없습니다.</p>'}
-    <dialog id="employeeScheduleDialog" class="wd62-month-dialog wd68-roster" aria-labelledby="employeeScheduleTitle">
+    <dialog id="employeeScheduleDialog" class="wd62-month-dialog wd80-schedule-dialog" aria-labelledby="employeeScheduleTitle">
       <div class="wd62-month-dialog-head"><h3 id="employeeScheduleTitle">내 출근 일정 체크</h3><form method="dialog"><button type="submit">닫기</button></form></div>
       <form id="employeeScheduleForm" class="wd68-roster-form">
-      <label for="myScheduleDate">근무일<input id="myScheduleDate" type="date" required min="${esc(today)}"></label>
+      <div class="wd80-calendar-nav"><button id="mySchedulePrevMonth" type="button" aria-label="이전 달">‹</button><strong id="myScheduleMonthLabel" aria-live="polite"></strong><button id="myScheduleNextMonth" type="button" aria-label="다음 달">›</button></div>
+      <div id="myScheduleCalendar" class="wd80-calendar-grid" aria-label="월간 출근 일정"></div>
+      <p id="myScheduleSelected" class="wd80-selected-day"></p>
+      <input id="myScheduleDate" type="hidden">
       <label><input id="mySchedulePlanned" type="checkbox" aria-describedby="myScheduleAssigned">출근 예정</label><p id="myScheduleAssigned" class="smallText"></p>
       <div class="wd70-time-fields"><label for="myScheduleStart">예정 출근<input id="myScheduleStart" type="time"></label>
       <label for="myScheduleEnd">예정 퇴근<input id="myScheduleEnd" type="time"></label></div>
@@ -651,16 +665,50 @@ function bindEmployeeSchedule(){
   const dialog=$('employeeScheduleDialog'),form=$('employeeScheduleForm');
   if(!dialog)return;
   const date=$('myScheduleDate'),planned=$('mySchedulePlanned'),start=$('myScheduleStart'),end=$('myScheduleEnd');
+  let month;
   const populate=()=>{
     const row=S.plannedWork.find(item=>item.day===date.value);
+    $('myScheduleSelected').textContent=attendanceDate(date.value);
     planned.checked=!!(row?.assigned||row?.manual);
     planned.disabled=!!row?.assigned;
     $('myScheduleAssigned').textContent=row?.assigned?'업무 배정으로 출근 예정에 포함됐어요. 예정 시간은 입력하거나 수정할 수 있어요.':'';
     start.value=row?.hours?.start||'';end.value=row?.hours?.end||'';
   };
-  $('editEmployeeSchedule').onclick=()=>{date.value=localDay();populate();dialog.showModal();};
-  document.querySelectorAll('[data-edit-plan]').forEach(button=>button.onclick=()=>{date.value=button.dataset.editPlan;populate();dialog.showModal();});
-  date.onchange=populate;
+  const calendar=$('myScheduleCalendar');
+  const paintCalendar=()=>{
+    const first=new Date(month+'-01T12:00:00');
+    const count=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
+    const today=localDay();
+    const plans=new Set(S.plannedWork.map(row=>row.day));
+    $('myScheduleMonthLabel').textContent=staffMonthLabel(month);
+    $('mySchedulePrevMonth').disabled=month<=today.slice(0,7);
+    calendar.innerHTML='일월화수목금토'.split('').map(day=>`<span>${day}</span>`).join('')+
+      '<span aria-hidden="true"></span>'.repeat(first.getDay())+
+      Array.from({length:count},(_,index)=>{
+        const day=month+'-'+String(index+1).padStart(2,'0');
+        const scheduled=plans.has(day);
+        return `<button type="button" data-schedule-day="${day}" data-planned="${scheduled}" aria-pressed="${date.value===day}" aria-label="${esc(attendanceDate(day))}${scheduled?' 출근 예정':''}" ${day<today?'disabled':''}>${index+1}${scheduled?'<small>예정</small>':''}</button>`;
+      }).join('');
+  };
+  const openDay=day=>{date.value=day;month=day.slice(0,7);populate();paintCalendar();dialog.showModal();};
+  $('editEmployeeSchedule').onclick=()=>openDay(localDay());
+  document.querySelectorAll('[data-edit-plan]').forEach(button=>button.onclick=()=>openDay(button.dataset.editPlan));
+  const shiftMonth=offset=>{
+    const first=new Date(month+'-01T12:00:00');
+    first.setMonth(first.getMonth()+offset);
+    month=localDay(first).slice(0,7);
+    const today=localDay();
+    date.value=month===today.slice(0,7)?today:month+'-01';
+    populate();paintCalendar();
+  };
+  $('mySchedulePrevMonth').onclick=()=>shiftMonth(-1);
+  $('myScheduleNextMonth').onclick=()=>shiftMonth(1);
+  calendar.onclick=event=>{
+    const button=event.target.closest('[data-schedule-day]');
+    if(!button||button.disabled)return;
+    date.value=button.dataset.scheduleDay;populate();paintCalendar();
+    calendar.querySelector('[aria-pressed="true"]')?.focus();
+  };
   form.onsubmit=event=>{
     event.preventDefault();
     const day=date.value,hours=start.value||end.value?{start:start.value,end:end.value}:null;
@@ -1251,14 +1299,13 @@ function bindAdminFilters(){
 }
 
 function analysisRequest(d) {
-  if(staffById(d.staffId)?.workType==='employee')return `다음 업무 요청을 직원에게 전달할 간단한 업무 목록으로 정리해줘. 단계별 가이드와 요청에 없는 일은 추가하지 마. 외부 게시·결제·삭제 등은 승인 필요 여부를 확인하도록 남겨줘. 첫 줄에 "목표: 짧은 제목", 이어서 한 줄마다 "할 일: 업무 내용" 형식으로 적어줘.\n\n${d.raw}`;
   return `아래 자연어 업무 요청을 할 일별로 나눠 스탭이 실행할 지시와 가이드로 정리해줘. 요청에 없는 업무는 추가하지 말고, 순서와 필요한 준비물, 결과물 및 확인 항목을 명확히 적어줘. 문서파쇄처럼 되돌리기 어려운 업무는 지정 문서와 승인 여부를 먼저 확인하도록 써줘. 확인되지 않은 실적과 승인 여부는 추정하지 마. 게시·결제·외부 발송은 지점장 확인 단계로 남겨줘. 날짜와 회차는 아직 배정하지 마.
 아래 양식을 반복해 평문으로만 써줘. 각 항목은 한 줄씩 작성해줘. 각 업무에 맞는 실행 순서, 비교 기준과 결과물 형태를 구체적으로 채워줘. 요청에 나온 기간과 작업 범위를 빠뜨리지 말고, 모르는 자료나 수치는 확인할 항목으로 남겨줘. 모든 단계에 같은 문구를 반복하지 마.
 목표: 한 문장
 할 일: 업무명
 단계: 단계 제목
 진행 방법: 구체적으로 할 작업과 순서
-정리 형식: 작성할 항목이나 표의 열
+업무보고에 적을 내용: 수행한 일·확인 결과 등 이 단계에서 보고할 구체적인 항목
 남길 자료: 결과물 또는 확인 근거
 다음 단계나 다음 할 일도 같은 형식으로 이어서 작성해줘.
 
@@ -1269,9 +1316,9 @@ ${d.raw}`;
 function parseAnalysis(text) {
   const result={goal:'',items:[]};
   let item, step;
-  const keys={'진행 방법':'method','정리 형식':'recordFormat','남길 자료':'evidence'};
+  const keys={'진행 방법':'method','업무보고에 적을 내용':'recordFormat','정리 형식':'recordFormat','남길 자료':'evidence'};
   for(const line of text.split(/\r?\n/)){
-    const match=line.trim().match(/^(목표|할 일|단계|진행 방법|정리 형식|남길 자료)\s*[:：]\s*(.+)$/);
+    const match=line.trim().match(/^(목표|할 일|단계|진행 방법|업무보고에 적을 내용|정리 형식|남길 자료)\s*[:：]\s*(.+)$/);
     if(!match) continue;
     const [,label,value]=match;
     if(label==='목표')result.goal=value;
@@ -1284,14 +1331,12 @@ function parseAnalysis(text) {
   return result;
 }
 
-function parseSimpleInstruction(text){
-  const result={goal:'',items:[]};
-  for(const line of text.split(/\r?\n/)){
-    const match=line.trim().match(/^(목표|할 일)\s*[:：]\s*(.+)$/);
-    if(!match)continue;
-    if(match[1]==='목표')result.goal=match[2];else result.items.push({text:match[2]});
-  }
-  return result.goal&&result.items.length?result:null;
+function employeeInstructionPlan(raw){
+  if(!raw.trim())return null;
+  const named=raw.match(/^[ \t]*(?:업무명|업무 제목)[ \t]*[:：][ \t]*(.+)$/m)?.[1];
+  const firstLine=raw.trim().split(/\r?\n/)[0];
+  const goal=(named||firstLine).trim();
+  return {goal:goal.length>64?goal.slice(0,63)+'…':goal,items:[{text:raw}]};
 }
 
 function instructionDraftFor(staffId,date=localDay()){
@@ -1299,9 +1344,9 @@ function instructionDraftFor(staffId,date=localDay()){
   return instructionDrafts.get(staffId);
 }
 
-function instructionGroups(d){
+function instructionGroups(d,plan=d.analysis){
   const groups=new Map();
-  for(const item of d.analysis.items){
+  for(const item of plan.items){
     const date=item.date||d.date;
     if(!groups.has(date))groups.set(date,[]);
     groups.get(date).push(item);
@@ -1310,26 +1355,27 @@ function instructionGroups(d){
 }
 
 function instructionPreview(d,simple){
-  if(!d?.analysis)return '<p class="wd68-empty">GPT로 업무지시를 만들면 여기에 담당자가 볼 내용이 표시돼요.</p>';
-  return instructionGroups(d).map(([date,items])=>`<article class="wd75-sheet wd71-simple-work">
+  const plan=simple&&d?employeeInstructionPlan(d.raw):d?.analysis;
+  if(!plan)return `<p class="wd68-empty">${simple?'왼쪽에 지시문을 넣으면 그대로 표시돼요.':'GPT로 업무지시를 만들면 할 일과 단계별 가이드가 표시돼요.'}</p>`;
+  return instructionGroups(d,plan).map(([date,items])=>`<article class="wd75-sheet wd71-simple-work">
     <div class="eyebrow">${date?esc(attendanceDate(date)):'배정일 선택 필요'}</div>
-    <h3>${esc(d.analysis.goal||'목표 입력 필요')}</h3>
-    ${simple?employeeInstructionList(items,''):items.map((item,i)=>`<details>
+    <h3>${esc(plan.goal||'목표 입력 필요')}</h3>
+    ${simple?employeeInstructionList(items,'',true):items.map((item,i)=>`<details ${i===0?'open':''}>
       <summary>${i+1}. ${esc(item.text||'할 일 입력 필요')}</summary>
       ${guideBook({workflow:{steps:item.workflow.steps.map(step=>({...step,instruction:step.method}))}})}
     </details>`).join('')}
   </article>`).join('');
 }
 
-const instructionStepFields=[['title','단계 이름'],['method','진행 방법'],['recordFormat','정리 형식'],['evidence','남길 자료']];
+const instructionStepFields=[['title','단계 이름'],['method','진행 방법'],['recordFormat','업무보고에 적을 내용'],['evidence','남길 자료']];
 
-function instructionEditor(d,simple){
+function instructionEditor(d){
   return `<details class="instruction-step wd75-edit"><summary>업무지시 수정</summary>
     <label for="instructionGoal">오늘의 목표</label><input id="instructionGoal" value="${esc(d.analysis.goal)}">
     ${d.analysis.items.map((item,i)=>`<details class="instruction-step"><summary id="instructionItemLabel${i}">${i+1}. ${esc(item.text)}</summary>
       <label for="instructionItem${i}">할 일</label><textarea id="instructionItem${i}" rows="2">${esc(item.text)}</textarea>
       <label for="instructionItemDate${i}">개별 배정일 (선택)</label><input id="instructionItemDate${i}" type="date" value="${esc(item.date||'')}">
-      ${simple?'':item.workflow.steps.map((step,j)=>`<details class="instruction-step"><summary id="instructionStepLabel${i}_${j}">${j+1}. ${esc(step.title)}</summary>
+      ${item.workflow.steps.map((step,j)=>`<details class="instruction-step"><summary id="instructionStepLabel${i}_${j}">${j+1}. ${esc(step.title)}</summary>
         ${instructionStepFields.map(([key,label])=>`<label for="instructionStep${i}_${j}_${key}">${label}</label><textarea rows="2" id="instructionStep${i}_${j}_${key}">${esc(step[key])}</textarea>`).join('')}
       </details>`).join('')}</details>`).join('')}
   </details>`;
@@ -1349,16 +1395,16 @@ function instructionView(){
     <div class="wd75-split">
       <section class="card"><h2>업무 배정</h2>
         ${d?`<label for="instructionDate">기본 배정일</label><input id="instructionDate" type="date" value="${esc(d.date)}">
-        <label for="instructionInput">할 일을 말하듯 적어주세요</label>
-        <textarea id="instructionInput" maxlength="4000" rows="5" placeholder="예) 우리 회사 유튜브 현황을 정리하고, 참고 채널과 비교해서 한 달 콘텐츠 계획을 만들어줘.">${esc(d.raw)}</textarea>
-        <div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating?'disabled':''}>GPT로 업무지시 만들기</button></div>
+        <label for="instructionInput">${simple?'업무지시 내용':'할 일을 말하듯 적어주세요'}</label>
+        <textarea id="instructionInput" ${simple?'rows="10"':'maxlength="4000" rows="5"'} placeholder="${simple?'이미 작성한 업무지시를 그대로 붙여넣으세요.':'예) 우리 회사 유튜브 현황을 정리하고 참고 채널과 비교해서 한 달 콘텐츠 계획을 만들어줘.'}">${esc(d.raw)}</textarea>
+        ${simple?'<p class="smallText">입력한 내용이 그대로 직원에게 전달돼요.</p>':`<div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating?'disabled':''}>GPT로 업무지시 만들기</button></div>
         <p id="instructionAiStatus" class="smallText" role="status">${d.generating?'GPT가 업무지시를 정리하고 있어요.':''}</p>
         <details class="instruction-step"><summary>GPT 답변 직접 불러오기</summary>
         <div class="actions"><button id="copyPlanningPrompt" type="button">GPT 요청문 복사</button></div>
         <p class="smallText">요청문을 ChatGPT에 붙여넣고, 답변을 아래에 붙여넣으세요.</p>
         <textarea id="planningPrompt" readonly hidden aria-label="GPT 요청문"></textarea>
         <label for="analysisAnswer">GPT 답변</label><textarea id="analysisAnswer" rows="4">${esc(d.answer)}</textarea>
-        <div class="actions"><button id="previewAnalysis" type="button">업무지시로 불러오기</button></div></details>
+        <div class="actions"><button id="previewAnalysis" type="button">업무지시로 불러오기</button></div></details>`}
         ${tasks.length?`<details class="instruction-step wd75-history"><summary>배정 이력 ${tasks.length}건</summary>
           <div class="wd60-inner-scroll"><table class="wd60-detail-table"><thead><tr><th scope="col">배정일</th><th scope="col">업무</th><th scope="col">진행 현황</th></tr></thead><tbody>
           ${tasks.map(task=>`<tr><td>${esc(task.date)}</td><td><button class="small" type="button" data-instruction-task="${esc(task.id)}">${esc(task.title)}</button></td><td>${esc(status(task))}</td></tr>`).join('')}
@@ -1367,14 +1413,14 @@ function instructionView(){
       <section class="card"><h2>${profile?esc(profile.name)+' 님이 볼 업무지시':'받는 사람 화면 미리보기'}</h2>
         <p class="smallText">${profile?(simple?'직원 · 내 업무':'스탭 · 업무진행판'):'담당자가 받을 업무지시를 확인하고 배정하세요.'}</p>
         <div id="instructionPreview" class="wd75-preview" tabindex="-1">${instructionPreview(d,simple)}</div>
-        ${d?.analysis?`<p class="smallText">내용을 확인하고 필요한 부분을 수정한 뒤 배정하세요.</p>
-          ${instructionEditor(d,simple)}
+        ${d&&(simple||d.analysis)?`<p class="smallText">내용을 확인하고 필요한 부분을 수정한 뒤 배정하세요.</p>
+          ${simple?'':instructionEditor(d)}
           <div class="wd75-action"><button id="assignInstruction" class="primary" type="button">업무지시 배정하기</button></div>`:''}
       </section>
     </div>`;
 }
 
-async function generateInstructionDraft(d,simple){
+async function generateInstructionDraft(d){
   const request=d.raw.trim();
   if(d.generating)return;
   if(!request)return notify('할 일을 먼저 입력하세요');
@@ -1389,7 +1435,7 @@ async function generateInstructionDraft(d,simple){
     const result=await fetch('https://mzftzadtoepcrwhnwdmn.supabase.co/functions/v1/work-instruction-test',{
       method:'POST',
       headers:{Authorization:'Bearer '+token,apikey:'sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh','Content-Type':'application/json'},
-      body:JSON.stringify({request,role:simple?'employee':'staff'}),
+      body:JSON.stringify({request,role:'staff'}),
       signal:AbortSignal.timeout(85_000),
     });
     const payload=await result.json().catch(()=>null);
@@ -1425,52 +1471,59 @@ function bindInstructionView(){
   if(!$('instructionInput'))return;
   const d=instructionDrafts.get(managerStaffId),simple=staffById(d.staffId)?.workType==='employee';
   const updatePreview=()=>{$('instructionPreview').innerHTML=instructionPreview(d,simple);};
-  $('instructionInput').oninput=()=>{d.raw=$('instructionInput').value;};
-  $('analysisAnswer').oninput=()=>{d.answer=$('analysisAnswer').value;};
+  $('instructionInput').oninput=()=>{d.raw=$('instructionInput').value;if(simple)updatePreview();};
   $('instructionDate').oninput=()=>{d.date=$('instructionDate').value;updatePreview();};
-  $('generateInstruction').onclick=()=>generateInstructionDraft(d,simple);
-  $('copyPlanningPrompt').onclick=async()=>{
-    if(!d.raw.trim())return notify('할 일을 먼저 입력하세요');
-    const field=$('planningPrompt');field.value=analysisRequest(d);
-    try{await navigator.clipboard.writeText(field.value);notify('요청문을 복사했습니다');}
-    catch{field.hidden=false;field.select();notify('선택된 요청문을 복사하세요');}
-  };
-  $('previewAnalysis').onclick=()=>{
-    const draft=simple?parseSimpleInstruction(d.answer):parseAnalysis(d.answer);
-    if(!draft)return notify('복사한 요청문으로 만든 GPT 답변을 붙여넣으세요');
-    d.analysis=draft;render();$('assignInstruction').focus();
-  };
-  if(!$('assignInstruction'))return;
-  $('instructionGoal').oninput=()=>{d.analysis.goal=$('instructionGoal').value;updatePreview();};
-  d.analysis.items.forEach((item,i)=>{
-    $('instructionItem'+i).oninput=event=>{
-      item.text=event.target.value;
-      $('instructionItemLabel'+i).textContent=(i+1)+'. '+item.text;
-      updatePreview();
+  if(!simple){
+    $('analysisAnswer').oninput=()=>{d.answer=$('analysisAnswer').value;};
+    $('generateInstruction').onclick=()=>generateInstructionDraft(d);
+    $('copyPlanningPrompt').onclick=async()=>{
+      if(!d.raw.trim())return notify('할 일을 먼저 입력하세요');
+      const field=$('planningPrompt');field.value=analysisRequest(d);
+      try{await navigator.clipboard.writeText(field.value);notify('요청문을 복사했습니다');}
+      catch{field.hidden=false;field.select();notify('선택된 요청문을 복사하세요');}
     };
-    $('instructionItemDate'+i).oninput=event=>{item.date=event.target.value;updatePreview();};
-    (item.workflow?.steps||[]).forEach((step,j)=>instructionStepFields.forEach(([key])=>{
-      $('instructionStep'+i+'_'+j+'_'+key).oninput=event=>{
-        step[key]=event.target.value;
-        if(key==='title')$('instructionStepLabel'+i+'_'+j).textContent=(j+1)+'. '+step.title;
+    $('previewAnalysis').onclick=()=>{
+      const draft=parseAnalysis(d.answer);
+      if(!draft)return notify('복사한 요청문으로 만든 GPT 답변을 붙여넣으세요');
+      d.analysis=draft;render();$('assignInstruction').focus();
+    };
+  }
+  if(!$('assignInstruction'))return;
+  if(!simple){
+    $('instructionGoal').oninput=()=>{d.analysis.goal=$('instructionGoal').value;updatePreview();};
+    d.analysis.items.forEach((item,i)=>{
+      $('instructionItem'+i).oninput=event=>{
+        item.text=event.target.value;
+        $('instructionItemLabel'+i).textContent=(i+1)+'. '+item.text;
         updatePreview();
       };
-    }));
-  });
+      $('instructionItemDate'+i).oninput=event=>{item.date=event.target.value;updatePreview();};
+      (item.workflow?.steps||[]).forEach((step,j)=>instructionStepFields.forEach(([key])=>{
+        $('instructionStep'+i+'_'+j+'_'+key).oninput=event=>{
+          step[key]=event.target.value;
+          if(key==='title')$('instructionStepLabel'+i+'_'+j).textContent=(j+1)+'. '+step.title;
+          updatePreview();
+        };
+      }));
+    });
+  }
   $('assignInstruction').onclick=()=>{
-    const profile=staffById(d.staffId),goal=d.analysis.goal.trim();
+    const profile=staffById(d.staffId);
+    const plan=simple?employeeInstructionPlan(d.raw):d.analysis;
+    if(!plan)return notify('업무지시 내용을 입력하세요');
+    const goal=plan.goal.trim();
     if(d.generating)return notify('GPT가 업무지시를 만든 뒤 확인하고 배정하세요');
     if(!profile||profile.archivedAt||managerStaffId!==d.staffId)return notify('배정할 사람을 다시 선택하세요');
     if(!goal)return notify('오늘의 목표를 입력하세요');
-    const groups=instructionGroups(d);
+    const groups=instructionGroups(d,plan);
     for(const [date,items] of groups){
       if(!date||items.some(item=>!item.text.trim()||!simple&&item.workflow.steps.some(step=>instructionStepFields.some(([key])=>!step[key].trim()))))
         return notify('배정일과 할 일, 비어 있는 단계가 있는지 확인하세요');
     }
     const batch=crypto.randomUUID(),prior=S.tasks;
     const tasks=groups.map(([date,items],i)=>{
-      const todos=items.map((item,j)=>({id:'todo'+j,text:item.text.trim(),done:false,...(!simple?{workflow:{...item.workflow,steps:item.workflow.steps.map(step=>({...step,instruction:step.method}))}}:{})}));
-      return {id:'task'+batch+'_'+i,staffId:d.staffId,simpleInstruction:simple,date,title:goal,objective:goal,guide:'',references:[],ack:null,work:{},reports:[],feedback:[],todos};
+      const todos=items.map((item,j)=>({id:'todo'+j,text:simple?item.text:item.text.trim(),done:false,...(!simple?{workflow:{...item.workflow,steps:item.workflow.steps.map(step=>({...step,instruction:step.method}))}}:{})}));
+      return {id:'task'+batch+'_'+i,staffId:d.staffId,simpleInstruction:simple,...(simple?{directInstruction:true}:{}),date,title:goal,objective:goal,guide:'',references:[],ack:null,work:{},reports:[],feedback:[],todos};
     });
     S.tasks=[...prior,...tasks];
     try{save();}catch(e){S.tasks=prior;return notify('배정에 실패했어요. 작성한 업무지시는 남아 있어요.');}
