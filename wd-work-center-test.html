@@ -264,13 +264,13 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd68-attendance{text-align:right}
 .wd68-empty{padding:10px 11px;margin:8px 0 0;background:#f8f6fa;color:#655677;border-radius:6px;font-size:13px}
 .wd86-roster-editor{padding:12px;margin:0 0 12px;border:1px solid #e8e0f4;border-radius:10px;background:#faf8fd}
-.wd86-roster-controls{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
-.wd86-roster-controls label{margin:0}
-.wd86-roster-controls select{width:min(180px,100%);min-height:44px;padding:6px 10px}
 .wd86-roster-editor p{margin:6px 0 0}
-.wd86-roster-time{margin-top:12px}
-.wd86-roster-time summary{cursor:pointer;font-weight:650;color:#4d289a}
-.wd86-roster-time input{width:auto}
+.wd89-roster-dates{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.wd89-roster-fields{display:flex;align-items:end;gap:8px 12px;flex-wrap:wrap;margin-top:10px}
+.wd89-roster-fields label{display:grid;gap:4px;margin:0;font-size:13px}
+.wd89-roster-fields select{width:min(170px,100%);min-height:44px;padding:6px 10px}
+.wd89-roster-fields input{width:auto;min-height:44px;padding:6px 8px}
+.wd89-roster-fields button{min-height:44px}
 .wd86-check{display:inline-grid;place-items:center;min-width:19px;height:19px;border:1px solid #bba7dc;border-radius:4px;color:#5120a9;background:#fff}
 .wd67-day[aria-pressed=true] .wd86-check{background:#6433d8;color:white;border-color:#6433d8}
 .wd67-day .wd86-check-row{display:flex;justify-content:space-between;align-items:center;gap:4px}
@@ -279,7 +279,6 @@ button.wd62-status:hover{filter:brightness(.97)}
 @media(max-width:600px){.wd68-header-review{gap:6px;padding-inline:8px}}
 .wd88-person{background:hsl(var(--staff-hue) 65% 93%);color:hsl(var(--staff-hue) 62% 29%)}
 strong.wd88-person{display:inline-block;padding:2px 7px;border-radius:5px}
-.wd67-day[aria-pressed=true] .wd86-check.wd88-person{background:hsl(var(--staff-hue) 58% 40%);border-color:hsl(var(--staff-hue) 58% 40%)}
 .wd70-roster-person{min-width:0;border:1px solid #eee7f5;border-radius:8px;margin:10px 0;padding:9px 11px}
 .wd70-roster-person legend{font-weight:700}.wd70-roster-form .wd70-roster-person label{border:0;padding:4px 0}
 .wd70-time-fields{display:flex;flex-wrap:wrap;gap:6px 12px}.wd70-time-fields input{padding:5px}
@@ -772,32 +771,27 @@ function dayAttendance(day,profiles,tasks){
     .filter(row=>row.planned||row.record);
 }
 
-function homeRosterDate(staffId,date){
-  return {manual:(S.workRoster?.[date]||[]).includes(staffId),
-    start:S.workSchedule?.[date]?.[staffId]?.start||'',end:S.workSchedule?.[date]?.[staffId]?.end||''};
-}
-
 function homeRosterAssigned(staffId,date){
   return S.tasks.some(task=>taskStaffId(task)===staffId&&task.date===date);
 }
 
-function homeRosterEditor(profiles,day){
+function homeRosterEditor(profiles){
   if(!homeRosterDraft)return '';
-  const {staffId,changes,showTimes}=homeRosterDraft;
-  const selected=changes.get(day)||homeRosterDate(staffId,day);
-  const canEditTime=staffId&&(selected.manual||homeRosterAssigned(staffId,day));
+  const {staffId,dates,start,end}=homeRosterDraft;
+  const count=dates.size;
+  const selected=count===1?attendanceDate([...dates][0]):count+'일 선택';
+  const canRemove=staffId&&[...dates].some(date=>(S.workRoster?.[date]||[]).includes(staffId));
   return `<section class="wd86-roster-editor" aria-label="출근일 지정">
-    <div class="wd86-roster-controls"><label for="homeRosterStaff">출근할 직원</label>
-      <select id="homeRosterStaff"><option value="">직원·스탭 선택</option>${profiles.map(profile=>`<option value="${esc(profile.id)}" ${profile.id===staffId?'selected':''}>${esc(profile.name)}</option>`).join('')}</select>
-      <button type="button" class="primary small" id="saveHomeRoster" ${changes.size?'':'disabled'}>저장 ${changes.size?changes.size+'일':''}</button>
+    <div class="wd89-roster-dates"><strong id="homeRosterDateHint" tabindex="-1">${count?esc(selected):'달력에서 출근할 날짜를 선택하세요.'}</strong>
       <button type="button" class="small" id="cancelHomeRoster">취소</button>
     </div>
-    <p class="smallText">${staffId?'달력에서 출근할 날짜를 체크한 뒤 한 번에 저장하세요. 업무가 이미 배정된 날은 자동으로 체크돼요.':'직원이나 스탭을 먼저 선택하세요.'}</p>
-    ${canEditTime?`<details id="homeRosterTime" class="wd86-roster-time" ${showTimes?'open':''}>
-      <summary>${esc(attendanceDate(day))} 예정 시간 입력 (선택)</summary>
-      <div class="wd70-time-fields"><label for="homeRosterStart">예정 출근 <input type="time" id="homeRosterStart" value="${esc(selected.start)}"></label>
-      <label for="homeRosterEnd">예정 퇴근 <input type="time" id="homeRosterEnd" value="${esc(selected.end)}"></label></div>
-    </details>`:''}
+    ${count?`<div class="wd89-roster-fields">
+      <label>직원 이름<select id="homeRosterStaff"><option value="">직원·스탭 선택</option>${profiles.map(profile=>`<option value="${esc(profile.id)}" ${profile.id===staffId?'selected':''}>${esc(profile.name)}</option>`).join('')}</select></label>
+      <label>예정 출근<input type="time" id="homeRosterStart" value="${esc(start)}"></label>
+      <label>예정 퇴근<input type="time" id="homeRosterEnd" value="${esc(end)}"></label>
+      <button type="button" class="primary small" id="saveHomeRoster" ${staffId?'':'disabled'}>저장</button>
+      ${canRemove?'<button type="button" class="small" id="removeHomeRoster">출근 예정 해제</button>':''}
+    </div>${count>1?'<p class="smallText">시간을 입력하면 선택한 날짜에 같은 시간이 들어가요.</p>':''}`:''}
   </section>`;
 }
 
@@ -818,7 +812,7 @@ function managerHomeView(){
     if(!weeklyStaff.has(profile.id))weeklyStaff.set(profile.id,[]);
     weeklyStaff.get(profile.id).push(date);
   }
-  const editing=!!homeRosterDraft,editingStaffId=homeRosterDraft?.staffId;
+  const editing=!!homeRosterDraft;
   const hues=[263,214,330,28,190,290,347,43];
   const staffHues=new Map(S.staffProfiles.map((profile,i)=>[profile.id,hues[i]??Math.round((72+i*137.508)%360)]));
   const staffColor=id=>`style="--staff-hue:${staffHues.get(id)??263}"`;
@@ -829,19 +823,17 @@ function managerHomeView(){
     <section class="card wd67-calendar"><div class="wd65-section-head"><div><h2>${esc(staffMonthLabel(month))} 일정</h2></div>
       <div class="wd67-month-nav"><button class="small" id="prevHomeMonth" aria-label="이전 달">‹</button><button class="small" id="todayHomeMonth">오늘</button><button class="small" id="nextHomeMonth" aria-label="다음 달">›</button>
       ${profiles.length?`<button type="button" class="small ${editing?'':'primary'}" id="editHomeRoster" aria-expanded="${editing}">출근일 지정하기</button>`:''}</div></div>
-    ${homeRosterEditor(profiles,day)}
+    ${homeRosterEditor(profiles)}
     <div class="wd87-month-grid" aria-label="${esc(staffMonthLabel(month))} 출근 달력">
       ${'월화수목금토일'.split('').map(label=>`<span class="wd87-weekday">${label}</span>`).join('')}
       ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(firstColumn)}
       ${days.map(date=>{
       const staff=calendar.get(date).staff;
-      const assigned=editingStaffId&&calendar.get(date).tasks.some(task=>taskStaffId(task)===editingStaffId);
-      const checked=!!(assigned||(editingStaffId&&(homeRosterDraft.changes.get(date)||homeRosterDate(editingStaffId,date)).manual));
+      const checked=!!homeRosterDraft?.dates.has(date);
       return `<button type="button" class="wd67-day" data-home-day="${date}" aria-pressed="${editing?checked:date===day}" ${date===today?'aria-current="date"':''}
-        ${editing&&!editingStaffId?'disabled':''} aria-label="${esc(attendanceDate(date))}${editing?(assigned?' 업무 배정으로 출근 예정':' 출근일 선택'):''}">
+        aria-label="${esc(attendanceDate(date))}${editing?' 출근일 선택':''}">
         ${date===today?'<small>오늘</small>':''}
-        ${editing?`<span class="wd86-check-row"><strong>${Number(date.slice(8))}</strong><span class="wd86-check wd88-person" ${staffColor(editingStaffId)} aria-hidden="true">${checked?'✓':''}</span></span>`:`<strong>${Number(date.slice(8))}</strong>`}
-        ${editing&&assigned?'<small>업무 배정 · 자동</small>':''}
+        ${editing?`<span class="wd86-check-row"><strong>${Number(date.slice(8))}</strong><span class="wd86-check" aria-hidden="true">${checked?'✓':''}</span></span>`:`<strong>${Number(date.slice(8))}</strong>`}
         ${staff.map(({profile,record,hours})=>{
           const time=record
             ? timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):' · 퇴근 미기록')
@@ -880,17 +872,18 @@ function bindManagerHome(){
   const select=date=>{homeDay=date;render();};
   document.querySelectorAll('[data-home-day]').forEach(button=>button.onclick=()=>{
     const date=button.dataset.homeDay;
+    let firstDate=false;
     if(homeRosterDraft){
-      const {staffId,changes}=homeRosterDraft;
-      if(!staffId)return;
-      if(!homeRosterAssigned(staffId,date)){
-        const previous=changes.get(date)||homeRosterDate(staffId,date);
-        const next=previous.manual?{manual:false,start:'',end:''}:{...previous,manual:true};
-        changeRosterDate(date,next);
-      }
+      const {dates}=homeRosterDraft;
+      firstDate=!dates.size;
+      if(dates.has(date))dates.delete(date);else dates.add(date);
+      if(!dates.size){
+        Object.assign(homeRosterDraft,{staffId:'',start:'',end:'',editedHours:false});
+      }else if(!homeRosterDraft.editedHours)loadRosterHours();
     }
     select(date);
-    document.querySelector('[data-home-day="'+date+'"]')?.focus();
+    if(firstDate)$('homeRosterStaff')?.focus();
+    else document.querySelector('[data-home-day="'+date+'"]')?.focus();
     if(!homeRosterDraft)$('homeDayDialog')?.showModal();
   });
   document.querySelectorAll('[data-home-task]').forEach(b=>b.onclick=()=>{const dialog=$('homeDayDialog');if(dialog?.open)dialog.close();taskPreview(b.dataset.homeTask);});
@@ -905,56 +898,49 @@ function bindManagerHome(){
   const openReview=()=>{reviewStaffId='';reviewStatus='보고서 제출';setNav('review');};
   $('homeReviewQueue').onclick=openReview;
   if($('editHomeRoster'))$('editHomeRoster').onclick=()=>{
-    if(homeRosterDraft)return $('homeRosterStaff')?.focus();
-    homeRosterDraft={staffId:'',changes:new Map(),showTimes:false};render();$('homeRosterStaff')?.focus();
+    if(!homeRosterDraft){homeRosterDraft={staffId:'',dates:new Set(),start:'',end:'',editedHours:false};render();}
+    $('homeRosterDateHint')?.focus();
   };
   if(!homeRosterDraft)return;
-  const changeRosterDate=(date,next)=>{
-    const {staffId,changes}=homeRosterDraft;
-    const base=homeRosterDate(staffId,date);
-    if(base.manual===next.manual&&base.start===next.start&&base.end===next.end)changes.delete(date);
-    else changes.set(date,next);
-  };
-  $('homeRosterStaff').onchange=event=>{
-    if(homeRosterDraft.changes.size){
-      event.target.value=homeRosterDraft.staffId;
-      return notify('작성 중인 출근일을 저장하거나 취소한 뒤 직원을 바꿔주세요.');
-    }
-    homeRosterDraft.staffId=event.target.value;render();$('homeRosterStaff')?.focus();
+  const loadRosterHours=()=>{
+    const {staffId,dates}=homeRosterDraft;
+    const time=dates.size===1?S.workSchedule?.[[...dates][0]]?.[staffId]:null;
+    Object.assign(homeRosterDraft,{start:time?.start||'',end:time?.end||'',editedHours:false});
   };
   $('cancelHomeRoster').onclick=()=>{homeRosterDraft=null;render();$('editHomeRoster')?.focus();};
-  const timeEditor=$('homeRosterTime');
-  if(timeEditor){
-    timeEditor.ontoggle=()=>{if(homeRosterDraft&&$('homeRosterTime')===timeEditor)homeRosterDraft.showTimes=timeEditor.open;};
-    const changeHours=()=>{
-      const previous=homeRosterDraft.changes.get(day)||homeRosterDate(homeRosterDraft.staffId,day);
-      changeRosterDate(day,{...previous,start:$('homeRosterStart').value,end:$('homeRosterEnd').value});
-      const count=homeRosterDraft.changes.size;
-      $('saveHomeRoster').disabled=!count;
-      $('saveHomeRoster').textContent=count?'저장 '+count+'일':'저장';
-    };
-    $('homeRosterStart').oninput=changeHours;
-    $('homeRosterEnd').oninput=changeHours;
-  }
-  $('saveHomeRoster').onclick=()=>{
-    const {staffId,changes}=homeRosterDraft;
-    if(!changes.size||!activeProfiles().some(profile=>profile.id===staffId))return;
+  if(!$('homeRosterStaff'))return;
+  $('homeRosterStaff').onchange=event=>{
+    homeRosterDraft.staffId=event.target.value;loadRosterHours();render();$('homeRosterStaff')?.focus();
+  };
+  const setHours=()=>{
+    Object.assign(homeRosterDraft,{start:$('homeRosterStart').value,end:$('homeRosterEnd').value,editedHours:true});
+  };
+  $('homeRosterStart').oninput=setHours;
+  $('homeRosterEnd').oninput=setHours;
+  const saveRoster=remove=>{
+    const {staffId,dates,start,end,editedHours}=homeRosterDraft;
+    if(!dates.size||!activeProfiles().some(profile=>profile.id===staffId))return;
     const priorRoster=S.workRoster,priorHours=S.workSchedule;
     const roster={...priorRoster},schedule={...priorHours};
-    for(const [date,{manual,start,end}] of changes){
-      if((start||end)&&(!attendanceISO(date,start)||!attendanceISO(date,end)||end<=start))
-        return notify(attendanceDate(date)+' 예정 출근·퇴근 시간을 확인해 주세요.');
+    for(const date of dates){
       const ids=new Set(roster[date]||[]);
-      if(manual)ids.add(staffId);else ids.delete(staffId);
+      const assigned=homeRosterAssigned(staffId,date);
+      if(remove&&!ids.has(staffId))continue;
+      if(!remove&&(start||end)&&(!attendanceISO(date,start)||!attendanceISO(date,end)||end<=start))
+        return notify('예정 출근·퇴근 시간을 확인해 주세요.');
+      if(remove)ids.delete(staffId);else if(!assigned)ids.add(staffId);
       if(ids.size)roster[date]=[...ids];else delete roster[date];
       const hours={...schedule[date]};
-      if(start&&end)hours[staffId]={start,end};else delete hours[staffId];
+      if(!remove&&start&&end)hours[staffId]={start,end};
+      else if(remove&&!assigned||!remove&&dates.size===1&&editedHours)delete hours[staffId];
       if(Object.keys(hours).length)schedule[date]=hours;else delete schedule[date];
     }
     S.workRoster=roster;S.workSchedule=schedule;
     try{save();}catch(e){S.workRoster=priorRoster;S.workSchedule=priorHours;return notify('출근 예정 저장에 실패했습니다');}
-    homeRosterDraft=null;render();$('editHomeRoster')?.focus();notify('출근일을 저장했습니다');
+    homeRosterDraft=null;render();$('editHomeRoster')?.focus();notify(remove?'출근 예정을 해제했습니다':'출근일을 저장했습니다');
   };
+  $('saveHomeRoster').onclick=()=>saveRoster(false);
+  if($('removeHomeRoster'))$('removeHomeRoster').onclick=()=>saveRoster(true);
 }
 
 function reviewView(){
