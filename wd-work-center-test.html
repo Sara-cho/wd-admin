@@ -640,6 +640,30 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
   body.wd109-print-payroll #payrollPreview,body.wd109-print-payroll #payrollPreview *{visibility:visible}
   body.wd109-print-payroll #payrollPreview{position:absolute;left:0;top:0;width:100%;border:0}
 }
+</style><style>.wd110-instruction-actions,.wd110-talk-controls,.wd110-talk-attachment{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.wd109-assigned-work>header,.wd110-cancelled-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.wd110-cancelled-list{list-style:none;padding:0}
+.wd110-cancelled-list li{border-top:1px solid #eee7f4;padding:6px 0}
+.wd110-instruction-delete{color:#9e2741;border-color:#e9c6d0;background:#fff7f9}
+.wd110-talk-badge:not([hidden]){display:inline-grid;place-items:center;min-width:21px;min-height:21px;padding:0 4px;border-radius:999px;background:#6a36cd;color:#fff;font-size:11px}
+.wd110-talk-attachment{overflow-wrap:anywhere}
+.wd110-office-full{grid-column:1/-1}
+.wd110-office-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px;margin-top:18px}
+.wd110-office-cards li{display:flex;flex-direction:column;align-items:flex-start;gap:8px;border:0;padding:0;max-width:310px}
+.wd110-card-face{display:flex;flex-direction:column;justify-content:space-between;gap:12px;aspect-ratio:1.62;width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,#372254,#7550ad);color:white;box-shadow:0 5px 12px #31204625}
+.wd110-card-face span{font-size:12px;letter-spacing:1px}
+.wd110-card-face i{width:30px;height:22px;border:1px solid #e8d9a3;border-radius:5px;background:repeating-linear-gradient(90deg,#e4cf93 0 9px,#beaa72 9px 10px)}
+.wd110-card-face strong{overflow-wrap:anywhere}
+.wd109-account-table tbody tr[data-account-row]{cursor:pointer}
+.wd109-account-table tbody tr[data-account-row]:hover,.wd109-account-table tbody tr[data-account-row]:focus-within{background:#f8f2ff}
+.wd110-account-row-button{background:transparent;border:0;padding:5px 0;color:#512a93;text-align:left;font-weight:750}
+.wd110-account-kicker{display:inline-block;padding:4px 10px;border-radius:999px;background:#f1e8fc;color:#592aac;font-size:13px;font-weight:750}
+.wd110-account-card{padding:13px 16px;margin-top:12px;border:1px solid #e9e0f3;border-radius:12px;background:#fbf9ff}
+.wd110-account-card h3{margin:0 0 8px;color:#552c91}
+.wd110-account-secret{background:#f3ebfc}
+.wd110-account-secret-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wd110-account-secret-row span{overflow-wrap:anywhere;min-width:0}
+.wd110-account-memo{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -769,7 +793,7 @@ async function sha(value){let data=await crypto.subtle.digest('SHA-256',new Text
 function logout(){
   if(liveAttendanceSaving)return notify('근무기록 저장이 끝난 뒤 로그아웃하세요');
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
-  closeWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
+  closeWorkspaceTalk();stopWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
   for(const id of ['todayWorkGate','modalLayer'])$(id)?.remove();
   currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
@@ -872,7 +896,7 @@ function sidebarIcon(id){
     <g fill="none" stroke="${line}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">${art.replaceAll('@','fill="url(#'+gradient+')"')}</g></svg>`;
 }
 
-function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span>${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 배정업무 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>완료 ${S.tasks.filter(t=>status(t)==='업무 완료').length}건 · 보고서 제출 ${S.tasks.filter(t=>status(t)==='보고서 제출').length}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK</button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
+function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span>${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 배정업무 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>완료 ${S.tasks.filter(t=>status(t)==='업무 완료').length}건 · 보고서 제출 ${S.tasks.filter(t=>status(t)==='보고서 제출').length}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
 function dayReportCount(t){return t.reports.length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.reports.length,0)}
 function dayFeedbackCount(t){return t.feedback.filter(f=>!f.reviewedOnly).length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.feedback.length,0)}
 function taskButton(t,i){return `<button class="taskTile ${S.selected===t.id?'selected':''}" data-task="${t.id}"><small>DAY ${String(i+1).padStart(2,'0')} · ${esc(t.date)}</small><b>${esc(t.title)}</b><span class="pill ${status(t)==='업무 완료'?'green':status(t)==='보완 요청'?'orange':''}">${status(t)}</span><small style="display:block;margin-top:8px">${dayReportCount(t)}회 제출 · ${dayFeedbackCount(t)}건 피드백</small></button>`}
@@ -917,7 +941,7 @@ revise_3:{method:'수정 요청이 모두 반영됐는지 확인하세요. 미�
 function recordFormat(step){return step.recordFormat&&!/[|「→]/.test(step.recordFormat)?step.recordFormat:GUIDE_DETAILS[step.id]?.format||'1. 수행한 일 :\n2. 작업한 방법 :\n3. 확인한 결과 :\n4. 적용하거나 사용할 부분 :\n5. 추가 확인할 사항 :'}
 function recordOutline(step){return recordFormat(step).split('\n').filter(line=>/^\d+\./.test(line)).map(line=>line.split(/\s*[:：]\s*/)[0]+' : ').join('\n')}
 function guideDetail(step){return {method:step.method||GUIDE_DETAILS[step.id]?.method||'안내에 따라 필요한 자료를 확인하고 지시된 순서로 작업하세요. 진행 중 판단이 필요한 내용은 확인 요청으로 남기세요.',format:recordFormat(step),evidence:step.evidence||GUIDE_DETAILS[step.id]?.evidence||'파일·사진·링크가 필요한 작업이면 해당 단계에 첨부하세요. 결과물 형식이 지정됐다면 그 형식에 맞춰 저장하세요.'}}
-function guideBook(t){return `<section class="wd40-guide">${workSteps(t).map((step,i)=>{let detail=guideDetail(step);return `<section class="wd40-guidesection"><h3><span>${String(i+1).padStart(2,'0')}</span>${esc(step.title)}</h3>${step.instruction&&step.instruction!==detail.method?`<p class="wd40-intro">${nl(step.instruction)}</p>`:''}<h4>진행 방법</h4><p>${nl(detail.method)}</p><h4>업무보고에 적을 내용</h4><p>${nl(detail.format)}</p><h4>남길 자료 · 파일</h4><p>${nl(detail.evidence)}</p></section>`}).join('')}</section>`}
+function guideBook(t){return `<section class="wd40-guide">${workSteps(t).map((step,i)=>{let detail=guideDetail(step);return `<section class="wd40-guidesection"><h3><span>${String(i+1).padStart(2,'0')}</span>${esc(step.title)}</h3>${step.instruction&&step.instruction!==detail.method?`<p class="wd40-intro">${nl(step.instruction)}</p>`:''}<h4>진행 방법</h4><p>${nl(detail.method)}</p><h4>업무보고에 적을 내용</h4><p>${nl(detail.format)}</p>${t.workflow?.reportInApp?'':`<h4>남길 자료 · 파일</h4><p>${nl(detail.evidence)}</p>`}</section>`}).join('')}</section>`}
 function bindGuide(t){document.querySelectorAll('[data-guide-step]').forEach(b=>b.onclick=()=>{if(activeStepUploads)return notify('첨부 저장이 끝난 뒤 이동하세요');let index=Number(b.dataset.guideStep);t.guideView=index;if(currentUser==='employee'){let f=reportFlow(t),steps=workSteps(t),first=steps.findIndex((_,i)=>!f.confirmed[i]),reachable=first<0?steps.length-1:first;if(index<=reachable){f.step=index;S.tab=1}}save();render()})}
 
 function empLeft(t){return `<section class="pane wd40-manual"><div class="paneHead"><h2>업무가이드북</h2><p class="smallText">안내를 읽으며 작업하고 오른쪽에 기록하세요.</p></div><div class="paneBody">${guideBook(t)}<h3>참고 홈페이지 · 참고 시안</h3>${refHtml(t)}${currentUser==='manager'?'<div class="actions"><button id="editTaskInline">오늘 업무지시 수정</button></div>':''}${currentUser==='manager'||t.feedback.length?`<div class="actions"><button class="small" id="openFeedback">${currentUser==='manager'?'피드백 작성·확인':'지점장 피드백 보기'}${t.feedback.length?' · '+t.feedback.length+'건':''}</button></div>`:''}</div></section>`}
@@ -960,13 +984,13 @@ function dailyFooter(day){let units=taskUnits(day),done=units.filter(isUnitCompl
 
 function reportFlow(t){let steps=workSteps(t);if(!t.reportFlow)t.reportFlow={step:0,confirmed:[]};let f=t.reportFlow;f.confirmed=Array.isArray(f.confirmed)?f.confirmed:[];let first=steps.findIndex((_,i)=>!f.confirmed[i]);f.step=Math.max(0,Math.min(Number(f.step)||0,first<0?steps.length:first));return f}
 function stageRail(t){let steps=workSteps(t),flow=reportFlow(t);return `<nav class="wd41-rail" aria-label="현재 할 일 안의 작업순서"><span class="wd41-raillabel">${t.order}번 할 일의 작업순서</span>${steps.map((item,i)=>`<button data-report-step="${i}" title="${esc(item.title)}" class="${i===(currentUser==='manager'&&Number.isInteger(t.guideView)?t.guideView:Math.min(flow.step,steps.length-1))?'active':''} ${flow.confirmed[i]?'done':''}" ${currentUser==='employee'&&i>flow.step&&!Array.from({length:i},(_,j)=>flow.confirmed[j]).every(Boolean)?'disabled':''} ${i===flow.step?'aria-current="step"':''}><span>${flow.confirmed[i]?'✓':i+1}</span><div><b>순서 ${i+1}</b><small>${esc(item.title)}</small></div></button>`).join('')}${currentUser==='manager'?'<button class="small" id="editTaskInline">업무지시 수정</button>':''}${currentUser==='manager'||t.feedback.length?`<button class="small wd41-feedback" id="openFeedback">피드백${t.feedback.length?' '+t.feedback.length+'건':''}</button>`:''}</nav>`}
-function empMid(t){let steps=workSteps(t),flow=reportFlow(t),step=flow.step,ready=step===steps.length,active=steps[Math.min(step,steps.length-1)],detail=guideDetail(active),answers=t.stepAnswers||{};return `<section class="pane wd41-work"><div class="wd41-stagehead"><div><small>${ready?t.order+'번 할 일 완료':t.order+'번 할 일 · 작업순서 '+(step+1)+' / '+steps.length}</small><h2>${ready?'수행 기록이 저장됐습니다':esc(active.title)}</h2></div><div class="wd41-save"><button class="small" id="saveDraft">임시저장</button><div class="wd34-savestate" id="draftSaveStatus" role="status" aria-live="polite">${t.draftSavedAt?'자동저장됨 · '+esc(t.draftSavedAt):'입력하면 자동 저장됩니다.'}</div></div></div>${ready?`<div class="wd41-donebody"><div class="wd28-done"><p>${t.order}번 할 일을 마쳤습니다. 다음 할 일을 시작하려면 아래 버튼을 누르세요. 모든 할 일을 마친 뒤 상단에서 업무보고서를 제출합니다.</p><div class="actions wd35-readyactions"><button id="reportPrev">기록 다시 보기</button>${taskUnits(sel()).some(u=>u.order>t.order)?`<button class="primary wd35-complete" id="nextUnit">${t.order+1}번 할 일 시작 →</button>`:''}</div></div></div>`:`<div class="wd41-stagebody"><section class="wd41-guidance"><p class="wd41-purpose">${nl(active.instruction)}</p><h3>진행 방법</h3><p>${nl(detail.method)}</p><h3>정리 형식</h3><p>${nl(detail.format)}</p><h3>남길 자료 · 파일</h3><p>${nl(detail.evidence)}</p>${t.references?.length?`<h3>참고자료</h3>${refHtml(t)}`:''}</section><section class="wd41-record"><label for="stepAnswer">업무보고에 적을 내용</label><p class="smallText">${nl(detail.format)}</p><textarea id="stepAnswer" data-step-answer="${esc(active.id)}" aria-label="현재 단계 수행 기록" placeholder="${esc(recordOutline(active))}">${esc(answers[active.id]||'')}</textarea>${stepAttachmentHTML(t,active.id)}<div class="actions wd23-actions wd35-stepactions"><button id="reportPrev" ${step===0?'disabled':''}>이전 순서</button><button class="primary ${step===steps.length-1?'wd35-complete':''}" id="reportNext" ${activeStepUploads?'disabled':''}>${step===steps.length-1?t.order+'번 할 일 완료':'다음 순서 · '+esc(steps[step+1].title)}</button></div></section></div>`}${oldDraft(t)}${t.reports.length?`<details class="wd41-legacy"><summary>이전 개별 제출 기록</summary>${reportList(t)}</details>`:''}</section>`}
+function empMid(t){let steps=workSteps(t),flow=reportFlow(t),step=flow.step,ready=step===steps.length,active=steps[Math.min(step,steps.length-1)],detail=guideDetail(active),answers=t.stepAnswers||{};return `<section class="pane wd41-work"><div class="wd41-stagehead"><div><small>${ready?t.order+'번 할 일 완료':t.order+'번 할 일 · 작업순서 '+(step+1)+' / '+steps.length}</small><h2>${ready?'수행 기록이 저장됐습니다':esc(active.title)}</h2></div><div class="wd41-save"><button class="small" id="saveDraft">임시저장</button><div class="wd34-savestate" id="draftSaveStatus" role="status" aria-live="polite">${t.draftSavedAt?'자동저장됨 · '+esc(t.draftSavedAt):'입력하면 자동 저장됩니다.'}</div></div></div>${ready?`<div class="wd41-donebody"><div class="wd28-done"><p>${t.order}번 할 일을 마쳤습니다. 다음 할 일을 시작하려면 아래 버튼을 누르세요. 모든 할 일을 마친 뒤 상단에서 업무보고서를 제출합니다.</p><div class="actions wd35-readyactions"><button id="reportPrev">기록 다시 보기</button>${taskUnits(sel()).some(u=>u.order>t.order)?`<button class="primary wd35-complete" id="nextUnit">${t.order+1}번 할 일 시작 →</button>`:''}</div></div></div>`:`<div class="wd41-stagebody"><section class="wd41-guidance"><p class="wd41-purpose">${nl(active.instruction)}</p><h3>진행 방법</h3><p>${nl(detail.method)}</p><h3>정리 형식</h3><p>${nl(detail.format)}</p>${t.workflow?.reportInApp?'':`<h3>남길 자료 · 파일</h3><p>${nl(detail.evidence)}</p>`}${t.references?.length?`<h3>참고자료</h3>${refHtml(t)}`:''}</section><section class="wd41-record"><label for="stepAnswer">업무보고에 적을 내용</label><p class="smallText">${nl(detail.format)}</p><textarea id="stepAnswer" data-step-answer="${esc(active.id)}" aria-label="현재 단계 수행 기록" placeholder="${esc(recordOutline(active))}">${esc(answers[active.id]||'')}</textarea>${stepAttachmentHTML(t,active.id)}<div class="actions wd23-actions wd35-stepactions"><button id="reportPrev" ${step===0?'disabled':''}>이전 순서</button><button class="primary ${step===steps.length-1?'wd35-complete':''}" id="reportNext" ${activeStepUploads?'disabled':''}>${step===steps.length-1?t.order+'번 할 일 완료':'다음 순서 · '+esc(steps[step+1].title)}</button></div></section></div>`}${oldDraft(t)}${t.reports.length?`<details class="wd41-legacy"><summary>이전 개별 제출 기록</summary>${reportList(t)}</details>`:''}</section>`}
 function bindReportFlow(t){let f=reportFlow(t),steps=workSteps(t);let go=step=>{if(activeStepUploads)return notify('첨부 저장이 끝난 뒤 이동하세요');f.step=step;t.guideView=null;save();render()};if($('reportPrev'))$('reportPrev').onclick=()=>go(Math.max(0,f.step-1));if($('reportNext'))$('reportNext').onclick=()=>{if(activeStepUploads)return notify('첨부 저장 중입니다');if(!t.ack)return notify('업무 내용을 먼저 확인하세요');let item=steps[f.step];if(!String(t.stepAnswers?.[item.id]||'').trim())return notify('이번 단계에서 수행한 내용을 기록하세요');if(!flushStepLinks(t,item.id))return;f.confirmed[f.step]=true;if(f.step===steps.length-1){t.completedAt=now();t.completionVersion=(t.completionVersion||0)+1;t.completedSignature=t.workflowSignature}go(f.step+1)};document.querySelectorAll('[data-report-step]').forEach(el=>el.onclick=()=>{let step=Number(el.dataset.reportStep);if(step<=f.step||Array.from({length:step},(_,j)=>f.confirmed[j]).every(Boolean))go(step)});document.querySelectorAll('[data-step-answer]').forEach(el=>el.oninput=()=>{t.stepAnswers=t.stepAnswers||{};t.stepAnswers[el.dataset.stepAnswer]=el.value;invalidateUnit(t,f.step);save()});document.querySelectorAll('[data-extra-note]').forEach(el=>el.oninput=()=>{t.work.issues=el.value;if(isUnitComplete(t))t.completionVersion=(t.completionVersion||0)+1;save()});bindStepAttachments(t)}
 function fileSummary(r,prefix){return `<div class="smallText">${(r.files||[]).map(f=>`<div class="mediaRow"><span>📎 ${esc(f.name)}</span><button class="small" data-download="${esc(f.id)}">열기</button></div>`).join('')}${(r.links||[]).map(u=>`<div><a href="${esc(u)}" rel="noopener noreferrer" target="_blank">${esc(u)}</a></div>`).join('')}</div>`}
 function feedbackHTML(t){const notes=t.feedback.filter(f=>!f.reviewedOnly);return notes.length?notes.map((f,i)=>`<div class="feedback"><b>${i+1}. ${f.decision==='approved'?'승인':f.decision==='revision'?'수정 요청':'추가 확인'} · ${esc(f.at)}</b><p>${nl(f.text)}</p>${fileSummary(f,'feedback')}</div>`).join(''):'<div class="empty">아직 등록된 피드백이 없습니다.</div>'}
 function empRight(t){return `<div class="pane"><div class="paneHead"><small>STEP 03 · 검토 및 수정</small><h2>지점장 피드백</h2><p class="muted">업무별로 수정 의견이 번호순으로 누적됩니다.</p></div><div class="paneBody"><span class="pill">${status(t)}</span><h3>피드백 내역</h3>${feedbackHTML(t)}${t.feedback.length&&t.feedback.at(-1).decision==='revision'?'<div class="warn">수정 요청 내용을 반영해 가운데 업무보고를 재제출하세요.</div>':''}</div></div>`}
 function mgrLeft(t){return empLeft(t)}
-function mgrMid(t){let steps=workSteps(t),index=Math.max(0,Math.min(Number.isInteger(t.guideView)?t.guideView:reportFlow(t).step,steps.length-1)),step=steps[index],detail=guideDetail(step);return `<section class="pane wd41-work"><div class="wd41-stagehead"><div><small>${index+1} / ${steps.length}단계 · 스탭 수행 기록</small><h2>${esc(step.title)}</h2></div><span class="pill">${unitState(t)}</span></div><div class="wd41-stagebody"><section class="wd41-guidance"><p>${nl(step.instruction)}</p><h3>진행 방법</h3><p>${nl(detail.method)}</p><h3>정리 형식</h3><p>${nl(detail.format)}</p><h3>남길 자료 · 파일</h3><p>${nl(detail.evidence)}</p></section><section class="wd41-record"><h3>수행 내용 · 확인 결과</h3><p>${nl(t.stepAnswers?.[step.id]||'아직 작성한 내용이 없습니다.')}</p>${fileSummary(t.stepAssets?.[step.id]||{files:[],links:[]},'stage')}</section></div></section>`}
+function mgrMid(t){let steps=workSteps(t),index=Math.max(0,Math.min(Number.isInteger(t.guideView)?t.guideView:reportFlow(t).step,steps.length-1)),step=steps[index],detail=guideDetail(step);return `<section class="pane wd41-work"><div class="wd41-stagehead"><div><small>${index+1} / ${steps.length}단계 · 스탭 수행 기록</small><h2>${esc(step.title)}</h2></div><span class="pill">${unitState(t)}</span></div><div class="wd41-stagebody"><section class="wd41-guidance"><p>${nl(step.instruction)}</p><h3>진행 방법</h3><p>${nl(detail.method)}</p><h3>정리 형식</h3><p>${nl(detail.format)}</p>${t.workflow?.reportInApp?'':`<h3>남길 자료 · 파일</h3><p>${nl(detail.evidence)}</p>`}</section><section class="wd41-record"><h3>수행 내용 · 확인 결과</h3><p>${nl(t.stepAnswers?.[step.id]||'아직 작성한 내용이 없습니다.')}</p>${fileSummary(t.stepAssets?.[step.id]||{files:[],links:[]},'stage')}</section></div></section>`}
 function mgrRight(t){return `<div class="pane"><div class="paneHead"><small>03 · 지점장 컨펌</small><h2>피드백 · 수정 요청</h2></div><div class="paneBody"><h3>이전 피드백</h3>${feedbackHTML(t)}<div class="divider"></div><label>평가 결과</label><select id="decision"><option value="revision">보완 요청</option><option value="approved">업무 완료</option><option value="review">추가 확인 필요</option></select><label>수정·평가 의견</label><textarea id="feedbackText" placeholder="예: 1. 비교 기준 보완 / 2. 사진 출처 추가 / 3. 제안 근거 확인"></textarea><h3>참고사진 · 파일 · 링크</h3>${attachmentArea('feedback','평가 참고자료','')}<button class="primary" id="sendFeedback" style="width:100%">피드백 등록</button></div></div>`}
 function taskUnits(day){if(!day.workUnits)day.workUnits={};return taskTodos(day).map((todo,i)=>{let u=day.workUnits[todo.id];if(!u)u=day.workUnits[todo.id]={id:day.id+'__'+todo.id,parentId:day.id,todoId:todo.id,ack:day.startedAt||null,work:{},reports:[],feedback:[],todos:[]};applyWorkflow(u,todo.workflow||makeWorkflow(suggestWorkflowType(todo.text)));Object.assign(u,{staffId:taskStaffId(day),date:day.date,title:todo.text,objective:todo.text,guide:day.guide,references:day.references||[],dayTitle:day.title,order:i+1});return u})}
 function allReportTasks(){return S.tasks.flatMap(day=>{taskUnits(day);return [day,...Object.values(day.workUnits)]})}
@@ -1606,83 +1630,273 @@ function talkBody(body){
   }
   return esc(body);
 }
-function closeWorkspaceTalk(){
-  $('workspaceTalk')?.closeDock();
+let workspaceTalkState=null,talkAudio=null;
+function talkRole(){
+  return currentUser==='manager'?managerHqAccount.uid:legacyStaffHqLogin;
+}
+function talkSender(){
+  return currentUser==='manager'?'박수진':'지점장';
+}
+function talkReadPoint(row){
+  const match=String(row.created_at).match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(?:Z|\+00:00)$/);
+  return match?match[1]+'.'+(match[2]||'').padEnd(6,'0')+'|'+row.id:String(row.created_at)+'|'+row.id;
+}
+function talkLatestIncoming(state){
+  return state.rows.filter(row=>row.sender_id!==state.uid).map(talkReadPoint).sort().at(-1)||'';
+}
+function talkUnreadRows(state){
+  return state.rows.filter(row=>row.sender_id!==state.uid&&talkReadPoint(row)>state.readPoint);
+}
+function talkPreference(state,key,value){
+  const storageKey='wd_work_talk_'+state.uid+'_'+key;
+  try{
+    if(value===undefined)return localStorage.getItem(storageKey);
+    localStorage.setItem(storageKey,value);
+  }catch{}
+  return null;
+}
+function markTalkRead(state){
+  const point=talkLatestIncoming(state);
+  if(point>state.readPoint){state.readPoint=point;talkPreference(state,'read',point);}
+}
+function primeTalkAudio(){
+  if(!talkAvailable()||workspaceTalkState?.sound===false)return;
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;
+    if(Audio){talkAudio??=new Audio();if(talkAudio.state==='suspended')void talkAudio.resume().catch(()=>{});}
+  }catch{}
+}
+document.addEventListener?.('click',primeTalkAudio);
+function chimeWorkspaceTalk(){
+  if(talkAudio?.state!=='running')return;
+  try{
+    const osc=talkAudio.createOscillator(),gain=talkAudio.createGain(),at=talkAudio.currentTime;
+    osc.frequency.value=880;gain.gain.setValueAtTime(0.0001,at);
+    gain.gain.exponentialRampToValueAtTime(0.13,at+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001,at+0.25);
+    osc.connect(gain);gain.connect(talkAudio.destination);osc.start(at);osc.stop(at+0.26);
+  }catch{}
+}
+async function workspaceTalkIdentity(){
+  const token=await attendanceHqToken(),identity=await readWorkCenterHqIdentity(token);
+  const role=currentUser==='manager'?managerHqAccount.role:'ops_lead';
+  if(!talkAvailable()||identity.login_id!==talkRole()||identity.staff_role!==role)throw new Error('이 계정의 WD TALK 권한을 확인해 주세요.');
+  return {token,uid:identity.user_id};
+}
+function stopWorkspaceTalk(){
+  if(!workspaceTalkState)return;
+  clearInterval(workspaceTalkState.timer);
+  workspaceTalkState=null;
+}
+function startWorkspaceTalk(){
+  if(!talkAvailable()){closeWorkspaceTalk(true);stopWorkspaceTalk();return null;}
+  if(workspaceTalkState?.generation!==driveConnectGeneration||workspaceTalkState?.role!==talkRole()){
+    closeWorkspaceTalk(true);stopWorkspaceTalk();
+    const state={generation:driveConnectGeneration,role:talkRole(),uid:'',rows:[],readPoint:'',latest:'',sound:true,loading:false};
+    workspaceTalkState=state;
+    state.timer=setInterval(()=>void refreshWorkspaceTalk(state),12000);
+    void refreshWorkspaceTalk(state);
+  }
+  paintWorkspaceTalkBadge(workspaceTalkState);
+  return workspaceTalkState;
+}
+function paintWorkspaceTalkBadge(state){
+  const button=$('openWorkspaceTalk'),badge=$('workspaceTalkBadge');
+  if(!button||!badge)return;
+  const count=talkUnreadRows(state).length;
+  badge.hidden=!count;badge.textContent=count>=100?'99+':String(count);
+  button.setAttribute('aria-label',count?'WD TALK 열기 · 안 읽은 메시지 '+count+'건':'WD TALK 열기');
+}
+async function refreshWorkspaceTalk(state){
+  if(workspaceTalkState!==state||!talkAvailable()||state.loading)return;
+  state.loading=true;
+  try{
+    const {token,uid}=await workspaceTalkIdentity(),rows=await talkRequest(token);
+    if(workspaceTalkState!==state||!talkAvailable()||state.generation!==driveConnectGeneration)return;
+    const initial=state.uid!==uid;
+    state.uid=uid;state.rows=rows;
+    const latest=talkLatestIncoming(state);
+    if(initial){
+      state.readPoint=talkPreference(state,'read')??latest;
+      talkPreference(state,'read',state.readPoint);
+      state.sound=talkPreference(state,'sound')!=='off';
+    }else if(latest>state.latest&&state.sound)chimeWorkspaceTalk();
+    state.latest=latest;
+    $('workspaceTalk')?.paintTalk();
+    paintWorkspaceTalkBadge(state);
+  }catch(error){
+    if(workspaceTalkState!==state)return;
+    if($('workspaceTalkStatus'))$('workspaceTalkStatus').textContent=error.message;
+  }finally{state.loading=false;}
+}
+
+function connectWorkspaceTalkDrive(state){
+  const saved=state.drive||(currentUser==='manager'?managerDriveSession:employeeDrive);
+  if(saved?.scope===driveWriteScope&&saved.expires>Date.now()+30000)return Promise.resolve(saved);
+  const oauth=window.google?.accounts?.oauth2,expected=currentUser==='manager'?managerDriveAccount:workspaceDriveAccount();
+  if(!expected)return Promise.reject(new Error('이 계정에 연결된 Google 계정을 확인해 주세요.'));
+  if(!oauth){
+    void loadEmployeeDriveClient().catch(()=>{});
+    return Promise.reject(new Error('Google 연결을 준비하고 있어요. 잠시 뒤 파일 보내기를 눌러 주세요.'));
+  }
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error('Google Drive 연결 시간이 지났어요. 다시 시도해 주세요.')),120000);
+    const fail=error=>{clearTimeout(timer);reject(error);};
+    try{
+      const client=oauth.initTokenClient({client_id:'525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com',
+        scope:driveWriteScope,include_granted_scopes:false,login_hint:expected,
+        callback:async response=>{
+          try{
+            if(!response?.access_token||!oauth.hasGrantedAllScopes(response,driveWriteScope))
+              throw new Error('첨부파일을 보내려면 Google Drive 접근을 허용해 주세요.');
+            const {user}=await (await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',response.access_token)).json();
+            if(workspaceTalkState!==state||user?.emailAddress?.toLowerCase()!==expected)
+              throw new Error('업무센터에 등록된 Google 계정을 선택해 주세요.');
+            state.drive={token:response.access_token,scope:driveWriteScope,expires:Date.now()+Number(response.expires_in||0)*1000};
+            clearTimeout(timer);resolve(state.drive);
+          }catch(error){fail(error);}
+        },error_callback:()=>fail(new Error('Google Drive 연결을 완료하지 못했어요.'))});
+      client.requestAccessToken({prompt:'',hint:expected});
+    }catch(error){fail(error);}
+  });
+}
+async function uploadWorkspaceTalkFile(file,token,requestId,role){
+  const folder=employeeDriveFolders.shared;
+  const lookup=new URLSearchParams({q:"'"+folder+"' in parents and trashed = false and appProperties has { key='wdTalkRequest' and value='"+requestId+"' }",
+    fields:'files(id)',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+  const previous=await (await employeeDriveRequest(driveFileApi+'?'+lookup,token)).json();
+  const type=file.type||'application/octet-stream';
+  let id=previous.files?.find(row=>safeDriveId(row.id))?.id;
+  if(!id){
+    const metadata={name:file.name,parents:[folder],appProperties:{wdSource:'wd-talk',wdSender:role,wdTalkRequest:requestId}};
+    const api='https://www.googleapis.com/upload/drive/v3/files';
+    const auth={Authorization:'Bearer '+token};
+    const params='&supportsAllDrives=true&fields=id,parents';
+    let response;
+    if(file.size<=5*1024*1024){
+      const boundary='wdtalk_'+requestId;
+      const payload=new Blob(['--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+
+        '\r\n--'+boundary+'\r\nContent-Type: '+type+'\r\n\r\n',file,'\r\n--'+boundary+'--\r\n']);
+      response=await fetch(api+'?uploadType=multipart'+params,{method:'POST',headers:{...auth,'Content-Type':'multipart/related; boundary='+boundary},
+        body:payload,signal:AbortSignal.timeout(45000)});
+    }else{
+      const init=await fetch(api+'?uploadType=resumable'+params,{method:'POST',headers:{...auth,'Content-Type':'application/json',
+        'X-Upload-Content-Type':type,'X-Upload-Content-Length':String(file.size)},body:JSON.stringify(metadata),signal:AbortSignal.timeout(20000)});
+      let location;
+      try{location=new URL(init.headers.get('Location'));}catch{}
+      if(!init.ok||location?.origin!=='https://www.googleapis.com')throw new Error('Drive 업로드를 시작하지 못했어요.');
+      response=await fetch(location.href,{method:'PUT',headers:{...auth,'Content-Type':type},body:file,signal:AbortSignal.timeout(240000)});
+    }
+    const row=await response.json().catch(()=>null);
+    if(!response.ok||!safeDriveId(row?.id)||!row.parents?.includes(folder))throw new Error('업무공유폴더에 파일을 저장하지 못했어요.');
+    id=row.id;
+  }
+  return '[WDFILE]'+JSON.stringify({v:1,id,name:file.name.slice(0,200),size:file.size,mime:type.slice(0,120)});
+}
+
+function closeWorkspaceTalk(force=false){
+  return $('workspaceTalk')?.closeDock(force)??true;
 }
 function openWorkspaceTalk(){
-  if($('workspaceTalk')){closeWorkspaceTalk();$('openWorkspaceTalk')?.focus();return;}
-  if(!talkAvailable())return;
-  closeNoteDock();
+  if($('workspaceTalk')){if(closeWorkspaceTalk())$('openWorkspaceTalk')?.focus();return;}
+  const state=startWorkspaceTalk();
+  if(!state)return;
+  closeNoteDock();primeTalkAudio();void loadEmployeeDriveClient().catch(()=>{});
   const panel=document.createElement('aside');
-  panel.id='workspaceTalk';
-  panel.className='wd109-talk-dock';
+  panel.id='workspaceTalk';panel.className='wd109-talk-dock';
   panel.setAttribute('aria-labelledby','workspaceTalkTitle');
-  panel.innerHTML=`<header><h2 id="workspaceTalkTitle">WD TALK</h2>
-    <button type="button" class="small" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button></header>
+  panel.innerHTML=`<header><div><h2 id="workspaceTalkTitle">WD TALK</h2><span class="smallText">${talkSender()} 님과 대화</span></div>
+    <div class="wd110-talk-controls"><button type="button" class="small" id="workspaceTalkSound"></button>
+    <button type="button" class="small" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button></div></header>
     <p class="smallText" id="workspaceTalkStatus" role="status">대화 불러오는 중…</p>
     <div class="wd108-talk-log" id="workspaceTalkLog" tabindex="0" aria-label="대화 내역"></div>
-    <form id="workspaceTalkForm"><label for="workspaceTalkText">메시지</label><textarea id="workspaceTalkText" maxlength="2000" rows="2" required></textarea>
-    <div class="actions"><button type="button" class="small" id="workspaceTalkRefresh">새로고침</button><button type="submit" class="primary small" id="workspaceTalkSend" disabled>보내기</button></div></form>
-  `;
+    <form id="workspaceTalkForm"><label for="workspaceTalkText">메시지</label><textarea id="workspaceTalkText" maxlength="2000" rows="2"></textarea>
+    <div class="wd110-talk-attachment"><input type="file" id="workspaceTalkFile" hidden><span id="workspaceTalkFileName" class="smallText"></span>
+      <button type="button" class="small" id="workspaceTalkRemoveFile" hidden>첨부 취소</button></div>
+    <div class="actions"><button type="button" class="small" id="workspaceTalkRefresh">새로고침</button><button type="button" class="small" id="workspaceTalkAttach">파일 첨부</button>
+    <button type="submit" class="primary small" id="workspaceTalkSend" disabled>보내기</button></div></form>`;
   document.body.append(panel);
   $('openWorkspaceTalk')?.setAttribute('aria-expanded','true');
-  const log=$('workspaceTalkLog'),status=$('workspaceTalkStatus');
-  const form=$('workspaceTalkForm'),input=$('workspaceTalkText'),send=$('workspaceTalkSend');
-  const generation=driveConnectGeneration;
-  const active=()=>panel.isConnected&&generation===driveConnectGeneration&&talkAvailable();
-  let timer,lastIds='',loading=false,sending=false;
-  const requestIdentity=async()=>{
-    const token=await attendanceHqToken(),identity=await readWorkCenterHqIdentity(token);
-    const allowed=currentUser==='manager'?identity.login_id===managerHqAccount.uid&&identity.staff_role===managerHqAccount.role:
-      identity.login_id===legacyStaffHqLogin&&identity.staff_role==='ops_lead';
-    if(!active()||!allowed)throw new Error('이 계정의 WD TALK 권한을 확인해 주세요.');
-    return {token,uid:identity.user_id};
+  const log=$('workspaceTalkLog'),status=$('workspaceTalkStatus'),form=$('workspaceTalkForm'),input=$('workspaceTalkText'),send=$('workspaceTalkSend');
+  const sound=$('workspaceTalkSound'),fileInput=$('workspaceTalkFile'),attach=$('workspaceTalkAttach'),remove=$('workspaceTalkRemoveFile');
+  const active=()=>panel.isConnected&&workspaceTalkState===state&&talkAvailable();
+  let ids='',sending=false,picked=null,uploaded='',requestId='';
+  const atBottom=()=>log.scrollHeight-log.scrollTop-log.clientHeight<60;
+  const controls=()=>{send.disabled=!state.uid||sending;attach.disabled=remove.disabled=sending;};
+  panel.paintTalk=()=>{
+    if(!active()||!state.uid)return;
+    const previous=log.scrollTop,stick=!ids||atBottom();
+    if(stick&&document.visibilityState!=='hidden')markTalkRead(state);
+    const unread=new Set(talkUnreadRows(state).map(row=>row.id));
+    const next=state.rows.map(row=>row.id+(unread.has(row.id)?'u':'r')).join(',');
+    if(ids!==next||!log.childNodes.length){
+      log.innerHTML=state.rows.slice().reverse().map(row=>{
+        const mine=row.sender_id===state.uid;
+        return `<article class="${mine?'mine':''}"><small>${mine?'나':talkSender()} · ${esc(new Date(row.created_at).toLocaleString('ko-KR'))}${unread.has(row.id)?' · 안 읽음':''}</small>
+          <p>${talkBody(row.body)}</p></article>`;
+      }).join('')||'<p class="empty">아직 대화가 없어요.</p>';
+      log.scrollTop=stick?log.scrollHeight:previous;ids=next;
+    }
+    sound.textContent=state.sound?'소리 켜짐':'소리 꺼짐';sound.setAttribute('aria-pressed',String(state.sound));
+    if(!sending&&!picked&&!uploaded)status.textContent='';
+    controls();
   };
-  const read=async()=>{
-    if(!active()){clearInterval(timer);return;}
-    if(loading)return;
-    loading=true;
-    try{
-      const {token,uid}=await requestIdentity(),rows=await talkRequest(token);
-      if(!active())return;
-      const ids=rows.map(row=>row.id).join(',');
-      if(ids!==lastIds||!log.childNodes.length){
-        const stick=!lastIds||log.scrollHeight-log.scrollTop-log.clientHeight<60;
-        log.innerHTML=rows.slice().reverse().map(row=>`<article class="${row.sender_id===uid?'mine':''}">
-          <small>${row.sender_id===uid?'나':currentUser==='manager'?'박수진':'지점장'} · ${esc(new Date(row.created_at).toLocaleString('ko-KR'))}</small>
-          <p>${talkBody(row.body)}</p></article>`).join('')||'<p class="empty">아직 대화가 없어요.</p>';
-        if(stick)log.scrollTop=log.scrollHeight;
-        lastIds=ids;
-      }
-      status.textContent='';
-      if(!sending)send.disabled=false;
-    }catch(error){if(active()){status.textContent=error.message;send.disabled=true;}}
-    finally{loading=false;}
+  const markVisible=()=>{if(active()&&atBottom()&&document.visibilityState!=='hidden'){markTalkRead(state);panel.paintTalk();paintWorkspaceTalkBadge(state);}};
+  log.onscroll=markVisible;document.addEventListener('visibilitychange',markVisible);
+  sound.onclick=()=>{state.sound=!state.sound;talkPreference(state,'sound',state.sound?'on':'off');if(state.sound)primeTalkAudio();panel.paintTalk();};
+  attach.onclick=()=>{if(!uploaded)fileInput.click();else status.textContent='저장된 첨부를 다시 보내거나 첨부를 취소해 주세요.';};
+  const clearFile=()=>{
+    picked=null;uploaded='';requestId='';fileInput.value='';remove.hidden=true;$('workspaceTalkFileName').textContent='';send.textContent='보내기';
+  };
+  remove.onclick=()=>{clearFile();status.textContent='';};
+  fileInput.onchange=()=>{
+    const file=fileInput.files?.[0];
+    if(!file)return;
+    if(!file.size||file.size>100*1024*1024){clearFile();status.textContent='내용이 있는 100MB 이하 파일을 선택해 주세요.';return;}
+    picked=file;requestId=crypto.randomUUID();remove.hidden=false;
+    $('workspaceTalkFileName').textContent=file.name;send.textContent='파일 보내기';status.textContent='파일은 보내기를 누르면 공유됩니다.';
   };
   form.onsubmit=async event=>{
     event.preventDefault();
-    const body=input.value.trim();
-    if(!active()||!body||send.disabled||sending)return;
-    sending=true;send.disabled=true;
+    const text=input.value.trim(),file=picked;
+    if(!active()||sending||!state.uid||(!text&&!file&&!uploaded))return;
+    if(file&&text){status.textContent='파일을 먼저 보내고 입력한 메시지는 이어서 보내 주세요.';}
+    sending=true;controls();activeMaterialUploads++;
     try{
-      const {token}=await requestIdentity();
-      await talkRequest(token,{body});
+      if(file&&!uploaded){
+        status.textContent='Drive에 파일을 저장하고 있어요.';
+        const drive=await connectWorkspaceTalkDrive(state);
+        if(!active())return;
+        uploaded=await uploadWorkspaceTalkFile(file,drive.token,requestId,state.role);
+        if(!active())return;
+      }
+      const {token,uid}=await workspaceTalkIdentity();
+      if(!active()||uid!==state.uid)return;
+      const body=uploaded||text;
+      const existing=uploaded&&(await talkRequest(token)).some(row=>row.sender_id===uid&&row.body===body);
       if(!active())return;
-      if(input.value.trim()===body)input.value='';
-      await read();
-    }catch(error){if(active())status.textContent=error.message;}
-    finally{sending=false;if(active())send.disabled=false;}
+      if(!existing)await talkRequest(token,{body});
+      if(!active())return;
+      if(uploaded)clearFile();else if(input.value.trim()===text)input.value='';
+      status.textContent='보냈어요.';
+      void refreshWorkspaceTalk(state);
+    }catch(error){
+      if(active()){
+        status.textContent=uploaded?'파일은 Drive에 저장됐어요. 다시 보내기를 눌러 주세요.':error.message;
+        if(uploaded)send.textContent='다시 보내기';
+        if(!uploaded&&file)state.drive=null;
+      }
+    }finally{sending=false;activeMaterialUploads--;if(active())controls();}
   };
-  $('workspaceTalkRefresh').onclick=read;
-  panel.closeDock=()=>{
-    clearInterval(timer);panel.remove();
-    $('openWorkspaceTalk')?.setAttribute('aria-expanded','false');
+  $('workspaceTalkRefresh').onclick=()=>void refreshWorkspaceTalk(state);
+  panel.closeDock=force=>{
+    if(sending&&!force){status.textContent='메시지 전송이 끝난 뒤 닫아 주세요.';return false;}
+    document.removeEventListener('visibilitychange',markVisible);panel.remove();$('openWorkspaceTalk')?.setAttribute('aria-expanded','false');return true;
   };
-  const close=()=>{panel.closeDock();$('openWorkspaceTalk')?.focus();};
+  const close=()=>{if(closeWorkspaceTalk())$('openWorkspaceTalk')?.focus();};
   $('closeWorkspaceTalk').onclick=close;
   panel.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();close();}};
-  $('closeWorkspaceTalk').focus();
-  timer=setInterval(read,12000);void read();
+  panel.paintTalk();paintWorkspaceTalkBadge(state);$('closeWorkspaceTalk').focus();
 }
 
 
@@ -2651,7 +2865,7 @@ async function officeLedgerRows(tab,month){
     query.set('select','id,user_id,service_name,category,amount,next_payment_date,billing_cycle,payment_method,memo,updated_at');
     query.set('order','next_payment_date.asc.nullslast,id.asc');
   }else{
-    query.set('select','id,user_id,flow_type,category,title,amount,actual_date,expected_date,payment_method,memo,money_status,source_type,updated_at');
+    query.set('select','id,user_id,flow_type,category,business_area,counterparty,title,amount,actual_date,expected_date,payment_method,memo,money_status,source_type,updated_at');
     query.set('flow_type','eq.'+tab);query.set('order','actual_date.desc.nullslast,expected_date.desc.nullslast,id.asc');
     const [year,monthNumber]=month.split('-').map(Number),first=month+'-01',last=month+'-'+new Date(year,monthNumber,0).getDate();
     query.set('or','(and(actual_date.gte.'+first+',actual_date.lte.'+last+'),and(actual_date.is.null,expected_date.gte.'+first+',expected_date.lte.'+last+'))');
@@ -2664,19 +2878,36 @@ async function officeLedgerRows(tab,month){
     if(page.length<200)return rows;
   }
 }
+const officeIncomeCategories=['보험','AI강의','퍼스널브랜딩'];
+const officeExpenseCategories=['생필품','식대','공과금','구독료','경조사','유흥비','직원월급'];
+function officeOptions(values,current,placeholder){
+  return `<option value="">${placeholder}</option>${[...new Set([...values,...(current?[current]:[])])].map(value=>
+    `<option value="${esc(value)}" ${value===current?'selected':''}>${esc(value)}</option>`).join('')}`;
+}
+function officeRecordFields(tab,row){
+  const income=tab==='수입',expense=tab==='지출',subscription=tab==='구독';
+  const name=row?officeRecordName(row,tab):'';
+  const method=row?.payment_method||'';
+  return `<div class="wd108-payroll-fields">
+    ${subscription?'':`<label>${income?'수입 분류':'사용 용도'}<select name="category" required>${officeOptions(income?officeIncomeCategories:officeExpenseCategories,row?.category,'선택해 주세요')}</select></label>`}
+    ${expense?`<label>사용처 구분<select name="business_area" required>${officeOptions(['집','사무실'],row?.business_area,'집 또는 사무실 선택')}</select></label>`:''}
+    <label class="wd110-office-full">${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(name)}"></label>
+    ${income?`<label>누구 건인지<input name="counterparty" maxlength="100" value="${esc(row?.counterparty||'')}"></label>`:''}
+    <label>${income?'입금일':expense?'지출일':'다음 결제일'}<input type="date" name="day" required value="${esc((row&&officeRowDate(row,tab))||localDay())}"></label>
+    ${subscription?`<label>결제 카드<select name="payment_method">${officeOptions(officeCards(),method,'카드 선택')}</select></label>
+      <label>결제 주기<input name="billing_cycle" maxlength="40" placeholder="예: 매월" value="${esc(row?.billing_cycle||'')}"></label>`:
+      `<label>${income?'입금된 곳':'결제 방법·카드'}<input name="payment_method" maxlength="60" ${expense?'list="officePaymentChoices"':''}
+        placeholder="${income?'예: 회사 계좌':'예: 회사 법인카드'}" value="${esc(method)}"></label>`}
+    ${expense?`<datalist id="officePaymentChoices">${['계좌이체','현금',...officeCards()].map(card=>`<option value="${esc(card)}"></option>`).join('')}</datalist>`:''}
+    <label>금액 (원)<input type="number" name="amount" min="1" step="1" required value="${esc(row?.amount??'')}"></label>
+  </div>`;
+}
+
 function officeRecordEditor(tab,row,active,reload){
   if(!active()||$('modalLayer'))return;
-  const subscription=tab==='구독',name=row?officeRecordName(row,tab):'';
+  const subscription=tab==='구독';
   showModal(`<form id="officeRecordForm">
-    <div class="wd108-payroll-fields">
-      <label>${subscription?'서비스명':'거래명'}<input name="title" maxlength="120" required value="${esc(name)}"></label>
-      <label>${subscription?'다음 결제일':tab+'일'}<input type="date" name="day" required value="${esc(row?officeRowDate(row,tab):localDay())}"></label>
-      <label>분류<input name="category" maxlength="60" value="${esc(row?.category||'')}"></label>
-      <label>금액 (원)<input type="number" name="amount" min="1" step="1" required value="${esc(row?.amount??'')}"></label>
-      <label>결제·입금 방법<input name="payment_method" maxlength="60" list="officePaymentChoices" value="${esc(row?.payment_method||'')}"></label>
-      <datalist id="officePaymentChoices">${[...new Set(['계좌이체','현금',...officeCards()])].map(card=>`<option value="${esc(card)}"></option>`).join('')}</datalist>
-      ${subscription?`<label>결제 주기<input name="billing_cycle" maxlength="40" placeholder="예: 매월" value="${esc(row?.billing_cycle||'')}"></label>`:''}
-    </div><label>메모<textarea name="memo" rows="3" maxlength="1000">${esc(row?.memo||'')}</textarea></label>
+    ${officeRecordFields(tab,row)}<label>메모<textarea name="memo" rows="3" maxlength="1000">${esc(row?.memo||'')}</textarea></label>
     <p id="officeRecordStatus" class="smallText" role="status"></p><div class="actions"><button class="primary" type="submit">저장</button></div>
   </form>`,tab+(row?' 수정':' 추가'));
   const form=$('officeRecordForm'),button=form.querySelector('button[type="submit"]'),status=$('officeRecordStatus');
@@ -2686,9 +2917,11 @@ function officeRecordEditor(tab,row,active,reload){
     if(button.disabled||!active()||!form.isConnected||row&&!officeRecordEditable(row,tab))return;
     const data=new FormData(form),title=data.get('title').trim(),date=data.get('day'),amount=Number(data.get('amount'));
     if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0){status.textContent='거래명, 날짜, 금액을 확인해 주세요.';return;}
-    const payload={category:data.get('category').trim()||null,amount,payment_method:data.get('payment_method').trim()||null,memo:data.get('memo').trim()||null};
+    const payload={category:data.get('category')||row?.category||null,amount,payment_method:data.get('payment_method').trim()||null,memo:data.get('memo').trim()||null};
     if(subscription)Object.assign(payload,{service_name:title,next_payment_date:date,billing_cycle:data.get('billing_cycle').trim()||null});
-    else Object.assign(payload,{title,flow_type:tab,...(row&&!row.actual_date?{expected_date:date}:{actual_date:date}),...(!row?{money_status:'완료',business_area:'회사운영'}:{})});
+    else Object.assign(payload,{title,flow_type:tab,
+      ...(tab==='수입'?{counterparty:data.get('counterparty').trim()||null,business_area:payload.category}:{business_area:data.get('business_area')}),
+      ...(row&&!row.actual_date?{expected_date:date}:{actual_date:date}),...(!row?{money_status:'완료'}:{})});
     const query=new URLSearchParams({select:'id'});
     if(row){query.set('id','eq.'+row.id);query.set('user_id','eq.'+managerHqAccount.uid);query.set('updated_at','eq.'+row.updated_at);payload.updated_at=new Date().toISOString();}
     else Object.assign(payload,{id:newId,user_id:managerHqAccount.uid});
@@ -2712,7 +2945,9 @@ function bindOfficeLedger(){
     const cards=officeCards();
     content.innerHTML=`<section class="wd109-office-chart"><h2>결제 카드 관리</h2><p class="smallText">카드 별칭을 추가하면 거래와 구독의 결제 방법으로 선택할 수 있어요. 이 브라우저에 저장돼요.</p>
       <form id="officeCardForm"><label>카드 별칭<input name="card" maxlength="60" required placeholder="예: 회사 법인카드"></label><button class="primary" type="submit">카드 추가</button></form>
-      <ul>${cards.map((name,i)=>`<li><span>${esc(name)}</span><button type="button" data-remove-office-card="${i}">목록에서 제거</button></li>`).join('')}</ul></section>`;
+      <ul class="wd110-office-cards">${cards.map((name,i)=>`<li>
+        <div class="wd110-card-face"><span>WD WAVE</span><i aria-hidden="true"></i><strong>${esc(name)}</strong></div>
+        <button type="button" class="small" data-remove-office-card="${i}">목록에서 제거</button></li>`).join('')}</ul></section>`;
     const store=next=>{try{localStorage.setItem(officeCardKey,JSON.stringify(next));paintCards();}catch{notify('카드 목록을 저장하지 못했어요.');}};
     $('officeCardForm').onsubmit=event=>{
       event.preventDefault();
@@ -2735,9 +2970,10 @@ function bindOfficeLedger(){
       if(!active()||id!==request)return;
       status.textContent='';
       const subscription=selected==='구독';
-      const table=rows.length?`<div class="wd105-admin-table"><table class="wd58-list-table"><thead><tr><th>${subscription?'결제일':'거래일'}</th><th>분류 / 내역</th><th>금액</th><th>결제 방법</th><th>메모</th><th>관리</th></tr></thead><tbody>
+      const table=rows.length?`<div class="wd105-admin-table"><table class="wd58-list-table"><thead><tr><th>${subscription?'결제일':'거래일'}</th><th>${subscription?'구독 서비스':'분류 / 상세 내역'}</th><th>금액</th><th>${selected==='수입'?'입금된 곳':subscription?'결제 카드':'결제 방법'}</th><th>메모</th><th>관리</th></tr></thead><tbody>
         ${rows.map((row,i)=>`<tr><td>${esc(officeRowDate(row,selected)||'—')}${row.money_status==='예정'?'<small>예정</small>':''}</td>
-          <td><strong>${esc(officeRecordName(row,selected))}</strong><small>${esc(row.category||'미분류')}${row.billing_cycle?' · '+esc(row.billing_cycle):''}</small></td>
+          <td><strong>${esc(officeRecordName(row,selected))}</strong><small>${esc(row.category||'미분류')}${row.billing_cycle?' · '+esc(row.billing_cycle):''}${selected==='지출'&&row.business_area?' · '+esc(row.business_area):''}</small>
+            ${selected==='수입'&&row.counterparty?`<small>${esc(row.counterparty)}</small>`:''}</td>
           <td>${officeMoney(row.amount)}</td><td>${esc(row.payment_method||'—')}</td><td>${esc(row.memo||'—')}</td>
           <td>${officeRecordEditable(row,selected)?`<button class="small" type="button" data-office-edit="${i}">수정</button> <button class="small" type="button" data-office-delete="${i}">삭제</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">등록된 내역이 없어요.</p>';
       content.innerHTML=subscription?table:`<div class="wd109-office-split">${officeChart(rows.filter(row=>row.actual_date),selected)}<section><h2>${selected} 내역</h2>${table}</section></div>`;
@@ -2800,7 +3036,7 @@ async function accountAccessToken(){
 }
 async function readAccounts(type,id){
   const token=await accountAccessToken();
-  const query=new URLSearchParams({select:id?'id,service_name,account_type,account_id,url,link_url,memo,pw':'id,service_name,account_type,account_id,url,pw_updated_at,created_at',
+  const query=new URLSearchParams({select:id?'id,user_id,service_name,account_type,account_id,url,link_url,memo,pw,pw_updated_at':'id,service_name,account_type,account_id,url,pw_updated_at,created_at',
     account_type:'eq.'+type,user_id:'in.('+managerHqAccount.uid+','+legacyStaffHqLogin+')',order:'service_name.asc',limit:id?'1':'250'});
   if(id)query.set('id','eq.'+id);
   const response=await fetch(adminAuthBase+'/rest/v1/kit_accounts?'+query,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},
@@ -2809,33 +3045,114 @@ async function readAccounts(type,id){
   return response.json();
 }
 
-function accountDetail(row,type,active){
+function accountOwner(detail){
+  return detail.user_id===(currentUser==='manager'?managerHqAccount.uid:currentUser==='employee'?hqStaffLoginId:'');
+}
+async function updateWorkspaceAccount(detail,changes){
+  if(!accountOwner(detail)||!safeDriveId(detail.id))throw new Error('이 계정을 변경할 권한을 확인해 주세요.');
+  const token=await accountAccessToken();
+  if(!accountOwner(detail))throw new Error('다시 로그인한 뒤 시도해 주세요.');
+  const query=new URLSearchParams({id:'eq.'+detail.id,user_id:'eq.'+detail.user_id,account_type:'eq.'+detail.account_type,
+    pw_updated_at:detail.pw_updated_at?'eq.'+detail.pw_updated_at:'is.null',select:'id'});
+  const response=await fetch(adminAuthBase+'/rest/v1/kit_accounts?'+query,{
+    method:changes?'PATCH':'DELETE',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token,
+      Prefer:'return=representation',...(changes?{'Content-Type':'application/json'}:{})},
+    ...(changes?{body:JSON.stringify({...changes,pw_updated_at:new Date().toISOString()})}:{}),
+    cache:'no-store',signal:AbortSignal.timeout(12000)
+  });
+  if(!response.ok||(await response.json())[0]?.id!==detail.id)
+    throw new Error('변경을 확인하지 못했어요. 계정 목록을 새로고침해 주세요.');
+}
+function accountDetail(row,type,active,onChanged){
   if(!safeDriveId(row.id)||$('modalLayer'))return;
   showModal('<section id="accountDetailBody" aria-live="polite">계정 정보를 불러오는 중…</section>',row.service_name);
-  const target=$('accountDetailBody');
+  const target=$('accountDetailBody'),current=()=>target.isConnected&&active();
+  const copy=async value=>{
+    if(!value||!current())return;
+    try{await navigator.clipboard.writeText(value);notify('복사했어요.');}
+    catch{notify('복사하지 못했어요. 표시된 값을 선택해 복사해 주세요.');}
+  };
   void readAccounts(type,row.id).then(([detail])=>{
-    if(!target.isConnected||!active())return;
+    if(!current())return;
     if(!detail){target.textContent='계정 정보를 찾지 못했어요.';return;}
-    const [info,...notes]=String(detail.memo||'').split('\n---\n');
-    let accountInfo=info;
+    const [info,...notes]=String(detail.memo||'').split('\n---\n'),memo=notes.join('\n---\n');
+    let setItems=null;
     if(type==='전산세트'){
-      try{const items=JSON.parse(info);if(Array.isArray(items))accountInfo=items.map((item,i)=>(i+1)+'. '+String(item.name||'')+(item.url?' · '+String(item.url):'')).join('\n');}catch{}
+      try{const parsed=JSON.parse(info);if(Array.isArray(parsed))setItems=parsed;}catch{}
     }
+    const accountInfo=setItems?setItems.map((item,i)=>(i+1)+'. '+String(item.name||'')+(item.url?' · '+String(item.url):'')).join('\n'):info;
     const secretLabel=type==='API키'?'API 키':type==='전산세트'?'데이터 비밀번호':'비밀번호';
-    target.innerHTML=`<dl class="wd109-account-detail">
-      <dt>계정정보</dt><dd>${esc(accountInfo||'—')}</dd><dt>아이디 / 이메일</dt><dd>${esc(detail.account_id||'—')}</dd>
-      <dt>로그인 방법 / URL</dt><dd>${esc([detail.url,detail.link_url].filter(Boolean).join(' · ')||'—')}</dd>
-      <dt>기타 메모</dt><dd>${esc(notes.join('\n---\n')||'—')}</dd>
-      <dt>${secretLabel}</dt><dd><span id="accountSecret">${detail.pw?'••••••••':'—'}</span>
-        ${detail.pw?'<button type="button" class="small" id="revealAccountSecret" aria-pressed="false">보기</button>':''}</dd></dl>`;
-    const button=$('revealAccountSecret');
-    if(button)button.onclick=()=>{
-      if(!active())return;
-      const reveal=button.getAttribute('aria-pressed')!=='true';
-      $('accountSecret').textContent=reveal?detail.pw:'••••••••';
-      button.setAttribute('aria-pressed',String(reveal));button.textContent=reveal?'숨기기':'보기';
+    const closeAfterChange=message=>{if(current()){$('modalLayer')?.remove();void onChanged();notify(message);}};
+    const showDetails=()=>{
+      target.innerHTML=`<div class="wd110-account-kicker">${esc(type)}</div>
+        <section class="wd110-account-card"><h3>계정 정보</h3><dl class="wd109-account-detail">
+          <dt>계정 설명</dt><dd>${esc(accountInfo||'—')}</dd><dt>아이디 / 이메일</dt><dd>${esc(detail.account_id||'—')}
+          ${detail.account_id?'<button type="button" class="small" id="copyAccountId">복사</button>':''}</dd>
+          <dt>로그인 방법</dt><dd>${esc(detail.url||'—')}</dd><dt>접속 주소</dt><dd>${esc(detail.link_url||'—')}</dd>
+        </dl></section>
+        <section class="wd110-account-card wd110-account-secret"><h3>${secretLabel}</h3><div class="wd110-account-secret-row">
+          <span id="accountSecret">${detail.pw?'••••••••':'등록된 값이 없어요.'}</span>
+          ${detail.pw?'<button type="button" class="small" id="revealAccountSecret" aria-pressed="false">보기</button><button type="button" class="small" id="copyAccountSecret">복사</button>':''}
+        </div></section>
+        <section class="wd110-account-card"><h3>메모</h3><p class="wd110-account-memo">${esc(memo||'—')}</p></section>
+        <p id="accountChangeStatus" class="smallText" role="status"></p>
+        ${accountOwner(detail)?'<div class="actions"><button type="button" class="primary small" id="editWorkspaceAccount">수정</button><button type="button" class="small wd110-instruction-delete" id="deleteWorkspaceAccount">삭제</button></div>':''}`;
+      const reveal=$('revealAccountSecret');
+      if(reveal)reveal.onclick=()=>{
+        const shown=reveal.getAttribute('aria-pressed')!=='true';
+        $('accountSecret').textContent=shown?detail.pw:'••••••••';
+        reveal.setAttribute('aria-pressed',String(shown));reveal.textContent=shown?'숨기기':'보기';
+      };
+      if($('copyAccountId'))$('copyAccountId').onclick=()=>void copy(detail.account_id);
+      if($('copyAccountSecret'))$('copyAccountSecret').onclick=()=>void copy(detail.pw);
+      if($('editWorkspaceAccount'))$('editWorkspaceAccount').onclick=showEdit;
+      if($('deleteWorkspaceAccount'))$('deleteWorkspaceAccount').onclick=async event=>{
+        const button=event.currentTarget,status=$('accountChangeStatus');
+        if(button.disabled||!current()||!window.confirm(detail.service_name+' 계정을 삭제하시겠습니까?'))return;
+        button.disabled=true;
+        try{await updateWorkspaceAccount(detail,null);closeAfterChange('계정을 삭제했어요.');}
+        catch(error){if(current())status.textContent=error.message;}
+        finally{button.disabled=false;}
+      };
     };
-  }).catch(error=>{if(target.isConnected&&active())target.textContent=error.message;});
+    const showEdit=()=>{
+      if(!current()||!accountOwner(detail))return;
+      const editInfo=setItems?setItems.map(item=>[item.name,item.url].filter(Boolean).join(' | ')).join('\n'):info;
+      target.innerHTML=`<form id="workspaceAccountEdit" class="wd110-account-card" autocomplete="off">
+        <label>서비스명<input name="service" required maxlength="120" value="${esc(detail.service_name)}"></label>
+        <label>아이디 / 이메일<input name="account" value="${esc(detail.account_id||'')}"></label>
+        <label>로그인 방법<input name="login" value="${esc(detail.url||'')}"></label>
+        <label>접속 주소<input name="link" value="${esc(detail.link_url||'')}"></label>
+        <label>${secretLabel} 변경<input name="secret" type="password" placeholder="비워 두면 기존 값 유지" autocomplete="new-password"></label>
+        <label>${setItems?'전산 구성 (이름 | 주소, 한 줄에 하나)':'계정 설명'}<textarea name="info" rows="4">${esc(editInfo)}</textarea></label>
+        <label>메모<textarea name="memo" rows="4">${esc(memo)}</textarea></label>
+        <p id="accountChangeStatus" class="smallText" role="status"></p>
+        <div class="actions"><button type="button" id="cancelWorkspaceAccountEdit">취소</button><button type="submit" class="primary">수정 저장</button></div>
+      </form>`;
+      const form=$('workspaceAccountEdit'),button=form.querySelector('[type="submit"]'),status=$('accountChangeStatus');
+      $('cancelWorkspaceAccountEdit').onclick=()=>{if(!button.disabled)showDetails();};
+      form.onsubmit=async event=>{
+        event.preventDefault();
+        if(button.disabled||!current())return;
+        const data=new FormData(form),get=key=>String(data.get(key)||'').trim();
+        const title=get('service'),secret=String(data.get('secret')||''),notes=get('memo');
+        if(!title){status.textContent='서비스명을 입력해 주세요.';return;}
+        let body=get('info');
+        if(setItems)body=JSON.stringify(body.split('\n').map(line=>line.trim()).filter(Boolean).map((line,i)=>{
+          const [name,...url]=line.split('|');
+          return {...setItems[i],name:name.trim(),url:url.join('|').trim()};
+        }));
+        button.disabled=true;
+        try{
+          await updateWorkspaceAccount(detail,{service_name:title,account_id:get('account'),url:get('login'),link_url:get('link'),
+            memo:notes?body+'\n---\n'+notes:body,...(secret?{pw:secret}:{})});
+          closeAfterChange('계정 정보를 수정했어요.');
+        }catch(error){if(current())status.textContent=error.message;}
+        finally{button.disabled=false;}
+      };
+    };
+    showDetails();
+  }).catch(error=>{if(current())target.textContent=error.message;});
 }
 
 function bindAccounts(){
@@ -2846,11 +3163,11 @@ function bindAccounts(){
   let rows=[],type=nativeAdminTabs.accounts[0][1],request=0;
   const paint=()=>{
     const term=search.value.trim().toLowerCase(),list=rows.filter(row=>[row.service_name,row.account_id].some(value=>String(value||'').toLowerCase().includes(term)));
-    target.innerHTML=list.length?`<table class="wd58-list-table wd109-account-table"><thead><tr><th>서비스명</th><th>로그인 방법</th><th>아이디 / 이메일</th><th>상세 정보</th><th>수정일</th></tr></thead>
-      <tbody>${list.map((row,i)=>`<tr><th scope="row">${esc(row.service_name)}</th><td>${esc(row.url||'—')}</td><td>${esc(row.account_id||'—')}</td>
-        <td><button type="button" class="small" data-account-row="${i}">${type==='API키'?'API 키 보기':'계정 상세 보기'}</button></td>
+    target.innerHTML=list.length?`<table class="wd58-list-table wd109-account-table"><thead><tr><th>서비스명</th><th>로그인 방법</th><th>아이디 / 이메일</th><th>수정일</th></tr></thead>
+      <tbody>${list.map((row,i)=>`<tr data-account-row="${i}"><th scope="row"><button type="button" class="wd110-account-row-button"
+          aria-label="${esc(row.service_name)} 상세 보기">${esc(row.service_name)}</button></th><td>${esc(row.url||'—')}</td><td>${esc(row.account_id||'—')}</td>
         <td>${esc(adminCell(row.pw_updated_at||row.created_at,'date'))}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">표시할 계정이 없어요.</p>';
-    target.querySelectorAll('[data-account-row]').forEach(button=>button.onclick=()=>accountDetail(list[Number(button.dataset.accountRow)],type,active));
+    target.querySelectorAll('[data-account-row]').forEach(row=>row.onclick=()=>accountDetail(list[Number(row.dataset.accountRow)],type,active,refresh));
   };
   const refresh=async()=>{
     const id=++request,selected=type;
@@ -3004,7 +3321,7 @@ function saveNoteText(text){normalizeNotes();let n=S.ideas.find(x=>x.id===active
 function deleteActiveNote(){let index=normalizeNotes().findIndex(n=>n.id===activeNoteId);if(index<0)return;lastDeletedNote={note:JSON.parse(JSON.stringify(S.ideas[index])),index};S.deletedNotes=Array.isArray(S.deletedNotes)?S.deletedNotes:[];S.deletedNotes.push(lastDeletedNote.note);S.ideas.splice(index,1);activeNoteId=null;S.stickyDraft='';save();noteListOpen=true;if(S.nav==='ideas')render();openNote(null)}
 function undoNoteDelete(){if(!lastDeletedNote)return;let restored=lastDeletedNote.note;if(!normalizeNotes().some(n=>n.id===restored.id))S.ideas.splice(Math.min(lastDeletedNote.index,S.ideas.length),0,restored);S.deletedNotes=(S.deletedNotes||[]).filter(n=>n.id!==restored.id);lastDeletedNote=null;save();if(S.nav==='ideas')render();openNote(restored.id)}
 function openNote(id=null){normalizeNotes();activeNoteId=id;let n=S.ideas.find(x=>x.id===id);closeNoteDock();let dock=document.createElement('section');dock.id='stickyDock';dock.className='stickyPanel stickyDock wd48-dock'+(noteListOpen?' wd48-withlist':'');dock.setAttribute('role','dialog');dock.setAttribute('aria-label','스티커노트');dock.setAttribute('data-note-color',validNoteColor(n?.color||S.stickyDraftColor));dock.setAttribute('style',noteColorStyle(n?.color||S.stickyDraftColor));dock.innerHTML=`<div class="wd48-dockhead"><div class="wd48-headleft"><button id="toggleStickyList" title="노트 목록" aria-label="노트 목록" aria-expanded="${noteListOpen}"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 5H17M5 10H17M5 15H17M2 5H2.1M2 10H2.1M2 15H2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button id="newSticky" title="새 노트" aria-label="새 노트">＋</button></div><strong>스티커노트</strong><div class="wd48-headright"><button id="deleteSticky" title="노트 삭제" aria-label="노트 삭제" ${n?'':'disabled'}><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5H16M8 3H12M6 5L7 17H13L14 5M9 8V14M11 8V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="closeSticky" title="닫기" aria-label="노트 닫기">×</button></div></div>${notePalette(n?.color||S.stickyDraftColor)}<div class="wd48-dockbody"><section class="wd48-docklist" id="dockNoteList" ${noteListOpen?'':'hidden'}>${noteListHTML()}</section><section class="wd48-editor"><textarea id="stickyText" aria-label="노트 내용" placeholder="여기에 메모하세요. 첫 줄이 노트 제목이 됩니다.">${esc(noteText(n))}</textarea><div class="stickyHint" id="stickyHint">${n?'자동저장됨 · '+esc(n.updatedAt||n.at):'입력하면 자동 저장됩니다.'}</div></section></div>`;document.body.append(dock);if($('openSticky'))$('openSticky').setAttribute('aria-expanded','true');$('stickyText').focus();$('stickyText').oninput=e=>saveNoteText(e.target.value);$('closeSticky').onclick=closeNoteDock;$('newSticky').onclick=()=>{S.stickyDraft='';S.stickyDraftColor='yellow';openNote(null)};document.querySelectorAll('[data-note-color-choice]').forEach(b=>b.onclick=()=>setNoteColor(b.dataset.noteColorChoice));$('deleteSticky').onclick=deleteActiveNote;$('toggleStickyList').onclick=()=>{noteListOpen=!noteListOpen;dock.classList.toggle('wd48-withlist',noteListOpen);$('dockNoteList').hidden=!noteListOpen;$('toggleStickyList').setAttribute('aria-expanded',String(noteListOpen));renderNoteList()};renderNoteList()}
-function stickyModal(){closeWorkspaceTalk();if($('stickyDock')){closeNoteDock();return}let n=normalizeNotes().find(x=>x.id===activeNoteId);openNote(n?n.id:null)}
+function stickyModal(){if(!closeWorkspaceTalk())return;if($('stickyDock')){closeNoteDock();return}let n=normalizeNotes().find(x=>x.id===activeNoteId);openNote(n?n.id:null)}
 
 
 function localDay(d=new Date()){let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
@@ -4365,6 +4682,25 @@ function bindAdminFilters(){
   query.oninput=apply;filter.onchange=apply;
 }
 
+const instructionReportStandard='업무보고에 바로 적을 구체적 질문을 단계마다 작성한다. 무엇을 어디서 어떻게 찾았는지, 확인한 근거·지표, 왜 효과적이라고 판단했는지, 우리 업무에 무엇을 어떤 방식으로 적용할지 적게 한다. 회사 파악은 핵심서비스·핵심타깃·핵심강점과 자료 근거를 각각 묻는다. SNS 사례는 원문·Meta 공식 참고 자료, 같은 기준의 여러 게시물 기간·조회·반응 수치와 일관성을 비교하며 비공개 수치는 미확인으로 구분한다. 별도 요약 문서나 목록 파일은 요구하지 않는다.';
+function instructionReportFormat(step,item){
+  const format=step.recordFormat||'';
+  const topic=[step.title,step.method,item.text].join(' ');
+  const criteria=[];
+  if(/핵심서비스|회사소개서|회사\s*(?:파악|이해)|서비스.*타깃/.test(topic)&&!(/핵심\s*서비스/.test(format)&&/핵심\s*타깃/.test(format)&&/핵심\s*강점/.test(format)&&/근거/.test(format))){
+    criteria.push('자료 이름과 확인한 페이지·메뉴를 적으세요. 핵심 서비스는 고객 문제와 제공 방식, 핵심 타깃은 고객 유형과 필요, 핵심 강점은 차별점과 이를 뒷받침하는 근거를 각각 설명하세요.');
+  }
+  if(/인스타|스레드|Threads|Meta|SNS/i.test(topic)&&/사례|경쟁|벤치마킹|레퍼런스/.test(step.title+' '+step.method)&&
+    !(/기간/.test(format)&&/조회/.test(format)&&/반응/.test(format)&&/적용/.test(format))){
+    criteria.push('Meta 공식 자료나 게시물 원문에서 어떤 검색어와 기준으로 사례를 찾았는지 적으세요. 같은 기간의 여러 게시물 링크·게시일·공개 조회수와 반응 수를 비교해 꾸준한 성과인지 판단하고, 확인할 수 없는 지표는 미확인으로 표시하세요. 효과적이라고 본 첫 장면·문구·구성의 이유와 우리 고객에게 맞게 무엇을 어떻게 바꿀지 설명하세요.');
+  }
+  return [format,...criteria].filter(Boolean).join('\n\n');
+}
+function visibleInstructionItems(d){
+  const items=d.analysis?.items||[];
+  return d.analysis?.bySession?[[items[d.previewSession||0],d.previewSession||0]]:items.map((item,i)=>[item,i]);
+}
+
 function analysisRequest(d) {
   return `아래 자연어 업무 요청을 할 일별로 나눠 스탭이 실행할 지시와 가이드로 정리해줘. 요청에 없는 업무는 추가하지 말고, 순서와 필요한 준비물, 결과물 및 확인 항목을 명확히 적어줘. 문서파쇄처럼 되돌리기 어려운 업무는 지정 문서와 승인 여부를 먼저 확인하도록 써줘. 확인되지 않은 실적과 승인 여부는 추정하지 마. 게시·결제·외부 발송은 지점장 확인 단계로 남겨줘. 날짜와 회차는 아직 배정하지 마.
 아래 양식을 반복해 평문으로만 써줘. 각 항목은 한 줄씩 작성해줘. 각 업무에 맞는 실행 순서, 비교 기준과 결과물 형태를 구체적으로 채워줘. 요청에 나온 기간과 작업 범위를 빠뜨리지 말고, 모르는 자료나 수치는 확인할 항목으로 남겨줘. 모든 단계에 같은 문구를 반복하지 마.
@@ -4373,8 +4709,7 @@ function analysisRequest(d) {
 단계: 단계 제목
 진행 방법: 구체적으로 할 작업과 순서
 업무보고에 적을 내용: 수행한 일·확인 결과 등 이 단계에서 보고할 구체적인 항목
-남길 자료: 결과물 또는 확인 근거
-다음 단계나 다음 할 일도 같은 형식으로 이어서 작성해줘.
+다음 단계나 다음 할 일도 같은 형식으로 이어서 작성해줘. 보고 항목마다 ${instructionReportStandard}
 
 업무 요청
 ${d.raw}`;
@@ -4393,7 +4728,7 @@ function parseAnalysis(text) {
     else if(label==='단계'&&item){step={id:'custom'+item.workflow.steps.length,title:value};item.workflow.steps.push(step);}
     else if(step&&keys[label])step[keys[label]]=value;
   }
-  if(!result.goal||!result.items.length||result.items.some(x=>!x.workflow.steps.length||x.workflow.steps.some(s=>!s.method||!s.recordFormat||!s.evidence)))return null;
+  if(!result.goal||!result.items.length||result.items.some(x=>!x.workflow.steps.length||x.workflow.steps.some(s=>!s.method||!s.recordFormat)))return null;
   result.items.forEach(x=>x.workflow.steps.forEach(s=>s.instruction=s.method));
   return result;
 }
@@ -4421,8 +4756,11 @@ function instructionDates(d){
 
 function scheduledInstruction(d,draft){
   const dates=instructionDates(d);
-  if(!dates.length||!draft.items.length||dates.length>1&&draft.items.length!==dates.length)return null;
-  return {...draft,bySession:dates.length>1,items:draft.items.map((item,i)=>({...item,date:dates.length===1?dates[0]:dates[i]}))};
+  if(!dates.length||!draft.items.length||dates.length>1&&draft.items.length!==dates.length||
+    draft.items.some(item=>!Array.isArray(item.workflow?.steps)||!item.workflow.steps.length))return null;
+  d.previewSession=0;
+  return {...draft,bySession:dates.length>1,items:draft.items.map((item,i)=>({...item,date:dates.length===1?dates[0]:dates[i],
+    workflow:{...item.workflow,reportInApp:true,steps:item.workflow.steps.map(step=>({...step,recordFormat:instructionReportFormat(step,item)}))}}))};
 }
 
 function instructionGroups(d,plan=d.analysis){
@@ -4439,22 +4777,24 @@ function instructionGroups(d,plan=d.analysis){
 function instructionPreview(d,simple){
   const plan=simple&&d?employeeInstructionPlan(d.raw):d?.analysis;
   if(!plan)return `<p class="wd68-empty">${simple?'왼쪽에 지시문을 넣으면 그대로 표시돼요.':'GPT로 업무지시를 만들면 할 일과 단계별 가이드가 표시돼요.'}</p>`;
-  return instructionGroups(d,plan).map(([date,items],index)=>`<article class="wd75-sheet wd71-simple-work">
-    <div class="eyebrow">${plan.bySession?(index+1)+'회차 · ':''}${date?esc(attendanceDate(date)):'배정일 선택 필요'}</div>
+  const groups=instructionGroups(d,plan),selected=plan.bySession?(d.previewSession||0):0;
+  const visible=plan.bySession?groups.slice(selected,selected+1):groups;
+  return visible.map(([date,items],index)=>`<article class="wd75-sheet wd71-simple-work">
+    <div class="eyebrow">${plan.bySession?(selected+index+1)+'회차 · ':''}${date?esc(attendanceDate(date)):'배정일 선택 필요'}</div>
     <h3>${esc(plan.bySession?items[0].text:plan.goal||'목표 입력 필요')}</h3>
     ${simple?employeeInstructionList(items,'',true):items.map((item,i)=>`<details ${i===0?'open':''}>
       <summary>${plan.bySession?'업무가이드·보고 항목':(i+1)+'. '+esc(item.text||'할 일 입력 필요')}</summary>
-      ${guideBook({workflow:{steps:item.workflow.steps.map(step=>({...step,instruction:step.method}))}})}
+      ${guideBook({workflow:{reportInApp:true,steps:item.workflow.steps.map(step=>({...step,instruction:step.method}))}})}
     </details>`).join('')}
   </article>`).join('');
 }
 
-const instructionStepFields=[['title','단계 이름'],['method','진행 방법'],['recordFormat','업무보고에 적을 내용'],['evidence','남길 자료']];
+const instructionStepFields=[['title','단계 이름'],['method','진행 방법'],['recordFormat','업무보고에 적을 내용']];
 
 function instructionEditor(d){
   return `<details class="instruction-step wd75-edit"><summary>업무지시 수정</summary>
     <label for="instructionGoal">${d.analysis.bySession?'전체 업무 목표':'오늘의 목표'}</label><input id="instructionGoal" value="${esc(d.analysis.goal)}">
-    ${d.analysis.items.map((item,i)=>`<details class="instruction-step"><summary id="instructionItemLabel${i}">${i+1}. ${esc(item.text)}</summary>
+    ${visibleInstructionItems(d).map(([item,i])=>`<details class="instruction-step"><summary id="instructionItemLabel${i}">${i+1}. ${esc(item.text)}</summary>
       <label for="instructionItem${i}">할 일</label><textarea id="instructionItem${i}" rows="2">${esc(item.text)}</textarea>
       ${item.workflow.steps.map((step,j)=>`<details class="instruction-step"><summary id="instructionStepLabel${i}_${j}">${j+1}. ${esc(step.title)}</summary>
         ${instructionStepFields.map(([key,label])=>`<label for="instructionStep${i}_${j}_${key}">${label}</label><textarea rows="2" id="instructionStep${i}_${j}_${key}">${esc(step[key])}</textarea>`).join('')}
@@ -4477,14 +4817,109 @@ function instructionFilesList(files){
   return files.length?`<ul class="wd91-file-list">${files.map(file=>`<li><span>${esc(file.name)}</span>
     <button class="small" type="button" data-download="${esc(file.id)}">다운로드</button></li>`).join('')}</ul>`:'<p class="smallText">첨부된 파일이 없어요.</p>';
 }
+function assignedInstructionActions(task){
+  if(currentUser!=='manager')return '';
+  return `<div class="wd110-instruction-actions"><button type="button" class="small" data-edit-instruction="${esc(task.id)}">수정</button>
+    <button type="button" class="small wd110-instruction-delete" data-delete-instruction="${esc(task.id)}">삭제</button></div>`;
+}
+function cancelledInstructionHistory(profile){
+  const rows=(S.cancelledInstructions||[]).filter(task=>taskStaffId(task)===profile.id);
+  return rows.length?`<details class="instruction-step"><summary>삭제한 업무 ${rows.length}건</summary>
+    <ul class="wd110-cancelled-list">${rows.map(task=>`<li><span>${esc(attendanceDate(task.date))} · ${esc(task.title)}</span>
+      <button type="button" class="small" data-restore-instruction="${esc(task.id)}">복원</button></li>`).join('')}</ul></details>`:'';
+}
+function bindAssignedInstructions(root,profile){
+  root.querySelectorAll('[data-edit-instruction]').forEach(button=>button.onclick=()=>openAssignedInstruction(profile,button.dataset.editInstruction));
+  root.querySelectorAll('[data-delete-instruction]').forEach(button=>button.onclick=()=>cancelAssignedInstruction(profile,button.dataset.deleteInstruction));
+  root.querySelectorAll('[data-restore-instruction]').forEach(button=>button.onclick=()=>restoreAssignedInstruction(profile,button.dataset.restoreInstruction));
+}
+function assignedInstruction(profile,id){
+  if(currentUser!=='manager'||!profile||profile.archivedAt||staffById(profile.id)!==profile)return null;
+  return tasksForStaff(profile.id).find(task=>task.id===id)||null;
+}
+function saveInstructionChange(change,message){
+  const prior=S;
+  S={...S,...change};
+  try{save();}
+  catch{
+    S=prior;
+    notify('저장하지 못했어요. 다른 창에서 변경했는지 확인하고 새로고침해 주세요.');
+    return false;
+  }
+  $('modalLayer')?.remove();render();notify(message);
+  return true;
+}
+function openAssignedInstruction(profile,id){
+  const task=assignedInstruction(profile,id);
+  if(!task||$('modalLayer'))return;
+  const simple=isEmployeeTask(task),direct=simple&&task.directInstruction;
+  const fallback=task.objective||task.title;
+  const todos=task.todos?.length?task.todos:simple?[{id:'todo0',text:fallback,done:false}]:taskTodos({...task});
+  const editable=todos.map((todo,index)=>({todo,index})).filter(({todo})=>!todo.sourceTask);
+  showModal(`<form id="editAssignedInstructionForm"><p class="smallText">${esc(profile.name)} · ${esc(task.title)}</p>
+    <label for="editAssignedDate">배정일</label><input type="date" id="editAssignedDate" value="${esc(task.date)}" required>
+    ${direct?'':`<label for="editAssignedTitle">업무 제목</label><input id="editAssignedTitle" maxlength="240" value="${esc(task.title)}" required>
+      <label for="editAssignedGoal">업무 목표</label><textarea id="editAssignedGoal" rows="2">${esc(task.objective||'')}</textarea>`}
+    ${editable.map(({todo,index},i)=>`<label for="editAssignedTodo${index}">${simple?'업무지시 내용':'할 일 '+(i+1)}</label>
+      <textarea id="editAssignedTodo${index}" rows="${simple?6:3}" maxlength="8000" required>${esc(todo.text)}</textarea>
+      ${!simple&&todo.workflow?.steps?.length?`<details class="instruction-step"><summary>단계별 업무 가이드</summary>
+        ${todo.workflow.steps.map((step,j)=>`<fieldset><legend>${j+1}단계</legend>${instructionStepFields.map(([key,label])=>
+          `<label for="editAssignedStep${index}_${j}_${key}">${label}</label><textarea id="editAssignedStep${index}_${j}_${key}" rows="2" required>${esc(step[key]||(key==='method'?step.instruction:''))}</textarea>`).join('')}</fieldset>`).join('')}</details>`:''}`).join('')}
+    <div class="actions"><button class="primary" type="submit">수정 저장</button></div>
+  </form>`,'배정한 업무 수정');
+  const form=$('editAssignedInstructionForm');
+  form.onsubmit=event=>{
+    event.preventDefault();
+    if(assignedInstruction(profile,id)!==task)return;
+    const date=$('editAssignedDate').value;
+    if(!validAttendanceDay(date))return notify('배정일을 확인해 주세요.');
+    const nextTodos=[...todos];
+    for(const {todo,index} of editable){
+      const text=$('editAssignedTodo'+index).value.trim();
+      if(!text)return notify('업무지시 내용을 입력해 주세요.');
+      const next={...todo,text};
+      if(!simple&&todo.workflow?.steps?.length){
+        const steps=todo.workflow.steps.map((step,j)=>{
+          const values=Object.fromEntries(instructionStepFields.map(([key])=>[key,$('editAssignedStep'+index+'_'+j+'_'+key).value.trim()]));
+          return {...step,...values,instruction:values.method};
+        });
+        if(steps.some(step=>instructionStepFields.some(([key])=>!step[key])))return notify('단계별 가이드의 빈 칸을 확인해 주세요.');
+        next.workflow={...todo.workflow,steps};
+      }
+      nextTodos[index]=next;
+    }
+    const title=direct?employeeInstructionPlan(nextTodos[editable[0]?.index]?.text||'')?.goal:$('editAssignedTitle').value.trim();
+    if(!title)return notify('업무 제목을 입력해 주세요.');
+    const updated={...task,date,title,objective:direct?title:$('editAssignedGoal').value.trim(),todos:nextTodos};
+    saveInstructionChange({tasks:S.tasks.map(row=>row===task?updated:row)},'업무지시를 수정했어요.');
+  };
+}
+function cancelAssignedInstruction(profile,id){
+  const task=assignedInstruction(profile,id);
+  if(!task||$('modalLayer'))return;
+  showModal(`<p><strong>${esc(task.title)}</strong></p><p>배정 목록에서 삭제할까요? 작성한 보고와 첨부파일은 함께 보관되며, 삭제한 업무에서 복원할 수 있어요.</p>
+    <div class="actions"><button type="button" class="wd110-instruction-delete" id="confirmAssignedDelete">업무 삭제</button></div>`,'배정한 업무 삭제');
+  $('confirmAssignedDelete').onclick=()=>{
+    if(assignedInstruction(profile,id)!==task)return;
+    saveInstructionChange({tasks:S.tasks.filter(row=>row!==task),selected:S.selected===id?null:S.selected,
+      cancelledInstructions:[task,...(S.cancelledInstructions||[])]},'배정 목록에서 삭제했어요.');
+  };
+}
+function restoreAssignedInstruction(profile,id){
+  if(currentUser!=='manager'||!profile||profile.archivedAt||staffById(profile.id)!==profile||S.tasks.some(task=>task.id===id))return;
+  const archive=S.cancelledInstructions||[],task=archive.find(row=>row.id===id&&taskStaffId(row)===profile.id);
+  if(task)saveInstructionChange({tasks:[...S.tasks,task],cancelledInstructions:archive.filter(row=>row!==task)},'업무지시를 복원했어요.');
+}
+
 function simpleInstructionHistory(profile,date){
   const tasks=tasksForStaff(profile.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
   const files=tasks.filter(task=>task.date===date).flatMap(task=>task.instructionFiles||[]);
   return `<section class="wd109-history-region" aria-labelledby="assignedWorkTitle">
     <h2 id="assignedWorkTitle">배정한 업무</h2>
     <div class="wd109-history-scroll" tabindex="0" role="region" aria-labelledby="assignedWorkTitle">
-      ${tasks.length?tasks.map(task=>`<article class="wd109-assigned-work"><time datetime="${esc(task.date)}">${esc(attendanceDate(task.date))}</time>
+      ${tasks.length?tasks.map(task=>`<article class="wd109-assigned-work"><header><time datetime="${esc(task.date)}">${esc(attendanceDate(task.date))}</time>${assignedInstructionActions(task)}</header>
         ${employeeInstructionList(task.todos||[],task.objective||task.title,task.directInstruction)}</article>`).join(''):'<p class="empty">배정한 업무가 없어요.</p>'}
+      ${cancelledInstructionHistory(profile)}
     </div>
   </section><section class="wd109-history-region" aria-labelledby="instructionFilesTitle">
     <h2 id="instructionFilesTitle">${esc(attendanceDate(date))} 업무공유파일</h2>
@@ -4510,6 +4945,7 @@ function bindSimpleInstruction(profile){
   $('instructionInput').oninput=event=>{d.raw=event.target.value;};
   const history=$('simpleInstructionHistory');
   const bindHistory=()=>{
+    bindAssignedInstructions(history,profile);
     history.querySelectorAll('[data-download]').forEach(item=>item.onclick=()=>downloadFile(item.dataset.download));
   };
   $('simpleInstructionDate').onchange=event=>{
@@ -4570,12 +5006,15 @@ function instructionView(){
         <label for="analysisAnswer">GPT 답변</label><textarea id="analysisAnswer" rows="4">${esc(d.answer)}</textarea>
         <div class="actions"><button id="previewAnalysis" type="button">업무지시로 불러오기</button></div></details>
         ${tasks.length?`<details class="instruction-step wd75-history"><summary>배정 이력 ${tasks.length}건</summary>
-          <div class="wd60-inner-scroll"><table class="wd60-detail-table"><thead><tr><th scope="col">배정일</th><th scope="col">업무</th><th scope="col">진행 현황</th></tr></thead><tbody>
-          ${tasks.map(task=>`<tr><td>${esc(task.date)}</td><td><button class="small" type="button" data-instruction-task="${esc(task.id)}">${esc(task.title)}</button></td><td>${esc(status(task))}</td></tr>`).join('')}
+          <div class="wd60-inner-scroll"><table class="wd60-detail-table"><thead><tr><th scope="col">배정일</th><th scope="col">업무</th><th scope="col">진행 현황</th><th scope="col">관리</th></tr></thead><tbody>
+          ${tasks.map(task=>`<tr><td>${esc(task.date)}</td><td><button class="small" type="button" data-instruction-task="${esc(task.id)}">${esc(task.title)}</button></td><td>${esc(status(task))}</td><td>${assignedInstructionActions(task)}</td></tr>`).join('')}
           </tbody></table></div></details>`:''}
+        ${cancelledInstructionHistory(profile)}
       </section>
       <section class="card"><h2>2. 단계와 배정일 확인</h2>
         <p class="smallText">${dates.length?dates.map(date=>esc(attendanceDate(date))).join(' · '):'배정할 날짜가 없어요.'}</p>
+        ${d.analysis?.bySession?`<label for="instructionPreviewSession">회차 선택</label>
+          <select id="instructionPreviewSession">${d.analysis.items.map((item,i)=>`<option value="${i}" ${i===(d.previewSession||0)?'selected':''}>${i+1}회차 · ${esc(attendanceDate(item.date))}</option>`).join('')}</select>`:''}
         <div id="instructionPreview" class="wd75-preview" tabindex="-1">${instructionPreview(d,false)}</div>
         ${d.analysis?`<p class="smallText">업무와 날짜를 확인하고 배정하세요.</p>
           ${instructionEditor(d)}
@@ -4587,13 +5026,10 @@ function instructionView(){
 const instructionBatchLimit=12;
 
 function instructionBatchRequest(raw,dates,offset,batch,previous){
-  const datesLabel=dates.join(', ');
-  const prior=previous.slice(-3).map(item=>String(item.text).slice(0,70)).join(' / ');
-  const range=batch.length===dates.length?'전체 일정':
-    '전체 중 '+(offset+1)+'~'+(offset+batch.length)+'번째 날짜에 해당하는 작업만';
-  return raw+'\n\n[업무 분할 기준] 배정일 '+datesLabel+'. '+range+' 작성. '+
-    '순서와 업무량을 날짜 수에 맞춰 나누고 중복과 불필요한 작업은 피할 것. '+
-    (prior?'직전 작업: '+prior+'. 앞선 결과를 이어서 활용할 것.':'');
+  const datesLabel=batch.join(', ');
+  const prior=previous.slice(-2).map(item=>String(item.text).slice(0,50)).join(' / ');
+  return raw+'\n\n[업무 분할] 전체 '+dates.length+'일 중 '+(offset+1)+'~'+(offset+batch.length)+'회차만 작성. '+datesLabel+
+    '. 일정 순서대로 다른 일을 배정. '+(prior?'이전 업무 '+prior+'. 그 결과를 이어서 사용. ':'')+instructionReportStandard;
 }
 
 async function generateInstructionDraft(d){
@@ -4664,6 +5100,7 @@ function bindInstructionView(){
   staff.onchange=()=>{instructionStaffId=staff.value||null;render();$('instructionStaff')?.focus();};
   const profile=staffById(instructionStaffId);
   if(profile?.workType==='employee'){bindSimpleInstruction(profile);return;}
+  bindAssignedInstructions(document,profile);
   document.querySelectorAll('[data-instruction-task]').forEach(button=>button.onclick=()=>taskPreview(button.dataset.instructionTask));
   if(!$('instructionInput'))return;
   const d=instructionDrafts.get(instructionStaffId);
@@ -4706,7 +5143,9 @@ function bindInstructionView(){
   const assign=$('assignInstruction');
   if(!assign)return;
   $('instructionGoal').oninput=()=>{d.analysis.goal=$('instructionGoal').value;updatePreview();};
-  d.analysis.items.forEach((item,i)=>{
+  const session=$('instructionPreviewSession');
+  if(session)session.onchange=()=>{d.previewSession=Number(session.value);render();$('instructionPreviewSession')?.focus();};
+  visibleInstructionItems(d).forEach(([item,i])=>{
     $('instructionItem'+i).oninput=event=>{
       item.text=event.target.value;
       $('instructionItemLabel'+i).textContent=(i+1)+'. '+item.text;
@@ -4753,7 +5192,7 @@ function commitInstruction(d,plan,simple){
 function render(){releaseNativeDrivePreview();if(!currentUser){loginView();return}
 if((currentUser==='manager'&&!managerHqReady&&!managerDriveSession)||(realAttendanceProfile()&&!liveAttendanceReady)){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
-let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}else closeWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
+let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
 }else if(currentUser==='manager'&&S.nav==='instructions'){bindInstructionView()}else if(S.nav==='dashboard'&&isEmployeeWorkspace()){bindEmployeeInstructions()}else if(S.nav==='dashboard'&&t){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=Number(b.dataset.tab);save();document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('primary',x===b))});document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));bindBoard(t)}else if(S.nav==='month'){bindTaskReports();bindAdminFilters();document.querySelectorAll('[data-staff-tasks]').forEach(b=>b.onclick=()=>{managerStaffId=b.dataset.staffTasks;staffTasksOpen=true;render()});if($('addTask'))$('addTask').onclick=()=>{setNav('instructions')}}else if(['drive','manual','archive'].includes(S.nav)){bindMaterials()}else if(S.nav==='reports'){bindReportButtons()}else if(S.nav==='ideas'){bindNotes()}document.querySelectorAll('[data-download]').forEach(x=>x.onclick=()=>downloadFile(x.dataset.download))}
 function bindEmployee(t){if($('saveDraft'))$('saveDraft').onclick=()=>{save();notify('수행 기록을 저장했습니다')}}
