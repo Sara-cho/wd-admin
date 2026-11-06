@@ -410,6 +410,26 @@ strong.wd88-person{display:inline-block;padding:2px 7px;border-radius:5px}
 .wd91-report-grid{grid-template-columns:minmax(0,1fr)}
 .wd91-report-left{grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start}
 @media(max-width:900px){.wd91-report-left{grid-template-columns:minmax(0,1fr)}}
+</style><style>
+.wd91-report-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
+.wd91-report-left{grid-template-columns:minmax(0,1fr)}
+@media(max-width:1000px){.wd91-report-grid{grid-template-columns:minmax(0,1fr)}}
+.wd96-drive-title{align-items:center}
+.wd96-drive-title [hidden],.wd96-drive-page [hidden]{display:none}
+.wd96-drive-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:12px 0}
+.wd96-drive-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.wd96-drive-tabs [aria-pressed="true"]{color:#51218f;background:#f2eafa;border-color:#dfc8f4;font-weight:750}
+.wd96-drive-tools input{width:min(100%,250px)}
+.wd96-drive-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:16px}
+.wd96-drive-list,.wd96-drive-reader{min-height:300px;min-width:0}
+.wd96-drive-list{max-height:650px;overflow:auto}
+.wd96-drive-row{display:block;width:100%;text-align:left;margin:0 0 8px;padding:10px 12px;overflow-wrap:anywhere}
+.wd96-drive-row small{display:block;color:#756784;margin-top:4px}
+.wd96-drive-row[aria-pressed="true"]{background:#f4ebfc;border-color:#dfc8f4}
+.wd96-drive-reader h2,.wd96-drive-links{overflow-wrap:anywhere}
+.wd96-drive-links{display:flex;gap:8px 14px;flex-wrap:wrap}
+.wd96-drive-text{margin-top:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:540px;overflow:auto;line-height:1.7}
+@media(max-width:760px){.wd96-drive-columns{grid-template-columns:minmax(0,1fr)}.wd96-drive-list{min-height:0;max-height:290px}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -532,7 +552,7 @@ async function sha(value){let data=await crypto.subtle.digest('SHA-256',new Text
 function logout(){
   if(liveAttendanceSaving)return notify('근무기록 저장이 끝난 뒤 로그아웃하세요');
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
-  closeNoteDock();acknowledgedWork.clear();employeeDrive=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
+  closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
   for(const id of ['todayWorkGate','modalLayer'])$(id)?.remove();
   currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
@@ -543,7 +563,7 @@ function logout(){
 }
 window.addEventListener('storage',event=>{
   if(event.key===KEY&&event.newValue!==storageVersion){location.reload();return;}
-  if(['wd-admin-auth-v1','wd_current_uid'].includes(event.key)&&$('adminLegacyModule'))render();
+  if(['wd-admin-auth-v1','wd_current_uid'].includes(event.key)&&($('adminLegacyModule')||$('nativeDrivePage')))render();
 });
 const navEmployee=[['attendance','근무기록'],['dashboard','업무보고']];
 const navStaff=[['attendance','근무기록'],['dashboard','업무진행판'],['month','업무목록'],['drive','자료실']];
@@ -781,10 +801,9 @@ async function refreshEmployeeDrive(date,fallback){
   statusLine.textContent=results.every(result=>result.status==='fulfilled')?'Google Drive 연결됨':'일부 Drive 자료를 불러오지 못했어요. Google 계정과 폴더 권한을 확인하세요.';
 }
 
-function bindEmployeeDrive(onConnected){
-  const button=$('connectEmployeeDrive'),statusLine=$('employeeDriveStatus');
+function bindEmployeeDrive(onConnected,scope=driveSessionScope(),expected=expectedEmployeeDriveAccount(),hqAccount=null){
+  const button=$('connectEmployeeDrive'),statusLine=$('employeeDriveStatus')||$('nativeDriveStatus');
   if(!button)return;
-  const expected=expectedEmployeeDriveAccount();
   const prepare=()=>{
     button.disabled=true;
     return loadEmployeeDriveClient().then(()=>{button.disabled=false;}).catch(()=>{button.disabled=false;statusLine.textContent='Google 연결 모듈을 불러오지 못했어요. 다시 눌러주세요.';});
@@ -794,28 +813,30 @@ function bindEmployeeDrive(onConnected){
     if(!readHqToken()){statusLine.textContent='WD 본진에 먼저 로그인해 주세요.';return;}
     if(!window.google?.accounts?.oauth2){void prepare();return;}
     const generation=driveConnectGeneration;
-    const stillCurrent=()=>generation===driveConnectGeneration&&expectedEmployeeDriveAccount()===expected;
+    const stillCurrent=()=>generation===driveConnectGeneration&&(hqAccount?workspaceModuleAccount(S.nav)?.uid===hqAccount.uid:expectedEmployeeDriveAccount()===expected);
     const client=window.google.accounts.oauth2.initTokenClient({
-      client_id:'525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com',scope:driveReadScope,include_granted_scopes:false,login_hint:expected,
+      client_id:'525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com',scope,include_granted_scopes:false,login_hint:expected,
       callback:async response=>{
         if(!stillCurrent())return;
-        const currentLine=$('employeeDriveStatus');
+        const currentLine=$('employeeDriveStatus')||$('nativeDriveStatus');
         if(currentLine)currentLine.textContent='계정과 연결 권한을 확인하는 중…';
         button.disabled=true;
         try{
-          if(!response.access_token||!window.google.accounts.oauth2.hasGrantedAllScopes(response,driveReadScope))throw new Error('scope');
+          if(!response.access_token||!window.google.accounts.oauth2.hasGrantedAllScopes(response,scope))throw new Error('scope');
           const about=await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',response.access_token);
           const identity=await about.json();
           if(!stillCurrent())return;
           if(identity.user?.emailAddress?.toLowerCase()!==expected){
             if(currentLine)currentLine.textContent='등록된 업무용 Google 계정으로 연결하세요.';return;
           }
-          const session={token:response.access_token,expires:Date.now()+Number(response.expires_in||0)*1000};
+          if(hqAccount&&!await verifyAdminWorkspace(readHqToken(),hqAccount))throw new Error('본진에 먼저 로그인해 주세요.');
+          if(!stillCurrent())return;
+          const session={token:response.access_token,expires:Date.now()+Number(response.expires_in||0)*1000,scope};
           await onConnected(session,stillCurrent);
         }catch(error){if(stillCurrent()&&currentLine)currentLine.textContent=error.message||'Google Drive 연결을 확인하지 못했어요.';}
         finally{if(stillCurrent())button.disabled=false;}
       },
-      error_callback:()=>{if(stillCurrent()&&$('employeeDriveStatus'))$('employeeDriveStatus').textContent='Google 연결 창을 다시 열어주세요.';}
+      error_callback:()=>{if(stillCurrent())statusLine.textContent='Google 연결 창을 다시 열어주세요.';}
     });
     client.requestAccessToken({prompt:'select_account'});
   };
@@ -993,26 +1014,6 @@ function workspaceModuleAccount(menu){
 }
 const companyManualFolder='1yx-Ded0o4oKHULmPjYUrY4GUBAZwZkQa';
 const companyManualCategories=['회사운영','보험업무','퍼스널브랜딩','AI강의'];
-const legacyDriveKey='wd_work_company_drive_access_v2';
-function readLegacyDriveSession(){
-  try{
-    const saved=JSON.parse(sessionStorage.getItem(legacyDriveKey)||'null');
-    return saved?.token&&Number(saved.expiresAt)>Date.now()+30000?saved:null;
-  }catch{return null;}
-}
-async function manualDriveWriteToken(){
-  const session=readLegacyDriveSession();
-  if(!session)throw new Error('업무매뉴얼 화면에서 업무용 Drive 연결을 확인해 주세요.');
-  const [account,folder]=await Promise.all([
-    employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',session.token),
-    employeeDriveRequest(driveFileApi+'/'+companyManualFolder+'?fields=id,capabilities(canAddChildren)&supportsAllDrives=true',session.token)
-  ]).then(responses=>Promise.all(responses.map(response=>response.json())));
-  if(account.user?.emailAddress?.toLowerCase()!=='kfcyk20@gmail.com'||folder.id!==companyManualFolder||folder.capabilities?.canAddChildren!==true){
-    throw new Error('현재 Google 계정의 매뉴얼 등록 권한을 확인해 주세요.');
-  }
-  return session.token;
-}
-
 async function createCompanyManual(token,category,title,body,requestId){
   const lookup=new URLSearchParams({q:"'"+companyManualFolder+"' in parents and trashed = false and appProperties has { key='wdManualRequest' and value='"+requestId+"' }",fields:'files(id)',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
   const matches=await (await employeeDriveRequest(driveFileApi+'?'+lookup,token)).json();
@@ -1033,54 +1034,196 @@ async function createCompanyManual(token,category,title,body,requestId){
   return result.id;
 }
 
-function bindLegacyManualAdd(frame,doc){
-  if(currentUser!=='manager'||doc.getElementById('wd95-add-manual'))return;
-  const actions=doc.querySelector('#wcn-panel-manual .wm-head-actions');
-  if(!actions)return;
-  const button=doc.createElement('button');
-  button.id='wd95-add-manual';button.type='button';button.className='wm-btn';button.textContent='+ 매뉴얼 추가';
-  actions.append(button);
-  button.onclick=()=>{
-    if(!frame.isConnected||currentUser!=='manager'||S.nav!=='manual')return;
-    if(!readLegacyDriveSession()){
-      frame.contentWindow.wsjConnect?.();
-      return;
-    }
-    const active=()=>frame.isConnected&&currentUser==='manager'&&S.nav==='manual';
-    showModal(`<form id="newCompanyManualForm">
-      <label for="newManualCategory">분류</label><select id="newManualCategory">${companyManualCategories.map(category=>`<option>${category}</option>`).join('')}</select>
-      <label for="newManualTitle">매뉴얼 제목</label><input id="newManualTitle" maxlength="120" required>
-      <label for="newManualBody">본문</label><textarea id="newManualBody" rows="12" maxlength="80000" required></textarea>
-      <p id="newManualStatus" role="status" class="smallText"></p><div class="actions"><button type="submit" class="primary" id="saveCompanyManual">Drive에 저장</button></div></form>`,'업무매뉴얼 추가');
-    $('newManualTitle').focus();
-    let lastDraft='',requestId='';
-    const form=$('newCompanyManualForm');
-    form.onsubmit=async event=>{
-      event.preventDefault();
-      const saveButton=$('saveCompanyManual'),status=$('newManualStatus');
-      if(!active()||saveButton.disabled)return;
-      const category=$('newManualCategory').value,title=$('newManualTitle').value.trim(),body=$('newManualBody').value.trim();
-      if(!companyManualCategories.includes(category)||!title||!body){status.textContent='분류, 제목, 본문을 확인해 주세요.';return;}
-      const draft=JSON.stringify([category,title,body]);
-      if(draft!==lastDraft){lastDraft=draft;requestId=crypto.randomUUID();}
-      saveButton.disabled=true;status.textContent='Drive에 저장하고 있어요.';
-      try{
-        const hq=readHqToken();
-        if(!await verifyAdminWorkspace(hq,workspaceModuleAccount('manual'))||!active())throw new Error('대표 계정 연결을 다시 확인해 주세요.');
-        const drive=await manualDriveWriteToken();
-        if(!active()||hq!==readHqToken()||$('newCompanyManualForm')!==form)return;
-        const id=await createCompanyManual(drive,category,title,body,requestId);
-        if(!active())return;
-        if($('newCompanyManualForm')===form)$('modalLayer')?.remove();
-        const original=frame.contentWindow;
-        await original.wmLoad?.(true);
-        original.wmSetTab?.(category);
-        original.wmOpen?.(id,true);
-        notify('업무매뉴얼을 기존 Drive 폴더에 저장했어요.');
-      }catch(error){status.textContent=error.message||'Drive 저장을 확인하지 못했어요.';}
-      finally{saveButton.disabled=false;}
-    };
+const driveWriteScope='https://www.googleapis.com/auth/drive';
+const workArchiveFolders=[
+  ['회사운영','1V4arkZhihHmWJ2f9t4Sh03hPl9rH8DrR'],
+  ['보험업무','1uPvy82jNaEZAKnNHW6Ll7mNSyVRGtm7Z'],
+  ['퍼스널브랜딩','1WoUGC6xKoeE5IoofLCH3cLt0jjmh2skf'],
+  ['AI강의','1K48EB1apq0immg2zpKTl5zQYb9ppx1x1'],
+  ['정리이전자료','1PTAJXgPGB4gielNyeUeWeSWs6z_Czfex']
+];
+const drivePageMenus=new Set(['manual','archive']);
+const drivePageAllowed=menu=>drivePageMenus.has(menu)&&!!workspaceModuleAccount(menu);
+const driveSessionScope=()=>workspaceMenus().some(([id])=>drivePageMenus.has(id))?driveWriteScope:driveReadScope;
+let managerDriveSession=null;
+
+function nativeDrivePage(){
+  const manual=S.nav==='manual',title=manual?'업무매뉴얼':'작업결과 보관';
+  return `<div class="titleRow wd96-drive-title"><h1>${title}</h1><div class="actions">
+    <button class="small" type="button" id="nativeDriveRefresh">새로고침</button>
+    <button class="primary small" type="button" id="nativeDriveAdd" hidden>${manual?'+ 매뉴얼 추가':'+ 자료 등록'}</button></div></div>
+    <section id="nativeDrivePage" class="wd96-drive-page">
+      <p id="nativeDriveStatus" class="smallText" role="status">불러오는 중…</p>
+      <button id="connectEmployeeDrive" class="primary small" type="button" hidden>Drive 연결 확인</button>
+      <div class="wd96-drive-tools"><div id="nativeDriveCategories" class="wd96-drive-tabs" aria-label="분류"></div>
+        <input id="nativeDriveSearch" type="search" aria-label="${title} 검색" placeholder="제목 검색"></div>
+      <div class="wd96-drive-columns"><section class="card wd96-drive-list" id="nativeDriveList" aria-label="자료 목록"></section>
+        <section class="card wd96-drive-reader" id="nativeDriveReader" aria-label="자료 본문"></section></div>
+    </section>`;
+}
+
+function driveCategory(file){
+  const aliases={'회사':'회사운영','보험':'보험업무','브랜딩':'퍼스널브랜딩','강의':'AI강의'};
+  const group=file.name?.match(/^\[([^_\]]+)_(?:업무)?(?:매뉴얼|메뉴얼)\]/)?.[1];
+  return aliases[group]||group||'기타';
+}
+const cleanManualTitle=name=>(name||'업무매뉴얼').replace(/^\[[^\]]+_(?:업무)?(?:매뉴얼|메뉴얼)\]\s*/,'').replace(/\.(txt|md|pdf|docx?)$/i,'');
+function archiveCategory(value){
+  const group=String(value||'').split('|')[0];
+  return ({'WD회사자료':'회사운영','지점장님자료':'보험업무','AI자료실':'AI강의'})[group]||group||'기타';
+}
+async function listNativeDriveFolder(folder,token){
+  const rows=[];
+  const q=new URLSearchParams({q:"'"+folder+"' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'",
+    fields:'nextPageToken,files(id,name,mimeType,modifiedTime,appProperties)',pageSize:'1000',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+  do{
+    const page=await (await employeeDriveRequest(driveFileApi+'?'+q,token)).json();
+    rows.push(...(page.files||[]).filter(file=>safeDriveId(file.id)));
+    if(!page.nextPageToken)break;
+    q.set('pageToken',page.nextPageToken);
+  }while(true);
+  return rows;
+}
+
+async function archiveRegisterRows(account){
+  const token=readHqToken();
+  if(!await verifyAdminWorkspace(token,account))throw new Error('본진에 다시 로그인해 주세요.');
+  const query=new URLSearchParams({select:'id,title,content,data_type,modified:updated_at,created_at',owner_id:'eq.kfcyk50',order:'created_at.desc'});
+  const response=await fetch(adminAuthBase+'/rest/v1/wd_ai_archive?'+query,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},cache:'no-store'});
+  if(!response.ok)throw new Error('업무센터 보관 원장을 읽지 못했어요.');
+  return response.json();
+}
+async function readNativeDriveRows(menu,token,account){
+  if(menu==='manual'){
+    return (await listNativeDriveFolder(companyManualFolder,token)).map(file=>({...file,title:cleanManualTitle(file.name),category:driveCategory(file),driveId:file.id}));
+  }
+  const results=await Promise.allSettled([
+    archiveRegisterRows(account),...workArchiveFolders.map(async([category,folder])=>(await listNativeDriveFolder(folder,token)).map(file=>({...file,title:file.name,category,driveId:file.id})))
+  ]);
+  if(!results.some(result=>result.status==='fulfilled'))throw new Error('작업결과 보관을 불러오지 못했어요.');
+  const ledger=results[0].status==='fulfilled'?results[0].value:[];
+  const files=results.slice(1).flatMap(result=>result.status==='fulfilled'?result.value:[]);
+  const linked=new Map();
+  for(const file of files){
+    const id=file.appProperties?.wdArchiveId;
+    if(id){if(!linked.has(id))linked.set(id,[]);linked.get(id).push(file);}
+  }
+  const ids=new Set(ledger.map(row=>row.id));
+  const rows=[...ledger.map(row=>({...row,category:archiveCategory(row.data_type),modifiedTime:row.modified||row.created_at,attachments:linked.get(row.id)||[]})),
+    ...files.filter(file=>!ids.has(file.appProperties?.wdArchiveId))];
+  return {rows,incomplete:results.some(result=>result.status==='rejected')};
+}
+async function nativeDriveDocument(row,token){
+  if(!row.driveId)return row.content||'등록된 본문이 없어요.';
+  const type=row.mimeType||'';
+  if(!type.startsWith('text/')&&type!=='application/vnd.google-apps.document')return '';
+  const path=type==='application/vnd.google-apps.document'?'/export?mimeType=text%2Fplain':'?alt=media&supportsAllDrives=true';
+  return (await employeeDriveRequest(driveFileApi+'/'+row.driveId+path,token)).text();
+}
+async function createArchiveFile(token,folder,title,file,requestId){
+  const lookup=new URLSearchParams({q:"'"+folder+"' in parents and trashed = false and appProperties has { key='wdArchiveRequest' and value='"+requestId+"' }",fields:'files(id)'});
+  const previous=await (await employeeDriveRequest(driveFileApi+'?'+lookup,token)).json();
+  if(previous.files?.some(row=>safeDriveId(row.id)))return;
+  const boundary='wd_archive_'+requestId;
+  const metadata={name:title,parents:[folder],appProperties:{wdArchiveRequest:requestId,wdSource:'wd-work-center'}};
+  const type=file.type||'application/octet-stream';
+  if(typeof file==='string')metadata.mimeType='application/vnd.google-apps.document';
+  const payload=new Blob(['--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: '+(typeof file==='string'?'text/plain; charset=UTF-8':type)+'\r\n\r\n',file,'\r\n--'+boundary+'--\r\n']);
+  const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,parents',{
+    method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary},body:payload});
+  const row=await res.json().catch(()=>({}));
+  if(!res.ok||!safeDriveId(row.id)||!row.parents?.includes(folder))throw new Error('Drive 자료 저장을 확인하지 못했어요.');
+}
+
+function openNativeDriveAdd(menu,session,active,onSaved){
+  const manual=menu==='manual',groups=manual?companyManualCategories:workArchiveFolders.slice(0,4).map(([name])=>name);
+  showModal(`<form id="nativeDriveAddForm"><label for="nativeAddCategory">분류</label><select id="nativeAddCategory">${groups.map(group=>`<option>${esc(group)}</option>`).join('')}</select>
+    <label for="nativeAddTitle">제목</label><input id="nativeAddTitle" maxlength="120" required>
+    <label for="nativeAddBody">본문</label><textarea id="nativeAddBody" rows="10" maxlength="80000" ${manual?'required':''}></textarea>
+    ${manual?'':'<label for="nativeAddFile">첨부파일 (선택)</label><input id="nativeAddFile" type="file">'}
+    <p id="nativeAddStatus" class="smallText" role="status"></p><div class="actions"><button id="nativeAddSave" class="primary" type="submit">Drive에 저장</button></div></form>`,manual?'업무매뉴얼 추가':'자료 등록');
+  const form=$('nativeDriveAddForm');
+  let previousDraft,requestId,previousFile;
+  $('nativeAddTitle').focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    const button=$('nativeAddSave'),status=$('nativeAddStatus');
+    if(button.disabled||!active())return;
+    const category=$('nativeAddCategory').value,title=$('nativeAddTitle').value.trim(),body=$('nativeAddBody').value.trim(),file=$('nativeAddFile')?.files?.[0];
+    if(!groups.includes(category)||!title||(!body&&!file)||(manual&&!body)){status.textContent='제목과 저장할 내용을 입력해 주세요.';return;}
+    if(file?.size>5*1024*1024){status.textContent='첨부파일은 5MB까지 등록할 수 있어요.';return;}
+    if(session.expires<=Date.now()||session.scope!==driveWriteScope){status.textContent='Drive 등록 권한을 확인해 주세요.';return;}
+    const draft=JSON.stringify([category,title,body]);
+    if(draft!==previousDraft||file!==previousFile){requestId=crypto.randomUUID();previousDraft=draft;previousFile=file;}
+    button.disabled=true;status.textContent='Drive에 저장하고 있어요.';
+    try{
+      if(!await verifyAdminWorkspace(readHqToken(),workspaceModuleAccount(menu)))throw new Error('본진 계정을 다시 확인해 주세요.');
+      if(!active()||$('nativeDriveAddForm')!==form)return;
+      if(manual)await createCompanyManual(session.token,category,title,body,requestId);
+      else{
+        const folder=workArchiveFolders.find(([name])=>name===category)[1];
+        if(body)await createArchiveFile(session.token,folder,title,body,requestId+'-text');
+        if(file)await createArchiveFile(session.token,folder,file.name,file,requestId+'-file');
+      }
+      if(!active())return;
+      if($('nativeDriveAddForm')===form)$('modalLayer')?.remove();
+      notify('공용 Drive에 저장했어요.');await onSaved(category);
+    }catch(error){status.textContent=error.message||'Drive 저장을 확인하지 못했어요.';}
+    finally{button.disabled=false;}
   };
+}
+
+function bindNativeDrivePage(){
+  const panel=$('nativeDrivePage'),status=$('nativeDriveStatus'),refresh=$('nativeDriveRefresh'),add=$('nativeDriveAdd'),connect=$('connectEmployeeDrive');
+  const menu=S.nav,account=workspaceModuleAccount(menu),manual=menu==='manual';
+  const active=()=>panel.isConnected&&S.nav===menu&&workspaceModuleAccount(menu)?.uid===account?.uid;
+  const session=()=>currentUser==='manager'?managerDriveSession:employeeDrive;
+  let rows=[],category='',selected='',readId=0;
+  const reader=$('nativeDriveReader'),list=$('nativeDriveList'),search=$('nativeDriveSearch'),tabs=$('nativeDriveCategories');
+  const groups=()=>['전체',...(manual?companyManualCategories:workArchiveFolders.map(([name])=>name)),...new Set(rows.map(row=>row.category))].filter((value,i,all)=>all.indexOf(value)===i);
+  const driveLink=file=>`<a href="${driveFileUrl(file.driveId)}" target="_blank" rel="noopener noreferrer">${esc(file.title)} 열기 ↗</a>`;
+  const choose=async row=>{
+    const request=++readId;
+    selected=row?.id||'';
+    list.querySelectorAll('[data-native-file]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.nativeFile===selected)));
+    if(!row){reader.innerHTML='<p class="empty">표시할 자료가 없어요.</p>';return;}
+    const links=[...(row.driveId?[row]:[]),...(row.attachments||[])].map(driveLink).join('');
+    reader.innerHTML=`<div class="eyebrow">${esc(row.category)}</div><h2>${esc(row.title)}</h2><div class="wd96-drive-links">${links}</div><div class="wd96-drive-text" role="status">본문을 불러오는 중…</div>`;
+    const body=reader.querySelector('.wd96-drive-text');
+    try{const text=await nativeDriveDocument(row,session().token);if(active()&&readId===request)body.textContent=text||'원본에서 파일을 확인할 수 있어요.';}
+    catch{if(active()&&readId===request)body.textContent='본문을 불러오지 못했어요. 새로고침해 주세요.';}
+  };
+  const paint=()=>{
+    const query=search.value.trim().toLowerCase();
+    const filtered=rows.filter(row=>(!category||category===row.category)&&String(row.title||'').toLowerCase().includes(query));
+    tabs.innerHTML=groups().map(group=>`<button class="small" type="button" data-native-category="${esc(group)}" aria-pressed="${(category||'전체')===group}">${esc(group)}</button>`).join('');
+    list.innerHTML=filtered.length?filtered.map(row=>`<button class="wd96-drive-row" type="button" data-native-file="${esc(row.id)}" aria-pressed="false"><strong>${esc(row.title)}</strong><small>${esc(row.category)} · ${esc(String(row.modifiedTime||'').slice(0,10))}</small></button>`).join(''):'<p class="empty">표시할 자료가 없어요.</p>';
+    tabs.querySelectorAll('[data-native-category]').forEach(button=>button.onclick=()=>{category=button.dataset.nativeCategory==='전체'?'':button.dataset.nativeCategory;paint();});
+    list.querySelectorAll('[data-native-file]').forEach(button=>button.onclick=()=>void choose(filtered.find(row=>row.id===button.dataset.nativeFile)));
+    void choose(filtered.find(row=>row.id===selected)||filtered[0]);
+  };
+  const load=async()=>{
+    const verified=session();
+    if(!active()||refresh.disabled)return;
+    if(!verified||verified.expires<=Date.now()){status.hidden=false;status.textContent='업무센터 Drive 연결을 확인해 주세요.';add.hidden=true;connect.hidden=currentUser!=='manager';return;}
+    refresh.disabled=true;status.hidden=false;status.textContent='Drive에서 불러오는 중…';
+    try{
+      const result=await readNativeDriveRows(menu,verified.token,account);
+      if(!active()||session()!==verified)return;
+      rows=(manual?result:result.rows).sort((a,b)=>String(b.modifiedTime||'').localeCompare(String(a.modifiedTime||'')));
+      status.hidden=manual||!result.incomplete;
+      if(!status.hidden)status.textContent='일부 자료를 불러오지 못했어요. 접근 권한을 확인하거나 새로고침해 주세요.';
+      add.hidden=verified.scope!==driveWriteScope;paint();
+    }catch(error){if(active())status.textContent=error.message||'자료를 불러오지 못했어요.';}
+    finally{refresh.disabled=false;}
+  };
+  refresh.onclick=load;search.oninput=paint;
+  add.onclick=()=>openNativeDriveAdd(menu,session(),active,async group=>{category=group;selected='';await load();});
+  if(currentUser==='manager'){
+    connect.hidden=!!session()&&session().expires>Date.now();
+    bindEmployeeDrive(async verified=>{managerDriveSession=verified;if(active()){connect.hidden=true;await load();}},driveWriteScope,'kfcyk20@gmail.com',account);
+  }
+  void load();
 }
 
 const adminLegacyOrigin='https://admin.wdwave.kr';
@@ -1119,11 +1262,6 @@ function prepareAdminFrame(frame,tab,token,account){
       #work-center-new>div:has(>#wcn-content-area){min-height:100vh!important}
       #work-center-new #wcn-content-area{padding:clamp(10px,2vw,24px)!important;min-width:0!important}
       #work-center-new .wcn-tab-content{max-width:100%!important}
-      #wcn-panel-manual .wm-head-actions a[href*="/drive/folders/"],#aa-drive-folder-link{display:none!important}
-      #wcn-panel-manual .wm-layout{grid-template-columns:repeat(2,minmax(0,1fr))}
-      #wcn-panel-manual .wm-reader-body{overflow-wrap:anywhere}
-      #wd95-add-manual{background:#6332d5;color:white;border-color:#6332d5}
-      @media(max-width:760px){#wcn-panel-manual .wm-layout{grid-template-columns:1fr}}
       #work-center-new .wcn-tab-content button[style*="background:#FBBF24"],#work-center-new .wcn-tab-content button[style*="background:#F59E0B"]{background:#6332d5!important;color:#fff!important}
       #work-center-new .wcn-tab-content input:focus-visible,#work-center-new .wcn-tab-content select:focus-visible,
       #work-center-new .wcn-tab-content textarea:focus-visible,#work-center-new .wcn-tab-content button:focus-visible{outline:2px solid #8055c9;outline-offset:2px}
@@ -1138,7 +1276,6 @@ function prepareAdminFrame(frame,tab,token,account){
   }
   target.wcSetAuthToken(token);
   target.wcnTabSwitch(tab);
-  if(tab==='manual')bindLegacyManualAdd(frame,doc);
   return section.style.display!=='none';
 }
 
@@ -1311,7 +1448,7 @@ async function checkEntryDrive(token){
 function workCenterEntry(){
   $('root').innerHTML=`<section class="login wd93-entry"><div class="loginCard"><span class="wd93-entry-icon">${sidebarIcon('drive')}</span>
     <h1>업무센터 Drive 연결</h1><p class="muted">회사 Google Drive와 실제 근무기록을 확인한 뒤 업무센터를 시작합니다.</p>
-    <ul><li>날짜별 업무지시 불러오기</li><li>업무공유파일 조회</li><li>기존 업무센터 근무기록 조회·저장</li></ul>
+    <ul><li>날짜별 업무지시 불러오기</li><li>업무공유파일·업무매뉴얼·작업결과 보관</li><li>기존 업무센터 근무기록 조회·저장</li></ul>
     <button class="primary" id="connectEmployeeDrive" type="button">Drive 연결 확인하고 시작</button>
     <p id="employeeDriveStatus" role="status" class="smallText"></p>
     <div class="wd93-entry-actions"><a href="./" target="_blank" rel="noopener">WD 본진 로그인 ↗</a><button type="button" class="small" id="exitWorkEntry">돌아가기</button></div></div></section>`;
@@ -2520,7 +2657,7 @@ function bindInstructionView(){
 function render(){clearTimeout(adminModuleTimer);if(!currentUser){loginView();return}
 if(realAttendanceProfile()&&!liveAttendanceReady){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
-let content=workspaceModuleAccount(S.nav)?legacyWorkspaceModuleView():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('adminLegacyModule'))bindAdminModule();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
+let content=drivePageAllowed(S.nav)?nativeDrivePage():workspaceModuleAccount(S.nav)?legacyWorkspaceModuleView():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('adminLegacyModule'))bindAdminModule();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
 }else if(currentUser==='manager'&&S.nav==='instructions'){bindInstructionView()}else if(S.nav==='dashboard'&&isEmployeeWorkspace()){bindEmployeeInstructions()}else if(S.nav==='dashboard'&&t){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=Number(b.dataset.tab);save();document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('primary',x===b))});document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));bindBoard(t)}else if(S.nav==='month'){bindTaskReports();bindAdminFilters();document.querySelectorAll('[data-staff-tasks]').forEach(b=>b.onclick=()=>{managerStaffId=b.dataset.staffTasks;staffTasksOpen=true;render()});if($('addTask'))$('addTask').onclick=()=>{setNav('instructions')}}else if(['drive','manual','archive'].includes(S.nav)){bindMaterials()}else if(S.nav==='reports'){bindReportButtons()}else if(S.nav==='ideas'){bindNotes()}document.querySelectorAll('[data-download]').forEach(x=>x.onclick=()=>downloadFile(x.dataset.download))}
 function bindEmployee(t){if($('saveDraft'))$('saveDraft').onclick=()=>{save();notify('수행 기록을 저장했습니다')}}
