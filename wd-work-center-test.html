@@ -565,6 +565,7 @@ function persistState(){
   storageVersion=value;
 }
 let currentUser=null, pickRole='employee', toastTimer;
+let hqAutoLoginBlocked=false,pinOnlyWorkspace=false,managerHqReady=false,hqStaffLoginId='';
 const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), nl=v=>esc(v).replace(/\n/g,'<br>'), now=()=>new Date().toLocaleString('ko-KR',{hour12:false}), save=()=>{let unit=null;if(currentUser==='employee'&&S.nav==='dashboard'){let day=S.tasks.find(d=>d.id===S.selected)||S.tasks[0];if(!isEmployeeWorkspace()&&day?.startedAt&&!day.showOverview){unit=boardTask(day);unit.draftSavedAt=now()}}try{persistState();if($('draftSaveStatus'))$('draftSaveStatus').textContent='자동저장됨 · '+(unit?.draftSavedAt||now())}catch(e){if($('draftSaveStatus'))$('draftSaveStatus').textContent='저장 실패 · 임시저장을 다시 눌러주세요';throw e}};
 function notify(msg){let n=document.createElement('div');n.className='toast';n.textContent=msg;document.body.append(n);setTimeout(()=>n.remove(),2800)}
 function status(t){if(t.parentId){let value=unitState(t);return value==='승인'?'업무 완료':value==='보완 요청'?'보완 요청':value==='제출됨'?'보고서 제출':'미제출'}let hasReports=dayReportCount(t)>0;if(!hasReports)return '미제출';let own=t.feedback.at(-1);if(own&&(own.totalReportCount!==undefined?own.totalReportCount===dayReportCount(t):(!own.reportCount||own.reportCount===t.reports.length))){if(own.decision==='approved')return '업무 완료';return '보완 요청'}let units=taskUnits(t),reviewed=units.map(u=>u.feedback.at(-1)).filter(f=>f&&f.dailyReportCount===t.reports.length);if(reviewed.some(f=>f.decision!=='approved'))return '보완 요청';if(units.length&&units.every(u=>{let f=u.feedback.at(-1);return f&&f.dailyReportCount===t.reports.length&&f.decision==='approved'}))return '업무 완료';return '보고서 제출'}
@@ -584,19 +585,17 @@ function loginView(){
     <form id="loginForm"><label for="pin">${setup?'새 관리자 비밀번호':'6자리 비밀번호'}</label>
     <div class="wd58-password"><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="${setup?'new-password':'current-password'}" placeholder="숫자 6자리" required>${passwordEye('showLoginPin','pin')}</div>
     <button class="primary" style="width:100%;margin-top:14px" id="enter">${setup?'비밀번호 설정 후 시작':'로그인'}</button></form>
-    ${manager?'':`<div class="wd103-hq-login"><button id="startWithWorkHq" type="button">본진 계정으로 시작</button>
-      <a href="./" target="_blank" rel="noopener">WD 본진 로그인 ↗</a><p class="smallText" role="status" id="startWorkHqStatus"></p></div>`}
-    <div class="warn">TEST 로그인입니다. 회사 자료는 본진 권한과 Google Drive 연결을 확인합니다.</div>
+
   </div></section>`;
-  document.querySelectorAll('[data-role]').forEach(el=>el.onclick=()=>{pickRole=el.dataset.role;loginView()});
+  document.querySelectorAll('[data-role]').forEach(el=>el.onclick=()=>{hqAutoLoginBlocked=true;pickRole=el.dataset.role;loginView()});
   passwordToggle('pin','showLoginPin');
   const hqStart=$('startWithWorkHq');
-  if(hqStart)hqStart.onclick=()=>loginWorkCenterFromHq(hqStart,$('startWorkHqStatus'));
+  if(!hqAutoLoginBlocked&&readHqToken())void loginWorkCenterFromHq($('loginForm'));
   $('loginForm').onsubmit=async event=>{
     event.preventDefault();
     const form=$('loginForm'), button=$('enter'), pin=$('pin').value;
     if(!/^\d{6}$/.test(pin))return notify('숫자 6자리를 입력하세요');
-    button.disabled=true;
+    hqAutoLoginBlocked=true;button.disabled=true;
     try{
       const digest=await sha(pin);
       if($('loginForm')!==form)return;
@@ -619,7 +618,7 @@ function loginView(){
       }else{
         const profile=S.staffProfiles.find(p=>!p.archivedAt&&p.pin===digest);
         if(!profile)return notify('관리자에게 받은 비밀번호를 확인하세요');
-        activeStaffId=profile.id;S=staffWorkspace(profile.id);currentUser='employee';
+        activeStaffId=profile.id;S=staffWorkspace(profile.id);pinOnlyWorkspace=true;currentUser='employee';
       }
       render();
     }catch(e){notify('로그인 정보를 저장하거나 확인하지 못했습니다. 새로고침 후 다시 시도하세요.');}
@@ -637,15 +636,20 @@ function logout(){
   employeeReportDate=null;attendanceRecordDay=null;editingAttendanceTime=null;materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
   S=migrateStaffState(load());
   storageVersion=localStorage.getItem(KEY);
+  hqAutoLoginBlocked=true;pinOnlyWorkspace=false;managerHqReady=false;hqStaffLoginId='';
   pickRole='employee';render();
 }
 window.addEventListener('storage',event=>{
   if(event.key===KEY&&event.newValue!==storageVersion){location.reload();return;}
-  if(staffCloudGrant&&((event.key==='wd_current_uid'&&event.newValue!==staffCloudGrant.login_id)||(event.key==='wd-admin-auth-v1'&&!event.newValue))){
+  if((hqStaffLoginId||staffCloudGrant)&&((event.key==='wd_current_uid'&&event.newValue!==(hqStaffLoginId||staffCloudGrant.login_id))||(event.key==='wd-admin-auth-v1'&&!event.newValue))){
     logout();return;
   }
   if(currentUser==='manager'&&((event.key==='wd_current_uid'&&event.newValue!==managerHqAccount.uid)||(event.key==='wd-admin-auth-v1'&&!event.newValue))){
+    if(managerHqReady){logout();return;}
     managerDriveSession=null;driveConnectGeneration++;render();return;
+  }
+  if(event.key==='wd-admin-auth-v1'&&event.newValue&&!currentUser&&!hqAutoLoginBlocked&&$('loginForm')){
+    void loginWorkCenterFromHq($('loginForm'));return;
   }
   if(event.key==='wd-admin-auth-v1'&&event.newValue&&currentUser==='manager'&&$('employeeHqRecovery')){
     $('connectEmployeeDrive')?.refreshOwnerSession?.();
@@ -840,7 +844,7 @@ const driveAccountByEmployee={'박수진':'woori08944@gmail.com','수진':'woori
 const driveReadScope='https://www.googleapis.com/auth/drive.readonly';
 const driveFileApi='https://www.googleapis.com/drive/v3/files';
 let employeeDrive=null,driveScript=null,driveConnectGeneration=0;
-const expectedEmployeeDriveAccount=()=>isEmployeeWorkspace()&&Object.hasOwn(driveAccountByEmployee,staffName())?driveAccountByEmployee[staffName()]:null;
+const expectedEmployeeDriveAccount=()=>!pinOnlyWorkspace&&isEmployeeWorkspace()?(hqStaffLoginId===legacyStaffHqLogin?staffCloudGrant?.google_email||driveAccountByEmployee['박수진']:Object.hasOwn(driveAccountByEmployee,staffName())?driveAccountByEmployee[staffName()]:null):null;
 const driveFileUrl=id=>'https://drive.google.com/open?id='+encodeURIComponent(id);
 const safeDriveId=id=>typeof id==='string'&&/^[A-Za-z0-9_-]+$/.test(id);
 
@@ -1077,6 +1081,7 @@ function employeeInstructions(){
   const shared=S.materials.filter(item=>item.kind==='shared'&&!item.deletedAt&&item.category!=='manual');
   const order=task&&!task.dailyJournal?task:tasks[0];
   const supportsDrive=!!expectedEmployeeDriveAccount();
+  const driveReady=employeeDrive?.expires>Date.now();
   const editable=!task||['미제출','보완 요청'].includes(status(task));
   return `<div class="titleRow wd91-report-title"><div><h1>업무보고</h1><p class="smallText">업무지시와 공유파일을 확인하고 업무보고를 남기세요.</p></div>
     <div class="wd91-report-controls"><label>보는 날짜<input type="date" id="employeeReportDate" value="${esc(date)}"></label>
@@ -1091,8 +1096,8 @@ function employeeInstructions(){
           <div id="employeeOrderLargeText" class="wd92-order-large" tabindex="0"></div>
         </dialog>
       </section>
-      <section class="card wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2>${supportsDrive?`<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>`:''}</div>
-        ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">공유파일을 불러오는 중…</p>
+      <section class="card wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2>${supportsDrive?`<button type="button" class="small" id="${driveReady?'refreshEmployeeDrive':'connectEmployeeDrive'}">${driveReady?'새로고침':'Drive 연결'}</button>`:''}</div>
+        ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 회사 Drive를 연결해 주세요.'}</p>
         `:'<p class="smallText">TEST에서 회사가 공유한 파일이에요.</p>'}
         <div class="wd97-share-scroll" tabindex="0" role="region" aria-label="업무공유파일 목록">
         ${supportsDrive?'<div id="employeeDriveFiles"></div>':''}
@@ -1126,7 +1131,13 @@ function bindEmployeeInstructions(){
     $('employeeOrderDialog').showModal();
   };
   if($('downloadEmployeeReport'))$('downloadEmployeeReport').onclick=()=>downloadEmployeeReport(context.task);
-  bindReportDriveRefresh(context.date);
+  if($('connectEmployeeDrive')){
+    bindEmployeeDrive(async(session,stillCurrent)=>{
+      await checkEntryDrive(session.token);
+      if(!stillCurrent())return;
+      employeeDrive=session;render();
+    });
+  }else bindReportDriveRefresh(context.date);
   if(!form)return;
   $('saveEmployeeDraft').onclick=()=>{
     const prior=S.journalDrafts;
@@ -1204,7 +1215,7 @@ const managerDriveAccount='kfcyk20@gmail.com';
 function workspaceModuleAccount(menu){
   if(!drivePageMenus.has(menu)||!workspaceMenus().some(([id])=>id===menu))return null;
   if(currentUser==='manager')return managerHqAccount;
-  if(staffCloudGrant?.enabled&&drivePageMenus.has(menu)&&employeeDrive)return {uid:staffCloudGrant.login_id,role:staffCloudGrant.access_role};
+  if(staffCloudGrant?.enabled&&drivePageMenus.has(menu))return {uid:staffCloudGrant.login_id,role:staffCloudGrant.access_role};
   if(currentUser==='employee'&&isEmployeeWorkspace()&&liveAttendanceReady&&realAttendanceProfile())return {uid:'kfcyk30',role:'ops_lead'};
   return null;
 }
@@ -1234,7 +1245,7 @@ const driveWriteScope='https://www.googleapis.com/auth/drive';
 const workCenterAccessTable='wd_work_center_test_access';
 const legacyStaffHqLogin='kfcyk30';
 let staffCloudGrant=null,managerCloudGrants=new Map();
-const isLegacyStaff=()=>staffCloudGrant?staffCloudGrant.login_id===legacyStaffHqLogin:!!expectedEmployeeDriveAccount();
+const isLegacyStaff=()=>hqStaffLoginId?hqStaffLoginId===legacyStaffHqLogin:staffCloudGrant?staffCloudGrant.login_id===legacyStaffHqLogin:!!expectedEmployeeDriveAccount();
 const workspaceDriveAccount=()=>staffCloudGrant?.enabled?staffCloudGrant.google_email:expectedEmployeeDriveAccount();
 function applyWorkCenterGrant(profile,grant,forManager=false){
   return {...profile,id:grant.staff_key,name:grant.display_name,
@@ -1299,33 +1310,83 @@ async function refreshWorkCenterGrant(menu,action){
   }
   if(action&&!libraryCan(menu,action))throw new Error('관리자가 이 작업의 권한을 변경했어요.');
 }
-async function loginWorkCenterFromHq(button,status){
-  button.disabled=true;status.textContent='본진 계정과 업무센터 권한을 확인하는 중…';
+async function readWorkCenterHqIdentity(token){
+  const headers={apikey:adminAuthPublic,Authorization:'Bearer '+token};
+  const options={headers,cache:'no-store',signal:AbortSignal.timeout(8000)};
+  const response=await fetch(adminAuthBase+'/auth/v1/user',options);
+  if(!response.ok){const error=hqLoginError();error.status=response.status;throw error;}
+  const user=await response.json();
+  if(!user.id)throw hqLoginError();
+  const query=new URLSearchParams({select:'user_id,login_id,staff_role,is_active',user_id:'eq.'+user.id,limit:'1'});
+  const profile=await fetch(adminAuthBase+'/rest/v1/wd_staff_profiles?'+query,options);
+  if(!profile.ok)throw hqLoginError();
+  const [identity]=await profile.json();
+  if(identity?.user_id!==user.id||!identity.login_id||identity.is_active!==true||
+    user.email?.toLowerCase()!==identity.login_id+'@admin.wdwave.kr')throw hqLoginError();
+  return identity;
+}
+
+function legacyHqStaffProfile(){
+  const matches=S.staffProfiles.filter(profile=>profile.workType==='employee'&&Object.hasOwn(driveAccountByEmployee,profile.name));
+  if(matches.length>1)throw new Error('수진님 직원 정보가 여러 개 있어요. 관리자에게 연결을 확인해 주세요.');
+  const profile=matches[0]||staffById('sujin');
+  if(profile&&(!Object.hasOwn(driveAccountByEmployee,profile.name)||profile.workType!=='employee'))
+    throw new Error('수진님 직원 정보가 연결되지 않았어요. 관리자에게 확인해 주세요.');
+  return profile||{id:'sujin',name:'박수진',workType:'employee'};
+}
+
+async function loginWorkCenterFromHq(form){
+  if(form.checkingHqSession||currentUser||hqAutoLoginBlocked)return;
+  form.checkingHqSession=true;
+  const current=()=>form.isConnected&&!currentUser&&!hqAutoLoginBlocked;
+  const sameSession=(token,identity)=>token===readHqToken()||readHqSession()?.user?.id===identity.user_id;
   try{
-    const token=await attendanceHqToken();
+    let token=await attendanceHqToken(),identity;
     if(!token)throw hqLoginError();
-    const query=new URLSearchParams({select:'login_id',limit:'1'});
-    const response=await fetch(adminAuthBase+'/rest/v1/wd_staff_profiles?'+query,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},cache:'no-store',signal:AbortSignal.timeout(8000)});
-    if(!response.ok)throw hqLoginError();
-    const [identity]=await response.json();
-    if(!identity?.login_id)throw hqLoginError();
+    try{identity=await readWorkCenterHqIdentity(token);}
+    catch(error){
+      if(error.status!==401)throw error;
+      const refreshed=await attendanceHqToken(token);
+      if(!refreshed)throw error;
+      token=refreshed;identity=await readWorkCenterHqIdentity(token);
+    }
+    if(!current()||!sameSession(token,identity))return;
+    if(identity.login_id===managerHqAccount.uid&&identity.staff_role===managerHqAccount.role){
+      await loadWorkCenterManagerGrants(()=>current()&&sameSession(token,identity));
+      if(!current()||!sameSession(token,identity))return;
+      managerHqReady=true;currentUser='manager';S.nav='managerHome';render();return;
+    }
     const grant=await workCenterAccessFor(identity.login_id,token);
-    if(!grant?.enabled)throw new Error('관리자에게 업무센터 권한을 받아 주세요.');
-    if(!button.isConnected||currentUser||pickRole!=='employee')return;
-    const original=S.staffProfiles;
-    const existing=staffById(grant.staff_key);
+    const legacy=identity.login_id===legacyStaffHqLogin&&identity.staff_role==='ops_lead';
+    if(grant?.enabled!==true&&(grant||!legacy))throw new Error('업무센터 권한이 설정되지 않았어요. 직원·스탭 비밀번호로 로그인하거나 관리자에게 확인해 주세요.');
+    if(!current()||!sameSession(token,identity))return;
+    const existing=grant?staffById(grant.staff_key):legacyHqStaffProfile();
     if(existing?.archivedAt)throw new Error('관리자에게 업무센터 계정 상태를 확인해 주세요.');
-    const profile=applyWorkCenterGrant(existing||{},grant);
-    if(!existing){
-      S.staffProfiles=[...original,profile];
+    const profile=grant?applyWorkCenterGrant(existing||{},grant):existing;
+    const month=attendanceMonth;
+    let attendanceRows=null;
+    if(legacy){
+      try{attendanceRows=await readAttendanceMonth(month);}
+      catch{/* Enter with attendance loading; the attendance view retries the read. */}
+    }
+    if(!current()||!sameSession(token,identity))return;
+    const original=S.staffProfiles;
+    if(!staffById(profile.id))S.staffProfiles=[...original,profile];
+    if(!storageVersion||S.staffProfiles!==original){
       try{persistState();}catch(error){S.staffProfiles=original;throw error;}
     }
     const workspace=staffWorkspace(profile.id);
-    workspace.staffProfiles[0]=applyWorkCenterGrant(workspace.staffProfiles[0],grant);
+    if(grant)workspace.staffProfiles[0]=applyWorkCenterGrant(workspace.staffProfiles[0],grant);
     if(profileMenus(workspace.staffProfiles[0]).includes('payroll')&&existing?.payslips)workspace.staffProfiles[0].payslips=existing.payslips;
-    activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;render();
-  }catch(error){if(button.isConnected)status.textContent=error.message||'본진 연결을 확인하지 못했어요.';}
-  finally{button.disabled=false;}
+    activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;hqStaffLoginId=identity.login_id;pinOnlyWorkspace=false;
+    if(legacy){
+      liveAttendanceReady=true;
+      if(attendanceRows)liveAttendanceMonths.set(month,attendanceRows);
+    }
+    render();
+  }catch{
+    // Keep the existing PIN form available if there is no eligible HQ session.
+  }finally{form.checkingHqSession=false;}
 }
 
 const workArchiveFolders=[
@@ -2771,7 +2832,7 @@ function staffProfileSummary(profile){
     ['급여은행',bank],['계좌번호',account?(account.length>4?'•••• '+account.slice(-4):'등록됨'):'']
   ];
   return `<dl class="wd58-profile-data">${fields.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value||'미등록')}</dd></div>`).join('')}
-    <div><dt>로그인 비밀번호</dt><dd class="wd59-pin-display">${profile.pin?`<span id="savedStaffPin">••••••</span>${passwordEye('showSavedStaffPin','savedStaffPin')}`:'미등록'}</dd></div>
+    <div><dt>로그인 비밀번호</dt><dd class="wd59-pin-display">${profile.pin?`<span id="savedStaffPin">••••••</span>${managerStaffPinKey?passwordEye('showSavedStaffPin','savedStaffPin'):''}`:'미등록'}</dd></div>
     </dl>${profile.role?`<p class="smallText">담당 업무 · ${esc(profile.role)}</p>`:''}${profile.memo?`<details class="wd58-note"><summary>관리 메모</summary><p>${nl(profile.memo)}</p></details>`:''}`;
 }
 
@@ -3019,7 +3080,7 @@ function bindStaffManagement(){
         const digest=pin?await sha(pin):profile?.pin;
         if(currentUser!=='manager'||$('staffProfileForm')!==form)return;
         if(digest&&(S.pins.manager===digest||S.staffProfiles.some(p=>p.id!==(profile?.id||draftStaffKey)&&!p.archivedAt&&p.pin===digest)))return notify('이미 사용 중인 비밀번호입니다. 다른 숫자 6자리를 입력하세요');
-        const pinCipher=pin?await encryptStaffPin(pin):profile?.pinCipher;
+        const pinCipher=pin?(managerStaffPinKey?await encryptStaffPin(pin):undefined):profile?.pinCipher;
         if(currentUser!=='manager'||$('staffProfileForm')!==form)return;
         const next={...profile,...fields,id:profile?.id||(draftStaffKey??='staff_'+crypto.randomUUID()),pin:digest,pinCipher};
         if(!profile)next.visibleMenus=[];
@@ -3430,8 +3491,7 @@ function bindInstructionView(){
 }
 
 function render(){releaseNativeDrivePreview();if(!currentUser){loginView();return}
-if((currentUser==='manager'&&!managerDriveSession)||(realAttendanceProfile()&&!liveAttendanceReady)||
-  (staffCloudGrant?.visible_menus.some(menu=>drivePageMenus.has(menu))&&!employeeDrive)){workCenterEntry();return;}
+if((currentUser==='manager'&&!managerHqReady&&!managerDriveSession)||(realAttendanceProfile()&&!liveAttendanceReady)){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
 let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?reviewView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>setNav(x.dataset.nav));document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('nativeAdminData'))bindNativeAdminView();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome()}else if(currentUser==='manager'&&S.nav==='review'){bindReviewView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
