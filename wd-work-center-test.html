@@ -1310,7 +1310,7 @@ function instructionGroups(d){
 }
 
 function instructionPreview(d,simple){
-  if(!d?.analysis)return '<p class="wd68-empty">GPT 답변을 불러오면 여기에 업무지시가 표시돼요.</p>';
+  if(!d?.analysis)return '<p class="wd68-empty">GPT로 업무지시를 만들면 여기에 담당자가 볼 내용이 표시돼요.</p>';
   return instructionGroups(d).map(([date,items])=>`<article class="wd75-sheet wd71-simple-work">
     <div class="eyebrow">${date?esc(attendanceDate(date)):'배정일 선택 필요'}</div>
     <h3>${esc(d.analysis.goal||'목표 입력 필요')}</h3>
@@ -1324,7 +1324,7 @@ function instructionPreview(d,simple){
 const instructionStepFields=[['title','단계 이름'],['method','진행 방법'],['recordFormat','정리 형식'],['evidence','남길 자료']];
 
 function instructionEditor(d,simple){
-  return `<details class="instruction-step wd75-edit"><summary>초안 수정</summary>
+  return `<details class="instruction-step wd75-edit"><summary>업무지시 수정</summary>
     <label for="instructionGoal">오늘의 목표</label><input id="instructionGoal" value="${esc(d.analysis.goal)}">
     ${d.analysis.items.map((item,i)=>`<details class="instruction-step"><summary id="instructionItemLabel${i}">${i+1}. ${esc(item.text)}</summary>
       <label for="instructionItem${i}">할 일</label><textarea id="instructionItem${i}" rows="2">${esc(item.text)}</textarea>
@@ -1351,7 +1351,7 @@ function instructionView(){
         ${d?`<label for="instructionDate">기본 배정일</label><input id="instructionDate" type="date" value="${esc(d.date)}">
         <label for="instructionInput">할 일을 말하듯 적어주세요</label>
         <textarea id="instructionInput" maxlength="4000" rows="5" placeholder="예) 우리 회사 유튜브 현황을 정리하고, 참고 채널과 비교해서 한 달 콘텐츠 계획을 만들어줘.">${esc(d.raw)}</textarea>
-        <div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating?'disabled':''}>GPT로 초안 만들기</button></div>
+        <div class="actions"><button id="generateInstruction" class="primary" type="button" ${d.generating?'disabled':''}>GPT로 업무지시 만들기</button></div>
         <p id="instructionAiStatus" class="smallText" role="status">${d.generating?'GPT가 업무지시를 정리하고 있어요.':''}</p>
         <details class="instruction-step"><summary>GPT 답변 직접 불러오기</summary>
         <div class="actions"><button id="copyPlanningPrompt" type="button">GPT 요청문 복사</button></div>
@@ -1365,10 +1365,11 @@ function instructionView(){
           </tbody></table></div></details>`:''}`:`<p class="wd68-empty">${profiles.length?'위에서 업무를 배정할 사람을 먼저 선택하세요.':'직원·스탭을 등록한 뒤 업무를 배정하세요.'}</p>`}
       </section>
       <section class="card"><h2>${profile?esc(profile.name)+' 님이 볼 업무지시':'받는 사람 화면 미리보기'}</h2>
-        <p class="smallText">${profile?(simple?'직원 · 내 업무':'스탭 · 업무진행판'):'업무지시를 불러온 뒤 확인하고 배정하세요.'}</p>
+        <p class="smallText">${profile?(simple?'직원 · 내 업무':'스탭 · 업무진행판'):'담당자가 받을 업무지시를 확인하고 배정하세요.'}</p>
         <div id="instructionPreview" class="wd75-preview" tabindex="-1">${instructionPreview(d,simple)}</div>
-        ${d?.analysis?`${instructionEditor(d,simple)}
-          <div class="wd75-action"><button id="assignInstruction" class="primary" type="button">확인하고 배정</button></div>`:''}
+        ${d?.analysis?`<p class="smallText">내용을 확인하고 필요한 부분을 수정한 뒤 배정하세요.</p>
+          ${instructionEditor(d,simple)}
+          <div class="wd75-action"><button id="assignInstruction" class="primary" type="button">업무지시 배정하기</button></div>`:''}
       </section>
     </div>`;
 }
@@ -1397,9 +1398,9 @@ async function generateInstructionDraft(d,simple){
       if(result.status===404)throw new Error('업무지시 GPT 연결이 아직 배포되지 않았어요.');
       throw new Error(payload?.error||'GPT 연결을 확인해 주세요.');
     }
-    if(!payload?.draft?.goal||!Array.isArray(payload.draft.items)||!payload.draft.items.length)throw new Error('GPT가 반환한 초안을 확인하지 못했어요.');
+    if(!payload?.draft?.goal||!Array.isArray(payload.draft.items)||!payload.draft.items.length)throw new Error('GPT가 만든 업무지시를 확인하지 못했어요.');
     if(currentUser!=='manager'||instructionDrafts.get(d.staffId)!==d)return;
-    if(d.raw.trim()!==request||JSON.stringify(d.analysis)!==previous)throw new Error('요청이나 초안이 바뀌었어요. 새 내용으로 다시 만들어 주세요.');
+    if(d.raw.trim()!==request||JSON.stringify(d.analysis)!==previous)throw new Error('요청이나 업무지시가 바뀌었어요. 새 내용으로 다시 만들어 주세요.');
     d.analysis=payload.draft;
     d.generating=false;
     if($('generateInstruction')&&managerStaffId===d.staffId){
@@ -1458,7 +1459,7 @@ function bindInstructionView(){
   });
   $('assignInstruction').onclick=()=>{
     const profile=staffById(d.staffId),goal=d.analysis.goal.trim();
-    if(d.generating)return notify('GPT 초안이 완성된 뒤 확인하고 배정하세요');
+    if(d.generating)return notify('GPT가 업무지시를 만든 뒤 확인하고 배정하세요');
     if(!profile||profile.archivedAt||managerStaffId!==d.staffId)return notify('배정할 사람을 다시 선택하세요');
     if(!goal)return notify('오늘의 목표를 입력하세요');
     const groups=instructionGroups(d);
@@ -1472,7 +1473,7 @@ function bindInstructionView(){
       return {id:'task'+batch+'_'+i,staffId:d.staffId,simpleInstruction:simple,date,title:goal,objective:goal,guide:'',references:[],ack:null,work:{},reports:[],feedback:[],todos};
     });
     S.tasks=[...prior,...tasks];
-    try{save();}catch(e){S.tasks=prior;return notify('저장에 실패했습니다. 초안은 남아 있습니다.');}
+    try{save();}catch(e){S.tasks=prior;return notify('배정에 실패했어요. 작성한 업무지시는 남아 있어요.');}
     instructionDrafts.delete(d.staffId);render();notify(profile.name+' 님에게 업무를 배정했습니다');
   };
 }
