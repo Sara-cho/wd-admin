@@ -11415,6 +11415,11 @@ setInterval(function(){
     var data=await (await api(url,{method:'GET'})).json(),files=data.files||[];
     if(role){
       files=files.filter(function(file){return journalOwnerMatches(file,role)&&journalFileDate(file.name,role)===date});
+      if(!files.length&&role.uid==='kfcyk30'){
+        var history=await listJournalHistory();
+        var entry=history.find(function(row){return row.date===date});
+        return entry?entry.file:null;
+      }
     }
     return files.find(function(file){return file.mimeType==='application/vnd.google-apps.document'})||files[0]||null;
   }
