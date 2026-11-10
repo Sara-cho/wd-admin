@@ -10691,15 +10691,12 @@ const wdTest09Storage = (() => {
         <p>보험설계사의 디지털 사무실</p>
       </header>
       <div class="wd09-auth-intro">
-        <h2>보험전산 계정으로 접속해 주세요</h2>
+        <h2>사번과 비밀번호로 접속해 주세요</h2>
         <p>안전하고 편리한 디지털 보험 업무실에 오신 것을 환영합니다.</p>
       </div>
       <form class="wd09-auth-form" id="wd09-auth-form">
         <label class="wd09-auth-field" for="wd09-auth-id">사번 / 아이디
           <input id="wd09-auth-id" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="사번 입력" maxlength="12" required>
-        </label>
-        <label class="wd09-auth-field" for="wd09-auth-email">등록된 이메일
-          <input id="wd09-auth-email" type="email" autocomplete="email" placeholder="보험전산에 등록된 이메일" required>
         </label>
         <label class="wd09-auth-field" for="wd09-auth-password">비밀번호
           <input id="wd09-auth-password" type="password" autocomplete="current-password" placeholder="비밀번호 입력" required>
@@ -32552,12 +32549,11 @@ function openDesignProgressModal(){
     event.preventDefault();
     if (authenticating || active) return;
     const uid = byId('wd09-auth-id').value.trim().toUpperCase();
-    const email = byId('wd09-auth-email').value.trim();
     const password = byId('wd09-auth-password').value;
-    const config = SUPABASE_CONFIG_BY_UID[uid];
+    const config = Object.hasOwn(SUPABASE_CONFIG_BY_UID,uid) && SUPABASE_CONFIG_BY_UID[uid];
     if (!config) { status.textContent='등록된 사번을 확인해 주세요.'; return; }
     if (window.location.protocol!=='https:' || !window.supabase?.createClient || !crypto.subtle) {
-      status.textContent='실제 로그인은 HTTPS로 배포한 9번 TEST에서 사용할 수 있어요.';
+      status.textContent='이 파일에서는 화면을 미리 볼 수 있어요. 실제 로그인은 연결된 9번 TEST에서 가능합니다.';
       return;
     }
 
@@ -32566,7 +32562,6 @@ function openDesignProgressModal(){
     status.textContent = '로그인과 자료 권한을 확인하는 중이에요.';
     const attempt = {verified:false,client:null};
     try {
-      if (await fingerprint(email)!==config.emailHash) throw new Error('이 사번에 등록된 이메일을 확인해 주세요.');
       attempt.client = window.supabase.createClient(config.url,config.key,{
         auth:{
           persistSession:false, autoRefreshToken:true, detectSessionInUrl:false,
@@ -32574,9 +32569,24 @@ function openDesignProgressModal(){
         },
         global:{fetch:ownedFetch(config,uid,()=>attempt.verified && active===attempt)}
       });
-      const logged = await attempt.client.auth.signInWithPassword({email,password});
+      const loginUrl = new URL('/functions/v1/wd09-employee-login',config.url);
+      const response = await fetch(loginUrl,{
+        method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
+        body:JSON.stringify({employee_id:uid,password}),
+        cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(12000)
+      }).catch(()=>null);
+      if (response?.status===429) throw new Error('로그인 시도가 많아요. 잠시 뒤 다시 시도해 주세요.');
+      if (response?.status===401) throw new Error('사번과 비밀번호를 확인해 주세요.');
+      if (!response?.ok) throw new Error('사번 로그인 연결을 확인해 주세요. 잠시 뒤 다시 시도할 수 있어요.');
+
+      const {access_token,refresh_token} = await response.json();
+      if (typeof access_token!=='string' || !access_token ||
+          typeof refresh_token!=='string' || !refresh_token) {
+        throw new Error('로그인 세션을 확인하지 못했어요.');
+      }
+      const logged = await attempt.client.auth.setSession({access_token,refresh_token});
       if (logged.error || !logged.data?.session?.access_token || !logged.data?.user?.id) {
-        throw new Error('이메일과 비밀번호를 확인해 주세요.');
+        throw new Error('로그인 세션을 확인하지 못했어요.');
       }
       const verified = await attempt.client.auth.getUser();
       const user = verified.data?.user;
@@ -32597,7 +32607,6 @@ function openDesignProgressModal(){
         }
       });
       byId('wd09-auth-password').value = '';
-      byId('wd09-auth-email').value = '';
       byId('wd09-google-connect').hidden = uid!=='WD23000';
       if (uid!=='WD23000') {
         byId('wd09-google-events').textContent='구글 일정은 지점장 계정에서 사용합니다.';
