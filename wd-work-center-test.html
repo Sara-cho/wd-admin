@@ -59,6 +59,11 @@
 .wd135-work-layout .wd19-print{max-width:none;padding:8px 0}
 .wd123-review-actions{margin-bottom:8px}
 .wd135-home-scroll,.wd135-home-shared #managerDriveRows{max-height:240px;overflow:auto}
+.titleRow.wd145-drive-title{align-items:center;flex-wrap:wrap}
+.wd145-drive-shortcut{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-inline-start:auto;padding:8px 14px;border:1px solid #e7b835;border-radius:9px;background:#ffe179;color:#3c2a00;text-decoration:none;font-size:14px;font-weight:700;line-height:1.35}
+.wd145-drive-shortcut:hover{background:#ffd85c;color:#3c2a00}
+.wd145-drive-shortcut:focus-visible{outline:2px solid #765200;outline-offset:3px}
+.wd145-drive-shortcut svg{flex:none}
 .wd135-home-folder{display:inline-block;margin-top:10px;font-size:13px}
 .wd91-report-grid.wd138-instruction-only{grid-template-columns:minmax(0,1fr)}
 .wd138-remote-order{margin-top:14px;padding-top:12px;border-top:1px solid #e8dff2}
@@ -4685,12 +4690,25 @@ function reportStaffProfiles(){
   return S.staffProfiles.filter(profile=>!profile.hiddenAt||staffWorkDriveFolders(profile));
 }
 
+function workDriveTitle(title,folder){
+  return `<div class="titleRow wd145-drive-title"><h1>${esc(title)}</h1>
+    <a class="wd145-drive-shortcut" href="https://drive.google.com/drive/folders/${esc(folder)}" target="_blank" rel="noopener noreferrer"
+      aria-label="${esc(title)} Google Drive 바로가기 (새 탭)">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="#0F9D58" d="M8 3 12 10 5 22 1 15Z"/>
+        <path fill="#4285F4" d="M9 15h14l-4 7H5Z"/>
+        <path fill="#F4B400" d="M8 3h8l7 12h-8Z"/>
+      </svg><span>${esc(title)} Drive 바로가기</span>
+    </a>
+  </div>`;
+}
+
 function workReportView(){
   const profiles=reportStaffProfiles();
   const calendar=`<details class="wd123-calendar-pop"><summary id="reportCalendarButton" aria-label="제출 달력" title="제출 달력">
     <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/></svg>
     </summary><div id="driveReportCalendar"></div></details>`;
-  return `<div class="titleRow"><h1>업무보고</h1></div>
+  return `${workDriveTitle('업무보고',employeeDriveFolders.journal)}
     <div class="wd135-work-layout">
       ${staffRosterPanel('driveReportStaff',profiles,driveReportFilters.staff,'report')}
       <section class="card" aria-labelledby="reportListTitle">
@@ -6425,7 +6443,7 @@ function bindSimpleInstruction(profile){
 function instructionView(){
   const profiles=activeProfiles();
   const profile=profiles.find(person=>person.id===instructionStaffId);
-  return `<div class="titleRow"><h1>업무지시</h1></div>
+  return `${workDriveTitle('업무지시',employeeDriveFolders.instruction)}
     <div class="wd135-work-layout">
       ${staffRosterPanel('instructionStaff',profiles,instructionStaffId,'instruction')}
       <section class="card" id="simpleInstructionHistory" aria-labelledby="assignedWorkTitle">
