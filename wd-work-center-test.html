@@ -843,7 +843,25 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd119-recipient-control select:focus-visible{outline:3px solid #7042c4;outline-offset:3px}
 .wd119-recipient-control select:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:760px){.wd119-recipient{grid-template-columns:minmax(0,1fr);gap:12px;padding:16px}.wd119-recipient-control select{min-height:52px}}
-</style></head><body><div id="root"></div><script>
+</style><style>
+.wd135-work-layout.wd149-employee-work{grid-template-columns:minmax(180px,1.48fr) minmax(0,2.47fr)}
+.wd149-employee-work>section:last-child{grid-column:auto}
+.wd149-employee-work input[type=date]{margin-bottom:12px}
+.wd149-work-dates{display:grid;align-content:start;gap:8px}
+.wd149-work-detail{margin-top:14px;padding:12px;background:#f5f2f8;border-radius:10px}
+.wd149-work-detail .wd133-instruction-paper{max-width:none;padding:clamp(14px,3vw,28px)}
+.wd149-work-detail .wd133-instruction-paper-head h3{margin:0;line-height:1.4}
+.wd149-work-detail .wd92-order-body{max-height:none;overflow:visible;background:white}
+.wd149-work-detail .wd97-order-scroll,.wd149-work-detail .wd97-share-scroll{overflow:visible}
+.wd149-report-reference{margin-top:12px;padding:14px;background:white;border:1px solid #e8dff2;border-radius:10px}
+.wd149-report-reference summary{cursor:pointer;font-weight:650}
+.wd149-report-reference section{margin-top:14px}
+.wd149-report-paper textarea{min-height:245px}
+@media(max-width:720px){
+  .wd135-work-layout.wd149-employee-work{grid-template-columns:minmax(0,1fr);grid-template-rows:260px minmax(420px,68vh)}
+}
+</style>
+</head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
 const defaults=[['2026-11-09','회사 이해 · SNS 조사','WD WAVE의 서비스와 주요 고객을 파악하고, 인스타그램·Threads 운영에 참고할 계정 5개 이상을 조사하세요.','회사 홈페이지·소개서·기존 홍보자료를 확인하세요. 두 SNS의 차이를 살피고, 관련 계정 5개 이상을 조사하여 출처·선정 이유·캡처를 남기세요.','조사기록과 핵심 발견사항'],['2026-11-11','SNS 마케팅 전략 제안','월요일 조사 내용을 바탕으로 WD WAVE의 인스타그램·스레드 홍보전략을 수립하세요.','채널별 목표·고객·운영방식·콘텐츠 유형을 제안하고 다른 방법과 비교한 근거를 작성하세요.','SNS 마케팅 전략 제안서'],['2026-11-16','첫 콘텐츠 기획 · 제작','승인된 전략을 바탕으로 인스타그램과 스레드용 콘텐츠를 기획하고 제작하세요.','형식은 스스로 선택합니다. 선택한 형식의 이유와 예상 효과를 설명하세요. 공개 전 승인받으세요.','채널별 제작물 1건씩'],['2026-11-18','콘텐츠 수정 · 게시 준비','제작물 피드백을 반영하고 채널별 게시를 준비하세요.','검토받은 결과물을 수정하여 제출하세요. 공개는 별도의 대표 승인 후 진행합니다.','게시 준비물·증빙'],['2026-11-23','실무 기록 정리','그동안 수행한 조사·제작 과정을 정리하고 누락된 근거를 보완하세요.','출처·선택 과정·제작 기록과 실제 수행 결과를 연결하세요. 성과분석은 이번 과제 범위 밖입니다.','업무 수행기록'],['2026-11-25','3주 종합보고 · 발표','3주 동안 맡은 업무와 과정을 종합하여 보고서를 제출하세요.','배운 점과 어려웠던 점, 직접 해결한 방법을 정리하여 보고하세요.','실무 종합보고서']];
@@ -1352,11 +1370,13 @@ async function readAllEmployeeDriveFiles(folder,token,filter='',fields){
 }
 
 async function employeeDriveInstructionFiles(date,token){
-  if(!validAttendanceDay(date))return [];
-  const shortDate=date.slice(2).replaceAll('-','');
-  const files=await readAllEmployeeDriveFiles(employeeDriveFolders.instruction,token,
-    " and (name contains '"+date+"_' or name contains '"+shortDate+"_')",'id,name,mimeType,appProperties');
-  return files.filter(item=>item.appProperties?.wdInstructionState!=='cancelled'&&workDriveDate(item.name)===date&&
+  if(date!==null&&!validAttendanceDay(date))return [];
+  const shortDate=date?.slice(2).replaceAll('-','');
+  const filter=date?" and (name contains '"+date+"_' or name contains '"+shortDate+"_')":
+    " and mimeType != 'application/vnd.google-apps.folder'";
+  const files=await readAllEmployeeDriveFiles(employeeDriveFolders.instruction,token,filter,'id,name,mimeType,appProperties');
+  return files.filter(item=>item.appProperties?.wdInstructionState!=='cancelled'&&
+    (date===null?validAttendanceDay(workDriveDate(item.name)):workDriveDate(item.name)===date)&&
     /(?:^\d{4}-\d{2}-\d{2}_수진업무지시|→(?:수진|박수진)_업무지시)(?:\.txt)?$/.test(item.name||''));
 }
 
@@ -1581,15 +1601,23 @@ function employeeReportContext(instructionOnly=false){
   const journal=S.tasks.find(task=>task.date===date&&task.dailyJournal);
   const journalKey='journal:'+date;
   const journalAvailable=!!(journal||S.journalDrafts?.[journalKey]);
-  const task=S.selected===journalKey&&journalAvailable?journal:tasks.find(item=>item.id===S.selected)||tasks[0]||journal;
+  const submittedTask=instructionOnly?null:[journal,...tasks].find(item=>item?.reports.length);
+  const task=S.selected===journalKey&&journalAvailable?journal:tasks.find(item=>item.id===S.selected)||submittedTask||tasks[0]||journal;
   return {date,tasks,task,journalKey,journalAvailable,key:task?.dailyJournal||!task?journalKey:'task:'+task.id};
+}
+
+const employeeInstructionDateRequests=new WeakMap();
+
+function employeeWorkDateRows(dates,selectedDate){
+  return [...new Set(dates.filter(validAttendanceDay))].sort().reverse().map(day=>
+    `<button type="button" class="wd133-instruction-row" data-employee-work-day="${esc(day)}" aria-pressed="${day===selectedDate}"><time datetime="${esc(day)}">${esc(attendanceDate(day,true))}</time></button>`).join('');
 }
 
 function employeeInstructions(instructionOnly=false){
   const {date,tasks,task,journalKey,journalAvailable,key}=employeeReportContext(instructionOnly);
   const draftDates=Object.keys(S.journalDrafts||{}).filter(key=>key.startsWith('journal:')).map(key=>key.slice(8));
   const reportTasks=instructionOnly?tasksForStaff(activeStaffId):isEmployeeWorkspace()?S.tasks:S.tasks.filter(item=>item.directInstruction||item.dailyJournal);
-  const history=[...new Set([...reportTasks.map(item=>item.date),...(instructionOnly?[]:draftDates)])].sort().reverse();
+  const history=[localDay(),date,...reportTasks.map(item=>item.date),...(instructionOnly?[]:draftDates)];
   const shared=S.materials.filter(item=>item.kind==='shared'&&!item.deletedAt&&item.category!=='manual');
   const assignedFiles=tasks.flatMap(item=>item.instructionFiles||[]);
   const order=task&&!task.dailyJournal?task:tasks[0];
@@ -1598,11 +1626,8 @@ function employeeInstructions(instructionOnly=false){
   const supportsDrive=!!expectedEmployeeDriveAccount();
   const driveReady=employeeDrive?.expires>Date.now();
   const editable=!task||['미제출','보완 요청'].includes(status(task));
-  return `<div class="titleRow wd91-report-title"><div><h1>${instructionOnly?'업무지시':'업무보고'}</h1><p class="smallText">${instructionOnly?'날짜를 선택하면 배정된 업무지시를 확인할 수 있어요.':'업무지시와 공유파일을 확인하고 업무보고를 남기세요.'}</p></div>
-    <div class="wd91-report-controls"><label>보는 날짜<input type="date" id="employeeReportDate" value="${esc(date)}"></label>
-    <label>지난 업무·보고<select id="employeeReportHistory"><option value="">날짜 선택</option>${history.map(day=>`<option value="${esc(day)}" ${day===date?'selected':''}>${esc(attendanceDate(day))}</option>`).join('')}</select></label></div></div>
-    <div class="wd91-report-grid ${instructionOnly?'wd138-instruction-only':''}"><div class="wd91-report-left">
-      <section class="card wd91-order"><div class="wd92-order-head"><h2>업무지시</h2><button type="button" class="small" id="employeeOrderExpand" ${order?'':'hidden'}>크게 보기</button></div>
+  const name=instructionOnly?'업무지시':'업무보고';
+  const instructionDetails=`
          ${instructionOnly&&supportsDrive?`${driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':''}
           <p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'':'상단에서 Drive 연결을 갱신해 주세요.'}</p>`:instructionOnly&&staffHqConnectionNeeded()?staffHqConnectionLink():''}
         ${tasks.length+(!instructionOnly&&journalAvailable?1:0)>1?`<label>이날 업무·업무보고<select id="employeeReportTask">${tasks.map(item=>`<option value="${esc(item.id)}" ${item.id===task?.id?'selected':''}>${esc(item.title)}</option>`).join('')}${!instructionOnly&&journalAvailable?`<option value="${esc(journalKey)}" ${key===journalKey?'selected':''}>업무보고</option>`:''}</select></label>`:''}
@@ -1614,17 +1639,17 @@ function employeeInstructions(instructionOnly=false){
           <div class="wd62-month-dialog-head"><div><h3 id="employeeOrderDialogTitle">업무지시</h3><p>${esc(attendanceDate(date))}</p></div><form method="dialog"><button type="submit">닫기</button></form></div>
           <div id="employeeOrderLargeText" class="wd92-order-large" tabindex="0"></div>
         </dialog>
-      </section>
-      ${instructionOnly?'':`<section class="card wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2> ${supportsDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':''}</div>
+  `;
+  const sharedDetails=instructionOnly?'':`<section class="wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2> ${supportsDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':''}</div>
         ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 상단에서 Drive 연결을 갱신해 주세요.'}</p>
         `:'<p class="smallText">TEST에서 회사가 공유한 파일이에요.</p>'}
         <div class="wd97-share-scroll" tabindex="0" role="region" aria-label="업무공유파일 목록">
         ${supportsDrive?'<div id="employeeDriveFiles"></div>':''}
         ${assignedFiles.length?instructionFilesList(assignedFiles):''}
         ${shared.length?`<ul class="wd91-file-list">${shared.map(item=>`<li><span>${esc(item.title)}</span><button class="small" data-material-view="${esc(item.id)}">보기</button><button class="small" data-download="${esc(item.file.id)}">다운로드</button></li>`).join('')}</ul>`:supportsDrive||assignedFiles.length?'':'<p class="empty">등록된 업무공유파일이 없습니다.</p>'}</div>
-      </section>`}
-    </div>
-    ${instructionOnly?'':`<section class="card wd91-journal"><h2>${esc(staffName())} 업무보고</h2><p class="smallText">${esc(attendanceDate(date))}</p>
+      </section>`;
+  const reportDetails=instructionOnly?'':`<article class="wd133-instruction-paper wd149-report-paper">
+      <header class="wd133-instruction-paper-head"><div><h3>${esc(attendanceDate(date,true))} 업무보고</h3></div></header>
       <p class="smallText">보고받는 사람 <strong>${esc(editable?reportRecipient.name:submitted?.snapshot?.recipientName||'기록 없음')}</strong></p>
       ${editable?`<form id="employeeReportForm">
         <label for="employeeReportText">업무보고 작성</label><textarea id="employeeReportText" rows="11" required placeholder="한 일, 확인한 점, 진행 중인 일, 남은 일을 편하게 적어주세요.">${esc(S.journalDrafts?.[key]||'')}</textarea>
@@ -1633,7 +1658,35 @@ function employeeInstructions(instructionOnly=false){
       </form>`:`<p class="pill">${status(task)==='업무 완료'?'검토 완료':'검토 대기'}</p><p class="wd91-submitted">${nl(task.reports.at(-1)?.outcome||'')}</p>`}
       ${task&&dayReportCount(task)?`<button type="button" class="small" data-day-reports="${esc(task.id)}">제출 이력 보기</button>`:''}
       ${task?.reports.at(-1)?.formVersion===5?'<button type="button" class="small" id="downloadEmployeeReport">업무보고 파일 받기</button>':''}
-    </section>`}</div>`;
+    </article>
+    <details class="wd149-report-reference"><summary>업무지시 및 공유파일</summary>
+      <section class="wd91-order"><div class="wd92-order-head"><h2>업무지시</h2>
+        <button type="button" class="small" id="employeeOrderExpand" ${order?'':'hidden'}>크게 보기</button></div>
+        ${instructionDetails}
+      </section>
+      ${sharedDetails}
+    </details>`;
+  return `<div class="titleRow"><h1>${name}</h1></div>
+    <div class="wd135-work-layout wd149-employee-work">
+      <section class="card"><h2>${name} 목록</h2>
+        <label for="employeeReportDate">${instructionOnly?'업무일':'보고일'}</label>
+        <input type="date" id="employeeReportDate" value="${esc(date)}">
+        <div id="employeeWorkDates" class="wd135-work-scroll wd149-work-dates" tabindex="0" role="region" aria-label="${name} 날짜 목록">
+          ${employeeWorkDateRows(history,date)}
+        </div>
+      </section>
+      <section class="card">
+        <div class="wd92-order-head"><h2>${instructionOnly?'업무지시 본문':editable?'업무보고 작성':'업무보고 본문'}</h2>
+          ${instructionOnly?`<button type="button" class="small" id="employeeOrderExpand" ${order?'':'hidden'}>크게 보기</button>`:''}
+        </div>
+        <div class="wd135-work-scroll wd149-work-detail" tabindex="0" role="region" aria-label="${name} 상세">
+          ${instructionOnly?`<article class="wd133-instruction-paper">
+            <header class="wd133-instruction-paper-head"><div><h3>${esc(attendanceDate(date,true))} 업무지시</h3></div></header>
+            ${instructionDetails}
+          </article>`:reportDetails}
+        </div>
+      </section>
+    </div>`;
 }
 
 function bindEmployeeInstructionRefresh({date,tasks}){
@@ -1641,13 +1694,34 @@ function bindEmployeeInstructionRefresh({date,tasks}){
   if(!button)return;
   const output=$('employeeDriveOrder'),statusLine=$('employeeDriveStatus'),expand=$('employeeOrderExpand');
   const initial=tasks.length?output.innerHTML:'';
-  const refresh=async()=>{
+  const refresh=async({reloadDates=false}={})=>{
     if(button.disabled)return;
     const session=employeeDrive,current=()=>$('employeeDriveOrder')===output&&employeeDrive===session;
     button.disabled=true;
     statusLine.textContent='Drive 업무지시를 확인하는 중이에요.';
     try{
       if(!session||session.expires<=Date.now())throw new Error('업무센터 Drive 연결을 갱신해 주세요.');
+      const dates=$('employeeWorkDates');
+      if(dates){
+        const localDates=[localDay(),date,...tasksForStaff(activeStaffId).map(task=>task.date)];
+        if(reloadDates||!employeeInstructionDateRequests.has(session)){
+          const request=employeeDriveInstructionFiles(null,session.token);
+          employeeInstructionDateRequests.set(session,request);
+          void request.catch(()=>{
+            if(employeeInstructionDateRequests.get(session)===request)employeeInstructionDateRequests.delete(session);
+          });
+        }
+        const request=employeeInstructionDateRequests.get(session);
+        void request.then(files=>{
+          if(!current()||$('employeeWorkDates')!==dates||employeeInstructionDateRequests.get(session)!==request)return;
+          const focusedDay=document.activeElement?.dataset?.employeeWorkDay;
+          const markup=employeeWorkDateRows([...localDates,...files.map(file=>workDriveDate(file.name))],date);
+          const scrollTop=dates.scrollTop;
+          dates.innerHTML=markup;
+          dates.scrollTop=scrollTop;
+          if(focusedDay)dates.querySelector(`[data-employee-work-day="${focusedDay}"]`)?.focus({preventScroll:true});
+        }).catch(()=>{});
+      }
       const files=await additionalEmployeeInstructions(date,session.token,tasks,true);
       const results=await Promise.allSettled(files.map(row=>readDriveReportBody(row,session.token)));
       if(!current())return;
@@ -1661,19 +1735,32 @@ function bindEmployeeInstructionRefresh({date,tasks}){
     }catch(error){if(current())statusLine.textContent=error.message||'Drive 업무지시를 불러오지 못했어요.';}
     finally{button.disabled=false;}
   };
-  button.onclick=refresh;
+  button.onclick=()=>refresh({reloadDates:true});
   void refresh();
 }
 
 function bindEmployeeInstructions(instructionOnly=false){
   bindTaskReports();
   document.querySelectorAll('[data-material-view]').forEach(button=>button.onclick=()=>previewMaterial(button.dataset.materialView));
-  const pickDate=event=>{
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(event.target.value))return;
-    employeeReportDate=event.target.value;S.selected=null;render();$(event.target.id)?.focus();
+  const dates=$('employeeWorkDates');
+  const pickDate=day=>{
+    if(!validAttendanceDay(day))return false;
+    if(activeStepUploads){notify('첨부 저장이 끝난 뒤 이동하세요');return false;}
+    employeeReportDate=day;S.selected=null;render();return true;
   };
-  $('employeeReportDate').onchange=pickDate;
-  $('employeeReportHistory').onchange=pickDate;
+  $('employeeReportDate').onchange=event=>{
+    if(pickDate(event.target.value))$('employeeReportDate')?.focus();
+    else event.target.value=employeeReportContext(instructionOnly).date;
+  };
+  dates.onclick=event=>{
+    const button=event.target.closest('[data-employee-work-day]');
+    if(!button||button.getAttribute('aria-pressed')==='true')return;
+    const day=button.dataset.employeeWorkDay,scrollTop=dates.scrollTop;
+    if(!pickDate(day))return;
+    const newDates=$('employeeWorkDates');
+    newDates.scrollTop=scrollTop;
+    newDates.querySelector(`[data-employee-work-day="${day}"]`)?.focus({preventScroll:true});
+  };
   if($('employeeReportTask'))$('employeeReportTask').onchange=event=>{S.selected=event.target.value;render();$('employeeReportTask')?.focus();};
   const form=$('employeeReportForm'),context=employeeReportContext(instructionOnly);
   if($('employeeOrderExpand'))$('employeeOrderExpand').onclick=()=>{
