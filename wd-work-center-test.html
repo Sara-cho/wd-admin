@@ -725,6 +725,19 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd118-report-filters input,.wd118-report-filters select{margin-top:5px}
 @media(max-width:1180px){.wd118-instruction-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.wd118-instruction-grid,.wd118-report-filters{grid-template-columns:minmax(0,1fr)}}
+</style><style>
+.wd119-recipient{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,420px);align-items:center;gap:16px 32px;margin:0 0 22px;padding:18px 24px;border:1px solid #dfd0f4;border-inline-start:5px solid #8860d7;border-radius:14px;background:#f6f0ff}
+.wd119-recipient-first{padding-block:23px;background:#efe5fd;border-color:#d5bdec;border-inline-start-color:#8050cd}
+.wd119-recipient-step{display:inline-block;padding:3px 9px;border-radius:6px;background:#d9c5f6;color:#432575;font-size:12px;font-weight:750}
+.wd119-recipient-copy label{margin:4px 0 0;color:#332050;font-size:19px;font-weight:800}
+.wd119-recipient-copy p{margin:2px 0 0;color:#5b4870;font-size:13px;overflow-wrap:anywhere}
+.wd119-recipient-control{position:relative;min-width:0}
+.wd119-recipient-control::after{content:"";position:absolute;inset-inline-end:20px;top:50%;width:8px;height:8px;border:solid #5f3895;border-width:0 2px 2px 0;transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.wd119-recipient-control select{appearance:none;width:100%;min-height:58px;padding:12px 45px 12px 16px;border:2px solid #aa8adb;border-radius:10px;background:#fff;color:#35204f;font-size:17px;font-weight:700;cursor:pointer}
+.wd119-recipient-control select:hover:not(:disabled){border-color:#8050cd;background:#fcfaff}
+.wd119-recipient-control select:focus-visible{outline:3px solid #7042c4;outline-offset:3px}
+.wd119-recipient-control select:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:760px){.wd119-recipient{grid-template-columns:minmax(0,1fr);gap:12px;padding:16px}.wd119-recipient-control select{min-height:52px}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -1167,7 +1180,6 @@ function employeeInstructionList(items,fallback,direct=false){
 const employeeDriveFolders={
   instruction:'1xDDgmq_tgKSvzqwTdMikRoJ3a7PFM4rZ',
   journal:'19893_XG7jXziYDYK-q5xaNlrtQna0ubf',
-  staffShared:'113VPxG3_XLFlAs7gXDjw5BbXfFxPy-wH',
   shared:'1akIH85_fbbPkshgPLWCkzxv3doMgJU0W'
 };
 const driveAccountByEmployee={'박수진':'woori08944@gmail.com','수진':'woori08944@gmail.com'};
@@ -1198,13 +1210,24 @@ async function employeeDriveRequest(url,token){
   return response;
 }
 
-async function employeeDriveList(folder,token,filter='',{pageToken='',fileFields='id,name,mimeType'}={}){
+async function employeeDriveList(folder,token,filter='',{pageToken=''}={}){
   const query=new URLSearchParams({q:"'"+folder+"' in parents and trashed = false"+filter,
-    pageSize:'100',orderBy:'modifiedTime desc',fields:'nextPageToken,files('+fileFields+')',
+    pageSize:'100',orderBy:'modifiedTime desc',fields:'nextPageToken,files(id,name,mimeType)',
     supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
   if(pageToken)query.set('pageToken',pageToken);
   const response=await employeeDriveRequest(driveFileApi+'?'+query,token);
   return response.json();
+}
+
+async function readAllEmployeeDriveFiles(folder,token,filter=''){
+  const rows=[];
+  let pageToken='';
+  do{
+    const page=await employeeDriveList(folder,token,filter,{pageToken});
+    rows.push(...(page.files||[]).filter(file=>safeDriveId(file.id)));
+    pageToken=page.nextPageToken||'';
+  }while(pageToken);
+  return rows;
 }
 
 async function employeeDriveInstruction(date,token){
@@ -4224,18 +4247,11 @@ function bindManagerHome(){
 let workReportSource='drive',driveReportFilters={date:'',staff:'',query:''};
 
 async function readCompanyDriveReports(token){
-  const reports=[];
-  let pageToken='';
-  do{
-    const page=await employeeDriveList(employeeDriveFolders.journal,token,
-      " and mimeType != 'application/vnd.google-apps.folder'",{pageToken});
-    for(const file of page.files||[]){
-      const date=file.name?.slice(0,10);
-      if(safeDriveId(file.id)&&validAttendanceDay(date))reports.push({...file,date});
-    }
-    pageToken=page.nextPageToken||'';
-  }while(pageToken);
-  return reports.sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'ko'));
+  const files=await readAllEmployeeDriveFiles(employeeDriveFolders.journal,token,
+    " and mimeType != 'application/vnd.google-apps.folder'");
+  return files.map(file=>({...file,date:file.name?.slice(0,10)}))
+    .filter(file=>validAttendanceDay(file.date))
+    .sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'ko'));
 }
 
 function workReportView(){
@@ -5322,22 +5338,6 @@ function cancelAssignedInstruction(profile,id){
       cancelledInstructions:[task,...(S.cancelledInstructions||[])]},'업무지시 목록에서 삭제했어요.');
   };
 }
-async function readInstructionDriveFiles(profile,date,token){
-  if(!validAttendanceDay(date))return [];
-  const start=new Date(date+'T00:00:00+09:00');
-  const end=new Date(start.getTime()+86400000);
-  const filter=" and mimeType != 'application/vnd.google-apps.folder' and (name contains '"+date+
-    "' or (createdTime >= '"+start.toISOString()+"' and createdTime < '"+end.toISOString()+"'))";
-  const folder=profile.workType==='staff'?employeeDriveFolders.staffShared:employeeDriveFolders.shared;
-  const {files=[]}=await employeeDriveList(folder,token,filter,{fileFields:'id,name,mimeType,createdTime'});
-  return files.filter(file=>{
-    if(!safeDriveId(file.id))return false;
-    const named=file.name?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
-    const created=Date.parse(file.createdTime);
-    return named===date||!named&&created>=start.getTime()&&created<end.getTime();
-  });
-}
-
 function managerDriveListControls(){
   return `<div class="row"><button class="small" type="button" id="connectEmployeeDrive" hidden>Drive 연결</button>
     <button class="small" type="button" id="refreshManagerDrive" hidden>새로고침</button></div>
@@ -5415,7 +5415,7 @@ function simpleInstructionView(profile){
     <section class="card wd118-instruction-history" id="simpleInstructionHistory">${simpleInstructionHistory(profile)}</section>
     <section class="card" aria-labelledby="instructionFilesTitle">
       <h2 id="instructionFilesTitle">업무공유파일</h2>
-      <p class="smallText" id="instructionSharedDate">${esc(attendanceDate(d.date))} · 업무공유 Drive</p>
+      <p class="smallText">01_업무공유폴더 / 03_업무공유파일</p>
       ${managerDriveListControls()}
     </section>
   </div>`;
@@ -5427,16 +5427,14 @@ function bindSimpleInstruction(profile){
   input.oninput=()=>{d.raw=input.value;};
   bindAssignedInstructions(history,profile);
   bindTaskReports(history);
-  const reload=bindManagerDriveList(token=>readInstructionDriveFiles(profile,d.date,token),(output,files)=>{
+  bindManagerDriveList(token=>readAllEmployeeDriveFiles(employeeDriveFolders.shared,token),(output,files)=>{
     output.innerHTML=files.length?`<ul class="wd91-file-list">${files.map(file=>
-      `<li><span>${esc(file.name)}</span><a href="${driveFileUrl(file.id)}" target="_blank" rel="noopener noreferrer">열기</a></li>`).join('')}</ul>`:
-      '<p class="empty">이 업무일에 표시할 Drive 파일이 없어요.</p>';
+      `<li><span>${esc(file.name)}</span><a href="${driveFileUrl(file.id)}" target="_blank" rel="noopener noreferrer">${file.mimeType==='application/vnd.google-apps.folder'?'폴더 열기':'열기'}</a></li>`).join('')}</ul>`:
+      '<p class="empty">공유 폴더에 아직 파일이 없어요.</p>';
   });
   dateInput.onchange=()=>{
     if(!validAttendanceDay(dateInput.value))return;
     d.date=dateInput.value;
-    $('instructionSharedDate').textContent=attendanceDate(d.date)+' · 업무공유 Drive';
-    void reload();
   };
   form.onsubmit=event=>{
     event.preventDefault();
@@ -5456,21 +5454,30 @@ function bindSimpleInstruction(profile){
 function instructionView(){
   const profiles=activeProfiles();
   const profile=profiles.find(person=>person.id===instructionStaffId);
-  return `<div class="titleRow wd75-heading"><h1>업무지시</h1>
-    <div class="wd77-staff-picker"><label for="instructionStaff">업무지시 대상</label>
-      <select id="instructionStaff" ${profiles.length?'':'disabled'}><option value="">직원·스탭 선택</option>
-        ${profiles.map(person=>`<option value="${esc(person.id)}" ${person===profile?'selected':''}>${esc(person.name)} · ${staffAccessLabel(person)}</option>`).join('')}
-      </select></div></div>
-    <div id="instructionWorkspace">${profile?simpleInstructionView(profile):
-      `<section class="card wd116-instruction-empty"><p class="muted">${profiles.length?
-        '위에서 업무지시를 받을 사람을 선택하세요.':'직원·스탭을 등록한 뒤 업무지시를 작성하세요.'}</p></section>`}</div>`;
+  const hint=profiles.length?'받는 사람을 고르면 아래에 작성 화면과 등록 내역이 열려요.':
+    '직원관리에서 직원·스탭을 먼저 등록해 주세요.';
+  return `<div class="titleRow"><h1>업무지시</h1></div>
+    <section class="wd119-recipient ${profile?'':'wd119-recipient-first'}" aria-labelledby="instructionStaffLabel">
+      <div class="wd119-recipient-copy">
+        <span class="wd119-recipient-step">${profile?'대상 선택됨':profiles.length?'먼저 선택':'등록 필요'}</span>
+        <label for="instructionStaff" id="instructionStaffLabel">업무지시 대상</label>
+        <p id="instructionStaffHint">${hint}</p>
+      </div>
+      <div class="wd119-recipient-control">
+        <select id="instructionStaff" aria-describedby="instructionStaffHint" ${profiles.length?'':'disabled'}>
+          <option value="">직원·스탭 선택</option>
+          ${profiles.map(person=>`<option value="${esc(person.id)}" ${person===profile?'selected':''}>${esc(person.name)} · ${staffAccessLabel(person)}</option>`).join('')}
+        </select>
+      </div>
+    </section>
+    <div id="instructionWorkspace">${profile?simpleInstructionView(profile):''}</div>`;
 }
 
 function bindInstructionView(){
   const staff=$('instructionStaff');
   staff.onchange=()=>{
     instructionStaffId=staff.value||null;
-    render();$('instructionInput')?.focus();
+    render();($('instructionInput')||$('instructionStaff'))?.focus();
   };
   const profile=activeProfiles().find(person=>person.id===instructionStaffId);
   if(profile)bindSimpleInstruction(profile);
