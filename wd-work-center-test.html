@@ -71,7 +71,12 @@
 .wd91-report-grid.wd138-instruction-only{grid-template-columns:minmax(0,1fr)}
 .wd138-remote-order{margin-top:14px;padding-top:12px;border-top:1px solid #e8dff2}
 #employeeHomeOrderCount{font-size:13px;margin-bottom:7px}
-.wd90-attendance-layout>.wd87-home-summary{min-width:0}
+.wd147-attendance-connect{margin-top:10px;padding:8px 10px;background:#f7f3fc;border-radius:8px}
+.wd147-attendance-connect p{margin:0}
+@media(max-width:1100px){
+  .wd90-attendance-layout>.wd90-attendance-side{display:contents}
+  .wd90-attendance-layout .wd94-clock-panel{grid-row:1}
+}
 .wd135-home-shared #employeeDriveStatus:empty,.wd135-work-layout #employeeDriveStatus:empty{display:none}
 @media(max-width:1050px){.wd135-work-layout,.wd135-work-layout.wd107-staff-layout{grid-template-columns:minmax(172px,1fr) minmax(0,3fr)}.wd135-work-layout>section:last-child{grid-column:1/-1}}
 @media(max-width:720px){.wd135-work-layout,.wd135-work-layout.wd107-staff-layout{grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(280px,46vh)}}
@@ -459,7 +464,6 @@ strong.wd88-person{display:inline-block;padding:2px 7px;border-radius:5px}
 .wd94-clock-panel .wd17-clock{width:76px;max-width:100%;height:81px;margin:1px auto 2px}
 .wd94-clock-panel .wd17-time{margin:2px auto 8px}
 .wd94-clock-panel .wd17-total{margin-top:10px}
-.wd90-attendance-side .wd17-history-scroll{max-height:210px}
 @media(max-width:760px){.wd92-sidebar .nav button{font-size:15px;min-height:44px;padding:6px 10px;gap:5px}.wd92-sidebar .wd92-nav-art{width:24px;height:24px;flex-basis:24px}.wd92-sidebar .wd92-nav-icon{width:20px;height:20px}.wd92-sidebar .wd94-home-control{margin:8px 0 2px}.wd94-attendance-head{flex-wrap:wrap}.wd94-admin-module{padding:6px}}
 </style><style>
 .app .content.wd95-attendance-content{padding-inline-end:max(74px,calc(66px + env(safe-area-inset-right,0px)))}
@@ -4176,11 +4180,28 @@ function automaticBreak(elapsed,original,start,end){
   return unchanged?attendanceBreak(original,elapsed):0;
 }
 
-function attendanceView(){let today=payrollCalendar.format(new Date()),day=attendanceRecordDay||today,month=attendanceMonth,records=myAttendanceRows(),r=records.find(x=>x.day===day),plan=S.plannedWork?.find(x=>x.day===day),rows=records.filter(x=>x.day.startsWith(month)).sort((a,b)=>b.day.localeCompare(a.day)),d=new Date(),inVal=r?.inAt?timeOnly(r.inAt):(day===today?null:plan?.hours?.start)||'09:00',outVal=r?.outAt?timeOnly(r.outAt):(day===today?null:plan?.hours?.end)||'18:00',total=rows.reduce((sum,x)=>sum+(workMinutes(x)||0),0);return `<div class="titleRow"><h1>근무기록</h1></div>${currentUser==='employee'?`<div class="wd90-attendance-layout"><div class="wd90-attendance-side">${employeeScheduleView(today,month)}`:'<div class="wd17-layout">'}<section class="wd17-panel wd94-clock-panel"><div class="wd17-head wd94-attendance-head"><div><h2>${day===today?'오늘의 출퇴근':'출퇴근 기록'}</h2>
+function attendanceView(){
+  const today=payrollCalendar.format(new Date()),day=attendanceRecordDay||today,month=attendanceMonth;
+  const records=myAttendanceRows(),r=records.find(row=>row.day===day),plan=S.plannedWork?.find(row=>row.day===day);
+  const inVal=r?.inAt?timeOnly(r.inAt):(day===today?null:plan?.hours?.start)||'09:00';
+  const outVal=r?.outAt?timeOnly(r.outAt):(day===today?null:plan?.hours?.end)||'18:00';
+  const heading='<div class="titleRow"><h1>근무기록</h1></div>';
+  const clock=`<section class="wd17-panel wd94-clock-panel" id="attendanceClockPanel"><div class="wd17-head wd94-attendance-head"><div><h2>${day===today?'오늘의 출퇴근':'출퇴근 기록'}</h2>
     ${r?.inAt&&r?.outAt?`<p class="wd102-attendance-complete" role="status">${day===today?'오늘 출퇴근 완료':'출퇴근 완료'}</p>`:''}
-    ${liveAttendanceReady?`<p id="liveAttendanceStatus" class="smallText" role="status" ${liveAttendanceMonths.has(month)?'hidden':''}>실제 근무기록 불러오는 중…</p>`:''}</div>
+    ${liveAttendanceReady?`<p id="liveAttendanceStatus" class="smallText" role="status" ${liveAttendanceMonths.has(month)&&liveAttendanceMonths.has(day.slice(0,7))?'hidden':''}>실제 근무기록 불러오는 중…</p>`:''}</div>
     <div class="wd92-record-date"><input type="date" id="attendanceRecordDay" aria-label="기록 날짜" value="${day}" max="${today}"><button type="button" class="small" id="attendanceRecordToday" ${day===today?'hidden':''}>오늘</button></div>
-  </div><div class="wd17-clocks">${wd17Clock('workInTime',inVal,'출근',true,!!r?.inAt,editingAttendanceTime==='inAt')}${wd17Clock('workOutTime',outVal,'퇴근',!!r?.inAt,!!r?.outAt,editingAttendanceTime==='outAt')}</div></section><section class="wd17-panel wd17-history"><div class="wd17-head"><div><div class="eyebrow">${month.replace('-','년 ')}월</div><h2>근무이력</h2></div><div class="wd18-filters"><select id="attendanceYear" aria-label="근무이력 연도">${Array.from(new Set([Number(month.slice(0,4)),...Array.from({length:21},(_,i)=>d.getFullYear()-10+i),...records.map(x=>Number(x.day.slice(0,4)))] )).sort((a,b)=>a-b).map(y=>`<option value="${y}" ${y===Number(month.slice(0,4))?"selected":""}>${y}년</option>`).join("")}</select><select id="attendanceMonth" aria-label="근무이력 월">${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,"0")}" ${i+1===Number(month.slice(5))?"selected":""}>${i+1}월</option>`).join("")}</select></div></div><div class="wd17-history-scroll"><table><thead><tr><th>날짜</th><th>출근</th><th>퇴근</th><th>휴게</th><th>근무시간</th></tr></thead><tbody>${rows.length?rows.map(x=>`<tr><td><button type="button" class="wd92-history-day" data-record-day="${esc(x.day)}" ${x.day===day?'aria-current="date"':''}>${attendanceDate(x.day)}</button></td><td>${clockLabel(timeOnly(x.inAt))}</td><td>${x.outAt?clockLabel(timeOnly(x.outAt)):'—'}</td><td>${attendanceBreak(x,workElapsed(x))}분</td><td>${workMinutes(x)===null?'미확정':minutesLabel(workMinutes(x))}</td></tr>`).join(''):'<tr><td colspan="5"><div class="wd17-empty">선택한 월의 근무기록이 없습니다.</div></td></tr>'}</tbody></table></div><div class="wd17-monthtotal"><span>선택한 월 누적 근무</span><strong>${Math.floor(total/60)}시간 ${Math.round(total%60)}분</strong></div></section></div>${currentUser==='employee'?employeeHomeSummary(today,records)+'</div>':''}`}
+  </div><div class="wd17-clocks">${wd17Clock('workInTime',inVal,'출근',true,!!r?.inAt,editingAttendanceTime==='inAt')}${wd17Clock('workOutTime',outVal,'퇴근',!!r?.inAt,!!r?.outAt,editingAttendanceTime==='outAt')}</div>
+    ${currentUser==='employee'&&staffHqConnectionNeeded()?`<div class="wd147-attendance-connect"><p class="smallText">실제 출퇴근 기록은 본진 직원 계정으로 연결하면 확인할 수 있어요.</p>${staffHqConnectionLink()}</div>`:''}</section>`;
+  if(currentUser==='employee')return `${heading}<div class="wd90-attendance-layout">
+    ${employeeScheduleView(today,month)}
+    <div class="wd90-attendance-side">${clock}
+      ${employeeHomeSummary(today)}
+    </div>
+  </div>`;
+  const rows=records.filter(row=>row.day.startsWith(month)).sort((a,b)=>b.day.localeCompare(a.day));
+  const d=new Date(),total=rows.reduce((sum,row)=>sum+(workMinutes(row)||0),0);
+  return `${heading}<div class="wd17-layout">${clock}<section class="wd17-panel wd17-history"><div class="wd17-head"><div><div class="eyebrow">${month.replace('-','년 ')}월</div><h2>근무이력</h2></div><div class="wd18-filters"><select id="attendanceYear" aria-label="근무이력 연도">${Array.from(new Set([Number(month.slice(0,4)),...Array.from({length:21},(_,i)=>d.getFullYear()-10+i),...records.map(x=>Number(x.day.slice(0,4)))] )).sort((a,b)=>a-b).map(y=>`<option value="${y}" ${y===Number(month.slice(0,4))?"selected":""}>${y}년</option>`).join("")}</select><select id="attendanceMonth" aria-label="근무이력 월">${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,"0")}" ${i+1===Number(month.slice(5))?"selected":""}>${i+1}월</option>`).join("")}</select></div></div><div class="wd17-history-scroll"><table><thead><tr><th>날짜</th><th>출근</th><th>퇴근</th><th>휴게</th><th>근무시간</th></tr></thead><tbody>${rows.length?rows.map(x=>`<tr><td><button type="button" class="wd92-history-day" data-record-day="${esc(x.day)}" ${x.day===day?'aria-current="date"':''}>${attendanceDate(x.day)}</button></td><td>${clockLabel(timeOnly(x.inAt))}</td><td>${x.outAt?clockLabel(timeOnly(x.outAt)):'—'}</td><td>${attendanceBreak(x,workElapsed(x))}분</td><td>${workMinutes(x)===null?'미확정':minutesLabel(workMinutes(x))}</td></tr>`).join(''):'<tr><td colspan="5"><div class="wd17-empty">선택한 월의 근무기록이 없습니다.</div></td></tr>'}</tbody></table></div><div class="wd17-monthtotal"><span>선택한 월 누적 근무</span><strong>${Math.floor(total/60)}시간 ${Math.round(total%60)}분</strong></div></section></div>`;
+}
 function timeOnly(iso){let d=new Date(iso);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 function validAttendanceDay(day){const date=new Date(day+'T12:00:00');return /^\d{4}-\d{2}-\d{2}$/.test(day)&&Number.isFinite(date.getTime())&&localDay(date)===day}
 function attendanceISO(day,value){if(!validAttendanceDay(day)||!/^\d{2}:\d{2}$/.test(value)||Number(value.slice(0,2))>23||Number(value.slice(3))>59)return null;let d=new Date(`${day}T${value}:00`);return Number.isNaN(d.valueOf())?null:d.toISOString()}
@@ -4247,21 +4268,23 @@ function bindAttendance(){
     };
     $('myAttendancePrev').onclick=()=>moveMonth(-1,'myAttendancePrev');
     $('myAttendanceNext').onclick=()=>moveMonth(1,'myAttendanceNext');
-    $('myAttendanceToday').onclick=()=>{attendanceMonth=localDay().slice(0,7);render();$('myAttendanceToday')?.focus();};
+    $('myAttendanceToday').onclick=()=>pickRecordDay(today);
   }
+  const today=payrollCalendar.format(new Date());
   const pickRecordDay=day=>{
-    if(!validAttendanceDay(day)||day>localDay())return false;
+    if(!validAttendanceDay(day)||day>today||liveAttendanceSaving)return false;
     attendanceRecordDay=day;attendanceMonth=day.slice(0,7);editingAttendanceTime=null;render();$('attendanceRecordDay').focus();return true;
   };
   $('attendanceRecordDay').onchange=event=>{
     if(!pickRecordDay(event.target.value)){
-      event.target.value=attendanceRecordDay||localDay();notify('오늘 또는 이전 날짜를 선택하세요');
+      event.target.value=attendanceRecordDay||today;notify('오늘 또는 이전 날짜를 선택하세요');
     }
   };
-  $('attendanceRecordToday').onclick=()=>pickRecordDay(localDay());
+  $('attendanceRecordToday').onclick=()=>pickRecordDay(today);
   document.querySelectorAll('[data-record-day]').forEach(button=>button.onclick=()=>pickRecordDay(button.dataset.recordDay));
   for(const id of ['attendanceYear','attendanceMonth']){
-    $(id).onchange=()=>{attendanceMonth=$('attendanceYear').value+'-'+$('attendanceMonth').value;render();$(id)?.focus();};
+    const select=$(id);
+    if(select)select.onchange=()=>{attendanceMonth=$('attendanceYear').value+'-'+$('attendanceMonth').value;render();$(id)?.focus();};
   }
   bindClockInputs();
   document.querySelectorAll('[data-clock-edit]').forEach(button=>button.onclick=()=>{
@@ -4276,11 +4299,10 @@ function bindAttendance(){
   $('clockIn').onclick=()=>saveAttendanceTime('inAt');
   $('clockOut').onclick=()=>saveAttendanceTime('outAt');
   if(liveAttendanceReady){
-    const month=(attendanceRecordDay||localDay()).slice(0,7);
+    const month=(attendanceRecordDay||today).slice(0,7);
     const ready=liveAttendanceMonths.has(month)&&!liveAttendanceSaving;
     if(!ready){$('clockIn').disabled=true;$('clockOut').disabled=true;}
-    const months=new Set([attendanceMonth,month,...weeklyDays(payrollCalendar.format(new Date())).map(day=>day.slice(0,7))]);
-    months.forEach(value=>void refreshLiveAttendance(value));
+    for(const value of new Set([attendanceMonth,month]))void refreshLiveAttendance(value);
   }
 }
 
@@ -4307,24 +4329,12 @@ function sharedDriveFilesMarkup(files){
     '<p class="empty">공유 폴더에 아직 파일이 없어요.</p>';
 }
 
-function employeeHomeSummary(today,records){
-  const week=weeklyDays(today),dates=new Set(week);
-  const planned=new Map((S.plannedWork||[]).filter(row=>dates.has(row.day)).map(row=>[row.day,row]));
-  const worked=new Map(records.filter(row=>dates.has(row.day)&&row.inAt).map(row=>[row.day,row]));
+function employeeHomeSummary(today){
   const orders=tasksForStaff(activeStaffId).filter(task=>task.date===today);
   const drive=!!workspaceDriveAccount(),remoteOrders=!!expectedEmployeeDriveAccount(),needsHq=staffHqConnectionNeeded();
   const driveReady=employeeDrive?.expires>Date.now();
   const shared=S.materials.filter(item=>item.kind==='shared'&&!item.deletedAt&&item.category!=='manual');
-  return `<div class="wd87-home-summary" role="region" aria-label="이번 주 출근과 업무지시, 업무공유폴더">
-    <section class="card"><h2>이번 주 출근</h2>
-      <p class="smallText">${esc(attendanceDate(week[0]))} ~ ${esc(attendanceDate(week.at(-1)))}</p>
-      ${needsHq?`<p class="smallText">본진에 연결하면 실제 출퇴근 기록을 확인할 수 있어요.</p>${staffHqConnectionLink()}`:''}
-      ${week.filter(day=>planned.has(day)||worked.has(day)).map(day=>{
-        const record=worked.get(day);
-        return `<div class="wd87-summary-row"><strong>${esc(attendanceDate(day))}</strong>
-          <span>${esc(record?'기록 '+timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):' · 근무 중'):'예정 '+scheduledHoursLabel(planned.get(day)?.hours))}</span></div>`;
-      }).join('')||'<p class="wd68-empty">이번 주 출근 일정이 없어요.</p>'}
-    </section>
+  return `
     <section class="card"><div class="wd132-instruction-head"><h2>업무지시</h2>
       <button type="button" class="small" id="employeeHomeOrdersLink" data-order-date="${esc(today)}">업무지시 보기</button></div>
       <div class="wd135-home-scroll">
@@ -4338,8 +4348,7 @@ function employeeHomeSummary(today,records){
       ${drive&&driveReady?'<div id="employeeHomeSharedFiles" class="wd135-home-scroll"><p class="smallText" role="status">공유파일을 불러오는 중이에요.</p></div>':''}
       ${shared.length?`<ul class="wd91-file-list">${shared.map(file=>`<li><span>${esc(file.title)}</span><button type="button" class="small" data-download="${esc(file.file.id)}">다운로드</button></li>`).join('')}</ul>`:drive?'':'<p class="wd68-empty">공유된 파일이 없어요.</p>'}
       ${drive?`<a class="wd135-home-folder" href="https://drive.google.com/drive/folders/${esc(employeeDriveFolders.shared)}" target="_blank" rel="noopener noreferrer">공유폴더 열기</a>`:''}
-    </section>
-  </div>`;
+    </section>`;
 }
 
 function bindEmployeeHomeSummary(){
@@ -4405,7 +4414,9 @@ function employeeScheduleView(today,month){
         const plan=plans.get(date),record=records.get(date);
         const label=record?'기록':plan?'예정':'';
         const hours=record?timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):' · 근무 중'):plan?.hours?.start&&plan.hours.end?plan.hours.start+' ~ '+plan.hours.end:'';
-        return `<button type="button" data-edit-plan="${date}" aria-haspopup="dialog" aria-label="${esc(attendanceDate(date))} 예정 근무 편집" class="wd67-day" ${date===today?'aria-current="date"':''}>
+        const action=record?`data-record-day="${date}" aria-controls="attendanceClockPanel"`:
+          `data-edit-plan="${date}" aria-haspopup="dialog"`;
+        return `<button type="button" ${action} aria-label="${esc(attendanceDate(date))} ${record?'출퇴근 기록 보기':'예정 근무 편집'}" class="wd67-day" ${date===today?'aria-current="date"':''}>
           <span class="wd90-day-head"><strong>${Number(date.slice(8))}</strong>${date===today?'<small>오늘</small>':''}</span>
           ${label?`<span class="wd67-day-staff ${record?'':'wd88-person'}" ${record?'':'style="--staff-hue:263"'}><b>${label}</b>${hours?`<span>${esc(hours)}</span>`:''}</span>`:''}
         </button>`;
