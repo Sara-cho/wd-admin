@@ -701,6 +701,15 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd114-payroll-account{grid-column:span 2}
 .wd114-payroll-account .wd114-payroll-bank{margin-inline-end:5px}
 @media(max-width:430px){.wd114-payroll-account{grid-column:auto}}
+</style><style>
+.wd116-instruction-layout{display:grid;grid-template-columns:minmax(190px,235px) minmax(0,1fr);gap:16px;align-items:start}
+.wd116-instruction-layout>*{min-width:0}
+.wd116-recipient-panel label{margin:0 0 5px;font-size:13px}
+.wd116-recipient-panel input{margin-bottom:10px;padding:8px 10px}
+.wd116-instruction-empty p,.wd116-instruction-recipient{margin:0}
+.wd116-instruction-recipient strong{margin-inline-start:4px;color:var(--purple-dark)}
+@media(max-width:1300px){.wd116-instruction-layout .wd75-split{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.wd116-instruction-layout{grid-template-columns:minmax(0,1fr)}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -774,7 +783,7 @@ function sel(){return S.tasks.find(t=>t.id===S.selected)||S.tasks[0]}
 function setNav(x,instructionRecipient=null){if(x!=='reports'&&!(x==='month'&&currentUser==='manager')&&!workspaceMenus().some(([id])=>id===x))return;
 if(['drive','manual','archive'].includes(x)){materialTab=x==='archive'?'final':'shared';materialCategory=x==='manual'?'manual':'all';materialSearch='';}
 if(x==='instructions'){
-  instructionStaffId=instructionRecipient;
+  instructionStaffId=instructionRecipient;instructionRecipientQuery='';
 }if(S.nav==='staff'&&x!=='staff')staffRecordView=null;
 if(x==='dashboard'&&currentUser==='employee'&&!isEmployeeWorkspace()&&S.tasks.some(task=>task.directInstruction)){
   S.selected=null;employeeReportDate=null;
@@ -844,7 +853,7 @@ function logout(){
   for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
   payrollReminderShown='';
   clearPrintDocument?.();
-  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
+  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionRecipientQuery='';instructionDrafts.clear();
   staffListRole='';staffListOrder='name';
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
   employeeReportDate=null;attendanceRecordDay=null;editingAttendanceTime=null;materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
@@ -4169,7 +4178,7 @@ function bindReviewView(){
   bindTaskReports();
 }
 
-let instructionStaffId = null;
+let instructionStaffId=null,instructionRecipientQuery='';
 const instructionDrafts = new Map();
 let staffTasksOpen = false;
 function staffTable() {
@@ -5202,6 +5211,7 @@ function simpleInstructionView(profile){
   const d=instructionDraftFor(profile.id);
   return `<div class="wd75-split">
     <section class="card"><h2>업무지시 작성</h2>
+      <p class="smallText wd116-instruction-recipient">받는 사람 <strong>${esc(profile.name)}</strong></p>
       <form id="simpleInstructionForm">
         <label for="simpleInstructionDate">업무일</label><input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required>
         <label for="instructionInput">업무지시 내용</label><textarea id="instructionInput" rows="8" maxlength="8000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
@@ -5237,7 +5247,7 @@ function bindSimpleInstruction(profile){
     button.disabled=true;activeMaterialUploads++;
     try{
       const uploaded=files.length?await uploadFiles(fileInput.id):[];
-      if(!form.isConnected||currentUser!=='manager'||staffById(profile.id)!==profile||profile.archivedAt)return;
+      if(!form.isConnected||currentUser!=='manager'||instructionStaffId!==profile.id||staffById(profile.id)!==profile||profile.archivedAt)return;
       if(uploaded.length!==files.length)return notify('모든 공유파일을 저장하지 못했어요. 다시 시도해 주세요.');
       if(commitInstruction({...request,instructionFiles:uploaded},plan)){
         d.raw='';d.date=date;render();notify(profile.name+' 님의 업무지시를 등록했어요.');
@@ -5246,23 +5256,84 @@ function bindSimpleInstruction(profile){
   };
 }
 
+function instructionRecipients(profiles,query){
+  const searchKey=value=>value.normalize('NFC').replace(/\s+/g,'').toLowerCase();
+  const term=searchKey(query);
+  return term?profiles.filter(profile=>searchKey(profile.name).includes(term)):profiles;
+}
+
+function instructionRecipientList(profiles){
+  if(!profiles.length)return '<p class="smallText" role="status">검색 결과가 없어요.</p>';
+  return `<ul class="wd107-staff-list">${profiles.map(profile=>{
+    const selected=profile.id===instructionStaffId;
+    return `<li class="${selected?'selected':''}"><button type="button" class="wd107-staff-pick"
+      data-instruction-recipient="${esc(profile.id)}" aria-pressed="${selected}"><strong>${esc(profile.name)}</strong>
+      <small class="wd105-staff-role">${esc(staffAccessLabel(profile))}</small></button></li>`;
+  }).join('')}</ul>`;
+}
+
+function instructionWorkspace(profile,hasRecipients){
+  if(profile)return simpleInstructionView(profile);
+  return `<section class="card wd116-instruction-empty">
+    <h2>업무지시 작성</h2><p class="muted">${hasRecipients?
+      '왼쪽 목록에서 업무지시를 받을 사람을 선택하세요.':'직원·스탭을 등록한 뒤 업무지시를 작성하세요.'}</p>
+  </section>`;
+}
+
 function instructionView(){
   const profiles=activeProfiles();
-  const profile=profiles.find(p=>p.id===instructionStaffId);
-  const heading=`<div class="titleRow wd75-heading"><h1>업무지시</h1>
-    <div class="wd77-staff-picker"><label for="instructionStaff">업무지시 대상</label><select id="instructionStaff" ${profiles.length?'':'disabled'}>
-      <option value="">직원·스탭 선택</option>
-      ${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===profile?.id?'selected':''}>${esc(p.name)} · ${p.workType==='employee'?'직원':'스탭'}</option>`).join('')}
-    </select></div></div>`;
-  return heading+(profile?simpleInstructionView(profile):
-    `<p class="muted">${profiles.length?'업무지시를 받을 직원·스탭을 선택하세요.':'직원·스탭을 등록한 뒤 업무지시를 작성하세요.'}</p>`);
+  const profile=profiles.find(person=>person.id===instructionStaffId);
+  return `<div class="titleRow"><h1>업무지시</h1></div>
+    <div class="wd116-instruction-layout">
+      <section class="card wd113-staff-panel wd116-recipient-panel" aria-labelledby="instructionRecipientsTitle">
+        <div class="wd58-panel-head"><h2 id="instructionRecipientsTitle">직원·스탭 <span class="pill">${profiles.length}명</span></h2></div>
+        <label for="instructionRecipientSearch">이름 검색</label>
+        <input type="search" id="instructionRecipientSearch" placeholder="직원 이름 입력" value="${esc(instructionRecipientQuery)}" ${profiles.length?'':'disabled'}>
+        <div class="wd113-staff-scroll" id="instructionRecipientList" role="region" aria-label="업무지시 대상 목록">
+          ${profiles.length?instructionRecipientList(instructionRecipients(profiles,instructionRecipientQuery)):'<p class="smallText">등록된 직원·스탭이 없어요.</p>'}
+        </div>
+      </section>
+      <div id="instructionWorkspace">${instructionWorkspace(profile,profiles.length>0)}</div>
+    </div>`;
 }
 
 function bindInstructionView(){
-  const staff=$('instructionStaff');
-  staff.onchange=()=>{instructionStaffId=staff.value||null;render();$('instructionStaff')?.focus();};
-  const profile=staffById(instructionStaffId);
-  if(profile&&!profile.archivedAt)bindSimpleInstruction(profile);
+  const search=$('instructionRecipientSearch'),list=$('instructionRecipientList'),workspace=$('instructionWorkspace');
+  const profiles=activeProfiles();
+  const currentMatches=()=>instructionRecipients(profiles,search.value);
+  const choose=id=>{
+    const profile=staffById(id);
+    if(!profile||profile.archivedAt||$('assignInstruction')?.disabled)return;
+    if(id!==instructionStaffId){
+      instructionStaffId=id;
+      list.querySelectorAll('[data-instruction-recipient]').forEach(button=>{
+        const selected=button.dataset.instructionRecipient===id;
+        button.setAttribute('aria-pressed',String(selected));
+        button.parentElement.classList.toggle('selected',selected);
+      });
+      workspace.innerHTML=instructionWorkspace(profile,true);
+      bindSimpleInstruction(profile);
+    }
+    $('instructionInput')?.focus();
+  };
+  list.onclick=event=>{
+    const button=event.target.closest('[data-instruction-recipient]');
+    if(button&&list.contains(button))choose(button.dataset.instructionRecipient);
+  };
+  search.oninput=()=>{
+    instructionRecipientQuery=search.value;
+    list.innerHTML=instructionRecipientList(currentMatches());
+    list.scrollTop=0;
+  };
+  search.onkeydown=event=>{
+    if(event.key!=='Enter'||event.isComposing)return;
+    const matches=currentMatches();
+    if(matches.length!==1)return;
+    event.preventDefault();
+    choose(matches[0].id);
+  };
+  const profile=profiles.find(person=>person.id===instructionStaffId);
+  if(profile)bindSimpleInstruction(profile);
 }
 
 function commitInstruction(d,plan){
