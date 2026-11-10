@@ -11331,7 +11331,7 @@ setInterval(function(){
     var r=assertWorkRole();if(!tokenValid())throw new Error('Google Drive 연결이 필요합니다.');
     var a=await (await api('https://www.googleapis.com/drive/v3/about?fields='+encodeURIComponent('user(emailAddress)'),{method:'GET'})).json();
     var email=String(a&&a.user&&a.user.emailAddress||'').trim().toLowerCase();
-    if(email!==r.email)throw new Error(r.label+' 업무일지는 '+r.email+' Google 계정으로 연결해야 합니다.');
+    if(email!==r.email)throw new Error(r.label+' 업무보고는 '+r.email+' Google 계정으로 연결해야 합니다.');
     return true;
   }
   async function verifyFolders(){
@@ -11339,7 +11339,7 @@ setInterval(function(){
     var ids=[INSTRUCTION_FOLDER_ID,JOURNAL_FOLDER_ID,FILES_FOLDER_ID];
     var rows=await Promise.all(ids.map(function(id){return api('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields='+encodeURIComponent('id,name,capabilities(canEdit,canAddChildren)'),{method:'GET'}).then(function(r){return r.json()})}));
     if(!rows[0]||!rows[1]||!rows[2])throw new Error('업무공유폴더 연결을 확인할 수 없습니다.');
-    if(!(rows[1].capabilities&&rows[1].capabilities.canAddChildren!==false))throw new Error('02_업무일지 폴더의 편집 권한이 필요합니다.');
+    if(!(rows[1].capabilities&&rows[1].capabilities.canAddChildren!==false))throw new Error('02_업무보고 폴더의 편집 권한이 필요합니다.');
   }
   function initTokenClient(){
     if(STATE.tokenClient)return true;
@@ -11386,10 +11386,26 @@ setInterval(function(){
     if(!initTokenClient()){setTimeout(silentConnect,700);return;}
     STATE.autoTried=true;setBusy(true);STATE.tokenClient.requestAccessToken({prompt:''});
   }
+  function journalNames(date,role){
+    var legacy=date+'_'+role.label+'업무일지';
+    if(role.uid==='kfcyk30'&&/^\d{4}-\d{2}-\d{2}$/.test(date)){
+      return [date.slice(2).replace(/-/g,'')+'_수진→대표_업무보고',legacy];
+    }
+    return [legacy];
+  }
+  function journalFileDate(name,role){
+    var title=String(name||'').replace(/\.txt$/,'');
+    var prefix=title.split('_',1)[0];
+    var date=/^\d{6}$/.test(prefix)?'20'+prefix.slice(0,2)+'-'+prefix.slice(2,4)+'-'+prefix.slice(4):prefix;
+    return /^\d{4}-\d{2}-\d{2}$/.test(date)&&journalNames(date,role).includes(title)?date:'';
+  }
+  function journalOwnerMatches(file,role){
+    return (file.owners||[]).some(function(owner){return String(owner.emailAddress||'').trim().toLowerCase()===role.email});
+  }
   async function listTodayFile(folderId,kind,searchDate){
     var date=searchDate||STATE.date;
-    var name=date+'_'+(kind==='업무일지'?assertWorkRole().label:'수진')+kind;
-    var names=[name];
+    var role=kind==='업무일지'?assertWorkRole():null;
+    var names=role?journalNames(date,role):[date+'_수진'+kind];
     if(kind==='업무지시'&&/^\d{4}-\d{2}-\d{2}$/.test(date)){
       names.push(date.slice(2).replace(/-/g,'')+'_대표→수진_업무지시');
     }
@@ -11397,9 +11413,8 @@ setInterval(function(){
     var q="'"+folderId+"' in parents and "+(names.length===1?namesQuery:'('+namesQuery+')')+" and trashed = false";
     var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size,owners(emailAddress))');
     var data=await (await api(url,{method:'GET'})).json(),files=data.files||[];
-    if(kind==='업무일지'){
-      var expectedOwner=assertWorkRole().email;
-      files=files.filter(function(file){return (file.owners||[]).some(function(o){return String(o.emailAddress||'').trim().toLowerCase()===expectedOwner})});
+    if(role){
+      files=files.filter(function(file){return journalOwnerMatches(file,role)&&journalFileDate(file.name,role)===date});
     }
     return files.find(function(file){return file.mimeType==='application/vnd.google-apps.document'})||files[0]||null;
   }
@@ -11485,17 +11500,17 @@ setInterval(function(){
     if(memo)memo.value=draft&&draft.text!==driveText?draft.text:driveText;
     var saved=field('wsj-saved');
     if(draft&&draft.text!==driveText){if(saved)saved.textContent='작성 중이던 임시저장 내용을 복원했습니다.';setDraftState('임시저장 복원 '+draftTimeLabel(draft.savedAt),'saved')}
-    else{if(draft)clearDraft(STATE.date);if(saved)saved.textContent=STATE.journalFile?(STATE.journalFile.mimeType==='application/vnd.google-apps.document'?'Drive에 저장된 업무일지를 불러왔습니다.':'기존 텍스트 업무일지를 불러왔습니다. 저장하면 Google Docs로 새로 저장됩니다.'):'아직 Drive에 저장된 업무일지가 없습니다.';setDraftState('자동 임시저장','')}
+    else{if(draft)clearDraft(STATE.date);if(saved)saved.textContent=STATE.journalFile?(STATE.journalFile.mimeType==='application/vnd.google-apps.document'?'Drive에 저장된 업무보고를 불러왔습니다.':'기존 텍스트 업무보고를 불러왔습니다. 저장하면 Google Docs로 새로 저장됩니다.'):'아직 Drive에 저장된 업무보고가 없습니다.';setDraftState('자동 임시저장','')}
   }
   function refreshDateView(){
     var current=field('wsj-current-date'),caption=field('wsj-date-caption'),title=field('wsj-instruction-title');
     if(current)current.textContent=STATE.date;
-    if(caption)caption.textContent=STATE.date+' · '+(assertWorkRole().label==='대표'?'회사 업무지시와 대표 업무일지를 확인하세요.':'대표님 업무지시를 확인하고 오른쪽에 업무일지를 작성하세요.');
+    if(caption)caption.textContent=STATE.date+' · '+(assertWorkRole().label==='대표'?'회사 업무지시와 대표 업무보고를 확인하세요.':'대표님 업무지시를 확인하고 오른쪽에 업무보고를 작성하세요.');
     if(title)title.textContent='📨 업무지시';
   }
   async function loadAll(){
     if(!tokenValid())return;
-    refreshDateView();setStatus(selectedDateLabel()+' 업무지시·공유파일·업무일지를 불러오는 중입니다.','warn');
+    refreshDateView();setStatus(selectedDateLabel()+' 업무지시·공유파일·업무보고를 불러오는 중입니다.','warn');
     await verifyFolders();await Promise.all([loadInstruction(),loadSharedFiles(),loadJournal()]);
     setStatus('업무공유폴더 연결됨 · '+STATE.date+' 기준','ok');
     updateGlobalDriveButton(false);
@@ -11509,24 +11524,28 @@ setInterval(function(){
   window.wsjToday=function(){var today=kstDate();if(STATE.date===today)return;window.wsjChangeDate(today)};
   async function listJournalHistory(){
     await verifyWorkAccount();
-    var suffix='_'+assertWorkRole().label+'업무일지';
-    var q="'"+JOURNAL_FOLDER_ID+"' in parents and name contains '"+suffix+"' and trashed = false";
-    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size,owners(emailAddress))');
-    var data=await (await api(url,{method:'GET'})).json(),byDate={};
-    (data.files||[]).forEach(function(file){
-      if(!(file.owners||[]).some(function(o){return String(o.emailAddress||'').trim().toLowerCase()===assertWorkRole().email}))return;
-      var match=String(file.name||'').match(new RegExp('^(\\d{4}-\\d{2}-\\d{2})'+suffix+'(?:\\.txt)?$'));if(!match)return;
-      var date=match[1],current=byDate[date];
-      if(!current||(current.mimeType!=='application/vnd.google-apps.document'&&file.mimeType==='application/vnd.google-apps.document'))byDate[date]=file;
-    });
+    var role=assertWorkRole(),byDate={},pageToken='';
+    var q="'"+JOURNAL_FOLDER_ID+"' in parents and trashed = false";
+    var fields='nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,size,owners(emailAddress))';
+    var url='https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent(fields);
+    do{
+      var data=await (await api(url+(pageToken?'&pageToken='+encodeURIComponent(pageToken):''),{method:'GET'})).json();
+      (data.files||[]).forEach(function(file){
+        if(!journalOwnerMatches(file,role))return;
+        var date=journalFileDate(file.name,role);if(!date)return;
+        var current=byDate[date];
+        if(!current||(current.mimeType!=='application/vnd.google-apps.document'&&file.mimeType==='application/vnd.google-apps.document'))byDate[date]=file;
+      });
+      pageToken=data.nextPageToken||'';
+    }while(pageToken);
     return Object.keys(byDate).sort().reverse().map(function(date){return {date:date,file:byDate[date]}});
   }
   function renderHistory(rows){
     var body=field('wsj-history-body'),state=field('wsj-history-state'),button=field('wsj-history-open');if(!body)return;
     body.innerHTML='';STATE.history=rows||[];
-    if(state)state.textContent=STATE.history.length?'저장된 업무일지 '+STATE.history.length+'건 · 최근 날짜순':'저장된 업무일지가 아직 없습니다.';
-    if(button)button.textContent='📅 지난 업무일지'+(STATE.history.length?' '+STATE.history.length+'건':' 보기');
-    if(!STATE.history.length){var empty=document.createElement('tr');empty.innerHTML='<td colspan="3" class="wsj-history-empty">저장된 업무일지가 없습니다.</td>';body.appendChild(empty);return;}
+    if(state)state.textContent=STATE.history.length?'저장된 업무보고 '+STATE.history.length+'건 · 최근 날짜순':'저장된 업무보고가 아직 없습니다.';
+    if(button)button.textContent='📅 지난 업무보고'+(STATE.history.length?' '+STATE.history.length+'건':' 보기');
+    if(!STATE.history.length){var empty=document.createElement('tr');empty.innerHTML='<td colspan="3" class="wsj-history-empty">저장된 업무보고가 없습니다.</td>';body.appendChild(empty);return;}
     STATE.history.forEach(function(row){
       var tr=document.createElement('tr'),date=document.createElement('td'),kind=document.createElement('td'),action=document.createElement('td'),view=document.createElement('button');
       date.textContent=row.date;kind.innerHTML='<span class="wsj-history-kind">'+(row.file.mimeType==='application/vnd.google-apps.document'?'Google Docs':'기존 텍스트')+'</span>';
@@ -11534,36 +11553,37 @@ setInterval(function(){
     });
   }
   window.wsjOpenHistory=async function(){
-    if(!tokenValid()){setStatus('지난 업무일지를 보려면 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
+    if(!tokenValid()){setStatus('지난 업무보고를 보려면 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
     var modal=field('wsj-history-modal'),state=field('wsj-history-state'),body=field('wsj-history-body');if(!modal)return;window.wsjHistoryList();
-    modal.className='wsj-history-modal show';document.body.style.overflow='hidden';if(state)state.textContent='저장된 업무일지를 불러오는 중입니다.';if(body)body.innerHTML='';
-    try{renderHistory(await listJournalHistory())}catch(e){console.error('[sujin-journal-drive history]',e);if(state)state.textContent='지난 업무일지를 불러오지 못했습니다 · '+String(e.message||e).substring(0,70)}
+    modal.className='wsj-history-modal show';document.body.style.overflow='hidden';if(state)state.textContent='저장된 업무보고를 불러오는 중입니다.';if(body)body.innerHTML='';
+    try{renderHistory(await listJournalHistory())}catch(e){console.error('[sujin-journal-drive history]',e);if(state)state.textContent='지난 업무보고를 불러오지 못했습니다 · '+String(e.message||e).substring(0,70)}
   };
   window.wsjCloseHistory=function(){var modal=field('wsj-history-modal');if(modal)modal.className='wsj-history-modal';document.body.style.overflow=''};
   window.wsjHistoryList=function(){
     var list=field('wsj-history-list'),reader=field('wsj-history-reader'),title=field('wsj-history-title'),note=field('wsj-history-note');
-    if(list)list.style.display='block';if(reader)reader.className='wsj-history-reader';if(title)title.textContent='지난 업무일지';if(note)note.textContent='실제로 저장된 날짜만 표시합니다. 보기를 눌러도 현재 작성 중인 내용은 그대로 유지됩니다.';
+    if(list)list.style.display='block';if(reader)reader.className='wsj-history-reader';if(title)title.textContent='지난 업무보고';if(note)note.textContent='실제로 저장된 날짜만 표시합니다. 보기를 눌러도 현재 작성 중인 내용은 그대로 유지됩니다.';
   };
   window.wsjViewHistoryDate=async function(date){
     var row=STATE.history.find(function(item){return item.date===date}),list=field('wsj-history-list'),reader=field('wsj-history-reader'),content=field('wsj-history-content'),readerDate=field('wsj-history-reader-date'),title=field('wsj-history-title'),note=field('wsj-history-note');if(!row||!reader||!content)return;
-    if(list)list.style.display='none';reader.className='wsj-history-reader show';if(readerDate)readerDate.textContent=date;if(title)title.textContent=date+' 업무일지';if(note)note.textContent='읽기 전용 · 현재 작성 중인 업무일지는 바뀌지 않습니다.';content.className='wsj-history-content loading';content.textContent='업무일지를 불러오는 중입니다.';
-    try{content.textContent=(await readTextFile(row.file))||'저장된 내용이 없습니다.';content.className='wsj-history-content'}catch(e){console.error('[sujin-journal-drive history read]',e);content.textContent='업무일지를 불러오지 못했습니다 · '+String(e.message||e).substring(0,80);content.className='wsj-history-content'}
+    if(list)list.style.display='none';reader.className='wsj-history-reader show';if(readerDate)readerDate.textContent=date;if(title)title.textContent=date+' 업무보고';if(note)note.textContent='읽기 전용 · 현재 작성 중인 업무보고는 바뀌지 않습니다.';content.className='wsj-history-content loading';content.textContent='업무보고를 불러오는 중입니다.';
+    try{content.textContent=(await readTextFile(row.file))||'저장된 내용이 없습니다.';content.className='wsj-history-content'}catch(e){console.error('[sujin-journal-drive history read]',e);content.textContent='업무보고를 불러오지 못했습니다 · '+String(e.message||e).substring(0,80);content.className='wsj-history-content'}
   };
   function multipartBody(metadata,text,boundary){
     var head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n';
     return new Blob([head,text,'\r\n--'+boundary+'--'],{type:'multipart/related; boundary='+boundary});
   }
   async function createJournal(text){
-    var boundary='wsj_'+Date.now()+'_'+Math.random().toString(16).slice(2),name=STATE.date+'_'+assertWorkRole().label+'업무일지';
-    var metadata={name:name,mimeType:'application/vnd.google-apps.document',parents:[JOURNAL_FOLDER_ID],description:'WD 업무센터 '+assertWorkRole().label+' 업무일지 · '+STATE.date};
+    var role=assertWorkRole(),boundary='wsj_'+Date.now()+'_'+Math.random().toString(16).slice(2),name=journalNames(STATE.date,role)[0];
+    var metadata={name:name,mimeType:'application/vnd.google-apps.document',parents:[JOURNAL_FOLDER_ID],description:'WD 업무센터 '+role.label+' 업무보고 · '+STATE.date};
     var res=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body:multipartBody(metadata,text,boundary)});
     return res.json();
   }
   async function updateJournal(file,text){
     await verifyWorkAccount();
     var detail=await (await api('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?fields='+encodeURIComponent('id,name,owners(emailAddress)'),{method:'GET'})).json();
-    if(![STATE.date+'_'+assertWorkRole().label+'업무일지',STATE.date+'_'+assertWorkRole().label+'업무일지.txt'].includes(String(detail.name||'')))throw new Error('업무일지 이름이 현재 역할과 일치하지 않습니다.');
-    if(!(detail.owners||[]).some(function(o){return String(o.emailAddress||'').trim().toLowerCase()===assertWorkRole().email}))throw new Error('다른 계정이 작성한 업무일지는 덮어쓸 수 없습니다.');
+    var role=assertWorkRole();
+    if(journalFileDate(detail.name,role)!==STATE.date)throw new Error('업무보고 이름이 현재 역할과 일치하지 않습니다.');
+    if(!journalOwnerMatches(detail,role))throw new Error('다른 계정이 작성한 업무보고는 덮어쓸 수 없습니다.');
     if(file.mimeType==='application/vnd.google-apps.document'){
       var res=await api('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(file.id)+'?uploadType=media&fields='+encodeURIComponent('id,name,mimeType,modifiedTime,webViewLink,size'),{method:'PATCH',headers:{'Content-Type':'text/plain; charset=UTF-8'},body:text});
       return res.json();
@@ -11572,26 +11592,26 @@ setInterval(function(){
   }
   window.wsjSave=async function(){
     if(STATE.saving)return;var memo=field('wsj-memo'),text=String((memo&&memo.value)||'');
-    if(!text.trim()){if(typeof showT==='function')showT('업무일지를 입력해주세요.');return;}
+    if(!text.trim()){if(typeof showT==='function')showT('업무보고를 입력해주세요.');return;}
     if(!tokenValid()){setStatus('먼저 Google Drive를 연결해주세요.','warn');window.wsjConnect();return;}
     STATE.saving=true;var button=field('wsj-save');if(button){button.disabled=true;button.textContent='저장 중…'}
     try{
       await verifyWorkAccount();
-      var role=assertWorkRole(),expectedName=STATE.date+'_'+role.label+'업무일지';
-      if(STATE.journalFile&&![expectedName,expectedName+'.txt'].includes(String(STATE.journalFile.name||'')))throw new Error('다른 사람의 업무일지를 덮어쓸 수 없습니다.');
+      var role=assertWorkRole();
+      if(STATE.journalFile&&journalFileDate(STATE.journalFile.name,role)!==STATE.date)throw new Error('다른 사람의 업무보고는 덮어쓸 수 없습니다.');
       STATE.journalFile=STATE.journalFile?await updateJournal(STATE.journalFile,text):await createJournal(text);
-      clearDraft(STATE.date);var saved=field('wsj-saved');if(saved)saved.textContent='방금 02_업무일지 폴더에 저장했습니다.';setDraftState('Drive 저장 완료','saved');
-      setStatus('업무일지 저장 완료 · Google Docs로 02_업무일지 폴더에 저장되었습니다.','ok');
-      if(typeof showT==='function')showT('📒 '+role.label+' 업무일지 저장 완료');
-    }catch(e){console.error('[sujin-journal-drive save]',e);setStatus('업무일지 저장 실패 · '+String(e.message||e).substring(0,85),'error');}
-    finally{STATE.saving=false;if(button){button.disabled=false;button.textContent='업무일지 저장'}}
+      clearDraft(STATE.date);var saved=field('wsj-saved');if(saved)saved.textContent='방금 02_업무보고 폴더에 저장했습니다.';setDraftState('Drive 저장 완료','saved');
+      setStatus('업무보고 저장 완료 · Google Docs로 02_업무보고 폴더에 저장되었습니다.','ok');
+      if(typeof showT==='function')showT('📒 '+role.label+' 업무보고 저장 완료');
+    }catch(e){console.error('[sujin-journal-drive save]',e);setStatus('업무보고 저장 실패 · '+String(e.message||e).substring(0,85),'error');}
+    finally{STATE.saving=false;if(button){button.disabled=false;button.textContent='업무보고 저장'}}
   };
   window.wsjOpenFiles=function(){window.open('https://drive.google.com/drive/folders/'+FILES_FOLDER_ID,'_blank','noopener,noreferrer')};
   function installGlobalDriveEntry(){
     var host=document.querySelector('.wc-head-status');if(!host||field('wc-global-drive-entry'))return;
     var button=document.createElement('button');button.type='button';button.id='wc-global-drive-entry';button.className='warn';button.textContent='Google Drive 연결';button.onclick=window.wsjConnect;host.appendChild(button);
     if(!field('wc-drive-entry-guard')){
-      var guard=document.createElement('div');guard.id='wc-drive-entry-guard';guard.innerHTML='<div class="wc-drive-entry-box" role="dialog" aria-modal="true" aria-labelledby="wc-drive-entry-title"><div class="wc-drive-entry-icon">📁</div><h2 id="wc-drive-entry-title">업무센터 Drive 연결</h2><p>업무센터를 시작하기 전에 Google Drive를 한 번 연결합니다.</p><div class="wc-drive-entry-list">✓ 날짜별 업무지시 불러오기<br>✓ Google Docs 업무일지 저장<br>✓ 업무매뉴얼 원본 조회<br>✓ 작업결과 보관·업무공유파일 공동 사용</div><button type="button" id="wc-drive-entry-action" class="wc-drive-entry-action" onclick="wsjConnect()">Google Drive 연결하고 시작</button><div id="wc-drive-entry-state" class="wc-drive-entry-state">연결 후 모든 메뉴에서 같은 Drive 연결을 사용합니다.</div></div>';document.body.appendChild(guard);
+      var guard=document.createElement('div');guard.id='wc-drive-entry-guard';guard.innerHTML='<div class="wc-drive-entry-box" role="dialog" aria-modal="true" aria-labelledby="wc-drive-entry-title"><div class="wc-drive-entry-icon">📁</div><h2 id="wc-drive-entry-title">업무센터 Drive 연결</h2><p>업무센터를 시작하기 전에 Google Drive를 한 번 연결합니다.</p><div class="wc-drive-entry-list">✓ 날짜별 업무지시 불러오기<br>✓ Google Docs 업무보고 저장<br>✓ 업무매뉴얼 원본 조회<br>✓ 작업결과 보관·업무공유파일 공동 사용</div><button type="button" id="wc-drive-entry-action" class="wc-drive-entry-action" onclick="wsjConnect()">Google Drive 연결하고 시작</button><div id="wc-drive-entry-state" class="wc-drive-entry-state">연결 후 모든 메뉴에서 같은 Drive 연결을 사용합니다.</div></div>';document.body.appendChild(guard);
     }
     updateGlobalDriveButton(false);
   }
@@ -11600,14 +11620,14 @@ setInterval(function(){
     STATE.roleUid=workRole().uid;var journalLabel=workRole().label;
     STATE.date=kstDate();
     panel.style.maxWidth='100%';panel.innerHTML='<section id="wsj-shell" class="wsj-shell">'
-      +'<header class="wsj-head"><div><div class="wsj-eyebrow">'+(journalLabel==='대표'?'REPRESENTATIVE DAILY WORK':'SUJIN DAILY WORK')+'</div><h2>'+journalLabel+' 업무일지</h2><p id="wsj-date-caption">'+STATE.date+' · '+(journalLabel==='대표'?'회사 업무지시와 대표 업무일지를 확인하세요.':'대표님 업무지시를 확인하고 오른쪽에 업무일지를 작성하세요.')+'</p></div>'
-      +'<div class="wsj-head-actions"><div class="wsj-date-tools"><span>보는 날짜</span><strong id="wsj-current-date">'+STATE.date+'</strong></div><button type="button" id="wsj-history-open" class="wsj-btn" onclick="wsjOpenHistory()">📅 지난 업무일지 보기</button></div></header>'
-      +'<div id="wsj-status" class="wsj-status">업무센터의 공용 Drive 연결로 날짜별 업무지시와 저장된 업무일지를 자동으로 불러옵니다.</div>'
+      +'<header class="wsj-head"><div><div class="wsj-eyebrow">'+(journalLabel==='대표'?'REPRESENTATIVE DAILY WORK':'SUJIN DAILY WORK')+'</div><h2>'+journalLabel+' 업무보고</h2><p id="wsj-date-caption">'+STATE.date+' · '+(journalLabel==='대표'?'회사 업무지시와 대표 업무보고를 확인하세요.':'대표님 업무지시를 확인하고 오른쪽에 업무보고를 작성하세요.')+'</p></div>'
+      +'<div class="wsj-head-actions"><div class="wsj-date-tools"><span>보는 날짜</span><strong id="wsj-current-date">'+STATE.date+'</strong></div><button type="button" id="wsj-history-open" class="wsj-btn" onclick="wsjOpenHistory()">📅 지난 업무보고 보기</button></div></header>'
+      +'<div id="wsj-status" class="wsj-status">업무센터의 공용 Drive 연결로 날짜별 업무지시와 저장된 업무보고를 자동으로 불러옵니다.</div>'
       +'<div class="wsj-grid"><div class="wsj-left-stack"><article class="wsj-card instruction"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">WORK ORDER</div><div id="wsj-instruction-title" class="wsj-card-title">📨 업무지시</div><div class="wsj-card-note">대표님이 전달한 업무를 확인합니다.</div></div><div class="wsj-card-head-tools"><button type="button" class="wsj-expand" onclick="wsjOpenInstruction()">⛶ 크게 보기</button><button type="button" class="wsj-expand refresh" onclick="wsjRefreshInstruction(this)">↻ 새로고침</button></div></div><div id="wsj-instruction" class="wsj-instruction empty">Google Drive 연결 후 선택한 날짜의 업무지시를 표시합니다.</div></article>'
       +'<article class="wsj-card files"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">SHARED FILES</div><div class="wsj-card-title">📁 업무공유파일</div><div class="wsj-card-note">전달된 파일을 바로 보고 다운로드합니다.</div></div><button type="button" class="wsj-expand refresh" onclick="wsjRefreshSharedFiles(this)">↻ 새로고침</button></div><div id="wsj-files" class="wsj-files"><div class="wsj-file-empty">업무공유파일을 확인하고 있습니다.</div></div></article></div>'
-      +'<article class="wsj-card memo"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">MY WORK LOG</div><div class="wsj-card-title">📝 '+journalLabel+' 업무일지</div><div class="wsj-card-note">처리한 업무와 남은 내용을 자유롭게 기록합니다.</div><div id="wsj-saved" class="wsj-saved">업무센터 Drive 연결을 확인하고 있습니다.</div></div><div class="wsj-journal-actions"><button type="button" id="wsj-draft-state" class="wsj-draft-state" onclick="wsjSaveDraft()">임시저장</button><button type="button" id="wsj-save" class="wsj-save" onclick="wsjSave()">업무일지 저장</button></div></div><textarea id="wsj-memo" class="wsj-memo" placeholder="한 일, 확인한 것, 진행 중인 내용, 남은 일을 편하게 적으세요."></textarea></article></div>'
+      +'<article class="wsj-card memo"><div class="wsj-card-head"><div><div class="wsj-card-eyebrow">MY WORK LOG</div><div class="wsj-card-title">📝 '+journalLabel+' 업무보고</div><div class="wsj-card-note">처리한 업무와 남은 내용을 자유롭게 기록합니다.</div><div id="wsj-saved" class="wsj-saved">업무센터 Drive 연결을 확인하고 있습니다.</div></div><div class="wsj-journal-actions"><button type="button" id="wsj-draft-state" class="wsj-draft-state" onclick="wsjSaveDraft()">임시저장</button><button type="button" id="wsj-save" class="wsj-save" onclick="wsjSave()">업무보고 저장</button></div></div><textarea id="wsj-memo" class="wsj-memo" placeholder="한 일, 확인한 것, 진행 중인 내용, 남은 일을 편하게 적으세요."></textarea></article></div>'
       +'<div id="wsj-instruction-modal" class="wsj-instruction-modal" onclick="if(event.target===this)wsjCloseInstruction()"><div class="wsj-instruction-dialog" role="dialog" aria-modal="true" aria-labelledby="wsj-instruction-modal-title"><div class="wsj-instruction-modal-head"><div><h3 id="wsj-instruction-modal-title">업무지시 전체보기</h3><p id="wsj-instruction-modal-date"></p></div><button type="button" class="wsj-instruction-modal-close" aria-label="닫기" onclick="wsjCloseInstruction()">×</button></div><pre id="wsj-instruction-modal-content" class="wsj-instruction-modal-content"></pre></div></div>'
-      +'<div id="wsj-history-modal" class="wsj-history-modal" onclick="if(event.target===this)wsjCloseHistory()"><div class="wsj-history-dialog" role="dialog" aria-modal="true" aria-labelledby="wsj-history-title"><div class="wsj-history-head"><div><h3 id="wsj-history-title">지난 업무일지</h3><p id="wsj-history-note">실제로 저장된 날짜만 표시합니다. 보기를 눌러도 현재 작성 중인 내용은 그대로 유지됩니다.</p></div><button type="button" class="wsj-history-close" aria-label="닫기" onclick="wsjCloseHistory()">×</button></div><div id="wsj-history-list"><div id="wsj-history-state" class="wsj-history-state">저장된 업무일지를 확인합니다.</div><div class="wsj-history-table-wrap"><table class="wsj-history-table"><thead><tr><th>날짜</th><th>저장형식</th><th>열기</th></tr></thead><tbody id="wsj-history-body"></tbody></table></div></div><div id="wsj-history-reader" class="wsj-history-reader"><div class="wsj-history-reader-tools"><button type="button" class="wsj-history-back" onclick="wsjHistoryList()">← 목록으로</button><strong id="wsj-history-reader-date" class="wsj-history-reader-date"></strong></div><pre id="wsj-history-content" class="wsj-history-content"></pre></div></div></div>'
+      +'<div id="wsj-history-modal" class="wsj-history-modal" onclick="if(event.target===this)wsjCloseHistory()"><div class="wsj-history-dialog" role="dialog" aria-modal="true" aria-labelledby="wsj-history-title"><div class="wsj-history-head"><div><h3 id="wsj-history-title">지난 업무보고</h3><p id="wsj-history-note">실제로 저장된 날짜만 표시합니다. 보기를 눌러도 현재 작성 중인 내용은 그대로 유지됩니다.</p></div><button type="button" class="wsj-history-close" aria-label="닫기" onclick="wsjCloseHistory()">×</button></div><div id="wsj-history-list"><div id="wsj-history-state" class="wsj-history-state">저장된 업무보고를 확인합니다.</div><div class="wsj-history-table-wrap"><table class="wsj-history-table"><thead><tr><th>날짜</th><th>저장형식</th><th>열기</th></tr></thead><tbody id="wsj-history-body"></tbody></table></div></div><div id="wsj-history-reader" class="wsj-history-reader"><div class="wsj-history-reader-tools"><button type="button" class="wsj-history-back" onclick="wsjHistoryList()">← 목록으로</button><strong id="wsj-history-reader-date" class="wsj-history-reader-date"></strong></div><pre id="wsj-history-content" class="wsj-history-content"></pre></div></div></div>'
       +'</section>';
     var memo=field('wsj-memo');if(memo)memo.addEventListener('input',scheduleDraftSave);
     window.addEventListener('beforeunload',saveDraftNow,{once:true});
