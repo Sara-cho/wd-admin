@@ -795,7 +795,11 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd133-instruction-row:hover,.wd133-instruction-row:focus-visible{background:#ececf0;border-color:#c5bbc9}
 #instructionDocumentBody .wd133-instruction-paper{padding:clamp(14px,3vw,28px)}
 #editAssignedInstructionForm textarea{display:block}
-#newAssignedInstruction{flex-shrink:0}
+#simpleInstructionForm{margin-bottom:22px}
+.wd144-daily-entries{border:1px solid #e8dff2;border-radius:12px;padding:16px}
+.wd144-daily-entries h3{margin:0 0 12px;overflow-wrap:anywhere}
+.wd144-daily-entry{border-top:1px solid #eee7f6;padding:12px 0;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px}
+@media(max-width:480px){.wd144-daily-entry{grid-template-columns:1fr}}
 .wd133-instruction-paper{max-width:840px;margin:0 auto;padding:clamp(16px,4vw,40px);background:white;border:1px solid #e8dff2;border-radius:12px}
 .wd133-instruction-paper:only-child{min-height:100%}
 .wd133-instruction-paper+.wd133-instruction-paper{margin-top:16px}
@@ -1321,12 +1325,13 @@ async function employeeDriveInstructionFiles(date,token){
     /(?:^\d{4}-\d{2}-\d{2}_수진업무지시|→(?:수진|박수진)_업무지시)(?:\.txt)?$/.test(item.name||''));
 }
 
-async function additionalEmployeeInstructions(date,token,tasks){
+async function additionalEmployeeInstructions(date,token,tasks,includeDaily=false){
   const known=new Set(tasks.flatMap(task=>[task.id,task.instructionDriveId].filter(Boolean)));
   const files=await employeeDriveInstructionFiles(date,token);
   const pending=files.filter(file=>!known.has(file.id)&&!known.has(file.appProperties?.wdInstructionRequest));
   const copies=await findUnlinkedInstructionCopies(pending,tasks,token).catch(()=>new Map());
-  return pending.filter(file=>!copies.has(file.id));
+  return files.filter(file=>includeDaily&&file.appProperties?.wdInstructionDay||
+    pending.includes(file)&&!copies.has(file.id));
 }
 
 async function employeeDriveInstruction(date,token){
@@ -1608,13 +1613,15 @@ function bindEmployeeInstructionRefresh({date,tasks}){
     statusLine.textContent='Drive 업무지시를 확인하는 중이에요.';
     try{
       if(!session||session.expires<=Date.now())throw new Error('업무센터 Drive 연결을 갱신해 주세요.');
-      const files=await additionalEmployeeInstructions(date,session.token,tasks);
+      const files=await additionalEmployeeInstructions(date,session.token,tasks,true);
       const results=await Promise.allSettled(files.map(row=>readDriveReportBody(row,session.token)));
       if(!current())return;
       const documents=results.map((result,index)=>result.status==='fulfilled'?
         `<article class="wd138-remote-order"><h3>${esc(files[index].name)}</h3>${instructionDocument(result.value||'저장된 본문이 없어요.')}</article>`:'').join('');
-      output.innerHTML=initial+documents||'<p class="empty">이날 등록된 업무지시가 없습니다.</p>';
-      expand.hidden=!(initial||documents);
+      const hasDaily=files.some((file,index)=>file.appProperties?.wdInstructionDay&&results[index].status==='fulfilled');
+      const content=(hasDaily?'':initial)+documents;
+      output.innerHTML=content||'<p class="empty">이날 등록된 업무지시가 없습니다.</p>';
+      expand.hidden=!content;
       statusLine.textContent=results.some(result=>result.status==='rejected')?'일부 Drive 업무지시를 불러오지 못했어요.':'';
     }catch(error){if(current())statusLine.textContent=error.message||'Drive 업무지시를 불러오지 못했어요.';}
     finally{button.disabled=false;}
@@ -4858,7 +4865,7 @@ function bindWorkReportView(){
   },true);
 }
 
-let instructionStaffId=null,instructionDay=null;
+let instructionStaffId=null,instructionDay=null,managerDailyTasks=[];
 const instructionDrafts = new Map();
 let staffTasksOpen = false;
 function staffTable() {
@@ -5852,7 +5859,7 @@ function directInstructionPlan(raw){
   return {goal:goal.length>64?goal.slice(0,63)+'…':goal,items:[{text:raw}]};
 }
 
-function instructionDraftFor(staffId,date=localDay()){
+function instructionDraftFor(staffId,date=payrollCalendar.format(new Date())){
   if(!instructionDrafts.has(staffId))instructionDrafts.set(staffId,{staffId,raw:'',date});
   return instructionDrafts.get(staffId);
 }
@@ -5923,6 +5930,11 @@ async function storeInstructionDocument(task,profile,original){
   if(previous&&!safeDriveId(previous))throw new Error('연결된 업무지시 문서를 확인해 주세요.');
   const metadata={name,mimeType:'application/vnd.google-apps.document',...(!previous?{parents:[folder]}:{}),
     appProperties:{wdInstructionRequest:task.id}};
+  const result=await writeInstructionFile(folder,session.token,previous,metadata,text);
+  return {...task,instructionDriveId:result.id,instructionDriveName:result.name};
+}
+
+async function writeInstructionFile(folder,token,previous,metadata,text){
   const boundary='wd_instruction_'+crypto.randomUUID();
   const body=new Blob([
     '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n',
@@ -5930,13 +5942,112 @@ async function storeInstructionDocument(task,profile,original){
   ]);
   const response=await fetch('https://www.googleapis.com/upload/drive/v3/files'+(previous?'/'+previous:'')+
     '?uploadType=multipart&supportsAllDrives=true&fields=id,name,parents',{
-    method:previous?'PATCH':'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'multipart/related; boundary='+boundary},
+    method:previous?'PATCH':'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary},
     body,signal:AbortSignal.timeout(45000)
   });
   const result=await response.json().catch(()=>null);
-  if(!response.ok||!safeDriveId(result?.id)||result.name!==name||!result.parents?.includes(folder)||previous&&result.id!==previous)
+  if(!response.ok||!safeDriveId(result?.id)||result.name!==metadata.name||!result.parents?.includes(folder)||previous&&result.id!==previous)
     throw new Error('Drive 업무지시 저장을 확인하지 못했어요. 연결을 확인하고 다시 시도해 주세요.');
-  return {...task,instructionDriveId:result.id,instructionDriveName:result.name};
+  return result;
+}
+
+const dailyInstructionMime='application/vnd.google-apps.document';
+const dailyInstructionIndex='wd-instruction-day-v1:';
+const dailyInstructionText=text=>String(text??'').replace(/\r\n?/g,'\n');
+
+function dailyInstructionName(profile,date,sender){
+  const from=!sender?.name||sender.loginId===managerHqAccount.uid?'대표':sender.name;
+  const to=staffWorkDriveFolders(profile)?'수진':profile.name;
+  return workDocumentName(date,from,to,'업무지시');
+}
+
+async function readDailyInstruction(profile,date,token,sender){
+  const folder=staffWorkDriveFolders(profile)?.instruction;
+  const name=dailyInstructionName(profile,date,sender);
+  const quoted=name.replace(/['\\]/g,value=>'\\'+value);
+  const files=await readAllEmployeeDriveFiles(folder,token," and name = '"+quoted+"'",
+    'id,name,mimeType,description,appProperties');
+  const matching=files.filter(file=>file.name===name&&file.mimeType===dailyInstructionMime);
+  if(matching.length>1)throw new Error('같은 이름의 업무지시 문서가 여러 개 있어요. Drive에서 원본을 확인해 주세요.');
+  const file=matching[0];
+  if(!file||file.appProperties?.wdInstructionState==='cancelled')return {file,entries:[],name,folder};
+  const body=dailyInstructionText(await readDriveReportBody(file,token));
+  if(!file.description?.startsWith(dailyInstructionIndex)){
+    const text=body.replace(/\n$/,'');
+    const locals=tasksForStaff(profile.id).filter(task=>task.date===date&&
+      dailyInstructionText(instructionTaskText(task)).trimEnd()===text.trimEnd());
+    const id=locals.find(task=>task.instructionDriveId===file.id)?.id||
+      (locals.length===1?locals[0].id:null)||file.appProperties?.wdInstructionRequest||'drive_'+file.id;
+    return {file,entries:text.trim()?[{id,text}]:[],name,folder};
+  }
+  const index=JSON.parse(file.description.slice(dailyInstructionIndex.length));
+  if(!Array.isArray(index)||new Set(index.map(entry=>entry[0])).size!==index.length)
+    throw new Error('Drive 업무지시의 목록 정보를 확인하지 못했어요.');
+  let offset=0;
+  const entries=index.map(([id,length],position)=>{
+    if(!safeDriveId(id)||!Number.isSafeInteger(length)||length<1||offset+length>body.length)
+      throw new Error('Drive 업무지시 본문과 목록 정보가 달라요.');
+    const text=body.slice(offset,offset+length);
+    offset+=length;
+    if(position<index.length-1){
+      if(body.slice(offset,offset+2)!=='\n\n')throw new Error('Drive 업무지시 본문과 목록 정보가 달라요.');
+      offset+=2;
+    }
+    return {id,text};
+  });
+  if(body.slice(offset).trim())throw new Error('Drive에서 바뀐 업무지시 본문을 확인해 주세요.');
+  return {file,entries,name,folder};
+}
+
+async function changeDailyInstruction(profile,task,original,remove=false){
+  const session=instructionDriveSession();
+  const update=async()=>{
+    if(currentUser!=='manager'||staffById(profile.id)!==profile||localStorage.getItem(KEY)!==storageVersion)
+      throw new Error('업무지시 목록이 변경됐어요. 새로고침해 주세요.');
+    const {file,entries,name,folder}=await readDailyInstruction(profile,task.date,session.token,task.instructionSender);
+    const before=entries.find(entry=>entry.id===task.id);
+    const indexed=!!file?.description?.startsWith(dailyInstructionIndex);
+    if(original&&(indexed||original.instructionDaily)&&(!before||
+      before.text.trimEnd()!==dailyInstructionText(instructionTaskText(original)).trimEnd()))
+      throw new Error('Drive 업무지시가 변경됐어요. 목록을 새로고침해 주세요.');
+    const local=indexed?[]:tasksForStaff(profile.id).filter(row=>row.date===task.date&&!row.instructionDaily&&
+      (!row.instructionDriveId||row.instructionDriveId===file?.id));
+    for(const row of local){
+      if(entries.some(entry=>entry.id===row.id))continue;
+      const text=dailyInstructionText(instructionTaskText(row));
+      if(text.trim())entries.push({id:row.id,text});
+    }
+    const position=entries.findIndex(entry=>entry.id===task.id);
+    if(remove){
+      if(position<0)throw new Error('삭제할 업무지시를 확인하지 못했어요.');
+      entries.splice(position,1);
+    }else{
+      const text=dailyInstructionText(instructionTaskText(task));
+      if(!text.trim())throw new Error('업무지시 내용을 입력해 주세요.');
+      const entry={id:task.id,text};
+      if(position<0)entries.push(entry);else entries[position]=entry;
+    }
+    const metadata={name,mimeType:dailyInstructionMime,...(!file?{parents:[folder]}:{}),
+      description:dailyInstructionIndex+JSON.stringify(entries.map(({id,text})=>[id,text.length])),
+      appProperties:{wdInstructionDay:task.date,wdInstructionState:entries.length?'active':'cancelled'}};
+    const saved=await writeInstructionFile(folder,session.token,file?.id,metadata,entries.map(entry=>entry.text).join('\n\n')||' ');
+    return {...task,instructionDaily:true,instructionDriveId:saved.id,instructionDriveName:saved.name};
+  };
+  const lock=globalThis.navigator?.locks;
+  return lock?lock.request('wd-instruction:'+profile.id+':'+task.date,update):update();
+}
+
+function dailyInstructionRows(profile,date,daily){
+  const rows=tasksForStaff(profile.id).filter(task=>task.date===date);
+  const local=new Map(rows.map(task=>[task.id,task]));
+  return daily.entries.map(entry=>{
+    const source=local.get(entry.id);
+    const task={...source,id:entry.id,staffId:profile.id,date,title:daily.name,objective:daily.name,
+      simpleInstruction:true,directInstruction:true,instructionDaily:!!daily.file?.description?.startsWith(dailyInstructionIndex),
+      instructionDriveId:daily.file?.id,instructionDriveName:daily.name,
+      todos:[{id:'todo0',text:entry.text}],reports:source?.reports||[],feedback:source?.feedback||[]};
+    return {id:entry.id,date,name:daily.name,staffId:profile.id,staffName:profile.name,task:source&&instructionTaskText(source).trimEnd()===entry.text.trimEnd()?source:task};
+  });
 }
 
 function assignedInstructionActions(task){
@@ -5946,7 +6057,7 @@ function assignedInstructionActions(task){
 }
 function assignedInstruction(profile,id){
   if(currentUser!=='manager'||!profile||profile.archivedAt||staffById(profile.id)!==profile)return null;
-  return tasksForStaff(profile.id).find(task=>task.id===id)||null;
+  return managerDailyTasks.find(task=>task.id===id&&task.staffId===profile.id)||tasksForStaff(profile.id).find(task=>task.id===id)||null;
 }
 function saveInstructionChange(change,message,onSaved){
   const prior=S;
@@ -5965,11 +6076,12 @@ function openAssignedInstruction(profile,id,pane,onCancel){
   const task=assignedInstruction(profile,id);
   if(!task||$('modalLayer'))return;
   const simple=isEmployeeTask(task),direct=simple&&task.directInstruction;
+  const daily=task.instructionDaily||task.date===payrollCalendar.format(new Date());
   const fallback=task.objective||task.title;
   const todos=task.todos?.length?task.todos:simple?[{id:'todo0',text:fallback,done:false}]:taskTodos({...task});
   const editable=todos.map((todo,index)=>({todo,index})).filter(({todo})=>!todo.sourceTask);
   pane.innerHTML=`<form id="editAssignedInstructionForm"><p class="smallText">${esc(profile.name)} · ${esc(task.title)}</p>
-    <label for="editAssignedDate">업무일</label><input type="date" id="editAssignedDate" value="${esc(task.date)}" required>
+    <label for="editAssignedDate">업무일</label><input type="date" id="editAssignedDate" value="${esc(task.date)}" ${daily?'readonly':''} required>
     ${direct?'':`<label for="editAssignedTitle">업무 제목</label><input id="editAssignedTitle" maxlength="240" value="${esc(task.title)}" required>
       <label for="editAssignedGoal">업무 목표</label><textarea id="editAssignedGoal" rows="2">${esc(task.objective||'')}</textarea>`}
     ${editable.map(({todo,index},i)=>`<label for="editAssignedTodo${index}">${simple?'업무지시 내용':'할 일 '+(i+1)}</label>
@@ -5988,7 +6100,7 @@ function openAssignedInstruction(profile,id,pane,onCancel){
   form.onsubmit=async event=>{
     event.preventDefault();
     if(submit.disabled||assignedInstruction(profile,id)!==task)return;
-    const date=$('editAssignedDate').value;
+    const date=daily?task.date:$('editAssignedDate').value;
     if(!validAttendanceDay(date))return notify('업무일을 확인해 주세요.');
     const nextTodos=[...todos];
     for(const {todo,index} of editable){
@@ -6006,7 +6118,8 @@ function openAssignedInstruction(profile,id,pane,onCancel){
       }
       nextTodos[index]=next;
     }
-    const title=direct?directInstructionPlan(nextTodos[editable[0]?.index]?.text||'')?.goal:$('editAssignedTitle').value.trim();
+    const title=direct?(daily?dailyInstructionName(profile,date,task.instructionSender):
+      directInstructionPlan(nextTodos[editable[0]?.index]?.text||'')?.goal):$('editAssignedTitle').value.trim();
     if(!title)return notify('업무 제목을 입력해 주세요.');
     const draft={...task,date,title,objective:direct?title:$('editAssignedGoal').value.trim(),todos:nextTodos};
     submit.disabled=true;cancel.disabled=true;
@@ -6017,9 +6130,9 @@ function openAssignedInstruction(profile,id,pane,onCancel){
         draft.instructionSender=instructionSenderFor(managerWorkIdentity)||await resolveInstructionSender();
       if(assignedInstruction(profile,id)!==task)return;
       if(localStorage.getItem(KEY)!==storageVersion)throw new Error('다른 창에서 자료가 변경됐어요. 새로고침 뒤 다시 시도해 주세요.');
-      const updated=linked?await storeInstructionDocument(draft,profile,task):draft;
+      const updated=linked?(daily?await changeDailyInstruction(profile,draft,task):await storeInstructionDocument(draft,profile,task)):draft;
       if(assignedInstruction(profile,id)===task)
-        saveInstructionChange({tasks:S.tasks.map(row=>row===task?updated:row)},
+        saveInstructionChange({tasks:S.tasks.map(row=>row.id===id?updated:row)},
           updated.instructionDriveId?'업무지시를 Drive에 저장했어요.':'업무지시를 수정했어요.',()=>{
           if(form.isConnected&&instructionStaffId===profile.id)instructionDay=date;
         });
@@ -6037,7 +6150,9 @@ function cancelAssignedInstruction(profile,id){
     if(button.disabled||assignedInstruction(profile,id)!==task)return;
     button.disabled=true;
     try{
-      if(task.instructionDriveId){
+      if(staffWorkDriveFolders(profile)&&(task.instructionDaily||task.date===payrollCalendar.format(new Date()))){
+        await changeDailyInstruction(profile,task,task,true);
+      }else if(task.instructionDriveId){
         const session=instructionDriveSession();
         await verifyInstructionDocument(task,staffWorkDriveFolders(profile)?.instruction,session.token);
         const response=await fetch(driveFileApi+'/'+task.instructionDriveId+'?supportsAllDrives=true&fields=id,appProperties',{
@@ -6049,7 +6164,7 @@ function cancelAssignedInstruction(profile,id){
           throw new Error('Drive 업무지시 상태를 변경하지 못했어요.');
       }
       if(assignedInstruction(profile,id)===task)
-        saveInstructionChange({tasks:S.tasks.filter(row=>row!==task),selected:S.selected===id?null:S.selected,
+        saveInstructionChange({tasks:S.tasks.filter(row=>row.id!==id),selected:S.selected===id?null:S.selected,
           cancelledInstructions:[task,...(S.cancelledInstructions||[])]},'업무지시 목록에서 삭제했어요.');
     }catch(error){if(button.isConnected)notify(error.message||'업무지시를 삭제하지 못했어요.');}
     finally{button.disabled=false;}
@@ -6157,7 +6272,10 @@ function instructionPaper(row){
 }
 
 async function showInstructionDocuments(pane,rows,profile,onCancel){
-  pane.innerHTML=rows.map(instructionPaper).join('');
+  const today=rows[0].date===payrollCalendar.format(new Date());
+  pane.innerHTML=today?`<section class="wd144-daily-entries"><h3>${esc(dailyInstructionName(profile,rows[0].date,rows.find(row=>row.task?.instructionSender)?.task.instructionSender))}</h3>
+    ${rows.map(row=>row.task?`<article class="wd144-daily-entry"><div>${instructionDocument(instructionTaskText(row.task))}</div>
+      ${assignedInstructionActions(row.task)}</article>`:instructionPaper(row)).join('')}</section>`:rows.map(instructionPaper).join('');
   const bodies=pane.querySelectorAll('[data-instruction-document-text]');
   pane.querySelectorAll('[data-edit-instruction]').forEach(button=>button.onclick=()=>{
     openAssignedInstruction(profile,button.dataset.editInstruction,pane,onCancel);
@@ -6166,7 +6284,8 @@ async function showInstructionDocuments(pane,rows,profile,onCancel){
     cancelAssignedInstruction(profile,button.dataset.deleteInstruction);
   });
   const session=managerDriveSession;
-  await Promise.all(rows.map(async(row,index)=>{
+  const readable=today?rows.filter(row=>!row.task):rows;
+  await Promise.all(readable.map(async(row,index)=>{
     if(row.task)return;
     const body=bodies[index];
     const current=()=>!pane.hidden&&$('instructionDocumentBody')===pane&&pane.contains(body);
@@ -6188,9 +6307,11 @@ function simpleInstructionHistory(){
 
 function bindInstructionHistory(profile,root){
   const output=$('instructionHistoryRows'),pane=$('instructionDocumentBody');
-  const form=$('simpleInstructionForm'),heading=$('instructionComposeTitle'),compose=$('newAssignedInstruction');
+  const form=$('simpleInstructionForm'),heading=$('instructionComposeTitle'),today=payrollCalendar.format(new Date());
   const session=staffWorkDriveFolders(profile)?managerDriveSession:null;
-  let archivePending=!!session,archive=[];
+  let archivePending=!!session,archive=[],todayRows=null,todayIndexed=false;
+  managerDailyTasks=[];
+  instructionDay=instructionDay||today;
   const days=new Map();
   const editing=()=>!!$('editAssignedInstructionForm');
   const saving=()=>$('assignInstruction').disabled||pane.querySelector('form[aria-busy="true"]');
@@ -6199,21 +6320,23 @@ function bindInstructionHistory(profile,root){
     output.querySelectorAll('[data-instruction-day]').forEach(button=>{
       button.setAttribute('aria-pressed',String(button.dataset.instructionDay===day));
     });
-    const viewing=!!day,scroll=preserveScroll?pane.scrollTop:0;
-    form.hidden=viewing;pane.hidden=!viewing;compose.hidden=!viewing;
-    heading.textContent=viewing?attendanceDate(day,true)+' 업무지시':'업무지시 작성';
+    const scroll=preserveScroll?pane.scrollTop:0;
+    form.hidden=day!==today;
+    heading.textContent=attendanceDate(day,true)+' 업무지시';
     const rows=days.get(day);
     if(rows?.length)void showInstructionDocuments(pane,rows,profile,()=>select(day,{focus:true}));
-    else pane.innerHTML=viewing?`<p class="empty">${archivePending?'업무지시를 불러오는 중이에요.':'등록된 업무지시가 없어요.'}</p>`:'';
+    else pane.innerHTML=`<p class="empty">${archivePending?'업무지시를 불러오는 중이에요.':'등록된 업무지시가 없어요.'}</p>`;
     pane.scrollTop=scroll;
-    if(focus)(viewing?pane:$('instructionInput')).focus();
+    if(focus)(day===today?$('instructionInput'):pane).focus();
   };
-  compose.onclick=()=>{if(!saving())select(null,{focus:true});};
   const paint=()=>{
-    const rows=[...instructionRows(profile.id),...archive].sort((a,b)=>b.date.localeCompare(a.date));
+    const current=instructionRows(profile.id).filter(row=>!todayRows||row.date!==today||
+      !todayIndexed&&!row.task.instructionDaily&&!todayRows.some(saved=>saved.id===row.id));
+    const rows=[...current,...archive.filter(row=>!todayRows||row.date!==today||!todayRows.some(saved=>saved.task.instructionDriveId===row.id)),...(todayRows||[])]
+      .sort((a,b)=>b.date.localeCompare(a.date));
     days.clear();
+    for(const date of [...new Set([today,...rows.map(row=>row.date)])].sort().reverse())days.set(date,[]);
     rows.forEach(row=>{
-      if(!days.has(row.date))days.set(row.date,[]);
       days.get(row.date).push(row);
     });
     output.innerHTML=[...days.keys()].map(day=>`<button type="button" class="wd133-instruction-row"
@@ -6226,13 +6349,23 @@ function bindInstructionHistory(profile,root){
   };
   paint();
   if(!session)return;
-  void readLegacyInstructionRows(session.token).then(rows=>{
+  void Promise.allSettled([readLegacyInstructionRows(session.token),readDailyInstruction(profile,today,session.token)]).then(([previous,daily])=>{
     if($('simpleInstructionHistory')!==root)return;
-    archivePending=false;archive=rows.filter(row=>row.staffId===profile.id);paint();
+    archivePending=false;
+    if(previous.status==='fulfilled')archive=previous.value.filter(row=>row.staffId===profile.id);
+    if(daily.status==='fulfilled'&&daily.value.file){
+      todayIndexed=!!daily.value.file.description?.startsWith(dailyInstructionIndex);
+      todayRows=dailyInstructionRows(profile,today,daily.value);
+      managerDailyTasks=todayRows.map(row=>row.task);
+      archive=archive.filter(row=>row.id!==daily.value.file.id);
+    }
+    paint();
+    if(daily.status==='rejected')throw daily.reason;
+    if(previous.status==='rejected')throw previous.reason;
   }).catch(()=>{
     if($('simpleInstructionHistory')!==root)return;
     archivePending=false;
-    if(instructionDay&&!days.has(instructionDay)&&!editing())select(instructionDay);
+    if(!days.get(instructionDay)?.length&&!editing())select(instructionDay);
     const status=$('instructionHistoryStatus');
     status.textContent='이전 문서를 불러오지 못했어요.';
     status.hidden=false;
@@ -6241,10 +6374,10 @@ function bindInstructionHistory(profile,root){
 
 function instructionComposeForm(profile){
   const d=instructionDraftFor(profile.id);
-  return `<form id="simpleInstructionForm" class="wd135-work-scroll">
+  return `<form id="simpleInstructionForm">
         <label class="wd132-instruction-date">업무일 <input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required></label>
         <label class="wd132-instruction-body-label" for="instructionInput">업무지시 내용</label>
-        <textarea id="instructionInput" rows="8" maxlength="50000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
+        <textarea id="instructionInput" rows="4" maxlength="50000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
         <p class="smallText wd116-instruction-recipient">보내는 사람 <strong>${esc(instructionSenderFor(managerWorkIdentity)?.name||'본진 로그인 이름')}</strong>
           · 받는 사람 <strong>${esc(profile.name)}</strong></p>
         ${staffWorkDriveFolders(profile)?'':'<p class="smallText">이 직원의 Drive 연결을 확인하기 전에는 업무지시가 이 브라우저에 저장돼요.</p>'}
@@ -6299,9 +6432,9 @@ function instructionView(){
         ${simpleInstructionHistory()}
       </section>
       <section class="card" aria-labelledby="instructionComposeTitle">
-        <header class="wd132-instruction-head"><h2 id="instructionComposeTitle">업무지시 작성</h2>
-          ${profile?'<button type="button" class="small" id="newAssignedInstruction" hidden>새 지시 작성</button>':''}</header>
-        ${profile?instructionComposeForm(profile)+'<div id="instructionDocumentBody" class="wd135-work-scroll" tabindex="-1" role="region" aria-labelledby="instructionComposeTitle" hidden></div>':
+        <header class="wd132-instruction-head"><h2 id="instructionComposeTitle">업무지시</h2></header>
+        ${profile?`<div class="wd135-work-scroll">${instructionComposeForm(profile)}
+          <div id="instructionDocumentBody" tabindex="-1" role="region" aria-labelledby="instructionComposeTitle"></div></div>`:
           '<p class="empty">왼쪽에서 직원·스탭을 선택해 주세요.</p>'}
       </section>
     </div>`;
@@ -6328,11 +6461,11 @@ function bindInstructionView(){
 async function commitInstruction(d,plan,sender,profile,id){
   if(currentUser!=='manager'||staffById(profile.id)!==profile)return false;
   if(localStorage.getItem(KEY)!==storageVersion)throw new Error('다른 창에서 자료가 변경됐어요. 새로고침 뒤 다시 시도해 주세요.');
-  const title=plan.goal,task={id,staffId:d.staffId,simpleInstruction:true,directInstruction:true,
+  const title=dailyInstructionName(profile,d.date,sender),task={id,staffId:d.staffId,simpleInstruction:true,directInstruction:true,
     instructionSender:sender,instructionRecipientName:profile.name,
     date:d.date,title,objective:title,guide:'',references:[],
     ack:null,work:{},reports:[],feedback:[],todos:[{id:'todo0',text:plan.items[0].text,done:false}]};
-  const stored=staffWorkDriveFolders(profile)?await storeInstructionDocument(task,profile):task;
+  const stored=staffWorkDriveFolders(profile)?await changeDailyInstruction(profile,task):task;
   if(currentUser!=='manager'||staffById(profile.id)!==profile)return false;
   const prior=S.tasks;
   S.tasks=[...prior.filter(row=>row.id!==id),stored];
