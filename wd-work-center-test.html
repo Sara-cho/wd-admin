@@ -776,17 +776,22 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 }
 @media(max-width:760px){.wd32-posts tr[data-admin-title]{grid-template-columns:minmax(0,1fr)}}
 </style><style>
-.wd118-instruction-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,.85fr);grid-auto-rows:1fr;gap:16px}
+.wd118-instruction-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1.1fr)) minmax(0,.85fr);grid-auto-rows:1fr;gap:16px}
 .wd118-instruction-grid>.card{min-width:0;overflow-wrap:anywhere}
 .wd118-instruction-history,.wd127-instruction-files{contain:size;display:flex;flex-direction:column;min-height:0}
-.wd127-instruction-date{display:grid;gap:4px;margin:0 0 14px;font-size:13px}
-.wd127-instruction-date select{width:100%;min-width:0}
+.wd132-instruction-date,.wd132-instruction-body-label{color:#3a3b46;font-size:14px;font-weight:700;line-height:20px}
+.wd132-instruction-date{display:grid;gap:8px;margin:0 0 16px}
+.wd132-instruction-date :is(input,select){height:48px;min-width:0;margin:0;padding:0 14px;font-family:inherit;font-size:14px;font-weight:600;line-height:normal}
+.wd132-instruction-date input::-webkit-datetime-edit{padding:0}
+.wd132-instruction-body-label{display:block;margin:0 0 8px}
+#simpleInstructionForm textarea{display:block}
+#simpleInstructionForm .wd116-instruction-recipient{margin-top:10px}
 .wd127-instruction-history-status{margin:0 0 8px}
 #instructionHistoryRows,.wd127-instruction-files #managerDriveRows{flex:1 1 0;min-height:0;overflow:auto;scrollbar-gutter:stable}
 #instructionHistoryRows{display:flex;flex-direction:column;padding:15px;border:1px solid #e1d4ee;border-radius:10px;background:#fcf9ff;scrollbar-gutter:auto}
-.wd129-file-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
-.wd129-file-header h2,.wd129-file-header .row{margin:0}
-.wd129-file-header .row{flex-shrink:0}
+.wd132-instruction-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px;margin:0 0 14px}
+.wd132-instruction-head h2,.wd132-instruction-head .row{margin:0}
+.wd132-instruction-head .row{flex-shrink:0}
 .wd127-instruction-files #employeeDriveStatus:empty{display:none}
 .wd127-instruction-files #managerDriveRows{padding-right:8px}
 .wd118-report-drive{margin-top:16px}
@@ -5799,7 +5804,7 @@ function cancelAssignedInstruction(profile,id){
 function managerDriveListControls({heading='',headingId=''}={}){
   const actions=`<div class="row"><button class="small" type="button" id="connectEmployeeDrive" hidden>Drive 연결</button>
     <button class="small" type="button" id="refreshManagerDrive" hidden>새로고침</button></div>`;
-  return `${heading?`<header class="wd129-file-header"><h2 id="${esc(headingId)}">${esc(heading)}</h2>${actions}</header>`:actions}
+  return `${heading?`<header class="wd132-instruction-head"><h2 id="${esc(headingId)}">${esc(heading)}</h2>${actions}</header>`:actions}
     <p class="smallText" id="employeeDriveStatus" role="status"></p>
     <div id="managerDriveRows"${heading?` tabindex="0" role="region" aria-label="${esc(heading)} 목록"`:''}></div>`;
 }
@@ -5897,12 +5902,13 @@ function instructionDocumentRows(rows){
 
 function simpleInstructionHistory(){
   const today=payrollCalendar.format(new Date());
-  return `<h2 id="assignedWorkTitle">업무지시 목록</h2>
-    <label class="wd127-instruction-date">날짜 <select id="instructionHistoryDate">
+  return `<header class="wd132-instruction-head"><h2 id="assignedWorkTitle">업무지시 목록</h2></header>
+    <label class="wd132-instruction-date">업무일 <select id="instructionHistoryDate">
       <option value="${today}">${today}</option>
     </select></label>
+    <p class="wd132-instruction-body-label" id="instructionHistoryBodyLabel">등록된 업무지시</p>
     <p class="smallText wd127-instruction-history-status" id="instructionHistoryStatus" role="status" hidden></p>
-    <div class="wd109-history-scroll" id="instructionHistoryRows" tabindex="0" role="region" aria-labelledby="assignedWorkTitle"></div>`;
+    <div class="wd109-history-scroll" id="instructionHistoryRows" tabindex="0" role="region" aria-labelledby="instructionHistoryBodyLabel"></div>`;
 }
 
 function bindInstructionHistory(profile,root){
@@ -5938,12 +5944,14 @@ function bindInstructionHistory(profile,root){
 function simpleInstructionView(profile){
   const d=instructionDraftFor(profile.id);
   return `<div class="wd118-instruction-grid">
-    <section class="card"><h2>업무지시 작성</h2>
-      <p class="smallText wd116-instruction-recipient">보내는 사람 <strong>${esc(instructionSenderFor(managerWorkIdentity)?.name||'본진 로그인 이름')}</strong>
-        · 받는 사람 <strong>${esc(profile.name)}</strong></p>
+    <section class="card" aria-labelledby="instructionComposeTitle">
+      <header class="wd132-instruction-head"><h2 id="instructionComposeTitle">업무지시 작성</h2></header>
       <form id="simpleInstructionForm">
-        <label for="simpleInstructionDate">업무일</label><input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required>
-        <label for="instructionInput">업무지시 내용</label><textarea id="instructionInput" rows="8" maxlength="50000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
+        <label class="wd132-instruction-date">업무일 <input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required></label>
+        <label class="wd132-instruction-body-label" for="instructionInput">업무지시 내용</label>
+        <textarea id="instructionInput" rows="8" maxlength="50000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
+        <p class="smallText wd116-instruction-recipient">보내는 사람 <strong>${esc(instructionSenderFor(managerWorkIdentity)?.name||'본진 로그인 이름')}</strong>
+          · 받는 사람 <strong>${esc(profile.name)}</strong></p>
         ${staffWorkDriveFolders(profile)?'':'<p class="smallText">이 직원의 Drive 연결을 확인하기 전에는 업무지시가 이 브라우저에 저장돼요.</p>'}
         <div class="actions"><button class="primary" id="assignInstruction" type="submit">업무지시 등록</button></div>
       </form>
