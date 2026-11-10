@@ -1022,7 +1022,7 @@ function sameDayReportTasks(task){
 function instructionDayReportLink(task){
   return sameDayReportTasks(task).length?
     `<button type="button" class="small wd42-reportlink" data-day-reports="${esc(task.id)}" data-report-scope="day">업무보고 보기</button>`:
-    currentUser==='manager'&&staffById(taskStaffId(task))&&payrollEmployeeLogin(staffById(taskStaffId(task)))===legacyStaffHqLogin?
+    currentUser==='manager'&&staffWorkDriveFolders(staffById(taskStaffId(task)))?
       `<button type="button" class="small wd42-reportlink" data-find-drive-report="${esc(task.id)}">Drive 업무보고 찾기</button>`:'';
 }
 
@@ -4246,16 +4246,34 @@ function bindManagerHome(){
 
 let workReportSource='drive',driveReportFilters={date:'',staff:'',query:''};
 
+function staffWorkDriveFolders(profile){
+  if(!profile)return null;
+  if(payrollEmployeeLogin(profile)===legacyStaffHqLogin)
+    return {instruction:employeeDriveFolders.instruction,journal:employeeDriveFolders.journal};
+  if(profile.id==='mina')return {
+    instruction:'14BJhFHQ2_VQoE3qOVjHYo2TzoFjHyvCL',
+    journal:'1vXTH0W2x0_RXMPrtQadloKAW_Qdfemzu'
+  };
+  return null;
+}
+
 async function readCompanyDriveReports(token){
-  const files=await readAllEmployeeDriveFiles(employeeDriveFolders.journal,token,
-    " and mimeType != 'application/vnd.google-apps.folder'");
-  return files.map(file=>({...file,date:file.name?.slice(0,10)}))
-    .filter(file=>validAttendanceDay(file.date))
-    .sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'ko'));
+  const profiles=S.staffProfiles.filter(profile=>staffWorkDriveFolders(profile));
+  const results=await Promise.allSettled(profiles.map(async profile=>{
+    const files=await readAllEmployeeDriveFiles(staffWorkDriveFolders(profile).journal,token,
+      " and mimeType != 'application/vnd.google-apps.folder'");
+    return files.map(file=>({...file,staffId:profile.id,staffName:profile.name,date:file.name?.slice(0,10)}))
+      .filter(file=>validAttendanceDay(file.date));
+  }));
+  const failed=new Map(results.flatMap((result,index)=>result.status==='rejected'?[[profiles[index].id,result.reason]]:[]));
+  if(profiles.length&&failed.size===profiles.length)throw failed.values().next().value;
+  const rows=results.flatMap(result=>result.status==='fulfilled'?result.value:[]);
+  rows.sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'ko'));
+  return {rows,failed};
 }
 
 function workReportView(){
-  const profiles=S.staffProfiles.filter(profile=>!profile.hiddenAt);
+  const profiles=S.staffProfiles.filter(profile=>!profile.hiddenAt||staffWorkDriveFolders(profile));
   return `<div class="titleRow"><h1>업무보고</h1></div>
     <div class="wd65-filters" aria-label="업무보고 출처">
       <button type="button" data-report-source="drive" aria-pressed="${workReportSource==='drive'}">본진 Drive</button>
@@ -4266,7 +4284,7 @@ function workReportView(){
       <div class="wd118-report-filters">
         <label>업무일 <input id="driveReportDate" type="date" value="${esc(driveReportFilters.date)}"></label>
         <label>직원·스탭 <select id="driveReportStaff"><option value="">전체</option>
-          ${profiles.map(profile=>`<option value="${esc(profile.id)}">${esc(profile.name)}</option>`).join('')}
+          ${profiles.map(profile=>`<option value="${esc(profile.id)}">${esc(profile.name)}${profile.archivedAt?' · 보관':''}</option>`).join('')}
         </select></label>
         <label>검색 <input id="driveReportSearch" type="search" placeholder="파일명 또는 날짜" value="${esc(driveReportFilters.query)}"></label>
       </div>
@@ -4282,25 +4300,35 @@ function bindWorkReportView(){
   });
   if(workReportSource==='local'){bindReviewView();return;}
   const date=$('driveReportDate'),staff=$('driveReportStaff'),search=$('driveReportSearch'),output=$('managerDriveRows');
-  const author=S.staffProfiles.find(profile=>!profile.hiddenAt&&payrollEmployeeLogin(profile)===legacyStaffHqLogin);
-  let reports=null;
+  let reportData=null;
   const paint=()=>{
-    if(reports===null)return;
+    if(!reportData)return;
+    const {rows,failed}=reportData;
     const term=search.value.trim().toLowerCase();
-    const filtered=reports.filter(row=>(!date.value||date.value===row.date)&&row.name.toLowerCase().includes(term));
-    const unlinked=staff.value&&staff.value!==author?.id;
-    output.innerHTML=unlinked?'<p class="empty">이 직원의 본진 업무보고 폴더가 연결되지 않았어요.</p>':
-      filtered.length?`<div class="wd65-work-scroll"><table class="wd65-table">
+    const filtered=rows.filter(row=>(!staff.value||row.staffId===staff.value)&&(!date.value||date.value===row.date)&&
+      (row.name.toLowerCase().includes(term)||row.staffName.toLowerCase().includes(term)));
+    const folder=staffWorkDriveFolders(staffById(staff.value))?.journal;
+    if(staff.value&&!folder){
+      output.innerHTML='<p class="empty">이 직원의 Drive 업무보고 폴더가 연결되지 않았어요.</p>';
+      return;
+    }
+    if(staff.value&&failed.has(staff.value)){
+      output.innerHTML='<p class="empty">이 직원의 Drive 업무보고 폴더를 읽지 못했어요. 새로고침하거나 Drive 접근 권한을 확인해 주세요.</p>';
+      return;
+    }
+    const note=!staff.value&&failed.size?'<p class="smallText">일부 직원의 Drive 폴더를 읽지 못했어요.</p>':'';
+    const folderLink=folder?`<p><a href="${driveFileUrl(folder)}" target="_blank" rel="noopener noreferrer">Drive 업무보고 폴더 열기</a></p>`:'';
+    output.innerHTML=note+folderLink+(filtered.length?`<div class="wd65-work-scroll"><table class="wd65-table">
         <thead><tr><th scope="col">업무일</th><th scope="col">직원</th><th scope="col">업무보고</th><th scope="col">원본</th></tr></thead>
-        <tbody>${filtered.map(row=>`<tr><td>${esc(row.date)}</td><td>${esc(author?.name||'박수진')}</td>
+        <tbody>${filtered.map(row=>`<tr><td>${esc(row.date)}</td><td>${esc(row.staffName)}</td>
           <th scope="row">${esc(row.name)}</th><td><a href="${driveFileUrl(row.id)}" target="_blank" rel="noopener noreferrer">Drive에서 열기</a></td></tr>`).join('')}</tbody>
-      </table></div>`:'<p class="empty">조건에 맞는 업무보고가 없어요.</p>';
+      </table></div>`:'<p class="empty">조건에 맞는 업무보고가 없어요.</p>');
   };
   date.onchange=staff.onchange=search.oninput=()=>{
     driveReportFilters={date:date.value,staff:staff.value,query:search.value};
     paint();
   };
-  bindManagerDriveList(readCompanyDriveReports,(_,rows)=>{reports=rows;paint();});
+  bindManagerDriveList(readCompanyDriveReports,(_,data)=>{reportData=data;paint();});
 }
 
 function reviewView(){
@@ -5392,8 +5420,10 @@ function bindManagerDriveList(readRows,paintRows){
 
 function simpleInstructionHistory(profile){
   const tasks=tasksForStaff(profile.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const folder=staffWorkDriveFolders(profile)?.instruction;
   return `<section class="wd109-history-region" aria-labelledby="assignedWorkTitle">
     <h2 id="assignedWorkTitle">등록한 업무지시</h2>
+    ${folder?`<p class="smallText"><a href="${driveFileUrl(folder)}" target="_blank" rel="noopener noreferrer">Drive 업무지시 폴더 열기</a></p>`:''}
     <div class="wd109-history-scroll" tabindex="0" role="region" aria-labelledby="assignedWorkTitle">
       ${tasks.length?tasks.map(task=>`<article class="wd109-assigned-work"><header><time datetime="${esc(task.date)}">${esc(attendanceDate(task.date))}</time><div class="wd110-instruction-actions">${instructionDayReportLink(task)}${assignedInstructionActions(task)}</div></header>
         ${employeeInstructionList(task.todos||[],task.objective||task.title,task.directInstruction)}</article>`).join(''):'<p class="empty">등록된 업무지시가 없어요.</p>'}
