@@ -11387,8 +11387,14 @@ setInterval(function(){
     STATE.autoTried=true;setBusy(true);STATE.tokenClient.requestAccessToken({prompt:''});
   }
   async function listTodayFile(folderId,kind,searchDate){
-    var name=(searchDate||STATE.date)+'_'+(kind==='업무일지'?assertWorkRole().label:'수진')+kind;
-    var q="'"+folderId+"' in parents and name contains '"+name.replace(/'/g,"\\'")+"' and trashed = false";
+    var date=searchDate||STATE.date;
+    var name=date+'_'+(kind==='업무일지'?assertWorkRole().label:'수진')+kind;
+    var names=[name];
+    if(kind==='업무지시'&&/^\d{4}-\d{2}-\d{2}$/.test(date)){
+      names.push(date.slice(2).replace(/-/g,'')+'_대표→수진_업무지시');
+    }
+    var namesQuery=names.map(function(value){return "name contains '"+value.replace(/'/g,"\\'")+"'";}).join(' or ');
+    var q="'"+folderId+"' in parents and "+(names.length===1?namesQuery:'('+namesQuery+')')+" and trashed = false";
     var url='https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy='+encodeURIComponent('modifiedTime desc')+'&q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink,size,owners(emailAddress))');
     var data=await (await api(url,{method:'GET'})).json(),files=data.files||[];
     if(kind==='업무일지'){
