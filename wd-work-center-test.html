@@ -61,9 +61,10 @@
 .wd123-review-actions{margin-bottom:8px}
 @media(max-width:1050px){.wd123-report-layout{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}.wd123-report-layout>section:last-child{grid-column:1/-1}}
 @media(max-width:720px){.wd123-report-layout{grid-template-columns:1fr}.wd123-report-layout>section:last-child{grid-column:auto}.wd123-scroll{max-height:35vh}}
-.wd124-instruction-day{padding:15px 15px 10px;margin:0 0 12px;border:1px solid #e1d4ee;border-radius:10px;background:#fcf9ff;min-width:0}
-.wd124-instruction-day h3{margin:0 0 10px;color:#3d245d;font-size:17px}
-.wd124-doc-entry{background:white;border:1px solid #eee5f3;border-radius:8px;padding:13px;margin-bottom:8px;min-width:0}
+.wd124-instruction-day{display:flex;flex:1 0 auto;flex-direction:column;gap:10px;min-width:0}
+.wd124-instruction-day h3{margin:0;color:#3d245d;font-size:17px}
+.wd124-doc-entry{background:white;border:1px solid #eee5f3;border-radius:8px;padding:13px;min-width:0}
+.wd124-doc-entry:only-of-type{flex:1 0 auto}
 .wd124-doc-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .wd124-instruction-doc{font-size:14px;line-height:1.68;overflow-wrap:anywhere}
 .wd124-instruction-doc h4{margin:4px 0;color:#382256;font-size:15px}
@@ -787,6 +788,11 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd127-instruction-date select{width:100%;min-width:0}
 .wd127-instruction-history-status{margin:0 0 8px}
 #instructionHistoryRows,.wd127-instruction-files #managerDriveRows{flex:1 1 0;min-height:0;overflow:auto;scrollbar-gutter:stable}
+#instructionHistoryRows{display:flex;flex-direction:column;padding:15px;border:1px solid #e1d4ee;border-radius:10px;background:#fcf9ff;scrollbar-gutter:auto}
+.wd129-file-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.wd129-file-header h2,.wd129-file-header .row{margin:0}
+.wd129-file-header .row{flex-shrink:0}
+.wd127-instruction-files #employeeDriveStatus:empty{display:none}
 .wd127-instruction-files #managerDriveRows{padding-right:8px}
 .wd118-report-drive{margin-top:16px}
 .wd118-report-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.5fr);gap:12px;margin-bottom:14px}
@@ -5737,11 +5743,12 @@ function cancelAssignedInstruction(profile,id){
       cancelledInstructions:[task,...(S.cancelledInstructions||[])]},'업무지시 목록에서 삭제했어요.');
   };
 }
-function managerDriveListControls(listLabel=''){
-  return `<div class="row"><button class="small" type="button" id="connectEmployeeDrive" hidden>Drive 연결</button>
-    <button class="small" type="button" id="refreshManagerDrive" hidden>새로고침</button></div>
+function managerDriveListControls({heading='',headingId=''}={}){
+  const actions=`<div class="row"><button class="small" type="button" id="connectEmployeeDrive" hidden>Drive 연결</button>
+    <button class="small" type="button" id="refreshManagerDrive" hidden>새로고침</button></div>`;
+  return `${heading?`<header class="wd129-file-header"><h2 id="${esc(headingId)}">${esc(heading)}</h2>${actions}</header>`:actions}
     <p class="smallText" id="employeeDriveStatus" role="status"></p>
-    <div id="managerDriveRows"${listLabel?` tabindex="0" role="region" aria-label="${esc(listLabel)}"`:''}></div>`;
+    <div id="managerDriveRows"${heading?` tabindex="0" role="region" aria-label="${esc(heading)} 목록"`:''}></div>`;
 }
 
 function bindManagerDriveList(readRows,paintRows,keepRows=false){
@@ -5888,9 +5895,7 @@ function simpleInstructionView(profile){
     </section>
     <section class="card wd118-instruction-history" id="simpleInstructionHistory" aria-labelledby="assignedWorkTitle">${simpleInstructionHistory()}</section>
     <section class="card wd127-instruction-files" aria-labelledby="instructionFilesTitle">
-      <h2 id="instructionFilesTitle">업무공유파일</h2>
-      <p class="smallText">01_업무공유폴더 / 03_업무공유파일</p>
-      ${managerDriveListControls('업무공유파일 목록')}
+      ${managerDriveListControls({heading:'업무공유파일',headingId:'instructionFilesTitle'})}
     </section>
   </div>`;
 }
