@@ -5693,24 +5693,10 @@ async function storeInstructionDocument(task,profile){
 
 function assignedInstructionActions(task){
   if(currentUser!=='manager')return '';
-  const saveToDrive=task.directInstruction&&!task.instructionDriveId&&staffWorkDriveFolders(staffById(taskStaffId(task)));
-  return `<div class="wd110-instruction-actions">${saveToDrive?`<button type="button" class="small" data-save-instruction-drive="${esc(task.id)}">Drive 저장</button>`:''}<button type="button" class="small" data-edit-instruction="${esc(task.id)}">수정</button>
+  return `<div class="wd110-instruction-actions"><button type="button" class="small" data-edit-instruction="${esc(task.id)}">수정</button>
     <button type="button" class="small wd110-instruction-delete" data-delete-instruction="${esc(task.id)}">삭제</button></div>`;
 }
 function bindAssignedInstructions(root,profile){
-  root.querySelectorAll('[data-save-instruction-drive]').forEach(button=>button.onclick=async()=>{
-    const id=button.dataset.saveInstructionDrive,task=assignedInstruction(profile,id);
-    if(!task?.directInstruction||task.instructionDriveId||button.disabled||!window.confirm('이 업무지시를 회사 Drive에 문서로 저장할까요?'))return;
-    button.disabled=true;
-    try{
-      const sender=task.instructionSender||instructionSenderFor(managerWorkIdentity)||await resolveInstructionSender();
-      if(assignedInstruction(profile,id)!==task)return;
-      const updated=await storeInstructionDocument({...task,instructionSender:sender},profile);
-      if(assignedInstruction(profile,id)===task)
-        saveInstructionChange({tasks:S.tasks.map(row=>row===task?updated:row)},'업무지시 문서를 Drive에 저장했어요.');
-    }catch(error){if(button.isConnected)notify(error.message||'Drive 저장을 확인하지 못했어요.');}
-    finally{button.disabled=false;}
-  });
   root.querySelectorAll('[data-edit-instruction]').forEach(button=>button.onclick=()=>openAssignedInstruction(profile,button.dataset.editInstruction));
   root.querySelectorAll('[data-delete-instruction]').forEach(button=>button.onclick=()=>cancelAssignedInstruction(profile,button.dataset.deleteInstruction));
 }
