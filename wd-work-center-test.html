@@ -601,7 +601,6 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd108-month-split header{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
 .wd108-month-split h4{margin:0}
 .wd108-month-split header strong{font-size:14px;color:#5426a0}
-.wd108-month-split #assignFromStaff{margin-left:auto}
 .wd108-month-split .wd60-inner-scroll{flex:1;min-height:0;max-height:none;border:1px solid #eee7f4;border-radius:8px}
 .wd108-month-split .wd60-detail-table th{position:sticky;top:0;z-index:1}
 .wd108-month-split .wd60-detail-table th,.wd108-month-split .wd60-detail-table td{font-size:13px}
@@ -763,8 +762,12 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 @media(max-width:1300px){.wd116-instruction-layout .wd75-split{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.wd116-instruction-layout{grid-template-columns:minmax(0,1fr)}}
 </style><style>
-.wd117-staff-instruction{min-height:0;padding:0;border:0;background:transparent;text-align:left;font:inherit;color:#4b25aa}
-.wd117-staff-instruction:hover,.wd117-staff-instruction:focus-visible{text-decoration:underline}
+.wd125-staff-reports th:first-child{width:1%;white-space:nowrap}
+.wd125-staff-reports time{white-space:nowrap}
+.wd125-staff-report{min-height:28px;padding:0;border:0;background:transparent;text-align:left;font:inherit;color:#4b25aa;overflow-wrap:anywhere}
+.wd125-staff-report:hover,.wd125-staff-report:focus-visible{text-decoration:underline}
+.wd125-report-status{margin:0}
+#staffReportDocument h4{overflow-wrap:anywhere}
 @media(max-width:760px){.wd32-posts tr[data-admin-title]{grid-template-columns:minmax(0,1fr)}}
 </style><style>
 .wd118-instruction-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,.85fr);gap:16px;align-items:start}
@@ -4417,8 +4420,8 @@ function staffWorkDriveFolders(profile){
   return null;
 }
 
-async function readCompanyDriveReports(token){
-  const profiles=S.staffProfiles.filter(profile=>staffWorkDriveFolders(profile));
+async function readCompanyDriveReports(token,staffId=''){
+  const profiles=S.staffProfiles.filter(profile=>(!staffId||profile.id===staffId)&&staffWorkDriveFolders(profile));
   const results=await Promise.allSettled(profiles.map(async profile=>{
     const files=await readAllEmployeeDriveFiles(staffWorkDriveFolders(profile).journal,token,
       " and mimeType != 'application/vnd.google-apps.folder'",'id,name,mimeType,createdTime');
@@ -5021,10 +5024,6 @@ function staffProfileSummary(profile){
     </dl>${profile.memo?`<details class="wd58-note"><summary>관리 메모</summary><p>${nl(profile.memo)}</p></details>`:''}`;
 }
 
-function staffMonthlyTasks(profile,month){
-  return tasksForStaff(profile.id).filter(task=>task.date.startsWith(month+'-')).sort((a,b)=>a.date.localeCompare(b.date));
-}
-
 function staffWorkTotal(rows){
   return minutesLabel(rows.reduce((sum,row)=>sum+(workMinutes(row)||0),0));
 }
@@ -5044,7 +5043,6 @@ function staffPayrollActions(profile,month){
 
 function staffMonthSummary(profile,month){
   const rows=staffMonthRecords(profile,month);
-  const tasks=staffMonthlyTasks(profile,month);
   const monthName=Number(month.slice(5))+'월',linked=!!payrollEmployeeLogin(profile);
   return `<section class="wd60-month" aria-labelledby="staffMonthTitle">
     <div class="wd60-month-header"><h3 id="staffMonthTitle">월간 현황</h3><label><span>조회 월</span><input type="month" id="staffMonth" value="${month}"></label></div>
@@ -5056,10 +5054,16 @@ function staffMonthSummary(profile,month){
         ${linked?`<div class="row wd113-work-status"><p class="smallText" id="staffWorkStatus" role="status">본진 근무기록을 불러오는 중이에요.</p><button type="button" class="small" id="reloadStaffWork" hidden>다시 불러오기</button></div>`:''}
         <div id="staffWorkRows">${staffWorkTable(rows,linked?'본진 근무기록을 확인하고 있어요.':undefined)}</div>
       </article>
-      <article class="wd107-month-item"><header><h4>${monthName} 업무지시</h4><strong>총 ${tasks.length}건</strong>
-        ${profile.archivedAt?'':'<button type="button" class="primary small" id="assignFromStaff">업무지시 작성</button>'}</header>
-        ${staffTasksTable(tasks)}
+      <article class="wd107-month-item"><header><h4>${monthName} 업무보고</h4><strong id="staffReportTotal"></strong></header>
+        <p class="smallText wd125-report-status" id="staffReportStatus" role="status" hidden></p>
+        <div class="wd60-inner-scroll" tabindex="0" role="region" aria-label="업무보고 목록">
+          <table class="wd60-detail-table wd125-staff-reports" aria-label="월별 제출 업무보고">
+            <thead><tr><th scope="col">제출일</th><th scope="col">업무보고 문서</th></tr></thead>
+            <tbody id="staffReportRows"></tbody>
+          </table>
+        </div>
       </article>
+      ${staffDetailDialog('staffReportDialog','업무보고',profile.name,'<div id="staffReportDocument" aria-live="polite"></div>')}
     </div>
     <div id="staffPayslipDialogArea">${staffPayslipDialogMarkup(profile,month)}</div>
   </section>`;
@@ -5427,9 +5431,71 @@ function bindStaffWorkMonth(profile,month){
   void load();
 }
 
-function staffTasksTable(tasks){
-  return `<div class="wd60-inner-scroll" tabindex="0" role="region" aria-label="업무지시 스크롤"><table class="wd60-detail-table" aria-label="일별 업무지시"><thead><tr><th scope="col">업무일</th><th scope="col">업무 제목</th><th scope="col">그날 업무보고</th></tr></thead>
-    <tbody>${tasks.length?tasks.map(task=>`<tr><td>${esc(attendanceDate(task.date))}</td><td><button type="button" class="wd117-staff-instruction" data-staff-instruction="${esc(task.id)}">${esc(task.title)}</button></td><td>${instructionDayReportLink(task)||'—'}</td></tr>`).join(''):'<tr><td colspan="3">이 달에 등록된 업무지시가 없어요.</td></tr>'}</tbody></table></div>`;
+function bindStaffMonthlyReports(profile,month){
+  const list=$('staffReportRows'),total=$('staffReportTotal'),status=$('staffReportStatus');
+  const dialog=$('staffReportDialog'),documentBody=$('staffReportDocument');
+  const active=()=>currentUser==='manager'&&$('staffReportRows')===list;
+  const local=localWorkReportRows().filter(row=>row.staffId===profile.id&&row.date.startsWith(month+'-'));
+  let opened=0;
+  const getSession=async()=>{
+    const session=managerDriveSession?.expires>Date.now()?managerDriveSession:await restoreCompanyDriveSession();
+    if(active()&&session)managerDriveSession=session;
+    return session;
+  };
+  const openReport=async row=>{
+    const request=++opened;
+    $('staffReportDialogTitle').textContent=attendanceDate(row.date)+' 업무보고';
+    if(row.report){
+      documentBody.innerHTML=reportDocument(row.owner,row.report);
+      documentBody.querySelectorAll('[data-download]').forEach(button=>button.onclick=()=>downloadFile(button.dataset.download));
+      dialog.showModal();
+      dialog.scrollTop=0;
+      return;
+    }
+    documentBody.innerHTML=`<h4>${esc(row.name)}</h4><div class="wd122-report-body">본문을 불러오는 중이에요.</div>`;
+    const body=documentBody.lastElementChild;
+    dialog.showModal();
+    dialog.scrollTop=0;
+    try{
+      const session=await getSession();
+      if(!session)throw Object.assign(new Error(),{status:401});
+      const text=await readDriveReportBody(row,session.token);
+      if(active()&&dialog.open&&request===opened)body.textContent=text||'저장된 본문이 없어요.';
+    }catch(error){
+      if(active()&&dialog.open&&request===opened)body.textContent=error.status===401?'업무센터 Drive 연결을 갱신해 주세요.':
+        error.status===403?'이 업무보고를 읽을 권한이 없어요.':error.message||'업무보고 본문을 불러오지 못했어요.';
+    }
+  };
+  const paint=(rows,message='')=>{
+    const focusedId=list.contains(document.activeElement)?document.activeElement.dataset.staffReport:null;
+    rows.sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'ko'));
+    total.textContent=rows.length||!message?'총 '+rows.length+'건':'';
+    status.textContent=message;
+    status.hidden=!message;
+    list.innerHTML=rows.map(row=>`<tr><td><time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time></td>
+      <td><button type="button" class="wd125-staff-report" data-staff-report="${esc(row.id)}" aria-haspopup="dialog">${esc(row.name)}</button></td></tr>`).join('')||
+      (message?'':'<tr><td colspan="2">이 달에 제출한 업무보고가 없어요.</td></tr>');
+    const byId=new Map(rows.map(row=>[row.id,row]));
+    list.querySelectorAll('[data-staff-report]').forEach(button=>{
+      button.onclick=()=>void openReport(byId.get(button.dataset.staffReport));
+      if(button.dataset.staffReport===focusedId)button.focus({preventScroll:true});
+    });
+  };
+  const linked=!!staffWorkDriveFolders(profile);
+  paint(local,linked?'업무보고를 불러오는 중이에요.':'');
+  if(!linked)return;
+  void (async()=>{
+    try{
+      const session=await getSession();
+      if(!active())return;
+      if(!session)throw Object.assign(new Error(),{status:401});
+      const {rows}=await readCompanyDriveReports(session.token,profile.id);
+      if(active())paint([...local,...rows.filter(row=>row.date.startsWith(month+'-'))]);
+    }catch(error){
+      if(active())paint(local,error.status===401?'업무센터 Drive 연결을 갱신해 주세요.':
+        error.status===403?'업무보고 폴더를 읽을 권한이 없어요.':'Drive 업무보고를 불러오지 못했어요.');
+    }
+  })();
 }
 
 function bindStaffManagement(){
@@ -5530,17 +5596,9 @@ function bindStaffManagement(){
     render();
     $('staffMonth').focus();
   };
-  if($('assignFromStaff'))$('assignFromStaff').onclick=()=>{
-    managerStaffId=profile.id;
-    const date=staffSummaryMonth===localDay().slice(0,7)?localDay():staffSummaryMonth+'-01';
-    const draft=instructionDraftFor(profile.id,date);
-    if(!draft.raw)draft.date=date;
-    setNav('instructions',profile.id);$('instructionInput')?.focus();
-  };
   bindStaffPayroll(profile,staffSummaryMonth);
   bindStaffWorkMonth(profile,staffSummaryMonth);
-  document.querySelectorAll('[data-staff-instruction]').forEach(button=>button.onclick=()=>taskPreview(button.dataset.staffInstruction));
-  bindTaskReports();
+  bindStaffMonthlyReports(profile,staffSummaryMonth);
 }
 function bindAdminFilters(){
   const query=$('adminTaskQuery');
