@@ -64,6 +64,15 @@
 .wd123-review-actions{margin-bottom:8px}
 @media(max-width:1050px){.wd123-report-layout{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}.wd123-report-layout>section:last-child{grid-column:1/-1}}
 @media(max-width:720px){.wd123-report-layout{grid-template-columns:1fr}.wd123-report-layout>section:last-child{grid-column:auto}.wd123-scroll{max-height:35vh}}
+.wd124-instruction-day{padding:15px 15px 10px;margin:0 0 12px;border:1px solid #e1d4ee;border-radius:10px;background:#fcf9ff;min-width:0}
+.wd124-instruction-day h3{margin:0 0 10px;color:#3d245d;font-size:17px}
+.wd124-doc-entry{background:white;border:1px solid #eee5f3;border-radius:8px;padding:13px;margin-bottom:8px;min-width:0}
+.wd124-doc-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.wd124-instruction-doc{font-size:14px;line-height:1.68;overflow-wrap:anywhere}
+.wd124-instruction-doc h4{margin:4px 0;color:#382256;font-size:15px}
+.wd124-doc-gap{height:7px}
+.wd124-doc-line{white-space:pre-wrap}
+.wd124-doc-item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px}
 </style>
 <style>/* v17: scoped clock attendance */
 .wd17-quote{display:flex;align-items:center;gap:16px;padding:16px 22px;background:#f0eafa;border-radius:12px;margin:0 0 22px;color:#49316e}.wd17-quote span{white-space:nowrap;font-size:12px;font-weight:800;color:#7357a8}.wd17-quote p{margin:0;font-size:15px;font-weight:600}
@@ -930,7 +939,7 @@ function logout(){
   employeeReportDate=null;attendanceRecordDay=null;editingAttendanceTime=null;materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
   S=migrateStaffState(load());
   storageVersion=localStorage.getItem(KEY);
-  hqAutoLoginBlocked=true;pinOnlyWorkspace=false;managerHqReady=false;hqStaffLoginId='';managerWorkIdentity=null;
+  hqAutoLoginBlocked=true;pinOnlyWorkspace=false;managerHqReady=false;hqStaffLoginId='';managerWorkIdentity=null;verifiedManagerRead=null;managerIdentityFlight=null;
   pickRole='employee';render();
 }
 window.addEventListener('storage',event=>{
@@ -1064,9 +1073,7 @@ function sameDayReportTasks(task){
 
 function instructionDayReportLink(task){
   return sameDayReportTasks(task).length?
-    `<button type="button" class="small wd42-reportlink" data-day-reports="${esc(task.id)}" data-report-scope="day">업무보고 보기</button>`:
-    currentUser==='manager'&&staffWorkDriveFolders(staffById(taskStaffId(task)))?
-      `<button type="button" class="small wd42-reportlink" data-find-drive-report="${esc(task.id)}">Drive 업무보고 찾기</button>`:'';
+    `<button type="button" class="small wd42-reportlink" data-day-reports="${esc(task.id)}" data-report-scope="day">업무보고 보기</button>`:'';
 }
 
 function dayReportsPopup(id,selected=null,sameDay=false){
@@ -1088,13 +1095,7 @@ function dayReportsPopup(id,selected=null,sameDay=false){
 
 function bindTaskReports(root=document){
   root.querySelectorAll('[data-day-reports]').forEach(button=>button.onclick=()=>dayReportsPopup(button.dataset.dayReports,null,button.dataset.reportScope==='day'));
-  root.querySelectorAll('[data-find-drive-report]').forEach(button=>button.onclick=()=>{
-    const task=S.tasks.find(item=>item.id===button.dataset.findDriveReport);
-    if(currentUser!=='manager'||!task)return;
-    reviewStatus='';driveReportFilters={date:'',staff:taskStaffId(task),query:'',workDate:task.date};
-    
-    setNav('review');
-  });
+
 }
 
 function monthView(){
@@ -1814,7 +1815,7 @@ async function loginWorkCenterFromHq(form){
     if(identity.login_id===managerHqAccount.uid&&identity.staff_role===managerHqAccount.role){
       await loadWorkCenterManagerGrants(()=>current()&&sameSession(token,identity));
       if(!current()||!sameSession(token,identity))return;
-      managerWorkIdentity=identity;managerHqReady=true;currentUser='manager';S.nav='managerHome';render();return;
+      managerWorkIdentity=identity;rememberManagerRead(token);managerHqReady=true;currentUser='manager';S.nav='managerHome';render();return;
     }
     const grant=await workCenterAccessFor(identity.login_id,token);
     const legacy=identity.login_id===legacyStaffHqLogin&&identity.staff_role==='ops_lead';
@@ -2785,14 +2786,14 @@ const adminAuthPublic='sb_publishable_rp4QHXzXMgnxKmKL0QERAw_cKX0dSgh';
 
 async function verifyWorkspaceIdentity(token,account){
   if(!account||location.origin!==adminLegacyOrigin||!token)return 'login';
-  const options={headers:{Authorization:'Bearer '+token,apikey:adminAuthPublic},cache:'no-store',signal:AbortSignal.timeout(8000)};
-  const response=await fetch(adminAuthBase+'/auth/v1/user',options);
+  const request=url=>fetch(url,{headers:{Authorization:'Bearer '+token,apikey:adminAuthPublic},cache:'no-store',signal:AbortSignal.timeout(12000)});
+  const response=await request(adminAuthBase+'/auth/v1/user');
   if(response.status===401||response.status===403)return 'login';
   if(!response.ok)return 'unavailable';
   const user=await response.json();
   if(!user.id||user.email?.toLowerCase()!==account.uid+'@admin.wdwave.kr')return 'account';
   const query=new URLSearchParams({select:'login_id,staff_role,is_active',user_id:'eq.'+user.id,limit:'1'});
-  const profiles=await fetch(adminAuthBase+'/rest/v1/wd_staff_profiles?'+query,options);
+  const profiles=await request(adminAuthBase+'/rest/v1/wd_staff_profiles?'+query);
   if(!profiles.ok)return 'unavailable';
   const [profile]=await profiles.json();
   return profile?.login_id===account.uid&&profile.staff_role===account.role&&profile.is_active===true?'verified':'permission';
@@ -2803,14 +2804,40 @@ async function verifyAdminWorkspace(token,account){
   return await verifyWorkspaceIdentity(token,account)==='verified';
 }
 
-async function verifyManagerHqSession(){
+let verifiedManagerRead=null,managerIdentityFlight=null;
+
+function rememberManagerRead(token){
+  if(token&&readHqToken()===token)verifiedManagerRead={token,until:Date.now()+30000};
+}
+
+async function verifyManagerToken(token,reuse){
+  if(!token)return 'login';
+  if(reuse&&currentUser==='manager'&&verifiedManagerRead?.token===token&&verifiedManagerRead.until>Date.now())return 'verified';
+  if(managerIdentityFlight?.token===token)return managerIdentityFlight.promise;
+  const flight={token,promise:verifyWorkspaceIdentity(token,managerHqAccount).catch(()=> 'unavailable')};
+  managerIdentityFlight=flight;
+  try{
+    const result=await flight.promise;
+    if(managerIdentityFlight===flight){
+      if(result==='verified')rememberManagerRead(token);
+      else if(verifiedManagerRead?.token===token)verifiedManagerRead=null;
+    }
+    return result;
+  }finally{if(managerIdentityFlight===flight)managerIdentityFlight=null;}
+}
+
+async function verifyManagerHqSession({reuse=false,rejectedToken=''}={}){
   let token,result;
   try{
-    token=await attendanceHqToken();
-    result=await verifyWorkspaceIdentity(token,managerHqAccount);
+    token=await attendanceHqToken(rejectedToken);
+    result=await verifyManagerToken(token,reuse);
+    if(result==='unavailable'&&reuse&&token&&readHqToken()===token){
+      await new Promise(resolve=>setTimeout(resolve,300));
+      if(currentUser==='manager'&&readHqToken()===token)result=await verifyManagerToken(token,true);
+    }
     if(result==='login'&&token){
       token=await attendanceHqToken(token);
-      result=await verifyWorkspaceIdentity(token,managerHqAccount);
+      result=await verifyManagerToken(token,false);
     }
   }catch{result='unavailable';}
   if(result==='verified'&&readHqToken()===token)return token;
@@ -3056,9 +3083,16 @@ async function readManagerWorkMonth(login,month,includeClocks=false){
   const select=includeClocks?'work_date,total_minutes,start_time,end_time':'work_date,total_minutes';
   const params=new URLSearchParams({select,user_id:'eq.'+login});
   params.append('work_date','gte.'+month+'-01');params.append('work_date','lte.'+month+'-'+last);
-  const token=await verifyManagerHqSession();
-  if(currentUser!=='manager')throw hqLoginError();
-  const response=await fetch(adminAuthBase+'/rest/v1/work_hours?'+params,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},cache:'no-store',signal:AbortSignal.timeout(12000)});
+  let token=await verifyManagerHqSession({reuse:true});
+  const request=credential=>{
+    if(currentUser!=='manager')throw hqLoginError();
+    return fetch(adminAuthBase+'/rest/v1/work_hours?'+params,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+credential},cache:'no-store',signal:AbortSignal.timeout(12000)});
+  };
+  let response=await request(token);
+  if(response.status===401){
+    token=await verifyManagerHqSession({rejectedToken:token});
+    response=await request(token);
+  }
   if(!response.ok)throw new Error('본진 근무기록을 불러오지 못했어요.');
   const rows=await response.json();
   if(!Array.isArray(rows))throw new Error('본진 근무기록을 확인하지 못했어요.');
@@ -4423,8 +4457,9 @@ function instructionBody(row){
 }
 
 function bindDriveInstructionBodies(root,rows){
-  root.querySelectorAll('[data-drive-instruction]').forEach(detail=>detail.ontoggle=async()=>{
-    if(!detail.open||detail.dataset.loaded)return;
+  root.querySelectorAll('[data-drive-instruction]').forEach(detail=>{
+    const load=async()=>{
+    if((detail.tagName==='DETAILS'&&!detail.open)||detail.dataset.loaded)return;
     const body=detail.querySelector('[data-drive-instruction-body]');
     const row=rows.find(item=>item.id===detail.dataset.driveInstruction);
     if(!row||!body)return;
@@ -4434,12 +4469,16 @@ function bindDriveInstructionBodies(root,rows){
     try{
       if(!session||session.expires<=Date.now())throw new Error('업무센터 Drive 연결을 갱신해 주세요.');
       const text=await readDriveReportBody(row,session.token);
-      body.textContent=text||'저장된 본문이 없어요.';
+      if(detail.tagName==='DETAILS')body.textContent=text||'저장된 본문이 없어요.';
+      else body.innerHTML=instructionDocument(text||'저장된 본문이 없어요.');
       detail.dataset.loaded='true';
     }catch(error){
       body.textContent=error.status===403?'이 업무지시를 읽을 권한이 없어요.':error.message;
       delete detail.dataset.loaded;
     }
+    };
+    if(detail.tagName==='DETAILS')detail.ontoggle=load;
+    else void load();
   });
 }
 
@@ -4607,14 +4646,11 @@ function bindWorkReportView(){
     const before=selected||pendingSelection;
     pendingSelection='';
     remote=data;
-    const linked=driveReportFilters.workDate&&[...data.rows,...localWorkReportRows()].find(row=>row.staffId===staff.value&&row.workDate===driveReportFilters.workDate);
     const prior=[...data.rows,...localWorkReportRows()].find(row=>row.id===before);
-    if(linked){driveReportFilters.date=linked.date;month=linked.date.slice(0,7);}
-    else if(prior)month=prior.date.slice(0,7);
+    if(prior)month=prior.date.slice(0,7);
     else if(!navigated&&!driveReportFilters.date)month='';
-    delete driveReportFilters.workDate;
     paint();
-    if(linked||prior)void show(linked||prior);
+    if(prior)void show(prior);
   },true);
 }
 
@@ -5085,7 +5121,7 @@ async function loadStaffRecords(profile,month){
   staffRecordView=view;
   const current=()=>currentUser==='manager'&&S.nav==='staff'&&staffRecordView===view&&managerStaffId===profile.id;
   try{
-    const token=await verifyManagerHqSession();
+    const token=await verifyManagerHqSession({reuse:true});
     const query=staffRecordQuery(profile.id);
     query.set('or','(kind.eq.contract,slot.eq.'+month+')');
     query.set('order','created_at.desc');
@@ -5576,7 +5612,7 @@ function openAssignedInstruction(profile,id){
     ${direct?'':`<label for="editAssignedTitle">업무 제목</label><input id="editAssignedTitle" maxlength="240" value="${esc(task.title)}" required>
       <label for="editAssignedGoal">업무 목표</label><textarea id="editAssignedGoal" rows="2">${esc(task.objective||'')}</textarea>`}
     ${editable.map(({todo,index},i)=>`<label for="editAssignedTodo${index}">${simple?'업무지시 내용':'할 일 '+(i+1)}</label>
-      <textarea id="editAssignedTodo${index}" rows="${simple?6:3}" maxlength="8000" required>${esc(todo.text)}</textarea>
+      <textarea id="editAssignedTodo${index}" rows="${simple?6:3}" maxlength="${direct?50000:8000}" required>${esc(todo.text)}</textarea>
       ${!simple&&todo.workflow?.steps?.length?`<details class="instruction-step"><summary>단계별 업무 가이드</summary>
         ${todo.workflow.steps.map((step,j)=>`<fieldset><legend>${j+1}단계</legend>${instructionStepFields.map(([key,label])=>
           `<label for="editAssignedStep${index}_${j}_${key}">${label}</label><textarea id="editAssignedStep${index}_${j}_${key}" rows="2" required>${esc(step[key]||(key==='method'?step.instruction:''))}</textarea>`).join('')}</fieldset>`).join('')}</details>`:''}`).join('')}
@@ -5669,6 +5705,54 @@ function bindManagerDriveList(readRows,paintRows,keepRows=false){
   return load;
 }
 
+function instructionDocument(text){
+  const lines=String(text||'').split(/\r?\n/);
+  const sections=/^(?:업무 목적|상세 지시|완료 기준|관련 파일|참고사항|확인 사항|업무 내용)$/;
+  const inline=value=>{
+    const links=/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]+)/g;
+    let result='',offset=0;
+    for(const match of value.matchAll(links)){
+      result+=esc(value.slice(offset,match.index));
+      const url=match[2]||match[3];
+      result+=`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(match[1]||url)}</a>`;
+      offset=match.index+match[0].length;
+    }
+    return result+esc(value.slice(offset));
+  };
+  return `<div class="wd124-instruction-doc">${lines.map((line,index)=>{
+    const raw=line.trim();
+    if(!raw)return '<div class="wd124-doc-gap" aria-hidden="true"></div>';
+    const heading=/^#{1,6}\s+(.+)$/.exec(raw);
+    const label=raw.replace(/^\*\*(.+)\*\*$/,'$1');
+    const numbered=/^(\d+)(?:\\?[.)])\s+(.+)$/.exec(raw);
+    if(heading||sections.test(label)||index===0&&lines.some((line,i)=>i>0&&line.trim())&&!numbered)
+      return `<h4>${inline(heading?.[1]||label)}</h4>`;
+    if(numbered)return `<div class="wd124-doc-item"><b>${esc(numbered[1])}.</b><span>${inline(numbered[2])}</span></div>`;
+    return `<div class="wd124-doc-line">${inline(line)}</div>`;
+  }).join('')}</div>`;
+}
+
+function instructionDocumentRows(rows){
+  const days=new Map();
+  rows.forEach(row=>{
+    if(!days.has(row.date))days.set(row.date,[]);
+    days.get(row.date).push(row);
+  });
+  return [...days].map(([date,entries])=>`<section class="wd124-instruction-day">
+    <h3><time datetime="${esc(date)}">${esc(attendanceDate(date))}</time> 업무지시</h3>
+    ${entries.map(row=>{
+      if(!row.task)return `<article class="wd124-doc-entry" data-drive-instruction="${esc(row.id)}">
+        <div data-drive-instruction-body>본문을 불러오는 중…</div></article>`;
+      const task=row.task,text=task.directInstruction?task.todos?.[0]?.text||task.objective||row.name:
+        [task.title,task.objective&&task.objective!==task.title?task.objective:'',
+          ...(task.todos||[]).map((todo,i)=>(i+1)+'. '+todo.text)].filter(Boolean).join('\n\n');
+      return `<article class="wd124-doc-entry">
+        <div class="wd124-doc-tools">${task.instructionSender?.name?`<span class="smallText">${esc(task.instructionSender.name)} → ${esc(row.staffName)}</span>`:'<span></span>'}${assignedInstructionActions(task)}</div>
+        ${instructionDocument(text)}</article>`;
+    }).join('')}
+  </section>`).join('');
+}
+
 function simpleInstructionHistory(){
   return `<section class="wd109-history-region" aria-labelledby="assignedWorkTitle">
     <h2 id="assignedWorkTitle">업무지시 목록</h2>
@@ -5694,15 +5778,9 @@ function bindInstructionHistory(profile,root){
     const day=picker.value==='today'?today:picker.value,term=search.value.trim().toLowerCase();
     const filtered=rows.filter(row=>(day==='all'||row.date===day)&&
       [row.date,row.name,row.task?.objective,...(row.task?.todos||[]).map(todo=>todo.text)].some(value=>String(value||'').toLowerCase().includes(term)));
-    output.innerHTML=filtered.map(row=>row.task?
-      `<article class="wd109-assigned-work"><header><time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time>
-        <div class="wd110-instruction-actions">${instructionDayReportLink(row.task)}${assignedInstructionActions(row.task)}</div></header>
-        <p class="smallText"><strong>${esc(row.task.instructionSender?.name||'지시자 기록 없음')}</strong> → ${esc(row.task.instructionRecipientName||profile.name)}</p>
-        ${instructionBody(row)}</article>`:
-      `<details class="wd109-assigned-work" data-drive-instruction="${esc(row.id)}">
-        <summary><time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time> · ${esc(row.name)}</summary>${instructionBody(row)}</details>`).join('')||
+    output.innerHTML=instructionDocumentRows(filtered)||
       `<p class="empty">${term?'검색에 맞는 업무지시가 없어요.':day===today?'오늘 등록된 업무지시가 없어요.':'해당 날짜에 등록된 업무지시가 없어요.'}</p>`;
-    bindAssignedInstructions(root,profile);bindTaskReports(root);bindDriveInstructionBodies(root,filtered);
+    bindAssignedInstructions(root,profile);bindDriveInstructionBodies(root,filtered);
   };
   picker.onchange=paint;
   search.oninput=()=>{if(search.value.trim()&&picker.value==='today')picker.value='all';paint();};
@@ -5725,7 +5803,7 @@ function simpleInstructionView(profile){
         · 받는 사람 <strong>${esc(profile.name)}</strong></p>
       <form id="simpleInstructionForm">
         <label for="simpleInstructionDate">업무일</label><input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required>
-        <label for="instructionInput">업무지시 내용</label><textarea id="instructionInput" rows="8" maxlength="8000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
+        <label for="instructionInput">업무지시 내용</label><textarea id="instructionInput" rows="8" maxlength="50000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
         <div class="actions"><button class="primary" id="assignInstruction" type="submit">업무지시 등록</button></div>
       </form>
     </section>
