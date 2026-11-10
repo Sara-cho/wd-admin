@@ -64,6 +64,8 @@
 .wd145-drive-shortcut:hover{background:#ffd85c;color:#3c2a00}
 .wd145-drive-shortcut:focus-visible{outline:2px solid #765200;outline-offset:3px}
 .wd145-drive-shortcut svg{flex:none}
+.wd148-drive-renew{background:#ffe179;color:#3c2a00;border-color:#e7b835}
+.wd148-drive-renew[hidden]{display:none}
 .wd146-hq-link{display:inline-flex;margin:5px 0 10px}
 .wd146-home-order{margin-top:8px;padding:10px 12px;background:#f7f3fc;border-radius:8px;overflow-wrap:anywhere}
 .wd146-home-order .wd65-task{margin-bottom:3px}
@@ -998,7 +1000,7 @@ async function sha(value){let data=await crypto.subtle.digest('SHA-256',new Text
 function logout(){
   if(liveAttendanceSaving)return notify('근무기록 저장이 끝난 뒤 로그아웃하세요');
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
-  closeWorkspaceTalk();stopWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
+  closeWorkspaceTalk();stopWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;workCenterDriveEntered=false;clearTimeout(workCenterDriveTimer);staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
   for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
   payrollReminderShown='';
   clearPrintDocument?.();
@@ -1018,7 +1020,7 @@ window.addEventListener('storage',event=>{
   }
   if(currentUser==='manager'&&((event.key==='wd_current_uid'&&event.newValue!==managerHqAccount.uid)||(event.key==='wd-admin-auth-v1'&&!event.newValue))){
     if(managerHqReady){logout();return;}
-    managerDriveSession=null;driveConnectGeneration++;render();return;
+    managerDriveSession=null;workCenterDriveEntered=false;clearTimeout(workCenterDriveTimer);driveConnectGeneration++;render();return;
   }
   if(event.key==='wd-admin-auth-v1'&&event.newValue&&!currentUser&&!hqAutoLoginBlocked&&$('loginForm')){
     void loginWorkCenterFromHq($('loginForm'));return;
@@ -1107,7 +1109,7 @@ function sidebarIcon(id){
     <g fill="none" stroke="${line}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">${art.replaceAll('@','fill="url(#'+gradient+')"')}</g></svg>`;
 }
 
-function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span>${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 업무지시 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>업무보고 ${S.tasks.reduce((total,task)=>total+dayReportCount(task),0)}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
+function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span>${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 업무지시 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>업무보고 ${S.tasks.reduce((total,task)=>total+dayReportCount(task),0)}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small wd148-drive-renew" id="renewWorkCenterDrive" type="button" hidden>Drive 다시 연결</button><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
 function dayReportCount(t){return t.reports.length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.reports.length,0)}
 function dayFeedbackCount(t){return t.feedback.filter(f=>!f.reviewedOnly).length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.feedback.length,0)}
 function taskButton(t,i){return `<button class="taskTile ${S.selected===t.id?'selected':''}" data-task="${t.id}"><small>DAY ${String(i+1).padStart(2,'0')} · ${esc(t.date)}</small><b>${esc(t.title)}</b><span class="pill ${status(t)==='업무 완료'?'green':status(t)==='보완 요청'?'orange':''}">${status(t)}</span><small style="display:block;margin-top:8px">${dayReportCount(t)}회 제출 · ${dayFeedbackCount(t)}건 피드백</small></button>`}
@@ -1299,7 +1301,7 @@ const employeeDriveFolders={
 const driveAccountByEmployee={'박수진':'woori08944@gmail.com','수진':'woori08944@gmail.com'};
 const driveReadScope='https://www.googleapis.com/auth/drive.readonly';
 const driveFileApi='https://www.googleapis.com/drive/v3/files';
-let employeeDrive=null,driveScript=null,driveConnectGeneration=0;
+let employeeDrive=null,driveScript=null,driveConnectGeneration=0,workCenterDriveEntered=false,workCenterDriveTimer;
 const expectedEmployeeDriveAccount=()=>pinOnlyWorkspace?null:
   hqStaffLoginId===legacyStaffHqLogin?staffCloudGrant?.google_email||driveAccountByEmployee['박수진']:
   isEmployeeWorkspace()&&Object.hasOwn(driveAccountByEmployee,staffName())?driveAccountByEmployee[staffName()]:null;
@@ -1322,7 +1324,10 @@ function loadEmployeeDriveClient(){
 
 async function employeeDriveRequest(url,token){
   const response=await fetch(url,{headers:{Authorization:'Bearer '+token},cache:'no-store',signal:AbortSignal.timeout(14000)});
-  if(!response.ok){const error=new Error('Drive 요청 실패 ('+response.status+')');error.status=response.status;throw error;}
+  if(!response.ok){
+    if(response.status===401)expireWorkCenterDrive(token);
+    const error=new Error('Drive 요청 실패 ('+response.status+')');error.status=response.status;throw error;
+  }
   return response;
 }
 
@@ -1378,7 +1383,7 @@ async function refreshEmployeeDrive(date,fallback,hasLocalOrder=false){
   if(!statusLine||!orders||!files)return;
   const current=()=>employeeDrive===session&&$('employeeDriveStatus')===statusLine;
   if(!session||session.expires<=Date.now()){
-    employeeDrive=null;statusLine.textContent='Drive 연결이 만료됐어요. 업무센터에 다시 들어와 주세요.';return;
+    syncWorkCenterDriveButton();statusLine.textContent='상단에서 Drive 연결을 갱신해 주세요.';return;
   }
   statusLine.textContent='Drive에서 불러오는 중…';
   const results=await Promise.allSettled([hasLocalOrder?null:employeeDriveInstruction(date,session.token),employeeDriveList(employeeDriveFolders.shared,session.token)]);
@@ -1432,9 +1437,9 @@ function bindEmployeeDrive(onConnected,scope=driveSessionScope(),expected=worksp
     ownerCheck=verifyManagerHqSession().then(token=>{
       if(!active())return;
       ownerToken=token;
-      button.textContent=$('nativeDrivePage')?'Drive 연결':'Drive 연결 확인하고 시작';
+      button.textContent=workCenterDriveEntered?'Drive 다시 연결':'Drive 연결 확인하고 시작';
       if(recovery)recovery.hidden=true;
-      status($('nativeDrivePage')?'회사 Drive를 연결해 주세요.':'지점장님 본진 계정을 확인했어요.');
+      status('지점장님 본진 계정을 확인했어요.');
     }).catch(error=>{
       ownerToken='';hqFailure(error);
     }).finally(()=>{
@@ -1598,8 +1603,8 @@ function employeeInstructions(instructionOnly=false){
     <label>지난 업무·보고<select id="employeeReportHistory"><option value="">날짜 선택</option>${history.map(day=>`<option value="${esc(day)}" ${day===date?'selected':''}>${esc(attendanceDate(day))}</option>`).join('')}</select></label></div></div>
     <div class="wd91-report-grid ${instructionOnly?'wd138-instruction-only':''}"><div class="wd91-report-left">
       <section class="card wd91-order"><div class="wd92-order-head"><h2>업무지시</h2><button type="button" class="small" id="employeeOrderExpand" ${order?'':'hidden'}>크게 보기</button></div>
-         ${instructionOnly&&supportsDrive?`<button type="button" class="small" id="${driveReady?'refreshEmployeeDrive':'connectEmployeeDrive'}">${driveReady?'새로고침':'Drive 연결'}</button>
-          <p id="employeeDriveStatus" class="smallText" role="status"></p>`:instructionOnly&&staffHqConnectionNeeded()?staffHqConnectionLink():''}
+         ${instructionOnly&&supportsDrive?`${driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':''}
+          <p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'':'상단에서 Drive 연결을 갱신해 주세요.'}</p>`:instructionOnly&&staffHqConnectionNeeded()?staffHqConnectionLink():''}
         ${tasks.length+(!instructionOnly&&journalAvailable?1:0)>1?`<label>이날 업무·업무보고<select id="employeeReportTask">${tasks.map(item=>`<option value="${esc(item.id)}" ${item.id===task?.id?'selected':''}>${esc(item.title)}</option>`).join('')}${!instructionOnly&&journalAvailable?`<option value="${esc(journalKey)}" ${key===journalKey?'selected':''}>업무보고</option>`:''}</select></label>`:''}
         <div class="wd97-order-scroll" tabindex="0" role="region" aria-label="업무지시 원문과 피드백"><div id="employeeDriveOrder" class="wd92-order-body">${order?
           `<p class="smallText">보낸 사람 <strong>${esc(order.instructionSender?.name||'기록 없음')}</strong></p>${employeeInstructionList(order.todos||[],order.objective||order.title,order.directInstruction)}`:`<p class="empty">${staffHqConnectionNeeded()?'본진 직원 계정 연결 후 Drive 업무지시를 확인할 수 있어요.':'이날 등록된 업무지시가 없습니다.'}</p>`}</div>
@@ -1610,8 +1615,8 @@ function employeeInstructions(instructionOnly=false){
           <div id="employeeOrderLargeText" class="wd92-order-large" tabindex="0"></div>
         </dialog>
       </section>
-      ${instructionOnly?'':`<section class="card wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2>${supportsDrive?`<button type="button" class="small" id="${driveReady?'refreshEmployeeDrive':'connectEmployeeDrive'}">${driveReady?'새로고침':'Drive 연결'}</button>`:''}</div>
-        ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 회사 Drive를 연결해 주세요.'}</p>
+      ${instructionOnly?'':`<section class="card wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2> ${supportsDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':''}</div>
+        ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 상단에서 Drive 연결을 갱신해 주세요.'}</p>
         `:'<p class="smallText">TEST에서 회사가 공유한 파일이에요.</p>'}
         <div class="wd97-share-scroll" tabindex="0" role="region" aria-label="업무공유파일 목록">
         ${supportsDrive?'<div id="employeeDriveFiles"></div>':''}
@@ -1676,17 +1681,9 @@ function bindEmployeeInstructions(instructionOnly=false){
     $('employeeOrderDialog').showModal();
   };
   if($('downloadEmployeeReport'))$('downloadEmployeeReport').onclick=()=>downloadEmployeeReport(context.task);
-  if($('connectEmployeeDrive')){
-    bindEmployeeDrive(async(session,stillCurrent)=>{
-      await checkEntryDrive(session.token);
-      if(!stillCurrent())return;
-      employeeDrive=session;render();
-    });
-  }else{
-    const order=context.task&&!context.task.dailyJournal?context.task:context.tasks[0];
-    if(instructionOnly)bindEmployeeInstructionRefresh(context);
-    else bindReportDriveRefresh(context.date,!!order?.instructionSender);
-  }
+  const order=context.task&&!context.task.dailyJournal?context.task:context.tasks[0];
+  if(instructionOnly)bindEmployeeInstructionRefresh(context);
+  else bindReportDriveRefresh(context.date,!!order?.instructionSender);
   if(!form)return;
   $('saveEmployeeDraft').onclick=()=>{
     const prior=S.journalDrafts;
@@ -1956,13 +1953,6 @@ async function loginWorkCenterFromHq(form,{staffOnly=false,expectedStaffId=null}
     activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;hqStaffLoginId=identity.login_id;pinOnlyWorkspace=false;
     if(legacy)liveAttendanceReady=true;
     render();
-    if(legacy){
-      const generation=driveConnectGeneration;
-      void restoreStaffDriveSession().then(session=>{
-        if(!session||generation!==driveConnectGeneration||currentUser!=='employee'||activeStaffId!==profile.id||employeeDrive||$('exitWorkEntry'))return;
-        employeeDrive=session;render();
-      });
-    }
     return true;
   }catch{
     return false;
@@ -2401,7 +2391,6 @@ function nativeDrivePage(){
     <button class="primary small" type="button" id="nativeDriveAdd" hidden>${manual?'+ 매뉴얼 추가':'+ 자료 등록'}</button></div></div>
     <section id="nativeDrivePage" class="wd96-drive-page${manual?' wd102-manual':''}">
       <p id="nativeDriveStatus" class="smallText" role="status">불러오는 중…</p>
-      <button id="connectEmployeeDrive" class="primary small" type="button" hidden>Drive 연결 확인</button>
       <div class="wd96-drive-tools"><div id="nativeDriveCategories" class="wd96-drive-tabs" aria-label="분류"></div>
         <input id="nativeDriveSearch" type="search" aria-label="${title} 제목 또는 파일명 검색" placeholder="제목 또는 파일명 검색" disabled></div>
       <div class="wd96-drive-columns"><section class="card wd96-drive-list" id="nativeDriveList" aria-label="자료 목록"></section>
@@ -2672,10 +2661,10 @@ function openArchiveAction(action,row,file,perform){
 }
 
 function bindNativeDrivePage(){
-  const panel=$('nativeDrivePage'),status=$('nativeDriveStatus'),refresh=$('nativeDriveRefresh'),add=$('nativeDriveAdd'),connect=$('connectEmployeeDrive');
+  const panel=$('nativeDrivePage'),status=$('nativeDriveStatus'),refresh=$('nativeDriveRefresh'),add=$('nativeDriveAdd');
   const menu=S.nav,account=workspaceModuleAccount(menu),manual=menu==='manual';
   const active=()=>panel.isConnected&&S.nav===menu&&workspaceModuleAccount(menu)?.uid===account?.uid;
-  const session=()=>currentUser==='manager'?managerDriveSession:employeeDrive;
+  const session=workCenterDriveSession;
   let groups=availableLibraryCategories(menu);
   let rows=[],category=groups[0],selected='',readId=0,listRequest=0;
   const reader=$('nativeDriveReader'),list=$('nativeDriveList'),search=$('nativeDriveSearch'),tabs=$('nativeDriveCategories');
@@ -2826,26 +2815,15 @@ function bindNativeDrivePage(){
   const load=async()=>{
     const request=++listRequest;
     if(!active())return;
-    let verified=session();
-    if(currentUser==='manager'&&(!verified||verified.expires<=Date.now())){
-      connect.hidden=true;refresh.disabled=true;status.hidden=false;status.textContent='회사 Drive 연결을 확인하는 중…';
-      verified=await restoreCompanyDriveSession();
-      if(!active()||listRequest!==request)return;
-      if(verified)managerDriveSession=verified;
-    }
+    const verified=session();
     if(!verified||verified.expires<=Date.now()){
-      refresh.disabled=true;add.hidden=true;connect.hidden=!workspaceDriveAccount()&&currentUser!=='manager';
-      status.hidden=false;status.textContent='회사 Drive를 연결해 주세요.';
+      syncWorkCenterDriveButton();
+      refresh.disabled=true;add.hidden=true;
+      status.hidden=false;status.textContent='상단에서 Drive 연결을 갱신해 주세요.';
       list.innerHTML='<p class="empty">Drive 연결 후 회사 자료를 불러옵니다.</p>';
-      if(currentUser==='manager'&&!connect.onclick){
-        bindEmployeeDrive(async (next,stillCurrent)=>{
-          if(!stillCurrent()||!active())return;
-          retainCompanyDriveSession(next);managerDriveSession=next;await load();
-        },driveWriteScope,managerDriveAccount,account);
-      }
       return;
     }
-    connect.hidden=true;add.hidden=verified.scope!==driveWriteScope||!libraryCan(menu,'upload');
+    add.hidden=verified.scope!==driveWriteScope||!libraryCan(menu,'upload');
     refresh.disabled=true;search.disabled=true;
     list.innerHTML='<p class="empty">이 분류의 자료를 불러오는 중…</p>';
     status.hidden=true;
@@ -2861,14 +2839,7 @@ function bindNativeDrivePage(){
       add.hidden=verified.scope!==driveWriteScope||!libraryCan(menu,'upload')||!groups.some(group=>group!=='정리이전자료');
       if(!category){list.innerHTML='<p class="empty">표시할 탭 권한이 없어요.</p>';return;}
       const requestedCategory=category;
-      if(verified.scope===driveReadScope&&driveSessionScope()===driveWriteScope){
-        connect.hidden=false;
-        status.hidden=false;status.textContent='변경된 작업 권한을 사용하려면 Drive 연결을 다시 확인해 주세요.';
-        bindEmployeeDrive(async(next,stillCurrent)=>{
-          if(!stillCurrent()||!active())return;
-          employeeDrive=next;await load();
-        });
-      }
+      syncWorkCenterDriveButton();
       const result=await readNativeDriveRows(menu,verified.token,account,requestedCategory);
       if(!active()||session()!==verified||listRequest!==request||!availableLibraryCategories(menu).includes(requestedCategory))return;
       rows=(manual?result:result.rows).sort((a,b)=>String(b.modifiedTime||'').localeCompare(String(a.modifiedTime||'')));
@@ -2876,10 +2847,7 @@ function bindNativeDrivePage(){
       paintTable();
     }catch(error){
       if(active()&&listRequest===request){
-        if(currentUser==='manager'&&error.status===401){
-          rejectedCompanyDriveToken=verified.token;managerDriveSession=null;void load();return;
-        }
-        status.hidden=false;status.textContent=error.message||'자료를 불러오지 못했어요.';paintTable();
+        status.hidden=false;status.textContent=error.status===401?'상단에서 Drive 연결을 갱신해 주세요.':error.message||'자료를 불러오지 못했어요.';paintTable();
       }
     }finally{
       if(active()&&listRequest===request){refresh.disabled=false;search.disabled=false;}
@@ -2890,12 +2858,6 @@ function bindNativeDrivePage(){
     if(add.hidden||!libraryCan(menu,'upload'))return;
     openNativeDriveAdd(menu,session(),active,async group=>{category=group;rows=[];search.value='';clearReader();paintTabs();await load();});
   };
-  if(currentUser==='employee'&&workspaceDriveAccount()){
-    bindEmployeeDrive(async(verified,stillCurrent)=>{
-      if(!stillCurrent()||!active())return;
-      employeeDrive=verified;await load();
-    });
-  }
   paintTabs();clearReader();paintTable();void load();
 }
 
@@ -4109,23 +4071,56 @@ async function checkEntryDrive(token,folders=[employeeDriveFolders.instruction,e
   if(denied)error.code='DRIVE_PERMISSION';
   throw error;
 }
+function workCenterDriveSession(){
+  return currentUser==='manager'?managerDriveSession:employeeDrive;
+}
+
+function syncWorkCenterDriveButton(){
+  const button=$('renewWorkCenterDrive');
+  if(!button)return;
+  const session=workCenterDriveSession();
+  const required=currentUser==='manager'?driveWriteScope:driveSessionScope();
+  button.hidden=!workCenterDriveEntered||!!(session&&session.expires>Date.now()&&(required!==driveWriteScope||session.scope===driveWriteScope));
+  button.onclick=workCenterEntry;
+}
+
+function expireWorkCenterDrive(token){
+  const session=workCenterDriveSession();
+  if(!session||session.token!==token)return;
+  if(currentUser==='manager'){
+    rejectedCompanyDriveToken=token;managerDriveSession=null;
+  }else{
+    employeeDrive=null;
+    try{sessionStorage.removeItem(staffDriveSessionKey());}catch{}
+  }
+  syncWorkCenterDriveButton();
+}
+
 function workCenterEntry(){
   const manager=currentUser==='manager',linkedStaff=!!staffCloudGrant;
   $('root').innerHTML=`<section class="login wd93-entry"><div class="loginCard"><span class="wd93-entry-icon">${sidebarIcon('drive')}</span>
     <h1>업무센터 Drive 연결</h1><p class="muted">${manager?'본진 관리자 계정과 회사 Google Drive를 확인합니다.':linkedStaff?'등록된 Google 계정으로 회사 자료 연결을 확인합니다.':'회사 Google Drive와 실제 근무기록을 확인한 뒤 업무센터를 시작합니다.'}</p>
     <ul>${manager?'<li>업무매뉴얼·작업결과 보관 연결</li><li>본진 관리 메뉴 열기</li>':linkedStaff?'<li>관리자가 허용한 업무센터 메뉴 연결</li>':'<li>날짜별 업무지시 불러오기</li><li>업무공유파일·업무매뉴얼·작업결과 보관</li><li>기존 업무센터 근무기록 조회·저장</li>'}</ul>
-    <button class="primary" id="connectEmployeeDrive" type="button">Drive 연결 확인하고 시작</button>
+    <button class="primary" id="connectEmployeeDrive" type="button">${workCenterDriveEntered?'Drive 다시 연결':'Drive 연결 확인하고 시작'}</button>
     <p id="employeeDriveStatus" role="status" class="smallText"></p>
     <div class="wd93-entry-actions"><a id="employeeHqRecovery" class="small" href="./" target="_blank" rel="noopener" hidden>${manager?'WD 본진 계정 확인 ↗':'로그인 다시 연결 ↗'}</a><button type="button" class="small" id="exitWorkEntry">돌아가기</button></div></div></section>`;
-  $('exitWorkEntry').onclick=logout;
+  $('exitWorkEntry').onclick=()=>workCenterDriveEntered?render():logout();
   const connect=$('connectEmployeeDrive');
   const active=()=>$('connectEmployeeDrive')===connect&&currentUser===(manager?'manager':'employee');
   const continueWithDrive=async(session,stillCurrent)=>{
-    if(manager){
-      await checkEntryDrive(session.token,[companyManualFolder,...workArchiveFolders.map(([,folder])=>folder),employeeDriveFolders.journal,employeeDriveFolders.shared]);
-      if(!managerHqReady)await loadWorkCenterManagerGrants(stillCurrent);
+    const accept=()=>{
       if(!stillCurrent())return;
-      retainCompanyDriveSession(session);managerDriveSession=session;render();
+      if(manager){retainCompanyDriveSession(session);managerDriveSession=session;}
+      else{retainStaffDriveSession(session);employeeDrive=session;}
+      workCenterDriveEntered=true;
+      clearTimeout(workCenterDriveTimer);
+      workCenterDriveTimer=setTimeout(syncWorkCenterDriveButton,Math.max(0,session.expires-Date.now()));
+      render();
+    };
+    if(manager){
+      await checkEntryDrive(session.token,[companyManualFolder,...workArchiveFolders.map(([,folder])=>folder),...Object.values(employeeDriveFolders)]);
+      if(!managerHqReady)await loadWorkCenterManagerGrants(stillCurrent);
+      accept();
       return;
     }
     if(!staffCloudGrant&&isLegacyStaff()){
@@ -4153,8 +4148,7 @@ function workCenterEntry(){
         liveAttendanceMonths.set(month,rows);liveAttendanceReady=true;
       }
     }
-    if(!stillCurrent())return;
-    retainStaffDriveSession(session);employeeDrive=session;render();
+    accept();
   };
   const ask=()=>bindEmployeeDrive(continueWithDrive,manager?driveWriteScope:driveSessionScope(),
     manager?managerDriveAccount:workspaceDriveAccount(),manager?managerHqAccount:null);
@@ -4338,8 +4332,8 @@ function employeeHomeSummary(today){
     <section class="card"><div class="wd132-instruction-head"><h2>업무지시</h2>
       <button type="button" class="small" id="employeeHomeOrdersLink" data-order-date="${esc(today)}">업무지시 보기</button></div>
       <div class="wd135-home-scroll">
-        <div id="employeeHomeOrderCount" role="status"> ${remoteOrders?(driveReady?'오늘 업무지시를 확인하는 중이에요.':'Drive를 연결하면 오늘 업무지시를 확인할 수 있어요.'):needsHq?'Drive 업무지시는 본진 직원 계정 연결 후 확인할 수 있어요.':orders.length?'오늘 배정된 업무지시 '+orders.length+'건':'오늘 배정된 업무지시가 없어요.'}</div>
-        ${needsHq?staffHqConnectionLink():remoteOrders&&!driveReady?'<button type="button" class="small" id="connectHomeInstructionDrive">Google Drive 연결</button>':''}
+        <div id="employeeHomeOrderCount" role="status"> ${remoteOrders?(driveReady?'오늘 업무지시를 확인하는 중이에요.':'상단에서 Drive 연결을 갱신하면 오늘 업무지시를 볼 수 있어요.'):needsHq?'Drive 업무지시는 본진 직원 계정 연결 후 확인할 수 있어요.':orders.length?'오늘 배정된 업무지시 '+orders.length+'건':'오늘 배정된 업무지시가 없어요.'}</div>
+        ${needsHq?staffHqConnectionLink():''}
         <div id="employeeHomeLocalOrders">${orders.map(task=>`<button type="button" class="wd65-task wd67-task-line" data-employee-home-order="${esc(task.id)}">${esc(task.title)}</button>`).join('')}</div>
          ${remoteOrders&&driveReady?'<div id="employeeHomeOrders"></div>':''}
       </div>
@@ -4353,8 +4347,6 @@ function employeeHomeSummary(today){
 
 function bindEmployeeHomeSummary(){
   const link=$('employeeHomeOrdersLink'),day=link.dataset.orderDate;
-  const connect=$('connectHomeInstructionDrive');
-  if(connect)connect.onclick=workCenterEntry;
   link.onclick=()=>setNav('myInstructions',null,day);
   document.querySelectorAll('[data-employee-home-order]').forEach(button=>button.onclick=()=>{
     const taskId=button.dataset.employeeHomeOrder;
@@ -6239,36 +6231,29 @@ function cancelAssignedInstruction(profile,id){
   };
 }
 function managerDriveListControls({heading='',headingId='',intro='',extraActions=''}={}){
-  const actions=`<div class="row"><button class="small" type="button" id="connectEmployeeDrive" hidden>Drive 연결</button>
-    <button class="small" type="button" id="refreshManagerDrive" hidden>새로고침</button>${extraActions}</div>`;
+  const actions=`<div class="row"><button class="small" type="button" id="refreshManagerDrive" hidden>새로고침</button>${extraActions}</div>`;
   return `${heading?`<header class="wd132-instruction-head"><h2 id="${esc(headingId)}">${esc(heading)}</h2>${actions}</header>`:actions}
     ${intro}<p class="smallText" id="employeeDriveStatus" role="status"></p>
     <div id="managerDriveRows"${heading?` tabindex="0" role="region" aria-label="${esc(heading)} 목록"`:''}></div>`;
 }
 
 function bindManagerDriveList(readRows,paintRows,keepRows=false){
-  const connect=$('connectEmployeeDrive'),refresh=$('refreshManagerDrive'),status=$('employeeDriveStatus'),output=$('managerDriveRows');
+  const refresh=$('refreshManagerDrive'),status=$('employeeDriveStatus'),output=$('managerDriveRows');
   let request=0;
   const active=()=>currentUser==='manager'&&$('managerDriveRows')===output;
   const needConnection=()=>{
-    status.textContent='Drive 연결이 만료됐어요. 업무센터 연결을 한 번 갱신해 주세요.';
-    connect.hidden=false;
-    connect.textContent='업무센터 Drive 연결';
+    status.textContent='상단에서 Drive 연결을 갱신해 주세요.';
     refresh.hidden=true;
-    connect.onclick=()=>{managerDriveSession=null;workCenterEntry();};
+    syncWorkCenterDriveButton();
   };
   const load=async()=>{
     const id=++request,current=()=>active()&&id===request;
     if(!keepRows)output.innerHTML='';
     status.textContent='Drive에서 불러오는 중…';
-    connect.hidden=true;
     refresh.disabled=true;
     try{
-      let session=managerDriveSession;
-      if(!session||session.expires<=Date.now())session=await restoreCompanyDriveSession();
-      if(!current())return;
-      if(!session){needConnection();return;}
-      managerDriveSession=session;
+      const session=workCenterDriveSession();
+      if(!session||session.expires<=Date.now()){needConnection();return;}
       refresh.hidden=false;
       const rows=await readRows(session.token);
       if(!current())return;
@@ -6276,11 +6261,8 @@ function bindManagerDriveList(readRows,paintRows,keepRows=false){
       paintRows(output,rows);
     }catch(error){
       if(!current())return;
-      if(error.status===401){
-        rejectedCompanyDriveToken=managerDriveSession?.token;
-        managerDriveSession=null;
-        needConnection();
-      }else status.textContent=error.status===403?'이 Drive 폴더를 열 권한이 없어요.':'Drive 파일을 불러오지 못했어요. 다시 시도해 주세요.';
+      if(error.status===401)needConnection();
+      else status.textContent=error.status===403?'이 Drive 폴더를 열 권한이 없어요.':'Drive 파일을 불러오지 못했어요. 다시 시도해 주세요.';
     }finally{if(current())refresh.disabled=false;}
   };
   refresh.onclick=()=>void load();
@@ -6542,11 +6524,9 @@ async function commitInstruction(d,plan,sender,profile,id){
 }
 
 function render(){releaseNativeDrivePreview();if(!currentUser){loginView();return}
-const attendanceWithoutDrive=S.nav==='attendance'&&hqStaffLoginId===legacyStaffHqLogin&&liveAttendanceReady;
-if((currentUser==='manager'&&!managerDriveSession)||(currentUser==='employee'&&
-  ((workspaceDriveAccount()&&!employeeDrive&&!attendanceWithoutDrive)||(realAttendanceProfile()&&!liveAttendanceReady)))){workCenterEntry();return;}
+if(!workCenterDriveEntered&&(currentUser==='manager'||workspaceDriveAccount()||realAttendanceProfile())){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
-let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?workReportView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():S.nav==='myInstructions'?employeeInstructions(true):dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>{setNav(x.dataset.nav);});document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindWorkReportView()}else if(currentUser==='manager'&&S.nav==='staff'){
+let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?workReportView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():S.nav==='myInstructions'?employeeInstructions(true):dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>{setNav(x.dataset.nav);});document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;syncWorkCenterDriveButton();if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindWorkReportView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
 }else if(currentUser==='manager'&&S.nav==='instructions'){bindInstructionView()}else if(S.nav==='myInstructions'){bindEmployeeInstructions(true)}else if(S.nav==='dashboard'&&usesDirectWorkReport()){bindEmployeeInstructions()}else if(S.nav==='dashboard'&&t){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=Number(b.dataset.tab);save();document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('primary',x===b))});document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));bindBoard(t)}else if(S.nav==='month'){bindTaskReports();bindAdminFilters();document.querySelectorAll('[data-staff-tasks]').forEach(b=>b.onclick=()=>{managerStaffId=b.dataset.staffTasks;staffTasksOpen=true;render()});if($('addTask'))$('addTask').onclick=()=>{setNav('instructions')}}else if(['drive','manual','archive'].includes(S.nav)){bindMaterials()}else if(S.nav==='reports'){bindReportButtons()}else if(S.nav==='ideas'){bindNotes()}document.querySelectorAll('[data-download]').forEach(x=>x.onclick=()=>downloadFile(x.dataset.download))}
 function bindEmployee(t){if($('saveDraft'))$('saveDraft').onclick=()=>{save();notify('수행 기록을 저장했습니다')}}
