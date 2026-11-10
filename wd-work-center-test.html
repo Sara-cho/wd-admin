@@ -784,12 +784,13 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd127-instruction-history-status{margin:0 0 8px}
 #instructionHistoryRows,.wd127-instruction-files #managerDriveRows{flex:1 1 0;min-height:0;overflow:auto;scrollbar-gutter:stable}
 #instructionHistoryRows{display:grid;align-content:start;gap:8px;padding:0;scrollbar-gutter:auto}
-.wd133-instruction-row{display:grid;gap:4px;width:100%;min-width:0;text-align:left;padding:10px 12px;background:#faf7ff;border-color:#e9ddf5}
-.wd133-instruction-row strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
-.wd133-instruction-row time{font-size:12px;color:#655677}
-.wd133-instruction-row:hover,.wd133-instruction-row:focus-visible{background:#f0e7fb;border-color:#bb9be8}
+.wd133-instruction-row{display:block;width:100%;min-width:0;text-align:left;padding:10px 12px;background:#f4f4f6;border-color:#e5e5e9}
+.wd133-instruction-row time{font-size:14px;font-weight:650;color:#363640}
+.wd133-instruction-row:hover,.wd133-instruction-row:focus-visible{background:#ececf0;border-color:#c5bbc9}
 #instructionDocumentBody{background:#f5f2f8}
-.wd133-instruction-paper{max-width:840px;min-height:100%;margin:0 auto;padding:clamp(16px,4vw,40px);background:white;border:1px solid #e8dff2;border-radius:12px}
+.wd133-instruction-paper{max-width:840px;margin:0 auto;padding:clamp(16px,4vw,40px);background:white;border:1px solid #e8dff2;border-radius:12px}
+.wd133-instruction-paper:only-child{min-height:100%}
+.wd133-instruction-paper+.wd133-instruction-paper{margin-top:16px}
 .wd133-instruction-paper-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #eee7f6;margin-bottom:22px;padding-bottom:16px}
 .wd133-instruction-paper-head>div:first-child{flex:1 1 220px;min-width:0}
 .wd133-instruction-paper-head h4{margin:8px 0 0;font-size:clamp(20px,2.6vw,28px);line-height:1.4;overflow-wrap:anywhere}
@@ -5866,79 +5867,73 @@ function instructionDocument(text){
   }).join('')}</div>`;
 }
 
-function instructionDocumentRows(rows){
-  return rows.map(row=>`<button type="button" class="wd133-instruction-row" data-open-instruction="${esc(row.id)}" aria-haspopup="dialog">
-    <strong>${esc(row.task?.title||row.name)}</strong>
-    <time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time>
-  </button>`).join('');
-}
-
-async function openInstructionDocument(row,profile){
-  const dialog=$('instructionDocumentDialog'),pane=$('instructionDocumentBody'),task=row.task;
-  const date=attendanceDate(row.date);
+function instructionPaper(row){
+  const task=row.task;
   const sender=task?.instructionSender?.name;
   const title=task?.title||row.name;
   const text=task?.directInstruction?task.todos?.[0]?.text||task.objective||title:
     task?[task.title,task.objective&&task.objective!==task.title?task.objective:'',
       ...(task.todos||[]).map((todo,i)=>(i+1)+'. '+todo.text)].filter(Boolean).join('\n\n'):'';
-  pane.innerHTML=`<article class="wd133-instruction-paper">
+  return `<article class="wd133-instruction-paper">
     <header class="wd133-instruction-paper-head">
       <div><span class="wd133-instruction-tag">업무지시</span><h4>${esc(title)}</h4>
-        <p class="smallText"><time datetime="${esc(row.date)}">${esc(date)}</time>${sender?' · '+esc(sender)+' → '+esc(row.staffName):''}</p>
+        <p class="smallText"><time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time>${sender?' · '+esc(sender)+' → '+esc(row.staffName):''}</p>
         ${task?.instructionDriveName?`<p class="smallText">${esc(task.instructionDriveName)}</p>`:''}
       </div>
       ${task?assignedInstructionActions(task):''}
     </header>
     <div data-instruction-document-text aria-live="polite">${task?instructionDocument(text):'본문을 불러오는 중이에요.'}</div>
   </article>`;
-  const body=pane.querySelector('[data-instruction-document-text]');
+}
+
+async function openInstructionDay(day,rows,profile){
+  const dialog=$('instructionDocumentDialog'),pane=$('instructionDocumentBody');
+  $('instructionDocumentDialogTitle').textContent=day+' 업무지시';
+  pane.innerHTML=rows.map(instructionPaper).join('');
+  const bodies=pane.querySelectorAll('[data-instruction-document-text]');
   bindAssignedInstructions(dialog,profile);
   dialog.showModal();
   pane.scrollTop=0;
-  if(task)return;
-  const current=()=>dialog.open&&$('instructionDocumentDialog')===dialog&&pane.contains(body);
-  try{
-    const session=managerDriveSession;
-    if(!session||session.expires<=Date.now())throw new Error('업무센터 Drive 연결을 갱신해 주세요.');
-    const content=await readDriveReportBody(row,session.token);
-    if(current())body.innerHTML=instructionDocument(content||'저장된 본문이 없어요.');
-  }catch(error){
-    if(current())body.textContent=error.status===403?'이 업무지시를 읽을 권한이 없어요.':error.message;
-  }
+  const session=managerDriveSession;
+  await Promise.all(rows.map(async(row,index)=>{
+    if(row.task)return;
+    const body=bodies[index];
+    const current=()=>dialog.open&&$('instructionDocumentDialog')===dialog&&pane.contains(body);
+    try{
+      if(!session||session.expires<=Date.now())throw new Error('업무센터 Drive 연결을 갱신해 주세요.');
+      const content=await readDriveReportBody(row,session.token);
+      if(current())body.innerHTML=instructionDocument(content||'저장된 본문이 없어요.');
+    }catch(error){
+      if(current())body.textContent=error.status===403?'이 업무지시를 읽을 권한이 없어요.':error.message;
+    }
+  }));
 }
 
 function simpleInstructionHistory(){
-  const today=payrollCalendar.format(new Date());
   return `<header class="wd132-instruction-head"><h2 id="assignedWorkTitle">업무지시 목록</h2></header>
-    <label class="wd132-instruction-date">업무일 <select id="instructionHistoryDate">
-      <option value="${today}">${today}</option>
-    </select></label>
-    <p class="wd132-instruction-body-label" id="instructionHistoryBodyLabel">등록된 업무지시</p>
     <p class="smallText wd127-instruction-history-status" id="instructionHistoryStatus" role="status" hidden></p>
-    <div class="wd109-history-scroll" id="instructionHistoryRows" tabindex="0" role="region" aria-labelledby="instructionHistoryBodyLabel"></div>`;
+    <div class="wd109-history-scroll" id="instructionHistoryRows" tabindex="0" role="region" aria-labelledby="assignedWorkTitle"></div>`;
 }
 
 function bindInstructionHistory(profile,root){
-  const picker=$('instructionHistoryDate'),output=$('instructionHistoryRows');
+  const output=$('instructionHistoryRows');
   let archive=[];
   const paint=()=>{
-    const today=payrollCalendar.format(new Date()),rows=[...instructionRows(profile.id),...archive]
-      .sort((a,b)=>b.date.localeCompare(a.date));
-    const dates=[today,...new Set(rows.map(row=>row.date).filter(date=>date!==today))].slice(0,10);
-    const prior=picker.value;
-    picker.innerHTML=dates.map(date=>`<option value="${esc(date)}">${esc(date)}</option>`).join('');
-    const day=dates.includes(prior)?prior:today;
-    picker.value=day;
-    const filtered=rows.filter(row=>row.date===day);
-    output.innerHTML=instructionDocumentRows(filtered)||
-      `<p class="empty">${day===today?'오늘 등록된 업무지시가 없어요.':'해당 날짜에 등록된 업무지시가 없어요.'}</p>`;
-    const byId=new Map(filtered.map(row=>[row.id,row]));
-    output.querySelectorAll('[data-open-instruction]').forEach(button=>button.onclick=()=>{
-      const row=byId.get(button.dataset.openInstruction);
-      if(row)void openInstructionDocument(row,profile);
+    const rows=[...instructionRows(profile.id),...archive].sort((a,b)=>b.date.localeCompare(a.date));
+    const days=new Map();
+    rows.forEach(row=>{
+      if(!days.has(row.date))days.set(row.date,[]);
+      days.get(row.date).push(row);
+    });
+    output.innerHTML=[...days.keys()].map(day=>`<button type="button" class="wd133-instruction-row"
+      data-instruction-day="${esc(day)}" aria-haspopup="dialog"><time datetime="${esc(day)}">${esc(day)}</time></button>`).join('')||
+      '<p class="empty">등록된 업무지시가 없어요.</p>';
+    output.querySelectorAll('[data-instruction-day]').forEach(button=>button.onclick=()=>{
+      const day=button.dataset.instructionDay;
+      const entries=days.get(day);
+      if(entries)void openInstructionDay(day,entries,profile);
     });
   };
-  picker.onchange=()=>{output.scrollTop=0;paint();};
   paint();
   if(!staffWorkDriveFolders(profile)||!managerDriveSession)return;
   void readLegacyInstructionRows(managerDriveSession.token).then(rows=>{
