@@ -702,6 +702,10 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 @media(max-width:1280px){.wd58-layout.wd107-staff-layout{grid-template-columns:minmax(172px,.8fr) minmax(0,3fr)}}
 @media(max-width:850px){.wd58-layout.wd107-staff-layout{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:430px){.wd107-staff-layout .wd113-profile-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style>
+.wd114-payroll-account{grid-column:span 2}
+.wd114-payroll-account .wd114-payroll-bank{margin-inline-end:5px}
+@media(max-width:430px){.wd114-payroll-account{grid-column:auto}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -4283,17 +4287,14 @@ function setStaffPrivateValue(button,field,label,value,visible){
   button.title=label+(visible?' 숨기기':' 보기');
 }
 
-function staffAccountMask(account){
-  const digits=account.replace(/\D/g,'');
-  return digits.length>4?'끝 '+digits.slice(-4)+'자리':'등록됨';
-}
+const hiddenStaffAccount='********';
 
 function bindStaffPrivateValues(profile){
   const accountButton=$('showSavedStaffAccount'),accountField=$('savedStaffAccount');
   if(accountButton)accountButton.onclick=()=>{
     if(currentUser!=='manager'||!accountButton.isConnected||managerStaffId!==profile.id)return;
     const {account}=staffBankInfo(profile),show=accountButton.getAttribute('aria-pressed')!=='true';
-    setStaffPrivateValue(accountButton,accountField,'계좌번호',show?account:staffAccountMask(account),show);
+    setStaffPrivateValue(accountButton,accountField,'계좌번호',show?account:hiddenStaffAccount,show);
   };
   const button=$('showSavedStaffPin'),field=$('savedStaffPin');
   if(!button)return;
@@ -4512,11 +4513,13 @@ function persistStaffProfile(next,remoteSaved=false){
 function staffProfileSummary(profile){
   const {bank,account}=staffBankInfo(profile);
   const fields=[
-    ['이름',profile.name],['연락처',profile.contact],['직책',staffAccessLabel(profile)],
-    ['급여은행',bank]
+    ['이름',profile.name],['연락처',profile.contact],['직책',staffAccessLabel(profile)]
   ];
   return `<dl class="wd58-profile-data wd113-profile-cards">${fields.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value||'미등록')}</dd></div>`).join('')}
-    <div><dt>계좌번호</dt><dd class="wd59-pin-display">${account?`<span id="savedStaffAccount">${esc(staffAccountMask(account))}</span>${passwordEye('showSavedStaffAccount','savedStaffAccount','계좌번호')}`:'미등록'}</dd></div>
+    <div class="wd114-payroll-account"><dt>급여 계좌</dt><dd class="wd59-pin-display">
+      ${bank?`<span class="wd114-payroll-bank">${esc(bank)}</span>`:''}
+      ${account?`<span id="savedStaffAccount">${hiddenStaffAccount}</span>${passwordEye('showSavedStaffAccount','savedStaffAccount','계좌번호')}`:bank?'계좌번호 미등록':'미등록'}
+    </dd></div>
     <div><dt>로그인 비밀번호</dt><dd class="wd59-pin-display">${profile.pin?`<span id="savedStaffPin">••••••</span>${passwordEye('showSavedStaffPin','savedStaffPin')}`:'미등록'}</dd></div>
     <div><dt>입사일</dt><dd>${esc(profile.joinedOn||'미등록')}</dd></div>
     <div><dt>퇴사일</dt><dd>${esc(profile.leftOn||(profile.archivedAt?'미등록':'재직 중'))}</dd></div>
