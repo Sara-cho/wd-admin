@@ -710,6 +710,10 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd116-instruction-recipient strong{margin-inline-start:4px;color:var(--purple-dark)}
 @media(max-width:1300px){.wd116-instruction-layout .wd75-split{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.wd116-instruction-layout{grid-template-columns:minmax(0,1fr)}}
+</style><style>
+.wd117-staff-instruction{min-height:0;padding:0;border:0;background:transparent;text-align:left;font:inherit;color:#4b25aa}
+.wd117-staff-instruction:hover,.wd117-staff-instruction:focus-visible{text-decoration:underline}
+@media(max-width:760px){.wd32-posts tr[data-admin-title]{grid-template-columns:minmax(0,1fr)}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -957,7 +961,7 @@ function sidebarIcon(id){
     <g fill="none" stroke="${line}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">${art.replaceAll('@','fill="url(#'+gradient+')"')}</g></svg>`;
 }
 
-function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span>${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 업무지시 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>완료 ${S.tasks.filter(t=>status(t)==='업무 완료').length}건 · 보고서 제출 ${S.tasks.filter(t=>status(t)==='보고서 제출').length}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
+function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const pendingReview=currentUser==='manager'?reviewQueueCount():0;const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span>${x[0]==='review'&&pendingReview?`<span class="wd67-nav-count" aria-label="검토 대기 ${pendingReview}건">${pendingReview}</span>`:''}</button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 업무지시 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>업무보고 ${S.tasks.reduce((total,task)=>total+dayReportCount(task),0)}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
 function dayReportCount(t){return t.reports.length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.reports.length,0)}
 function dayFeedbackCount(t){return t.feedback.filter(f=>!f.reviewedOnly).length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.feedback.length,0)}
 function taskButton(t,i){return `<button class="taskTile ${S.selected===t.id?'selected':''}" data-task="${t.id}"><small>DAY ${String(i+1).padStart(2,'0')} · ${esc(t.date)}</small><b>${esc(t.title)}</b><span class="pill ${status(t)==='업무 완료'?'green':status(t)==='보완 요청'?'orange':''}">${status(t)}</span><small style="display:block;margin-top:8px">${dayReportCount(t)}회 제출 · ${dayFeedbackCount(t)}건 피드백</small></button>`}
@@ -987,9 +991,58 @@ function printReportPdf(owner,report,index){
   printDocument(markup,`업무보고_${(report.snapshot||owner).date}_${index+1}차`);
 }
 
-function dayReportsPopup(id,selected=null){let day=S.tasks.find(t=>t.id===id);if(!day)return;let entries=submittedReportEntries(day);if(!entries.length){showModal('<div class="empty">아직 제출한 보고서가 없습니다.</div>','제출 업무보고서');return}let chosen=selected===null?(day.reports.length?day.reports.length-1:entries.length-1):Number(selected);chosen=Math.max(0,Math.min(chosen,entries.length-1));let entry=entries[chosen];let picker=entries.length>1?`<label class="wd47-version">제출 이력<select id="reportVersion">${entries.map((e,i)=>`<option value="${i}" ${i===chosen?'selected':''}>${e.owner.parentId?'이전 개별 보고 · ':''}${e.index+1}차 · ${esc(e.report.at)}</option>`).join('')}</select></label>`:'<span class="smallText">제출한 보고서</span>';openSubmittedReport(entry.owner,entry.report,entry.index,picker);if($('reportVersion'))$('reportVersion').onchange=()=>dayReportsPopup(id,Number($('reportVersion').value))}
-function bindTaskReports(){document.querySelectorAll('[data-day-reports]').forEach(b=>b.onclick=()=>dayReportsPopup(b.dataset.dayReports))}
-function monthView(){let t=currentUser==='manager'?tasksForStaff(managerStaffId):S.tasks;return `<div class="titleRow"><div><div class="eyebrow">NOVEMBER 2026 · ${currentUser==='manager'?'MANAGEMENT':'MY TASKS'}</div><h1>${currentUser==='manager'?esc(staffName())+' 업무목록':'11월 업무목록'}</h1><p class="muted">${currentUser==='manager'?'업무 개수·내용·마감은 자유롭게 변경할 수 있습니다.':'업무 내용과 진행상태, 제출 보고서를 한곳에서 확인하세요.'}</p></div>${currentUser==='manager'?'<div class="actions"><button data-nav="month">스탭 선택</button><button class="primary" id="addTask">+ 업무지시</button></div>':''}</div><div class="statRow"><div class="stat"><small>업무지시</small><b>${t.length}</b></div><div class="stat"><small>제출된 보고</small><b>${t.reduce((n,x)=>n+dayReportCount(x),0)}</b></div><div class="stat"><small>완료된 업무</small><b>${t.filter(x=>status(x)==='업무 완료').length}</b></div></div><section class="wd32-board"><div class="wd32-listtitle"><h2>업무목록</h2><span class="muted">전체 ${t.length}건</span></div>${currentUser==='manager'?`<div class="adm-filters"><input id="adminTaskQuery" placeholder="업무 제목 검색" aria-label="업무 제목 검색"><select id="adminTaskStatus" aria-label="진행 상태"><option value="">전체 상태</option><option>미제출</option><option>보고서 제출</option><option>보완 요청</option><option>업무 완료</option></select></div><p id="adminTaskEmpty" hidden>조건에 맞는 업무가 없습니다.</p>`:''}<table class="wd32-posts"><colgroup><col style="width:60px"><col style="width:130px"><col><col style="width:115px"><col style="width:115px"></colgroup><thead><tr><th>번호</th><th>업무일</th><th>업무 제목</th><th>진행상태</th><th>제출 보고서</th></tr></thead><tbody>${t.length?t.map((task,i)=>`<tr data-admin-title="${esc(task.title)}" data-admin-status="${esc(status(task))}" class="${S.selected===task.id?'selected':''}"><td class="wd32-no">${i+1}</td><td class="wd32-date">${attendanceDate(task.date)}</td><td class="wd32-title"><button data-task="${esc(task.id)}">${esc(task.title)}</button></td><td class="wd32-state"><span class="pill ${status(task)==='업무 완료'?'green':status(task)==='보완 요청'?'orange':''}">${status(task)}</span></td><td class="wd32-reports">${dayReportCount(task)?`<button class="small wd42-reportlink" data-day-reports="${esc(task.id)}">보고서 ${dayReportCount(task)}건</button>`:'<span class="wd42-none">미제출</span>'}</td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">등록된 업무가 없습니다.</div></td></tr>'}</tbody></table></section>`}
+function sameDayReportTasks(task){
+  return S.tasks.filter(item=>item.date===task.date&&taskStaffId(item)===taskStaffId(task)&&dayReportCount(item));
+}
+
+function instructionDayReportLink(task){
+  return sameDayReportTasks(task).length?
+    `<button type="button" class="small wd42-reportlink" data-day-reports="${esc(task.id)}" data-report-scope="day">업무보고 보기</button>`:'';
+}
+
+function dayReportsPopup(id,selected=null,sameDay=false){
+  const day=S.tasks.find(task=>task.id===id);
+  if(!day)return;
+  const entries=sameDay?sameDayReportTasks(day).flatMap(submittedReportEntries):submittedReportEntries(day);
+  if(!entries.length){showModal('<div class="empty">제출된 업무보고가 없습니다.</div>','제출 업무보고서');return;}
+  const initial=sameDay?Math.max(0,entries.findLastIndex(entry=>entry.owner===day)):
+    day.reports.length?day.reports.length-1:entries.length-1;
+  const chosen=selected===null?initial:Math.max(0,Math.min(Number(selected),entries.length-1));
+  const entry=entries[chosen];
+  const picker=entries.length>1?`<label class="wd47-version">${sameDay?'그날 업무보고':'제출 이력'}<select id="reportVersion">${entries.map((item,i)=>
+    `<option value="${i}" ${i===chosen?'selected':''}>${sameDay?esc(item.owner.title)+' · ':item.owner.parentId?'이전 개별 보고 · ':''}${item.index+1}차 · ${esc(item.report.at)}</option>`).join('')}</select></label>`:
+    `<span class="smallText">${sameDay?esc(attendanceDate(day.date))+' 업무보고':'제출한 보고서'}</span>`;
+  openSubmittedReport(entry.owner,entry.report,entry.index,picker);
+  const select=$('reportVersion');
+  if(select)select.onchange=()=>dayReportsPopup(id,select.value,sameDay);
+}
+
+function bindTaskReports(root=document){
+  root.querySelectorAll('[data-day-reports]').forEach(button=>button.onclick=()=>dayReportsPopup(button.dataset.dayReports,null,button.dataset.reportScope==='day'));
+}
+
+function monthView(){
+  const manager=currentUser==='manager';
+  const tasks=manager?tasksForStaff(managerStaffId):S.tasks;
+  const reports=manager?S.tasks.filter(task=>taskStaffId(task)===managerStaffId):tasks;
+  return `<div class="titleRow"><div><div class="eyebrow">NOVEMBER 2026 · ${manager?'MANAGEMENT':'MY TASKS'}</div>
+    <h1>${manager?esc(staffName())+' 업무목록':'11월 업무목록'}</h1>
+    <p class="muted">업무지시와 그날 제출한 업무보고를 확인하세요.</p></div>
+    ${manager?'<div class="actions"><button data-nav="month">스탭 선택</button><button class="primary" id="addTask">+ 업무지시</button></div>':''}</div>
+    <div class="statRow"><div class="stat"><small>업무지시</small><b>${tasks.filter(task=>!task.dailyJournal).length}</b></div>
+    <div class="stat"><small>제출된 업무보고</small><b>${reports.reduce((total,task)=>total+dayReportCount(task),0)}</b></div></div>
+    <section class="wd32-board"><div class="wd32-listtitle"><h2>업무목록</h2><span class="muted">전체 ${tasks.length}건</span></div>
+    ${manager?`<div class="adm-filters"><input id="adminTaskQuery" placeholder="업무 제목 검색" aria-label="업무 제목 검색"></div>
+      <p id="adminTaskEmpty" hidden>조건에 맞는 업무가 없습니다.</p>`:''}
+    <table class="wd32-posts"><colgroup><col style="width:60px"><col style="width:130px"><col><col style="width:140px"></colgroup>
+    <thead><tr><th>번호</th><th>업무일</th><th>업무 제목</th><th>그날 업무보고</th></tr></thead><tbody>
+    ${tasks.length?tasks.map((task,i)=>`<tr data-admin-title="${esc(task.title)}" class="${S.selected===task.id?'selected':''}">
+      <td class="wd32-no">${i+1}</td><td class="wd32-date">${esc(attendanceDate(task.date))}</td>
+      <td class="wd32-title"><button data-task="${esc(task.id)}">${esc(task.title)}</button></td>
+      <td class="wd32-reports">${instructionDayReportLink(task)||'—'}</td></tr>`).join(''):
+      '<tr><td colspan="4"><div class="empty">등록된 업무가 없습니다.</div></td></tr>'}</tbody></table></section>`;
+}
+
 function taskPreview(id){
   let t=S.tasks.find(x=>x.id===id);if(!t)return;
   if(currentUser==='employee'&&t.directInstruction){setTask(id);return;}
@@ -998,8 +1051,7 @@ function taskPreview(id){
     return;
   }
   let refs=t.references||[];
-  let statusText=status(t);
-  showModal(`<div class="eyebrow">${esc(t.date)} · 월간 업무</div><h2 style="margin-top:6px">${esc(t.title)}</h2><span class="pill">${statusText}</span><h3>오늘의 목표</h3><div class="info">${nl(t.objective||'업무지시가 등록되지 않았습니다.')}</div><h3>오늘 할 일</h3><ol>${taskTodos(t).map(x=>`<li>${esc(x.text)}</li>`).join()}</ol>${guideBook(t)}${refs.length?`<h3>참고자료</h3>${refHtml(t)}`:''}<p class="smallText">읽음 확인: ${esc(t.ack||'아직 읽음 확인 전')} · 제출 ${t.reports.length}건 · 피드백 ${t.feedback.length}건</p><div class="actions"><button class="primary" id="previewStart">${currentUser==='manager'?'이 업무 확인·평가':'업무 수행·보고서 작성'}</button>${currentUser==='manager'?'<button id="previewEdit">업무지시 수정</button>':''}</div>`, '업무 간단보기');
+  showModal(`<div class="eyebrow">${esc(t.date)} · 월간 업무</div><h2 style="margin-top:6px">${esc(t.title)}</h2><h3>오늘의 목표</h3><div class="info">${nl(t.objective||'업무지시가 등록되지 않았습니다.')}</div><h3>오늘 할 일</h3><ol>${taskTodos(t).map(x=>`<li>${esc(x.text)}</li>`).join()}</ol>${guideBook(t)}${refs.length?`<h3>참고자료</h3>${refHtml(t)}`:''}<p class="smallText">읽음 확인: ${esc(t.ack||'아직 읽음 확인 전')} · 제출 ${t.reports.length}건 · 피드백 ${t.feedback.length}건</p><div class="actions"><button class="primary" id="previewStart">${currentUser==='manager'?'이 업무 확인·평가':'업무 수행·보고서 작성'}</button>${currentUser==='manager'?'<button id="previewEdit">업무지시 수정</button>':''}</div>`, '업무 간단보기');
   $('previewStart').onclick=()=>{$('modalLayer').remove();setTask(id)};
   if(currentUser==='manager')$('previewEdit').onclick=()=>{$('modalLayer').remove();taskEditor(t)};
 }
@@ -4184,11 +4236,11 @@ let staffTasksOpen = false;
 function staffTable() {
   const rows=S.staffProfiles.filter(p=>!p.hiddenAt).map(p=>{
     const tasks=tasksForStaff(p.id);
-    return `<tr><td><button class="small" data-staff-tasks="${esc(p.id)}">${esc(p.name)}</button> ${p.archivedAt?'<span class="smallText">삭제됨</span>':''}</td><td>${tasks.length}건</td><td>${tasks.filter(t=>status(t)==='보고서 제출').length}건</td><td>${tasks.filter(t=>status(t)==='보완 요청').length}건</td><td>${tasks.filter(t=>status(t)==='업무 완료').length}건</td></tr>`;
+    return `<tr><td><button class="small" data-staff-tasks="${esc(p.id)}">${esc(p.name)}</button> ${p.archivedAt?'<span class="smallText">삭제됨</span>':''}</td><td>${tasks.length}건</td><td>${S.tasks.filter(task=>taskStaffId(task)===p.id).reduce((total,task)=>total+dayReportCount(task),0)}건</td></tr>`;
   }).join('');
   return `<div class="titleRow"><h1>스탭별 업무목록</h1></div>
-  <section class="card wd51-tablewrap"><table class="wd51-table"><thead><tr><th>스탭 이름</th><th>업무지시</th><th>검토 대기</th><th>보완 요청</th><th>완료</th></tr></thead>
-  <tbody>${rows||'<tr><td colspan="5">등록된 스탭이 없습니다.</td></tr>'}</tbody></table></section>`;
+  <section class="card wd51-tablewrap"><table class="wd51-table"><thead><tr><th>스탭 이름</th><th>업무지시</th><th>제출된 업무보고</th></tr></thead>
+  <tbody>${rows||'<tr><td colspan="3">등록된 스탭이 없습니다.</td></tr>'}</tbody></table></section>`;
 }
 
 let staffDetailOpen=false, editingStaff=false;
@@ -4952,8 +5004,8 @@ function bindStaffWorkMonth(profile,month){
 }
 
 function staffTasksTable(tasks){
-  return `<div class="wd60-inner-scroll" tabindex="0" role="region" aria-label="업무지시 스크롤"><table class="wd60-detail-table" aria-label="일별 업무지시"><thead><tr><th scope="col">업무일</th><th scope="col">업무 제목</th><th scope="col">진행상태</th></tr></thead>
-    <tbody>${tasks.length?tasks.map(task=>`<tr><td>${esc(attendanceDate(task.date))}</td><td>${esc(task.title)}</td><td><span class="pill">${esc(status(task))}</span></td></tr>`).join(''):'<tr><td colspan="3">이 달에 등록된 업무지시가 없어요.</td></tr>'}</tbody></table></div>`;
+  return `<div class="wd60-inner-scroll" tabindex="0" role="region" aria-label="업무지시 스크롤"><table class="wd60-detail-table" aria-label="일별 업무지시"><thead><tr><th scope="col">업무일</th><th scope="col">업무 제목</th><th scope="col">그날 업무보고</th></tr></thead>
+    <tbody>${tasks.length?tasks.map(task=>`<tr><td>${esc(attendanceDate(task.date))}</td><td><button type="button" class="wd117-staff-instruction" data-staff-instruction="${esc(task.id)}">${esc(task.title)}</button></td><td>${instructionDayReportLink(task)||'—'}</td></tr>`).join(''):'<tr><td colspan="3">이 달에 등록된 업무지시가 없어요.</td></tr>'}</tbody></table></div>`;
 }
 
 function bindStaffManagement(){
@@ -5063,19 +5115,21 @@ function bindStaffManagement(){
   };
   bindStaffPayroll(profile,staffSummaryMonth);
   bindStaffWorkMonth(profile,staffSummaryMonth);
+  document.querySelectorAll('[data-staff-instruction]').forEach(button=>button.onclick=()=>taskPreview(button.dataset.staffInstruction));
+  bindTaskReports();
 }
 function bindAdminFilters(){
-  const query=$('adminTaskQuery'), filter=$('adminTaskStatus');
-  if(!query||!filter)return;
-  const apply=()=>{
+  const query=$('adminTaskQuery');
+  if(!query)return;
+  query.oninput=()=>{
     let visible=0;
+    const term=query.value.trim().toLowerCase();
     document.querySelectorAll('[data-admin-title]').forEach(row=>{
-      row.hidden=!(row.dataset.adminTitle.toLowerCase().includes(query.value.trim().toLowerCase())&&(!filter.value||row.dataset.adminStatus===filter.value));
+      row.hidden=!row.dataset.adminTitle.toLowerCase().includes(term);
       if(!row.hidden)visible++;
     });
     $('adminTaskEmpty').hidden=visible>0;
   };
-  query.oninput=apply;filter.onchange=apply;
 }
 
 function directInstructionPlan(raw){
@@ -5102,16 +5156,9 @@ function assignedInstructionActions(task){
   return `<div class="wd110-instruction-actions"><button type="button" class="small" data-edit-instruction="${esc(task.id)}">수정</button>
     <button type="button" class="small wd110-instruction-delete" data-delete-instruction="${esc(task.id)}">삭제</button></div>`;
 }
-function cancelledInstructionHistory(profile){
-  const rows=(S.cancelledInstructions||[]).filter(task=>taskStaffId(task)===profile.id);
-  return rows.length?`<details class="instruction-step"><summary>삭제한 업무지시 ${rows.length}건</summary>
-    <ul class="wd110-cancelled-list">${rows.map(task=>`<li><span>${esc(attendanceDate(task.date))} · ${esc(task.title)}</span>
-      <button type="button" class="small" data-restore-instruction="${esc(task.id)}">복원</button></li>`).join('')}</ul></details>`:'';
-}
 function bindAssignedInstructions(root,profile){
   root.querySelectorAll('[data-edit-instruction]').forEach(button=>button.onclick=()=>openAssignedInstruction(profile,button.dataset.editInstruction));
   root.querySelectorAll('[data-delete-instruction]').forEach(button=>button.onclick=()=>cancelAssignedInstruction(profile,button.dataset.deleteInstruction));
-  root.querySelectorAll('[data-restore-instruction]').forEach(button=>button.onclick=()=>restoreAssignedInstruction(profile,button.dataset.restoreInstruction));
 }
 function assignedInstruction(profile,id){
   if(currentUser!=='manager'||!profile||profile.archivedAt||staffById(profile.id)!==profile)return null;
@@ -5178,7 +5225,7 @@ function openAssignedInstruction(profile,id){
 function cancelAssignedInstruction(profile,id){
   const task=assignedInstruction(profile,id);
   if(!task||$('modalLayer'))return;
-  showModal(`<p><strong>${esc(task.title)}</strong></p><p>업무지시 목록에서 삭제할까요? 작성한 보고와 첨부파일은 함께 보관되며, 삭제한 업무지시에서 복원할 수 있어요.</p>
+  showModal(`<p><strong>${esc(task.title)}</strong></p><p>업무지시 목록에서 삭제할까요? 작성한 보고와 첨부파일은 함께 보관돼요.</p>
     <div class="actions"><button type="button" class="wd110-instruction-delete" id="confirmAssignedDelete">업무 삭제</button></div>`,'업무지시 삭제');
   $('confirmAssignedDelete').onclick=()=>{
     if(assignedInstruction(profile,id)!==task)return;
@@ -5186,21 +5233,14 @@ function cancelAssignedInstruction(profile,id){
       cancelledInstructions:[task,...(S.cancelledInstructions||[])]},'업무지시 목록에서 삭제했어요.');
   };
 }
-function restoreAssignedInstruction(profile,id){
-  if(currentUser!=='manager'||!profile||profile.archivedAt||staffById(profile.id)!==profile||S.tasks.some(task=>task.id===id))return;
-  const archive=S.cancelledInstructions||[],task=archive.find(row=>row.id===id&&taskStaffId(row)===profile.id);
-  if(task)saveInstructionChange({tasks:[...S.tasks,task],cancelledInstructions:archive.filter(row=>row!==task)},'업무지시를 복원했어요.');
-}
-
 function simpleInstructionHistory(profile,date){
   const tasks=tasksForStaff(profile.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
   const files=tasks.filter(task=>task.date===date).flatMap(task=>task.instructionFiles||[]);
   return `<section class="wd109-history-region" aria-labelledby="assignedWorkTitle">
     <h2 id="assignedWorkTitle">등록한 업무지시</h2>
     <div class="wd109-history-scroll" tabindex="0" role="region" aria-labelledby="assignedWorkTitle">
-      ${tasks.length?tasks.map(task=>`<article class="wd109-assigned-work"><header><time datetime="${esc(task.date)}">${esc(attendanceDate(task.date))}</time>${assignedInstructionActions(task)}</header>
+      ${tasks.length?tasks.map(task=>`<article class="wd109-assigned-work"><header><time datetime="${esc(task.date)}">${esc(attendanceDate(task.date))}</time><div class="wd110-instruction-actions">${instructionDayReportLink(task)}${assignedInstructionActions(task)}</div></header>
         ${employeeInstructionList(task.todos||[],task.objective||task.title,task.directInstruction)}</article>`).join(''):'<p class="empty">등록된 업무지시가 없어요.</p>'}
-      ${cancelledInstructionHistory(profile)}
     </div>
   </section><section class="wd109-history-region" aria-labelledby="instructionFilesTitle">
     <h2 id="instructionFilesTitle">${esc(attendanceDate(date))} 업무공유파일</h2>
@@ -5229,6 +5269,7 @@ function bindSimpleInstruction(profile){
   const history=$('simpleInstructionHistory');
   const bindHistory=()=>{
     bindAssignedInstructions(history,profile);
+    bindTaskReports(history);
     history.querySelectorAll('[data-download]').forEach(item=>item.onclick=()=>downloadFile(item.dataset.download));
   };
   $('simpleInstructionDate').onchange=event=>{
