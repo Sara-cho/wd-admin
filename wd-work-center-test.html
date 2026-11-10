@@ -813,7 +813,7 @@ function logout(){
   for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
   payrollReminderShown='';
   clearPrintDocument?.();
-  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='보고서 제출';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
+  currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
   employeeReportDate=null;attendanceRecordDay=null;editingAttendanceTime=null;materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
   S=migrateStaffState(load());
@@ -841,7 +841,7 @@ window.addEventListener('storage',event=>{
 });
 const navEmployee=[['attendance','근무기록'],['dashboard','업무보고']];
 const navStaff=[['attendance','근무기록'],['dashboard','업무진행판'],['month','업무목록']];
-const navMgr=[['managerHome','관리자 대시보드'],['staff','직원관리'],['instructions','업무지시'],['review','보고서 검토']];
+const navMgr=[['managerHome','관리자 대시보드'],['staff','직원관리'],['instructions','업무지시'],['review','업무보고']];
 const sharedMenus=[['manual','업무매뉴얼'],['archive','작업결과 보관'],['ideas','아이디어&자료수집함']];
 const sensitiveMenus=[['payroll','급여명세서'],['tax','세무업무'],['accounts','계정관리'],['agents','설계사관리'],['finance','수입·지출'],['office','사무실 운영']];
 const configurableMenus=[...sharedMenus,...sensitiveMenus.filter(([id])=>['payroll','accounts'].includes(id))];
@@ -2792,19 +2792,34 @@ function payrollEmployeeLogin(profile){
     (profile.workType==='employee'&&Object.hasOwn(driveAccountByEmployee,profile.name)?legacyStaffHqLogin:'');
 }
 
-async function payrollWorkMinutes(profile,month){
-  const local=staffMonthRecords(profile,month),login=payrollEmployeeLogin(profile);
-  if(!login)return {minutes:local.reduce((total,row)=>total+(workMinutes(row)||0),0),records:local.length};
+async function readManagerWorkMonth(login,month){
+  if(currentUser!=='manager'||!login||!validAttendanceDay(month+'-01'))throw new Error('직원과 조회 월을 다시 확인해 주세요.');
   const [year,monthNumber]=month.split('-').map(Number);
   const last=new Date(year,monthNumber,0).getDate();
   const params=new URLSearchParams({select:'work_date,total_minutes',user_id:'eq.'+login});
   params.append('work_date','gte.'+month+'-01');params.append('work_date','lte.'+month+'-'+last);
   const token=await verifyManagerHqSession();
+  if(currentUser!=='manager')throw hqLoginError();
   const response=await fetch(adminAuthBase+'/rest/v1/work_hours?'+params,{headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},cache:'no-store',signal:AbortSignal.timeout(12000)});
-  if(!response.ok)throw new Error('근무기록을 불러오지 못했어요.');
-  const remote=await response.json(),days=new Map(local.map(row=>[row.day,workMinutes(row)||0]));
-  remote.forEach(row=>days.set(row.work_date,Number(row.total_minutes)||0));
-  return {minutes:[...days.values()].reduce((a,b)=>a+b,0),records:days.size};
+  if(!response.ok)throw new Error('본진 근무기록을 불러오지 못했어요.');
+  const rows=await response.json();
+  if(!Array.isArray(rows))throw new Error('본진 근무기록을 확인하지 못했어요.');
+  return rows.filter(row=>validAttendanceDay(row.work_date)&&row.work_date.startsWith(month+'-'));
+}
+
+function mergeStaffWorkMonth(local,remote){
+  const days=new Map(local.map(row=>[row.day,row]));
+  for(const {work_date,total_minutes} of remote){
+    const minutes=Number(total_minutes);
+    days.set(work_date,{day:work_date,ledgerMinutes:total_minutes!==null&&total_minutes!==''&&Number.isFinite(minutes)&&minutes>=0?minutes:null});
+  }
+  return [...days.values()].sort((a,b)=>b.day.localeCompare(a.day));
+}
+
+async function payrollWorkMinutes(profile,month){
+  const local=staffMonthRecords(profile,month),login=payrollEmployeeLogin(profile);
+  const rows=login?mergeStaffWorkMonth(local,await readManagerWorkMonth(login,month)):local;
+  return {minutes:rows.reduce((total,row)=>total+(workMinutes(row)||0),0),records:rows.length};
 }
 
 function payrollPreviewMarkup(fields,result,depositLabel=''){
@@ -3833,8 +3848,8 @@ function bindAttendance(){
   }
 }
 
-let homeDay=null,reviewStaffId='',reviewStatus='보고서 제출';
-const reviewTabs=[['보고서 제출','검토 대기'],['보완 요청','보완 요청'],['업무 완료','업무 완료'],['','전체 제출 이력']];
+let homeDay=null,reviewStaffId='',reviewStatus='';
+const reviewTabs=[['','전체 제출'],['보고서 제출','검토 대기'],['보완 요청','보완 요청'],['업무 완료','검토 완료']];
 const activeProfiles=()=>S.staffProfiles.filter(p=>!p.archivedAt).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
 const visibleAdminTasks=()=>S.tasks.filter(t=>!staffById(taskStaffId(t))?.hiddenAt);
 const reviewQueueCount=()=>visibleAdminTasks().filter(t=>status(t)==='보고서 제출').length;
@@ -4007,7 +4022,7 @@ function managerHomeView(){
     </div><p class="smallText wd67-legend">날짜를 누르면 근무 일정을 추가하거나 배정 업무를 볼 수 있어요.</p></section>
     <div class="wd87-home-summary" role="region" aria-label="업무 확인과 이번 주 출근">
       <section class="card"><h2>검토·피드백 대기</h2>
-        <button type="button" id="homeReviewQueue" class="wd68-header-review"><strong>${count}건</strong><span>보고서 검토</span><span aria-hidden="true">›</span></button>
+        <button type="button" id="homeReviewQueue" class="wd68-header-review"><strong>${count}건</strong><span>업무보고 검토</span><span aria-hidden="true">›</span></button>
       </section>
       <section class="card"><h2>이번 주 출근</h2>
         <p class="smallText">${esc(thisWeek[0].slice(5).replace('-','/'))} ~ ${esc(thisWeek.at(-1).slice(5).replace('-','/'))}</p>
@@ -4087,17 +4102,17 @@ function reviewView(){
   const selected=profiles.find(p=>p.id===reviewStaffId);
   const scoped=selected?reports.filter(r=>taskStaffId(r.task)===selected.id):reports;
   const visible=scoped.filter(r=>!reviewStatus||r.state===reviewStatus).sort((a,b)=>b.task.date.localeCompare(a.task.date));
-  return `<div class="titleRow"><h1>보고서 검토</h1></div><div class="wd65-layout">
-    <section class="card wd65-staff"><div class="wd65-section-head"><h2>스탭별 제출 내역</h2></div>
-    <div class="wd65-people">${[{id:'',name:'전체 스탭'},...profiles].map(p=>{
+  return `<div class="titleRow"><h1>업무보고</h1></div><div class="wd65-layout">
+    <section class="card wd65-staff"><div class="wd65-section-head"><h2>직원·스탭별 제출 내역</h2></div>
+    <div class="wd65-people">${[{id:'',name:'전체 직원·스탭'},...profiles].map(p=>{
       const pending=reports.filter(r=>(!p.id||taskStaffId(r.task)===p.id)&&r.state==='보고서 제출').length;
       return `<button type="button" class="wd65-person" data-review-staff="${esc(p.id)}" aria-pressed="${(selected?.id||'')===p.id}"><strong>${esc(p.name)}${p.archivedAt?' · 보관':''}</strong><small>대기 ${pending}건</small></button>`;
     }).join('')}</div></section>
-    <section class="card wd65-work"><div class="wd65-section-head"><div><h2>${esc(selected?.name||'전체 스탭')} 보고서</h2><p class="smallText">업무별 보고서와 피드백 기록이 누적됩니다.</p></div></div>
+    <section class="card wd65-work"><div class="wd65-section-head"><div><h2>${selected?esc(selected.name)+' 업무보고':'제출된 업무보고'}</h2><p class="smallText">이 브라우저에 저장된 업무보고와 피드백을 확인할 수 있어요.</p></div></div>
     <div class="wd65-filters">${reviewTabs.map(([key,label])=>`<button type="button" data-review-status="${key}" aria-pressed="${reviewStatus===key}">${label} <b>${scoped.filter(r=>!key||r.state===key).length}</b></button>`).join('')}</div>
     <div class="wd65-work-scroll"><table class="wd65-table"><thead><tr><th scope="col">업무일</th><th scope="col">담당</th><th scope="col">제출 업무</th><th scope="col">상태</th><th scope="col">검토</th></tr></thead><tbody>
     ${visible.map(({task,state})=>`<tr><td>${esc(task.date)}</td><td>${esc(taskStaffName(task))}</td><th scope="row">${esc(task.title)}<small class="wd67-history">제출 ${dayReportCount(task)}회 · 피드백 ${dayFeedbackCount(task)}건</small></th>
-    <td><span class="pill">${state==='보고서 제출'?'검토 대기':esc(state)}</span></td><td><div class="wd67-review-actions"><button class="small" data-day-reports="${esc(task.id)}">보고서 보기</button>${state==='보고서 제출'&&isEmployeeTask(task)?`<button class="small primary" data-review-complete="${esc(task.id)}">검토 완료</button>`:''}<button class="small" data-review-feedback="${esc(task.id)}">피드백</button></div></td></tr>`).join('')||'<tr><td class="wd65-empty" colspan="5">이 상태의 보고서가 없습니다.</td></tr>'}
+    <td><span class="pill">${state==='보고서 제출'?'검토 대기':state==='업무 완료'?'검토 완료':esc(state)}</span></td><td><div class="wd67-review-actions"><button class="small" data-day-reports="${esc(task.id)}">보고서 보기</button>${state==='보고서 제출'&&isEmployeeTask(task)?`<button class="small primary" data-review-complete="${esc(task.id)}">검토 완료</button>`:''}<button class="small" data-review-feedback="${esc(task.id)}">피드백</button></div></td></tr>`).join('')||`<tr><td class="wd65-empty" colspan="5">${reviewStatus?'이 상태의 업무보고가 없어요.':'이 브라우저에 저장된 업무보고가 없어요.'}</td></tr>`}
     </tbody></table></div></section></div>`;
 }
 
@@ -4139,6 +4154,7 @@ function workElapsed(row){
   return Number.isFinite(minutes)&&minutes>=0?minutes:null;
 }
 function workMinutes(row){
+  if(row&&Object.hasOwn(row,'ledgerMinutes'))return row.ledgerMinutes;
   const elapsed=workElapsed(row);
   return elapsed===null?null:Math.max(0,elapsed-attendanceBreak(row,elapsed));
 }
@@ -4451,13 +4467,14 @@ function staffPayrollActions(profile,month){
 function staffMonthSummary(profile,month){
   const rows=staffMonthRecords(profile,month);
   const tasks=staffMonthlyTasks(profile,month);
-  const monthName=Number(month.slice(5))+'월';
+  const monthName=Number(month.slice(5))+'월',linked=!!payrollEmployeeLogin(profile);
   return `<section class="wd60-month" aria-labelledby="staffMonthTitle">
     <div class="wd60-month-header"><h3 id="staffMonthTitle">월간 현황</h3><label><span>조회 월</span><input type="month" id="staffMonth" value="${month}"></label></div>
     <div class="wd108-month-split">
-      <article class="wd107-month-item"><header><h4>${monthName} 근무내역</h4><strong>총 ${staffWorkTotal(rows)}</strong></header>
+      <article class="wd107-month-item"><header><h4>${monthName} 근무내역</h4><strong id="staffWorkTotal">${linked?'집계 중':'총 '+staffWorkTotal(rows)}</strong></header>
         <div id="staffPayrollArea">${staffPayrollActions(profile,month)}</div>
-        ${staffWorkTable(rows)}
+        ${linked?`<div class="row"><p class="smallText" id="staffWorkStatus" role="status">본진 근무기록을 불러오는 중이에요.</p><button type="button" class="small" id="reloadStaffWork" hidden>다시 불러오기</button></div>`:''}
+        <div id="staffWorkRows">${staffWorkTable(rows,linked?'본진 근무기록을 확인하고 있어요.':undefined)}</div>
       </article>
       <article class="wd107-month-item"><header><h4>${monthName} 배정업무</h4><strong>총 ${tasks.length}건</strong>
         ${profile.archivedAt?'':'<button type="button" class="primary small" id="assignFromStaff">업무 배정하기</button>'}</header>
@@ -4777,13 +4794,44 @@ function staffDetailDialog(id,title,name,table){
   </dialog>`;
 }
 
-function staffWorkTable(rows){
+function staffWorkTable(rows,empty='이 달의 근무기록이 없습니다.'){
   const clock=timestamp=>timestamp&&Number.isFinite(new Date(timestamp).getTime())?esc(clockLabel(timeOnly(timestamp))):'—';
   return `<div class="wd60-inner-scroll" tabindex="0" role="region" aria-label="근무내역 스크롤"><table class="wd60-detail-table" aria-label="일별 근무내역"><thead><tr><th scope="col">근무일</th><th scope="col">출근</th><th scope="col">퇴근</th><th scope="col">근무시간</th></tr></thead>
     <tbody>${rows.length?rows.map(row=>{
       const minutes=workMinutes(row);
       return `<tr><td>${esc(attendanceDate(row.day))}</td><td>${clock(row.inAt)}</td><td>${clock(row.outAt)}</td><td>${minutes===null?'미확정':minutesLabel(minutes)}</td></tr>`;
-    }).join(''):'<tr><td colspan="4">이 달의 근무기록이 없습니다.</td></tr>'}</tbody></table></div>`;
+    }).join(''):`<tr><td colspan="4">${esc(empty)}</td></tr>`}</tbody></table></div>`;
+}
+
+function bindStaffWorkMonth(profile,month){
+  const login=payrollEmployeeLogin(profile),status=$('staffWorkStatus');
+  const reload=$('reloadStaffWork'),body=$('staffWorkRows'),total=$('staffWorkTotal');
+  if(!login||!status||!reload||!body||!total)return;
+  const current=()=>status.isConnected&&currentUser==='manager'&&S.nav==='staff'&&
+    managerStaffId===profile.id&&staffSummaryMonth===month;
+  const load=async()=>{
+    reload.disabled=true;
+    const local=staffMonthRecords(profile,month);
+    status.textContent='본진 근무기록을 불러오는 중이에요.';
+    try{
+      const remote=await readManagerWorkMonth(login,month);
+      if(!current())return;
+      const rows=mergeStaffWorkMonth(local,remote);
+      body.innerHTML=staffWorkTable(rows);
+      total.textContent='총 '+staffWorkTotal(rows);
+      status.textContent=remote.length?'본진 기록은 일별 근무시간으로 표시됩니다.':
+        local.length?'본진 기록이 없어 이 브라우저의 기록을 표시합니다.':'이 달의 본진 근무기록이 없어요.';
+      reload.hidden=false;
+    }catch(error){
+      if(!current())return;
+      body.innerHTML=staffWorkTable(local,'본진 근무기록을 확인하지 못했어요.');
+      total.textContent=local.length?'브라우저 기록 '+staffWorkTotal(local):'집계 미확인';
+      status.textContent=error.message||'본진 근무기록을 불러오지 못했어요.';
+      reload.hidden=false;
+    }finally{reload.disabled=false;}
+  };
+  reload.onclick=()=>void load();
+  void load();
 }
 
 function staffTasksTable(tasks){
@@ -4880,6 +4928,7 @@ function bindStaffManagement(){
     setNav('instructions',profile.id);$('instructionInput')?.focus();
   };
   bindStaffPayroll(profile,staffSummaryMonth);
+  bindStaffWorkMonth(profile,staffSummaryMonth);
 }
 function bindAdminFilters(){
   const query=$('adminTaskQuery'), filter=$('adminTaskStatus');
