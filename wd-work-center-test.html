@@ -680,6 +680,28 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd111-talk-excerpt{white-space:pre-wrap;overflow-wrap:anywhere;color:#2d233b;font-size:14px;font-weight:400;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 .wd109-talk-dock details[open] .wd111-talk-excerpt,.wd109-talk-dock details[open] .wd111-talk-expand,.wd109-talk-dock details:not([open]) .wd111-talk-collapse{display:none}
 .wd111-talk-clipboard{position:fixed;left:-10000px;top:0}
+</style><style>.wd58-layout.wd107-staff-layout{grid-template-columns:minmax(172px,.72fr) minmax(0,1.7fr) minmax(0,2.25fr)}
+.wd113-staff-panel{padding:16px}
+.wd113-staff-panel .wd58-panel-head{flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.wd113-staff-panel .wd58-panel-head h2{margin:0;font-size:15px}
+.wd113-staff-panel #addStaff{padding:5px 8px;min-height:34px;font-size:12px}
+.wd113-staff-filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.wd113-staff-filters select{flex:1 1 60px;min-width:0;width:auto;padding:6px;font-size:12px;min-height:34px}
+.wd113-staff-scroll{max-height:clamp(180px,49vh,480px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.wd113-staff-scroll:focus-visible{outline:2px solid #9779db;outline-offset:3px}
+.wd107-staff-layout .wd113-profile-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wd113-profile-cards>div{min-width:0;min-height:64px;padding:8px 10px;border:1px solid #eee7f5;border-radius:8px;background:#fbf9ff}
+.wd113-profile-cards dd{margin-top:2px}
+.wd113-profile-cards .wd59-pin-display{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.wd113-profile-cards .wd58-eye{flex:none}
+.wd113-work-head .wd113-work-heading{display:flex;align-items:baseline;gap:4px 8px;flex-wrap:wrap}
+.wd113-work-head #staffPayrollArea{margin-inline-start:auto}
+.wd113-work-head #staffPayrollArea .wd62-payroll{justify-content:flex-end}
+.wd113-work-status p{margin:0}
+.wd108-month-split #staffWorkRows{display:flex;flex-direction:column;flex:1;min-height:0}
+@media(max-width:1280px){.wd58-layout.wd107-staff-layout{grid-template-columns:minmax(172px,.8fr) minmax(0,3fr)}}
+@media(max-width:850px){.wd58-layout.wd107-staff-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:430px){.wd107-staff-layout .wd113-profile-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -814,6 +836,7 @@ function logout(){
   payrollReminderShown='';
   clearPrintDocument?.();
   currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;reviewStaffId='';reviewStatus='';staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;instructionDrafts.clear();
+  staffListRole='';staffListOrder='name';
   activeNoteId=null;noteListOpen=false;noteSearch='';lastDeletedMaterial=null;lastDeletedNote=null;
   employeeReportDate=null;attendanceRecordDay=null;editingAttendanceTime=null;materialTab='shared';materialCategory='all';materialSearch='';attendanceMonth=localDay().slice(0,7);
   S=migrateStaffState(load());
@@ -2792,11 +2815,12 @@ function payrollEmployeeLogin(profile){
     (profile.workType==='employee'&&Object.hasOwn(driveAccountByEmployee,profile.name)?legacyStaffHqLogin:'');
 }
 
-async function readManagerWorkMonth(login,month){
+async function readManagerWorkMonth(login,month,includeClocks=false){
   if(currentUser!=='manager'||!login||!validAttendanceDay(month+'-01'))throw new Error('직원과 조회 월을 다시 확인해 주세요.');
   const [year,monthNumber]=month.split('-').map(Number);
   const last=new Date(year,monthNumber,0).getDate();
-  const params=new URLSearchParams({select:'work_date,total_minutes',user_id:'eq.'+login});
+  const select=includeClocks?'work_date,total_minutes,start_time,end_time':'work_date,total_minutes';
+  const params=new URLSearchParams({select,user_id:'eq.'+login});
   params.append('work_date','gte.'+month+'-01');params.append('work_date','lte.'+month+'-'+last);
   const token=await verifyManagerHqSession();
   if(currentUser!=='manager')throw hqLoginError();
@@ -2809,9 +2833,14 @@ async function readManagerWorkMonth(login,month){
 
 function mergeStaffWorkMonth(local,remote){
   const days=new Map(local.map(row=>[row.day,row]));
-  for(const {work_date,total_minutes} of remote){
+  for(const {work_date,total_minutes,start_time,end_time} of remote){
     const minutes=Number(total_minutes);
-    days.set(work_date,{day:work_date,ledgerMinutes:total_minutes!==null&&total_minutes!==''&&Number.isFinite(minutes)&&minutes>=0?minutes:null});
+    days.set(work_date,{
+      day:work_date,
+      inAt:attendanceISO(work_date,String(start_time??'').slice(0,5)),
+      outAt:attendanceISO(work_date,String(end_time??'').slice(0,5)),
+      ledgerMinutes:total_minutes!==null&&total_minutes!==''&&Number.isFinite(minutes)&&minutes>=0?minutes:null
+    });
   }
   return [...days.values()].sort((a,b)=>b.day.localeCompare(a.day));
 }
@@ -4210,32 +4239,83 @@ function confirmLegacyStaffPin(profile,reveal){
   };
 }
 
-function bindStaffPinReveal(profile){
+function unlockStaffPins(button,afterUnlock){
+  if(!S.pins.manager)return notify('관리자 로그인에서 업무센터 비밀번호를 먼저 설정해 주세요.');
+  if($('modalLayer'))return;
+  showModal(`<p>이 로그인에서 한 번만 업무센터 관리자 비밀번호를 입력하세요.</p>
+    <form id="unlockStaffPinForm"><label for="unlockStaffPin">관리자 비밀번호</label>
+      <input id="unlockStaffPin" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
+      <div class="actions"><button class="primary" id="confirmStaffPinUnlock" type="submit">열람 잠금 해제</button></div>
+      <p id="staffPinUnlockStatus" class="smallText" role="status"></p></form>`,'직원 비밀번호 열람');
+  const form=$('unlockStaffPinForm'),input=$('unlockStaffPin'),confirm=$('confirmStaffPinUnlock'),status=$('staffPinUnlockStatus');
+  input.focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    const pin=input.value;
+    if(confirm.disabled||!/^\d{6}$/.test(pin))return;
+    confirm.disabled=true;
+    const current=()=>currentUser==='manager'&&$('unlockStaffPinForm')===form&&button.isConnected;
+    try{
+      const digest=await sha(pin);
+      if(!current())return;
+      if(digest!==S.pins.manager){status.textContent='관리자 비밀번호를 다시 확인해 주세요.';input.select();return;}
+      const existingSalt=S.staffPinSalt;
+      const salt=existingSalt||Array.from(crypto.getRandomValues(new Uint8Array(16)));
+      const key=await staffPinKey(pin,salt);
+      if(!current())return;
+      if(!existingSalt){
+        S.staffPinSalt=salt;
+        try{save();}catch(error){delete S.staffPinSalt;throw error;}
+      }
+      managerStaffPinKey=key;
+      $('modalLayer').remove();
+      await afterUnlock();
+      if(button.isConnected)button.focus();
+    }catch{if(current())status.textContent='열람 잠금을 해제하지 못했어요.';}
+    finally{confirm.disabled=false;}
+  };
+}
+
+function setStaffPrivateValue(button,field,label,value,visible){
+  field.textContent=value;
+  button.setAttribute('aria-pressed',String(visible));
+  button.setAttribute('aria-label',label+(visible?' 숨기기':' 보기'));
+  button.title=label+(visible?' 숨기기':' 보기');
+}
+
+function staffAccountMask(account){
+  const digits=account.replace(/\D/g,'');
+  return digits.length>4?'끝 '+digits.slice(-4)+'자리':'등록됨';
+}
+
+function bindStaffPrivateValues(profile){
+  const accountButton=$('showSavedStaffAccount'),accountField=$('savedStaffAccount');
+  if(accountButton)accountButton.onclick=()=>{
+    if(currentUser!=='manager'||!accountButton.isConnected||managerStaffId!==profile.id)return;
+    const {account}=staffBankInfo(profile),show=accountButton.getAttribute('aria-pressed')!=='true';
+    setStaffPrivateValue(accountButton,accountField,'계좌번호',show?account:staffAccountMask(account),show);
+  };
   const button=$('showSavedStaffPin'),field=$('savedStaffPin');
   if(!button)return;
-  button.onclick=async()=>{
-    if(button.getAttribute('aria-pressed')==='true'){
-      field.textContent='••••••';
-      button.setAttribute('aria-pressed','false');
-      button.setAttribute('aria-label','비밀번호 보기');
-      button.title='비밀번호 보기';
-      return;
-    }
-    const reveal=pin=>{
-      if(currentUser!=='manager'||$('showSavedStaffPin')!==button)return;
-      field.textContent=pin;
-      button.setAttribute('aria-pressed','true');
-      button.setAttribute('aria-label','비밀번호 숨기기');
-      button.title='비밀번호 숨기기';
-    };
+  const current=()=>currentUser==='manager'&&$('showSavedStaffPin')===button&&managerStaffId===profile.id;
+  const reveal=pin=>{if(current())setStaffPrivateValue(button,field,'비밀번호',pin,true);};
+  const open=async()=>{
+    if(!current())return;
     if(!profile.pinCipher)return confirmLegacyStaffPin(profile,reveal);
     button.disabled=true;
     try{
       const {iv,cipher}=profile.pinCipher;
       const data=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)},managerStaffPinKey,new Uint8Array(cipher));
       reveal(new TextDecoder().decode(data));
-    }catch(e){notify('비밀번호를 열 수 없습니다.');}
+    }catch{if(current())notify('비밀번호를 열 수 없어요. 직원 정보 수정에서 비밀번호를 다시 저장해 주세요.');}
     finally{button.disabled=false;}
+  };
+  button.onclick=()=>{
+    if(!current())return;
+    if(button.getAttribute('aria-pressed')==='true'){
+      setStaffPrivateValue(button,field,'비밀번호','••••••',false);
+    }else if(managerStaffPinKey)void open();
+    else unlockStaffPins(button,open);
   };
 }
 
@@ -4251,8 +4331,8 @@ function passwordToggle(inputId,buttonId){
   };
 }
 
-function passwordEye(id,inputId){
-  return `<button type="button" id="${id}" class="wd58-eye" aria-controls="${inputId}" aria-label="비밀번호 보기" aria-pressed="false" title="비밀번호 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/><path class="wd58-eye-slash" d="m4 4 16 16"/></svg></button>`;
+function passwordEye(id,inputId,label='비밀번호'){
+  return `<button type="button" id="${id}" class="wd58-eye" aria-controls="${inputId}" aria-label="${label} 보기" aria-pressed="false" title="${label} 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/><path class="wd58-eye-slash" d="m4 4 16 16"/></svg></button>`;
 }
 
 function staffProfileEditor(profile){
@@ -4433,13 +4513,14 @@ function staffProfileSummary(profile){
   const {bank,account}=staffBankInfo(profile);
   const fields=[
     ['이름',profile.name],['연락처',profile.contact],['직책',staffAccessLabel(profile)],
-    ['급여은행',bank],['계좌번호',account?(account.length>4?'•••• '+account.slice(-4):'등록됨'):'']
+    ['급여은행',bank]
   ];
-  return `<dl class="wd58-profile-data">${fields.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value||'미등록')}</dd></div>`).join('')}
-    <div><dt>로그인 비밀번호</dt><dd class="wd59-pin-display">${profile.pin?`<span id="savedStaffPin">••••••</span>${managerStaffPinKey?passwordEye('showSavedStaffPin','savedStaffPin'):''}`:'미등록'}</dd></div>
+  return `<dl class="wd58-profile-data wd113-profile-cards">${fields.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value||'미등록')}</dd></div>`).join('')}
+    <div><dt>계좌번호</dt><dd class="wd59-pin-display">${account?`<span id="savedStaffAccount">${esc(staffAccountMask(account))}</span>${passwordEye('showSavedStaffAccount','savedStaffAccount','계좌번호')}`:'미등록'}</dd></div>
+    <div><dt>로그인 비밀번호</dt><dd class="wd59-pin-display">${profile.pin?`<span id="savedStaffPin">••••••</span>${passwordEye('showSavedStaffPin','savedStaffPin')}`:'미등록'}</dd></div>
     <div><dt>입사일</dt><dd>${esc(profile.joinedOn||'미등록')}</dd></div>
     <div><dt>퇴사일</dt><dd>${esc(profile.leftOn||(profile.archivedAt?'미등록':'재직 중'))}</dd></div>
-    <div class="wd108-staff-role"><dt>담당 업무</dt><dd>${esc(profile.role||'미등록')}</dd></div>
+    <div><dt>담당 업무</dt><dd>${esc(profile.role||'미등록')}</dd></div>
     </dl>${profile.memo?`<details class="wd58-note"><summary>관리 메모</summary><p>${nl(profile.memo)}</p></details>`:''}`;
 }
 
@@ -4471,9 +4552,11 @@ function staffMonthSummary(profile,month){
   return `<section class="wd60-month" aria-labelledby="staffMonthTitle">
     <div class="wd60-month-header"><h3 id="staffMonthTitle">월간 현황</h3><label><span>조회 월</span><input type="month" id="staffMonth" value="${month}"></label></div>
     <div class="wd108-month-split">
-      <article class="wd107-month-item"><header><h4>${monthName} 근무내역</h4><strong id="staffWorkTotal">${linked?'집계 중':'총 '+staffWorkTotal(rows)}</strong></header>
+      <article class="wd107-month-item"><header class="wd113-work-head">
+        <div class="wd113-work-heading"><h4>${monthName} 근무내역</h4><strong id="staffWorkTotal">${linked?'집계 중':'총 '+staffWorkTotal(rows)}</strong></div>
         <div id="staffPayrollArea">${staffPayrollActions(profile,month)}</div>
-        ${linked?`<div class="row"><p class="smallText" id="staffWorkStatus" role="status">본진 근무기록을 불러오는 중이에요.</p><button type="button" class="small" id="reloadStaffWork" hidden>다시 불러오기</button></div>`:''}
+      </header>
+        ${linked?`<div class="row wd113-work-status"><p class="smallText" id="staffWorkStatus" role="status">본진 근무기록을 불러오는 중이에요.</p><button type="button" class="small" id="reloadStaffWork" hidden>다시 불러오기</button></div>`:''}
         <div id="staffWorkRows">${staffWorkTable(rows,linked?'본진 근무기록을 확인하고 있어요.':undefined)}</div>
       </article>
       <article class="wd107-month-item"><header><h4>${monthName} 배정업무</h4><strong>총 ${tasks.length}건</strong>
@@ -4668,22 +4751,21 @@ function bindStaffContracts(profile){
 }
 
 function staffManagementView(){
-  const profiles=S.staffProfiles.filter(p=>!p.archivedAt).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-  const archived=S.staffProfiles.filter(p=>p.archivedAt&&!p.hiddenAt).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  const profiles=activeProfiles();
   if(!staffDetailOpen&&profiles.length){
     managerStaffId=profiles[0].id;
     staffDetailOpen=true;
   }
   const profile=staffDetailOpen?staffById(managerStaffId):null;
-  const list=people=>people.length?`<ul class="wd107-staff-list">${people.map(p=>`<li class="${p.id===profile?.id?'selected':''}">
-    <button type="button" class="wd107-staff-pick" data-staff-profile="${esc(p.id)}" aria-pressed="${p.id===profile?.id}"><strong>${esc(p.name)}</strong><small class="wd105-staff-role">${staffAccessLabel(p)}</small></button>
-    <button type="button" class="wd107-trash" ${p.archivedAt?'data-hide-staff':'data-delete-staff'}="${esc(p.id)}" aria-label="${esc(p.name)} ${p.archivedAt?'목록에서 제거':'삭제'}" title="${p.archivedAt?'목록에서 제거':'삭제'}">${staffTrashIcon}</button>
-    </li>`).join('')}</ul>`:'<p class="smallText">등록된 직원·스탭이 없어요.</p>';
   return `<div class="titleRow"><h1>직원관리</h1></div>
   <div class="wd58-layout wd107-staff-layout">
-    <section class="card wd58-list"><div class="wd58-panel-head"><h2>직원·스탭 목록 <span class="pill">${profiles.length}명</span></h2><button type="button" class="primary" id="addStaff">+ 인원 추가</button></div>
-    ${list(profiles)}
-    ${archived.length?`<details class="wd58-note" ${profile?.archivedAt?'open':''}><summary>삭제된 스탭 ${archived.length}명</summary>${list(archived)}</details>`:''}</section>
+    <section class="card wd58-list wd113-staff-panel"><div class="wd58-panel-head"><h2>직원·스탭 <span class="pill">${profiles.length}명</span></h2><button type="button" class="primary" id="addStaff">+ 인원 추가</button></div>
+    <div class="wd113-staff-filters">
+      <select id="staffRoleFilter" aria-label="직원·스탭 필터"><option value="">전체</option><option value="employee" ${staffListRole==='employee'?'selected':''}>직원</option><option value="staff" ${staffListRole==='staff'?'selected':''}>스탭</option></select>
+      <select id="staffListOrder" aria-label="직원 목록 정렬"><option value="name">이름순</option><option value="joined" ${staffListOrder==='joined'?'selected':''}>최근 입사순</option></select>
+    </div>
+    <div class="wd113-staff-scroll" id="staffRosterList" tabindex="0" role="region" aria-label="직원·스탭 목록">${staffRosterMarkup(profile)}</div>
+    </section>
     <section class="card wd58-detail">
       <div class="wd58-panel-head"><div><div class="eyebrow">${profile?'직원·스탭 상세':'직원관리'}</div><h2>${profile?esc(profile.name):editingStaff?'인원 추가':'직원·스탭 상세'}</h2></div>
       ${profile&&!profile.archivedAt&&!editingStaff?'<button type="button" id="editStaff">수정</button>':''}</div>
@@ -4693,6 +4775,20 @@ function staffManagementView(){
     </section>
     <section class="card wd107-month-card">${profile&&!editingStaff?staffMonthSummary(profile,staffSummaryMonth):'<h2>월간 현황</h2><p class="smallText">직원·스탭을 선택하면 확인할 수 있어요.</p>'}</section>
   </div>`;
+}
+
+let staffListRole='',staffListOrder='name';
+function staffRosterMarkup(profile){
+  const sorted=S.staffProfiles.filter(person=>!person.hiddenAt&&
+    (!staffListRole||(person.workType==='employee'?'employee':'staff')===staffListRole))
+    .sort((a,b)=>(staffListOrder==='joined'?String(b.joinedOn||'').localeCompare(String(a.joinedOn||'')):0)||a.name.localeCompare(b.name,'ko'));
+  const profiles=sorted.filter(person=>!person.archivedAt),archived=sorted.filter(person=>person.archivedAt);
+  const list=people=>people.length?`<ul class="wd107-staff-list">${people.map(p=>`<li class="${p.id===profile?.id?'selected':''}">
+    <button type="button" class="wd107-staff-pick" data-staff-profile="${esc(p.id)}" aria-pressed="${p.id===profile?.id}"><strong>${esc(p.name)}</strong><small class="wd105-staff-role">${staffAccessLabel(p)}</small></button>
+    <button type="button" class="wd107-trash" ${p.archivedAt?'data-hide-staff':'data-delete-staff'}="${esc(p.id)}" aria-label="${esc(p.name)} ${p.archivedAt?'목록에서 제거':'삭제'}" title="${p.archivedAt?'목록에서 제거':'삭제'}">${staffTrashIcon}</button>
+    </li>`).join('')}</ul>`:'<p class="smallText">등록된 직원·스탭이 없어요.</p>';
+  return `${list(profiles)}
+    ${archived.length?`<details class="wd58-note" ${profile?.archivedAt?'open':''}><summary>보관된 인원 ${archived.length}명</summary>${list(archived)}</details>`:''}`;
 }
 
 async function storePayslip(profile,month,input){
@@ -4814,12 +4910,12 @@ function bindStaffWorkMonth(profile,month){
     const local=staffMonthRecords(profile,month);
     status.textContent='본진 근무기록을 불러오는 중이에요.';
     try{
-      const remote=await readManagerWorkMonth(login,month);
+      const remote=await readManagerWorkMonth(login,month,true);
       if(!current())return;
       const rows=mergeStaffWorkMonth(local,remote);
       body.innerHTML=staffWorkTable(rows);
       total.textContent='총 '+staffWorkTotal(rows);
-      status.textContent=remote.length?'본진 기록은 일별 근무시간으로 표시됩니다.':
+      status.textContent=remote.length?'본진 근무기록을 불러왔어요.':
         local.length?'본진 기록이 없어 이 브라우저의 기록을 표시합니다.':'이 달의 본진 근무기록이 없어요.';
       reload.hidden=false;
     }catch(error){
@@ -4841,30 +4937,43 @@ function staffTasksTable(tasks){
 
 function bindStaffManagement(){
   $('addStaff').onclick=()=>{managerStaffId=null;staffDetailOpen=true;editingStaff=true;render();$('staffName').focus();};
-  document.querySelectorAll('[data-staff-profile]').forEach(button=>button.onclick=()=>{
-    managerStaffId=button.dataset.staffProfile;staffDetailOpen=true;editingStaff=false;render();
-    Array.from(document.querySelectorAll('[data-staff-profile]')).find(item=>item.dataset.staffProfile===managerStaffId)?.focus();
-  });
-  document.querySelectorAll('[data-delete-staff]').forEach(button=>button.onclick=()=>{
-    const profile=staffById(button.dataset.deleteStaff);
-    if(!profile||profile.archivedAt||!window.confirm(profile.name+' 스탭을 삭제할까요? 로그인은 중지되고 업무와 근무내역은 보관됩니다.'))return;
-    if(managerCloudGrants.get(profile.id)?.enabled)return notify('권한 관리에서 본진 계정 사용을 먼저 해제해 주세요.');
-    const {pin,pinCipher}=profile;
-    profile.archivedAt=now();delete profile.pin;delete profile.pinCipher;
-    try{save()}catch(e){delete profile.archivedAt;profile.pin=pin;profile.pinCipher=pinCipher;return notify('스탭 정보를 저장하지 못했습니다.');}
-    if(managerStaffId===profile.id)editingStaff=false;
-    render();notify('스탭을 삭제했습니다');
-  });
-  document.querySelectorAll('[data-hide-staff]').forEach(button=>button.onclick=()=>{
-    const removed=staffById(button.dataset.hideStaff);
-    if(!removed?.archivedAt||!window.confirm(removed.name+' 님을 삭제된 스탭 목록에서 제거할까요? 근무와 업무 기록은 보관됩니다.'))return;
-    removed.hiddenAt=now();
-    try{save()}catch(e){delete removed.hiddenAt;return notify('목록에서 제거하지 못했습니다.');}
-    if(managerStaffId===removed.id){managerStaffId=null;staffDetailOpen=false;}
-    render();notify('삭제된 스탭 목록에서 제거했습니다');
-  });
+  const roster=$('staffRosterList'),filter=$('staffRoleFilter'),order=$('staffListOrder');
+  const bindRoster=()=>{
+    roster.querySelectorAll('[data-staff-profile]').forEach(button=>button.onclick=()=>{
+      const scroll=roster.scrollTop;
+      managerStaffId=button.dataset.staffProfile;staffDetailOpen=true;editingStaff=false;render();
+      $('staffRosterList').scrollTop=scroll;
+      Array.from(document.querySelectorAll('[data-staff-profile]')).find(item=>item.dataset.staffProfile===managerStaffId)?.focus({preventScroll:true});
+    });
+    roster.querySelectorAll('[data-delete-staff]').forEach(button=>button.onclick=()=>{
+      const profile=staffById(button.dataset.deleteStaff);
+      if(!profile||profile.archivedAt||!window.confirm(profile.name+' 스탭을 삭제할까요? 로그인은 중지되고 업무와 근무내역은 보관됩니다.'))return;
+      if(managerCloudGrants.get(profile.id)?.enabled)return notify('권한 관리에서 본진 계정 사용을 먼저 해제해 주세요.');
+      const {pin,pinCipher}=profile;
+      profile.archivedAt=now();delete profile.pin;delete profile.pinCipher;
+      try{save()}catch(e){delete profile.archivedAt;profile.pin=pin;profile.pinCipher=pinCipher;return notify('스탭 정보를 저장하지 못했습니다.');}
+      if(managerStaffId===profile.id)editingStaff=false;
+      render();notify('스탭을 삭제했습니다');
+    });
+    roster.querySelectorAll('[data-hide-staff]').forEach(button=>button.onclick=()=>{
+      const removed=staffById(button.dataset.hideStaff);
+      if(!removed?.archivedAt||!window.confirm(removed.name+' 님을 삭제된 스탭 목록에서 제거할까요? 근무와 업무 기록은 보관됩니다.'))return;
+      removed.hiddenAt=now();
+      try{save()}catch(e){delete removed.hiddenAt;return notify('목록에서 제거하지 못했습니다.');}
+      if(managerStaffId===removed.id){managerStaffId=null;staffDetailOpen=false;}
+      render();notify('삭제된 스탭 목록에서 제거했습니다');
+    });
+  };
+  const refreshRoster=()=>{
+    roster.innerHTML=staffRosterMarkup(staffDetailOpen?staffById(managerStaffId):null);
+    roster.scrollTop=0;
+    bindRoster();
+  };
+  filter.onchange=()=>{staffListRole=filter.value;refreshRoster();};
+  order.onchange=()=>{staffListOrder=order.value;refreshRoster();};
+  bindRoster();
   const profile=staffById(managerStaffId);
-  bindStaffPinReveal(profile);bindStaffContracts(profile);
+  bindStaffPrivateValues(profile);bindStaffContracts(profile);
   if(profile)void loadStaffRecords(profile,staffSummaryMonth);
   if($('editStaff'))$('editStaff').onclick=()=>{editingStaff=true;render();$('staffName').focus();};
   if($('editStaffPermissions'))$('editStaffPermissions').onclick=()=>openStaffPermissions(profile);
@@ -4889,6 +4998,10 @@ function bindStaffManagement(){
       if(!fields.name)return notify('이름을 입력하세요');
       if(fields.joinedOn&&fields.leftOn&&fields.leftOn<fields.joinedOn)return notify('퇴사일을 입사일 이후로 입력하세요');
       if((pin||!profile?.pin&&!grant)&&!/^\d{6}$/.test(pin))return notify('숫자 6자리 비밀번호를 입력하세요');
+      if(pin&&!managerStaffPinKey&&S.pins.manager){
+        unlockStaffPins(button,()=>{if(form.isConnected)form.requestSubmit(button);});
+        return;
+      }
       button.disabled=true;
       let remoteSaved=false;
       try{
