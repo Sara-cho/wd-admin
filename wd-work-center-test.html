@@ -4646,8 +4646,9 @@ async function readLegacyInstructionRows(token){
   if(!profile)return [];
   const files=await readAllEmployeeDriveFiles(employeeDriveFolders.instruction,token,
     " and mimeType != 'application/vnd.google-apps.folder'",'id,name,mimeType,appProperties');
-  const knownIds=new Set(S.tasks.map(task=>task.instructionDriveId).filter(Boolean));
-  return files.filter(file=>!knownIds.has(file.id)&&file.appProperties?.wdInstructionState!=='cancelled'&&
+  const knownIds=new Set(S.tasks.flatMap(task=>[task.id,task.instructionDriveId]).filter(Boolean));
+  return files.filter(file=>!knownIds.has(file.id)&&!knownIds.has(file.appProperties?.wdInstructionRequest)&&
+    file.appProperties?.wdInstructionState!=='cancelled'&&
     /(?:^\d{4}-\d{2}-\d{2}_수진업무지시|→(?:수진|박수진)_업무지시)(?:\.txt)?$/.test(file.name||''))
     .map(file=>({...file,date:workDriveDate(file.name),staffId:profile.id,staffName:profile.name}))
     .filter(file=>validAttendanceDay(file.date));
@@ -5880,8 +5881,8 @@ async function storeInstructionDocument(task,profile){
     throw new Error('업무지시를 저장할 Drive 경로와 지시자를 확인해 주세요.');
   const session=instructionDriveSession();
   if(task.instructionDriveId)await verifyInstructionDocument(task,folder,session.token);
-  const text=task.todos?.[0]?.text||task.objective||task.title;
-  if(!text?.trim())throw new Error('업무지시 내용을 확인해 주세요.');
+  const text=instructionTaskText(task);
+  if(!text.trim())throw new Error('업무지시 내용을 확인해 주세요.');
   const name=workDocumentName(task.date,task.instructionSender.loginId===managerHqAccount.uid?'대표':task.instructionSender.name,'수진','업무지시');
   const requestFilter=" and appProperties has { key='wdInstructionRequest' and value='"+task.id+"' }";
   const matches=task.instructionDriveId?[]:await readAllEmployeeDriveFiles(folder,session.token,requestFilter,'id,name,appProperties');
@@ -5978,9 +5979,15 @@ function openAssignedInstruction(profile,id,pane,onCancel){
     submit.disabled=true;cancel.disabled=true;
     form.setAttribute('aria-busy','true');
     try{
-      const updated=task.instructionDriveId?await storeInstructionDocument(draft,profile):draft;
+      const linked=!!task.instructionDriveId||!!staffWorkDriveFolders(profile);
+      if(linked&&!draft.instructionSender?.name)
+        draft.instructionSender=instructionSenderFor(managerWorkIdentity)||await resolveInstructionSender();
+      if(assignedInstruction(profile,id)!==task)return;
+      if(localStorage.getItem(KEY)!==storageVersion)throw new Error('다른 창에서 자료가 변경됐어요. 새로고침 뒤 다시 시도해 주세요.');
+      const updated=linked?await storeInstructionDocument(draft,profile):draft;
       if(assignedInstruction(profile,id)===task)
-        saveInstructionChange({tasks:S.tasks.map(row=>row===task?updated:row)},'업무지시를 수정했어요.',()=>{
+        saveInstructionChange({tasks:S.tasks.map(row=>row===task?updated:row)},
+          updated.instructionDriveId?'업무지시를 Drive에 저장했어요.':'업무지시를 수정했어요.',()=>{
           if(form.isConnected&&instructionStaffId===profile.id)instructionDay=date;
         });
     }catch(error){if(form.isConnected)notify(error.message||'업무지시를 수정하지 못했어요.');}
@@ -6092,22 +6099,27 @@ function instructionDocument(text){
   }).join('')}</div>`;
 }
 
+function instructionTaskText(task){
+  if(task.directInstruction)return task.todos?.[0]?.text||task.objective||task.title||'';
+  return [task.title,task.objective&&task.objective!==task.title?task.objective:'',
+    ...(task.todos||[]).map((todo,i)=>(i+1)+'. '+todo.text)].filter(Boolean).join('\n\n');
+}
+
 function instructionPaper(row){
   const task=row.task;
   const sender=task?.instructionSender?.name;
   const title=task?.title||row.name;
-  const text=task?.directInstruction?task.todos?.[0]?.text||task.objective||title:
-    task?[task.title,task.objective&&task.objective!==task.title?task.objective:'',
-      ...(task.todos||[]).map((todo,i)=>(i+1)+'. '+todo.text)].filter(Boolean).join('\n\n'):'';
   return `<article class="wd133-instruction-paper">
     <header class="wd133-instruction-paper-head">
       <div><span class="wd133-instruction-tag">업무지시</span><h4>${esc(title)}</h4>
         <p class="smallText"><time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time>${sender?' · '+esc(sender)+' → '+esc(row.staffName):''}</p>
-        ${task?.instructionDriveName?`<p class="smallText">${esc(task.instructionDriveName)}</p>`:''}
+        ${task?.instructionDriveName?`<p class="smallText">${esc(task.instructionDriveName)}</p>`:
+          task&&!task.instructionDriveId&&staffWorkDriveFolders(staffById(row.staffId))?
+            '<p class="smallText">브라우저에 저장된 지시예요. 수정 저장하면 Drive에 연결돼요.</p>':''}
       </div>
       ${task?assignedInstructionActions(task):''}
     </header>
-    <div data-instruction-document-text aria-live="polite">${task?instructionDocument(text):'본문을 불러오는 중이에요.'}</div>
+    <div data-instruction-document-text aria-live="polite">${task?instructionDocument(instructionTaskText(task)):'본문을 불러오는 중이에요.'}</div>
   </article>`;
 }
 
