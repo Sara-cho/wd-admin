@@ -1324,7 +1324,9 @@ async function employeeDriveInstructionFiles(date,token){
 async function additionalEmployeeInstructions(date,token,tasks){
   const known=new Set(tasks.flatMap(task=>[task.id,task.instructionDriveId].filter(Boolean)));
   const files=await employeeDriveInstructionFiles(date,token);
-  return files.filter(file=>!known.has(file.id)&&!known.has(file.appProperties?.wdInstructionRequest));
+  const pending=files.filter(file=>!known.has(file.id)&&!known.has(file.appProperties?.wdInstructionRequest));
+  const copies=await findUnlinkedInstructionCopies(pending,tasks,token).catch(()=>new Map());
+  return pending.filter(file=>!copies.has(file.id));
 }
 
 async function employeeDriveInstruction(date,token){
@@ -4647,11 +4649,13 @@ async function readLegacyInstructionRows(token){
   const files=await readAllEmployeeDriveFiles(employeeDriveFolders.instruction,token,
     " and mimeType != 'application/vnd.google-apps.folder'",'id,name,mimeType,appProperties');
   const knownIds=new Set(S.tasks.flatMap(task=>[task.id,task.instructionDriveId]).filter(Boolean));
-  return files.filter(file=>!knownIds.has(file.id)&&!knownIds.has(file.appProperties?.wdInstructionRequest)&&
+  const rows=files.filter(file=>!knownIds.has(file.id)&&!knownIds.has(file.appProperties?.wdInstructionRequest)&&
     file.appProperties?.wdInstructionState!=='cancelled'&&
     /(?:^\d{4}-\d{2}-\d{2}_수진업무지시|→(?:수진|박수진)_업무지시)(?:\.txt)?$/.test(file.name||''))
     .map(file=>({...file,date:workDriveDate(file.name),staffId:profile.id,staffName:profile.name}))
     .filter(file=>validAttendanceDay(file.date));
+  const copies=await findUnlinkedInstructionCopies(rows,tasksForStaff(profile.id),token).catch(()=>new Map());
+  return rows.filter(row=>!copies.has(row.id));
 }
 
 function reportSubmittedDate(value,fallback){
@@ -5875,7 +5879,28 @@ async function verifyInstructionDocument(task,folder,token){
   return file;
 }
 
-async function storeInstructionDocument(task,profile){
+function instructionDriveName(task){
+  const sender=task.instructionSender;
+  const from=!sender?.name||sender.loginId===managerHqAccount.uid?'대표':sender.name;
+  return workDocumentName(task.date,from,'수진','업무지시');
+}
+
+async function findUnlinkedInstructionCopies(files,tasks,token){
+  const available=tasks.filter(task=>!task.instructionDriveId&&!task.dailyJournal&&validAttendanceDay(task.date));
+  const comparable=text=>text.replace(/\r\n/g,'\n').trimEnd();
+  const pairs=await Promise.all(files.filter(file=>file.mimeType==='application/vnd.google-apps.document'&&
+    !file.appProperties?.wdInstructionRequest&&file.appProperties?.wdInstructionState!=='cancelled').map(async file=>{
+    const candidates=available.filter(task=>instructionDriveName(task)===file.name);
+    if(!candidates.length)return null;
+    const text=comparable(await readDriveReportBody(file,token));
+    if(!text)return null;
+    const matching=candidates.filter(task=>comparable(instructionTaskText(task))===text);
+    return matching.length===1?[file.id,matching[0].id]:null;
+  }));
+  return new Map(pairs.filter(Boolean));
+}
+
+async function storeInstructionDocument(task,profile,original){
   const folder=staffWorkDriveFolders(profile)?.instruction;
   if(!folder||!safeDriveId(task.id)||!task.instructionSender?.name||!validAttendanceDay(task.date))
     throw new Error('업무지시를 저장할 Drive 경로와 지시자를 확인해 주세요.');
@@ -5883,10 +5908,18 @@ async function storeInstructionDocument(task,profile){
   if(task.instructionDriveId)await verifyInstructionDocument(task,folder,session.token);
   const text=instructionTaskText(task);
   if(!text.trim())throw new Error('업무지시 내용을 확인해 주세요.');
-  const name=workDocumentName(task.date,task.instructionSender.loginId===managerHqAccount.uid?'대표':task.instructionSender.name,'수진','업무지시');
+  const name=instructionDriveName(task);
   const requestFilter=" and appProperties has { key='wdInstructionRequest' and value='"+task.id+"' }";
   const matches=task.instructionDriveId?[]:await readAllEmployeeDriveFiles(folder,session.token,requestFilter,'id,name,appProperties');
-  const previous=task.instructionDriveId||matches.find(file=>file.appProperties?.wdInstructionState!=='cancelled')?.id;
+  let previous=task.instructionDriveId||matches.find(file=>file.appProperties?.wdInstructionState!=='cancelled')?.id;
+  if(!previous&&original){
+    const attached=new Set(tasksForStaff(profile.id).map(row=>row.instructionDriveId));
+    const files=await employeeDriveInstructionFiles(original.date,session.token);
+    const copies=await findUnlinkedInstructionCopies(files.filter(file=>!attached.has(file.id)),tasksForStaff(profile.id),session.token);
+    const matchingIds=[...copies].filter(([,taskId])=>taskId===task.id).map(([fileId])=>fileId);
+    if(matchingIds.length>1)throw new Error('같은 업무지시 문서가 Drive에 여러 개 있어요. 연결할 원본을 확인해 주세요.');
+    previous=matchingIds[0];
+  }
   if(previous&&!safeDriveId(previous))throw new Error('연결된 업무지시 문서를 확인해 주세요.');
   const metadata={name,mimeType:'application/vnd.google-apps.document',...(!previous?{parents:[folder]}:{}),
     appProperties:{wdInstructionRequest:task.id}};
@@ -5984,7 +6017,7 @@ function openAssignedInstruction(profile,id,pane,onCancel){
         draft.instructionSender=instructionSenderFor(managerWorkIdentity)||await resolveInstructionSender();
       if(assignedInstruction(profile,id)!==task)return;
       if(localStorage.getItem(KEY)!==storageVersion)throw new Error('다른 창에서 자료가 변경됐어요. 새로고침 뒤 다시 시도해 주세요.');
-      const updated=linked?await storeInstructionDocument(draft,profile):draft;
+      const updated=linked?await storeInstructionDocument(draft,profile,task):draft;
       if(assignedInstruction(profile,id)===task)
         saveInstructionChange({tasks:S.tasks.map(row=>row===task?updated:row)},
           updated.instructionDriveId?'업무지시를 Drive에 저장했어요.':'업무지시를 수정했어요.',()=>{
@@ -6115,7 +6148,7 @@ function instructionPaper(row){
         <p class="smallText"><time datetime="${esc(row.date)}">${esc(attendanceDate(row.date))}</time>${sender?' · '+esc(sender)+' → '+esc(row.staffName):''}</p>
         ${task?.instructionDriveName?`<p class="smallText">${esc(task.instructionDriveName)}</p>`:
           task&&!task.instructionDriveId&&staffWorkDriveFolders(staffById(row.staffId))?
-            '<p class="smallText">브라우저에 저장된 지시예요. 수정 저장하면 Drive에 연결돼요.</p>':''}
+            '<p class="smallText">수정 저장하면 이 지시를 Drive 문서와 연결해요.</p>':''}
       </div>
       ${task?assignedInstructionActions(task):''}
     </header>
