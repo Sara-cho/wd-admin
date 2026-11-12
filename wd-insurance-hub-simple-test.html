@@ -10874,6 +10874,17 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   body:has(:is(#modal-claim-rec,#modal-auto-rec).open) #modal-cust.open { z-index:9000; }
   .wd09-entry-customer { margin-bottom:12px; }
   .wd09-entry-customer button { margin-top:8px; }
+  #modal-del-cust .wd09-delete-dialog { max-width:600px; }
+  .wd09-delete-name { margin:0 0 8px; color:var(--navy); font-size:18px; font-weight:800; overflow-wrap:anywhere; }
+  .wd09-delete-copy { margin:0 0 18px; line-height:1.65; word-break:keep-all; }
+  .wd09-delete-options { min-inline-size:0; margin:0; padding:4px 0 0; border:0; }
+  .wd09-delete-options legend { font-weight:800; }
+  .wd09-delete-options label { display:flex; gap:10px; align-items:flex-start; padding:12px; margin-top:8px; border:1px solid var(--s200); background:#fff; border-radius:9px; cursor:pointer; }
+  .wd09-delete-options label:has(input:checked) { border-color:var(--purple); background:var(--lav); }
+  .wd09-delete-options input { flex:none; margin-top:3px; accent-color:var(--purple); }
+  .wd09-delete-options small { display:block; margin-top:3px; line-height:1.6; color:var(--s600); word-break:keep-all; }
+  #modal-del-cust .wd09-delete-confirm { background:var(--rd700); }
+  .wd09-delete-error { margin:12px 0 0; color:var(--rd700); line-height:1.5; }
   #wd09-auto-entry-fields { border:0; margin:0; padding:0; min-inline-size:0; }
   #wd09-auto-entry-fields:disabled { opacity:.62; }
   #wd09-auto-customer-hint { margin:8px 0 0; font-size:13px; color:var(--s600); }
@@ -10882,7 +10893,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     font:inherit; font-weight:800; text-align:left; cursor:pointer;
   }
   #pg-claim .wd09-claim-person button:is(:hover,:focus-visible), #pg-auto .wd09-auto-expiry-table button:is(:hover,:focus-visible) { text-decoration:underline; }
-  #pg-auto .wd09-auto-expiry-table { min-width:830px; }
+  #pg-auto .wd09-auto-expiry-table { min-width:1220px; }
   #pg-auto .wd09-auto-expiry-table :is(th,td):not(.wd09-auto-expiry-memo) { white-space:nowrap; }
   #pg-auto .wd09-auto-expiry-table a { color:var(--purple); }
   #pg-auto .wd09-auto-expiry-memo { min-width:135px; overflow-wrap:anywhere; white-space:pre-wrap; }
@@ -12244,7 +12255,7 @@ const wdTest09Storage = (() => {
 <div class="card-hd">
 <h2 class="card-title">고객업무기록</h2>
 <div class="wd09-info-actions">
-<button type="button" class="btn-sm" onclick="wd09SyncOpenCustomerSheets()">Drive 시트 동기화</button>
+<button type="button" class="btn-sm" onclick="wd09RefreshCustomerRecordTab('work')">새로고침</button>
 <button type="button" class="btn-sm" popovertarget="det-work-filter-popover">검색·필터</button>
 <button type="button" class="btn-sm p" onclick="openCommAdd()">+ 고객업무기록</button>
 </div>
@@ -12324,7 +12335,7 @@ const wdTest09Storage = (() => {
 <div class="card">
 <div class="card-hd"><h2 class="card-title">청구현황</h2>
 <div class="wd09-info-actions">
-<button type="button" class="btn-sm" onclick="wd09SyncOpenCustomerSheets()">Drive 시트 동기화</button>
+<button type="button" class="btn-sm" onclick="wd09RefreshCustomerRecordTab('claims')">새로고침</button>
 <button type="button" class="btn-sm" popovertarget="det-claim-filter-popover">검색·필터</button>
 <button type="button" class="btn-sm p" onclick="openClaimAdd()">+ 청구문의 추가</button>
 </div></div>
@@ -16031,21 +16042,26 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 <!-- ── 고객 삭제 확인 모달 ── -->
-<div class="modal-ov" id="modal-del-cust" onclick="closeModal('modal-del-cust')">
-<div class="modal-bx" onclick="event.stopPropagation()" style="max-width:360px;text-align:center;">
-<div style="font-size:32px;margin-bottom:14px;">🗑</div>
-<div class="modal-title" style="margin-bottom:8px;">고객 삭제</div>
-<div style="font-size:13px;color:var(--s600);margin-bottom:6px;line-height:1.5;">이 고객을 삭제하면 상담이력, 다음연락예정, 청구문의, 가입보험, 설계의뢰 등 연결된 모든 기록이 함께 삭제됩니다.<br/>삭제 후 복구할 수 없습니다. 정말 삭제하시겠습니까?</div>
-<fieldset style="text-align:left;margin:12px 0">
+<div class="modal-ov wd09-entry-overlay" id="modal-del-cust">
+<div class="modal-bx wd09-entry-modal wd09-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="wd09-delete-title">
+<header class="wd09-entry-header">
+<h2 id="wd09-delete-title">고객 삭제</h2>
+<button type="button" class="wd09-modal-close" aria-label="닫기" onclick="closeModal('modal-del-cust')">×</button>
+</header>
+<div class="wd09-entry-body">
+<p class="wd09-delete-name" id="del-cust-name"></p>
+<p class="wd09-delete-copy">고객과 연결된 업무기록, 가입보험, 청구현황, 설계의뢰가 앱에서 함께 삭제돼요. 삭제한 앱 기록은 복구할 수 없어요.</p>
+<fieldset class="wd09-delete-options">
 <legend>Google Drive 기록 시트</legend>
-<label style="display:block"><input type="radio" name="wd09-delete-drive" value="keep" checked> Drive에 남기기</label>
-<label style="display:block"><input type="radio" name="wd09-delete-drive" value="trash"> 이 고객의 업무기록·청구현황 시트도 휴지통으로 이동</label>
+<label><input type="radio" name="wd09-delete-drive" value="keep" checked><span><strong>Drive에 남기기</strong><small>고객업무기록·청구현황 시트를 보관해요.</small></span></label>
+<label><input type="radio" name="wd09-delete-drive" value="trash"><span><strong>기록 시트도 휴지통으로 이동</strong><small>앱에서 만든 이 고객의 기록 시트 두 개에 적용돼요.</small></span></label>
 </fieldset>
-<div id="del-cust-name" style="font-size:16px;font-weight:800;color:var(--rd700);margin-bottom:24px;"></div>
-<div style="display:flex;justify-content:center;gap:12px;">
-<button class="btn-s" onclick="closeModal('modal-del-cust')">아니오</button>
-<button class="btn-p" onclick="deleteCustById()" style="background:linear-gradient(135deg,var(--rd700),#e53e3e);">예, 삭제합니다</button>
+<p id="wd09-delete-error" class="wd09-delete-error" role="alert" hidden></p>
 </div>
+<footer class="modal-ft wd09-entry-footer">
+<button class="btn-s" type="button" onclick="closeModal('modal-del-cust')">취소</button>
+<button class="btn-p wd09-delete-confirm" id="wd09-delete-confirm" type="button" onclick="deleteCustById()">고객 삭제</button>
+</footer>
 </div>
 </div>
 <!-- ── V144_7_19 보험상담 고객 선택 모달 (기존 고객목록 읽기 전용 · 새 저장 없음) ── -->
@@ -16408,8 +16424,14 @@ const wdTest09Storage = (() => {
 <div class="fld"><label for="auto-carnum">차량번호</label><input id="auto-carnum" placeholder="예: 12가3456" type="text"/></div>
 <div class="fld"><label for="auto-year">보험년도</label><input id="auto-year" placeholder="예: 2026" inputmode="numeric" type="text"/></div>
 <div class="fld"><label for="auto-expiry">자동차 만기일</label><input id="auto-expiry" type="date"/></div>
-<div class="fld"><label for="auto-annual-premium">연 보험료 (원)</label>
+<div class="fld"><label for="auto-annual-premium">최종보험료 (원)</label>
 <input id="auto-annual-premium" type="number" inputmode="numeric" min="0" step="1" placeholder="선택 입력"/></div>
+<div class="fld"><label for="auto-contract-date">계약일</label><input id="auto-contract-date" type="date"/></div>
+<div class="fld"><label for="auto-start-date">보험시작일</label><input id="auto-start-date" type="date"/></div>
+<div class="fld"><label for="auto-line">종목</label><input id="auto-line" type="text"/></div>
+<div class="fld"><label for="auto-holder">계약자</label><input id="auto-holder" type="text"/></div>
+<div class="fld"><label for="auto-insured">피보험자</label><input id="auto-insured" type="text"/></div>
+<div class="fld"><label for="auto-agent">담당설계사</label><input id="auto-agent" type="text"/></div>
 </div>
 <div class="wd09-insurance-fields wd09-insurance-extra">
 <div class="fld"><label for="auto-policy-file">증권 PDF</label><input id="auto-policy-file" type="file" accept="application/pdf,.pdf"/></div>
@@ -16458,6 +16480,13 @@ const wdTest09Storage = (() => {
 <div class="cd-row"><div class="cd-label">자동차 만기일</div><div class="cd-val" id="atd-expiry">-</div></div>
 <div class="cd-row"><div class="cd-label">D-day</div><div class="cd-val" id="atd-dday">-</div></div>
 <div class="cd-row"><div class="cd-label">차량번호</div><div class="cd-val" id="atd-carnum">-</div></div>
+<div class="cd-row"><div class="cd-label">계약일</div><div class="cd-val" id="atd-contract-date">-</div></div>
+<div class="cd-row"><div class="cd-label">보험시작일</div><div class="cd-val" id="atd-start-date">-</div></div>
+<div class="cd-row"><div class="cd-label">종목</div><div class="cd-val" id="atd-line">-</div></div>
+<div class="cd-row"><div class="cd-label">계약자</div><div class="cd-val" id="atd-holder">-</div></div>
+<div class="cd-row"><div class="cd-label">피보험자</div><div class="cd-val" id="atd-insured">-</div></div>
+<div class="cd-row"><div class="cd-label">담당설계사</div><div class="cd-val" id="atd-agent">-</div></div>
+<div class="cd-row"><div class="cd-label">최종보험료</div><div class="cd-val" id="atd-premium">-</div></div>
 <div class="cd-row"><div class="cd-label">블랙박스 사진</div><div class="cd-val" id="atd-blackbox">첨부 없음</div></div>
 <div class="cd-row"><div class="cd-label">차량계기판 사진</div><div class="cd-val" id="atd-dashboard">첨부 없음</div></div>
 <div class="cd-row"><div class="cd-label">차량번호판 사진</div><div class="cd-val" id="atd-plate">첨부 없음</div></div>
@@ -16465,6 +16494,7 @@ const wdTest09Storage = (() => {
 <div class="cd-row"><div class="cd-label">메모</div><div class="cd-box" id="atd-memo">-</div></div>
 <div class="cd-row" style="margin-bottom:6px;"><div class="cd-label">등록일 / 수정일</div><div class="cd-val" id="atd-dates" style="font-size:12px;color:var(--s500);font-weight:600;">-</div></div>
 <div class="modal-ft">
+<button class="btn-s" id="atd-policy" type="button" hidden>증권 보기</button>
 <button class="btn-s" onclick="autoDetailEdit()" style="background:var(--lav);color:var(--purple);border-color:#DDD6FE;">수정</button>
 <button class="btn-p" onclick="autoDetailDelete()" style="background:linear-gradient(135deg,var(--rd700),#e53e3e);">삭제</button>
 </div>
@@ -17326,7 +17356,6 @@ async function saveCusts(d,changed=d){
 async function deleteCustomerFromSupa(id){
   var sb=getSbClient();
   if(!sb){
-    alert('고객 삭제 실패 — 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
   var childTables=['wd_partners_communications','wd_partners_claim_records','wd_partners_contracts','wd_partners_design_requests'];
@@ -17335,20 +17364,17 @@ async function deleteCustomerFromSupa(id){
       var cres=await sb.from(childTables[i]).delete().eq('uid',_UID).eq('customer_id',id);
       if(cres.error){
         console.error('[customer cascade delete] '+childTables[i],cres.error.message);
-        alert('고객 삭제 실패(연결된 '+childTables[i]+' 기록 삭제 중 오류): '+cres.error.message);
         return {ok:false,reason:'CHILD_DELETE_ERROR',table:childTables[i]};
       }
     }
     var res=await sb.from('wd_partners_customers').delete().eq('uid',_UID).eq('id',id);
     if(res.error){
       console.error('[customer delete]',res.error.message);
-      alert('고객 삭제 실패: '+res.error.message);
       return {ok:false,reason:'DELETE_ERROR'};
     }
     return {ok:true};
   }catch(e){
     console.error('[customer delete]',e&&e.message);
-    alert('고객 삭제 실패: '+(e&&e.message?e.message:'네트워크 오류'));
     return {ok:false,reason:'DELETE_EXCEPTION'};
   }
 }
@@ -18615,6 +18641,7 @@ function confirmDeleteCust(id){
   _delCustId=id;
   document.querySelector('[name=wd09-delete-drive][value=keep]').checked=true;
   document.getElementById('del-cust-name').textContent=c.name;
+  document.getElementById('wd09-delete-error').hidden=true;
   openModal('modal-del-cust');
 }
 async function deleteCustById(){
@@ -18623,9 +18650,25 @@ async function deleteCustById(){
   const customer=getCusts().find(c=>String(c.id)===String(id));
   const trash=document.querySelector('[name=wd09-delete-drive]:checked').value==='trash';
   const drive=window.wd09CustomerSheets;
-  if(trash&&!drive){alert('Drive에 연결한 다음 다시 시도해 주세요.');return;}
-  var result=await deleteCustomerFromSupa(id);
-  if(!result.ok)return; // 삭제 실패 시 모달 닫지 않고 화면도 갱신하지 않음
+  const button=document.getElementById('wd09-delete-confirm');
+  const error=document.getElementById('wd09-delete-error');
+  if(button.disabled||!customer)return;
+  error.hidden=true;
+  if(trash&&!drive){
+    error.textContent='Drive에 연결한 뒤 다시 시도해 주세요.';
+    error.hidden=false;
+    return;
+  }
+  button.disabled=true;
+  button.textContent='삭제 중…';
+  const result=await deleteCustomerFromSupa(id);
+  if(!result.ok){
+    button.disabled=false;
+    button.textContent='고객 삭제';
+    error.textContent='고객 삭제를 마치지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+    error.hidden=false;
+    return;
+  }
   CURRENT_CUSTOMERS=CURRENT_CUSTOMERS.filter(function(x){return x.id!=id;});
   if(_vid==id){_vid=null;}
   wd09PendingCustomerSheets.delete(String(id));
@@ -18634,6 +18677,8 @@ async function deleteCustById(){
     catch(error){alert('앱 고객은 삭제했지만 Drive 시트를 휴지통으로 옮기지 못했어요. Drive에서 확인해 주세요.');}
   }
   _delCustId=null;
+  button.disabled=false;
+  button.textContent='고객 삭제';
   closeModal('modal-del-cust');
   renderCustList();
   renderHomeCusts();
@@ -18696,6 +18741,7 @@ function swDetTab(btn,id){
   if(id==='det-plans'){renderPlansList();renderUnderwriteList();renderNblmArea();}
   if(id==='det-contracts')loadCustomerInsurance();
   if(id==='det-claim')renderClaimList();
+  if(id==='det-work'||id==='det-claim')window.wd09SyncVisibleCustomerSheet?.(id);
 }
 function loadCustomerInsurance(){
   var custId=_vid;
@@ -19582,6 +19628,36 @@ function renderMatList(){
 }
 /* ══ 자동차보험 (고객 객체 c.autoInsurance 배열 기반, matLogs와 동일 패턴 재사용 — v91수정 3차) ══ */
 var AUTO_INSURERS=['삼성화재','현대해상','DB손해보험','KB손해보험','메리츠화재','한화손해보험','롯데손해보험','흥국화재','MG손해보험','AXA손해보험','캐롯손해보험'];
+function wd09AutoFields(record){
+  const labels={계약일:'contractDate',보험시작:'startDate',보험시작일:'startDate',종목:'line',계약자:'policyholder',피보험자:'insured',최종보험료:'annualPremium',담당설계사:'agent'};
+  const legacy={};
+  for(const part of String(record.memo||'').split(/\s+\/\s+|\r?\n/)){
+    const entry=/^(계약일|보험시작일?|종목|계약자|피보험자|최종보험료|담당설계사)(?:\s*[:：]\s*|\s+)(.+)$/.exec(part.trim());
+    if(entry)legacy[labels[entry[1]]]=entry[2].trim();
+  }
+  const detail={};
+  for(const key of Object.values(labels)){
+    detail[key]=Object.hasOwn(record,key)?record[key]:legacy[key];
+  }
+  for(const key of ['contractDate','startDate']){
+    const date=/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$/.exec(String(detail[key]||'').trim());
+    detail[key]=date?date[1]+'-'+date[2].padStart(2,'0')+'-'+date[3].padStart(2,'0'):'';
+  }
+  const rawPremium=Object.hasOwn(record,'finalPremium')?record.finalPremium:
+    String(record.annualPremium??'').trim()!==''?record.annualPremium:legacy.annualPremium;
+  detail.annualPremium=insurancePremiumAmount(String(rawPremium??'').replace(/\s*원$/,''));
+  return detail;
+}
+function wd09SetAutoFields(record){
+  const detail=wd09AutoFields(record);
+  document.getElementById('auto-annual-premium').value=detail.annualPremium??'';
+  document.getElementById('auto-contract-date').value=detail.contractDate??'';
+  document.getElementById('auto-start-date').value=detail.startDate??'';
+  document.getElementById('auto-line').value=detail.line??'';
+  document.getElementById('auto-holder').value=detail.policyholder??'';
+  document.getElementById('auto-insured').value=detail.insured??'';
+  document.getElementById('auto-agent').value=detail.agent??'';
+}
 function cstAutoList(c){return Array.isArray(c&&c.autoInsurance)?c.autoInsurance.slice():[];}
 function _autoGetCust(){return getCusts().find(function(x){return x.id==_vid;});}
 async function _autoSaveList(c,list){
@@ -19590,7 +19666,7 @@ async function _autoSaveList(c,list){
   if(idx<0)return {ok:false,reason:'CUSTOMER_NOT_FOUND'};
   var updated=Object.assign({},c,{autoInsurance:list,updated:new Date().toISOString()});
   var newCs=cs.slice();newCs[idx]=updated;
-  return await saveCusts(newCs);
+  return await saveCusts(newCs,[updated]);
 }
 // v97실행: 고객관리(고객상세) 처리상태 전용 — 상단메뉴 올해연락상태(resultStatus)와 필드 자체를 분리한 contractStatus 사용.
 // contractStatus가 아직 없는 레거시 기록은 기존 resultStatus 값으로 1회성 폴백 매핑만 하고, resultStatus 자체는 건드리지 않는다(상단메뉴 영향 없음).
@@ -19658,7 +19734,7 @@ function openAutoAdd(fromInsurance){
   document.getElementById('auto-company-custom').value='';
   document.getElementById('auto-expiry').value='';
   document.getElementById('auto-policy-file').value='';
-  document.getElementById('auto-annual-premium').value='';
+  wd09SetAutoFields({});
   document.getElementById('auto-carnum').value='';
   ['blackbox','dashboard','plate'].forEach(function(k){
     var fi=document.getElementById('auto-file-'+k);if(fi)fi.value='';
@@ -19689,7 +19765,7 @@ function openAutoEdit(id,custId){
   document.getElementById('auto-company-custom').value=knownCompany?'':(item.company||'');
   document.getElementById('auto-expiry').value=item.expiryDate||'';
   document.getElementById('auto-policy-file').value='';
-  document.getElementById('auto-annual-premium').value=item.annualPremium??'';
+  wd09SetAutoFields(item);
   document.getElementById('auto-carnum').value=item.carNumber||'';
   var fmap={blackbox:item.blackboxFile,dashboard:item.dashboardFile,plate:item.plateFile};
   Object.keys(fmap).forEach(function(k){
@@ -19725,11 +19801,19 @@ async function saveAutoRecord(){
   var policyPdf=policyInput?await uploadCustomerPolicy('auto',c.id,recId,policyInput):prev.policyPdf;
   if(policyInput&&!policyPdf)return;
   var rec={
+    ...prev,
     id:recId,
     year:year,
     company:company,
     expiryDate:expiry,
     annualPremium:insurancePremiumAmount(premiumInput.value),
+    finalPremium:insurancePremiumAmount(premiumInput.value),
+    contractDate:document.getElementById('auto-contract-date').value.trim(),
+    startDate:document.getElementById('auto-start-date').value.trim(),
+    line:document.getElementById('auto-line').value.trim(),
+    policyholder:document.getElementById('auto-holder').value.trim(),
+    insured:document.getElementById('auto-insured').value.trim(),
+    agent:document.getElementById('auto-agent').value.trim(),
     policyPdf:policyPdf,
     carNumber:carNum,
     blackboxFile:prev.blackboxFile||{name:'',path:'',url:''},
@@ -19794,12 +19878,23 @@ function openAutoDetail(custId,id){
   document.getElementById('atd-expiry').textContent=item.expiryDate||'-';
   document.getElementById('atd-dday').textContent=dd.label;
   document.getElementById('atd-carnum').textContent=item.carNumber||'-';
+  const detail=wd09AutoFields(item);
+  document.getElementById('atd-contract-date').textContent=detail.contractDate||'—';
+  document.getElementById('atd-start-date').textContent=detail.startDate||'—';
+  document.getElementById('atd-line').textContent=detail.line||'—';
+  document.getElementById('atd-holder').textContent=detail.policyholder||'—';
+  document.getElementById('atd-insured').textContent=detail.insured||'—';
+  document.getElementById('atd-agent').textContent=detail.agent||'—';
+  document.getElementById('atd-premium').textContent=detail.annualPremium===null?'—':detail.annualPremium.toLocaleString('ko-KR')+'원';
   document.getElementById('atd-blackbox').innerHTML=autoPhotoCell(item.blackboxFile);
   document.getElementById('atd-dashboard').innerHTML=autoPhotoCell(item.dashboardFile);
   document.getElementById('atd-plate').innerHTML=autoPhotoCell(item.plateFile);
   document.getElementById('atd-result').textContent=autoContractStatus(item);
   document.getElementById('atd-memo').textContent=item.memo||'-';
   document.getElementById('atd-dates').textContent='등록 '+(item.createdAt||'').slice(0,10)+' / 수정 '+(item.updatedAt||'').slice(0,10);
+  const policy=document.getElementById('atd-policy');
+  policy.hidden=!customerPolicyMeta(item,'auto',_UID,c.id);
+  policy.onclick=()=>openCustomerPolicy('auto',cstAutoList(c).findIndex(row=>String(row.id)===String(item.id)),c.id);
   openModal('modal-auto-detail');
 }
 function autoDetailEdit(){if(_autoDetailCustId!=null&&_autoDetailId)openAutoEdit(_autoDetailId,_autoDetailCustId);}
@@ -19842,22 +19937,24 @@ function renderAutoManagePage(state){
   message.textContent=rows.length?'전체 '+rows.length+'건':'고객관리에 등록된 자동차보험이 없습니다.';
   list.innerHTML=rows.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame">'
     +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
-    +'<thead><tr>'+['고객명','연락처','보험회사','연보험료','차량번호','보험만기일','D-day','메모']
+    +'<thead><tr>'+['D-day','고객명','연락처','보험회사','차량번호','최종보험료','계약일','보험시작일','만기일','종목','계약자','피보험자','담당설계사']
       .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
     +rows.map(({customer,record,plate,expiry,days})=>{
       const phone=cstFormatPhone(customer.phone);
       const digits=phone.replace(/\D/g,'');
       const phoneCell=digits.length>=8?'<a href="tel:'+digits+'">'+esc(phone)+'</a>':esc(phone||'—');
-      const premium=insurancePremiumAmount(record.annualPremium);
+      const detail=wd09AutoFields(record);
+      const premium=detail.annualPremium;
+      const vehicle=record.id!=null?'<button type="button" data-customer="'+esc(customer.id)+'" data-record="'+esc(record.id)+'" onclick="openAutoDetail(this.dataset.customer,this.dataset.record)">'+esc(plate||'상세 보기')+'</button>':esc(plate||'—');
       return '<tr>'
+        +'<td><span class="auto-dday '+days.cls+'">'+esc(days.label)+'</span></td>'
         +'<td><button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-contracts\')">'+esc(customer.name||'이름 없음')+'</button></td>'
         +'<td>'+phoneCell+'</td>'
         +'<td>'+esc(record.company||record.insurer||'—')+'</td>'
-        +'<td>'+ (premium===null?'—':premium.toLocaleString('ko-KR')+'원')+'</td>'
-        +'<td>'+esc(plate||'—')+'</td>'
-        +'<td>'+esc(expiry||'—')+'</td>'
-        +'<td><span class="auto-dday '+days.cls+'">'+esc(days.label)+'</span></td>'
-        +'<td class="wd09-auto-expiry-memo">'+esc(record.memo||'—')+'</td></tr>';
+        +'<td>'+vehicle+'</td>'
+        +'<td>'+(premium===null?'—':premium.toLocaleString('ko-KR')+'원')+'</td>'
+        +[detail.contractDate,detail.startDate,expiry,detail.line,detail.policyholder,detail.insured,detail.agent]
+          .map(value=>'<td>'+esc(value||'—')+'</td>').join('')+'</tr>';
     }).join('')+'</tbody></table></div>':'';
 }
 function renderHomeCusts(){
@@ -23520,19 +23617,19 @@ function showCustomerPolicyPdf(blob,name){
 async function validCustomerPolicyPdf(file){
   return file.size<=ATTACH_MAX_SIZE&&await file.slice(0,5).text()==='%PDF-';
 }
-async function openCustomerPolicy(source,index){
-  var customer=getCusts().find(function(c){return c.id==_vid;});
+async function openCustomerPolicy(source,index,custId=_vid){
+  var customer=getCusts().find(function(c){return c.id==custId;});
   var records=source==='auto'&&customer?cstAutoList(customer):source==='contracts'?getContracts():[];
-  var pdf=customerPolicyMeta(records[index],source,_UID,_vid);
+  var pdf=customerPolicyMeta(records[index],source,_UID,custId);
   var sb=getSbClient();
   if(!pdf||!sb)return;
-  var name=pdf.name||'보험증권.pdf', custId=_vid;
+  var name=pdf.name||'보험증권.pdf';
   openCustomerPolicyPanel(name);
   var request=customerPolicyRequest;
   try{
     var result=await sb.storage.from('wd-partners-attachments').download(pdf.path);
     if(result.error||!result.data||!await validCustomerPolicyPdf(result.data))throw Error();
-    if(request===customerPolicyRequest&&custId===_vid)showCustomerPolicyPdf(result.data,name);
+    if(request===customerPolicyRequest)showCustomerPolicyPdf(result.data,name);
   }catch(error){
     if(request===customerPolicyRequest)document.getElementById('wd09-policy-status').textContent='증권 PDF를 열지 못했습니다. 파일 또는 조회 권한을 확인해 주세요.';
   }
@@ -23579,14 +23676,16 @@ var WD09_INSURANCE_PURPOSES={health:'장기보험',savings:'저축성보험',unk
 function customerInsuranceRow(c,source,index){
   var auto=source==='auto';
   var purpose=auto?'auto':Object.hasOwn(WD09_INSURANCE_PURPOSES,c.insurance_purpose)?c.insurance_purpose:'unknown';
-  var annual=auto||(purpose==='auto'&&String(c.annualPremium??'').trim()!=='');
+  var autoFields=purpose==='auto'?wd09AutoFields(c):null;
+  var annual=auto||!!(autoFields&&autoFields.annualPremium!==null);
   return {
     purpose:purpose, purposeLabel:WD09_INSURANCE_PURPOSES[purpose], source:source, index:index,
     insurer:auto?c.company:c.insurer, product:c.product||(purpose==='auto'?'자동차보험':''),
     policy:customerPolicyMeta(c,source,_UID,_vid),
-    payPeriod:c.pay_period, period:c.ins_period, date:auto?c.contractDate:c.contract_date,
+    payPeriod:c.pay_period, period:c.ins_period, date:auto?(autoFields.contractDate||c.contract_date):c.contract_date,
+    autoFields:autoFields,
     carNumber:c.carNumber||c.car_number, expiry:c.expiryDate||c.expiry_date,
-    premium:insurancePremiumAmount(annual?c.annualPremium:c.fee), annual:annual,
+    premium:annual?autoFields.annualPremium:insurancePremiumAmount(c.fee), annual:annual,
     recordDate:auto?(c.updatedAt||c.createdAt):(c.updated||c.created)
   };
 }
@@ -23595,13 +23694,14 @@ function openCustomerInsuranceDetail(source,index){
   var records=source==='auto'&&customer?cstAutoList(customer):source==='contracts'?getContracts():[];
   var record=records[index];
   if(!record)return;
+  if(source==='auto'&&record.id!=null){openAutoDetail(customer.id,record.id);return;}
   var row=customerInsuranceRow(record,source,index);
   var premium=row.premium===null?'—':row.premium.toLocaleString('ko-KR')+'원';
   var fields=[
     ['보험 목적',row.purposeLabel],['보험사',row.insurer],['계약일',row.date]
   ];
   if(row.purpose==='auto'){
-    fields.push(['차량번호',row.carNumber],['만기일',row.expiry],['연보험료',row.annual?premium:'—']);
+    fields.push(['차량번호',row.carNumber],['종목',row.autoFields.line],['보험시작일',row.autoFields.startDate],['만기일',row.expiry],['최종보험료',row.annual?premium:'—'],['계약자',row.autoFields.policyholder],['피보험자',row.autoFields.insured],['담당설계사',row.autoFields.agent]);
   }else{
     fields.push(['월 보험료',premium],['납입기간',row.payPeriod],['보험기간',row.period],
       ['보험료 출금일',ctDebitNorm(record.debit_date)],['담당 설계사',record.agent],
@@ -23674,9 +23774,13 @@ function renderContractsList(state){
       +'<td>'+esc(row.period||'—')+'</td><td class="wd09-insurance-fee">'+fee+'</td><td>'+esc(row.date||'—')+'</td><td>'+policyCell(row)+'</td></tr>';
   }
   function renderAutoRow(row){
-    return recordStart(row)+'<td>'+esc(row.carNumber||'—')+'</td>'
+    var action="openCustomerInsuranceDetail('"+row.source+"',"+row.index+")";
+    return '<tr class="wd09-insurance-record" onclick="if(!event.target.closest(\'button\'))'+action+'">'
+      +'<td><button type="button" onclick="'+action+'">'+esc(row.insurer||'상세 보기')+'</button></td>'
+      +'<td>'+esc(row.carNumber||'—')+'</td><td>'+esc(row.autoFields.line||'—')+'</td>'
+      +'<td class="wd09-table-nowrap">'+esc(row.autoFields.startDate||'—')+'</td>'
       +'<td class="wd09-table-nowrap">'+esc(row.expiry||'—')+'</td>'
-      +'<td class="wd09-insurance-fee">'+formatAmount(row.annual?row.premium:null)+'</td><td>'+policyCell(row)+'</td></tr>';
+      +'<td class="wd09-insurance-fee">'+formatAmount(row.annual?row.premium:null)+'</td></tr>';
   }
   var monthly=summarize(rows.filter(function(row){return row.purpose!=='auto';}),false);
   var visible=rows.filter(function(row){return !el.dataset.purpose||row.purpose===el.dataset.purpose;});
@@ -23707,7 +23811,7 @@ function renderContractsList(state){
     var auto=purpose==='auto';
     var titleId='wd09-insurance-group-title-'+purpose;
     var columns=auto
-      ?['보험사','상품명','차량번호','만기일','연보험료','증권']
+      ?['보험사','차량번호','종목','보험시작일','만기일','최종보험료']
       :['보험사','상품명','납입기간','보험기간','월 보험료','계약일','증권'];
     var headers=columns.map(function(label){return '<th scope="col">'+label+'</th>';}).join('');
     var body=groupRows.length?groupRows.map(auto?renderAutoRow:renderInsuranceRow).join('')
@@ -33145,7 +33249,10 @@ function openDesignProgressModal(){
         }
         const custId=_vid;
         const customer=getCusts().find(c=>c.id==custId);
-        const ownsPolicy=getContracts().some(c=>customerPolicyMeta(c,'contracts',uid,custId)?.path===path)
+        const selectedAuto=getCusts().find(c=>String(c.id)===String(_autoDetailCustId));
+        const ownsSelectedAuto=selectedAuto&&cstAutoList(selectedAuto).some(c=>
+          String(c.id)===String(_autoDetailId)&&customerPolicyMeta(c,'auto',uid,selectedAuto.id)?.path===path);
+        const ownsPolicy=ownsSelectedAuto||getContracts().some(c=>customerPolicyMeta(c,'contracts',uid,custId)?.path===path)
           ||(customer&&cstAutoList(customer).some(c=>customerPolicyMeta(c,'auto',uid,custId)?.path===path));
         if(ownsPolicy)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
@@ -33191,9 +33298,10 @@ function openDesignProgressModal(){
           const row=await request.clone().json();
           authorized=row&&Object.keys(row).every(key=>!['uid','id','customer_id'].includes(key));
         }else if(request.method==='DELETE'&&exactOwner){
-          const isCustomer=table===customers&&url.searchParams.size===2&&matched('id')===String(_delCustId);
-          const isCascade=[...records,'wd_partners_contracts','wd_partners_design_requests'].includes(table)&&
-            url.searchParams.size===2&&matched('customer_id')===String(_delCustId);
+          const targetsCustomer=key=>_delCustId!=null&&url.searchParams.getAll(key).length===1&&
+            url.searchParams.get(key)==='eq.'+String(_delCustId)&&[...url.searchParams.keys()].every(k=>k==='uid'||k===key);
+          const isCustomer=table===customers&&targetsCustomer('id');
+          const isCascade=[...records,'wd_partners_contracts','wd_partners_design_requests'].includes(table)&&targetsCustomer('customer_id');
           const isRecord=records.includes(table)&&url.searchParams.size===3&&!!matched('id')&&ownsCustomer(matched('customer_id'));
           authorized=(isCustomer||isCascade)&&ownsCustomer(_delCustId)||isRecord;
         }
@@ -34102,10 +34210,19 @@ async function wd09FlushCustomerSheetQueue(){
     }
   }
 }
-function wd09SyncOpenCustomerSheets(){
-  if(!_vid)return;
-  if(!window.wd09CustomerSheets){alert('먼저 상단에서 Google Drive를 연결해 주세요.');return;}
-  wd09QueueCustomerSheets(_vid);
+window.wd09SyncVisibleCustomerSheet=function(view){
+  if(!window.wd09CustomerSheets||!_vid)return;
+  if(view==='det-work'||view==='det-claim')wd09QueueCustomerSheets(_vid,view==='det-work'?'work':'claims');
+};
+async function wd09RefreshCustomerRecordTab(kind){
+  const id=_vid;
+  if(!id)return;
+  const work=kind==='work';
+  const result=await (work?loadCommsFromSupa(id):loadClaimDsFromSupa(id));
+  if(String(_vid)!==String(id))return;
+  if(work)renderCustomerWorkTable();
+  else renderClaimList();
+  if(result.ok&&window.wd09CustomerSheets)wd09QueueCustomerSheets(id,kind);
 }
 </script>
 <script id="wd09-drive-auth-script">
@@ -34235,6 +34352,12 @@ function wd09SyncOpenCustomerSheets(){
       onReady(folders){
         window.wd09CustomerSheets=wd09CustomerSheetService(api,folders,uid);
         wd09RenderBulkSheets();
+        const page=document.getElementById('pg-cust');
+        const detail=document.getElementById('cust-det-pg');
+        if(page.classList.contains('on')&&detail.style.display!=='none'){
+          window.wd09SyncVisibleCustomerSheet(document.getElementById('cust-det-info')?.dataset.recordView
+            ||document.getElementById('det-info')?.dataset.recordView);
+        }
         void wd09FlushCustomerSheetQueue();
       }
     };
