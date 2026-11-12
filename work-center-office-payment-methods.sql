@@ -214,4 +214,20 @@ $$;
 revoke all on function public.work_office_delete_payment_method(uuid,timestamptz) from public, anon, authenticated;
 grant execute on function public.work_office_delete_payment_method(uuid,timestamptz) to authenticated;
 
+alter table public.work_finance_transactions
+  add column recurrence_cycle text,
+  add column recurrence_day smallint,
+  add column recurrence_month smallint,
+  add constraint work_finance_transactions_recurrence_check check (
+    (recurrence_cycle is null and recurrence_day is null and recurrence_month is null)
+    or (
+      recurrence_cycle is not null and flow_type = '지출'
+      and recurrence_day is not null and recurrence_day between 1 and 31
+      and (
+        (recurrence_cycle = 'monthly' and recurrence_month is null)
+        or (recurrence_cycle = 'yearly' and recurrence_month is not null and recurrence_month between 1 and 12)
+      )
+    )
+  );
+
 commit;
