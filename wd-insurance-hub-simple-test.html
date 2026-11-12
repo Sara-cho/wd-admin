@@ -10457,11 +10457,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #wd09-home-grid .wd09-google-event time { color:var(--purple); font-weight:700; white-space:nowrap; }
   .wd09-google-feedback { margin:10px 0 0; color:#526076; font-size:13px; }
   .wd09-google-feedback:empty { display:none; }
-  #hdr .wd09-header-google { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 14px; border:1px solid #e7ba3c; border-radius:10px; background:#ffda66; color:#29200a; font:inherit; font-size:13px; font-weight:800; white-space:nowrap; cursor:pointer; }
-  #hdr .wd09-header-google:hover { background:#ffcf45; }
-  #hdr .wd09-header-google:focus-visible { outline:2px solid var(--purple); outline-offset:2px; }
-  #hdr .wd09-header-google:disabled { opacity:.65; cursor:wait; }
-  #hdr .wd09-header-google.wd09-connected { background:#fff6d6; color:#594411; }
   #hdr .wd09-drive-button {
     display:inline-flex; align-items:center; padding:5px 8px; border:1px solid var(--s200);
     min-height:36px; border-radius:8px; background:var(--lav); color:var(--purple);
@@ -10512,7 +10507,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   }
   @media(max-width:480px) {
     #hdr .hdr-right { gap:5px; }
-    #hdr .wd09-header-google { padding:0 8px; font-size:12px; }
     #hdr .hdr-user-btn { padding-inline:6px; gap:4px; }
     #hdr .hdr-av { display:none; }
     #hdr .hdr-uname { white-space:nowrap; }
@@ -10819,7 +10813,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #det-contracts .wd09-insurance-empty { text-align:center; padding:22px 10px; color:var(--s600); }
 </style>
 <style id="wd09-personal-auth-style">
-  #wd09-auth-screen[hidden], #hdr #wd09-google-connect[hidden] { display:none !important; }
+  #wd09-auth-screen[hidden] { display:none !important; }
   #wd09-auth-screen {
     --login-ink:#0c1b34;
     --login-gold:#e7c462;
@@ -11261,7 +11255,6 @@ const wdTest09Storage = (() => {
 </div>
 <div class="hdr-right">
 <button class="wd09-drive-button" type="button" id="wd09-drive-open" aria-haspopup="dialog">Drive 연결</button>
-<button class="wd09-header-google" type="button" id="wd09-google-connect" hidden>일정·할 일 연결</button>
 <div class="hdr-user-btn" id="user-btn" onclick="toggleDd()">
 <div class="hdr-av" id="hdr-av">?</div>
 <div><div class="hdr-uname" id="hdr-uname">-</div><div class="hdr-uid" id="hdr-uid">-</div></div>
@@ -15645,12 +15638,13 @@ const wdTest09Storage = (() => {
 <div class="modal-ov wd09-entry-overlay" id="wd09-drive-setup">
 <div class="modal-bx wd09-entry-modal" style="max-width:560px" role="dialog" aria-modal="true" aria-labelledby="wd09-drive-setup-title">
 <header class="wd09-entry-header">
-<h2 id="wd09-drive-setup-title">Google Drive 연결</h2>
-<button type="button" class="wd09-modal-close" onclick="closeModal('wd09-drive-setup')" aria-label="Drive 연결창 닫기">×</button>
+<h2 id="wd09-drive-setup-title">Google 계정 연결</h2>
+<button type="button" class="wd09-modal-close" onclick="closeModal('wd09-drive-setup')" aria-label="Google 연결창 닫기">×</button>
 </header>
 <div class="wd09-entry-body wd09-drive-setup">
+<p id="wd09-drive-services">Drive 폴더 · 일정 · 할 일</p>
 <p id="wd09-drive-account" hidden></p>
-<p id="wd09-drive-message" role="status">파일을 보관할 Google 계정을 연결해 주세요.</p>
+<p id="wd09-drive-message" role="status">사용할 Google 계정을 연결해 주세요.</p>
 <pre id="wd09-drive-tree" class="wd09-drive-folder-tree" hidden></pre>
 </div>
 <footer class="modal-ft wd09-entry-footer wd09-drive-footer">
@@ -33373,8 +33367,8 @@ function openDesignProgressModal(){
         }
       });
       passwordInput.value = '';
-      byId('wd09-google-connect').hidden = uid!=='WD23000';
       if (uid!=='WD23000') {
+        byId('wd09-drive-services').textContent='Drive 폴더';
         byId('wd09-google-events').textContent='구글 일정은 지점장 계정에서 사용합니다.';
         byId('wd09-google-tasks').textContent='구글 할 일은 지점장 계정에서 사용합니다.';
       }
@@ -33412,7 +33406,7 @@ function openDesignProgressModal(){
 const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps.googleusercontent.com';
 </script>
 <script id="wd09-simple-home-script">
-(function initSimpleHome(){
+const wd09GoogleHome = (function initSimpleHome(){
   const byId = id => document.getElementById(id);
   const dayGrid = byId('wd09-calendar-days');
   const monthLabel = byId('wd09-calendar-month');
@@ -33422,7 +33416,6 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
   const todoDate = byId('wd09-todo-date');
   const taskList = byId('wd09-google-tasks');
   const events = byId('wd09-google-events');
-  const connect = byId('wd09-google-connect');
   const add = byId('wd09-google-add');
   const submit = byId('wd09-google-submit');
   const input = byId('ti');
@@ -33431,7 +33424,6 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
 
   const calendarApi = 'https://www.googleapis.com/calendar/v3';
   const tasksApi = 'https://tasks.googleapis.com/tasks/v1';
-  const scope = ['https://www.googleapis.com/auth/calendar.readonly','https://www.googleapis.com/auth/tasks'];
   const seoul = {timeZone:'Asia/Seoul'};
   const dayKey = new Intl.DateTimeFormat('en-CA', {...seoul,year:'numeric',month:'2-digit',day:'2-digit'});
   const fullDate = new Intl.DateTimeFormat('ko-KR', {timeZone:'UTC',year:'numeric',month:'long',day:'numeric',weekday:'long'});
@@ -33448,32 +33440,20 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
   let selected = todayKey();
   let cursor = monthOf(dateOf(selected));
   let connection = null;
-  let authPending = false;
-  let client = null;
   let eventVersion = 0;
   let taskVersion = 0;
   let tasks = [];
-  const pendingTasks = new Set();
-  let expiresTimer = 0;
-
-  function updateConnection() {
-    connect.disabled = authPending;
-    connect.classList.toggle('wd09-connected',Boolean(connection));
-    connect.textContent = authPending ? '연결 확인 중' : connection ? '일정 새로고침' : '일정·할 일 연결';
-    add.disabled = !connection;
-  }
-
-  function disconnect(message) {
+  function reset(message='') {
     connection = null;
     tasks = [];
     eventVersion++;
     taskVersion++;
-    clearTimeout(expiresTimer);
     closeModal('modal-todo');
     input.value = '';
-    updateConnection();
+    add.disabled = true;
     feedback.textContent = message;
-    events.textContent = 'Google 연결 후 일정을 확인할 수 있어요.';
+    events.textContent = _UID && _UID!=='WD23000'
+      ? '구글 일정은 지점장 계정에서 사용합니다.' : '상단 Drive 연결에서 일정을 연결해 주세요.';
     renderTasks();
   }
 
@@ -33486,9 +33466,9 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
   async function request(session, url, options={}) {
     const headers = {Authorization:'Bearer '+session.token,Accept:'application/json'};
     if (options.body) headers['Content-Type']='application/json';
-    const response = await fetch(url, {...options,headers,cache:'no-store',credentials:'omit'});
+    const response = await fetch(url, {...options,headers,cache:'no-store',credentials:'omit',redirect:'error'});
     if (!response.ok) {
-      if (response.status===401 && connection===session) disconnect('Google 연결이 만료됐어요. 다시 연결해 주세요.');
+      if (response.status===401 && connection===session) window.wd09DriveReset('Google 연결이 만료됐어요. 다시 연결해 주세요.');
       throw requestError(response.status);
     }
     return response.json();
@@ -33513,59 +33493,23 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
     return Array.from(new Uint8Array(digest),byte => byte.toString(16).padStart(2,'0')).join('');
   }
 
-  async function authorized(response) {
-    try {
-      if (!response?.access_token || response.error || !google.accounts.oauth2.hasGrantedAllScopes(response,...scope)) {
-        throw new Error('캘린더와 할 일 권한을 모두 허용해 주세요.');
-      }
-      const session = {token:response.access_token};
-      const primary = await request(session,calendarApi+'/calendars/primary?fields=id');
-      if (await accountFingerprint(primary.id) !== 'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22') {
-        throw new Error('본진에서 연결한 Google 계정으로 선택해 주세요.');
-      }
-      connection = session;
-      clearTimeout(expiresTimer);
-      expiresTimer = setTimeout(() => {
-        if (connection===session) disconnect('Google 연결이 만료됐어요. 다시 연결해 주세요.');
-      },Math.max(1000,Number(response.expires_in || 3600)*1000-1000));
-      feedback.textContent = 'Google 연결됨';
-      await Promise.all([loadEvents(),loadTasks()]);
-    } catch (error) {
-      disconnect(error.message || 'Google 연결을 확인해 주세요.');
-    } finally {
-      authPending = false;
-      updateConnection();
+  async function verify(session) {
+    const primary = await request(session,calendarApi+'/calendars/primary?fields=id');
+    if (await accountFingerprint(primary.id) !== 'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22') {
+      throw new Error('본진에서 연결한 Google 계정을 선택해 주세요.');
     }
   }
 
-  function connectGoogle() {
-    if (_UID!=='WD23000') return;
-    if (connection) {
-      Promise.all([loadEvents(),loadTasks()]);
-      return;
-    }
-    if (!window.google?.accounts?.oauth2 || window.location.protocol!=='https:') {
-      feedback.textContent = 'Google 연결 준비 중이에요. 배포된 TEST 화면에서 다시 눌러 주세요.';
-      return;
-    }
-    authPending = true;
-    updateConnection();
-    try {
-      client ||= google.accounts.oauth2.initTokenClient({
-        client_id:WD09_GOOGLE_CLIENT_ID,
-        scope:scope.join(' '),
-        include_granted_scopes:false,
-        callback:authorized,
-        error_callback:() => {
-          authPending = false;
-          disconnect('Google 연결을 완료하지 못했어요. 다시 연결해 주세요.');
-        }
-      });
-      client.requestAccessToken({prompt:'select_account'});
-    } catch {
-      authPending = false;
-      disconnect('Google 연결을 열지 못했어요. 다시 시도해 주세요.');
-    }
+  function refresh() {
+    if (!connection) return;
+    connection.calendars = null;
+    return Promise.all([loadEvents(),loadTasks()]);
+  }
+
+  function activate(session) {
+    connection = session;
+    add.disabled = false;
+    return refresh();
   }
 
   function renderCalendar() {
@@ -33646,7 +33590,8 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
 
   function renderTasks() {
     if (!connection) {
-      taskList.textContent = _UID==='WD26002' ? '구글 할 일은 지점장 계정에서 사용합니다.' : 'Google 연결 후 할 일을 확인할 수 있어요.';
+      taskList.textContent = _UID && _UID!=='WD23000'
+        ? '구글 할 일은 지점장 계정에서 사용합니다.' : '상단 Drive 연결에서 할 일을 연결해 주세요.';
       return;
     }
     const rows = tasks.filter(task=>task.due ? task.due.slice(0,10)===selected :
@@ -33658,7 +33603,7 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
       const box = document.createElement('input');
       box.type = 'checkbox';
       box.checked = task.status==='completed';
-      box.disabled = pendingTasks.has(task.listId+'/'+task.id);
+      box.disabled = connection.pendingTasks.has(task.listId+'/'+task.id);
       box.addEventListener('change',() => updateTask(task,box));
       const name = document.createElement('span');
       name.textContent = task.title || '제목 없는 할 일';
@@ -33693,8 +33638,8 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
   async function updateTask(task,box) {
     const session = connection;
     const key = task.listId+'/'+task.id;
-    if (!session || pendingTasks.has(key)) { box.checked=task.status==='completed'; return; }
-    pendingTasks.add(key);
+    if (!session || session.pendingTasks.has(key)) { box.checked=task.status==='completed'; return; }
+    session.pendingTasks.add(key);
     box.disabled = true;
     const status = box.checked ? 'completed' : 'needsAction';
     try {
@@ -33711,7 +33656,7 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
       box.checked = task.status==='completed';
       if (session===connection) feedback.textContent = error.message || '완료 상태 저장을 확인하지 못했어요.';
     } finally {
-      pendingTasks.delete(key);
+      session.pendingTasks.delete(key);
       if (session===connection) renderTasks();
     }
   }
@@ -33763,7 +33708,6 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
     renderCalendar();
   }
 
-  connect.addEventListener('click',connectGoogle);
   add.addEventListener('click',() => {
     if (!connection) return;
     modalFeedback.textContent = fullDate.format(dateOf(selected))+' · Google Tasks 기본 목록';
@@ -33777,8 +33721,9 @@ const WD09_GOOGLE_CLIENT_ID='1057195216975-0b3v2qbpafhmeubicepmeaf9o2ieaq9v.apps
   byId('wd09-calendar-prev').addEventListener('click',() => moveMonth(-1));
   byId('wd09-calendar-next').addEventListener('click',() => moveMonth(1));
   byId('wd09-calendar-today').addEventListener('click',() => selectDate(todayKey()));
-  disconnect('');
+  reset();
   selectDate(selected);
+  return {verify,activate,refresh,reset};
 })();
 </script>
 <script id="wd09-drive-shared-script">
@@ -33826,7 +33771,7 @@ function wd09DriveFolderService(api,adviserId,adviserName){
   };
 }
 
-function wd09MountDriveSetup(connectDrive){
+function wd09MountDriveSetup(connectDrive,home){
   const byId=id=>document.getElementById(id);
   const open=byId('wd09-drive-open');
   const action=byId('wd09-drive-action');
@@ -33840,7 +33785,8 @@ function wd09MountDriveSetup(connectDrive){
   let pending=false;
   let generation=0;
   let expiryTimer;
-  let message='파일을 보관할 Google 계정을 연결해 주세요.';
+  const connectMessage='사용할 Google 계정을 연결해 주세요.';
+  let message=connectMessage;
 
   function render(){
     open.textContent=session?'Drive 연결됨':'Drive 연결';
@@ -33864,7 +33810,8 @@ function wd09MountDriveSetup(connectDrive){
     session=null;
     folders=null;
     pending=false;
-    message=note||'파일을 보관할 Google 계정을 연결해 주세요.';
+    message=note||connectMessage;
+    home?.reset(note);
     render();
   }
   function reportFolders(){
@@ -33892,9 +33839,10 @@ function wd09MountDriveSetup(connectDrive){
       if(!isCurrent())return;
       session=result;
       if(session.expiresAt){
-        expiryTimer=setTimeout(()=>reset('Drive 연결이 만료됐어요. 다시 연결해 주세요.'),
+        expiryTimer=setTimeout(()=>reset('Google 연결이 만료됐어요. 다시 연결해 주세요.'),
           Math.max(0,session.expiresAt-Date.now()));
       }
+      if(session.homeSession)void home.activate(session.homeSession);
       const state=await session.service.inspect();
       if(!isCurrent())return;
       folders=state;
@@ -33908,7 +33856,8 @@ function wd09MountDriveSetup(connectDrive){
   action.addEventListener('click',()=>{
     if(!session){connect();return;}
     const create=folders?.ready===false;
-    run(create?'폴더를 준비하고 있어요.':'폴더를 다시 확인하고 있어요.',async isCurrent=>{
+    run(create?'폴더를 준비하고 있어요.':'연결한 서비스를 다시 확인하고 있어요.',async isCurrent=>{
+      if(!create&&session.homeSession)void home.refresh();
       const state=await (create?session.service.create():session.service.inspect());
       if(!isCurrent())return;
       folders=state;
@@ -33930,28 +33879,40 @@ function wd09MountDriveSetup(connectDrive){
 </script>
 <script id="wd09-drive-auth-script">
 (() => {
-  const scope='https://www.googleapis.com/auth/drive.file';
+  const driveScope='https://www.googleapis.com/auth/drive.file';
+  const homeScopes=['https://www.googleapis.com/auth/calendar.readonly','https://www.googleapis.com/auth/tasks'];
   const base='https://www.googleapis.com/drive/v3';
   const propertiesKey='wd09Setup';
   const propertyPrefix='wd-insurance-test09:';
 
-  function authorize(){
+  function authorize(scopes){
     return new Promise((resolve,reject)=>{
-      if(!window.google?.accounts?.oauth2||location.protocol!=='https:'){
-        reject(new Error('HTTPS로 열린 9번 TEST에서 Google Drive를 연결해 주세요.'));
+      if(location.protocol!=='https:'){
+        reject(new Error('HTTPS로 열린 9번 TEST에서 Google 계정을 연결해 주세요.'));
         return;
       }
-      const oauth=google.accounts.oauth2;
+      const oauth=window.google?.accounts?.oauth2;
+      if(!oauth){
+        reject(new Error('Google 연결을 준비하고 있어요. 잠시 뒤 다시 눌러 주세요.'));
+        return;
+      }
       const client=oauth.initTokenClient({
-        client_id:WD09_GOOGLE_CLIENT_ID,scope,include_granted_scopes:false,
+        client_id:WD09_GOOGLE_CLIENT_ID,scope:scopes.join(' '),include_granted_scopes:false,
         callback:response=>{
-          if(!response?.access_token||response.error||!oauth.hasGrantedAllScopes(response,scope)){
-            reject(new Error('Google Drive 파일 권한을 허용해 주세요.'));
+          if(response?.error||!response?.access_token||!oauth.hasGrantedAllScopes(response,...scopes)){
+            const services=scopes.length>1?'Drive 파일, 일정, 할 일':'Drive 파일';
+            reject(new Error(services+' 권한을 허용해 주세요.'));
             return;
           }
           resolve(response);
         },
-        error_callback:()=>reject(new Error('Google 계정 연결을 완료하지 못했어요. 다시 눌러 주세요.'))
+        error_callback:error=>{
+          const messages={
+            popup_failed_to_open:'Google 계정 선택창을 열지 못했어요. 이 사이트의 팝업을 허용한 뒤 다시 눌러 주세요.',
+            popup_closed:'Google 계정 선택창이 닫혔어요. 다시 열어 연결해 주세요.'
+          };
+          reject(new Error(messages[error?.type]||'Google 계정 연결을 완료하지 못했어요. 다시 눌러 주세요.'));
+        }
       });
       client.requestAccessToken({prompt:'select_account'});
     });
@@ -33961,11 +33922,15 @@ function wd09MountDriveSetup(connectDrive){
     const uid=_UID;
     const adviser=USERS[uid];
     if(!adviser||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
-    const grant=await authorize();
-    const expiresAt=Date.now()+Math.max(0,Number(grant.expires_in||3600)*1000-1000);
+    const withHome=uid==='WD23000';
+    const grant=await authorize(withHome?[driveScope,...homeScopes]:[driveScope]);
+    if(uid!==_UID||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
+    const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
+    const homeSession=withHome?{token:grant.access_token,pendingTasks:new Set()}:null;
+    if(homeSession)await wd09GoogleHome.verify(homeSession);
     async function request(url,{method='GET',body,contentType,asText=false}={}){
       if(uid!==_UID||!getSbClient()||Date.now()>=expiresAt){
-        throw Object.assign(new Error('Drive에 다시 연결해 주세요.'),{reconnect:true});
+        throw Object.assign(new Error('Google 계정에 다시 연결해 주세요.'),{reconnect:true});
       }
       const headers={Authorization:'Bearer '+grant.access_token};
       if(contentType)headers['Content-Type']=contentType;
@@ -33975,8 +33940,8 @@ function wd09MountDriveSetup(connectDrive){
       }catch{
         throw new Error('Drive에 접속하지 못했어요. 네트워크를 확인한 뒤 다시 시도해 주세요.');
       }
-      if(uid!==_UID||!getSbClient())throw Object.assign(new Error('Drive에 다시 연결해 주세요.'),{reconnect:true});
-      if(response.status===401)throw Object.assign(new Error('Drive 연결이 만료됐어요. 다시 연결해 주세요.'),{reconnect:true});
+      if(uid!==_UID||!getSbClient())throw Object.assign(new Error('Google 계정에 다시 연결해 주세요.'),{reconnect:true});
+      if(response.status===401)throw Object.assign(new Error('Google 연결이 만료됐어요. 다시 연결해 주세요.'),{reconnect:true});
       if(response.status===403){
         const result=await response.json().catch(()=>null);
         if(result?.error?.details?.some(detail=>detail.reason==='SERVICE_DISABLED')||
@@ -34033,12 +33998,12 @@ function wd09MountDriveSetup(connectDrive){
       }
     };
     return {
-      account:user.emailAddress||user.displayName||'연결된 계정',expiresAt,
+      account:user.emailAddress||user.displayName||'연결된 계정',expiresAt,homeSession,
       folderUrl:id=>'https://drive.google.com/drive/folders/'+encodeURIComponent(id),
       service:wd09DriveFolderService(api,uid,adviser.name)
     };
   }
-  window.wd09DriveReset=wd09MountDriveSetup(connectDrive);
+  window.wd09DriveReset=wd09MountDriveSetup(connectDrive,wd09GoogleHome);
   window.addEventListener('pagehide',()=>window.wd09DriveReset());
 })();
 </script>
