@@ -743,18 +743,15 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-workspace .office-payment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .office-workspace .office-method-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,175px),1fr));gap:12px}
 .office-workspace .office-method-item{min-width:0}
-.office-workspace .office-method-face{display:grid;align-content:space-between;gap:12px;min-height:78px;border-radius:10px;padding:11px 12px;background:#f3eefb;color:#42306f;overflow-wrap:anywhere}
-.office-workspace .office-method-face[data-issuer]{min-height:104px;background:var(--office-card-color,#4e3b68);color:#fff}
-.office-workspace .office-method-face span{font-size:12px}
-.office-workspace .office-method-face[data-issuer="shinhan"]{--office-card-color:#204798}
-.office-workspace .office-method-face[data-issuer="samsung"]{--office-card-color:#123e9d}
-.office-workspace .office-method-face[data-issuer="kb"]{--office-card-color:#765318}
-.office-workspace .office-method-face[data-issuer="hyundai"]{--office-card-color:#242630}
-.office-workspace .office-method-face[data-issuer="lotte"]{--office-card-color:#a52a3f}
-.office-workspace .office-method-face[data-issuer="hana"]{--office-card-color:#176b66}
-.office-workspace .office-method-face[data-issuer="woori"]{--office-card-color:#146786}
-.office-workspace .office-method-face[data-issuer="nh"]{--office-card-color:#1d664a}
-.office-workspace .office-method-face[data-issuer="bc"]{--office-card-color:#a52c43}
+.office-workspace .office-method-face{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;position:relative;isolation:isolate;overflow:hidden;width:100%;min-width:0;overflow-wrap:anywhere}
+.office-workspace .office-method-face-label{font-size:12px;font-weight:700}
+.office-workspace .office-method-face strong{font-size:15px;line-height:1.3}
+.office-workspace .office-method-face--card{aspect-ratio:1.586;min-height:113px;padding:12px 14px;border-radius:13px;color:#fff;background:var(--office-method-color);background:linear-gradient(130deg,var(--office-method-color),color-mix(in srgb,var(--office-method-color) 67%,#16112e));box-shadow:0 3px 8px #241a3c24}
+.office-workspace .office-method-face--card::after{content:"";position:absolute;z-index:-1;right:-30px;top:-50%;width:68%;height:200%;border:1px solid #ffffff26;border-radius:50%;transform:rotate(30deg);box-shadow:inset 10px 0 #ffffff0d}
+.office-workspace .office-card-chip{width:25px;height:19px;flex:none;border-radius:4px;background:linear-gradient(90deg,transparent 34%,#6f572966 34% 39%,transparent 39% 62%,#6f572966 62% 67%,transparent 67%),linear-gradient(0deg,transparent 43%,#6f572966 43% 51%,transparent 51%),linear-gradient(140deg,#f5e4b9,#c9ad72)}
+.office-workspace .office-method-face--account{min-height:113px;aspect-ratio:1.586;padding:12px 14px 13px 25px;border:1px solid color-mix(in srgb,var(--office-method-color) 38%,#fff);border-radius:4px 11px 11px 4px;color:var(--office-method-color);background:color-mix(in srgb,var(--office-method-color) 13%,#fff);box-shadow:0 3px 0 #e8e0e8,0 4px 0 #cfc5d2}
+.office-workspace .office-method-face--account::before{content:"";position:absolute;inset:0 auto 0 0;width:13px;background:var(--office-method-color);box-shadow:inset -3px 0 #ffffff35}
+.office-workspace .office-passbook-rules{display:block;width:76%;height:11px;border-block:1px solid color-mix(in srgb,var(--office-method-color) 36%,transparent)}
 .office-workspace .office-method-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .office-workspace .office-legacy-cards{margin-top:16px}
 .office-workspace .office-legacy-cards button{margin:3px}
@@ -3791,16 +3788,16 @@ async function officePaymentMethods(){
 }
 
 const officeCardIssuers={
-  shinhan:{label:'신한카드',match:/신한|shinhan/i},
-  samsung:{label:'삼성카드',match:/삼성|samsung/i},
-  kb:{label:'KB국민카드',match:/국민|\bkb\b/i},
-  hyundai:{label:'현대카드',match:/현대|hyundai/i},
-  lotte:{label:'롯데카드',match:/롯데|lotte/i},
-  hana:{label:'하나카드',match:/하나|hana/i},
-  woori:{label:'우리카드',match:/우리카드|우리\s*체크|woori/i},
-  nh:{label:'NH농협카드',match:/농협|\bnh\b/i},
-  bc:{label:'BC카드',match:/비씨|\bbc\b/i},
-  other:{label:'기타 카드사'}
+  shinhan:{hue:215,label:'신한카드',match:/신한|shinhan/i},
+  samsung:{hue:238,label:'삼성카드',match:/삼성|samsung/i},
+  kb:{hue:38,label:'KB국민카드',match:/국민|\bkb\b/i},
+  hyundai:{hue:255,label:'현대카드',match:/현대|hyundai/i},
+  lotte:{hue:350,label:'롯데카드',match:/롯데|lotte/i},
+  hana:{hue:173,label:'하나카드',match:/하나|hana/i},
+  woori:{hue:194,label:'우리카드',match:/우리카드|우리\s*체크|woori/i},
+  nh:{hue:143,label:'NH농협카드',match:/농협|\bnh\b/i},
+  bc:{hue:324,label:'BC카드',match:/비씨|\bbc\b/i},
+  other:{hue:277,label:'기타 카드사'}
 };
 
 function officeCardIssuer(row){
@@ -3813,18 +3810,34 @@ function officeIssuerField(value){
     ${Object.entries(officeCardIssuers).map(([key,{label}])=>`<option value="${key}" ${key===value?'selected':''}>${label}</option>`).join('')}</select></label>`;
 }
 
+function officeMethodColor(issuer,index){
+  if(!issuer){
+    const hue=Math.round((166+137.508*index)%360);
+    return 'hsl('+hue+' 48% 30%)';
+  }
+  const offset=(index%2?1:-1)*Math.ceil(index/2)*17;
+  const hue=((officeCardIssuers[issuer].hue+offset)%360+360)%360;
+  const saturation=issuer==='hyundai'&&index===0?19:59;
+  const lightness=(hue>=38&&hue<=202?[28,25,29]:[34,31,37])[index%3];
+  return 'hsl('+hue+' '+saturation+'% '+lightness+'%)';
+}
+
 function officePaymentView(rows){
   const legacy=officeLegacyCards().filter(name=>!rows.some(row=>row.name.toLowerCase()===name.toLowerCase()));
   return `<div class="office-payment-grid">${Object.entries(officeMethodKinds).map(([kind,label])=>{
-    const card=kind==='card',entries=rows.filter(row=>row.kind===kind);
+    const card=kind==='card',entries=rows.filter(row=>row.kind===kind),colorPositions=new Map();
     return `<section class="office-payment-section" aria-labelledby="officeMethod-${kind}">
       <div class="office-detail-head"><h2 id="officeMethod-${kind}">${label} 관리</h2>
         <button class="primary small" type="button" data-office-method-add="${kind}">${label} 추가</button></div>
       ${entries.length?`<ul class="office-method-list">${entries.map(row=>{
         const issuer=card?officeCardIssuer(row):'';
+        const position=colorPositions.get(issuer)||0;
+        colorPositions.set(issuer,position+1);
+        const color=officeMethodColor(issuer,position);
         return `<li class="office-method-item">
-          <div class="office-method-face" ${card?`data-issuer="${issuer}"`:''}>
-            <span>${card?officeCardIssuers[issuer].label:'결제 계좌'}${row.archived?' · 보관됨':''}</span>
+          <div class="office-method-face office-method-face--${kind}" style="--office-method-color:${color}" ${card?`data-issuer="${issuer}"`:''}>
+            <span class="office-method-face-label">${card?officeCardIssuers[issuer].label:'결제 계좌'}${row.archived?' · 보관됨':''}</span>
+            ${card?'<span class="office-card-chip" aria-hidden="true"></span>':'<span class="office-passbook-rules" aria-hidden="true"></span>'}
             <strong>${esc(row.name)}</strong>
           </div>
           <div class="office-method-actions">
