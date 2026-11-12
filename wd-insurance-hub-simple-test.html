@@ -12183,6 +12183,8 @@ const wdTest09Storage = (() => {
 <div id="cust-list-pg">
 <div class="sec-hd" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
 <div><div class="sec-title">보험 고객관리</div><div class="sec-sub">고객별 보험업무 허브 · 상담기록 · 설계의뢰 · 청구문의</div></div>
+<button class="btn-sm" id="wd09-bulk-sheet-button" type="button" onclick="wd09SyncAllCustomerSheets()" hidden>기존 고객 시트 만들기</button>
+<span id="wd09-bulk-sheet-status" role="status"></span>
 <button class="btn-p" type="button" onclick="openCustModal()">+ 고객 추가</button>
 </div>
 <div class="notice-box">이 고객관리는 업무 보조용 기록입니다. 주민번호는 기본 화면에서 마스킹 표시됩니다. 계좌번호, 병력 원문, 보험사 비밀번호 등 민감정보는 저장하지 마세요.</div>
@@ -33941,6 +33943,7 @@ function wd09MountDriveSetup(connectDrive,home){
     message=note||connectMessage;
     home?.reset(note);
     window.wd09CustomerSheets=null;
+    window.wd09RefreshBulkSheetButton?.();
     render();
   }
   function reportFolders(){
@@ -34007,6 +34010,40 @@ function wd09MountDriveSetup(connectDrive,home){
 <script id="wd09-customer-sync-script">
 const wd09PendingCustomerSheets=new Map();
 let wd09CustomerSheetSyncing=false;
+let wd09BulkCustomerSheets=null;
+function wd09RenderBulkSheets(){
+  const button=document.getElementById('wd09-bulk-sheet-button');
+  const status=document.getElementById('wd09-bulk-sheet-status');
+  const job=wd09BulkCustomerSheets;
+  button.hidden=_UID!=='WD23000'||!window.wd09CustomerSheets;
+  button.disabled=!!job?.running;
+  button.textContent=job?.remaining.size?'시트 만들기 계속':'기존 고객 시트 만들기';
+  if(job){
+    status.textContent='고객 시트 '+(job.total-job.remaining.size)+' / '+job.total+
+      (job.error?' · '+job.error:job.remaining.size?'':' 완료');
+  }
+}
+window.wd09RefreshBulkSheetButton=wd09RenderBulkSheets;
+async function wd09SyncAllCustomerSheets(){
+  if(_UID!=='WD23000'||!window.wd09CustomerSheets||wd09BulkCustomerSheets?.running)return;
+  if(!wd09BulkCustomerSheets?.remaining.size){
+    const result=await loadCustomersFromSupa();
+    if(!result.ok||_UID!=='WD23000'||!window.wd09CustomerSheets)return;
+    const ids=new Set(getCusts().map(c=>String(c.id)));
+    if(!ids.size||!confirm('등록 고객 '+ids.size+'명의 업무기록·청구현황 시트를 Drive에 만들거나 갱신할까요?'))return;
+    wd09BulkCustomerSheets={total:ids.size,remaining:ids,running:false,error:''};
+  }
+  const job=wd09BulkCustomerSheets;
+  job.running=true;
+  job.error='';
+  for(const id of job.remaining){
+    const kinds=wd09PendingCustomerSheets.get(id)||new Set();
+    for(const kind of Object.keys(WD09_CUSTOMER_SHEETS))kinds.add(kind);
+    wd09PendingCustomerSheets.set(id,kinds);
+  }
+  wd09RenderBulkSheets();
+  void wd09FlushCustomerSheetQueue();
+}
 function wd09QueueCustomerSheets(id,kind){
   const key=String(id);
   const pending=wd09PendingCustomerSheets.get(key)||new Set();
@@ -34038,15 +34075,32 @@ async function wd09FlushCustomerSheetQueue(){
       if(!customer)continue;
       try{
         await service.sync(customer,kinds,wd09ReadCustomerSheetRows);
+        const job=wd09BulkCustomerSheets;
+        if(job?.remaining.delete(id)){
+          if(!job.remaining.size)job.running=false;
+          wd09RenderBulkSheets();
+          if(job.remaining.size)await new Promise(resolve=>setTimeout(resolve,2400));
+        }
       }catch(error){
         const pending=wd09PendingCustomerSheets.get(id)||new Set();
         for(const kind of kinds)pending.add(kind);
         wd09PendingCustomerSheets.set(id,pending);
-        alert('앱 저장은 끝났어요. Google 시트 반영에 실패했어요. '+(error.message||''));
+        const job=wd09BulkCustomerSheets;
+        if(job?.running){
+          job.running=false;
+          job.error=error.message||'시트 반영에 실패했어요.';
+          wd09RenderBulkSheets();
+        }else alert('앱 저장은 끝났어요. Google 시트 반영에 실패했어요. '+(error.message||''));
         break;
       }
     }
-  }finally{wd09CustomerSheetSyncing=false;}
+  }finally{
+    wd09CustomerSheetSyncing=false;
+    if(wd09BulkCustomerSheets?.running){
+      wd09BulkCustomerSheets.running=false;
+      wd09RenderBulkSheets();
+    }
+  }
 }
 function wd09SyncOpenCustomerSheets(){
   if(!_vid)return;
@@ -34180,6 +34234,7 @@ function wd09SyncOpenCustomerSheets(){
       service:wd09DriveFolderService(api,uid,adviser.name),
       onReady(folders){
         window.wd09CustomerSheets=wd09CustomerSheetService(api,folders,uid);
+        wd09RenderBulkSheets();
         void wd09FlushCustomerSheetQueue();
       }
     };
