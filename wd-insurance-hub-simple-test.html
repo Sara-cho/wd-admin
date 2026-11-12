@@ -10725,16 +10725,9 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #det-contracts .wd09-insurance-heading-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
   .wd09-filter-popover {
     position:fixed; inset:auto; top:var(--filter-top,80px); left:var(--filter-left,12px);
-    width:min(304px,calc(100vw - 24px)); max-height:min(430px,75dvh); overflow:auto;
+    width:min(304px,calc(100vw - 24px)); max-height:min(430px,75dvh,var(--filter-space,75dvh)); overflow:auto;
     margin:0; padding:16px; border:1px solid var(--s200); border-radius:12px;
     background:#fff; color:var(--navy); box-shadow:0 8px 24px #13213b24;
-  }
-  @supports (top:anchor(bottom)) {
-    .wd09-filter-popover {
-      top:calc(anchor(bottom) + 8px);
-      left:clamp(12px,calc(anchor(right) - min(304px,calc(100vw - 24px))),calc(100vw - min(304px,calc(100vw - 24px)) - 12px));
-      position-try-fallbacks:flip-block;
-    }
   }
   .wd09-filter-popover:popover-open { animation:wd09-filter-in .16s ease-out; }
   @keyframes wd09-filter-in { from { opacity:0; transform:translateY(-5px); } }
@@ -12326,9 +12319,18 @@ const wdTest09Storage = (() => {
 <!-- 청구문의 -->
 <div id="det-claim" class="wd09-customer-pane" style="display:none;">
 <div class="card">
-<div class="card-hd"><h2 class="card-title">청구현황</h2><button type="button" class="btn-sm p" onclick="openClaimAdd()">+ 청구문의 추가</button></div>
-<div class="notice-box" style="background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:#92400e;"><strong>안내:</strong> 보험금 지급 여부는 앱에서 판단하지 않습니다. 지급 여부는 약관과 보험사 심사 결과에 따라 달라질 수 있습니다.</div>
+<div class="card-hd"><h2 class="card-title">청구현황</h2>
+<div class="wd09-info-actions">
+<button type="button" class="btn-sm" popovertarget="det-claim-filter-popover">검색·필터</button>
+<button type="button" class="btn-sm p" onclick="openClaimAdd()">+ 청구문의 추가</button>
+</div></div>
+<div id="det-claim-filter-popover" class="wd09-filter-popover" popover aria-labelledby="det-claim-filter-title" role="region">
+<h3 id="det-claim-filter-title">검색·필터</h3>
 <div id="det-claim-list-tools" class="cust-work-tools wd09-table-tools"></div>
+<div class="modal-ft">
+<button type="button" class="btn-s" popovertarget="det-claim-filter-popover" popovertargetaction="hide">취소</button>
+<button type="button" class="btn-p" id="det-claim-list-apply">적용</button>
+</div></div>
 <div id="det-claim-list" class="wd09-customer-pane-list"></div>
 </div>
 </div>
@@ -18361,6 +18363,7 @@ function positionCustomerFilters(popover){
   var width=document.documentElement.clientWidth;
   var panelWidth=Math.min(304,width-24);
   popover.style.setProperty('--filter-top',(rect.bottom+8)+'px');
+  popover.style.setProperty('--filter-space',Math.max(40,document.documentElement.clientHeight-rect.bottom-20)+'px');
   popover.style.setProperty('--filter-left',Math.max(12,Math.min(rect.right-panelWidth,width-panelWidth-12))+'px');
 }
 
@@ -19201,7 +19204,7 @@ function renderClaimList(){
   if(!el)return;
   if(_claimdLoadError){el.innerHTML='<div style="text-align:center;padding:20px 0;font-size:13px;color:var(--rd700);">'+claimErrMsg+'</div>';return;}
   list=customerTableRows('det-claim-list',list,{
-    render:renderClaimList, placeholder:'보험사·청구내용 검색',
+    render:renderClaimList, placeholder:'보험사·청구내용 검색', popoverId:'det-claim-filter-popover',
     showSort:false, showReset:false,
     date:function(x){return x.date;},
     search:function(x){return [x.insCompany,x.type,x.content||x.note,x.fileName];},
