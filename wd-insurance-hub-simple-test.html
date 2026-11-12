@@ -10888,12 +10888,25 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #wd09-auto-entry-fields { border:0; margin:0; padding:0; min-inline-size:0; }
   #wd09-auto-entry-fields:disabled { opacity:.62; }
   #wd09-auto-customer-hint { margin:8px 0 0; font-size:13px; color:var(--s600); }
-  #pg-claim .wd09-claim-person button, #pg-auto .wd09-auto-expiry-table button {
+  #pg-claim .wd09-claim-person button {
     min-height:36px; border:0; padding:0; color:var(--purple); background:transparent;
     font:inherit; font-weight:800; text-align:left; cursor:pointer;
   }
-  #pg-claim .wd09-claim-person button:is(:hover,:focus-visible), #pg-auto .wd09-auto-expiry-table button:is(:hover,:focus-visible) { text-decoration:underline; }
-  #pg-auto .wd09-auto-expiry-table { min-width:1120px; table-layout:fixed; }
+  #pg-claim .wd09-claim-person button:is(:hover,:focus-visible) { text-decoration:underline; }
+  #pg-auto .wd09-auto-expiry-frame { max-height:clamp(250px,calc(100dvh - 310px),680px); }
+  #pg-auto .wd09-auto-expiry-table { min-width:1040px; table-layout:fixed; border-collapse:separate; border-spacing:0; }
+  #pg-auto .wd09-auto-expiry-table th { z-index:1; background:var(--s50); }
+  #pg-auto .wd09-auto-expiry-table :is(th,td):not(:last-child) { border-right:1px solid var(--s100); }
+  #pg-auto .wd09-auto-expiry-table tbody tr { cursor:pointer; }
+  #pg-auto .wd09-auto-expiry-table tbody tr:is(:hover,:focus-within) td { background:var(--s50); }
+  #pg-auto .wd09-auto-expiry-table .wd09-auto-detail-trigger {
+    padding:0; border:0; background:none; color:inherit; font:inherit;
+    overflow-wrap:anywhere; text-align:left; cursor:pointer;
+  }
+  #pg-auto .wd09-auto-expiry-table .wd09-auto-detail-trigger:focus-visible {
+    outline:2px solid var(--purple); outline-offset:3px; border-radius:2px;
+  }
+  #modal-auto-detail .wd09-auto-details { width:min(100%,620px); max-height:calc(100dvh - 32px); overflow:auto; }
   #pg-auto .wd09-auto-expiry-table :is(th,td) {
     padding:9px 7px; text-align:left; white-space:normal; overflow-wrap:anywhere; vertical-align:middle;
   }
@@ -10901,14 +10914,12 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     text-align:center; white-space:nowrap; background:var(--s50);
   }
   #pg-auto .wd09-auto-expiry-table :is(th,td):nth-child(7) { text-align:right; white-space:nowrap; }
-  #pg-auto .wd09-auto-expiry-table td:nth-child(7) { font-weight:700; }
+  #pg-auto .wd09-auto-expiry-table td:is(:nth-child(2),:nth-child(7)) { font-weight:800; }
   #pg-auto .wd09-auto-expiry-table td:nth-child(2),
-  #pg-auto .wd09-auto-expiry-table td:nth-child(8),
-  #pg-auto .wd09-auto-expiry-table td:nth-child(9) { font-variant-numeric:tabular-nums; }
+  #pg-auto .wd09-auto-expiry-table td:nth-child(8) { font-variant-numeric:tabular-nums; }
   .wd09-bulk-sheet-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
   #wd09-bulk-sheet-button[hidden], #wd09-bulk-sheet-status:empty { display:none!important; }
   #wd09-bulk-sheet-status { font-size:12px; color:var(--s600); }
-  #pg-auto .wd09-auto-expiry-table a { color:var(--purple); }
   #pg-auto #wd09-auto-list-message { margin:8px 0 12px; font-size:13px; color:var(--s600); }
   #pg-claim #claim-doc { max-height:240px; overflow:auto; }
   #pg-claim .wd09-claim-checklist { display:grid; gap:12px; margin:14px 0; padding-inline-start:19px; }
@@ -16487,8 +16498,10 @@ const wdTest09Storage = (() => {
 </div>
 <!-- ── 자동차보험 상세 모달(사진3종/메모는 여기서만 표시) ── -->
 <div class="modal-ov" id="modal-auto-detail">
-<div class="modal-bx" role="dialog" aria-modal="true" aria-labelledby="wd09-auto-detail-title" style="max-width:520px;">
+<div class="modal-bx wd09-auto-details" role="dialog" aria-modal="true" aria-labelledby="wd09-auto-detail-title">
 <header class="wd09-detail-modal-header"><h2 id="wd09-auto-detail-title">자동차보험 상세</h2><button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="closeModal('modal-auto-detail')">×</button></header>
+<div class="cd-row"><div class="cd-label">고객명</div><div class="cd-val" id="atd-customer">—</div></div>
+<div class="cd-row"><div class="cd-label">연락처</div><div class="cd-val" id="atd-phone">—</div></div>
 <div class="cd-row"><div class="cd-label">보험년도</div><div class="cd-val" id="atd-year">-</div></div>
 <div class="cd-row"><div class="cd-label">보험사</div><div class="cd-val" id="atd-company">-</div></div>
 <div class="cd-row"><div class="cd-label">자동차 만기일</div><div class="cd-val" id="atd-expiry">-</div></div>
@@ -19879,13 +19892,16 @@ async function deleteAutoRecord(id,custId){
 }
 // 자동차보험 상세 모달(사진 3종/메모/등록·수정일은 여기서만 노출) — custId를 명시적으로 받아 상단 관리화면의 "보기"에서도 동작
 var _autoDetailId=null,_autoDetailCustId=null;
-function openAutoDetail(custId,id){
+function openAutoDetail(custId,id,index){
   var c=getCusts().find(function(x){return x.id==custId;});
   if(!c)return;
-  var item=cstAutoList(c).find(function(x){return x.id==id;});
+  const records=cstAutoList(c);
+  const item=id?records.find(x=>String(x.id)===String(id)):records[index];
   if(!item)return;
   _autoDetailCustId=custId;
-  _autoDetailId=id;
+  _autoDetailId=item.id;
+  document.getElementById('atd-customer').textContent=c.name||'—';
+  document.getElementById('atd-phone').textContent=cstFormatPhone(c.phone)||'—';
   var dd=autoDdayInfo(item.expiryDate);
   document.getElementById('atd-year').textContent=item.year||'-';
   document.getElementById('atd-company').textContent=item.company||'-';
@@ -19926,11 +19942,11 @@ function renderAutoManagePage(state){
   const rows=getCusts().flatMap(customer=>{
     const vehicles=new Map();
     const unknownVehicles=[];
-    for(const record of cstAutoList(customer)){
+    for(const [index,record] of cstAutoList(customer).entries()){
       if(!record)continue;
       const plate=String(record.carNumber||record.car_number||'').trim();
       const expiry=String(record.expiryDate||record.expiry_date||'').trim();
-      const row={customer,record,plate,expiry,days:autoDdayInfo(expiry)};
+      const row={customer,record,index,plate,expiry,days:autoDdayInfo(expiry)};
       const key=plate.replace(/[\s-]+/g,'').toUpperCase();
       if(!key){unknownVehicles.push(row);continue;}
       const previous=vehicles.get(key);
@@ -19949,29 +19965,31 @@ function renderAutoManagePage(state){
       ||String(a.customer.name||'').localeCompare(String(b.customer.name||''),'ko');
   });
   message.textContent=rows.length?'전체 '+rows.length+'건':'고객관리에 등록된 자동차보험이 없습니다.';
-  list.innerHTML=rows.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame">'
+  list.innerHTML=rows.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame" tabindex="0" role="region" aria-labelledby="wd09-auto-expiry-title">'
     +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
-    +'<colgroup>'+[5,8,9,9,7,10,9,8,8,7,7,7,6].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
-    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','보험시작일','종목','계약자','피보험자','담당설계사']
+    +'<colgroup>'+[5,9,10,10,8,10,10,9,7,8,7,7].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
+    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','종목','계약자','피보험자','담당설계사']
       .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
-    +rows.map(({customer,record,plate,expiry,days})=>{
+    +rows.map(({customer,record,index,plate,expiry,days})=>{
       const phone=cstFormatPhone(customer.phone);
-      const digits=phone.replace(/\D/g,'');
-      const phoneCell=digits.length>=8?'<a href="tel:'+digits+'">'+esc(phone)+'</a>':esc(phone||'—');
       const detail=wd09AutoFields(record);
       const premium=detail.annualPremium;
-      const vehicle=record.id!=null?'<button type="button" data-customer="'+esc(customer.id)+'" data-record="'+esc(record.id)+'" onclick="openAutoDetail(this.dataset.customer,this.dataset.record)">'+esc(plate||'상세 보기')+'</button>':esc(plate||'—');
-      return '<tr>'
+      const name=esc(customer.name||'이름 없음');
+      return '<tr data-customer="'+esc(customer.id)+'" data-record="'+esc(record.id??'')+'" data-index="'+index+'">'
         +'<td><span class="auto-dday '+days.cls+'">'+esc(days.label)+'</span></td>'
         +'<td>'+esc(expiry||'—')+'</td>'
-        +'<td><button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-contracts\')">'+esc(customer.name||'이름 없음')+'</button></td>'
-        +'<td>'+phoneCell+'</td>'
+        +'<td><button class="wd09-auto-detail-trigger" type="button" aria-label="'+name+' 자동차보험 상세">'+name+'</button></td>'
+        +'<td>'+esc(phone||'—')+'</td>'
         +'<td>'+esc(record.company||record.insurer||'—')+'</td>'
-        +'<td>'+vehicle+'</td>'
+        +'<td>'+esc(plate||'—')+'</td>'
         +'<td>'+(premium===null?'—':premium.toLocaleString('ko-KR')+'원')+'</td>'
-        +[detail.contractDate,detail.startDate,detail.line,detail.policyholder,detail.insured,detail.agent]
+        +[detail.contractDate,detail.line,detail.policyholder,detail.insured,detail.agent]
           .map(value=>'<td>'+esc(value||'—')+'</td>').join('')+'</tr>';
     }).join('')+'</tbody></table></div>':'';
+  list.onclick=event=>{
+    const row=event.target.closest('tbody tr[data-customer]');
+    if(row&&list.contains(row))openAutoDetail(row.dataset.customer,row.dataset.record,Number(row.dataset.index));
+  };
 }
 function renderHomeCusts(){
   var cs=getCusts();
