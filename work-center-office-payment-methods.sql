@@ -11,9 +11,9 @@ create table public.work_office_payment_methods (
   institution text check (institution is null or (kind = 'account' and
     institution = btrim(institution) and char_length(institution) between 1 and 60)),
   last_four text check (last_four is null or last_four ~ '^[0-9]{4}$'),
-  has_card_number boolean not null default false check (
-    not has_card_number or (kind = 'card' and last_four is not null)
-  ),
+  has_number boolean not null default false check (not has_number or last_four is not null),
+  number_length smallint check (number_length is null or
+    (kind = 'card' and number_length between 12 and 19)),
   archived boolean not null default false,
   updated_at timestamptz not null default now()
 );
@@ -48,11 +48,11 @@ alter table public.work_subscriptions
 create schema wd_office_private;
 revoke all on schema wd_office_private from public, anon, authenticated;
 
-create table wd_office_private.card_number_secrets (
+create table wd_office_private.payment_number_secrets (
   method_id uuid primary key references public.work_office_payment_methods(id),
   secret_id uuid not null unique references vault.secrets(id)
 );
-revoke all on wd_office_private.card_number_secrets from public, anon, authenticated;
+revoke all on wd_office_private.payment_number_secrets from public, anon, authenticated;
 
 create function wd_office_private.is_payment_owner()
 returns boolean language sql stable set search_path = '' as $$
@@ -68,7 +68,7 @@ $$;
 revoke all on function wd_office_private.is_payment_owner() from public, anon, authenticated;
 
 create function public.work_office_save_payment_method(
-  p_id uuid, p_expected_updated_at timestamptz, p_changes jsonb, p_card_number text
+  p_id uuid, p_expected_updated_at timestamptz, p_changes jsonb, p_number text
 ) returns uuid language plpgsql security definer set search_path = '' as $$
 declare
   method public.work_office_payment_methods%rowtype;
@@ -91,35 +91,43 @@ begin
     end if;
   end if;
 
-  if p_card_number is not null and (method.kind <> 'card' or p_card_number !~ '^[0-9]{12,19}$') then
-    raise exception 'Invalid card number' using errcode = '22023';
+  if p_number is not null and (
+    (method.kind = 'card' and p_number !~ '^[0-9]{12,19}$')
+    or (method.kind = 'account' and
+      (length(p_number) > 47 or p_number !~ '^[0-9]+(-[0-9]+)*$'
+        or length(replace(p_number, '-', '')) not between 4 and 24))
+  ) then
+    raise exception 'Invalid payment number' using errcode = '22023';
   end if;
 
   if p_changes ? 'name' then method.name := p_changes->>'name'; end if;
   if p_changes ? 'issuer' then method.issuer := p_changes->>'issuer'; end if;
   if p_changes ? 'institution' then method.institution := p_changes->>'institution'; end if;
   if p_changes ? 'archived' then method.archived := (p_changes->>'archived')::boolean; end if;
-  if method.kind = 'account' and p_changes ? 'last_four' then method.last_four := p_changes->>'last_four'; end if;
-  if p_card_number is not null then method.last_four := right(p_card_number, 4); end if;
-  method.has_card_number := coalesce(method.has_card_number, false) or p_card_number is not null;
+  if p_number is not null then
+    method.last_four := right(replace(p_number, '-', ''), 4);
+    method.number_length := case when method.kind = 'card' then length(p_number) else null end;
+    method.has_number := true;
+  end if;
+  method.has_number := coalesce(method.has_number, false);
 
   if p_expected_updated_at is null then
-    insert into public.work_office_payment_methods(id,kind,name,issuer,institution,last_four,has_card_number,archived)
-      values (p_id,method.kind,method.name,method.issuer,method.institution,method.last_four,method.has_card_number,method.archived);
+    insert into public.work_office_payment_methods(id,kind,name,issuer,institution,last_four,has_number,number_length,archived)
+      values (p_id,method.kind,method.name,method.issuer,method.institution,method.last_four,method.has_number,method.number_length,method.archived);
   else
     update public.work_office_payment_methods
       set name=method.name, issuer=method.issuer, institution=method.institution, last_four=method.last_four,
-          has_card_number=method.has_card_number, archived=method.archived, updated_at=clock_timestamp()
+          has_number=method.has_number, number_length=method.number_length, archived=method.archived, updated_at=clock_timestamp()
       where id=p_id;
   end if;
 
-  if p_card_number is not null then
-    select secret_id into existing_secret from wd_office_private.card_number_secrets where method_id=p_id;
+  if p_number is not null then
+    select secret_id into existing_secret from wd_office_private.payment_number_secrets where method_id=p_id;
     if found then
-      perform vault.update_secret(existing_secret, p_card_number);
+      perform vault.update_secret(existing_secret, p_number);
     else
-      insert into wd_office_private.card_number_secrets(method_id,secret_id)
-        values (p_id,vault.create_secret(p_card_number));
+      insert into wd_office_private.payment_number_secrets(method_id,secret_id)
+        values (p_id,vault.create_secret(p_number));
     end if;
   end if;
   return p_id;
@@ -128,23 +136,24 @@ $$;
 revoke all on function public.work_office_save_payment_method(uuid,timestamptz,jsonb,text) from public, anon, authenticated;
 grant execute on function public.work_office_save_payment_method(uuid,timestamptz,jsonb,text) to authenticated;
 
-create function public.work_office_reveal_card_number(p_id uuid)
+create function public.work_office_reveal_payment_number(p_id uuid, p_kind text)
 returns text language plpgsql security definer set search_path = '' as $$
 declare
-  card_number text;
+  payment_number text;
 begin
   if not wd_office_private.is_payment_owner() then
     raise exception 'Access denied' using errcode = '42501';
   end if;
   perform set_config('response.headers','[{"Cache-Control":"private, no-store"},{"Pragma":"no-cache"}]',true);
-  select secret.decrypted_secret into card_number
-  from wd_office_private.card_number_secrets mapping
+  select secret.decrypted_secret into payment_number
+  from wd_office_private.payment_number_secrets mapping
   join vault.decrypted_secrets secret on secret.id=mapping.secret_id
-  where mapping.method_id=p_id;
-  return card_number;
+  join public.work_office_payment_methods method on method.id=mapping.method_id
+  where mapping.method_id=p_id and method.kind=p_kind;
+  return payment_number;
 end;
 $$;
-revoke all on function public.work_office_reveal_card_number(uuid) from public, anon, authenticated;
-grant execute on function public.work_office_reveal_card_number(uuid) to authenticated;
+revoke all on function public.work_office_reveal_payment_number(uuid,text) from public, anon, authenticated;
+grant execute on function public.work_office_reveal_payment_number(uuid,text) to authenticated;
 
 commit;
