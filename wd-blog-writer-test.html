@@ -428,16 +428,16 @@ chooseConfigured=function(i){const x=configuredResult?.items[i];if(!x)return;if(
 chooseKeywordArticle=function(i){const x=keywordArticleRows[i];if(!x)return;const t={id:crypto.randomUUID(),live:true,title:x.article.title,data:{keyword:activeResearch.query,category:'정보·비교',articles:[x.article]}};s.topics.push(t);liveChoose(t.id)};
 const manuscriptFields=['title','draft','selected','blogCategory','blogMode','sourceDraft','photoNotes','keywords','experience','evidence','sourceNotes','application','cta','disclosure'];
 function commitManuscripts(next){try{localStorage.setItem(KEY,JSON.stringify(next));s=next;return true}catch{toast('저장하지 못했습니다. 현재 원고를 복사해 보관해 주세요.');return false}}
-function saveManuscript(){sync();if(!s.title.trim()||!s.draft.trim())return toast('제목과 원고를 입력해 주세요.');const rows=[...(s.manuscripts||[])];const old=rows.find(x=>x.id===s.activeManuscriptId);const now=new Date().toISOString();const item={...old,id:old?.id||crypto.randomUUID(),createdAt:old?.createdAt||now,updatedAt:now,status:old?.status||'draft',content:Object.fromEntries(manuscriptFields.map(k=>[k,s[k]||'']))};const index=rows.findIndex(x=>x.id===item.id);if(index<0)rows.unshift(item);else rows[index]=item;if(commitManuscripts({...s,manuscripts:rows,activeManuscriptId:item.id}))toast('원고를 저장했습니다. 글 관리에서 발행 여부를 체크할 수 있습니다.')}
+function saveManuscript(){sync();if(!s.title.trim()||!s.draft.trim())return toast('제목과 원고를 입력해 주세요.');const rows=[...(s.manuscripts||[])];const old=rows.find(x=>x.id===s.activeManuscriptId);const now=new Date().toISOString();const item={...old,id:old?.id||crypto.randomUUID(),createdAt:old?.createdAt||now,updatedAt:now,status:old?.status||'draft',content:Object.fromEntries(manuscriptFields.map(k=>[k,s[k]||'']))};const index=rows.findIndex(x=>x.id===item.id);if(index<0)rows.unshift(item);else rows[index]=item;if(commitManuscripts({...s,manuscripts:rows,activeManuscriptId:item.id}))toast('원고를 저장했어요. 글 만들기의 저장한 원고에서 이어 쓸 수 있어요.')}
 function openManuscript(i){const item=s.manuscripts?.[i];if(!item)return;if(s.draft&&s.draft!==item.content.draft&&!confirm('작성 중인 내용을 바꿀까요? 보관하려면 취소하고 원고 저장을 눌러 주세요.'))return;Object.assign(s,item.content,{activeManuscriptId:item.id});save();go('write')}
 function markManuscript(i,checked){const rows=structuredClone(s.manuscripts||[]);if(!rows[i])return;rows[i].status=checked?'published':'draft';rows[i].publishedAt=checked?new Date().toISOString():null;if(commitManuscripts({...s,manuscripts:rows})){render();toast(checked?'발행 완료로 표시했습니다.':'미발행으로 변경했습니다.')}else render()}
 function setManuscriptUrl(i,value){if(value&&!safeURL(value))return toast('https:// 형식의 주소를 입력해 주세요.');const rows=structuredClone(s.manuscripts||[]);if(!rows[i])return;rows[i].url=value.trim();if(commitManuscripts({...s,manuscripts:rows}))toast('게시글 주소를 저장했습니다.')}
 let manuscriptFilter='all';
 function manuscriptsView(){const all=s.manuscripts||[];const rows=all.map((x,i)=>({x,i})).filter(({x})=>manuscriptFilter==='all'||x.status===manuscriptFilter);return `<section class="card space"><div class="row between"><h2>저장한 원고 · ${all.length}개</h2><select aria-label="발행 상태 필터" onchange="manuscriptFilter=this.value;render()">${[['all','전체'],['draft','미발행'],['published','발행 완료']].map(([v,t])=>`<option value="${v}" ${v===manuscriptFilter?'selected':''}>${t}</option>`).join('')}</select></div>${rows.length?rows.map(({x,i})=>`<article class="manuscript-row"><div><h3>${esc(x.content.title)}</h3><p class="muted">저장 ${new Date(x.updatedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}${x.publishedAt?' · 발행 체크 '+new Date(x.publishedAt).toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'}):''}</p></div><div class="row"><label><input type="checkbox" style="width:auto" ${x.status==='published'?'checked':''} onchange="markManuscript(${i},this.checked)"> 발행 완료</label><button onclick="openManuscript(${i})">원고 열기</button></div><input aria-label="발행한 글 주소" placeholder="발행한 글 주소 (선택)" value="${esc(x.url||'')}" onchange="setManuscriptUrl(${i},this.value)">${x.url?link(x.url,'게시글 열기 ↗'):''}</article>`).join(''):'<p class="empty">저장한 원고가 없습니다. 글 만들기에서 원고를 저장해 주세요.</p>'}<p class="muted">발행 여부는 직접 체크합니다. 원고는 현재 브라우저에 저장됩니다.</p></section>`}
 const blogBeforeManuscripts=views.blog;
-views.blog=()=>manuscriptsView()+blogBeforeManuscripts();
+views.blog=()=>blogBeforeManuscripts();
 const writeBeforeManuscripts=views.write;
-views.write=()=>writeBeforeManuscripts().replace('글감을 고르면 초안이 바로 열립니다. 문장을 다듬고 실제 경험과 출처를 확인해 주세요.','글감·참고 자료와 작성 규칙을 확인하고 원고를 작성해 저장하세요.').replace('이 제목으로 초안 만들기','작성 규칙으로 집필 준비').replace('바로 편집할 원고','블로그 원고').replace('글감 찾기에서 주제를 고르거나 제목으로 초안을 만들어 주세요.','원고를 작성하거나 집필한 본문을 붙여 넣어 주세요.').replace('<button class="primary" onclick="go(\'publish\')">발행·홍보로 →</button>','<button class="primary" onclick="saveManuscript()">원고 저장</button><button onclick="go(\'blog\')">저장한 글 보기</button>').replace('자동 초안은 구성 규칙으로 작성했습니다. 실제 경험·성과를 만들지 않았습니다. 뉴스 원문과 날짜를 확인하고 문장을 다듬어 발행해 주세요.','AI 자동 집필은 아직 연결되지 않았습니다. 집필 지시문에는 저장된 회사 설정과 WD WAVE 작성 규칙이 함께 반영됩니다.');
+views.write=()=>writeBeforeManuscripts().replace('글감을 고르면 초안이 바로 열립니다. 문장을 다듬고 실제 경험과 출처를 확인해 주세요.','글감·참고 자료와 작성 규칙을 확인하고 원고를 작성해 저장하세요.').replace('이 제목으로 초안 만들기','작성 규칙으로 집필 준비').replace('바로 편집할 원고','블로그 원고').replace('글감 찾기에서 주제를 고르거나 제목으로 초안을 만들어 주세요.','원고를 작성하거나 집필한 본문을 붙여 넣어 주세요.').replace('<button class="primary" onclick="go(\'publish\')">발행·홍보로 →</button>','<button class="primary" onclick="saveManuscript()">원고 저장</button><button onclick="showSavedManuscripts()">저장한 원고 보기</button>').replace('자동 초안은 구성 규칙으로 작성했습니다. 실제 경험·성과를 만들지 않았습니다. 뉴스 원문과 날짜를 확인하고 문장을 다듬어 발행해 주세요.','AI 자동 집필은 아직 연결되지 않았습니다. 집필 지시문에는 저장된 회사 설정과 WD WAVE 작성 규칙이 함께 반영됩니다.');
 delete names.publish;
 const goBeforeManuscripts=go;go=function(p){return goBeforeManuscripts(p==='publish'?'blog':p)};
 
@@ -526,6 +526,20 @@ function completeBlogSetup(){
 const goBeforeSetup=go;
 go=function(p){if(p!=='settings'&&!setupReady()){toast('먼저 설정을 확인한 뒤 설정 반영하기를 눌러 주세요.');return goBeforeSetup('settings')}return goBeforeSetup(p)};
 page=setupReady()?'today':'settings';
+
+// Saved manuscripts belong to writing; published posts stay in blog management.
+let savedManuscriptsOpen=false;
+function showSavedManuscripts(){sync();savedManuscriptsOpen=true;render();$('savedManuscripts').scrollIntoView({behavior:'smooth',block:'start'})}
+const openManuscriptBeforeSeparation=openManuscript;
+openManuscript=function(i){openManuscriptBeforeSeparation(i);if(s.activeManuscriptId===s.manuscripts?.[i]?.id){savedManuscriptsOpen=false;render();$('title')?.focus()}};
+const writeBeforeSeparation=views.write;
+views.write=function(){return `<details id="savedManuscripts" class="card space" ${savedManuscriptsOpen?'open':''} ontoggle="savedManuscriptsOpen=this.open"><summary style="cursor:pointer;font-weight:700;font-size:18px;padding:4px 0">저장한 원고 <span class="muted">· ${(s.manuscripts||[]).length}개</span></summary><p class="muted">저장한 글을 불러와 이어서 작성하세요. 실제 발행한 게시물은 글 관리에서 확인할 수 있어요.</p>${manuscriptsView()}</details>`+writeBeforeSeparation()};
+
+// Open Naver's own statistics without leaving the editor.
+names.results='네이버 통계 ↗';
+const NAVER_STATS_URL='https://admin.blog.naver.com/wdwave/stat/today';
+const goBeforeExternalStats=go;
+go=function(p){if(p==='results'){window.open(NAVER_STATS_URL,'_blank','noopener,noreferrer');return}return goBeforeExternalStats(p)};
 
 render();
 </script></html>
