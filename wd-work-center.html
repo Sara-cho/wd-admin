@@ -708,7 +708,7 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-workspace .wd109-office-tabs{display:flex;flex-wrap:wrap}
 .office-workspace .wd109-office-tabs [role="tab"]{font-size:16px;min-width:auto}
 .office-workspace .office-overview{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px;align-items:start}
-.office-workspace .office-calendar,.office-workspace .office-week-detail,.office-workspace .office-payment-section,.office-workspace .office-legacy-cards,.office-workspace .office-subscriptions{min-width:0;padding:16px;border:1px solid #e7ddf0;border-radius:12px}
+.office-workspace .office-calendar,.office-workspace .office-week-detail,.office-workspace .office-payment-section,.office-workspace .office-legacy-cards,.office-workspace .office-subscriptions,.office-workspace .office-statistics{min-width:0;padding:16px;border:1px solid #e7ddf0;border-radius:12px;background:#fff}
 .office-workspace .office-calendar-filters,.office-workspace .office-legend{display:flex;gap:5px;flex-wrap:wrap}
 .office-workspace .office-calendar-filters button[aria-pressed="true"]{background:#f0e8fc;border-color:#9f85dc;color:#50258f;font-weight:750}
 .office-workspace .office-legend{margin-top:10px}
@@ -727,7 +727,9 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-workspace .office-day-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .office-workspace .office-detail-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .office-workspace .office-detail-head h2{margin:0}
-.office-workspace .office-week-section{margin-top:12px;border-top:1px solid #eee7f4}
+.office-workspace .office-week-heading{padding:10px 12px;border-radius:8px;background:#6433d8;color:#fff}
+.office-workspace .office-week-heading .smallText{color:#f5efff}
+.office-workspace .office-week-section{margin-top:12px;padding:0 10px 6px;border:1px solid #eee7f4;border-radius:8px;background:#fff}
 .office-workspace .office-week-section h3{margin:12px 0 4px}
 .office-workspace .office-events,.office-workspace .office-method-list,.office-workspace .office-subscription-list{list-style:none;margin:8px 0 0;padding:0}
 .office-workspace .office-events li{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:start;gap:6px;padding:9px 0;border-bottom:1px solid #eee7f4;font-size:13px}
@@ -773,6 +775,24 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-method-detail #officeConnectSubscription label{margin:0;flex:1 1 160px}
 .office-workspace .office-legacy-cards{margin-top:16px}
 .office-workspace .office-legacy-cards button{margin:3px}
+.office-workspace .office-statistics-period{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.office-workspace .office-statistics-period label{margin:0}
+.office-workspace .office-statistics-period select{display:block;min-width:105px;margin-top:4px;padding:7px}
+.office-workspace .office-statistics-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:15px}
+.office-workspace .office-statistics-total{min-width:0;padding:10px 12px;border:1px solid #e7ddf0;border-radius:8px;background:#fff}
+.office-workspace .office-statistics-total span{display:block;color:#655978;font-size:12px}
+.office-workspace .office-statistics-total strong{color:#4b2686;font-size:17px;overflow-wrap:anywhere}
+.office-workspace .office-statistics-total[data-stat-kind="income"] strong{color:#364889}
+.office-workspace .office-statistics-total[data-stat-kind="expense"] strong{color:#9a3e64}
+.office-workspace .office-statistics-table{font-variant-numeric:tabular-nums}
+.office-workspace .office-statistics-table td:not(.office-statistics-bars){white-space:nowrap}
+.office-workspace .office-statistics-bars{width:24%;min-width:90px}
+.office-workspace .office-statistics-bars div{background:#f5f1f8;height:5px;border-radius:3px;margin:3px 0}
+.office-workspace .office-statistics-bars span{display:block;height:100%;border-radius:3px}
+.office-workspace .office-stat-bar-income{background:#556bbb}
+.office-workspace .office-stat-bar-expense{background:#b45c83}
+@media(max-width:640px){.office-workspace .office-statistics-bars{display:none}.office-workspace .office-statistics-total{padding:7px}.office-workspace .office-statistics-total strong{font-size:14px}}
+
 @media(max-width:1150px){.office-workspace .office-day-name{display:none}}
 @media(max-width:1050px){.office-workspace .office-overview{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:640px){
@@ -3657,7 +3677,7 @@ function employeePayslipList(files){
 }
 
 const officeLedgerTabs=['수입','지출','구독'];
-const officeTabs=['전체관리',...officeLedgerTabs,'결제수단관리'];
+const officeTabs=['전체내역',...officeLedgerTabs,'결제수단관리','통계'];
 const officeCardKey='wd_work_center_test_payment_cards';
 const officeMethodTable='work_office_payment_methods';
 const officeMethodKinds={card:'결제 카드',account:'결제 계좌'};
@@ -3716,22 +3736,11 @@ function officeEventList(events,empty){
     <strong>${officeMoney(row.amount)}</strong></li>`).join('')}</ul>`:`<p class="empty">${empty}</p>`;
 }
 
-function officeDashboardView({events,weekEvents,week,month,day,filter}){
+function officeCalendarGrid(events,month,day,types,label){
   const {days,leading,trailing}=monthCalendarDates(month);
   const byDay=new Map(days.map(date=>[date,[]]));
   for(const event of events)byDay.get(event.date)?.push(event);
-  const types=filter==='all'?officeCalendarTypes:officeCalendarTypes.filter(item=>item.kind===filter);
-  const shown=day?byDay.get(day)||[]:weekEvents;
-  return `<div class="office-overview">
-    <section class="office-calendar" aria-labelledby="officeCalendarTitle">
-      <div class="office-detail-head"><h2 id="officeCalendarTitle">결제 캘린더</h2>
-        <div class="office-calendar-filters" role="group" aria-label="결제 캘린더 보기">
-          ${[['all','전체'],['income','수입'],['expense','지출']].map(([value,label])=>
-            `<button type="button" class="small" data-office-filter="${value}" aria-pressed="${filter===value}">${label}</button>`).join('')}
-        </div>
-      </div>
-      <div class="office-legend">${types.map(({kind,label})=>`<span data-kind="${kind}">${label}</span>`).join('')}</div>
-      <div class="office-month-grid" aria-label="${esc(staffMonthLabel(month))} 결제 캘린더">
+  return `<div class="office-month-grid" aria-label="${esc(staffMonthLabel(month))} ${label}">
         ${[...'월화수목금토일'].map(label=>`<span class="office-weekday">${label}</span>`).join('')}
         ${'<span aria-hidden="true"></span>'.repeat(leading)}
         ${days.map(date=>{
@@ -3747,10 +3756,25 @@ function officeDashboardView({events,weekEvents,week,month,day,filter}){
           </button>`;
         }).join('')}
         ${'<span aria-hidden="true"></span>'.repeat(trailing)}
+      </div>`;
+}
+
+function officeDashboardView({events,weekEvents,week,month,day,filter}){
+  const types=filter==='all'?officeCalendarTypes:officeCalendarTypes.filter(item=>item.kind===filter);
+  const shown=day?events.filter(event=>event.date===day):weekEvents;
+  return `<div class="office-overview">
+    <section class="office-calendar" aria-labelledby="officeCalendarTitle">
+      <div class="office-detail-head"><h2 id="officeCalendarTitle">사무실 운영 캘린더</h2>
+        <div class="office-calendar-filters" role="group" aria-label="사무실 운영 캘린더 보기">
+          ${[['all','전체'],['income','수입'],['expense','지출']].map(([value,label])=>
+            `<button type="button" class="small" data-office-filter="${value}" aria-pressed="${filter===value}">${label}</button>`).join('')}
+        </div>
       </div>
+      <div class="office-legend">${types.map(({kind,label})=>`<span data-kind="${kind}">${label}</span>`).join('')}</div>
+      ${officeCalendarGrid(events,month,day,types,'사무실 운영 캘린더')}
     </section>
     <section class="office-week-detail" aria-labelledby="officeWeekTitle">
-      <div class="office-detail-head"><h2 id="officeWeekTitle">${day?esc(attendanceDate(day)):'이번 주 자금 내역'}</h2>
+      <div class="office-detail-head office-week-heading"><h2 id="officeWeekTitle">${day?esc(attendanceDate(day)):'이번 주 자금 내역'}</h2>
         ${day?'<button type="button" class="small" id="officeThisWeek">이번 주 보기</button>':
           `<span class="smallText">${officeDateLabel(week[0])} ~ ${officeDateLabel(week.at(-1))}</span>`}</div>
       <section class="office-week-section"><h3>나가는 돈</h3>
@@ -3775,27 +3799,89 @@ async function officeOverviewData(month){
   return {events:results[0],weekEvents,week,month};
 }
 
-function officeSubscriptionView(rows,month,table){
+function officeSubscriptionView(rows,month,table,day){
   const schedule=rows.flatMap((row,index)=>{
     const date=officeSubscriptionDate(row,month);
     return date?[{row,index,date}]:[];
   }).sort((a,b)=>a.date.localeCompare(b.date)||String(a.row.service_name).localeCompare(String(b.row.service_name),'ko'));
-  return `<section class="office-subscriptions" aria-labelledby="officeSubscriptionTitle">
-    <div class="office-detail-head"><h2 id="officeSubscriptionTitle">${esc(staffMonthLabel(month))} 구독 결제 일정</h2>
-      <span class="smallText">${schedule.length}건</span></div>
-    ${schedule.length?`<ul class="office-subscription-list">${schedule.map(({row,index,date})=>`<li>
+  const events=schedule.map(entry=>({...entry,tab:'구독',kind:'subscription'}));
+  const shown=day?schedule.filter(entry=>entry.date===day):schedule;
+  return `<div class="office-overview">
+    <section class="office-calendar" aria-labelledby="officeSubscriptionCalendarTitle">
+      <h2 id="officeSubscriptionCalendarTitle">구독 달력</h2>
+      ${officeCalendarGrid(events,month,day,[officeCalendarTypes[0]],'구독 달력')}
+    </section>
+    <section class="office-subscriptions" aria-labelledby="officeSubscriptionTitle">
+    <div class="office-detail-head"><h2 id="officeSubscriptionTitle">구독 결제 일정</h2>
+      ${day?'<button class="small" type="button" id="officeSubscriptionAllDays">이번 달 전체</button>':''}</div>
+    <p class="smallText">${esc(day?attendanceDate(day):staffMonthLabel(month))} · ${shown.length}건</p>
+    ${shown.length?`<ul class="office-subscription-list">${shown.map(({row,index,date})=>`<li>
       <time datetime="${date}"><strong>${Number(date.slice(8))}</strong><span>일</span></time>
       <div><strong>${esc(officeRecordName(row,'구독'))}</strong>
         <small>${esc([row.billing_cycle,row.payment_method].filter(Boolean).join(' · '))}</small></div>
       <strong>${officeMoney(row.amount)}</strong>
       ${officeRecordEditable(row,'구독')?`<button class="small" type="button" data-office-edit="${index}">수정</button>`:''}</li>`).join('')}</ul>`:
-      '<p class="empty">이 달에 예정된 구독 결제가 없어요.</p>'}
+      `<p class="empty">${day?'이 날짜에 예정된 구독 결제가 없어요.':'이 달에 예정된 구독 결제가 없어요.'}</p>`}
     <details class="instruction-step office-subscription-all"><summary>전체 구독 관리</summary>${table}</details>
+    </section>
+  </div>`;
+}
+
+async function officeStatisticsRows(){
+  const query=new URLSearchParams({
+    user_id:'in.('+managerHqAccount.uid+','+legacyStaffHqLogin+')',
+    select:'id,flow_type,actual_date,amount',actual_date:'not.is.null',order:'actual_date.asc,id.asc'
+  });
+  const rows=[];
+  for(let offset=0;;offset+=200){
+    query.set('limit','200');query.set('offset',String(offset));
+    const page=await officeLedgerRequest('지출',query);
+    rows.push(...page);
+    if(page.length<200)return rows;
+  }
+}
+
+function officeStatisticsData(rows,currentYear){
+  const monthly=new Map(),yearly=new Map([[currentYear,{income:0,expense:0}]]);
+  for(const {actual_date:date,flow_type:flow,amount} of rows){
+    const key=flow==='수입'?'income':flow==='지출'?'expense':null,value=Number(amount);
+    if(!key||!date||!Number.isFinite(value))continue;
+    for(const [groups,period] of [[monthly,date.slice(0,7)],[yearly,date.slice(0,4)]]){
+      if(!groups.has(period))groups.set(period,{income:0,expense:0});
+      groups.get(period)[key]+=value;
+    }
+  }
+  return {monthly,yearly,years:[...yearly.keys()].sort().reverse()};
+}
+
+function officeStatisticsView(data,mode,year){
+  const empty={income:0,expense:0};
+  const rows=mode==='month'?Array.from({length:12},(_,i)=>({
+    label:(i+1)+'월',...(data.monthly.get(year+'-'+String(i+1).padStart(2,'0'))||empty)
+  })):data.years.map(value=>({label:value+'년',...data.yearly.get(value)}));
+  const total=rows.reduce((sum,row)=>({income:sum.income+row.income,expense:sum.expense+row.expense}),empty);
+  const maximum=Math.max(1,...rows.flatMap(row=>[row.income,row.expense]));
+  const cards=[['수입',total.income,'income'],['지출',total.expense,'expense'],['수입 − 지출',total.income-total.expense,'balance']];
+  return `<section class="office-statistics" aria-labelledby="officeStatisticsTitle">
+    <div class="office-detail-head"><h2 id="officeStatisticsTitle">수입·지출 통계</h2>
+      <div class="office-calendar-filters" role="group" aria-label="통계 조회 단위">
+        ${[['month','월별'],['year','연별']].map(([value,label])=>`<button class="small" type="button" data-office-statistics-mode="${value}" aria-pressed="${mode===value}">${label}</button>`).join('')}</div>
+    </div>
+    <div class="office-statistics-period">
+      ${mode==='month'?`<label>조회 연도<select id="officeStatisticsYear">${data.years.map(value=>`<option value="${esc(value)}" ${value===year?'selected':''}>${esc(value)}년</option>`).join('')}</select></label>`:'<span class="smallText">등록된 연도 전체</span>'}
+      <span class="smallText">입금일·지출일이 있는 내역 기준</span>
+    </div>
+    <div class="office-statistics-summary">${cards.map(([label,amount,kind])=>`<div class="office-statistics-total" data-stat-kind="${kind}"><span>${label}</span><strong>${officeMoney(amount)}</strong></div>`).join('')}</div>
+    <div class="wd105-admin-table"><table class="wd58-list-table office-statistics-table">
+      <thead><tr><th scope="col">기간</th><th scope="col">수입</th><th scope="col">지출</th><th scope="col">수입 − 지출</th><th scope="col" class="office-statistics-bars">수입·지출 비교</th></tr></thead>
+      <tbody>${rows.map(({label,income,expense})=>`<tr><th scope="row">${esc(label)}</th><td>${officeMoney(income)}</td><td>${officeMoney(expense)}</td><td>${officeMoney(income-expense)}</td>
+        <td class="office-statistics-bars" aria-hidden="true"><div><span class="office-stat-bar-income" style="width:${Math.max(0,income)/maximum*100}%"></span></div><div><span class="office-stat-bar-expense" style="width:${Math.max(0,expense)/maximum*100}%"></span></div></td></tr>`).join('')}</tbody>
+    </table></div>
   </section>`;
 }
 
 async function officePaymentMethods(){
-  const query=new URLSearchParams({select:'id,kind,name,issuer,institution,last_four,has_card_number,archived,updated_at',order:'name.asc,id.asc'});
+  const query=new URLSearchParams({select:'id,kind,name,issuer,institution,last_four,has_number,number_length,archived,updated_at',order:'name.asc,id.asc'});
   const rows=[];
   for(let offset=0;;offset+=200){
     query.set('limit','200');query.set('offset',String(offset));
@@ -3924,9 +4010,9 @@ function officeMethodDetailView(row){
     <dl class="office-method-meta">
       <div><dt>별칭</dt><dd>${esc(row.name)}</dd></div>
       <div><dt>${card?'카드사':'은행'}</dt><dd>${esc(institution||'미등록')}</dd></div>
-      <div class="office-method-number-row"><dt>${card?'카드번호':'계좌번호 끝 4자리'}</dt>
-        <dd><span id="officeCardNumberValue">${esc(officeMaskedNumber(row))}</span>
-        ${card&&row.has_card_number?`<button type="button" class="small office-card-eye" id="officeRevealCardNumber" aria-pressed="false" aria-label="전체 카드번호 보기" aria-controls="officeCardNumberValue">
+      <div class="office-method-number-row"><dt>${card?'카드번호':'계좌번호'}</dt>
+        <dd><span id="officePaymentNumberValue">${esc(!card&&row.has_number?'계좌번호를 불러오는 중…':officeMaskedNumber(row))}</span>
+        ${card&&row.has_number?`<button type="button" class="small office-card-eye" id="officeRevealCardNumber" aria-pressed="false" aria-label="전체 카드번호 보기" aria-controls="officePaymentNumberValue">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.4"/><path class="office-eye-strike" d="m4 4 16 16"/>
           </svg></button>`:''}</dd></div>
@@ -3971,8 +4057,28 @@ function officeCardNumber(value){
   return digits;
 }
 
+function officeAccountNumber(value){
+  const input=String(value||'').trim().replace(/ /g,'');
+  if(!input)return null;
+  const count=input.replaceAll('-','').length;
+  if(!/^[0-9]+(-[0-9]+)*$/.test(input)||count<4||count>24)
+    throw new Error('계좌번호를 숫자와 하이픈으로 입력해 주세요.');
+  return input;
+}
+
 function officeMaskedNumber(row){
-  return row.last_four?'•••• '+row.last_four:'미등록';
+  if(!row.last_four)return '미등록';
+  const length=row.kind==='card'?(row.number_length||16):8;
+  return '•'.repeat(length-4).match(/.{1,4}/g).join(' ')+' '+row.last_four;
+}
+
+async function showOfficeAccountNumber(method,layer){
+  if(!method.has_number)return;
+  const value=$('officePaymentNumberValue');
+  try{
+    const number=await officePaymentRpc('work_office_reveal_payment_number',{p_id:method.id,p_kind:'account'});
+    if(layer.isConnected)value.textContent=number||'등록된 계좌번호를 확인할 수 없어요.';
+  }catch(error){if(layer.isConnected)value.textContent=error.message;}
 }
 
 async function officePaymentRpc(name,payload){
@@ -3993,16 +4099,16 @@ async function officePaymentRpc(name,payload){
 }
 
 async function saveOfficePaymentMethod(row,changes){
-  const {card_number=null,...details}=changes;
+  const {number=null,...details}=changes;
   const id=row?.id||crypto.randomUUID();
   const saved=await officePaymentRpc('work_office_save_payment_method',{
-    p_id:id,p_expected_updated_at:row?.updated_at||null,p_changes:details,p_card_number:card_number
+    p_id:id,p_expected_updated_at:row?.updated_at||null,p_changes:details,p_number:number
   });
   if(saved!==id)throw new Error('결제수단 저장을 확인하지 못했어요.');
 }
 
 function bindOfficeCardNumber(method,layer,status){
-  const button=$('officeRevealCardNumber'),value=$('officeCardNumberValue');
+  const button=$('officeRevealCardNumber'),value=$('officePaymentNumberValue');
   if(!button||!value)return;
   let request=0,timer;
   const hide=()=>{
@@ -4028,7 +4134,7 @@ function bindOfficeCardNumber(method,layer,status){
     button.disabled=true;
     status.textContent='';
     try{
-      const digits=await officePaymentRpc('work_office_reveal_card_number',{p_id:method.id});
+      const digits=await officePaymentRpc('work_office_reveal_payment_number',{p_id:method.id,p_kind:'card'});
       if(!layer.isConnected||id!==request||document.hidden)return;
       if(typeof digits!=='string'||!/^\d{12,19}$/.test(digits))throw new Error('등록된 전체 카드번호를 확인할 수 없어요.');
       value.textContent=digits.match(/.{1,4}/g).join(' ');
@@ -4179,7 +4285,8 @@ function bindOfficeLedger(){
   const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
   const tabs=officeTabs.map((_,i)=>$('officeTab'+i));
   const active=()=>currentUser==='manager'&&S.nav==='office'&&panel.isConnected;
-  let tab=officeTabs[0],request=0,selectedDay='',calendarFilter='all';
+  let tab=officeTabs[0],request=0,selectedDay='',subscriptionDay='',calendarFilter='all';
+  let statisticsMode='month',statisticsYear=localDay().slice(0,4);
   const paintOverview=data=>{
     content.innerHTML=officeDashboardView({...data,day:selectedDay,filter:calendarFilter});
     content.querySelectorAll('[data-office-filter]').forEach(button=>button.onclick=()=>{
@@ -4209,9 +4316,6 @@ function bindOfficeLedger(){
       if('name' in changes&&(!changes.name||changes.name.length>60)){
         output.textContent='결제수단 별칭을 1~60자로 입력해 주세요.';return;
       }
-      if(changes.last_four&&!/^[0-9]{4}$/.test(changes.last_four)){
-        output.textContent='번호 끝 4자리를 숫자로 입력해 주세요.';return;
-      }
       button.disabled=true;
       output.textContent='저장 중…';
       try{
@@ -4233,7 +4337,8 @@ function bindOfficeLedger(){
         <label>${card?'카드 별칭':'계좌 별칭'}<input name="name" maxlength="60" required placeholder="${card?'예: 법인카드, 회사결제카드':'예: 운영계좌, 교육비 입금계좌'}" value="${esc(row?.name||'')}"></label>
         ${card?`<label>카드번호<input name="card_number" type="password" inputmode="numeric" autocomplete="off" maxlength="23" placeholder="${row?.last_four?'등록 번호 끝 '+esc(row.last_four):'카드번호 입력'}">
           ${row?.last_four?'<small>번호를 바꿀 때만 다시 입력해 주세요.</small>':''}</label>`:
-          `<label>계좌번호 끝 4자리<input name="last_four" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" value="${esc(row?.last_four||'')}"></label>`}
+          `<label>계좌번호<input name="account_number" type="text" inputmode="numeric" autocomplete="off" maxlength="47" placeholder="${row?.last_four?'등록 번호 끝 '+esc(row.last_four):'전체 계좌번호 입력'}">
+            ${row?.last_four?'<small>번호를 바꿀 때만 다시 입력해 주세요.</small>':''}</label>`}
         <p id="officeMethodEditStatus" class="smallText" role="status"></p>
         <div class="actions"><button type="submit" class="primary">저장</button></div></form>`,label+(row?' 수정':' 추가'));
       const form=$('officeMethodEdit');
@@ -4243,12 +4348,9 @@ function bindOfficeLedger(){
         if(!row)changes.kind=kind;
         if(card){
           changes.issuer=data.get('issuer')||null;
-          try{changes.card_number=officeCardNumber(data.get('card_number'));}
-          catch(error){output.textContent=error.message;return;}
-        }else{
-          changes.institution=data.get('institution').trim()||null;
-          changes.last_four=data.get('last_four').trim()||null;
-        }
+        }else changes.institution=data.get('institution').trim()||null;
+        try{changes.number=card?officeCardNumber(data.get('card_number')):officeAccountNumber(data.get('account_number'));}
+        catch(error){output.textContent=error.message;return;}
         void save(form.querySelector('button'),row,changes,output);
       };
     };
@@ -4265,6 +4367,7 @@ function bindOfficeLedger(){
       layer.addEventListener('click',event=>{if(event.target===layer)trigger.focus();});
       layer.addEventListener('keydown',event=>{if(event.key==='Escape'){layer.remove();trigger.focus();}});
       if(method.kind==='card')bindOfficeCardNumber(method,layer,detailStatus);
+      else void showOfficeAccountNumber(method,layer);
       const current=()=>stillHere()&&layer.isConnected;
       const loadLinks=async()=>{
         try{
@@ -4315,7 +4418,7 @@ function bindOfficeLedger(){
   const load=async focusMonth=>{
     const id=++request,selected=tab;
     if(typeof focusMonth==='string')month.value=focusMonth;
-    $('officeMonthLabel').hidden=selected==='결제수단관리';
+    $('officeMonthLabel').hidden=['결제수단관리','통계'].includes(selected);
     add.hidden=!officeLedgerTabs.includes(selected);add.textContent=selected+' 추가';
     status.textContent='';content.replaceChildren();
     const viewMonth=month.value;
@@ -4329,7 +4432,24 @@ function bindOfficeLedger(){
         if(!active()||id!==request)return;
         status.textContent='';paintPaymentMethods(rows);return;
       }
-      if(selected==='전체관리'){
+      if(selected==='통계'){
+        const records=await officeStatisticsRows();
+        if(!active()||id!==request)return;
+        status.textContent='';
+        const data=officeStatisticsData(records,localDay().slice(0,4));
+        const paint=()=>{
+          content.innerHTML=officeStatisticsView(data,statisticsMode,statisticsYear);
+          content.querySelectorAll('[data-office-statistics-mode]').forEach(button=>button.onclick=()=>{
+            statisticsMode=button.dataset.officeStatisticsMode;
+            paint();
+            content.querySelector('[data-office-statistics-mode="'+statisticsMode+'"]')?.focus();
+          });
+          const year=$('officeStatisticsYear');
+          if(year)year.onchange=()=>{statisticsYear=year.value;paint();$('officeStatisticsYear').focus();};
+        };
+        paint();return;
+      }
+      if(selected==='전체내역'){
         const data=await officeOverviewData(viewMonth);
         if(!active()||id!==request)return;
         if(!selectedDay.startsWith(viewMonth))selectedDay='';
@@ -4346,7 +4466,7 @@ function bindOfficeLedger(){
             ${selected==='수입'&&row.counterparty?`<small>${esc(row.counterparty)}</small>`:''}</td>
           <td>${officeMoney(row.amount)}</td><td>${esc(row.payment_method||'—')}</td><td>${esc(row.memo||'—')}</td>
           <td>${officeRecordEditable(row,selected)?`<button class="small" type="button" data-office-edit="${i}">수정</button> <button class="small" type="button" data-office-delete="${i}">삭제</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">등록된 내역이 없어요.</p>';
-      content.innerHTML=subscription?officeSubscriptionView(rows,viewMonth,table):`<div class="wd109-office-split">${officeChart(rows.filter(row=>row.actual_date),selected)}<section><h2>${selected} 내역</h2>${table}</section></div>`;
+      if(!subscription)content.innerHTML=`<div class="wd109-office-split">${officeChart(rows.filter(row=>row.actual_date),selected)}<section><h2>${selected} 내역</h2>${table}</section></div>`;
       if(selected==='지출'){
         content.insertAdjacentHTML('beforeend','<details class="instruction-step" id="officePurchaseStock"><summary>구매·재고 내역</summary><div id="officePurchaseStockBody"></div></details>');
         const details=$('officePurchaseStock'),body=$('officePurchaseStockBody');
@@ -4363,19 +4483,39 @@ function bindOfficeLedger(){
           }catch{if(body.isConnected)body.textContent='구매·재고 내역을 불러오지 못했어요.';}
         };
       }
-      content.querySelectorAll('[data-office-edit]').forEach(button=>button.onclick=()=>officeRecordEditor(selected,rows[Number(button.dataset.officeEdit)],()=>active()&&tab===selected,load));
-      content.querySelectorAll('[data-office-delete]').forEach(button=>button.onclick=async()=>{
-        const row=rows[Number(button.dataset.officeDelete)];
-        if(button.disabled||!active()||tab!==selected||!officeRecordEditable(row,selected)||!window.confirm(officeRecordName(row,selected)+' 내역을 삭제할까요?'))return;
-        button.disabled=true;
-        try{
-          const query=new URLSearchParams({id:'eq.'+row.id,user_id:'eq.'+managerHqAccount.uid,updated_at:'eq.'+row.updated_at,select:'id'});
-          const [removed]=await officeLedgerRequest(selected,query,'DELETE');
-          if(removed?.id!==row.id)throw new Error('삭제를 확인하지 못했어요. 새로고침해 주세요.');
-          if(active()&&tab===selected)void load();
-        }catch(error){if(active())status.textContent=error.message;}
-        finally{button.disabled=false;}
-      });
+      const bindRecordActions=()=>{
+        content.querySelectorAll('[data-office-edit]').forEach(button=>button.onclick=()=>officeRecordEditor(selected,rows[Number(button.dataset.officeEdit)],()=>active()&&tab===selected,load));
+        content.querySelectorAll('[data-office-delete]').forEach(button=>button.onclick=async()=>{
+          const row=rows[Number(button.dataset.officeDelete)];
+          if(button.disabled||!active()||tab!==selected||!officeRecordEditable(row,selected)||!window.confirm(officeRecordName(row,selected)+' 내역을 삭제할까요?'))return;
+          button.disabled=true;
+          try{
+            const query=new URLSearchParams({id:'eq.'+row.id,user_id:'eq.'+managerHqAccount.uid,updated_at:'eq.'+row.updated_at,select:'id'});
+            const [removed]=await officeLedgerRequest(selected,query,'DELETE');
+            if(removed?.id!==row.id)throw new Error('삭제를 확인하지 못했어요. 새로고침해 주세요.');
+            if(active()&&tab===selected)void load();
+          }catch(error){if(active())status.textContent=error.message;}
+          finally{button.disabled=false;}
+        });
+      };
+      if(subscription){
+        if(!subscriptionDay.startsWith(viewMonth))subscriptionDay='';
+        const paint=()=>{
+          content.innerHTML=officeSubscriptionView(rows,viewMonth,table,subscriptionDay);
+          bindRecordActions();
+          content.querySelectorAll('[data-office-day]').forEach(button=>button.onclick=()=>{
+            const date=button.dataset.officeDay;
+            subscriptionDay=subscriptionDay===date?'':date;
+            paint();content.querySelector('[data-office-day="'+date+'"]')?.focus();
+          });
+          const allDays=$('officeSubscriptionAllDays');
+          if(allDays)allDays.onclick=()=>{
+            const previous=subscriptionDay;
+            subscriptionDay='';paint();content.querySelector('[data-office-day="'+previous+'"]')?.focus();
+          };
+        };
+        paint();
+      }else bindRecordActions();
     }catch(error){if(active()&&id===request)status.textContent=error.message;}
   };
   bindWorkspaceTabs(tabs,index=>{tab=officeTabs[index];panel.setAttribute('aria-labelledby',tabs[index].id);void load();});
