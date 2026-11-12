@@ -768,8 +768,6 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-modal .office-modal-delete{color:#a33252;border-color:#e9c5cf}
 .office-modal .office-modal-delete:hover{background:#fcf0f3}
 
-.office-workspace .office-subscription-expense{background:#f7f2fc}
-.office-workspace .office-subscription-expense td>strong{display:block}
 .office-workspace .office-payment-grid{display:grid;gap:16px}
 .office-workspace .office-method-list{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;padding:3px 3px 10px;scroll-snap-type:x proximity}
 .office-workspace .office-method-item{flex:0 0 clamp(175px,25vw,210px);min-width:0;scroll-snap-align:start}
@@ -823,6 +821,14 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-workspace .office-stat-bar-income{background:#556bbb}
 .office-workspace .office-stat-bar-expense{background:#b45c83}
 @media(max-width:640px){.office-workspace .office-statistics-bars{display:none}.office-workspace .office-statistics-total{padding:7px}.office-workspace .office-statistics-total strong{font-size:14px}}
+
+.office-modal .office-fixed-expense{margin-top:12px;padding:9px 12px;border:1px solid #e7ddf0;border-radius:8px}
+.office-modal .office-fixed-expense-check{display:flex;align-items:center;gap:8px;margin:0}
+.office-modal .office-fixed-expense-check input{width:auto;accent-color:#6433d8}
+.office-modal .office-fixed-expense-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px}
+.office-modal .office-fixed-expense-fields[hidden],.office-modal .office-fixed-expense-fields label[hidden]{display:none}
+.office-modal .office-fixed-expense-fields label{margin:8px 0 0}
+.office-modal .office-fixed-expense-note{grid-column:1/-1}
 
 @media(max-width:1150px){.office-workspace .office-day-name{display:none}}
 @media(max-width:1050px){.office-workspace .office-overview,.office-workspace .office-subscription-overview{grid-template-columns:minmax(0,1fr)}}
@@ -3761,7 +3767,7 @@ function officeDateLabel(date){
 function officeEventList(events,empty){
   return events.length?`<ul class="office-events">${events.map(({tab,row,date,kind,label})=>`<li>
     <time datetime="${date}">${officeDateLabel(date)}</time><span class="office-event-type" data-kind="${kind}">${label}</span>
-    <div><strong>${esc(officeRecordName(row,tab))}</strong>${row.payment_method?`<small>${esc(row.payment_method)}</small>`:''}</div>
+    <div><strong>${esc(officeRecordName(row,tab))}</strong>${row.payment_display?`<small>${esc(row.payment_display)}</small>`:''}</div>
     <strong>${officeMoney(row.amount)}</strong></li>`).join('')}</ul>`:`<p class="empty">${empty}</p>`;
 }
 
@@ -3821,7 +3827,7 @@ async function officeOverviewData(month){
   const methods=officePaymentMethods().catch(()=>[]);
   const results=await Promise.all(months.map(async value=>{
     const [income,expense,recurring,registered]=await Promise.all([officeLedgerRows('수입',value),officeLedgerRows('지출',value),subscriptions,methods]);
-    return officeDashboardEvents([income,expense,recurring].map(rows=>rows.map(row=>({...row,payment_method:officePaymentLabel(row,registered)}))),value);
+    return officeDashboardEvents([income,expense,recurring].map(rows=>rows.map(row=>({...row,payment_display:officePaymentLabel(row,registered)}))),value);
   }));
   const weekEvents=results.flat().filter(event=>event.date>=week[0]&&event.date<=week.at(-1))
     .sort((a,b)=>a.date.localeCompare(b.date)||a.order-b.order);
@@ -3829,10 +3835,7 @@ async function officeOverviewData(month){
 }
 
 function officeSubscriptionMethodLabel(row,methods){
-  const method=officeMethodForRecord(row,methods);
-  if(!method)return row.payment_method||'결제수단 미지정';
-  const label=method.kind==='card'?officeCardIssuers[officeCardIssuer(method)].label:method.institution||method.name;
-  return label+(method.last_four?'('+method.last_four+')':'');
+  return officePaymentLabel(row,methods)||'결제수단 미지정';
 }
 
 function officeSubscriptionView(rows,month,methods,day='',showUnscheduled=false){
@@ -3897,23 +3900,19 @@ function officeIsSubscriptionExpense(row){
 function officeExpenseSubscriptionSummary(rows,subscriptions,month){
   const matches=rows.filter(officeIsSubscriptionExpense);
   const actual=matches.filter(row=>row.actual_date);
-  const expected=matches.filter(row=>!row.actual_date);
   const scheduled=subscriptions?.filter(row=>officeSubscriptionDate(row,month));
   const total=items=>items.reduce((sum,row)=>sum+Number(row.amount||0),0);
-  return {rows:matches,actual:total(actual),expected:total(expected),scheduled:scheduled?total(scheduled):null,
-    count:scheduled?.length||0,visible:!!(matches.length||scheduled?.length||subscriptions===null)};
+  const displayed=scheduled?.length?scheduled:matches;
+  return {actual:total(actual),scheduled:scheduled?total(scheduled):null,amount:total(displayed),
+    count:displayed.length,visible:!!(displayed.length||subscriptions===null)};
 }
 
 function officeSubscriptionExpenseRow(summary){
   if(!summary.visible)return '';
-  const labels=[
-    ['실제 지출',officeMoney(summary.actual)],
-    ...(summary.expected?[['지출 예정 기록',officeMoney(summary.expected)]]:[]),
-    ['구독 결제 일정',summary.scheduled===null?'조회 실패':officeMoney(summary.scheduled)]
-  ];
-  return `<tr class="office-subscription-expense">
-    <td>월 합계</td><td><button type="button" class="small" id="officeSubscriptionExpenseDetail" aria-haspopup="dialog">구독료</button></td>
-    <td>${labels.map(([label,amount])=>`<small>${label}</small><strong>${amount}</strong>`).join('')}</td><td colspan="3"></td>
+  return `<tr>
+    <td>월 합계</td><td><strong>${summary.count?'구독 '+summary.count+'건':'구독 일정 확인'}</strong><small>구독료</small></td>
+    <td>${summary.count?officeMoney(summary.amount):'조회 실패'}</td><td>개별 결제</td><td>—</td>
+    <td><button type="button" class="small" id="officeSubscriptionExpenseDetail" aria-haspopup="dialog">보기</button></td>
   </tr>`;
 }
 
@@ -3923,9 +3922,11 @@ function officeTransactionTable(entries,tab,summaryRow=''){
   </tr></thead><tbody>${summaryRow}${entries.map(({row,index})=>`<tr>
     <td>${esc(officeRowDate(row,tab)||'—')}${row.money_status==='예정'?'<small>예정</small>':''}</td>
     <td><strong>${esc(officeRecordName(row,tab))}</strong><small>${esc(row.category||'미분류')}${tab==='지출'&&row.business_area?' · '+esc(row.business_area):''}</small>
-      ${tab==='수입'&&row.counterparty?`<small>${esc(row.counterparty)}</small>`:''}</td>
-    <td>${officeMoney(row.amount)}</td><td>${esc(row.payment_method||'—')}</td><td>${esc(row.memo||'—')}</td>
-    <td>${officeRecordEditable(row,tab)?`<button class="small" type="button" data-office-edit="${index}">수정</button> <button class="small" type="button" data-office-delete="${index}">삭제</button>`:'—'}</td>
+            ${tab==='수입'&&row.counterparty?`<small>${esc(row.counterparty)}</small>`:''}
+      ${row.recurrence_cycle?`<small>고정비 · ${esc(officeFixedExpenseLabel(row))}</small>`:''}</td>
+    <td>${officeMoney(row.amount)}</td><td>${esc(row.payment_display||row.payment_method||'—')}</td><td>${esc(row.memo||'—')}</td>
+    <td>${row.recurrence_source&&officeRecordEditable(row.recurrence_source,tab)?`<button class="small" type="button" data-office-edit="${index}">반복 수정</button>`:
+      officeRecordEditable(row,tab)?`<button class="small" type="button" data-office-edit="${index}">수정</button> <button class="small" type="button" data-office-delete="${index}">삭제</button>`:'—'}</td>
   </tr>`).join('')}</tbody></table></div>`:'<p class="empty">등록된 내역이 없어요.</p>';
 }
 
@@ -4064,8 +4065,14 @@ function officeMethodForRecord(row,methods){
   return alias?methods.find(item=>item.name.toLowerCase()===alias):undefined;
 }
 
+function officeMethodLabel(method){
+  const label=method.kind==='card'?officeCardIssuers[officeCardIssuer(method)].label:method.institution||'은행 미등록';
+  return method.last_four?label+'('+method.last_four+')':label+' · '+method.name;
+}
+
 function officePaymentLabel(row,methods){
-  return officeMethodForRecord(row,methods)?.name||row.payment_method||'';
+  const method=officeMethodForRecord(row,methods);
+  return method?officeMethodLabel(method):row.payment_method||'';
 }
 
 function officePaymentSelection(row,methods){
@@ -4080,7 +4087,7 @@ function officePaymentField(row,methods){
     ${Object.entries(officeMethodKinds).map(([kind,label])=>{
       const choices=methods.filter(item=>!item.archived&&item.kind===kind);
       return choices.length?`<optgroup label="${label}">${choices.map(item=>
-        `<option value="${esc(item.id)}" ${item.id===current?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</optgroup>`:'';
+        `<option value="${esc(item.id)}" ${item.id===current?.id?'selected':''}>${esc(officeMethodLabel(item))}</option>`).join('')}</optgroup>`:'';
     }).join('')}</select>
     ${unavailable?`<small>기존 결제수단 ${esc(row.payment_method||'보관된 결제수단')} · 새로 선택하면 변경됩니다.</small>`:''}
   </label>`;
@@ -4356,6 +4363,7 @@ function officeChart(rows,label){
     return officeChartColors[i%officeChartColors.length]+' '+start+'% '+Math.min(cursor,100)+'%';
   });
   return `<section class="wd109-office-chart"><h2>${label} 분류별 비중</h2>
+    ${label==='지출'?'<p class="smallText">실제 지출 기준</p>':''}
     <div class="wd109-office-donut" aria-hidden="true" style="background:${total?'conic-gradient('+colors.join(',')+')':'#edeaf2'}"><span>합계<strong>${officeMoney(total)}</strong></span></div>
     ${groups.length?`<ul>${groups.map(([category,amount],i)=>`<li><i aria-hidden="true" style="background:${officeChartColors[i%officeChartColors.length]}"></i>
       <span>${esc(category)}<small>${officeMoney(amount)}</small></span><strong>${(amount/total*100).toFixed(1)}%</strong></li>`).join('')}</ul>`:'<p class="smallText">이 달에 분류할 내역이 없어요.</p>'}
@@ -4364,7 +4372,7 @@ function officeChart(rows,label){
 const officeTable=tab=>tab==='결제수단관리'?officeMethodTable:tab==='구독'?'work_subscriptions':'work_finance_transactions';
 const officeRecordName=(row,tab)=>tab==='구독'?row.service_name:row.title;
 function officeRowDate(row,tab){return tab==='구독'?row.next_payment_date:row.actual_date||row.expected_date;}
-function officeRecordEditable(row,tab){return row.user_id===managerHqAccount.uid&&(tab==='구독'||!row.source_type||row.source_type==='manual');}
+function officeRecordEditable(row,tab){return !row.recurrence_source&&row.user_id===managerHqAccount.uid&&(tab==='구독'||!row.source_type||row.source_type==='manual');}
 async function officeLedgerRequest(tab,params,method='GET',payload){
   const token=await verifyManagerHqSession({reuse:method==='GET'});
   if(currentUser!=='manager')throw hqLoginError();
@@ -4387,17 +4395,21 @@ async function officeLedgerRows(tab,month){
     query.set('select','id,user_id,service_name,category,amount,next_payment_date,billing_cycle,billing_day,payment_method,payment_method_id,memo,is_used,updated_at');
     query.set('order','next_payment_date.asc.nullslast,id.asc');
   }else{
-    query.set('select','id,user_id,flow_type,category,business_area,counterparty,title,amount,actual_date,expected_date,payment_method,payment_method_id,memo,money_status,source_type,updated_at');
+    query.set('select','id,user_id,flow_type,category,business_area,counterparty,title,amount,actual_date,expected_date,payment_method,payment_method_id,memo,money_status,source_type,recurrence_cycle,recurrence_day,recurrence_month,updated_at');
     query.set('flow_type','eq.'+tab);query.set('order','actual_date.desc.nullslast,expected_date.desc.nullslast,id.asc');
     const [year,monthNumber]=month.split('-').map(Number),first=month+'-01',last=month+'-'+new Date(year,monthNumber,0).getDate();
-    query.set('or','(and(actual_date.gte.'+first+',actual_date.lte.'+last+'),and(actual_date.is.null,expected_date.gte.'+first+',expected_date.lte.'+last+'))');
+    const dateFilters=['and(actual_date.gte.'+first+',actual_date.lte.'+last+')',
+      'and(actual_date.is.null,expected_date.gte.'+first+',expected_date.lte.'+last+')'];
+    if(tab==='지출')dateFilters.push('and(recurrence_cycle.not.is.null,actual_date.lt.'+first+')',
+      'and(recurrence_cycle.not.is.null,actual_date.is.null,expected_date.lt.'+first+')');
+    query.set('or','('+dateFilters.join(',')+')');
   }
   const rows=[];
   for(let offset=0;;offset+=200){
     query.set('limit','200');query.set('offset',String(offset));
     const page=await officeLedgerRequest(tab,query);
     rows.push(...page);
-    if(page.length<200)return rows;
+    if(page.length<200)return tab==='지출'?officeExpenseOccurrences(rows,month):rows;
   }
 }
 const officeIncomeCategories=['보험','AI강의','퍼스널브랜딩'];
@@ -4406,6 +4418,79 @@ function officeOptions(values,current,placeholder){
   return `<option value="">${placeholder}</option>${[...new Set([...values,...(current?[current]:[])])].map(value=>
     `<option value="${esc(value)}" ${value===current?'selected':''}>${esc(value)}</option>`).join('')}`;
 }
+function officeFixedExpenseDate(row,month){
+  const anchor=row.actual_date||row.expected_date;
+  if(!anchor||!row.recurrence_cycle||month<=anchor.slice(0,7))return '';
+  const [year,number]=month.split('-').map(Number);
+  if(row.recurrence_cycle==='yearly'&&number!==Number(row.recurrence_month))return '';
+  const day=Math.min(Number(row.recurrence_day),new Date(year,number,0).getDate());
+  return month+'-'+String(day).padStart(2,'0');
+}
+
+function officeExpenseOccurrences(rows,month){
+  return rows.flatMap(row=>{
+    const date=row.actual_date||row.expected_date;
+    if(date?.slice(0,7)===month)return [row];
+    const projected=officeFixedExpenseDate(row,month);
+    return projected?[{...row,id:row.id+'@'+projected,actual_date:null,expected_date:projected,
+      money_status:'예정',recurrence_source:row}]:[];
+  }).sort((a,b)=>(b.actual_date||'').localeCompare(a.actual_date||'')||
+    (b.expected_date||'').localeCompare(a.expected_date||'')||a.id.localeCompare(b.id));
+}
+
+function officeFixedExpenseFields(row){
+  const day=(row&&officeRowDate(row,'지출'))||localDay();
+  const options=(count,current,unit)=>Array.from({length:count},(_,i)=>
+    `<option value="${i+1}" ${i+1===Number(current)?'selected':''}>${i+1}${unit}</option>`).join('');
+  return `<section class="wd110-office-full office-fixed-expense">
+    <label class="office-fixed-expense-check"><input type="checkbox" name="fixed_expense" ${row?.recurrence_cycle?'checked':''}> 고정비로 반복</label>
+    <div class="office-fixed-expense-fields" id="officeFixedExpenseFields" hidden>
+      <label>반복 주기<select name="recurrence_cycle"><option value="monthly">매달</option>
+        <option value="yearly" ${row?.recurrence_cycle==='yearly'?'selected':''}>매년</option></select></label>
+      <label id="officeFixedExpenseMonth">반복 월<select name="recurrence_month">${options(12,row?.recurrence_month||day.slice(5,7),'월')}</select></label>
+      <label>반복 결제일<select name="recurrence_day">${options(31,row?.recurrence_day||day.slice(8),'일')}</select></label>
+      <small class="office-fixed-expense-note">입력한 지출일 이후의 결제 일정에 적용됩니다. 해당 날짜가 없는 달은 말일로 표시합니다.</small>
+    </div>
+  </section>`;
+}
+
+function bindOfficeFixedExpense(form){
+  const fixed=form.elements.namedItem('fixed_expense');
+  if(!fixed)return;
+  const cycle=form.elements.namedItem('recurrence_cycle'),day=form.elements.namedItem('recurrence_day');
+  const month=form.elements.namedItem('recurrence_month'),date=form.elements.namedItem('day');
+  const sync=()=>{
+    const yearly=fixed.checked&&cycle.value==='yearly';
+    $('officeFixedExpenseFields').hidden=!fixed.checked;
+    $('officeFixedExpenseMonth').hidden=!yearly;
+    cycle.disabled=!fixed.checked;
+    day.disabled=!fixed.checked;
+    month.disabled=!yearly;
+  };
+  fixed.onchange=cycle.onchange=sync;
+  date.onchange=()=>{
+    if(fixed.checked||!date.value)return;
+    day.value=String(Number(date.value.slice(8)));
+    month.value=String(Number(date.value.slice(5,7)));
+  };
+  sync();
+}
+
+function officeFixedExpensePayload(data){
+  if(!data.has('fixed_expense'))return {recurrence_cycle:null,recurrence_day:null,recurrence_month:null};
+  const cycle=data.get('recurrence_cycle'),day=Number(data.get('recurrence_day'));
+  const month=cycle==='yearly'?Number(data.get('recurrence_month')):null;
+  if(!['monthly','yearly'].includes(cycle)||!Number.isInteger(day)||day<1||day>31||
+    (cycle==='yearly'&&(!Number.isInteger(month)||month<1||month>12)))
+    throw new Error('고정비 반복 주기와 날짜를 확인해 주세요.');
+  return {recurrence_cycle:cycle,recurrence_day:day,recurrence_month:month};
+}
+
+function officeFixedExpenseLabel(row){
+  if(!row.recurrence_cycle)return '';
+  return row.recurrence_cycle==='yearly'?'매년 '+row.recurrence_month+'월 '+row.recurrence_day+'일':'매달 '+row.recurrence_day+'일';
+}
+
 function officeRecordFields(tab,row,methods){
   const income=tab==='수입',expense=tab==='지출',subscription=tab==='구독';
   const name=row?officeRecordName(row,tab):'';
@@ -4419,6 +4504,7 @@ function officeRecordFields(tab,row,methods){
      ${subscription?`<label>결제 주기<input name="billing_cycle" maxlength="40" list="officeBillingCycles" placeholder="예: 매월" value="${esc(row?.billing_cycle||'')}"></label>
       <datalist id="officeBillingCycles"><option value="매월"></option><option value="매년"></option><option value="1회"></option></datalist>`:''}
     <label>금액 (원)<input type="number" name="amount" min="1" max="99999999999999" step="1" required value="${esc(row?.amount??'')}"></label>
+    ${expense?officeFixedExpenseFields(row):''}
   </div>`;
 }
 
@@ -4434,23 +4520,29 @@ async function officeRecordEditor(tab,row,active,reload,trigger){
   </form>`,tab+(row?' 수정':' 추가'),trigger);
   const form=$('officeRecordForm'),button=form.querySelector('button[type="submit"]'),status=$('officeRecordStatus');
   const newId=crypto.randomUUID();
+  bindOfficeFixedExpense(form);
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active()||!form.isConnected||row&&!officeRecordEditable(row,tab))return;
     const data=new FormData(form),title=data.get('title').trim(),date=data.get('day'),amount=Number(data.get('amount'));
     if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0||amount>99999999999999){status.textContent='거래명, 날짜, 금액을 확인해 주세요.';return;}
-    let payment;
-    try{payment=officePaymentPayload(data.get('payment_method_id'),row,methods);}
-    catch(error){status.textContent=error.message;return;}
-    const payload={category:data.get('category')||row?.category||null,amount,...payment,memo:data.get('memo').trim()||null};
+    let payment,rule={};
+    try{
+      payment=officePaymentPayload(data.get('payment_method_id'),row,methods);
+      if(tab==='지출')rule=officeFixedExpensePayload(data);
+    }catch(error){status.textContent=error.message;return;}
+    const payload={category:data.get('category')||row?.category||null,amount,...payment,...rule,memo:data.get('memo').trim()||null};
     if(subscription){
       const cycle=data.get('billing_cycle').trim();
       Object.assign(payload,{service_name:title,next_payment_date:date,billing_cycle:cycle||null});
       if(officeBillingInterval(cycle))payload.billing_day=(row?.next_payment_date===date&&row.billing_day)||Number(date.slice(8));
     }
-    else Object.assign(payload,{title,flow_type:tab,
-      ...(tab==='수입'?{counterparty:data.get('counterparty').trim()||null,business_area:payload.category}:{business_area:data.get('business_area')}),
-      ...(row&&!row.actual_date?{expected_date:date}:{actual_date:date}),...(!row?{money_status:'완료'}:{})});
+    else{
+      const planned=row?!row.actual_date:!!(rule.recurrence_cycle&&date>localDay());
+      Object.assign(payload,{title,flow_type:tab,
+        ...(tab==='수입'?{counterparty:data.get('counterparty').trim()||null,business_area:payload.category}:{business_area:data.get('business_area')}),
+        ...(planned?{expected_date:date}:{actual_date:date}),...(!row?{money_status:planned?'예정':'완료'}:{})});
+    }
     const query=new URLSearchParams({select:'id'});
     if(row){query.set('id','eq.'+row.id);query.set('user_id','eq.'+managerHqAccount.uid);query.set('updated_at','eq.'+row.updated_at);payload.updated_at=new Date().toISOString();}
     else Object.assign(payload,{id:newId,user_id:managerHqAccount.uid});
@@ -4650,12 +4742,12 @@ function bindOfficeLedger(){
         expense?officeLedgerRows('구독',viewMonth).catch(()=>null):Promise.resolve([])
       ]);
       if(!active()||id!==request)return;
-      const rows=records.map(row=>({...row,payment_method:officePaymentLabel(row,methods)}));
+      const rows=records.map(row=>({...row,payment_display:officePaymentLabel(row,methods)}));
       status.textContent='';
       const stillHere=()=>active()&&tab===selected;
       const editRecord=(row,layer,trigger)=>{
         layer?.remove();
-        void officeRecordEditor(selected,row,stillHere,load,trigger);
+        void officeRecordEditor(selected,row.recurrence_source||row,stillHere,load,trigger);
       };
       const deleteRecord=async(button,row,layer,output=status)=>{
         if(button.disabled||!stillHere()||!officeRecordEditable(row,selected)||!window.confirm(officeRecordName(row,selected)+' 내역을 삭제할까요?'))return;
