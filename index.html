@@ -1459,15 +1459,15 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
 </div>
 
 <nav id="wdhq-quick-dock" aria-label="본진 빠른 메뉴">
-  <button id="wdhq-talk-open" type="button" aria-label="TALK" title="TALK" aria-controls="wdhq-talk-panel">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8H4l1.4-4A8 8 0 1 1 20 11.5Z"/><path d="M8.5 11.5h.01m3.5 0h.01m3.5 0h.01"/></svg>
+  <button id="wdhq-talk-open" type="button" aria-label="TALK" title="TALK" aria-expanded="false" aria-controls="wdhq-talk-panel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9.3 9.3 0 0 0-8.1 14l-1.1 4.1 4.4-1.1A9.3 9.3 0 1 0 12 3Z"/><g class="wdhq-icon-cutout"><circle cx="8" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="16" cy="12" r="1.25"/></g></svg>
     <span id="wdhq-talk-open-sub" hidden></span><span id="wdhq-talk-badge" aria-live="polite"></span>
   </button>
   <button id="wdhq-sticky-open" type="button" aria-label="스티커메모" title="스티커메모" aria-expanded="false" aria-controls="wdhq-sticky-panel">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v10l-5 5H5z"/><path d="M14 19v-5h5M8 8h8M8 11h5"/></svg>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v9.2a2 2 0 0 1-.6 1.4l-4.8 4.8a2 2 0 0 1-1.4.6H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path class="wdhq-icon-cutout" d="M7 7h10v1.8H7zm0 4h8v1.8H7zm8 7.8v-3a.8.8 0 0 1 .8-.8h3z"/></svg>
   </button>
   <button id="wdhq-account-info-open" type="button" aria-label="계정정보" title="계정정보" aria-haspopup="dialog" aria-controls="wdhq-account-info">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="10" r="3.5"/><path d="m11.5 12 7.5 6m-2.5-2 1.8-2.1m.5 4.1 1.7-2"/></svg>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm2.3 0h5.4V8a2.7 2.7 0 0 0-5.4 0Z"/><path class="wdhq-icon-cutout" d="M12 13a1.5 1.5 0 0 0-.8 2.8v1.7h1.6v-1.7A1.5 1.5 0 0 0 12 13Z"/></svg>
   </button>
 </nav>
 <dialog id="wdhq-account-info" aria-labelledby="wdhq-account-info-title">
@@ -6130,12 +6130,14 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     try{if(window.WDHQNoah&&document.getElementById('wdhq-noah-panel')?.classList.contains('open'))window.WDHQNoah.close()}catch(e){}
     isOpen=true;unread=0;setBadge();
     panel.classList.add('open');panel.setAttribute('aria-hidden','false');
+    openBtn.setAttribute('aria-expanded','true');
     if(historyReady){render();scrollBottom();}
     void loadHistory();
     setTimeout(()=>input.focus(),60);
   }
   function close(){
     isOpen=false;talkBackup?.reset();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
+    openBtn.setAttribute('aria-expanded','false');
   }
   function autoSize(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px'}
   async function send(){
@@ -6187,7 +6189,8 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   if(!talkBackup)panel.querySelector('.wdhq-talk-backup-tools').hidden=true;
 
   openBtn.addEventListener('click',()=>isOpen?close():open());
-  $('wdhq-talk-close').addEventListener('click',close);
+  const dismiss=()=>{close();openBtn.focus();};
+  $('wdhq-talk-close').addEventListener('click',dismiss);
   $('wdhq-talk-sound').addEventListener('click',()=>{soundOn=!soundOn;setSoundBtn();if(soundOn)ensureAudio()});
   preview.addEventListener('click',()=>{ensureAudio();open()});
   // 새로고침 후 TALK를 누르기 전이라도 첫 클릭·키 입력 때 오디오 준비 (브라우저 자동재생 정책)
@@ -6199,7 +6202,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   input.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();send()}
   });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isOpen)close()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isOpen)dismiss()});
   document.getElementById('wdhq-noah-open')?.addEventListener('click',()=>{if(isOpen)close()});
 
 
@@ -6497,27 +6500,89 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 })();
 </script>
 <style id="wdhq-quick-style">
-#wdhq-quick-dock{position:fixed;right:22px;bottom:22px;z-index:2147483100;display:flex;gap:9px}
+#wdhq-quick-dock{
+  position:fixed;right:22px;bottom:22px;z-index:2147483100;
+  display:flex;flex-direction:column;gap:10px;
+}
 body.wdhq-auth-locked #wdhq-quick-dock,body.wdhq-auth-checking #wdhq-quick-dock{display:none}
-#wdhq-quick-dock button{position:relative;inset:auto;width:44px;height:44px;min-height:44px;display:grid;place-items:center;padding:0;border:1px solid #ddcfee;border-radius:13px;background:#fff;color:#553184;box-shadow:0 6px 18px #30234826;cursor:pointer}
-#wdhq-quick-dock button:hover{background:#f2eafa;transform:translateY(-2px)}
-#wdhq-quick-dock button:focus-visible{outline:2px solid #6e42ae;outline-offset:3px}
-#wdhq-quick-dock svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#wdhq-quick-dock #wdhq-talk-open{background:#56358c;color:#fff}
-body:not(.wdhq-talk-ready) #wdhq-quick-dock #wdhq-talk-open,body:not([data-wdhq-role="owner"]) #wdhq-account-info-open{display:none}
-#wdhq-sticky-panel{bottom:78px}
-#wdhq-talk-preview{bottom:78px}
-#wdhq-account-info{width:min(1060px,calc(100vw - 28px));height:min(750px,calc(100dvh - 28px));max-width:none;max-height:none;padding:0;border:1px solid #e4daed;border-radius:16px;background:#faf8fc;color:#271c38;box-shadow:0 24px 65px #21163345}
-#wdhq-account-info[open]{display:flex;flex-direction:column}
-#wdhq-account-info::backdrop{background:#24183580}
-#wdhq-account-info header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;background:#44246e;color:#fff}
-#wdhq-account-info h2{margin:0;font-size:18px;color:inherit}
-#wdhq-account-info-close{width:36px;height:36px;border:1px solid #eee5fb;border-radius:8px;background:#fff;color:#44246e;font-size:24px;cursor:pointer}
-#wdhq-account-info-content{flex:1;min-height:0}
+body:not(.wdhq-talk-ready) #wdhq-quick-dock #wdhq-talk-open,
+body:not([data-wdhq-role="owner"]) #wdhq-account-info-open{display:none}
+#wdhq-quick-dock button{
+  position:relative;inset:auto;display:grid;place-items:center;width:52px;height:52px;min-height:52px;
+  padding:0;border:1px solid #18253924;border-radius:14px;background:var(--wdhq-tool-color);
+  color:var(--wdhq-icon-color,#fff);box-shadow:0 5px 15px #11253929;
+  cursor:pointer;transition:filter .16s ease,transform .16s ease;
+}
+#wdhq-quick-dock #wdhq-talk-open{--wdhq-tool-color:#08745d;display:grid}
+#wdhq-quick-dock #wdhq-sticky-open{--wdhq-tool-color:#ffd34f;--wdhq-icon-color:#392800}
+#wdhq-quick-dock #wdhq-account-info-open{--wdhq-tool-color:#be3048}
+#wdhq-quick-dock button:hover{background:var(--wdhq-tool-color);filter:brightness(1.08);transform:translateX(-2px)}
+#wdhq-quick-dock button:focus-visible{outline:3px solid #143455;outline-offset:3px}
+#wdhq-quick-dock svg{display:block;width:29px;height:29px;fill:currentColor;stroke:none}
+#wdhq-quick-dock svg .wdhq-icon-cutout{fill:var(--wdhq-tool-color)}
+#wdhq-quick-dock #wdhq-talk-badge{top:-5px;right:-5px}
+
+#wdhq-talk-panel,#wdhq-sticky-panel,#wdhq-account-info{
+  position:fixed;inset:0 0 0 auto;margin:0;width:min(560px,100%);max-width:100%;
+  height:100vh;height:100dvh;max-height:none;padding:0;box-sizing:border-box;overflow:hidden;
+  border:0;border-left:1px solid #dce4ed;border-radius:0;
+  box-shadow:-14px 0 42px #1329432b;
+}
+#wdhq-talk-panel{
+  opacity:1;visibility:hidden;transform:translateX(100%);
+  transition:transform .24s cubic-bezier(.2,.72,.22,1),visibility 0s linear .24s;
+}
+#wdhq-talk-panel.open{visibility:visible;transform:translateX(0);transition-delay:0s}
+#wdhq-sticky-panel{
+  z-index:2147483200;background:#fffaf0;color:#302711;
+}
+#wdhq-sticky-panel:not([hidden]),#wdhq-account-info[open]{
+  display:flex;flex-direction:column;animation:wdhq-drawer-enter .24s cubic-bezier(.2,.72,.22,1) both;
+}
+@keyframes wdhq-drawer-enter{from{transform:translateX(100%)}to{transform:translateX(0)}}
+#wdhq-talk-panel .wdhq-talk-head,#wdhq-sticky-panel header,#wdhq-account-info header{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  flex:0 0 auto;min-height:68px;padding:12px 16px;border-bottom:1px solid #dce4ed;
+}
+#wdhq-sticky-panel header{background:#fff0be}
+#wdhq-account-info{background:#fbf7f8;color:#351d25}
+#wdhq-account-info header{background:#fbe8ec}
+#wdhq-sticky-panel h2,#wdhq-account-info h2{margin:0;font-size:18px;color:inherit}
+#wdhq-talk-close,#wdhq-sticky-close,#wdhq-account-info-close{
+  display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;
+  border:1px solid #dce4ed;border-radius:10px;background:#fff;color:#293b52;
+  font:inherit;font-size:21px;line-height:1;cursor:pointer;
+}
+#wdhq-talk-close:hover,#wdhq-sticky-close:hover,#wdhq-account-info-close:hover{background:#eff3f8}
+#wdhq-talk-list{overscroll-behavior:contain}
+#wdhq-talk-panel .wdhq-talk-composer{flex:0 0 auto;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+#wdhq-sticky-panel textarea{
+  flex:1 1 auto;width:auto;min-height:0;margin:16px 16px 0;padding:14px;
+  border:1px solid #e1d3a7;resize:none;overscroll-behavior:contain;
+}
+#wdhq-sticky-panel p{margin:8px 16px 0;color:#65583a}
+#wdhq-sticky-panel footer{padding:12px 16px max(16px,env(safe-area-inset-bottom))}
+#wdhq-sticky-panel footer button{min-height:44px;padding:8px 14px;border-color:#e1d3a7;color:#392800}
+#wdhq-sticky-panel #wdhq-sticky-save{background:#ffd34f;border-color:#e5b93e;color:#392800;font-weight:750}
+#wdhq-account-info::backdrop{background:#15263b42}
+#wdhq-account-info-content{flex:1 1 auto;min-height:0}
 #wdhq-account-info-content iframe{display:block;width:100%;height:100%;border:0}
+#wdhq-talk-preview{right:86px;bottom:146px}
+body:has(#wdhq-talk-panel.open,#wdhq-sticky-panel:not([hidden]),#wdhq-account-info[open]) :is(#wdhq-quick-dock,#wdhq-talk-preview){
+  visibility:hidden;
+}
 @media(max-width:760px){
-  #wdhq-quick-dock{right:13px;bottom:76px}
-  #wdhq-sticky-panel,#wdhq-talk-preview{bottom:131px}
+  #wdhq-quick-dock{right:12px;bottom:calc(76px + env(safe-area-inset-bottom))}
+  #wdhq-quick-dock button{width:48px;height:48px;min-height:48px}
+  #wdhq-quick-dock svg{width:27px;height:27px}
+  #wdhq-talk-preview{right:70px;bottom:calc(192px + env(safe-area-inset-bottom));width:min(260px,calc(100vw - 82px))}
+}
+@media(max-width:560px){
+  #wdhq-talk-panel,#wdhq-sticky-panel,#wdhq-account-info{border-left:0}
+}
+@media(prefers-reduced-motion:reduce){
+  #wdhq-quick-dock button,#wdhq-talk-panel{transition:none}
+  #wdhq-sticky-panel:not([hidden]),#wdhq-account-info[open]{animation:none}
 }
 </style>
 <script id="wdhq-account-info-script">
