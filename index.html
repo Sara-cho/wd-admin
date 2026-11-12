@@ -1009,6 +1009,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 
 <style id="wdhq-noah-api-style">
 /* WD 본진 · 노아 API TEST — 기존 본진 비침투형 오버레이 */
+#wdhq-noah-open[hidden]{display:none!important}
 #wdhq-noah-open{
   position:fixed;right:22px;bottom:92px;z-index:2147483100;
   display:inline-flex;align-items:center;gap:10px;min-height:54px;
@@ -1126,6 +1127,7 @@ body.wdhq-auth-checking #wdhq-noah-backdrop{display:none!important}
 }
 </style>
 
+<script src="./wd-talk-backup.js"></script>
 </head>
 <body>
 <!-- v1.7.7 보험사업부 독립원본 연결
@@ -1456,14 +1458,28 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
   </main>
 </div>
 
-<button class="wdhq-keep-fab" id="wdhq-keep-fab" type="button" onclick="wdhqOpenKeepPopup()" aria-label="Google Keep 빠른 메모 열기" title="Google Keep 빠른 메모 열기">
-  <span class="wdhq-keep-fab-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8.2 16.8h7.6M9.3 20h5.4M8.1 14.4c-1.5-1.2-2.4-3-2.4-5A6.3 6.3 0 0 1 12 3a6.3 6.3 0 0 1 6.3 6.4c0 2-.9 3.8-2.4 5-.7.6-1 1.1-1.1 1.8H9.2c-.1-.7-.4-1.2-1.1-1.8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </span>
-  <span><b>빠른 메모</b><small>Google Keep</small></span>
-</button>
+<nav id="wdhq-quick-dock" aria-label="본진 빠른 메뉴">
+  <button id="wdhq-talk-open" type="button" aria-label="TALK" title="TALK" aria-controls="wdhq-talk-panel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8H4l1.4-4A8 8 0 1 1 20 11.5Z"/><path d="M8.5 11.5h.01m3.5 0h.01m3.5 0h.01"/></svg>
+    <span id="wdhq-talk-open-sub" hidden></span><span id="wdhq-talk-badge" aria-live="polite"></span>
+  </button>
+  <button id="wdhq-sticky-open" type="button" aria-label="스티커메모" title="스티커메모" aria-expanded="false" aria-controls="wdhq-sticky-panel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v10l-5 5H5z"/><path d="M14 19v-5h5M8 8h8M8 11h5"/></svg>
+  </button>
+  <button id="wdhq-account-info-open" type="button" aria-label="계정정보" title="계정정보" aria-haspopup="dialog" aria-controls="wdhq-account-info">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="10" r="3.5"/><path d="m11.5 12 7.5 6m-2.5-2 1.8-2.1m.5 4.1 1.7-2"/></svg>
+  </button>
+</nav>
+<dialog id="wdhq-account-info" aria-labelledby="wdhq-account-info-title">
+  <header><h2 id="wdhq-account-info-title">계정정보</h2><button id="wdhq-account-info-close" type="button" aria-label="닫기">×</button></header>
+  <div id="wdhq-account-info-content"></div>
+</dialog>
+<section id="wdhq-sticky-panel" class="wdhq-sticky-panel" aria-labelledby="wdhq-sticky-title" hidden>
+  <header><h2 id="wdhq-sticky-title">스티커메모</h2><button id="wdhq-sticky-close" type="button" aria-label="닫기">×</button></header>
+  <textarea id="wdhq-sticky-text" rows="7" maxlength="4000" aria-label="스티커메모 내용" placeholder="기억할 내용을 적어 두세요"></textarea>
+  <p id="wdhq-sticky-status" role="status">이 브라우저에 저장됩니다.</p>
+  <footer><button id="wdhq-sticky-delete" type="button">삭제</button><button id="wdhq-sticky-save" type="button">저장</button></footer>
+</section>
 
 <nav class="mobilebar">
   <button class="active" onclick="goToSection('top')"><b>⌂</b>오늘</button>
@@ -1662,7 +1678,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
 
 
 <!-- WD 본진 · 노아 API TEST -->
-<button id="wdhq-noah-open" type="button" aria-label="노아 AI 열기" title="노아에게 말하기">
+<button id="wdhq-noah-open" type="button" hidden aria-label="노아 AI 열기" title="노아에게 말하기">
   <span class="wdhq-noah-mark" aria-hidden="true">N</span>
   <span><b>노아에게 말하기</b><small>본진 AI · GPT TEST</small></span>
 </button>
@@ -2628,6 +2644,9 @@ function setDate(){
 }
 
 function wdhqClearDisplayState(){
+  window.WDHQStickyNote?.close();
+  document.getElementById('wdhq-account-info')?.close();
+  delete document.body.dataset.wdhqRole;
   [WDHQ_AUTH_KEY,WDHQ_USER_KEY,'wd_current_uid','wd_user_name','wd_current_dbk','wd_current_role'].forEach(key=>localStorage.removeItem(key));
   try{sessionStorage.removeItem(WDHQ_NAV_SESSION_KEY)}catch(e){}
 }
@@ -2664,6 +2683,7 @@ function wdhqClearLoginError(){
   const err=document.getElementById('wdhq-login-error');if(err){err.textContent='';err.style.display='none'}
 }
 function wdhqShowLogin(message='대표님 또는 수진님 회사 계정으로 로그인해 주세요.'){
+  document.getElementById('wdhq-account-info')?.close();
   document.body.classList.remove('wdhq-auth-checking');
   document.body.classList.add('wdhq-auth-locked');
   document.getElementById('wdhq-login-screen')?.classList.add('wdhq-show');
@@ -5733,6 +5753,20 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
 - 2026-09-23 추가: 파일첨부(A안) · 회사공통 03_업무공유파일(1akIH85_…)에 Drive 업로드 후 [WDFILE] 메시지 · 100MB 상한 · DB 변경 없음
 - 2026-09-23 추가: 상대 메시지 알림음(Web Audio) · 🔔/🔕 토글(메모리) · 닫힌 상태 미리보기 5초 · 배지 유지
 -->
+<style id="wdhq-sticky-style">
+.wdhq-sticky-fab{position:fixed;right:22px;bottom:92px;z-index:80;display:inline-flex;align-items:center;gap:9px;min-height:54px;padding:8px 14px 8px 10px;border:1px solid #dbcaf5;border-radius:17px;background:#f2eaff;color:#45277d;font:inherit;font-size:13px;cursor:pointer;box-shadow:0 10px 24px #3d236521}
+.wdhq-sticky-fab span{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:#e7d8ff;font-size:20px}
+.wdhq-sticky-panel{position:fixed;right:22px;bottom:158px;z-index:2147483100;width:min(380px,calc(100vw - 32px));padding:16px;border:1px solid #ddcff0;border-radius:15px;background:#fdf9ff;color:#302348;box-shadow:0 15px 34px #30234830}
+.wdhq-sticky-panel[hidden],body.wdhq-auth-locked .wdhq-sticky-fab,body.wdhq-auth-checking .wdhq-sticky-fab,body.wdhq-auth-locked .wdhq-sticky-panel,body.wdhq-auth-checking .wdhq-sticky-panel{display:none!important}
+.wdhq-sticky-panel header,.wdhq-sticky-panel footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wdhq-sticky-panel h2{margin:0;font-size:17px}
+.wdhq-sticky-panel textarea{display:block;width:100%;margin:10px 0 6px;min-height:120px;padding:10px;border:1px solid #ddcff0;border-radius:9px;background:#fff;font:inherit;resize:vertical}
+.wdhq-sticky-panel p{margin:6px 0 9px;font-size:12px;color:#685b79}
+.wdhq-sticky-panel button{min-height:34px;padding:5px 10px;border:1px solid #ddcff0;border-radius:8px;background:#fff;color:#432974;cursor:pointer}
+.wdhq-sticky-panel footer{justify-content:flex-end}
+.wdhq-sticky-panel #wdhq-sticky-save{background:#6433b7;color:#fff;border-color:#6433b7}
+@media(max-width:760px){.wdhq-sticky-fab{right:13px;bottom:140px;min-height:48px;padding:6px 11px 6px 7px}.wdhq-sticky-panel{right:13px;bottom:194px;max-height:calc(100dvh - 215px);overflow:auto}}
+</style>
 <style id="wdhq-talk-style">
 #wdhq-talk-open{
   position:fixed;right:22px;bottom:162px;z-index:2147483100;
@@ -5781,6 +5815,12 @@ body.wdhq-talk-ready #wdhq-talk-open{display:inline-flex}
 .wdhq-talk-row.theirs .wdhq-talk-bubble{border:1px solid #e0e7ee;border-bottom-left-radius:5px;background:#fff;color:#27364a}
 .wdhq-talk-time{flex:0 0 auto;color:#98a3b2;font-size:10px;white-space:nowrap}
 .wdhq-talk-composer{padding:10px 12px 12px;border-top:1px solid #e3e9f0;background:#fff}
+.wdhq-talk-backup-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.wdhq-talk-backup-tools button{min-height:30px;padding:4px 9px;border:1px solid #d6dee8;border-radius:8px;background:#f7f9fb;color:#33435b;font:inherit;font-size:12px;cursor:pointer}
+.wdhq-talk-backup-tools button[data-talk-clear]{color:#9b334c}
+.wdhq-talk-backup-tools button:disabled{opacity:.55;cursor:default}
+.wdhq-talk-backup-tools[hidden],.wdhq-talk-backup-tools [hidden],.wdhq-talk-backup-status:empty{display:none}
+.wdhq-talk-backup-status{margin:4px 0 7px;color:#46566b;font-size:12px}
 .wdhq-talk-input-wrap{display:grid;grid-template-columns:42px minmax(0,1fr) 64px;gap:8px;align-items:end}
 #wdhq-talk-attach{height:42px;border:1px solid #d6dee8;border-radius:12px;background:#fbfcfe;font-size:17px;cursor:pointer}
 #wdhq-talk-attach:hover{background:#eef6f3;border-color:#9fcfbf}
@@ -5835,11 +5875,6 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 }
 </style>
 
-<button id="wdhq-talk-open" type="button" aria-label="WD TALK 열기" title="WD TALK">
-  <span class="wdhq-talk-mark" aria-hidden="true">💬</span>
-  <span><b>TALK</b><small id="wdhq-talk-open-sub">WD TALK</small></span>
-  <span id="wdhq-talk-badge" aria-live="polite"></span>
-</button>
 <button id="wdhq-talk-preview" type="button" aria-live="polite" aria-label="새 TALK 메시지 열기"><b id="wdhq-talk-preview-name"></b><span id="wdhq-talk-preview-text"></span></button>
 <section id="wdhq-talk-panel" role="dialog" aria-label="WD TALK" aria-hidden="true">
   <header class="wdhq-talk-head">
@@ -5853,6 +5888,11 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   </header>
   <div id="wdhq-talk-list" aria-live="polite"></div>
   <div class="wdhq-talk-composer">
+    <div class="wdhq-talk-backup-tools">
+      <button type="button" data-talk-backup>백업 다운로드</button>
+      <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
+    </div>
+    <p class="wdhq-talk-backup-status" data-talk-backup-status role="status"></p>
     <div id="wdhq-talk-filebar" aria-live="polite"></div>
     <input id="wdhq-talk-file-input" type="file" hidden>
     <div class="wdhq-talk-input-wrap">
@@ -5871,12 +5911,16 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   const TABLE='wd_talk_messages';
   const MEMBERS=['kfcyk50','kfcyk30'];
   const HISTORY_LIMIT=300;
+  const HISTORY_REFRESH_MS=12000;
   const $=id=>document.getElementById(id);
   const openBtn=$('wdhq-talk-open'),panel=$('wdhq-talk-panel'),list=$('wdhq-talk-list'),
         input=$('wdhq-talk-input'),sendBtn=$('wdhq-talk-send'),badge=$('wdhq-talk-badge');
 
   let me=null;            // {uid, loginId}
   let channel=null;
+  let historyRequest=null;
+  let historyTimer=null;
+  let historyReady=false;
   let messages=[];        // 시간순
   const seen=new Set();   // id 중복 방지
   let unread=0;           // 메모리 전용
@@ -5952,57 +5996,83 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     setLast();
     if(stick||isOpen)scrollBottom();
   }
-  function add(m,fromRealtime){
-    if(!m||!m.id||seen.has(m.id))return false;
-    seen.add(m.id);
-    messages.push({id:m.id,sender_id:m.sender_id,body:String(m.body||''),created_at:m.created_at});
-    messages.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    if(fromRealtime&&m.sender_id!==me?.uid){
-      if(!isOpen){unread++;setBadge()}
-      try{notify(m)}catch(e){}
-    }
-    render();
-    return true;
+  const messageOrder=(a,b)=>String(a.created_at).localeCompare(String(b.created_at))||String(a.id).localeCompare(String(b.id));
+  function newIncoming(m){
+    if(m.sender_id===me?.uid)return;
+    if(!isOpen){unread++;setBadge()}
+    try{notify(m)}catch(e){}
   }
-  async function loadHistory(){
-    const a=authState();if(!a)return;
-    const {data,error}=await a.client.from(TABLE).select('id,sender_id,body,created_at').order('created_at',{ascending:false}).limit(HISTORY_LIMIT);
-    if(error){state('대화 내용을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.',true);return false}
-    messages=[];seen.clear();
-    (data||[]).reverse().forEach(m=>{seen.add(m.id);messages.push(m)});
-    render();scrollBottom();
-    return true;
+  function add(m,fromRealtime){
+    if(!m?.id||seen.has(m.id))return;
+    seen.add(m.id);messages.push(m);
+    historyRequest?.arrivals.push(m);
+    messages.sort(messageOrder);
+    if(messages.length>HISTORY_LIMIT)messages.splice(0,messages.length-HISTORY_LIMIT);
+    if(fromRealtime)newIncoming(m);
+    render();
+  }
+  function loadHistory(){
+    const a=authState(),account=me;
+    if(!a||!account||a.uid!==account.uid)return;
+    if(historyRequest?.account===account)return historyRequest.promise;
+    const request={account,promise:null,arrivals:[],cleared:new Set()};
+    historyRequest=request;
+    request.promise=(async()=>{
+      try{
+        const {data,error}=await a.client.from(TABLE).select('id,sender_id,body,created_at')
+          .order('created_at',{ascending:false}).order('id',{ascending:false}).limit(HISTORY_LIMIT);
+        if(me!==account||authState()?.uid!==account.uid)return;
+        if(error)throw error;
+        const merged=new Map();
+        for(const row of [...(data||[]),...request.arrivals])if(!request.cleared.has(row.id))merged.set(row.id,row);
+        const next=[...merged.values()].sort(messageOrder).slice(-HISTORY_LIMIT);
+        const changed=!historyReady||next.length!==messages.length||next.some((row,i)=>row.id!==messages[i]?.id);
+        if(historyReady)for(const row of next)if(!seen.has(row.id))newIncoming(row);
+        messages=next;seen.clear();
+        for(const row of next)seen.add(row.id);
+        historyReady=true;
+        if(changed)render();
+      }catch(e){
+        if(me===account&&!historyReady)state('대화 내용을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.',true);
+      }finally{
+        if(historyRequest===request)historyRequest=null;
+      }
+    })();
+    return request.promise;
   }
   async function subscribe(){
-    const a=authState();if(!a)return;
+    const a=authState(),account=me;
+    if(!a||!account||a.uid!==account.uid)return;
     try{
       const {data}=await a.client.auth.getSession();
       const token=data?.session?.access_token;
-      if(token&&a.client.realtime?.setAuth)a.client.realtime.setAuth(token);
+      if(token&&a.client.realtime?.setAuth)await a.client.realtime.setAuth(token);
     }catch(e){}
-    let everSubscribed=false;
+    if(me!==account||authState()?.uid!==account.uid)return;
     channel=a.client.channel('wdhq-talk-'+a.uid)
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:TABLE},payload=>add(payload.new,true))
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:TABLE},payload=>{
+        if(me===account&&authState()?.uid===account.uid)add(payload.new,true);
+      })
       .subscribe(status=>{
-        if(status==='SUBSCRIBED'){
-          if(everSubscribed)loadHistory(); // 재연결 시 누락분 회수
-          everSubscribed=true;
-        }
+        if(status==='SUBSCRIBED'&&me===account)void loadHistory();
       });
   }
   async function start(a){
     if(starting)return;starting=true;
+    const account={uid:a.uid,loginId:a.loginId};
     try{
-      me={uid:a.uid,loginId:a.loginId};
+      me=account;historyReady=false;talkBackup?.reset();
       $('wdhq-talk-partner').textContent=partnerLabel();
       $('wdhq-talk-open-sub').textContent=partnerLabel()+'님과 대화';
       document.body.classList.add('wdhq-talk-ready');
       state('대화 내용을 불러오는 중입니다.');
+      historyTimer=setInterval(()=>{if(!document.hidden)void loadHistory()},HISTORY_REFRESH_MS);
       await loadHistory();
-      await subscribe();
+      if(me===account)await subscribe();
     }finally{starting=false}
   }
   function stop(){
+    clearInterval(historyTimer);historyTimer=null;historyRequest=null;historyReady=false;
     try{if(channel)(authState()?.client||WDHQ_SUPABASE)?.removeChannel(channel)}catch(e){}
     channel=null;me=null;messages=[];seen.clear();unread=0;setBadge();
     document.body.classList.remove('wdhq-talk-ready');
@@ -6055,15 +6125,17 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   function open(){
     if(!me)return;
     ensureAudio();
+    window.WDHQStickyNote?.close();
     hidePreview();
     try{if(window.WDHQNoah&&document.getElementById('wdhq-noah-panel')?.classList.contains('open'))window.WDHQNoah.close()}catch(e){}
     isOpen=true;unread=0;setBadge();
     panel.classList.add('open');panel.setAttribute('aria-hidden','false');
-    render();scrollBottom();
+    if(historyReady){render();scrollBottom();}
+    void loadHistory();
     setTimeout(()=>input.focus(),60);
   }
   function close(){
-    isOpen=false;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
+    isOpen=false;talkBackup?.reset();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
   }
   function autoSize(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px'}
   async function send(){
@@ -6084,6 +6156,35 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       sending=false;sendBtn.disabled=false;input.focus();
     }
   }
+
+  const talkBackup=window.WDTalkBackup?.bind({
+    root:panel,active:()=>isOpen&&!!me,canDelete:()=>me?.loginId==='kfcyk50',
+    getIdentity:async()=>{
+      const identity=authState();
+      if(!identity||identity.uid!==me?.uid)throw new Error('계정이 바뀌었어요. TALK를 다시 열어 주세요.');
+      return identity;
+    },
+    readPage:async({client},after,limit)=>{
+      let query=client.from(TABLE).select('id,sender_id,body,created_at').order('id',{ascending:true}).limit(limit);
+      if(after)query=query.gt('id',after);
+      const {data,error}=await query;
+      if(error)throw new Error('대화 백업 목록을 불러오지 못했어요.');
+      return data;
+    },
+    deleteMessages:async({client},ids)=>{
+      const {data,error}=await client.rpc('wd_talk_delete_backed_up',{p_message_ids:ids});
+      if(error)throw new Error(error.code==='PGRST202'?'TALK 대화 삭제 기능을 연결한 뒤 사용할 수 있어요.':'대화 삭제를 확인하지 못했어요.');
+      return data;
+    },
+    onDeleted:ids=>{
+      const removed=new Set(ids);
+      if(historyRequest)for(const id of ids)historyRequest.cleared.add(id);
+      messages=messages.filter(row=>!removed.has(row.id));
+      for(const id of ids)seen.delete(id);
+      unread=0;setBadge();render();void loadHistory();
+    }
+  });
+  if(!talkBackup)panel.querySelector('.wdhq-talk-backup-tools').hidden=true;
 
   openBtn.addEventListener('click',()=>isOpen?close():open());
   $('wdhq-talk-close').addEventListener('click',close);
@@ -6351,12 +6452,93 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     else if(!a&&me)stop();
   }
   setInterval(tick,1000);
-  window.addEventListener('pageshow',()=>setTimeout(tick,300));
+  window.addEventListener('pageshow',()=>setTimeout(()=>{tick();void loadHistory()},300));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();void loadHistory()}});
   tick();
 
   window.WDHQTalk=Object.freeze({open,close});
 })();
 </script>
 
+<script id="wdhq-sticky-script">
+(function(){
+  const get=id=>document.getElementById(id);
+  const open=get('wdhq-sticky-open'),panel=get('wdhq-sticky-panel'),text=get('wdhq-sticky-text');
+  const status=get('wdhq-sticky-status');
+  let owner='';
+  const uid=()=>WDHQ_AUTH_PROFILE?.user_id===WDHQ_AUTH_SESSION?.user?.id?(WDHQ_AUTH_SESSION?.user?.id||''):'';
+  const key=()=> 'wdhq-sticky-note-v1:'+owner;
+  const close=()=>{
+    panel.hidden=true;open.setAttribute('aria-expanded','false');text.value='';owner='';
+  };
+  open.onclick=()=>{
+    if(!panel.hidden){close();return;}
+    owner=uid();
+    if(!owner)return;
+    window.WDHQTalk?.close();
+    try{text.value=localStorage.getItem(key())||'';status.textContent='이 브라우저에 저장됩니다.';}
+    catch(e){text.value='';status.textContent='브라우저 저장소에 접근하지 못했습니다.';}
+    panel.hidden=false;open.setAttribute('aria-expanded','true');text.focus();
+  };
+  get('wdhq-sticky-close').onclick=()=>{close();open.focus()};
+  get('wdhq-sticky-save').onclick=()=>{
+    if(!owner||owner!==uid())return close();
+    try{localStorage.setItem(key(),text.value);status.textContent='이 브라우저에 저장했어요.';}
+    catch(e){status.textContent='메모를 저장하지 못했습니다.';}
+  };
+  get('wdhq-sticky-delete').onclick=()=>{
+    if(!owner||owner!==uid())return close();
+    if(!window.confirm('스티커메모를 삭제하시겠습니까?'))return;
+    try{localStorage.removeItem(key());text.value='';status.textContent='메모를 삭제했어요.';}
+    catch(e){status.textContent='메모를 삭제하지 못했습니다.';}
+  };
+  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){close();open.focus()}});
+  window.WDHQStickyNote=Object.freeze({close});
+})();
+</script>
+<style id="wdhq-quick-style">
+#wdhq-quick-dock{position:fixed;right:22px;bottom:22px;z-index:2147483100;display:flex;gap:9px}
+body.wdhq-auth-locked #wdhq-quick-dock,body.wdhq-auth-checking #wdhq-quick-dock{display:none}
+#wdhq-quick-dock button{position:relative;inset:auto;width:44px;height:44px;min-height:44px;display:grid;place-items:center;padding:0;border:1px solid #ddcfee;border-radius:13px;background:#fff;color:#553184;box-shadow:0 6px 18px #30234826;cursor:pointer}
+#wdhq-quick-dock button:hover{background:#f2eafa;transform:translateY(-2px)}
+#wdhq-quick-dock button:focus-visible{outline:2px solid #6e42ae;outline-offset:3px}
+#wdhq-quick-dock svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#wdhq-quick-dock #wdhq-talk-open{background:#56358c;color:#fff}
+body:not(.wdhq-talk-ready) #wdhq-quick-dock #wdhq-talk-open,body:not([data-wdhq-role="owner"]) #wdhq-account-info-open{display:none}
+#wdhq-sticky-panel{bottom:78px}
+#wdhq-talk-preview{bottom:78px}
+#wdhq-account-info{width:min(1060px,calc(100vw - 28px));height:min(750px,calc(100dvh - 28px));max-width:none;max-height:none;padding:0;border:1px solid #e4daed;border-radius:16px;background:#faf8fc;color:#271c38;box-shadow:0 24px 65px #21163345}
+#wdhq-account-info[open]{display:flex;flex-direction:column}
+#wdhq-account-info::backdrop{background:#24183580}
+#wdhq-account-info header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;background:#44246e;color:#fff}
+#wdhq-account-info h2{margin:0;font-size:18px;color:inherit}
+#wdhq-account-info-close{width:36px;height:36px;border:1px solid #eee5fb;border-radius:8px;background:#fff;color:#44246e;font-size:24px;cursor:pointer}
+#wdhq-account-info-content{flex:1;min-height:0}
+#wdhq-account-info-content iframe{display:block;width:100%;height:100%;border:0}
+@media(max-width:760px){
+  #wdhq-quick-dock{right:13px;bottom:76px}
+  #wdhq-sticky-panel,#wdhq-talk-preview{bottom:131px}
+}
+</style>
+<script id="wdhq-account-info-script">
+(function(){
+  const button=document.getElementById('wdhq-account-info-open');
+  const dialog=document.getElementById('wdhq-account-info');
+  const content=document.getElementById('wdhq-account-info-content');
+  const close=()=>{content.replaceChildren();};
+  button.onclick=()=>{
+    if(dialog.open||WDHQ_AUTH_PROFILE?.staff_role!=='owner'||
+      WDHQ_AUTH_PROFILE.user_id!==WDHQ_AUTH_SESSION?.user?.id)return;
+    window.WDHQTalk?.close();window.WDHQStickyNote?.close();
+    const frame=document.createElement('iframe');
+    frame.title='계정정보';frame.allow='clipboard-write';
+    frame.src='./wd-work-center.html?view=account-info';
+    content.replaceChildren(frame);
+    dialog.showModal();
+  };
+  document.getElementById('wdhq-account-info-close').onclick=()=>dialog.close();
+  dialog.addEventListener('close',close);
+})();
+</script>
 </body>
 </html>
