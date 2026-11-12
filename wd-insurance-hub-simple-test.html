@@ -1276,7 +1276,7 @@ body.cdh-lock{overflow:hidden;}
 /* ══ V107: 퀵버튼 캡슐 라벨 (PC 항상 표시) / V109: 모바일은 기본 숨김, 터치(active)·포커스 시에만 표시 ══ */
 #code-mgr-btn::after{content:'코드관리';}
 #mgr-quick-btn::after{content:'전화';}
-#quick-memo-btn::after{content:'메모';}
+#quick-memo-btn::after{content:'보험메모장';}
 #code-mgr-btn::after,#mgr-quick-btn::after,#quick-memo-btn::after{position:absolute;right:58px;top:50%;transform:translateY(-50%);background:rgba(13,27,62,.82);color:#fff;font-size:11px;font-weight:700;font-family:'Noto Sans KR',sans-serif;padding:4px 11px;border-radius:12px;white-space:nowrap;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.18);letter-spacing:0;}
 /* V143_4: 라벨 상시 노출 → 호버/포커스 시에만 (모바일 active 동작은 기존 미디어 규칙 유지) */
 #code-mgr-btn::after,#mgr-quick-btn::after,#quick-memo-btn::after{display:none;}
@@ -10820,6 +10820,34 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #det-contracts .wd09-insurance-scroll { overflow:auto; min-height:0; }
   #det-contracts .wd09-insurance-empty { text-align:center; padding:22px 10px; color:var(--s600); }
 </style>
+<style id="wd09-worktools-style">
+#quick-memo-panel.modal-ov { inset:0; width:auto; padding:0; max-height:none; z-index:10010; border:0; border-radius:0; background:#10182b55; box-shadow:none; justify-content:flex-end; align-items:stretch; }
+#quick-memo-panel:not(.open) { display:none; }
+#quick-memo-panel.open { display:flex; }
+.wd09-insurance-memo-drawer { width:min(100%,480px); display:flex; flex-direction:column; background:var(--s50); box-shadow:-10px 0 34px #10182b25; animation:wd09-memo-in .18s ease-out; }
+@keyframes wd09-memo-in { from { transform:translateX(100%); } }
+@media(prefers-reduced-motion:reduce) { .wd09-insurance-memo-drawer { animation:none; } }
+.wd09-insurance-memo-drawer .wd09-entry-body { flex:1; min-height:0; }
+#wd09-insurance-note-form { background:#fff; border:1px solid var(--s200); border-radius:12px; padding:14px; margin-bottom:14px; }
+#wd09-insurance-note-text { display:block; width:100%; min-height:120px; margin-top:8px; padding:10px; font:inherit; }
+.wd09-insurance-note { background:#fff6cc; border:1px solid #efdfa1; border-radius:12px; margin-bottom:12px; padding:14px; }
+.wd09-insurance-note p { white-space:pre-wrap; overflow-wrap:anywhere; margin:0 0 12px; }
+.wd09-insurance-note footer { display:flex; align-items:center; gap:8px; }
+.wd09-insurance-note time { margin-right:auto; color:var(--s600); font-size:12px; }
+#wd09-insurance-note-status { margin:0; }
+.wd09-monthly-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.wd09-monthly-grid label { grid-column:1/-1; display:flex; align-items:center; gap:10px; }
+.wd09-monthly-grid section { border:1px solid var(--s200); padding:14px; border-radius:12px; }
+.wd09-monthly-grid h3 { margin:0 0 10px; }
+.wd09-monthly-file { width:100%; text-align:left; overflow-wrap:anywhere; }
+.wd09-monthly-preview { border:1px solid var(--s200); border-radius:16px; padding:0; width:min(960px,calc(100% - 24px)); margin:auto; }
+.wd09-monthly-preview::backdrop { background:#10182b80; }
+#wd09-monthly-file-body { max-height:76dvh; overflow:auto; }
+#wd09-monthly-file-body iframe { width:100%; height:70dvh; border:0; }
+#wd09-monthly-file-body img { max-width:100%; }
+#wd09-monthly-file-body pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+@media(max-width:650px) { .wd09-monthly-grid { grid-template-columns:1fr; } }
+</style>
 <style id="wd09-claim-overview-style">
   body:has(:is(#pg-claim,#pg-auto,#pg-cust).on) #content { padding-top:24px!important; }
   #pg-auto .wd09-auto-expiry-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
@@ -11433,11 +11461,6 @@ const wdTest09Storage = (() => {
 <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M9 7h7M9 11h7M9 15h5"></path></svg><span>메뉴얼북</span>
 </div>
 <div class="dr-divider"></div>
-<div class="dr-group">나의 공간</div>
-<div class="dr-item" data-wdpage="myspace" onclick="goPage('myspace');closeDrawer()">
-<svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V21h14V10.5"></path><path d="M9 21v-6h6v6"></path></svg><span>나만의 공간</span>
-</div>
-
 </div>
 <div id="content">
 <!-- ── 홈 ── -->
@@ -12102,7 +12125,7 @@ const wdTest09Storage = (() => {
 <div class="smr-desc">업무실장은 사무실 전체 흐름을 읽고, 놓친 다음 행동과 처리 주체를 알려줍니다.<br/>상담 판단·고지 판단·보험금 지급 판단과 사람의 최종 결정은 대신하지 않습니다.</div>
 </div>
 <div class="smr-hero-actions">
-<button class="smr-hero-btn" onclick="goPage('myspace')" type="button">🗄️ 나만의 공간 열기</button>
+<button class="smr-hero-btn" onclick="openQuickMemo()" type="button">보험메모장 열기</button>
 <button class="smr-hero-btn" onclick="goPage('dsoffice')" type="button">🛎️ 설계 스탭지원실</button>
 </div>
 </section>
@@ -13056,7 +13079,7 @@ const wdTest09Storage = (() => {
 <!-- ── 워크키트 ── -->
 <!-- V147: 자료·문서실 중복 제거 — 상단 3개 안내카드, 보험사 연락처, 빠른 경로 제거 -->
 <div class="pg" id="pg-wkit">
-<div class="sec-hd"><div class="sec-title">워크키트</div><div class="sec-sub">고객업무에 필요한 문장·자료제작·자료·월간영업자료를 한곳에서 사용하는 업무공간</div></div>
+<div class="sec-hd"><div class="sec-title">워크키트</div><div class="sec-sub">고객 전달 문장과 월간영업자료</div></div>
 
 
 
@@ -13069,25 +13092,10 @@ const wdTest09Storage = (() => {
 
 
 
-<!-- 월간영업자료 선택 모달 (정리본 / 원본 구글드라이브) -->
-<div class="modal-ov" id="modal-monthly-sales" onclick="closeModal('modal-monthly-sales')">
-<div class="modal-bx" onclick="event.stopPropagation()" style="max-width:460px;">
-<div class="modal-title">월간영업자료</div>
-<div style="font-size:13px;color:var(--muted);line-height:1.7;margin:-14px 0 20px;">정리본은 상세한 내용까지 담은 자료가 아니라 빠르고 보기 편하게 정리한 자료입니다. 자세한 내용은 원본 구글드라이브로 이동해서 확인하시는 게 좋습니다.</div>
-<a class="wk-item" href="https://pro.wdwave.kr/monthly-sales.html" rel="noopener noreferrer" style="text-decoration:none;cursor:pointer;" target="_blank">
-<div class="wk-ico"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
-<div><div class="wk-item-title">정리본 보기 ↗</div><div class="wk-item-sub">이달의 영업자료 요약본</div></div>
-</a>
-<a class="wk-item" href="#test09-private-resource" rel="noopener noreferrer" style="text-decoration:none;cursor:pointer;margin-bottom:0;" target="_blank">
-<div class="wk-ico"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="18"><rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg></div>
-<div><div class="wk-item-title">원본 구글드라이브 가기 ↗</div><div class="wk-item-sub">전체 원본 자료 모음</div></div>
-</a>
-<div class="modal-ft">
-<button class="btn-s" onclick="closeModal('modal-monthly-sales')">닫기</button>
-</div>
-</div>
-</div>
-<div class="itabs wk-main-tabs"><button class="itab on" id="wk-copy-btn" onclick="swTab(this,'wk-copy')" type="button">복붙서랍</button><button class="itab" id="wk-maker-btn" onclick="swTab(this,'wk-maker')" type="button">고객자료제작실</button><button class="itab" id="wk-drawer-btn" onclick="swTab(this,'wk-drawer')" type="button">자료서랍</button><button class="itab" id="wk-monthly-btn" onclick="swTab(this,'wk-monthly')" type="button">월간영업자료</button><button class="itab" id="wk-flow-btn" onclick="swTab(this,'wk-flow')" type="button">질병·치료 흐름</button></div><div class="wk-main-panel" id="wk-copy"><details class="wq-acc wk-copy-toggle" id="wkc-sec"><summary><span class="wk-copy-summary"><span class="wk-copy-title">고객전달문장</span><span class="wk-copy-desc">고객 응대할 때 주로 사용하는 문장들을 모아뒀습니다. 필요한 문장을 골라 복사해서 사용하세요.</span></span></summary><div class="wq-acc-bd" style="padding-left:18px;"><div id="wk-client" style="display:block;">
+<div class="itabs wk-main-tabs">
+<button class="itab on" id="wk-copy-btn" onclick="swTab(this,'wk-copy')" type="button">복붙서랍</button>
+<button class="itab" id="wk-monthly-btn" onclick="swTab(this,'wk-monthly')" type="button">월간영업자료</button>
+</div><div class="wk-main-panel" id="wk-copy"><details class="wq-acc wk-copy-toggle" id="wkc-sec"><summary><span class="wk-copy-summary"><span class="wk-copy-title">고객전달문장</span><span class="wk-copy-desc">고객 응대할 때 주로 사용하는 문장들을 모아뒀습니다. 필요한 문장을 골라 복사해서 사용하세요.</span></span></summary><div class="wq-acc-bd" style="padding-left:18px;"><div id="wk-client" style="display:block;">
 <div class="wk-sec-hd"><div class="wk-sec-title">고객 전달 문장</div><div class="wk-sec-sub">상황에 맞는 메시지를 선택하여 카카오톡으로 바로 보내세요.</div></div>
 <!-- V112: 톤 선택 (모달에서 선택한 톤이 먼저 표시됨) -->
 <div class="clt-tone-sel">
@@ -13108,17 +13116,7 @@ const wdTest09Storage = (() => {
 <!-- V144_7_8: #ds-doccard(가입 후 서류 안내) → pg-postdocs로 이동 (원본 1개 유지, 복제 없음) -->
 <!-- V112: 사용 시 주의사항 (시안 하단 박스) -->
 <div class="notice-box" style="margin-top:16px;background:rgba(107,79,187,.06);border-color:rgba(107,79,187,.25);"><strong>사용 시 주의사항</strong><br/>· 보험금 지급 여부, 가입 가능 여부, 보장 확정을 단정하지 마세요.<br/>· 약관과 보험사 심사 결과에 따라 달라질 수 있음을 포함해 주세요.</div>
-</div></div></details><details class="wq-acc wk-copy-toggle" id="wkp-sec"><summary><span class="wk-copy-summary"><span class="wk-copy-title">프롬프트서랍</span><span class="wk-copy-desc">각종 AI 프롬프트와 안내문을 모아뒀습니다. 용도에 맞게 검색해 사용하면 업무 효율을 높일 수 있습니다.</span></span></summary><div class="wq-acc-bd wkd-shell" style="padding-left:18px;">
-        AI에게 붙여넣을 프롬프트를 찾아 복사하는 공간입니다. <b>기본 9종은 목업 샘플(확정본 대기)</b>이고, AI 문서작성 탭에서 이관된 25종은 사용 중인 원문 그대로입니다.
-        <div class="wkd-search" style="margin-top:10px;">
-<svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-width="2.4" viewbox="0 0 24 24" width="16"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-<input aria-label="프롬프트 검색" id="wkp-search" oninput="wkPromptRender()" placeholder="프롬프트 검색 (예: 상담 요약, 문자)" type="text"/>
-</div>
-<div class="wkd-tabs" id="wkp-tabs"></div>
-<div class="wkd-count"><span id="wkp-count"></span><span>기본 9종 샘플 · 이관 25종 원문</span></div>
-<div class="wkd-grid" id="wkp-grid"></div>
-<div class="wkd-note">프롬프트에 고객 개인정보 원문을 넣지 않습니다. { } 표시 칸은 상황에 맞게 바꿔서 사용하세요.</div>
-</div></details></div><div class="wk-main-panel" id="wk-maker" style="display:none;"><div class="wk-maker-inline">
+</div></div></details></div><div class="wk-main-panel" id="wk-maker" style="display:none;"><div class="wk-maker-inline">
 <div class="msr-intro"><b>업무기록이 아니라 고객에게 전달할 자료를 만드는 곳입니다.</b><span>내부 상담기록·다음 연락·처리상태는 각 업무 화면에서 관리하고, 이곳에는 고객에게 설명하거나 보관용으로 전달할 결과물만 둡니다.</span></div>
 <div class="wdmat-hub-grid">
 <article class="wdmat-hub ai-material-card">
@@ -13202,34 +13200,17 @@ const wdTest09Storage = (() => {
 <div class="wkd-count"><span id="wkd-count"></span><span>최근 업데이트: 2026.07.09 (샘플)</span></div>
 <div class="wkd-grid" id="wkd-grid"></div>
 <div class="wkd-note">본 자료실의 파일은 설계사 업무용입니다. 고객 개인정보가 포함된 파일은 이곳에 올리지 않습니다. 자료 요청·오류 제보는 지점장에게 알려주세요.</div>
-</div></details></div><div class="wk-main-panel" id="wk-monthly" style="display:none;">
-<div class="wk-sec-hd"><div class="wk-sec-title">월간영업자료</div><div class="wk-sec-sub">이달의 추천 자료</div></div>
-<div class="grid-2">
-<div class="wk-item" onclick="openModal('modal-monthly-sales')" style="cursor:pointer;">
-<div class="wk-ico"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="18"><rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg></div>
-<div><div class="wk-item-title">월간영업자료 ↗</div><div class="wk-item-sub">월간 영업자료 모음</div></div>
-</div>
-<a class="wk-item" href="https://band.us/band/82472176" rel="noopener noreferrer" style="text-decoration:none;cursor:pointer;" target="_blank">
-<div class="wk-ico"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="18"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-<div><div class="wk-item-title">월간시책자료 ↗</div><div class="wk-item-sub">월간 시책자료 모음</div></div>
-</a>
-</div>
-<div class="wk-main-panel" id="wk-flow" style="display:none;">
-  <div class="wk-panel-intro">
-    <b>질병·치료 흐름 보기</b>
-    <span>질병 발견부터 검사·치료·회복까지의 일반적인 흐름과 비용 부담 시점을 상담 참고자료로 확인합니다.</span>
-  </div>
-  <div class="wk-flow-entry">
-    <div class="wk-flow-entry-ico">🩺</div>
-    <div class="wk-flow-entry-copy">
-      <strong>질병·치료 흐름 상담자료</strong>
-      <span>보장 필요성을 설명할 때 참고하는 도구입니다. 실제 치료 과정과 보험금 지급 여부는 의료진 판단, 약관과 보험사 심사 기준에 따라 달라질 수 있습니다.</span>
-    </div>
-    <button class="btn-p" onclick="flowref_open('wkit')" type="button">흐름 보기 →</button>
-  </div>
-</div>
-
-</div>
+</div></details></div><section class="wk-main-panel card" id="wk-monthly" style="display:none;" aria-labelledby="wd09-monthly-title">
+<div class="card-hd"><h2 class="card-title" id="wd09-monthly-title">월간영업자료</h2>
+<button type="button" class="btn-sm p" id="wd09-monthly-connect" onclick="wd09OpenMonthlyMaterials()">월간자료 연결</button></div>
+<p id="wd09-monthly-status" role="status"></p>
+<div id="wd09-monthly-content" class="wd09-monthly-grid"></div>
+</section>
+<dialog class="wd09-monthly-preview" id="wd09-monthly-preview" aria-labelledby="wd09-monthly-file-title" onclose="wd09ClearMonthlyPreview()">
+<header class="wd09-entry-header"><h2 id="wd09-monthly-file-title">자료 보기</h2>
+<button type="button" class="wd09-modal-close" aria-label="닫기" onclick="document.getElementById('wd09-monthly-preview').close()">×</button></header>
+<div class="wd09-entry-body" id="wd09-monthly-file-body"></div>
+</dialog>
 <!-- ── 업무허브 ── -->
 
 <!-- ── 설계매니저 연락표 ── -->
@@ -14941,11 +14922,7 @@ const wdTest09Storage = (() => {
       <span class="cwf-support-copy"><strong>보험 방향 함께 정리</strong><em>고객의 예산·우선순위·갱신 선호를 함께 정리해 상담 방향을 잡습니다.</em><small>2단계에 활용 · 고객 니즈 정리</small></span>
       <span class="cwf-support-action">정리 시작하기 →</span>
     </button>
-    <button type="button" class="cwf-support-card flow" id="cwf-support-flow" onclick="flowref_open('consulthub')">
-      <span class="cwf-support-ico">🩺</span>
-      <span class="cwf-support-copy"><strong>질병·치료 흐름 보기</strong><em>질병 발견부터 치료·회복까지의 흐름과 비용 부담 시점을 설명합니다.</em><small>6단계에 활용 · 보장 필요성 설명</small></span>
-      <span class="cwf-support-action">흐름 보기 →</span>
-    </button>
+
   </div>
 </section>
 
@@ -15010,7 +14987,7 @@ const wdTest09Storage = (() => {
 <details class="mb-acc" data-mbcat="custflow"><summary><span class="mb-no">11</span>현재 보험금 청구 사용법</summary><div class="mb-acc-bd"><b>사고·질병 확인 → 가입보험 확인 → 기본서류 안내 → 청구 접수 → 진행상태 → 추가서류</b> 순서로 지원합니다. 청구는 고객 본인이 진행하는 절차이며 설계사는 방향·서류·진행을 돕습니다. <b>지급 여부는 보험사 심사 결과에 따라 달라질 수 있습니다.</b><div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('claim')">청구업무 열기</button></div></div></details>
 <details class="mb-acc" data-mbcat="custflow"><summary><span class="mb-no">12</span>숨은보험 탐색 사용법</summary><div class="mb-acc-bd"><b>사고·질병 사건 등록 → 사건 당시 계약 확인(실효·해지·만기 포함) → 보험사 보상내역 확인 → 홈택스 의료비·치료 흔적 확인 → 담보와 기존 지급내역 교차확인</b> 후 <b>일반청구 / 추가자료 / 손해사정사 검토 / 근거 부족</b>으로 분기합니다. 가정 지급률은 참고 시나리오이며 실제 장해율이 아닙니다. 업무기록에는 <b>안전요약만</b> 저장합니다.<div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('claim')">청구업무 열기</button></div></div></details>
 <details class="mb-acc" data-mbcat="docs"><summary><span class="mb-no">13</span>고객자료 제작실 사용법</summary><div class="mb-acc-bd">고객에게 <b>실제 전달할 결과물</b>을 만드는 공간이며, 내부 업무기록은 포함하지 않습니다. 첫 화면 결과물 4종: <b>① 이번 보험 점검 결과 ② 계약 후 관리 안내서 ③ 고객 보험관리 책자 ④ 가입 후 서류 안내</b>. 잘 유지되는 보장을 먼저 보여주는 순서로 구성하고, 기존 종합 제작 흐름도 그대로 사용할 수 있습니다. 전달 전 설계사 최종 검수가 필수입니다.<div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('materialstudio')">고객자료 제작실 열기</button></div></div></details>
-<details class="mb-acc" data-mbcat="docs"><summary><span class="mb-no">14</span>워크키트 사용법</summary><div class="mb-acc-bd"><b>복붙서랍 · 고객자료제작실 · 자료서랍 · 월간영업자료</b>를 사용합니다. 가입제안서 쉽게 풀어보기 흐름: <b>자료 준비 → NotebookLM 분석 → 결과 확인 → ChatGPT 고객자료 변환 → 설계사 검수</b>. NotebookLM(근거 확인)과 ChatGPT(문장 변환)의 역할을 섞지 않습니다.<div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('wkit')">워크키트 열기</button></div></div></details>
+<details class="mb-acc" data-mbcat="docs"><summary><span class="mb-no">14</span>워크키트 사용법</summary><div class="mb-acc-bd"><b>복붙서랍 · 월간영업자료</b>를 사용합니다. 가입제안서 쉽게 풀어보기 흐름: <b>자료 준비 → NotebookLM 분석 → 결과 확인 → ChatGPT 고객자료 변환 → 설계사 검수</b>. NotebookLM(근거 확인)과 ChatGPT(문장 변환)의 역할을 섞지 않습니다.<div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('wkit')">워크키트 열기</button></div></div></details>
 <details class="mb-acc" data-mbcat="docs"><summary><span class="mb-no">15</span>가입제안서·약관·보험증권 원문 확인 기준</summary><div class="mb-acc-bd">가입제안서 · 약관 · 보험증권 · 상품설명서는 각각 역할이 다르며, <b>가입제안서는 약관 전체를 대신하지 않습니다.</b> 자료 간 내용이 다르면 나란히 놓고 확인하고, 확인되지 않는 내용은 "자료에서 확인되지 않음"으로 표시합니다. 인용 시 자료명과 페이지 또는 근거 위치를 남기고, 지급·인수·상품 우열은 단정하지 않습니다.</div></details>
 <details class="mb-acc" data-mbcat="support"><summary><span class="mb-no">16</span>보험사 연락처 확인 기준</summary><div class="mb-acc-bd">보험사 <b>대표번호와 고객센터</b>를 청구 · 계약변경 · 설계지원 용도로 구분해 확인합니다. 앱의 연락처는 참고용이며, 중요한 업무는 보험사 공식 홈페이지 · 업무채널에서 재확인합니다. 개인정보를 일반 메시지로 보내지 않습니다.<div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('manager')">보험사 연락처 열기</button></div></div></details>
 <details class="mb-acc" data-mbcat="support"><summary><span class="mb-no">17</span>스탭지원 요청 기준</summary><div class="mb-acc-bd"><b>요청 준비 → 업무채널 전달 → 답변 대기 → 답변 확인 → 완료 처리</b> 순서로 진행합니다. 공식 업무는 <b>메가종합금융 총무 경유</b>를 우선하고, 요청문에 넣는 고객정보 · 보안값은 마스킹합니다.<div style="margin-top:10px;"><button class="btn-sm p" onclick="goPage('links')">업무허브 열기</button></div></div></details>
@@ -15104,10 +15081,10 @@ const wdTest09Storage = (() => {
 </div>
 
 <div class="pg" id="pg-links">
-<div class="sec-hd"><div class="sec-title">업무허브</div><div class="sec-sub">업무도구 · 업무전산 · 보험사연락처 · 공식확인</div></div>
+<div class="sec-hd"><div class="sec-title">업무허브</div><div class="sec-sub">업무도구 · 보험코드관리 · 보험사연락처 · 공식확인</div></div>
 <div class="itabs">
 <button class="itab on" id="hub-tools-btn" onclick="swHubTab(this,'hub-tools')">업무도구</button>
-<button class="itab" id="hub-system-btn" onclick="swHubTab(this,'hub-system')">업무전산</button>
+<button class="itab" id="hub-system-btn" type="button" onclick="openCodeMgr()">보험코드관리</button>
 <button class="itab" id="hub-manager-btn" onclick="swHubTab(this,'hub-manager')">보험사연락처</button>
 <button class="itab" id="hub-official-btn" onclick="swHubTab(this,'hub-official')">공식확인</button>
 </div>
@@ -15590,16 +15567,23 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 <!-- ── 빠른 메모 ── -->
-<button id="quick-memo-btn" onclick="event.stopPropagation();toggleQuickMemo()" title="빠른 메모" type="button">📝</button>
-<div id="quick-memo-panel" onclick="event.stopPropagation()">
-<div class="qm-hd">
-<div class="qm-title">📝 빠른 메모</div>
-<button class="qm-close" onclick="closeQuickMemo()" type="button">×</button>
+<button id="quick-memo-btn" onclick="event.stopPropagation();toggleQuickMemo()" title="보험메모장" aria-label="보험메모장" type="button">📝</button>
+<div class="modal-ov" id="quick-memo-panel">
+<section class="wd09-insurance-memo-drawer" role="dialog" aria-modal="true" aria-labelledby="wd09-insurance-memo-title">
+<header class="wd09-entry-header"><h2 id="wd09-insurance-memo-title">보험메모장</h2>
+<button type="button" class="wd09-modal-close" aria-label="닫기" onclick="closeQuickMemo()">×</button></header>
+<div class="wd09-entry-body">
+<div class="card-hd"><p id="wd09-insurance-note-status" role="status"></p><button type="button" class="btn-sm p" id="wd09-insurance-note-add" onclick="wd09EditInsuranceNote()" disabled>+ 메모 추가</button></div>
+<form id="wd09-insurance-note-form" onsubmit="wd09SaveInsuranceNote(event)" hidden>
+<label for="wd09-insurance-note-text">메모 내용</label>
+<textarea id="wd09-insurance-note-text" maxlength="4000" required></textarea>
+<div class="modal-ft">
+<button class="btn-s" type="button" onclick="document.getElementById('wd09-insurance-note-form').hidden=true">취소</button>
+<button class="btn-p" type="submit" id="wd09-insurance-note-save">저장</button>
+</div></form>
+<div id="wd09-insurance-notes"></div>
 </div>
-<div class="qm-sub">개인 리마인드 전용</div>
-<textarea id="quick-memo-text" oninput="saveQuickMemo()" placeholder="개인 메모용입니다. 고객 정보는 고객관리 메뉴에 기록하세요."></textarea>
-<div class="qm-warn">⚠ 민감정보(주민번호·계좌번호·비밀번호)는 메모장에 남기지 마세요.</div>
-<div id="quick-memo-status" style="font-size:10px;color:var(--em700);margin-top:4px;min-height:14px;"></div>
+</section>
 </div>
 <!-- end app -->
 <div class="modal-ov wd09-entry-overlay" id="wd09-drive-setup">
@@ -16635,23 +16619,97 @@ function loadQuickMemo(){
   var ta=document.getElementById('quick-memo-text');
   if(ta)ta.value=qmGetData().content||'';
 }
-function openQuickMemo(){
-  var panel=document.getElementById('quick-memo-panel');
-  if(!panel)return;
-  panel.classList.add('qm-open');
-  loadQuickMemo();
+const WD09_INSURANCE_MEMO_FORMAT='wd09-insurance-notes-v1';
+let wd09InsuranceNotes=[];
+let wd09MemoBusy=false;
+let wd09MemoEditing=null;
+
+function wd09ParseInsuranceNotes(data){
+  const content=data.content||'';
+  if(!content)return [];
+  try{
+    const payload=JSON.parse(content);
+    if(payload.format===WD09_INSURANCE_MEMO_FORMAT&&Array.isArray(payload.notes)){
+      return payload.notes.filter(note=>note&&typeof note.id==='string'&&typeof note.text==='string');
+    }
+  }catch{}
+  return [{id:'legacy-memo',text:content,date:data.date||''}];
 }
-function closeQuickMemo(){
-  var panel=document.getElementById('quick-memo-panel');
-  if(!panel)return;
-  panel.classList.remove('qm-open');
+function wd09RenderInsuranceNotes(){
+  const list=document.getElementById('wd09-insurance-notes');
+  list.replaceChildren();
+  if(!wd09InsuranceNotes.length){list.textContent='등록된 메모가 없어요.';return;}
+  for(const note of wd09InsuranceNotes){
+    const card=document.createElement('article');
+    card.className='wd09-insurance-note';
+    const body=document.createElement('p');
+    body.textContent=note.text;
+    const actions=document.createElement('footer');
+    const date=document.createElement('time');
+    date.textContent=note.date||'';
+    const edit=document.createElement('button');
+    edit.type='button';edit.className='btn-sm';edit.textContent='수정';
+    edit.onclick=()=>wd09EditInsuranceNote(note);
+    const remove=document.createElement('button');
+    remove.type='button';remove.className='btn-sm d';remove.textContent='삭제';
+    remove.onclick=()=>{
+      if(confirm('이 보험메모를 삭제할까요?'))void wd09PersistInsuranceNotes(wd09InsuranceNotes.filter(item=>item.id!==note.id));
+    };
+    actions.append(date,edit,remove);card.append(body,actions);list.append(card);
+  }
 }
+function wd09EditInsuranceNote(note){
+  wd09MemoEditing=note?.id??null;
+  const field=document.getElementById('wd09-insurance-note-text');
+  document.getElementById('wd09-insurance-note-form').hidden=false;
+  field.value=note?.text||'';
+  field.focus();
+}
+async function wd09PersistInsuranceNotes(notes){
+  if(wd09MemoBusy||_qmLoadError)return;
+  wd09MemoBusy=true;
+  const save=document.getElementById('wd09-insurance-note-save');
+  save.disabled=true;
+  try{
+    const content=notes.length?JSON.stringify({format:WD09_INSURANCE_MEMO_FORMAT,notes}):'';
+    const result=await qmSetData({date:notes.length?today():'',content});
+    if(!result.ok)return;
+    wd09InsuranceNotes=notes;
+    document.getElementById('wd09-insurance-note-form').hidden=true;
+    document.getElementById('wd09-insurance-note-status').textContent='저장했어요.';
+    wd09RenderInsuranceNotes();
+  }finally{wd09MemoBusy=false;save.disabled=false;}
+}
+function wd09SaveInsuranceNote(event){
+  event.preventDefault();
+  const text=document.getElementById('wd09-insurance-note-text').value.trim();
+  if(!text)return;
+  const note={id:wd09MemoEditing||crypto.randomUUID(),text,date:today()};
+  const next=wd09MemoEditing?wd09InsuranceNotes.map(item=>item.id===note.id?note:item):[note,...wd09InsuranceNotes];
+  void wd09PersistInsuranceNotes(next);
+}
+async function openQuickMemo(){
+  if(!_UID)return;
+  openModal('quick-memo-panel');
+  const status=document.getElementById('wd09-insurance-note-status');
+  const add=document.getElementById('wd09-insurance-note-add');
+  add.disabled=true;
+  status.textContent='메모를 불러오고 있어요.';
+  document.getElementById('wd09-insurance-notes').replaceChildren();
+  document.getElementById('wd09-insurance-note-form').hidden=true;
+  const result=await loadQuickMemoFromSupa();
+  if(!result.ok){status.textContent='메모를 불러오지 못했어요. 다시 열어 주세요.';return;}
+  wd09InsuranceNotes=wd09ParseInsuranceNotes(qmGetData());
+  status.textContent='';
+  add.disabled=false;
+  wd09RenderInsuranceNotes();
+}
+function closeQuickMemo(){closeModal('quick-memo-panel');}
 function toggleQuickMemo(){
-  var panel=document.getElementById('quick-memo-panel');
-  if(!panel)return;
-  if(panel.classList.contains('qm-open')){closeQuickMemo();}
-  else{openQuickMemo();}
+  if(document.getElementById('quick-memo-panel').classList.contains('open'))closeQuickMemo();
+  else void openQuickMemo();
 }
+
 async function saveQuickMemo(){
   var val=document.getElementById('quick-memo-text').value;
   var result=await qmSetData({date:today(),content:val});
@@ -16762,7 +16820,7 @@ function initApp(){
   var isAdmin=(_ROLE==='branch_manager');
   ['hn-admin','dr-admin'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=isAdmin?'':'none';});
   // 업무전산: SUPABASE_CONFIG_BY_UID에 등록된 UID(WD23000/WD26001/WD26002)만 표시
-  var sysBtn=document.getElementById('hub-system-btn');if(sysBtn)sysBtn.style.display=hubSystemAllowed()?'':'none';
+  var sysBtn=document.getElementById('hub-system-btn');if(sysBtn)sysBtn.style.display=_UID?'':'none';
   // 코드관리 퀵버튼: 로그인한 모든 설계사에게 표시 (데이터는 uid 기준 개인별 저장이므로 표시만 공통)
   var cmBtn=document.getElementById('code-mgr-btn');if(cmBtn)cmBtn.classList.toggle('show',!!_UID);
 }
@@ -16844,6 +16902,8 @@ function cwf_openDirectionTool(){
 }
 var PAGES=['home','saramanagerroom','cust','design','contract','aftercontract','claim','auto','wkit','manual','links','manager','admin','mypage','dgboard','dsoffice','claimguide','myspace','officeintro','custdoc','qcconsult','consulthub','materialstudio','flowref','postdocs'];
 function goPage(id){
+  if(id==='myspace'){openQuickMemo();return;}
+  if(id==='flowref')return;
   var _openMaterialStudio=(id==='materialstudio');
   if(_openMaterialStudio)id='wkit';
   // 원수사 접속관리(admin) 화면 연결 차단 — v39, 전체 사용자 대상 (역할/사번 무관)
@@ -20238,6 +20298,7 @@ function swTab(btn,id){
     var client=document.getElementById('wk-client');
     if(client)client.style.display='block';
   }
+  if(id==='wk-monthly')window.wd09ShowMonthlyMaterials?.();
   if(id==='wk-counsel')renderCnsl();
   if(id==='wk-maker'){
     var ai=document.getElementById('wk-ai');
@@ -20517,7 +20578,7 @@ function filterCodeMgrList(){
   const messages=[];
   if(_cmLoadState==='loading')messages.push('코드 정보를 불러오는 중이에요.');
   if(_cmLoadState==='preview')messages.push('미리보기에서는 저장된 코드와 로그인 정보를 불러오지 않아요.');
-  if(_cmLoadState==='error')messages.push('저장된 코드와 로그인 정보를 불러오지 못했습니다.');
+  if(_cmLoadState==='error')messages.push('저장된 코드 정보를 불러오지 못했어요. 다시 열어 확인해 주세요.');
   if(!found&&_cmLoadState!=='loading')messages.push('검색 결과가 없어요.');
   document.getElementById('cm-status').textContent=messages.join(' ');
 }
@@ -33249,7 +33310,7 @@ function openDesignProgressModal(){
   const allowedTables = new Set([
     'wd_partners_customers','wd_partners_claim_records','wd_partners_communications',
     'wd_partners_contracts','wd_partners_consultations','wd_partners_design_requests',
-    'wd_partners_home_flow','wd_partners_quickmemo','wd_partners_todos','wd_partners_managers'
+    'wd_partners_home_flow','wd_partners_quickmemo','wd_partners_todos','wd_partners_managers','wd_partners_hub_system_accounts'
   ]);
   let active = null;
   let authenticating = false;
@@ -33308,6 +33369,19 @@ function openDesignProgressModal(){
           if(row && row.uid===uid && String(row.customer_id)===claim.custId &&
               row.id===claim.recId && (row.data?.file_path||'')===claim.filePath &&
               isVerified() && wd09ClaimSubmission===claim){
+            return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+          }
+        }
+      }
+      if(isVerified()&&request.method==='POST'&&url.searchParams.size===1){
+        const conflict=url.searchParams.get('on_conflict');
+        const memo=table==='wd_partners_quickmemo'&&conflict==='uid';
+        const code=table==='wd_partners_hub_system_accounts'&&conflict==='uid,company_type,company_name';
+        if(memo||code){
+          const row=await request.clone().json();
+          const knownCompany=code&&['nonlife','life'].some(type=>hubSystemCompanyType(type)===row?.company_type
+            &&HUB_SYSTEM_DATA[type].some(company=>company.name===row?.company_name));
+          if(row?.uid===uid&&(memo||knownCompany)&&isVerified()){
             return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
           }
         }
@@ -34086,6 +34160,7 @@ function wd09MountDriveSetup(connectDrive,home){
     message=note||connectMessage;
     home?.reset(note);
     window.wd09CustomerSheets=null;
+    window.wd09ResetMonthly?.();
     window.wd09RefreshBulkSheetButton?.();
     render();
   }
@@ -34285,7 +34360,7 @@ async function wd09RefreshCustomerRecordTab(kind){
         client_id:WD09_GOOGLE_CLIENT_ID,scope:scopes.join(' '),include_granted_scopes:false,
         callback:response=>{
           if(response?.error||!response?.access_token||!oauth.hasGrantedAllScopes(response,...scopes)){
-            const services=scopes.length>1?'Drive 파일, 일정, 할 일':'Drive 파일';
+            const services=scopes.includes('https://www.googleapis.com/auth/drive.readonly')?'Drive 읽기':scopes.length>1?'Drive 파일, 일정, 할 일':'Drive 파일';
             reject(new Error(services+' 권한을 허용해 주세요.'));
             return;
           }
@@ -34399,6 +34474,163 @@ async function wd09RefreshCustomerRecordTab(kind){
       }
     };
   }
+  const monthlyRoot='1zoxuP2TBhMpDQ4qxje5T6HF2FStFCRlx';
+  const monthlyScope='https://www.googleapis.com/auth/drive.readonly';
+  let monthlySession=null;
+  let monthlyUrl='';
+  let monthlyRequest=0;
+  const monthlyById=id=>document.getElementById(id);
+
+  window.wd09ClearMonthlyPreview=function(){
+    monthlyRequest++;
+    if(monthlyUrl)URL.revokeObjectURL(monthlyUrl);
+    monthlyUrl='';
+    monthlyById('wd09-monthly-file-body').replaceChildren();
+  };
+  function resetMonthly(){
+    monthlySession=null;
+    const dialog=monthlyById('wd09-monthly-preview');
+    if(dialog.open)dialog.close();
+    window.wd09ClearMonthlyPreview();
+    monthlyById('wd09-monthly-content').replaceChildren();
+    monthlyById('wd09-monthly-connect').textContent='월간자료 연결';
+    monthlyById('wd09-monthly-status').textContent='월간자료를 보려면 Google Drive 읽기 권한을 연결해 주세요.';
+  }
+  async function monthlyFetch(session,path){
+    if(session!==monthlySession||session.uid!==_UID||Date.now()>=session.expiresAt){
+      throw Error('월간자료 연결이 만료됐어요. 다시 연결해 주세요.');
+    }
+    const response=await fetch(base+path,{headers:{Authorization:'Bearer '+session.token},
+      credentials:'omit',cache:'no-store',redirect:'error'});
+    if(session!==monthlySession||session.uid!==_UID)throw Error('계정 연결이 바뀌었어요.');
+    if(!response.ok)throw Error(response.status===401?'월간자료 연결이 만료됐어요. 다시 연결해 주세요.':'월간자료 폴더 또는 파일의 Drive 접근 권한을 확인해 주세요.');
+    return response;
+  }
+  async function monthlyChildren(session,parent){
+    const params=new URLSearchParams({q:"trashed = false and '"+parent+"' in parents",
+      fields:'nextPageToken,files(id,name,mimeType,description)',pageSize:'100',orderBy:'name',
+      supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+    const files=[];
+    while(true){
+      const page=await (await monthlyFetch(session,'/files?'+params)).json();
+      files.push(...(page.files||[]));
+      if(!page.nextPageToken)return files;
+      params.set('pageToken',page.nextPageToken);
+    }
+  }
+  async function monthlyDocuments(session,folder,trail=''){
+    const items=await monthlyChildren(session,folder.id);
+    const files=[];
+    for(const item of items){
+      if(item.mimeType===WD09_DRIVE_FOLDER_TYPE){
+        files.push(...await monthlyDocuments(session,item,trail+item.name+' / '));
+      }else if(item.mimeType!=='application/vnd.google-apps.shortcut'){
+        files.push({...item,label:trail+item.name});
+      }
+    }
+    return files;
+  }
+  async function showMonthlyFile(session,file){
+    const dialog=monthlyById('wd09-monthly-preview');
+    const body=monthlyById('wd09-monthly-file-body');
+    window.wd09ClearMonthlyPreview();
+    const request=monthlyRequest;
+    monthlyById('wd09-monthly-file-title').textContent=file.name;
+    body.textContent='자료를 불러오고 있어요.';
+    if(!dialog.open)dialog.showModal();
+    try{
+      const id=encodeURIComponent(file.id);
+      const native=/^application\/vnd\.google-apps\.(document|spreadsheet|presentation)$/.test(file.mimeType);
+      const path=native?'/files/'+id+'/export?mimeType=application%2Fpdf':'/files/'+id+'?alt=media&supportsAllDrives=true';
+      const response=await monthlyFetch(session,path);
+      const blob=await response.blob();
+      if(request!==monthlyRequest||!dialog.open)return;
+      body.replaceChildren();
+      if(native||file.mimeType==='application/pdf'){
+        monthlyUrl=URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));
+        const frame=document.createElement('iframe');frame.title=file.name;frame.src=monthlyUrl;body.append(frame);
+      }else if(/^image\/(png|jpeg|webp|gif|bmp|avif)$/.test(file.mimeType)){
+        monthlyUrl=URL.createObjectURL(blob);
+        const image=document.createElement('img');image.src=monthlyUrl;image.alt=file.name;body.append(image);
+      }else if(file.mimeType==='text/plain'||file.mimeType==='text/csv'){
+        const content=await blob.text();
+        if(request!==monthlyRequest||!dialog.open)return;
+        const pre=document.createElement('pre');pre.textContent=content;body.append(pre);
+      }else{
+        monthlyUrl=URL.createObjectURL(blob);
+        const link=document.createElement('a');link.className='btn-sm p';
+        link.href=monthlyUrl;link.download=file.name;link.textContent='파일 내려받기';
+        body.append('이 파일 형식은 앱 안에서 미리 볼 수 없어요. ',link);
+      }
+    }catch(error){if(request===monthlyRequest)body.textContent=error.message||'자료를 열지 못했어요.';}
+  }
+  async function showMonthlySections(session,month,host){
+    const status=monthlyById('wd09-monthly-status');
+    status.textContent='월간자료를 불러오고 있어요.';
+    try{
+      const folders=await monthlyChildren(session,month);
+      const groups=await Promise.all(['영업자료','시책'].map(async name=>{
+        const matching=folders.filter(file=>file.mimeType===WD09_DRIVE_FOLDER_TYPE&&file.name.includes(name));
+        const files=(await Promise.all(matching.map(f=>monthlyDocuments(session,f)))).flat();
+        return {name,files};
+      }));
+      if(session!==monthlySession||host!==monthlyById('wd09-monthly-content').firstElementChild||host.querySelector('select').value!==month)return;
+      host.parentElement.querySelectorAll('section').forEach(section=>section.remove());
+      for(const group of groups){
+        const section=document.createElement('section');
+        const title=document.createElement('h3');title.textContent=group.name;section.append(title);
+        if(!group.files.length)section.append('등록된 자료가 없어요.');
+        for(const file of group.files){
+          const button=document.createElement('button');button.type='button';button.className='btn-sm wd09-monthly-file';
+          button.textContent=file.label;button.onclick=()=>void showMonthlyFile(session,file);section.append(button);
+        }
+        host.parentElement.append(section);
+      }
+      status.textContent='';
+    }catch(error){if(session===monthlySession)status.textContent=error.message||'월간자료를 불러오지 못했어요.';}
+  }
+  async function loadMonthlyMonths(session){
+    const files=await monthlyChildren(session,monthlyRoot);
+    const months=files.filter(file=>file.mimeType===WD09_DRIVE_FOLDER_TYPE&&/^20\d{2}[_-](0[1-9]|1[0-2])$/.test(file.name)).reverse();
+    if(session!==monthlySession)return;
+    const content=monthlyById('wd09-monthly-content');
+    content.replaceChildren();
+    if(!months.length){monthlyById('wd09-monthly-status').textContent='월별 자료 폴더가 없어요.';return;}
+    const label=document.createElement('label');label.textContent='자료 월';
+    const select=document.createElement('select');
+    for(const month of months)select.add(new Option(month.name.replace(/[_-]/,'년 ')+'월',month.id));
+    const now=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+    const current=now.find(p=>p.type==='year').value+'_'+now.find(p=>p.type==='month').value;
+    select.value=months.find(month=>month.name.replace('-','_')===current)?.id||months[0].id;
+    select.onchange=()=>void showMonthlySections(session,select.value,label);
+    label.append(select);content.append(label);
+    await showMonthlySections(session,select.value,label);
+  }
+  window.wd09ShowMonthlyMaterials=function(){
+    if(!monthlySession||Date.now()>=monthlySession.expiresAt)resetMonthly();
+  };
+  window.wd09OpenMonthlyMaterials=async function(){
+    const uid=_UID;
+    if(!uid||!getSbClient())return;
+    const button=monthlyById('wd09-monthly-connect'),status=monthlyById('wd09-monthly-status');
+    if(button.disabled)return;
+    button.disabled=true;
+    try{
+      if(!monthlySession||Date.now()>=monthlySession.expiresAt){
+        const grant=await authorize([monthlyScope]);
+        if(uid!==_UID)return;
+        monthlySession={uid,token:grant.access_token,expiresAt:Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000)};
+      }
+      status.textContent='월간자료를 불러오고 있어요.';
+      await loadMonthlyMonths(monthlySession);
+      button.textContent='새로고침';
+    }catch(error){
+      resetMonthly();
+      status.textContent=error.message||'월간자료에 연결하지 못했어요.';
+    }finally{button.disabled=false;}
+  };
+  window.wd09ResetMonthly=resetMonthly;
+
   window.wd09DriveReset=wd09MountDriveSetup(connectDrive,wd09GoogleHome);
   window.addEventListener('pagehide',()=>window.wd09DriveReset());
 })();
