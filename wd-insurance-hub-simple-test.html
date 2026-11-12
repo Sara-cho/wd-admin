@@ -1229,12 +1229,29 @@ body.cdh-lock{overflow:hidden;}
 #code-mgr-btn{position:fixed;bottom:144px;right:24px;z-index:8000;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--purple));color:#fff;display:none;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(74,63,138,.35);transition:all .15s;border:none;}
 #code-mgr-btn.show{display:flex;}
 #code-mgr-btn:hover{transform:scale(1.1);}
-#modal-codemgr .modal-bx{max-height:84vh;}
-#modal-codemgr .cm-head{margin:0 -28px 14px;padding:20px 28px 16px;background:linear-gradient(135deg,var(--navy),var(--purple));border-radius:18px 18px 0 0;}
-#modal-codemgr .cm-head-title{font-size:18px;font-weight:900;color:#fff;letter-spacing:-.3px;margin-bottom:5px;}
-#modal-codemgr .cm-head-sub{font-size:12.5px;color:rgba(255,255,255,.85);line-height:1.6;}
-#modal-codemgr .cm-warn{padding:10px 12px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;font-size:12px;color:#92400e;line-height:1.7;margin-bottom:14px;}
-#modal-codemgr .cm-card{border:1px solid var(--s200);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;}
+#modal-codemgr .modal-bx{width:94%;max-width:1200px;height:90vh;max-height:90vh;max-height:90dvh;display:flex;flex-direction:column;padding:0;overflow:hidden;}
+#modal-codemgr .cm-head{flex:none;padding:18px 22px 14px;background:linear-gradient(135deg,var(--navy),var(--purple));}
+#modal-codemgr .cm-head-line,#modal-codemgr .cm-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+#modal-codemgr .cm-head-title{font-size:18px;font-weight:900;color:#fff;}
+#modal-codemgr .cm-head .itabs{margin:12px 0 0;background:rgba(255,255,255,.14);}
+#modal-codemgr .cm-head .itab{color:#fff;background:rgba(255,255,255,.08);}
+#modal-codemgr .cm-head .itab.on{color:var(--navy);background:#fff;}
+#modal-codemgr #cm-search{width:100%;min-height:42px;margin-top:10px;padding:8px 12px;border:1px solid transparent;border-radius:9px;background:#fff;color:var(--navy);font:inherit;font-size:14px;}
+#modal-codemgr .cm-body{flex:1;min-height:0;overflow:auto;padding:16px 22px 22px;background:var(--bg);}
+#modal-codemgr #cm-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
+#modal-codemgr #cm-status{margin:0 0 12px;font-size:13px;color:var(--s600);}
+#modal-codemgr #cm-status:empty,#modal-codemgr .cm-card[hidden]{display:none;}
+#modal-codemgr .cm-card{min-width:0;border:1px solid var(--s200);border-radius:12px;padding:12px 14px;background:#fff;}
+#modal-codemgr .cm-card-head{margin-bottom:6px;}
+#modal-codemgr .cm-card-title{font-size:14px;font-weight:800;color:var(--navy);min-width:0;overflow-wrap:anywhere;}
+#modal-codemgr .cm-value{min-width:0;overflow-wrap:anywhere;}
+@media(max-width:920px){#modal-codemgr #cm-list{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:600px){
+  #modal-codemgr .modal-bx{width:100%;height:100vh;max-height:100vh;height:100dvh;max-height:100dvh;border-radius:0;}
+  #modal-codemgr .cm-head,#modal-codemgr .cm-body{padding-inline:14px;}
+  #modal-codemgr #cm-list{grid-template-columns:minmax(0,1fr);}
+  #modal-codemgr .cm-head :is(input,button),#modal-codemgr .cm-card .cm-mini-btn{min-height:44px;}
+}
 #modal-codemgr .cm-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;min-width:0;}
 #modal-codemgr .cm-label{font-weight:800;color:var(--s500);font-size:12px;min-width:44px;flex-shrink:0;}
 #modal-codemgr .cm-input{flex:1;min-width:0;padding:7px 10px;border:1.5px solid var(--s200);border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;}
@@ -9386,7 +9403,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #pg-design.on,
   #pg-contract.on,
   #pg-aftercontract.on,
-  #pg-claim.on,
   #pg-auto.on,
   #pg-wkit.on,
   #pg-materialstudio.on,
@@ -9441,7 +9457,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #pg-design.on,
   #pg-contract.on,
   #pg-aftercontract.on,
-  #pg-claim.on,
   #pg-auto.on,
   #pg-wkit.on,
   #pg-materialstudio.on,
@@ -10812,6 +10827,91 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #det-contracts .wd09-insurance-scroll { overflow:auto; min-height:0; }
   #det-contracts .wd09-insurance-empty { text-align:center; padding:22px 10px; color:var(--s600); }
 </style>
+<style id="wd09-claim-overview-style">
+  body:has(:is(#pg-claim,#pg-auto,#pg-cust).on) #content { padding-top:24px!important; }
+  #pg-auto .wd09-auto-expiry-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  #pg-auto .wd09-auto-expiry-header h2 { margin:0; }
+  #pg-auto .wd09-auto-expiry-header button { min-height:40px; }
+  #pg-claim .wd09-claim-layout {
+    display:grid; grid-template-columns:minmax(0,2fr) minmax(0,3fr); gap:16px;
+  }
+  #pg-claim .wd09-claim-layout > .card { min-width:0; margin:0; }
+  #pg-claim .wd09-claim-overview { display:flex; flex-direction:column; min-height:0; }
+  #pg-claim .wd09-claim-shortcuts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  #pg-claim .wd09-claim-shortcuts .work-card {
+    min-height:58px; margin:0; padding:10px 12px; gap:9px; align-items:center;
+    border:1px solid transparent; border-radius:12px; background:#37469a; color:#fff;
+    box-shadow:0 3px 8px #1c2a631c; text-decoration:none;
+  }
+  #pg-claim .wd09-claim-shortcuts .wd09-claim-silson { background:#145f56; }
+  #pg-claim .wd09-claim-shortcuts .work-card:hover { filter:brightness(1.13); transform:none; }
+  #pg-claim .wd09-claim-shortcuts .work-card:focus-visible { outline:2px solid var(--purple); outline-offset:3px; }
+  #pg-claim .wd09-claim-shortcuts .wc-ico { width:34px; height:34px; flex:none; margin:0; background:#ffffff26; color:#fff; }
+  #pg-claim .wd09-claim-shortcuts .wc-ico svg { width:20px; height:20px; stroke:currentColor; }
+  #pg-claim .wd09-claim-shortcuts .wc-title { margin:0; color:inherit; font-size:15px; line-height:1.4; word-break:keep-all; }
+  #pg-claim .wd09-claim-shortcuts .wc-sub { display:none; }
+  #pg-claim .wd09-claim-tool-section { margin-top:16px; padding-top:16px; border-top:1px solid var(--s200); }
+  #pg-claim .wd09-claim-list-header { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  #pg-claim .wd09-claim-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  #pg-claim .wd09-claim-actions .btn-sm, #pg-claim #wd09-claim-copy { min-height:40px; }
+  #pg-claim .wd09-claim-doc-actions { display:flex; justify-content:flex-end; margin-top:10px; }
+  #pg-claim .card-title { margin:0; }
+  #pg-claim .wd09-claim-list-header select {
+    max-width:100%; min-height:40px; padding:6px 10px;
+    color:var(--navy); background:#fff; border:1px solid var(--s200); border-radius:8px; font:inherit; font-size:13px;
+  }
+  #pg-claim .wd09-claim-list-message { margin:0 0 10px; font-size:13px; color:var(--s600); line-height:1.6; }
+  #pg-claim .wd09-claim-list-message:last-child { margin-bottom:0; }
+  #pg-claim #wd09-claim-list-message:empty { display:none; }
+  #pg-claim #wd09-claim-list-frame, #pg-auto .wd09-auto-expiry-frame { overflow:auto; border:1px solid var(--s200); }
+  #pg-claim #wd09-claim-list-frame { flex:1 1 0; min-height:330px; }
+  #pg-claim #wd09-claim-retry { align-self:flex-start; margin-top:10px; }
+  #pg-claim #wd09-claim-retry[hidden] { display:none; }
+  #pg-claim .wd09-claim-table, #pg-auto .wd09-auto-expiry-table { width:100%; border-collapse:collapse; }
+  #pg-claim .wd09-claim-table { min-width:590px; }
+  #pg-claim .wd09-claim-table:has(.wd09-claim-state) { height:100%; }
+  #pg-claim .wd09-claim-table thead { height:44px; }
+  #pg-claim .wd09-claim-table th, #pg-auto .wd09-auto-expiry-table th { position:sticky; top:0; }
+  #pg-claim .wd09-claim-table td { overflow-wrap:anywhere; }
+  #pg-claim .wd09-claim-table td.wd09-claim-state {
+    padding:22px 12px; text-align:center; color:var(--s600); background:var(--s50);
+  }
+  #pg-claim .wd09-claim-file button { display:inline-flex; align-items:center; gap:5px; text-align:left; }
+  #pg-claim .wd09-claim-file svg { flex:none; }
+  body:has(:is(#modal-claim-rec,#modal-auto-rec).open) #modal-cust.open { z-index:9000; }
+  .wd09-entry-customer { margin-bottom:12px; }
+  .wd09-entry-customer button { margin-top:8px; }
+  #wd09-auto-entry-fields { border:0; margin:0; padding:0; min-inline-size:0; }
+  #wd09-auto-entry-fields:disabled { opacity:.62; }
+  #wd09-auto-customer-hint { margin:8px 0 0; font-size:13px; color:var(--s600); }
+  #pg-claim .wd09-claim-person button, #pg-auto .wd09-auto-expiry-table button {
+    min-height:36px; border:0; padding:0; color:var(--purple); background:transparent;
+    font:inherit; font-weight:800; text-align:left; cursor:pointer;
+  }
+  #pg-claim .wd09-claim-person button:is(:hover,:focus-visible), #pg-auto .wd09-auto-expiry-table button:is(:hover,:focus-visible) { text-decoration:underline; }
+  #pg-auto .wd09-auto-expiry-table { min-width:830px; }
+  #pg-auto .wd09-auto-expiry-table :is(th,td):not(.wd09-auto-expiry-memo) { white-space:nowrap; }
+  #pg-auto .wd09-auto-expiry-table a { color:var(--purple); }
+  #pg-auto .wd09-auto-expiry-memo { min-width:135px; overflow-wrap:anywhere; white-space:pre-wrap; }
+  #pg-auto #wd09-auto-list-message { margin:8px 0 12px; font-size:13px; color:var(--s600); }
+  #pg-claim #claim-doc { max-height:240px; overflow:auto; }
+  #pg-claim .wd09-claim-checklist { display:grid; gap:12px; margin:14px 0; padding-inline-start:19px; }
+  #pg-claim .wd09-claim-checklist li { font-size:14px; color:var(--navy); }
+  #pg-claim .wd09-claim-checklist li::marker { color:var(--purple); }
+  #pg-claim .wd09-claim-checklist span { display:block; margin-top:2px; color:var(--s600); font-size:13px; }
+  @media(max-width:920px) {
+    #pg-claim .wd09-claim-layout { grid-template-columns:minmax(0,1fr); }
+  }
+  @media(max-width:600px) {
+    #pg-claim .wd09-claim-table:has(.wd09-claim-state) { min-width:0; }
+    #pg-claim .wd09-claim-table thead th { padding-inline:5px; }
+    #pg-claim .wd09-claim-table .wd09-claim-person button { min-height:44px; }
+    #pg-claim .wd09-claim-list-header :is(button,select), #pg-claim #wd09-claim-copy { min-height:44px; }
+  }
+  @media(max-width:400px) {
+    #pg-claim .wd09-claim-shortcuts { grid-template-columns:minmax(0,1fr); }
+  }
+</style>
 <style id="wd09-personal-auth-style">
   #wd09-auth-screen[hidden] { display:none !important; }
   #wd09-auth-screen {
@@ -11290,6 +11390,9 @@ const wdTest09Storage = (() => {
 </div>
 <div class="dr-item" data-wdpage="claim" onclick="goPage('claim');closeDrawer()">
 <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewbox="0 0 24 24" width="20"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg><span>청구업무</span>
+</div>
+<div class="dr-item" data-wdpage="auto" onclick="goPage('auto');closeDrawer()">
+<svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="M5 17v2m14-2v2M4 13l2.5-6h11L20 13M4 13h16v4H4zM7 15h.01M17 15h.01"></path></svg><span>자동차보험</span>
 </div>
 <div class="dr-divider"></div>
 <div class="dr-group">자료·지원</div>
@@ -12592,91 +12695,16 @@ const wdTest09Storage = (() => {
 </div>
 <!-- ── 자동차보험 관리 ── -->
 <div class="pg" id="pg-auto">
-<div class="auto-page-wrap afw-wrap">
-<div class="sec-hd"><div class="sec-title">자동차보험</div><div class="sec-sub">비교견적 의뢰부터 고객 선택, 자료 전달, 가입 완료까지 관리하고 만기 대상은 별도로 확인합니다.</div></div>
-<div class="itabs afw-main-tabs" id="afw-main-tabs">
-<button class="itab on" onclick="afwTab('flow',this)">자동차보험 진행</button>
-<button class="itab" onclick="afwTab('expiry',this)">만기관리</button>
+  <div class="sec-hd"><h1 class="sec-title">자동차보험</h1></div>
+  <section class="card" aria-labelledby="wd09-auto-expiry-title">
+    <header class="wd09-auto-expiry-header">
+      <h2 class="card-title" id="wd09-auto-expiry-title">만기 연락 목록</h2>
+      <button class="btn-sm p" type="button" onclick="wd09StartAutoRegistration()">+ 자동차보험 추가</button>
+    </header>
+    <p id="wd09-auto-list-message" role="status">자동차보험 목록을 불러오는 중이에요.</p>
+    <div id="auto-mgmt-list"></div>
+  </section>
 </div>
-<section id="afw-flow-panel">
-<div class="afw-guide">
-<b>자동차보험 진행 순서</b>
-<span>고객 확인 → 비교견적 의뢰 → 견적 수신 → 고객 안내 → 고객 선택 → 자료 수령 → 계약 진행 → 가입 확인 → 완료</span>
-</div>
-<div class="afw-mode-row">
-<button class="afw-mode on" data-mode="channel" onclick="afwMode(this,'channel')"><b>업무채널 비교견적·계약 진행</b><small>메가종합금융 총무에게 의뢰하고 진행상황을 관리합니다.</small></button>
-<button class="afw-mode" data-mode="direct" onclick="afwMode(this,'direct')"><b>원클릭 다이렉트 고객 직접 가입</b><small>고객이 직접 진행하는 예외 방식입니다.</small></button>
-</div>
-<div class="afw-status" id="afw-status">고객 확인 전 · 비교견적 의뢰 전 · 고객 안내 전</div>
-<div class="afw-grid">
-<article class="afw-card" data-step="1"><div class="afw-card-hd"><span>1</span><b>고객·차량정보</b></div>
-<div class="afw-fields">
-<label>고객명<input id="afw-name" placeholder="고객명"/></label><label>업무 구분<select id="afw-kind"><option>갱신</option><option>신규</option><option>차량변경</option></select></label>
-<label>차량번호<input id="afw-car" placeholder="12가 3456"/></label><label>현재 보험사<input id="afw-current" placeholder="현재 보험사"/></label>
-<label>만기일<input id="afw-expiry" type="date"/></label><label>계약자 / 피보험자<input id="afw-relation" placeholder="본인 / 본인"/></label>
-<label>운전자 범위<input id="afw-driver" placeholder="가족한정"/></label><label>최저연령<input id="afw-age" placeholder="만 30세 이상"/></label>
-<label>차량용도<input id="afw-use" placeholder="자가용"/></label><label>추가 요청사항<input id="afw-request" placeholder="동일 조건 비교 등"/></label>
-</div>
-<label class="afw-check"><input data-afw="고객·차량정보 확인" onchange="afwRefresh()" type="checkbox"/> 고객·차량정보 확인 완료</label>
-</article>
-<article class="afw-card" data-step="2"><div class="afw-card-hd"><span>2</span><b>비교견적 의뢰</b></div>
-<div class="afw-checkgrid"><label><input data-afw="대인배상" type="checkbox"/> 대인배상</label><label><input data-afw="대물배상" type="checkbox"/> 대물배상</label><label><input data-afw="자동차상해" type="checkbox"/> 자동차상해</label><label><input data-afw="자기차량손해" type="checkbox"/> 자기차량손해</label><label><input data-afw="무보험차상해" type="checkbox"/> 무보험차상해</label><label><input data-afw="긴급출동" type="checkbox"/> 긴급출동</label></div>
-<div class="afw-btnrow"><button class="btn-p" onclick="afwMakeQuote()">의뢰서 생성</button><button class="btn-s" onclick="afwCopy('afw-quote-out')">복사</button></div>
-<textarea class="afw-out" id="afw-quote-out" placeholder="비교견적 요청문이 여기에 생성됩니다."></textarea>
-<label class="afw-check"><input data-afw="업무채널 전달 완료" onchange="afwRefresh()" type="checkbox"/> 업무채널 전달 완료</label>
-<label class="afw-check"><input data-afw="비교견적 도착" onchange="afwRefresh()" type="checkbox"/> 비교견적 도착</label>
-</article>
-<article class="afw-card" data-step="3"><div class="afw-card-hd"><span>3</span><b>고객 안내·선택</b></div>
-<div class="afw-fields"><label>비교견적 전달일<input id="afw-guide-date" type="date"/></label><label>고객 선택 보험사<input id="afw-choice" placeholder="선택 보험사"/></label><label>고객 결정일<input id="afw-choice-date" type="date"/></label><label>조건 변경·재견적 요청<input id="afw-requote" placeholder="없음 / 요청내용"/></label></div>
-<label class="afw-check"><input data-afw="비교견적 고객 안내" onchange="afwRefresh()" type="checkbox"/> 비교견적 고객 안내 완료</label>
-<label class="afw-check"><input data-afw="고객 보험사 선택" onchange="afwRefresh()" type="checkbox"/> 고객 최종 선택 완료</label>
-</article>
-<article class="afw-card" data-step="4"><div class="afw-card-hd"><span>4</span><b>필요자료</b></div>
-<div class="afw-checkgrid"><label><input data-afw="차량 사진 수령" onchange="afwRefresh()" type="checkbox"/> 차량 사진 수령</label><label><input data-afw="계기판 사진 수령" onchange="afwRefresh()" type="checkbox"/> 계기판 사진 수령</label><label><input data-afw="블랙박스 사진 수령" onchange="afwRefresh()" type="checkbox"/> 블랙박스 사진 수령</label><label><input data-afw="자동차등록증 수령" onchange="afwRefresh()" type="checkbox"/> 자동차등록증 수령</label><label><input data-afw="사진·서류 총무 전달" onchange="afwRefresh()" type="checkbox"/> 사진·서류 총무 전달</label></div>
-<div class="afw-warn">사진 원본은 허브에 저장하지 않습니다. 수령·전달 여부만 기록합니다.</div>
-</article>
-<article class="afw-card" data-step="5"><div class="afw-card-hd"><span>5</span><b>계약 진행</b></div>
-<div class="afw-checkgrid"><label><input data-afw="결제정보 요청" onchange="afwRefresh()" type="checkbox"/> 결제정보 고객 요청</label><label><input data-afw="결제정보 수령" onchange="afwRefresh()" type="checkbox"/> 결제정보 수령</label><label><input data-afw="결제정보 총무 전달" onchange="afwRefresh()" type="checkbox"/> 결제정보 총무 전달</label><label><input data-afw="계약 진행 요청" onchange="afwRefresh()" type="checkbox"/> 계약 진행 요청</label><label><input data-afw="보완사항 완료" onchange="afwRefresh()" type="checkbox"/> 보완사항 완료</label></div>
-<div class="afw-warn danger">카드번호·유효기간·인증번호는 입력하거나 저장하지 않습니다.</div>
-<div class="afw-btnrow"><button class="btn-p" onclick="afwMakeContract()">계약 진행 요청문 생성</button><button class="btn-s" onclick="afwCopy('afw-contract-out')">복사</button></div>
-<textarea class="afw-out" id="afw-contract-out" placeholder="계약 진행 요청문이 여기에 생성됩니다."></textarea>
-</article>
-<article class="afw-card" data-step="6"><div class="afw-card-hd"><span>6</span><b>가입 완료</b></div>
-<div class="afw-checkgrid"><label><input data-afw="보험료 결제 완료" onchange="afwRefresh()" type="checkbox"/> 보험료 결제 완료</label><label><input data-afw="계약 반영 확인" onchange="afwRefresh()" type="checkbox"/> 계약 반영 확인</label><label><input data-afw="보험 시작일 확인" onchange="afwRefresh()" type="checkbox"/> 보험 시작일 확인</label><label><input data-afw="가입증명서 확인" onchange="afwRefresh()" type="checkbox"/> 가입증명서 확인</label><label><input data-afw="고객 가입 안내" onchange="afwRefresh()" type="checkbox"/> 고객 가입 완료 안내</label><label><input data-afw="자동차보험 업무 완료" onchange="afwRefresh()" type="checkbox"/> 자동차보험 업무 완료</label></div>
-</article>
-</div>
-</section>
-<section id="afw-expiry-panel" style="display:none;">
-<div class="sec-hd" style="margin-top:10px;"><div class="sec-title" style="font-size:21px;">자동차보험 만기관리</div><div class="sec-sub">올해 갱신 연락 상태만 관리합니다. 사진 등 상세 자료는 고객 상세에서 확인하세요.</div></div>
-<div class="auto-action-row"><button class="auto-act-btn primary" onclick="openAutoAddPick()" type="button">+ 자동차보험 등록</button><button class="auto-act-btn ghost" onclick="openAutoBulkSoon()" type="button">여러 명 일괄 등록</button></div>
-<div class="auto-summary-strip" id="auto-summary-strip"></div>
-<div class="itabs auto-tabs" id="auto-filter-tabs"><button class="itab on" data-t="pending" onclick="swAutoTab(this,'pending')">만기일확인</button><button class="itab" data-t="done" onclick="swAutoTab(this,'done')">갱신완료</button><button class="itab" data-t="moved" onclick="swAutoTab(this,'moved')">타사이동</button></div>
-<div class="card auto-list-card"><div id="auto-mgmt-list"></div></div>
-</section>
-</div>
-</div>
-<!-- ── V128: 자동차보험 등록용 고객 선택 모달 (설계업무 고객선택 패턴 재사용, 저장 없음 · _vid만 세팅 후 기존 openAutoAdd() 호출) ── -->
-<div class="modal-ov" id="modal-auto-custpick" onclick="closeModal('modal-auto-custpick')">
-<div class="modal-bx" onclick="event.stopPropagation()">
-<div class="modal-title">자동차보험 등록 — 고객 선택</div>
-<input id="acp-search" oninput="renderAutoCustPickList()" placeholder="고객명·연락처 검색" style="width:100%;padding:10px 13px;border:1.5px solid var(--s200);border-radius:9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:var(--s50);margin-bottom:12px;" type="search"/>
-<div id="acp-list" style="max-height:320px;overflow-y:auto;"></div>
-<div class="modal-ft">
-<button class="btn-s" onclick="closeModal('modal-auto-custpick')">취소</button>
-</div>
-</div>
-</div>
-<!-- ── V128: 여러 명 일괄 등록 준비중 안내 모달 (V128에서는 안내만, 저장 로직 없음 — 실제 기능은 V129) ── -->
-<div class="modal-ov" id="modal-auto-bulk-soon" onclick="closeModal('modal-auto-bulk-soon')">
-<div class="modal-bx" onclick="event.stopPropagation()" style="max-width:420px;">
-<div class="modal-title">여러 명 일괄 등록</div>
-<div class="notice-box" style="margin-bottom:4px;">여러 명 일괄 등록은 다음 버전에서 제공됩니다.<br/>고객명, 보험사, 만기일, 차량번호를 행 단위로 빠르게 입력하는 방식으로 준비 중입니다.</div>
-<div class="modal-ft">
-<button class="btn-p" onclick="closeModal('modal-auto-bulk-soon')" style="width:100%;">확인</button>
-</div>
-</div>
-</div>
-<!-- ── 청구업무 ── -->
 <div class="pg" id="pg-contract">
 <div class="sec-hd">
 <div class="sec-title">신계약업무</div>
@@ -12912,179 +12940,76 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 <div class="pg" id="pg-claim">
-<div id="hic-claim-home">
-<div class="sec-hd"><div class="sec-title">청구업무</div><div class="sec-sub">보케어 · 실손24 바로가기 · 서류 안내문 생성</div></div>
-<div class="clh-safe">기존 보험이 무조건 나쁘다는 뜻이 아니라, 현재 계약과 치료 사실을 기준으로 청구에 필요한 내용을 확인합니다. 보험금 지급 여부는 약관과 보험사 심사 결과에 따라 달라질 수 있으므로 단정하지 않습니다.</div>
-<div class="clh-main-actions">
-<button class="clh-main-action current" onclick="clh_openConsult('current')" type="button">
-<div class="clh-main-kicker">현재 발생 건</div><div class="clh-main-title">📄 보험금 청구</div>
-<div class="clh-main-desc">최근 질병·사고·치료 건의 계약과 담보, 필요서류, 접수 및 진행상태를 확인합니다.</div><div class="clh-main-go">보험금 청구 시작 ›</div>
-</button>
-<button class="clh-main-action unclaimed" onclick="hic_open()" type="button">
-<div class="clh-main-kicker">과거 미확인 건</div><div class="clh-main-title">🔎 숨은보험 진단</div>
-<div class="clh-main-desc">사고·질병 당시 보험가입내역, 보험사 보상내역, 의료비 흔적을 교차 확인해 미청구 검토 후보를 탐색합니다.</div><div class="clh-main-go">숨은보험 진단 시작 ›</div>
-</button>
-</div>
-<div class="clh-flow">
-<button class="clh-card primary" onclick="clh_openConsult('consult')" type="button"><div class="clh-no">공통 지원 1</div><div class="clh-t">💬 보험청구 상담</div><div class="clh-s">어떤 보험금을 확인할지 상담하고 고객 기록을 남깁니다.</div></button>
-<button class="clh-card" onclick="goPage('claimguide')" type="button"><div class="clh-no">공통 지원 2</div><div class="clh-t">🧭 청구지원실</div><div class="clh-s">청구 유형·상황·담보별 확인 방향을 정리합니다.</div></button>
-<button class="clh-card" onclick="flowref_open('claim')" type="button"><div class="clh-no">공통 지원 3</div><div class="clh-t">🩺 질병·치료 흐름</div><div class="clh-s">진료·검사·입원·수술의 흐름과 확인사항을 봅니다.</div></button>
-<button class="clh-card" onclick="document.getElementById('c-check').scrollIntoView({behavior:'smooth',block:'start'})" type="button"><div class="clh-no">공통 지원 4</div><div class="clh-t">✅ 접수·진행 확인</div><div class="clh-s">가입보험·청구유형·필요서류·진행 확인을 빠뜨리지 않습니다.</div></button>
-</div>
-<div class="grid-2" style="margin-bottom:20px;">
-<a class="work-card" href="https://www.bocare.co.kr/v2/views/crm/login/" rel="noopener noreferrer" style="text-decoration:none;" target="_blank">
-<div class="wc-ico wc-blue"><svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" viewbox="0 0 24 24" width="24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg></div>
+<div class="wd09-claim-layout">
+<section class="card wd09-claim-tools" aria-label="청구 도구">
+<div class="wd09-claim-shortcuts">
+<a class="work-card" href="https://www.bocare.co.kr/v2/views/crm/login/" rel="noopener noreferrer" target="_blank">
+<div class="wc-ico wc-blue" aria-hidden="true"><svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-width="2" viewBox="0 0 24 24" width="24"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l3 3"></path></svg></div>
 <div><div class="wc-title">보케어 바로가기 ↗</div><div class="wc-sub">보험금 청구 접수·진행 확인</div></div>
 </a>
-<a class="work-card" href="https://www.silson24.or.kr" rel="noopener noreferrer" style="text-decoration:none;" target="_blank">
-<div class="wc-ico wc-green"><svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" viewbox="0 0 24 24" width="24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>
+<a class="work-card wd09-claim-silson" href="https://www.silson24.or.kr" rel="noopener noreferrer" target="_blank">
+<div class="wc-ico wc-green" aria-hidden="true"><svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M22 12h-4l-3 8L9 4l-3 8H2"></path></svg></div>
 <div><div class="wc-title">실손24 바로가기 ↗</div><div class="wc-sub">실손보험 청구 서비스</div></div>
 </a>
 </div>
-<div id="c-docs">
-<div class="card">
-<div class="card-title" style="margin-bottom:18px;">서류 안내문 생성</div>
-<div class="itabs">
-<button class="itab on" onclick="swClaimDoc(this,'외래')">외래</button>
-<button class="itab" onclick="swClaimDoc(this,'입원')">입원</button>
-<button class="itab" onclick="swClaimDoc(this,'수술')">수술</button>
-<button class="itab" onclick="swClaimDoc(this,'암')">암 진단</button>
-</div>
-<div class="pt-box" id="claim-doc"></div>
-<button class="btn-copy" onclick="copyEl('claim-doc')">복사하기</button>
-</div>
-</div>
-<!-- 기존 접수확인/보케어·실손24(카드형) 탭: 화면 숨김 처리 (기능·데이터 삭제 없음, v35에서 비활성화) -->
-<div id="c-check" style="display:block;scroll-margin-top:84px;">
-<div class="card">
-<div class="card-title" style="margin-bottom:18px;">청구 접수 확인사항</div>
-<div class="cl-item"><div class="cl-num">1</div><div class="cl-txt">치료 / 검사 / 입원 / 수술 여부 확인</div></div>
-<div class="cl-item"><div class="cl-num">2</div><div class="cl-txt">가입 보험 확인<div class="cl-note">보험사·상품명 확인</div></div></div>
-<div class="cl-item"><div class="cl-num">3</div><div class="cl-txt">청구 유형 분류<div class="cl-note">외래 / 입원 / 수술 / 암 / 기타</div></div></div>
-<div class="cl-item"><div class="cl-num">4</div><div class="cl-txt">필요 서류 안내</div></div>
-<div class="cl-item"><div class="cl-num">5</div><div class="cl-txt">보험사 접수 방법 안내<div class="cl-note">앱 / 팩스 / 방문</div></div></div>
-<div class="cl-item"><div class="cl-num">6</div><div class="cl-txt">진행 상태 확인 및 고객 안내</div></div>
-<div class="notice-box" style="margin-top:16px;">보험금 지급 여부는 약관과 보험사 심사 결과에 따라 달라질 수 있습니다. 지급 가능 여부를 단정하는 표현은 삼가주세요.</div>
-</div>
-</div>
-<div id="c-tools" style="display:none;">
-<div class="grid-2">
-<a class="work-card" href="https://www.bocare.co.kr/v2/views/crm/login/" style="text-decoration:none;" target="_blank">
-<div class="wc-ico wc-blue"><svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" viewbox="0 0 24 24" width="24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg></div>
-<div><div class="wc-title">보케어</div><div class="wc-sub">청구 간편 서비스 바로가기</div></div>
-</a>
-<a class="work-card" href="https://www.silson24.or.kr" style="text-decoration:none;" target="_blank">
-<div class="wc-ico wc-green"><svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" viewbox="0 0 24 24" width="24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>
-<div><div class="wc-title">실손24</div><div class="wc-sub">실손 청구 공식 안내</div></div>
-</a>
-</div>
-</div>
-</div>
-<!-- 숨은보험 진단 — 상담 중 교차확인 작업대, 1차 저장 없음 -->
-<section aria-label="숨은보험 진단 작업대" id="hic-workspace">
-<div class="hic-top">
-<div style="display:flex;gap:10px;align-items:flex-start;">
-<button class="hic-back" onclick="hic_close()" type="button">← 청구업무</button>
-<div><div class="hic-title">숨은보험 진단</div><div class="hic-sub">사고·질병 이후 과거 보험과 보험사 보상내역, 홈택스 의료비·치료흔적을 교차 확인해 미청구 검토 후보를 찾습니다.</div></div>
-</div>
-<div class="hic-top-actions">
-<button class="hic-btn sub" onclick="hic_reset()" type="button">새 사건</button>
-<button class="hic-btn warn" onclick="hic_copyCustomerGuide()" type="button">고객 안내문 복사</button>
-<button class="hic-btn primary" onclick="hic_copyHandoff()" type="button">손사 인계요약 복사</button>
-<button class="hic-btn primary" onclick="hic_toRecord()" type="button">고객 업무기록에 남기기</button>
-</div>
-</div>
-<div class="hic-safe"><b>상담용 탐색 도구입니다.</b> 지급 가능 여부·장해지급률·보험금은 확정하지 않습니다. 가입금액과 사용자가 선택한 <b>가정 지급률</b>로 참고금액만 계산하며, 실제 적용은 약관·의료자료·보험사 심사 또는 손해사정 결과에 따라 달라질 수 있습니다. 입력 내용은 이번 1차에서 서버·localStorage에 저장하지 않습니다.</div>
-<div class="hic-steps">
-<div class="hic-step on"><b>1</b><span>사건·질병</span></div><div class="hic-step"><b>2</b><span>보험가입내역</span></div><div class="hic-step"><b>3</b><span>보상내역</span></div><div class="hic-step"><b>4</b><span>의료·치료흔적</span></div><div class="hic-step"><b>5</b><span>담보 교차확인</span></div><div class="hic-step"><b>6</b><span>정리·인계</span></div>
-</div>
-<div class="hic-grid">
-<div class="hic-main">
-<section class="hic-panel">
-<div class="hic-panel-hd"><div><div class="hic-panel-title">1. 사건·질병 정보</div><div class="hic-panel-sub">보험이 아니라 사건을 기준점으로 잡습니다.</div></div><span class="hic-badge">사건별 카드</span></div>
-<div class="hic-fields">
-<div class="hic-field wide"><label>고객 선택</label><select id="hic-customer" onchange="hic_customerChange()"><option value="">고객을 선택하세요</option></select><div class="hic-panel-sub" style="margin-top:5px;">고객을 변경하면 현재 세션 입력은 지워지며, 변경 전에 확인합니다.</div></div>
-<div class="hic-field"><label>구분</label><select id="hic-event-kind"><option>사고</option><option>질병</option></select></div>
-<div class="hic-field"><label>발생일 / 최초 진단일</label><input id="hic-event-date" oninput="hic_updateAll()" type="date"/></div>
-<div class="hic-field wide"><label>사건·진단·수술명</label><input id="hic-event-title" oninput="hic_updateAll()" placeholder="예: 좌측 고관절 골절 후 수술"/></div>
-<div class="hic-field"><label>수술·입원 여부</label><select id="hic-treatment-type"><option>확인 필요</option><option>수술 있음</option><option>입원 있음</option><option>수술·입원 모두 있음</option><option>통원·검사 중심</option></select></div>
-<div class="hic-field"><label>현재 경과</label><select id="hic-elapsed" onchange="hic_updateAll()"><option>확인 필요</option><option>6개월 미만</option><option>6개월~1년</option><option>1~2년</option><option>2년 이상</option></select></div>
-<div class="hic-field wide"><label>현재 상태</label><div class="hic-checks"><label><input class="hic-state" onchange="hic_updateAll()" type="checkbox" value="통증 지속"/>통증 지속</label><label><input class="hic-state" onchange="hic_updateAll()" type="checkbox" value="운동범위 제한"/>운동범위 제한</label><label><input class="hic-state" onchange="hic_updateAll()" type="checkbox" value="보행·일상 제한"/>보행·일상 제한</label><label><input class="hic-state" onchange="hic_updateAll()" type="checkbox" value="치료 진행 중"/>치료 진행 중</label><label><input class="hic-state" onchange="hic_updateAll()" type="checkbox" value="객관적 검사자료 있음"/>검사자료 있음</label></div></div>
-<div class="hic-field wide"><label>상담 메모</label><textarea id="hic-event-note" oninput="hic_updateAll()" placeholder="확인된 사실만 짧게 기록"></textarea></div>
-</div>
+  <section class="wd09-claim-tool-section" aria-labelledby="wd09-claim-doc-title">
+    <div class="wd09-claim-list-header">
+      <h2 class="card-title" id="wd09-claim-doc-title">서류 안내문 생성</h2>
+    </div>
+    <div class="itabs" aria-label="안내문 유형">
+      <button class="itab on" type="button" aria-pressed="true" onclick="swClaimDoc(this,'외래')">외래</button>
+      <button class="itab" type="button" aria-pressed="false" onclick="swClaimDoc(this,'입원')">입원</button>
+      <button class="itab" type="button" aria-pressed="false" onclick="swClaimDoc(this,'수술')">수술</button>
+      <button class="itab" type="button" aria-pressed="false" onclick="swClaimDoc(this,'암')">암 진단</button>
+    </div>
+    <div class="pt-box" id="claim-doc" tabindex="0" role="region" aria-label="서류 안내문" aria-live="polite"></div>
+    <div class="wd09-claim-doc-actions">
+      <button id="wd09-claim-copy" class="btn-sm p" type="button" onclick="copyEl('claim-doc')">외래 안내문 복사</button>
+    </div>
+  </section>
+  <section class="wd09-claim-tool-section" aria-labelledby="wd09-claim-check-title">
+    <h2 class="card-title" id="wd09-claim-check-title">청구접수 확인사항</h2>
+    <ul class="wd09-claim-checklist">
+      <li><strong>치료 내용과 청구유형</strong><span>외래·검사, 입원, 수술, 진단 등</span></li>
+      <li><strong>가입 보험과 필요서류</strong><span>보험사·상품명과 접수에 필요한 서류 확인</span></li>
+      <li><strong>보험사 접수 방법</strong><span>앱, 팩스, 방문 등 이용할 경로 확인</span></li>
+      <li><strong>진행 상태와 고객 안내</strong><span>보험사 진행 상태를 확인하고 고객에게 안내</span></li>
+    </ul>
+    <p class="wd09-claim-list-message">보험금 지급 여부는 약관과 보험사 심사 결과에 따라 달라질 수 있어요.</p>
+  </section>
 </section>
-<section class="hic-panel">
-<div class="hic-panel-hd"><div><div class="hic-panel-title">2. 보험가입내역</div><div class="hic-panel-sub">사건 당시 유지·실효·해지·만기·단체보험까지 확인합니다.</div></div><button class="hic-link" onclick="hic_importContracts()" type="button">등록 계약 불러오기</button></div>
-<div class="hic-row-form five">
-<div class="hic-field"><label>보험사</label><input id="hic-pol-insurer" placeholder="보험사"/></div>
-<div class="hic-field"><label>상품·담보</label><input id="hic-pol-cover" placeholder="상해후유장해"/></div>
-<div class="hic-field"><label>가입금액</label><input id="hic-pol-amount" inputmode="numeric" placeholder="100000000 또는 1억"/></div>
-<div class="hic-field"><label>상태</label><select id="hic-pol-status"><option>유지</option><option>실효</option><option>해지</option><option>만기</option><option>단체</option><option>확인 필요</option></select></div>
-<div class="hic-field"><label>보장기간</label><input id="hic-pol-period" placeholder="2020~2030"/></div>
-<button class="hic-mini-add" onclick="hic_addPolicy()" type="button">추가</button>
-</div>
-<div class="hic-table-wrap"><table class="hic-table"><thead><tr><th>보험사</th><th>상품·담보</th><th>가입금액</th><th>상태</th><th>사건 당시</th><th></th></tr></thead><tbody id="hic-policy-body"></tbody></table></div>
-</section>
-<section class="hic-panel">
-<div class="hic-panel-hd"><div><div class="hic-panel-title">3. 보험사 보상내역</div><div class="hic-panel-sub">같은 사건으로 무엇을 청구했고 무엇이 빠졌는지 확인합니다.</div></div><span class="hic-badge need">공식 내역 기준</span></div>
-<div class="hic-row-form">
-<div class="hic-field"><label>보험사</label><input id="hic-pay-insurer" placeholder="보험사"/></div>
-<div class="hic-field"><label>담보명</label><input id="hic-pay-cover" placeholder="수술비"/></div>
-<div class="hic-field"><label>청구일</label><input id="hic-pay-date" type="date"/></div>
-<div class="hic-field"><label>결과</label><select id="hic-pay-result"><option>지급</option><option>부지급</option><option>보류</option><option>청구 여부 불명</option></select></div>
-<button class="hic-mini-add" onclick="hic_addPayment()" type="button">추가</button>
-</div>
-<div class="hic-table-wrap"><table class="hic-table"><thead><tr><th>보험사</th><th>담보</th><th>청구일</th><th>결과</th><th></th></tr></thead><tbody id="hic-payment-body"></tbody></table></div>
-</section>
-<section class="hic-panel">
-<div class="hic-panel-hd"><div><div class="hic-panel-title">4. 홈택스·의료비·치료흔적</div><div class="hic-panel-sub">고객 기억만으로 판단하지 않고 치료 시기와 흔적을 맞춥니다.</div></div><span class="hic-badge ok">원문 저장 안 함</span></div>
-<div class="hic-row-form">
-<div class="hic-field"><label>시기</label><input id="hic-med-date" placeholder="2021.08"/></div>
-<div class="hic-field"><label>기관</label><input id="hic-med-provider" placeholder="○○정형외과"/></div>
-<div class="hic-field"><label>출처</label><select id="hic-med-source"><option>홈택스 의료비</option><option>병원 진료기록</option><option>국민건강보험</option><option>고객 보유서류</option><option>기타</option></select></div>
-<div class="hic-field"><label>확인 흔적</label><input id="hic-med-note" placeholder="입원·수술 흔적"/></div>
-<button class="hic-mini-add" onclick="hic_addMedical()" type="button">추가</button>
-</div>
-<div class="hic-table-wrap"><table class="hic-table"><thead><tr><th>시기</th><th>기관</th><th>출처</th><th>확인 흔적</th><th></th></tr></thead><tbody id="hic-medical-body"></tbody></table></div>
-</section>
-<section class="hic-panel wide">
-<div class="hic-panel-hd"><div><div class="hic-panel-title">5. 담보 교차확인 &amp; 미청구 후보</div><div class="hic-panel-sub">가입 담보·사건 당시 유효 여부·기존 청구·자료 상태를 함께 봅니다.</div></div><button class="hic-btn sub" onclick="hic_addCandidate()" type="button">후보 추가</button></div>
-<div id="hic-candidate-list"></div>
-<div class="hic-private">`높음·낮음` 같은 확률이나 실제 장해율은 표시하지 않습니다. 결과는 일반 청구 / 추가자료 / 손해사정사 검토 / 현재 근거 부족으로만 구분합니다.</div>
-</section>
-<section class="hic-panel wide">
-<div class="hic-panel-hd"><div><div class="hic-panel-title">6. 정리·인계 준비</div><div class="hic-panel-sub">확인된 사실·미확인 사항·다음 행동을 분리합니다.</div></div><span class="hic-badge">자동 요약</span></div>
-<div class="hic-copybox" id="hic-summary-box"></div>
-<div class="hic-top-actions" style="margin-top:9px;"><button class="hic-btn primary" onclick="hic_toRecord()" type="button">고객 업무기록에 남기기</button><button class="hic-btn primary" onclick="hic_copyHandoff()" type="button">손사 인계요약 복사</button><button class="hic-btn sub" onclick="hic_copyCustomerGuide()" type="button">고객 안내문 복사</button></div>
+<section class="card wd09-claim-overview" aria-labelledby="wd09-claim-overview-title">
+  <header class="wd09-claim-list-header">
+    <h2 class="card-title" id="wd09-claim-overview-title">고객 청구 목록</h2>
+    <div class="wd09-claim-actions">
+      <select id="wd09-claim-status-filter" aria-label="청구상태 필터">
+        <option value="">전체 상태</option>
+        <option>청구접수중</option>
+        <option>청구진행중</option>
+        <option>보험금지급완료</option>
+      </select>
+      <button class="btn-sm p" id="wd09-claim-add" type="button">+ 청구문의 추가</button>
+    </div>
+  </header>
+  <p id="wd09-claim-list-message" class="wd09-claim-list-message" role="status"></p>
+  <div class="wd09-customer-table-frame" id="wd09-claim-list-frame">
+    <table class="wd09-customer-table wd09-claim-table" role="table" aria-labelledby="wd09-claim-overview-title">
+      <thead role="rowgroup"><tr role="row">
+        <th scope="col" role="columnheader">요청일</th>
+        <th scope="col" role="columnheader">고객명</th>
+        <th scope="col" role="columnheader">보험사</th>
+        <th scope="col" role="columnheader">청구유형</th>
+        <th scope="col" role="columnheader">청구상태</th>
+        <th scope="col" role="columnheader">청구파일</th>
+      </tr></thead>
+      <tbody role="rowgroup" id="wd09-claim-overview-rows">
+        <tr role="row"><td class="wd09-claim-state" role="cell" colspan="6"><span role="status">청구 목록을 불러오는 중이에요.</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <button class="btn-sm" id="wd09-claim-retry" type="button" hidden>다시 불러오기</button>
 </section>
 </div>
-<aside class="hic-side">
-<section class="hic-judgment">
-<div class="hic-judgment-k">선택한 진행 분기</div>
-<div class="hic-judgment-v" id="hic-overall">추가자료 확인</div>
-<div class="hic-judgment-p" id="hic-overall-desc">사건과 가입내역을 입력한 뒤 담보 후보별 결과를 선택해 주세요.</div>
-<div class="hic-signals" id="hic-signals"></div>
-</section>
-<section class="hic-scenario">
-<div class="hic-scenario-title">가정 지급률별 참고 시나리오</div>
-<div class="hic-scenario-sub">선택한 담보의 가입금액에 가정 지급률을 곱한 참고값입니다.</div>
-<select class="hic-scenario-select" id="hic-scenario-candidate" onchange="hic_renderScenario()"><option value="">담보 후보를 선택하세요</option></select>
-<table class="hic-scenario-table"><thead><tr><th>가정 지급률</th><th>계산식</th><th>참고금액</th></tr></thead><tbody id="hic-scenario-body"><tr><td colspan="3">가입금액이 있는 후보를 선택하세요.</td></tr></tbody></table>
-<div class="hic-note">실제 장해지급률·보험금이 아닙니다. 수술명이나 경과기간만으로 장해율을 판단하지 않습니다.</div>
-</section>
-<section class="hic-scenario">
-<div class="hic-scenario-title">최종 진행 분기 선택</div>
-<div class="hic-scenario-sub">후보별 검토 결과를 참고해 상담자가 최종 경로를 선택합니다.</div>
-<div class="hic-branch" id="hic-branch">
-<button data-value="일반 청구 진행" onclick="hic_setBranch(this)" type="button">일반 청구 진행</button>
-<button class="on" data-value="추가자료 확인" onclick="hic_setBranch(this)" type="button">추가자료 확인</button>
-<button data-value="손해사정사 검토" onclick="hic_setBranch(this)" type="button">손해사정사 검토</button>
-<button data-value="현재 근거 부족" onclick="hic_setBranch(this)" type="button">현재 근거 부족</button>
-</div>
-</section>
-</aside>
-</div>
-</section>
 </div>
 <!-- ── 워크키트 ── -->
 <!-- V147: 자료·문서실 중복 제거 — 상단 3개 안내카드, 보험사 연락처, 빠른 경로 제거 -->
@@ -15649,7 +15574,6 @@ const wdTest09Storage = (() => {
 </div>
 <footer class="modal-ft wd09-entry-footer wd09-drive-footer">
 <a id="wd09-drive-folder-link" class="btn-s" target="_blank" rel="noopener noreferrer" hidden>Drive에서 열기</a>
-<button type="button" class="btn-s" id="wd09-drive-test-upload" hidden>테스트 파일 올리기</button>
 <button type="button" class="btn-p" id="wd09-drive-action">Google 계정 연결</button>
 </footer>
 </div>
@@ -15801,19 +15725,23 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 <!-- 코드관리 모달 — 로그인 사용자 공통, 업무전산과 동일한 wd_partners_hub_system_accounts 데이터 사용 (uid 기준 개인별 저장) -->
-<div class="modal-ov" id="modal-codemgr" onclick="closeModal('modal-codemgr')">
-<div class="modal-bx" onclick="event.stopPropagation()" style="padding-top:0;">
-<div class="cm-head">
-<div class="cm-head-title">🔐 코드관리</div>
-<div class="cm-head-sub">업무전산 로그인 코드와 비밀번호를 빠르게 확인합니다.</div>
+<div class="modal-ov" id="modal-codemgr" onclick="closeCodeMgr()">
+<div class="modal-bx" role="dialog" aria-modal="true" aria-labelledby="cm-title" onclick="event.stopPropagation()" onkeydown="if(event.key==='Escape')closeCodeMgr()">
+<header class="cm-head">
+<div class="cm-head-line">
+<h2 class="cm-head-title" id="cm-title">코드관리</h2>
+<button class="wd09-modal-close" type="button" aria-label="코드관리 닫기" onclick="closeCodeMgr()">×</button>
 </div>
-<div class="cm-warn">비밀번호는 기본 숨김 상태입니다. 화면공유 중에는 보기 버튼을 누르지 마세요.<br/>앱에 저장된 비밀번호는 참고용입니다. 실제 보험사 전산 비밀번호 변경은 해당 보험사 전산에서 직접 진행하세요.</div>
-<div class="itabs" style="margin-bottom:12px;">
-<button class="itab on" id="cm-tab-nonlife" onclick="swCodeMgrTab('nonlife')">손해보험</button>
-<button class="itab" id="cm-tab-life" onclick="swCodeMgrTab('life')">생명보험</button>
+<div class="itabs" aria-label="보험 구분">
+<button class="itab on" id="cm-tab-nonlife" type="button" aria-pressed="true" onclick="swCodeMgrTab('nonlife')">손해보험</button>
+<button class="itab" id="cm-tab-life" type="button" aria-pressed="false" onclick="swCodeMgrTab('life')">생명보험</button>
 </div>
+<input id="cm-search" type="search" aria-label="보험사명 검색" placeholder="보험사명 검색" oninput="filterCodeMgrList()" autocomplete="off">
+</header>
+<div class="cm-body">
+<p id="cm-status" role="status"></p>
 <div id="cm-list"></div>
-<div class="modal-ft"><button class="btn-s" onclick="closeModal('modal-codemgr')">닫기</button></div>
+</div>
 </div>
 </div>
 <!-- 원수사 추가/수정 모달 -->
@@ -16045,16 +15973,6 @@ const wdTest09Storage = (() => {
 <button class="btn-s" onclick="contractDetailEdit()" style="background:var(--lav);color:var(--purple);border-color:#DDD6FE;">수정</button>
 <button class="btn-p" onclick="contractDetailDelete()" style="background:linear-gradient(135deg,var(--rd700),#e53e3e);">삭제</button>
 </div>
-</div>
-</div>
-<!-- ── Noah ClaimDesk: 보험청구 상담 고객 선택 (기존 고객목록·청구문의기록 재사용) ── -->
-<div class="modal-ov" id="modal-clh-custpick" onclick="closeModal('modal-clh-custpick')">
-<div class="modal-bx" onclick="event.stopPropagation()">
-<div class="modal-title">보험청구 상담 — 고객 선택</div>
-<div class="notice-box">고객을 선택하면 고객상세의 청구문의 탭으로 이동하고 새 청구 상담기록 입력창이 열립니다.</div>
-<input class="clh-search" id="clh-cp-search" oninput="clh_renderCustPick()" placeholder="고객명·연락처 검색" type="search"/>
-<div class="clh-list" id="clh-cp-list"></div>
-<div class="modal-ft"><button class="btn-s" onclick="closeModal('modal-clh-custpick');openCustModal();">+ 고객 등록</button><button class="btn-s" onclick="closeModal('modal-clh-custpick')">취소</button></div>
 </div>
 </div>
 <!-- ── 설계의뢰 고객 선택 모달 ── -->
@@ -16325,6 +16243,11 @@ const wdTest09Storage = (() => {
 </header>
 <div class="wd09-entry-body">
 <input id="clm-edit-id" type="hidden"/>
+<div class="fld wd09-entry-customer" id="clm-customer-field" hidden>
+<label for="clm-customer">고객</label>
+<select id="clm-customer" onchange="clmUpdateSteps()"></select>
+<button type="button" class="btn-sm p" onclick="wd09OpenCustomerRegistration()">+ 고객 추가</button>
+</div>
 <fieldset class="wd09-claim-step" id="clm-step-1" aria-labelledby="clm-step-label-1">
 <h3 class="wd09-step-title" id="clm-step-label-1">1. 청구 기본정보</h3>
 <div class="wd09-claim-fields">
@@ -16461,6 +16384,13 @@ const wdTest09Storage = (() => {
 <div class="wd09-entry-body">
 <input id="auto-edit-id" type="hidden"/>
 <input id="auto-edit-custid" type="hidden"/>
+<div class="fld wd09-entry-customer" id="auto-customer-field" hidden>
+<label for="wd09-auto-customer">고객</label>
+<select id="wd09-auto-customer" onchange="wd09SyncAutoCustomer()"></select>
+<button type="button" class="btn-sm p" onclick="wd09OpenCustomerRegistration()">+ 고객 추가</button>
+<p id="wd09-auto-customer-hint" role="status" hidden>고객을 먼저 선택해 주세요.</p>
+</div>
+<fieldset id="wd09-auto-entry-fields" aria-label="자동차보험 정보">
 <div class="wd09-insurance-fields">
 <div class="fld"><label for="auto-company">보험사</label><select id="auto-company" onchange="autoToggleCompanyCustom()"></select>
 <div id="auto-company-custom-wrap" style="display:none;"><label for="auto-company-custom">보험사 직접입력</label>
@@ -16502,9 +16432,10 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 </details>
+</fieldset>
 </div>
 <footer class="modal-ft wd09-entry-footer">
-<button type="button" class="btn-p" onclick="saveAutoRecord()">저장</button>
+<button type="button" class="btn-p" id="wd09-auto-save" onclick="saveAutoRecord()">저장</button>
 </footer>
 </div>
 </div>
@@ -16530,25 +16461,7 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 <!-- ── 자동차보험 만기관리 요약 보기(상단 자동차보험 메뉴 전용, 사진 노출 안 함) ── -->
-<div class="modal-ov" id="modal-auto-mgmt-detail" onclick="closeModal('modal-auto-mgmt-detail')">
-<div class="modal-bx" onclick="event.stopPropagation()" style="max-width:460px;">
-<div class="modal-title">자동차보험 만기관리 요약</div>
-<div class="cd-row"><div class="cd-label">고객명</div><div class="cd-val" id="atmd-name">-</div></div>
-<div class="cd-row"><div class="cd-label">연락처</div><div class="cd-val" id="atmd-phone">-</div></div>
-<div class="cd-row"><div class="cd-label">만기일</div><div class="cd-val" id="atmd-expiry">-</div></div>
-<div class="cd-row"><div class="cd-label">D-day</div><div class="cd-val" id="atmd-dday">-</div></div>
-<div class="cd-row"><div class="cd-label">최근가입년도</div><div class="cd-val" id="atmd-year">-</div></div>
-<div class="cd-row"><div class="cd-label">올해연락상태</div><div class="cd-val" id="atmd-status">-</div></div>
-<div class="cd-row"><div class="cd-label">차량번호</div><div class="cd-val" id="atmd-carnum">-</div></div>
-<div class="cd-row"><div class="cd-label">보험사</div><div class="cd-val" id="atmd-company">-</div></div>
-<div class="cd-row" style="margin-bottom:6px;"><div class="cd-label">메모</div><div class="cd-box" id="atmd-memo">-</div></div>
-<div class="info-box" style="margin-bottom:10px;">사진 등 상세 자료는 고객 상세의 가입보험 → 자동차보험에서 확인하세요.</div>
-<div class="modal-ft">
-<button class="btn-s" onclick="closeModal('modal-auto-mgmt-detail')">닫기</button>
-<button class="btn-p" onclick="autoMgmtDetailGoToCust()">고객 상세로 이동</button>
-</div>
-</div>
-</div>
+
 
 </div>
 <!-- ── 개인메모 수정 모달 ── -->
@@ -16721,7 +16634,7 @@ async function deleteQmemo(){
 
 
 
-// TEST 09: verified personal-project access with a read-only API boundary.
+// TEST 09: verified personal-project access with scoped claim registration.
 var USERS={
   WD23000:{name:'최윤경',role:'branch_manager'},
   WD26002:{name:'형민',role:'planner'}
@@ -16878,7 +16791,14 @@ function goPage(id){
   if(id==='manager'){renderManagerPage();loadManagersFromSupa().then(function(){renderManagerPage();});}
   if(id==='admin'){renderAdminPage();}
   if(id==='design'){var _db=document.getElementById('ndf-tab-work');if(_db){swDesignMain(_db,'dm-work');}} // Noah: 설계업무 기본은 단건 설계 흐름
-  if(id==='auto'){renderAutoManagePage();}
+  if(id==='auto'){
+    var uid=_UID;
+    renderAutoManagePage(_custUidLoaded===uid?'':'loading');
+    loadCustomersFromSupa().then(function(result){
+      if(_UID===uid&&document.getElementById('pg-auto').classList.contains('on'))renderAutoManagePage(result.ok?'':'error');
+    });
+  }
+  if(id==='claim')wd09RefreshClaimOverview();
   if(id==='aftercontract'&&typeof caw_init==='function'){caw_init();}
   if(id==='saramanagerroom'&&typeof saraMgrRoomRender==='function'){saraMgrRoomRender();}
   if(id==='wkit'){var wcl=document.getElementById('wk-client');if(wcl&&wcl.style.display==='none'){var cb=document.getElementById('wk-client-btn');if(cb)cb.click();}}
@@ -17675,6 +17595,7 @@ async function saveCust(){
   cfr_closeAfterMainSave();
   closeModal('modal-cust');
   renderCustList();renderHomeCusts();
+  if(wd09ResumeEntryWithCustomer(d.id))return;
   showDetail(d.id); /* 내부에서 기본정보 탭으로 리셋됨 */
   if(wasNew)cnx_show(d.id); /* 신규 등록에만 완료 안내 표시 (수정 저장은 안내 없음) */
 }
@@ -18842,6 +18763,8 @@ function lsClaimD(){return'wlp_claimd_'+_UID+'_'+_vid;}
 // 저장은 saveClaimDs()가 Supabase 성공 후에만 캐시 갱신. localStorage는 더 이상 청구문의기록 저장에 쓰지 않음(기존 키는 삭제하지 않음).
 var CLAIMD_CACHE_BY_CUST_ID={};
 var _claimdLoadError=false;
+let wd09ClaimSubmission=null;
+let wd09ClaimOverviewFiles=new Map();
 function getClaimDs(){return CLAIMD_CACHE_BY_CUST_ID[_vid]||[];}
 async function loadClaimDsFromSupa(custId){
   var sb=getSbClient();
@@ -18871,13 +18794,12 @@ async function loadClaimDsFromSupa(custId){
   }
 }
 // 저장: 현재 고객(_vid) 기준 배열 d를 uid+customer_id+id로 upsert. 실패 시 캐시 갱신 안 함.
-async function saveClaimDs(d){
+async function saveClaimDs(d,custId=_vid,newOverviewClaim=false){
   var sb=getSbClient();
   if(!sb){
     alert('청구문의기록 저장 실패 — 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
-  var custId=_vid;
   var rows=d.map(function(r){
     return {
       uid:_UID,
@@ -18896,13 +18818,17 @@ async function saveClaimDs(d){
     };
   });
   try{
-    var res=await sb.from('wd_partners_claim_records').upsert(rows,{onConflict:'uid,customer_id,id'});
+    var res=await sb.from('wd_partners_claim_records').upsert(rows,{
+      onConflict:'uid,customer_id,id',ignoreDuplicates:newOverviewClaim
+    });
     if(res.error){
       console.error('[claimd save]',res.error.message);
       alert('청구문의기록 저장 실패: '+res.error.message);
       return {ok:false,reason:'SAVE_ERROR'};
     }
-    CLAIMD_CACHE_BY_CUST_ID[custId]=d;
+    CLAIMD_CACHE_BY_CUST_ID[custId]=newOverviewClaim
+      ?(CLAIMD_CACHE_BY_CUST_ID[custId]||[]).filter(item=>item.id!=d[0].id).concat(d)
+      :d;
     return {ok:true};
   }catch(e){
     console.error('[claimd save]',e&&e.message);
@@ -18910,7 +18836,11 @@ async function saveClaimDs(d){
     return {ok:false,reason:'SAVE_EXCEPTION'};
   }
 }
-function openClaimAdd(){
+function openClaimAdd(fromOverview=false){
+  const customerField=document.getElementById('clm-customer-field');
+  customerField.hidden=!fromOverview;
+  if(fromOverview)wd09FillEntryCustomers('clm-customer');
+  document.getElementById('modal-claim-rec').dataset.newClaimId='';
   document.getElementById('modal-claim-rec-t').textContent='청구문의 추가';
   document.getElementById('clm-edit-id').value='';
   document.getElementById('clm-date').value=today();
@@ -18929,6 +18859,7 @@ function openClaimAdd(){
 }
 function openClaimEdit(id){
   var list=getClaimDs();var item=list.find(function(x){return x.id==id;});if(!item)return;
+  document.getElementById('clm-customer-field').hidden=true;
   document.getElementById('modal-claim-rec-t').textContent='청구문의 수정';
   document.getElementById('clm-edit-id').value=id;
   document.getElementById('clm-date').value=(item.date||'').slice(0,10);
@@ -18984,28 +18915,35 @@ function validateClaimAttachFile(file){
 }
 function clmUpdateSteps(){
   function value(id){return document.getElementById(id).value.trim();}
+  var needsCustomer=!document.getElementById('clm-customer-field').hidden&&!value('clm-customer');
   var confirmBasic=document.getElementById('clm-confirm-basic');
-  var basicOk=!!value('clm-date')&&(confirmBasic.dataset.confirmed==='true'||['clm-ins-cat','clm-insurer','clm-type'].every(value));
-  confirmBasic.disabled=!value('clm-date');
+  var basicOk=!needsCustomer&&!!value('clm-date')&&(confirmBasic.dataset.confirmed==='true'||['clm-ins-cat','clm-insurer','clm-type'].every(value));
+  confirmBasic.disabled=needsCustomer||!value('clm-date');
   confirmBasic.hidden=basicOk;
   var file=document.getElementById('clm-file').files[0];
   var fileCheck=file?validateClaimAttachFile(file):null;
   var hasAttachment=fileCheck?fileCheck.ok:!!value('clm-file-name');
   var active=renderEntrySteps('clm-step-',[basicOk,!!value('clm-content'),!!value('clm-status'),hasAttachment]);
+  if(needsCustomer){
+    var firstStep=document.getElementById('clm-step-1');
+    firstStep.disabled=true;
+    firstStep.dataset.stepState='waiting';
+    firstStep.removeAttribute('aria-current');
+  }
   var requiredComplete=active===-1||active===3;
   var canSave=requiredComplete&&(!fileCheck||fileCheck.ok);
   document.getElementById('clm-save-btn').disabled=!canSave;
   var hints=['청구 기본정보를 확인해 주세요.','청구 내용을 입력해 주세요.','처리상태를 선택해 주세요.',''];
   var hint=document.getElementById('clm-save-hint');
-  hint.textContent=requiredComplete?(fileCheck&&!fileCheck.ok?fileCheck.message:''):hints[active];
+  hint.textContent=needsCustomer?'고객을 먼저 선택해 주세요.':requiredComplete?(fileCheck&&!fileCheck.ok?fileCheck.message:''):hints[active];
   hint.hidden=!hint.textContent;
   return canSave;
 }
-async function uploadClaimAttachment(recordId,file){
+async function uploadClaimAttachment(recordId,file,custId=_vid){
   var sb=getSbClient();
   if(!sb){console.error('[claim attachment upload] Supabase client 없음');return {ok:false,reason:'NO_SUPABASE_CLIENT'};}
   var ext=_claimAttachExt(file);
-  var path=_UID+'/'+_vid+'/claims/'+recordId+'/file.'+ext;
+  var path=_UID+'/'+custId+'/claims/'+recordId+'/file.'+ext;
   try{
     var res=await sb.storage.from('wd-partners-attachments').upload(path,file,{upsert:true});
     if(res.error){
@@ -19037,15 +18975,21 @@ async function openClaimAttachment(filePath){
   window.open(url,'_blank','noopener');
 }
 async function saveClaimRecord(){
-  if(!clmUpdateSteps())return;
-  var custId=_vid;
+  if(wd09ClaimSubmission||!clmUpdateSteps())return;
+  const overview=!document.getElementById('clm-customer-field').hidden;
+  const custId=overview?document.getElementById('clm-customer').value:_vid;
+  const customer=getCusts().find(item=>String(item.id)===String(custId));
+  if(!customer)return;
+  const modal=document.getElementById('modal-claim-rec');
   var dt=document.getElementById('clm-date').value;
   var ct=document.getElementById('clm-content').value.trim();
   var fi=document.getElementById('clm-file');
   var newFile=(fi&&fi.files&&fi.files[0])?fi.files[0]:null;
   var fn=document.getElementById('clm-file-name').value||(newFile?newFile.name:'');
   var eid=document.getElementById('clm-edit-id').value;
-  var recId=eid||Date.now();
+  const recId=eid||(overview
+    ?Number(modal.dataset.newClaimId ||= String(Date.now()*1000+crypto.getRandomValues(new Uint16Array(1))[0]%1000))
+    :Date.now());
   var rec={
     id:recId,
     date:dt,
@@ -19057,29 +19001,49 @@ async function saveClaimRecord(){
     status:document.getElementById('clm-status').value,
     updated:new Date().toISOString()
   };
-  // 이번 저장에서 새로 선택된 파일이 있을 때만 검증/업로드 (기존 첨부는 Object.assign으로 그대로 유지됨)
-  if(newFile){
-    var customer=_matGetCust();
-    var uploadAt=new Date().toISOString();
-    var up=await uploadClaimAttachment(recId,newFile);
-    if(custId!==_vid)return;
-    if(!up.ok){alert('첨부파일을 올리지 못했어요. 다시 시도해 주세요.');return;}
-    rec.fileName=customerAttachmentName(customer,'청구서류',newFile.name,uploadAt);
-    rec.file_name=rec.fileName;
-    rec.original_file_name=newFile.name;
-    rec.file_category='청구서류';
-    rec.file_path=up.path;
-    rec.file_size=newFile.size;
-    rec.file_type=newFile.type;
-    rec.uploaded_at=uploadAt;
+  const entryBody=modal.querySelector('.wd09-entry-body');
+  const closeButton=modal.querySelector('.wd09-modal-close');
+  if(overview){
+    wd09ClaimSubmission={custId,recId,filePath:newFile?_UID+'/'+custId+'/claims/'+recId+'/file.'+_claimAttachExt(newFile):''};
+    entryBody.inert=true;
+    closeButton.disabled=true;
+    document.getElementById('clm-save-btn').disabled=true;
   }
-  var list=getClaimDs().slice();
-  if(eid){list=list.map(function(x){return x.id==eid?Object.assign({},x,rec):x;});}
-  else{rec.created=new Date().toISOString();list=list.concat([rec]);}
-  var result=await saveClaimDs(list);
-  if(!result.ok)return; // 저장 실패 시 모달 유지, 화면 갱신 안 함
-  closeModal('modal-claim-rec');
-  renderClaimList();
+  try{
+    if(newFile){
+      const uploadAt=new Date().toISOString();
+      const up=await uploadClaimAttachment(recId,newFile,custId);
+      if(!overview&&custId!==_vid)return;
+      if(!up.ok){alert('첨부파일을 올리지 못했어요. 다시 시도해 주세요.');return;}
+      rec.fileName=customerAttachmentName(customer,'청구서류',newFile.name,uploadAt);
+      rec.file_name=rec.fileName;
+      rec.original_file_name=newFile.name;
+      rec.file_category='청구서류';
+      rec.file_path=up.path;
+      rec.file_size=newFile.size;
+      rec.file_type=newFile.type;
+      rec.uploaded_at=uploadAt;
+    }
+    if(!eid)rec.created=new Date().toISOString();
+    const list=overview?[rec]:eid
+      ?getClaimDs().map(item=>item.id==eid?Object.assign({},item,rec):item)
+      :getClaimDs().concat(rec);
+    const result=await saveClaimDs(list,custId,overview);
+    if(!result.ok)return;
+    closeModal('modal-claim-rec');
+    if(!overview||String(_vid)===String(custId))renderClaimList();
+    if(overview){
+      document.getElementById('wd09-claim-status-filter').value='';
+      wd09RefreshClaimOverview();
+    }
+  }finally{
+    if(overview){
+      wd09ClaimSubmission=null;
+      entryBody.inert=false;
+      closeButton.disabled=false;
+      clmUpdateSteps();
+    }
+  }
 }
 // 공용: Supabase에서 청구문의기록 1건 삭제(성공 시에만 true 반환, 캐시는 호출부에서 갱신)
 async function _claimRecordDeleteFromSupa(id){
@@ -19116,6 +19080,54 @@ function clmStatusBadge(s){
   else if(s==='진행중')label='청구진행중';
   else if(s==='완료')label='보험금지급완료';
   return '<span class="clm-badge '+cls+'">'+esc(label)+'</span>';
+}
+async function loadClaimOverviewRows(){
+  const sb=getSbClient(), uid=_UID;
+  if(!sb||!uid)throw new Error('청구 목록을 불러올 수 없습니다.');
+  if(_custUidLoaded!==uid&&!(await loadCustomersFromSupa()).ok)throw new Error('고객 목록을 불러올 수 없습니다.');
+  const rows=[], pageSize=200;
+  for(let start=0;;start+=pageSize){
+    if(_UID!==uid||getSbClient()!==sb)throw new Error('로그인 상태를 확인해 주세요.');
+    const {data,error}=await sb.from('wd_partners_claim_records')
+      .select('id,customer_id,date,ins_company,claim_type,status,file_name,legacy_file_name:data->>fileName,file_path:data->>file_path')
+      .eq('uid',uid)
+      .order('date',{ascending:false,nullsFirst:false})
+      .order('customer_id',{ascending:true})
+      .order('id',{ascending:false})
+      .range(start,start+pageSize-1);
+    if(error)throw error;
+    rows.push(...data);
+    if(data.length<pageSize)break;
+  }
+  if(_UID!==uid||getSbClient()!==sb)throw new Error('로그인 상태를 확인해 주세요.');
+  const files=new Map();
+  for(const row of rows){
+    row.file_name ||= row.legacy_file_name;
+    if(row.file_path?.startsWith(uid+'/'+row.customer_id+'/')){
+      files.set(row.file_path,row.file_name||'청구첨부파일');
+    }else{
+      row.file_path=null;
+    }
+  }
+  wd09ClaimOverviewFiles=files;
+  return rows;
+}
+async function wd09DownloadClaimFile(path){
+  const name=wd09ClaimOverviewFiles.get(path);
+  const sb=getSbClient();
+  if(!name||!sb)return;
+  try{
+    const {data,error}=await sb.storage.from('wd-partners-attachments').download(path);
+    if(error||!data)throw error;
+    const url=URL.createObjectURL(data);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=name;
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }catch{
+    alert('청구파일을 내려받지 못했어요. 다시 시도해 주세요.');
+  }
 }
 function clmStatusSelectInline(id,cur){
   var cls='접수';
@@ -19553,11 +19565,7 @@ function renderMatList(){
     +'</div>';
 }
 /* ══ 자동차보험 (고객 객체 c.autoInsurance 배열 기반, matLogs와 동일 패턴 재사용 — v91수정 3차) ══ */
-// v91수정 3차: 상단 자동차보험 메뉴 = "만기관리표"로 단순화(D-day/고객명/연락처/만기일/최근가입년도/올해연락상태/관리만).
-// 올해연락상태는 기존 resultStatus 필드를 재사용해 연락전/갱신완료/타사이동 3값 직접 저장(새 컬럼 없음).
-// 레거시 값(연락 전/연락 완료/본사계약중/타사계약중/진행중/갱신완료/타사이동)은 autoYearStatus()가 표시 시점에 3값으로 정규화.
 var AUTO_INSURERS=['삼성화재','현대해상','DB손해보험','KB손해보험','메리츠화재','한화손해보험','롯데손해보험','흥국화재','MG손해보험','AXA손해보험','캐롯손해보험'];
-var AUTO_YEAR_STATES=['연락전','갱신완료','타사이동'];
 function cstAutoList(c){return Array.isArray(c&&c.autoInsurance)?c.autoInsurance.slice():[];}
 function _autoGetCust(){return getCusts().find(function(x){return x.id==_vid;});}
 async function _autoSaveList(c,list){
@@ -19567,12 +19575,6 @@ async function _autoSaveList(c,list){
   var updated=Object.assign({},c,{autoInsurance:list,updated:new Date().toISOString()});
   var newCs=cs.slice();newCs[idx]=updated;
   return await saveCusts(newCs);
-}
-// 올해연락상태 표시 정규화(상단 자동차보험 메뉴 전용): 갱신완료/타사이동(구 타사계약중)만 별도 인식, 나머지는 전부 '연락전'
-function autoYearStatus(v){
-  if(v==='갱신완료')return '갱신완료';
-  if(v==='타사이동'||v==='타사계약중')return '타사이동';
-  return '연락전'; // 연락 전/연락 완료/본사계약중/진행중/미지정 전부 '연락전'로 단순화
 }
 // v97실행: 고객관리(고객상세) 처리상태 전용 — 상단메뉴 올해연락상태(resultStatus)와 필드 자체를 분리한 contractStatus 사용.
 // contractStatus가 아직 없는 레거시 기록은 기존 resultStatus 값으로 1회성 폴백 매핑만 하고, resultStatus 자체는 건드리지 않는다(상단메뉴 영향 없음).
@@ -19628,6 +19630,8 @@ async function uploadAutoAttachment(custId,recordId,kind,file){
   }catch(e){console.error('[auto attachment upload]',e&&e.message);return {ok:false,reason:'UPLOAD_EXCEPTION'};}
 }
 function openAutoAdd(fromInsurance){
+  document.getElementById('auto-customer-field').hidden=true;
+  wd09SetAutoCustomerRequired(false);
   var extra=document.getElementById('auto-extra-fields');
   extra.open=false;extra.hidden=fromInsurance===true;
   document.getElementById('modal-auto-rec-t').textContent='자동차보험 기록 추가';
@@ -19650,6 +19654,8 @@ function openAutoAdd(fromInsurance){
 }
 // custId 생략 시 현재 고객상세(_vid) 기준 — 상단 관리화면의 "수정"에서는 대상 custId를 명시적으로 넘긴다.
 function openAutoEdit(id,custId){
+  document.getElementById('auto-customer-field').hidden=true;
+  wd09SetAutoCustomerRequired(false);
   var targetId=custId!=null?custId:_vid;
   var c=getCusts().find(function(x){return x.id==targetId;});
   if(!c)return;
@@ -19782,166 +19788,61 @@ function openAutoDetail(custId,id){
 }
 function autoDetailEdit(){if(_autoDetailCustId!=null&&_autoDetailId)openAutoEdit(_autoDetailId,_autoDetailCustId);}
 function autoDetailDelete(){if(_autoDetailCustId!=null&&_autoDetailId)deleteAutoRecord(_autoDetailId,_autoDetailCustId);}
-// ── 상단 자동차보험 메뉴(pg-auto) — "만기관리표"로 단순화: D-day/고객명/연락처/만기일/최근가입년도/올해연락상태/관리만 표시 ──
-// v94수정: 상단 자동차보험 메뉴 = 3탭(만기일확인/갱신완료/타사이동) 갱신관리판.
-// 필터 대신 탭으로 상태 매핑: pending→연락전, done→갱신완료, moved→타사이동.
-var _autoTab='pending';
-var AUTO_TAB_STATUS_MAP={pending:'연락전',done:'갱신완료',moved:'타사이동'};
-// ══ V128: 자동차보험 1차 행동유도 — 기존 등록 흐름/저장 로직 재사용, 신규 저장 없음 ══
-function openAutoAddPick(){
-  var s=document.getElementById('acp-search');if(s)s.value='';
-  renderAutoCustPickList();
-  openModal('modal-auto-custpick');
-}
-function renderAutoCustPickList(){
-  var q=(document.getElementById('acp-search').value||'').trim();
-  var cs=getCusts();
-  if(q){cs=cs.filter(function(c){return (c.name||'').indexOf(q)>-1||(c.phone||'').indexOf(q)>-1;});}
-  var el=document.getElementById('acp-list');if(!el)return;
-  if(!cs.length){el.innerHTML='<div style="font-size:13px;color:var(--s400);padding:14px 0;text-align:center;">고객이 없습니다. 고객관리에서 먼저 등록해주세요.</div>';return;}
-  el.innerHTML=cs.map(function(c){
-    return '<div class="my-row" style="cursor:pointer;" onclick="selectAutoAddCust('+c.id+')">'
-      +'<div style="flex:1;"><strong style="font-size:13px;">'+esc(c.name)+'</strong> <span style="color:var(--s400);font-size:11px;">'+esc(c.phone||'-')+'</span></div>'
-      +'</div>';
-  }).join('');
-}
-function selectAutoAddCust(custId){
-  closeModal('modal-auto-custpick');
-  _vid=custId; // 기존 openAutoAdd()는 _vid(현재 선택 고객) 기준으로 동작 — 저장 로직 무변경, 대상 고객만 지정
-  openAutoAdd();
-}
-function openAutoBulkSoon(){openModal('modal-auto-bulk-soon');}
-// 요약 카드: 기존 _autoAllRecords()/autoYearStatus()로 표시용 집계만 (저장 구조 무변경)
-function renderAutoSummaryStrip(){
-  var el=document.getElementById('auto-summary-strip');if(!el)return;
-  var all=_autoAllRecords();
-  var thisYear=String(new Date().getFullYear());
-  var expThisYear=all.filter(function(item){return (item.rec.expiryDate||'').slice(0,4)===thisYear;}).length;
-  var needContact=all.filter(function(item){return autoYearStatus(item.rec.resultStatus)==='연락전';}).length;
-  var done=all.filter(function(item){return autoYearStatus(item.rec.resultStatus)==='갱신완료';}).length;
-  var moved=all.filter(function(item){return autoYearStatus(item.rec.resultStatus)==='타사이동';}).length;
-  el.innerHTML=''
-    +'<div class="auto-sum-item"><div class="n">'+expThisYear+'</div><div class="l">올해 만기</div></div>'
-    +'<div class="auto-sum-item warn"><div class="n">'+needContact+'</div><div class="l">연락 필요</div></div>'
-    +'<div class="auto-sum-item done"><div class="n">'+done+'</div><div class="l">갱신완료</div></div>'
-    +'<div class="auto-sum-item"><div class="n">'+moved+'</div><div class="l">타사이동</div></div>';
-}
-function swAutoTab(btn,t){
-  _autoTab=t;
-  var tabs=document.getElementById('auto-filter-tabs');
-  if(tabs)tabs.querySelectorAll('.itab').forEach(function(b){b.classList.remove('on');});
-  btn.classList.add('on');
-  renderAutoManagePage();
-}
-function _autoAllRecords(){
-  var out=[];
-  getCusts().forEach(function(c){
-    cstAutoList(c).forEach(function(x){out.push({rec:x,cust:c});});
-  });
-  return out;
-}
-async function autoSetStatus(custId,recId,field,value){
-  var cs=getCusts();
-  var idx=cs.findIndex(function(x){return x.id==custId;});
-  if(idx<0)return;
-  var c=cs[idx];
-  var list=cstAutoList(c);
-  var ri=list.findIndex(function(x){return x.id==recId;});
-  if(ri<0)return;
-  var newList=list.slice();
-  newList[ri]=Object.assign({},newList[ri]);
-  newList[ri][field]=value;
-  newList[ri].updatedAt=new Date().toISOString();
-  var result=await _autoSaveList(c,newList);
-  if(!result||!result.ok)return; // 저장 실패를 완료처럼 보이지 않게
-  renderAutoManagePage();
-  if(_vid===custId)renderContractsList();
-}
-// 올해연락상태 드롭다운 변경 즉시 저장 + 재렌더. 갱신완료 선택 시 고객 상세로 이동해 새 연도 기록을 추가할지 안내.
-async function autoStatusChange(custId,recId,newVal){
-  await autoSetStatus(custId,recId,'resultStatus',newVal);
-  if(newVal==='갱신완료'){
-    if(confirm('갱신완료 처리되었습니다. 고객 상세에서 새 자동차보험 기록을 추가하시겠습니까?')){
-      autoGoToCustDetail(custId,true);
-    }
-  }
-}
-// 고객 상세의 통합 가입보험 목록으로 이동한다.
-function autoGoToCustDetail(custId,openAddModal){
-  closeModal('modal-auto-mgmt-detail');
-  goPage('cust');
-  showDetail(custId);
-  swDetTab(document.getElementById('wd09-customer-insurance-tab'),'det-contracts');
-  if(openAddModal)openAutoAdd();
-}
-// 상단 관리화면 전용 "보기" — 사진/첨부 노출 없이 만기관리 요약만 표시(연도별 사진은 고객상세 카드에서만)
-var _atmdCustId=null;
-function openAutoMgmtDetail(custId,recId){
-  var c=getCusts().find(function(x){return x.id==custId;});
-  if(!c)return;
-  var item=cstAutoList(c).find(function(x){return x.id==recId;});
-  if(!item)return;
-  _atmdCustId=custId;
-  var dd=autoDdayInfo(item.expiryDate);
-  document.getElementById('atmd-name').textContent=c.name||'-';
-  document.getElementById('atmd-phone').textContent=c.phone||'-';
-  document.getElementById('atmd-expiry').textContent=item.expiryDate||'-';
-  document.getElementById('atmd-dday').textContent=dd.label;
-  document.getElementById('atmd-year').textContent=item.year||'-';
-  document.getElementById('atmd-status').textContent=autoYearStatus(item.resultStatus);
-  document.getElementById('atmd-carnum').textContent=item.carNumber||'-';
-  document.getElementById('atmd-company').textContent=item.company||'-';
-  document.getElementById('atmd-memo').textContent=item.memo||'-';
-  openModal('modal-auto-mgmt-detail');
-}
-function autoMgmtDetailGoToCust(){
-  if(_atmdCustId!=null)autoGoToCustDetail(_atmdCustId,false);
-}
-function renderAutoManagePage(){
-  renderAutoSummaryStrip(); // V128: 요약 카드 표시용 집계 (탭 전환 시에도 최신화)
-  var el=document.getElementById('auto-mgmt-list');
-  if(!el)return;
-  var targetStatus=AUTO_TAB_STATUS_MAP[_autoTab]||'연락전';
-  var all=_autoAllRecords();
-  var filtered=all.filter(function(item){
-    return autoYearStatus(item.rec.resultStatus)===targetStatus;
-  });
-  filtered.sort(function(a,b){
-    var da=autoDdayInfo(a.rec.expiryDate).days;var db=autoDdayInfo(b.rec.expiryDate).days;
-    if(da===null)da=999999;if(db===null)db=999999;
-    return da-db;
-  });
-  if(!filtered.length){
-    // V128: 빈 상태 행동유도 — "기록 없음" 텍스트만 두지 않고 등록 버튼 2개 노출
-    el.innerHTML='<div class="auto-empty-box">'
-      +'<div class="t1">아직 등록된 자동차보험 기록이 없습니다.</div>'
-      +'<div class="t2">올해 만기 고객을 등록하면<br>만기일 확인 / 갱신완료 / 타사이동 상태로 관리할 수 있습니다.</div>'
-      +'<div class="auto-action-row">'
-      +'<button type="button" class="auto-act-btn primary" onclick="openAutoAddPick()">+ 자동차보험 등록</button>'
-      +'<button type="button" class="auto-act-btn ghost" onclick="openAutoBulkSoon()">여러 명 일괄 등록 준비중</button>'
-      +'</div></div>';
+function renderAutoManagePage(state){
+  const list=document.getElementById('auto-mgmt-list');
+  if(!list)return;
+  const message=document.getElementById('wd09-auto-list-message');
+  if(state==='loading'||state==='error'){
+    list.replaceChildren();
+    message.textContent=state==='loading'?'자동차보험 목록을 불러오는 중이에요.':'자동차보험 목록을 불러오지 못했습니다.';
     return;
   }
-  var head='<div class="auto-list-row auto-list-head"><div>D-day</div><div>고객명</div><div>연락처</div><div>만기일</div><div>최근가입년도</div><div>올해연락상태</div><div>관리</div></div>';
-  var rows=filtered.map(function(item){
-    var x=item.rec,c=item.cust;
-    var dd=autoDdayInfo(x.expiryDate);
-    var st=autoYearStatus(x.resultStatus);
-    var options=AUTO_YEAR_STATES.map(function(s){return '<option'+(s===st?' selected':'')+'>'+s+'</option>';}).join('');
-    return '<div class="auto-list-row">'
-      +'<div><span class="auto-dday '+dd.cls+'">'+esc(dd.label)+'</span></div>'
-      +'<div style="font-weight:700;">'+esc(c.name)+'</div>'
-      +'<div>'+esc(c.phone||'-')+'</div>'
-      +'<div>'+esc(x.expiryDate||'-')+'</div>'
-      +'<div>'+esc(x.year||'-')+'</div>'
-      +'<div><select onchange="autoStatusChange('+c.id+',\''+x.id+'\',this.value)" style="font-size:13px;padding:4px 6px;border-radius:7px;border:1.5px solid var(--s200);font-family:\'Noto Sans KR\',sans-serif;">'+options+'</select></div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:4px;">'
-      +'<button class="btn-sm" style="font-size:12px;padding:4px 9px;background:var(--s100);color:var(--s700);" onclick="openAutoMgmtDetail('+c.id+',\''+x.id+'\')">보기</button>'
-      +'<button class="btn-sm p" style="font-size:12px;padding:4px 9px;" onclick="openAutoEdit(\''+x.id+'\','+c.id+')">수정</button>'
-      +'<button class="btn-sm d" style="font-size:12px;padding:4px 9px;" onclick="deleteAutoRecord(\''+x.id+'\','+c.id+')">삭제</button>'
-      +'</div></div>';
-  }).join('');
-  el.innerHTML=head+rows;
+
+  const rows=getCusts().flatMap(customer=>{
+    const vehicles=new Map();
+    const unknownVehicles=[];
+    for(const record of cstAutoList(customer)){
+      if(!record)continue;
+      const plate=String(record.carNumber||record.car_number||'').trim();
+      const expiry=String(record.expiryDate||record.expiry_date||'').trim();
+      const row={customer,record,plate,expiry,days:autoDdayInfo(expiry)};
+      const key=plate.replace(/[\s-]+/g,'').toUpperCase();
+      if(!key){unknownVehicles.push(row);continue;}
+      const previous=vehicles.get(key);
+      const dateRank=row.days.days??-Infinity;
+      const previousRank=previous?.days.days??-Infinity;
+      if(!previous||dateRank>previousRank||(dateRank===previousRank&&String(record.updatedAt||record.createdAt||'')>String(previous.record.updatedAt||previous.record.createdAt||''))){
+        vehicles.set(key,row);
+      }
+    }
+    return [...vehicles.values(),...unknownVehicles];
+  });
+  const expiryGroup=days=>days===null?2:days<0?1:0;
+  rows.sort((a,b)=>{
+    const first=a.days.days, second=b.days.days;
+    return expiryGroup(first)-expiryGroup(second)||(first<0?second-first:first-second)
+      ||String(a.customer.name||'').localeCompare(String(b.customer.name||''),'ko');
+  });
+  message.textContent=rows.length?'전체 '+rows.length+'건':'고객관리에 등록된 자동차보험이 없습니다.';
+  list.innerHTML=rows.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame">'
+    +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
+    +'<thead><tr>'+['고객명','연락처','보험회사','연보험료','차량번호','보험만기일','D-day','메모']
+      .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
+    +rows.map(({customer,record,plate,expiry,days})=>{
+      const phone=cstFormatPhone(customer.phone);
+      const digits=phone.replace(/\D/g,'');
+      const phoneCell=digits.length>=8?'<a href="tel:'+digits+'">'+esc(phone)+'</a>':esc(phone||'—');
+      const premium=insurancePremiumAmount(record.annualPremium);
+      return '<tr>'
+        +'<td><button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-contracts\')">'+esc(customer.name||'이름 없음')+'</button></td>'
+        +'<td>'+phoneCell+'</td>'
+        +'<td>'+esc(record.company||record.insurer||'—')+'</td>'
+        +'<td>'+ (premium===null?'—':premium.toLocaleString('ko-KR')+'원')+'</td>'
+        +'<td>'+esc(plate||'—')+'</td>'
+        +'<td>'+esc(expiry||'—')+'</td>'
+        +'<td><span class="auto-dday '+days.cls+'">'+esc(days.label)+'</span></td>'
+        +'<td class="wd09-auto-expiry-memo">'+esc(record.memo||'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div>':'';
 }
 function renderHomeCusts(){
   var cs=getCusts();
@@ -20182,7 +20083,7 @@ function swTab(btn,id){
   var wkMainTabs=['wk-copy','wk-maker','wk-drawer','wk-monthly'];
   var tabs=wkMainTabs.indexOf(id)>-1
     ? wkMainTabs
-    : ['d-check','d-tpl','d-guide','c-check','c-docs','c-tools','wk-counsel','wk-client','wk-ai','ml-main','ml-consult','ml-cases','ml-official'];
+    : ['d-check','d-tpl','d-guide','wk-counsel','wk-client','wk-ai','ml-main','ml-consult','ml-cases','ml-official'];
   tabs.forEach(function(t){var el=document.getElementById(t);if(el)el.style.display=t===id?'':'none';});
   btn.closest('.itabs').querySelectorAll('.itab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
@@ -20421,59 +20322,101 @@ function swHubSystemTab(btn,id){
 // ══ 코드관리 퀵모달 — 로그인 사용자 공통, 저장은 uid 기준 분리 ══
 // 데이터/저장: 업무전산과 완전히 동일 — loadHubSystemAccounts()/saveHubSystemAccount() 재사용, 같은 record upsert.
 // 별도 localStorage·별도 테이블 사용 안 함. 요소 id는 cm- 접두사로 업무전산(hs-)과 충돌 방지.
-var _cmTab='nonlife';
-var _cmPwVis={}; // 행별 PW 보기 상태 (메모리만, 저장 안 함, 모달 열 때 초기화 → 기본 숨김 보장)
+var _cmTab='nonlife', _cmLoadState='idle', _cmRequest=0;
+var _cmPwVis={};
 function codeMgrAllowed(){return !!_UID;}
 async function openCodeMgr(){
   if(!codeMgrAllowed())return;
-  _cmTab='nonlife';_cmPwVis={};
-  var nb=document.getElementById('cm-tab-nonlife'),lb=document.getElementById('cm-tab-life');
-  if(nb)nb.classList.add('on');if(lb)lb.classList.remove('on');
+  const request=++_cmRequest;
+  _cmLoadState='loading';
+  const search=document.getElementById('cm-search');
+  search.value='';
+  swCodeMgrTab('nonlife');
   openModal('modal-codemgr');
-  var el=document.getElementById('cm-list');
-  if(el)el.innerHTML='<div style="text-align:center;padding:24px;font-size:13px;color:var(--muted);">불러오는 중...</div>';
-  await loadHubSystemAccounts(); // 업무전산과 같은 조회 함수 — 항상 Supabase 최신값 반영
+  search.focus();
+  const result=await loadHubSystemAccounts();
+  if(request!==_cmRequest)return;
+  _cmLoadState=result.ok?'ready':result.reason==='PREVIEW'?'preview':'error';
   renderCodeMgrList();
+}
+function closeCodeMgr(){
+  _cmRequest++;
+  _cmPwVis={};
+  document.getElementById('cm-list').replaceChildren();
+  closeModal('modal-codemgr');
+  document.getElementById('code-mgr-btn')?.focus();
 }
 function swCodeMgrTab(tab){
-  _cmTab=tab;_cmPwVis={};
-  var nb=document.getElementById('cm-tab-nonlife'),lb=document.getElementById('cm-tab-life');
-  if(nb)nb.classList.toggle('on',tab==='nonlife');
-  if(lb)lb.classList.toggle('on',tab==='life');
+  _cmTab=tab;
+  _cmPwVis={};
+  for(const type of ['nonlife','life']){
+    const button=document.getElementById('cm-tab-'+type);
+    button.classList.toggle('on',tab===type);
+    button.setAttribute('aria-pressed',String(tab===type));
+  }
   renderCodeMgrList();
 }
+function filterCodeMgrList(){
+  const query=document.getElementById('cm-search').value.normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+  const cards=document.querySelectorAll('#cm-list .cm-card');
+  let found=0;
+  cards.forEach(card=>{
+    const visible=card.dataset.company.normalize('NFKC').replace(/\s+/g,'').toLowerCase().includes(query);
+    card.hidden=!visible;
+    if(visible)found++;
+    const reveal=card.querySelector('.cm-reveal[aria-pressed="true"]');
+    if(reveal)cmTogglePw(_cmTab,Number(reveal.dataset.index));
+  });
+  const messages=[];
+  if(_cmLoadState==='loading')messages.push('코드 정보를 불러오는 중이에요.');
+  if(_cmLoadState==='preview')messages.push('미리보기에서는 저장된 코드와 로그인 정보를 불러오지 않아요.');
+  if(_cmLoadState==='error')messages.push('저장된 코드와 로그인 정보를 불러오지 못했습니다.');
+  if(!found&&_cmLoadState!=='loading')messages.push('검색 결과가 없어요.');
+  document.getElementById('cm-status').textContent=messages.join(' ');
+}
 function renderCodeMgrList(){
-  var el=document.getElementById('cm-list');if(!el)return;
-  if(!codeMgrAllowed()){el.innerHTML='<div style="text-align:center;padding:24px;font-size:13px;">접근 권한이 없습니다.</div>';return;}
-  var type=_cmTab;
-  el.innerHTML=HUB_SYSTEM_DATA[type].map(function(c,idx){
-    return '<div class="cm-card" id="cm-card-'+type+'-'+idx+'">'+cmCardView(c,type,idx)+'</div>';
+  const list=document.getElementById('cm-list');
+  const type=_cmTab;
+  list.innerHTML=_cmLoadState==='loading'?'':HUB_SYSTEM_DATA[type].map(function(company,index){
+    return '<div class="cm-card" data-company="'+esc(company.name)+'" id="cm-card-'+type+'-'+index+'">'+cmCardView(company,type,index)+'</div>';
   }).join('');
+  filterCodeMgrList();
 }
 function cmCardView(c,type,idx){
-  var saved=HUB_SYSTEM_SAVED[hubSystemSavedKey(hubSystemCompanyType(type),c.name)];
-  var code=saved&&saved.carrier_code?esc(saved.carrier_code):'<span style="color:var(--s300);">미등록</span>';
-  var idv=saved&&saved.login_id?esc(saved.login_id):'<span style="color:var(--s300);">미등록</span>';
-  var pw;
-  if(saved&&saved.login_pw){
-    var vis=!!_cmPwVis[type+'-'+idx];
-    pw='<span id="cm-pwval-'+type+'-'+idx+'">'+(vis?esc(saved.login_pw):'********')+'</span>'
-      +'<button type="button" class="cm-mini-btn" style="margin-left:8px;" onclick="cmTogglePw(\''+type+'\','+idx+')">'+(vis?'숨김':'보기')+'</button>';
-  }else{pw='<span style="color:var(--s300);">-</span>';}
-  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">'
-    +'<div style="font-size:14px;font-weight:800;color:var(--navy);min-width:0;overflow-wrap:anywhere;">'+esc(c.name)+'</div>'
-    +'<button type="button" class="cm-mini-btn" onclick="cmEditCard(\''+type+'\','+idx+')">수정</button></div>'
-    +'<div class="cm-row"><span class="cm-label">접속전산</span><span style="min-width:0;overflow-wrap:anywhere;">'+hubSystemLinkBtn(c)+'</span></div>'
-    +'<div class="cm-row"><span class="cm-label">코드</span><span style="min-width:0;overflow-wrap:anywhere;">'+code+'</span></div>'
-    +'<div class="cm-row"><span class="cm-label">ID</span><span style="min-width:0;overflow-wrap:anywhere;">'+idv+'</span></div>'
-    +'<div class="cm-row"><span class="cm-label">PW</span><span style="display:flex;align-items:center;min-width:0;">'+pw+'</span></div>';
+  const ready=_cmLoadState==='ready';
+  const saved=ready?HUB_SYSTEM_SAVED[hubSystemSavedKey(hubSystemCompanyType(type),c.name)]:null;
+  const missing='<span class="hs-dash">'+(ready?'미등록':'—')+'</span>';
+  const code=saved?.carrier_code?esc(saved.carrier_code):missing;
+  const idv=saved?.login_id?esc(saved.login_id):missing;
+  const pw=saved?.login_pw
+    ?'<span class="cm-value" id="cm-pwval-'+type+'-'+idx+'">********</span>'
+      +'<button type="button" class="cm-mini-btn cm-reveal" data-index="'+idx+'" aria-pressed="false" onclick="cmTogglePw(\''+type+'\','+idx+')">보기</button>'
+    :missing;
+  return '<div class="cm-card-head"><h3 class="cm-card-title">'+esc(c.name)+'</h3>'
+    +(ready?'<button type="button" class="cm-mini-btn" onclick="cmEditCard(\''+type+'\','+idx+')">수정</button>':'')+'</div>'
+    +'<div class="cm-row"><span class="cm-label">접속전산</span><span class="cm-value">'+hubSystemLinkBtn(c)+'</span></div>'
+    +'<div class="cm-row"><span class="cm-label">코드</span><span class="cm-value">'+code+'</span></div>'
+    +'<div class="cm-row"><span class="cm-label">ID</span><span class="cm-value">'+idv+'</span></div>'
+    +'<div class="cm-row"><span class="cm-label">PW</span>'+pw+'</div>';
 }
 function cmTogglePw(type,idx){
-  var k=type+'-'+idx;_cmPwVis[k]=!_cmPwVis[k];
-  var box=document.getElementById('cm-card-'+type+'-'+idx);var c=HUB_SYSTEM_DATA[type][idx];
-  if(box&&c)box.innerHTML=cmCardView(c,type,idx);
+  if(_cmLoadState!=='ready'||_cmTab!==type)return;
+  const key=type+'-'+idx;
+  const box=document.getElementById('cm-card-'+key);
+  const value=document.getElementById('cm-pwval-'+key);
+  const button=box?.querySelector('.cm-reveal');
+  const c=HUB_SYSTEM_DATA[type][idx];
+  if(!value||!button||!c)return;
+  const password=HUB_SYSTEM_SAVED[hubSystemSavedKey(hubSystemCompanyType(type),c.name)]?.login_pw;
+  if(!password)return;
+  const visible=_cmPwVis[key]=!_cmPwVis[key];
+  value.textContent=visible?password:'********';
+  button.textContent=visible?'숨김':'보기';
+  button.setAttribute('aria-pressed',String(visible));
 }
 function cmEditCard(type,idx){
+  if(_cmLoadState!=='ready')return;
+  delete _cmPwVis[type+'-'+idx];
   var box=document.getElementById('cm-card-'+type+'-'+idx);var c=HUB_SYSTEM_DATA[type][idx];if(!box||!c)return;
   var saved=HUB_SYSTEM_SAVED[hubSystemSavedKey(hubSystemCompanyType(type),c.name)];
   var codeVal=saved&&saved.carrier_code?esc(saved.carrier_code):'';
@@ -20535,7 +20478,14 @@ function switchWkit(tab){document.querySelectorAll('#pg-wkit .itabs .itab').forE
 
 // ══ 청구 서류 ══
 var CLAIM={'외래':'안녕하세요 고객님!\n외래/검사 청구 서류 안내드립니다.\n\n■ 필요서류\n- 진료비 영수증 (원본 or 사본)\n- 진료비 세부내역서\n- 의사 소견서 또는 진단명 기재 서류 (필요 시)\n\n■ 안내사항\n- 실손보험과 정액보험은 동시 청구 가능합니다.\n- 서류는 해당 보험사 앱 또는 팩스로 접수 가능합니다.\n- 보험금 지급 여부는 약관과 심사 결과에 따라 달라질 수 있습니다.\n\n궁금한 점은 편하게 연락 주세요! 😊','입원':'안녕하세요 고객님!\n입원 청구 서류 안내드립니다.\n\n■ 필요서류\n- 입퇴원확인서 (원본)\n- 진료비 영수증\n- 진료비 세부내역서\n- 진단서 (필요 시)\n\n■ 안내사항\n- 퇴원 후 서류 준비 즉시 청구해 주세요.\n- 3년 이내 청구 가능합니다.\n- 보험금 지급 여부는 약관과 심사 결과에 따라 달라질 수 있습니다.\n\n빠른 회복 응원합니다! 💙','수술':'안녕하세요 고객님!\n수술 청구 서류 안내드립니다.\n\n■ 필요서류\n- 수술확인서 또는 수술기록지 (원본)\n- 진단서 (수술명·진단명 기재)\n- 진료비 영수증\n- 진료비 세부내역서\n\n■ 안내사항\n- 수술 종류에 따라 적용 담보가 다를 수 있습니다.\n- 보험금 지급 여부는 약관과 심사 결과에 따라 달라질 수 있습니다.\n\n빠른 회복 바랍니다! 💙','암':'안녕하세요 고객님!\n암 진단 청구 서류 안내드립니다.\n\n■ 필요서류\n- 조직검사결과지 또는 병리검사결과지\n- 진단서 (암 진단명, 진단일 기재)\n- 진료비 영수증 (선택)\n\n■ 안내사항\n- 암의 종류와 가입 상품에 따라 지급 내용이 다를 수 있습니다.\n- 보험금 지급 여부는 약관과 심사 결과에 따라 달라질 수 있습니다.\n\n힘내세요, 곁에 있겠습니다 🙏'};
-function swClaimDoc(btn,type){var el=document.getElementById('claim-doc');if(el)el.textContent=CLAIM[type]||'';btn.closest('.itabs').querySelectorAll('.itab').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
+function swClaimDoc(btn,type){
+  document.getElementById('claim-doc').textContent=CLAIM[type]||'';
+  document.getElementById('wd09-claim-copy').textContent=btn.textContent.trim()+' 안내문 복사';
+  btn.closest('.itabs').querySelectorAll('.itab').forEach(function(tab){
+    tab.classList.toggle('on',tab===btn);
+    tab.setAttribute('aria-pressed',String(tab===btn));
+  });
+}
 
 // ══ 복사 ══
 function copyEl(id){var el=document.getElementById(id);if(!el)return;var t=el.textContent||el.innerText;if(navigator.clipboard){navigator.clipboard.writeText(t).then(toast).catch(function(){fc(t);});}else{fc(t);}}
@@ -29194,59 +29144,6 @@ function cwf_onConsultPageEnter(){
 })();
 window.cwf_openCustPick=cwf_openCustPick;window.cwf_renderCustPick=cwf_renderCustPick;window.cwf_selectCustomer=cwf_selectCustomer;window.cwf_applyCustomerGate=cwf_applyCustomerGate;
 
-/* ══ Noah ClaimDesk: 보험청구 상담 진입 · 기존 고객/청구문의 구조 재사용 ══ */
-var clh_claimMode='consult';
-function clh_openConsult(mode){
-  clh_claimMode=mode||'consult';
-  var title=document.querySelector('#modal-clh-custpick .modal-title');
-  if(title){title.textContent=clh_claimMode==='current'?'보험금 청구 — 고객 선택':clh_claimMode==='unclaimed'?'미청구 보험금 확인·청구 — 고객 선택':'보험청구 상담 — 고객 선택';}
-  var q=document.getElementById('clh-cp-search');if(q)q.value='';
-  clh_renderCustPick();
-  if(typeof openModal==='function')openModal('modal-clh-custpick');
-}
-function clh_renderCustPick(){
-  var el=document.getElementById('clh-cp-list');if(!el)return;
-  var q=((document.getElementById('clh-cp-search')||{}).value||'').trim().toLowerCase();
-  var digits=q.replace(/\D/g,'');
-  var list=[];try{list=typeof getCusts==='function'?getCusts():[];}catch(e){list=[];}
-  list=list.filter(function(c){var n=String(c.name||'').toLowerCase();var p=String(c.phone||'');return !q||n.indexOf(q)>-1||(digits&&p.replace(/\D/g,'').indexOf(digits)>-1);});
-  if(!list.length){el.innerHTML='<div class="empty"><div class="e-ico">🔎</div><div class="e-txt">검색된 고객이 없습니다</div></div>';return;}
-  el.innerHTML=list.map(function(c){return '<div class="clh-item" onclick="clh_pickCustomer('+JSON.stringify(c.id)+')"><div class="clh-av">'+esc(String(c.name||'?').charAt(0))+'</div><div><div class="clh-name">'+esc(c.name||'이름 없음')+'</div><div class="clh-meta">'+esc(c.phone||'연락처 없음')+(c.birth?' · '+esc(c.birth):'')+'</div></div><div class="clh-go">상담 시작 ›</div></div>';}).join('');
-}
-function clh_pickCustomer(id){
-  if(typeof closeModal==='function')closeModal('modal-clh-custpick');
-  if(typeof goPage==='function')goPage('cust');
-  if(typeof showDetail==='function')showDetail(id);
-  setTimeout(function(){
-    var det=document.getElementById('det-tabs');var btn=null;
-    if(det)btn=det.querySelector('[data-det-pane="det-claim"]');
-    if(btn&&typeof swDetTab==='function')swDetTab(btn,'det-claim');
-    if(typeof openClaimAdd==='function')openClaimAdd();
-    setTimeout(function(){
-      var mt=document.getElementById('modal-claim-rec-t');
-      var ct=document.getElementById('clm-content');
-      if(clh_claimMode==='current'){
-        if(mt)mt.textContent='보험금 청구 기록 추가';
-        if(ct&&!ct.value)ct.value=`[보험금 청구]
-발생한 질병·사고·치료 내용:
-확인할 계약·담보:
-필요서류 및 다음 조치:`;
-      }else if(clh_claimMode==='unclaimed'){
-        if(mt)mt.textContent='미청구 보험금 확인 기록 추가';
-        if(ct&&!ct.value)ct.value=`[미청구 보험금 확인]
-과거 진료·검사·입원·수술 내용:
-기존 청구 여부 확인:
-당시 가입 계약·보장기간 확인:
-고객 동의 및 다음 조치:
-※ 실제 청구 가능 여부와 지급 결과는 계약 내용, 약관 및 보험사 심사에 따라 달라질 수 있습니다.`;
-      }else{
-        if(mt)mt.textContent='보험청구 상담 기록 추가';
-      }
-    },0);
-  },80);
-}
-window.clh_openConsult=clh_openConsult;window.clh_renderCustPick=clh_renderCustPick;window.clh_pickCustomer=clh_pickCustomer;
-
 </script>
 <script>
 (function(){
@@ -29323,40 +29220,7 @@ document.addEventListener('keydown',function(e){
   if(c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();c.click();}
 });
 </script>
-<script id="afw-js">
-function afwTab(which,btn){
-  document.querySelectorAll('#afw-main-tabs .itab').forEach(x=>x.classList.remove('on')); if(btn)btn.classList.add('on');
-  var f=document.getElementById('afw-flow-panel'),e=document.getElementById('afw-expiry-panel');
-  if(f)f.style.display=which==='flow'?'block':'none'; if(e)e.style.display=which==='expiry'?'block':'none';
-  if(which==='expiry'&&typeof renderAutoMgmt==='function')try{renderAutoMgmt();}catch(_e){}
-}
-function afwMode(btn,mode){document.querySelectorAll('.afw-mode').forEach(x=>x.classList.remove('on'));btn.classList.add('on');afwRefresh();}
-function afwVal(id){var e=document.getElementById(id);return e?e.value.trim():'';}
-function afwChecks(){return Array.from(document.querySelectorAll('#afw-flow-panel input[type="checkbox"]:checked')).map(x=>x.getAttribute('data-afw')).filter(Boolean);}
-function afwRefresh(){
- var c=afwChecks(),txt=[];
- if(c.includes('업무채널 전달 완료'))txt.push('비교견적 요청 완료'); else txt.push('비교견적 의뢰 전');
- if(c.includes('비교견적 도착'))txt.push('견적 수신 완료'); else if(c.includes('업무채널 전달 완료'))txt.push('견적 수신 대기');
- if(c.includes('비교견적 고객 안내'))txt.push('고객 안내 완료'); else txt.push('고객 안내 전');
- if(c.includes('고객 보험사 선택'))txt.push('고객 선택 완료');
- if(c.includes('계약 진행 요청'))txt.push('계약 진행 중');
- if(c.includes('자동차보험 업무 완료'))txt=['자동차보험 업무 완료'];
- var el=document.getElementById('afw-status');if(el)el.textContent=txt.join(' · ');
-}
-function afwMakeQuote(){
- var cov=Array.from(document.querySelectorAll('#afw-flow-panel input[data-afw]:checked')).map(x=>x.getAttribute('data-afw')).filter(x=>['대인배상','대물배상','자동차상해','자기차량손해','무보험차상해','긴급출동'].includes(x));
- var t='[자동차보험 비교견적 요청]\n\n고객명: '+(afwVal('afw-name')||'-')+'\n업무 구분: '+(afwVal('afw-kind')||'-')+'\n차량번호: '+(afwVal('afw-car')||'-')+'\n만기일: '+(afwVal('afw-expiry')||'-')+'\n현재 보험사: '+(afwVal('afw-current')||'-')+'\n계약자 / 피보험자: '+(afwVal('afw-relation')||'-')+'\n운전자 범위: '+(afwVal('afw-driver')||'-')+'\n최저연령: '+(afwVal('afw-age')||'-')+'\n차량용도: '+(afwVal('afw-use')||'-')+'\n\n요청 담보:\n- '+(cov.length?cov.join('\n- '):'동일 조건 기준 확인')+'\n\n추가 요청사항:\n'+(afwVal('afw-request')||'동일 조건 기준으로 비교견적 부탁드립니다.');
- document.getElementById('afw-quote-out').value=t;
-}
-function afwMakeContract(){
- var c=afwChecks();var done=['고객 최종 선택 완료','차량 사진 전달','계기판 사진 전달','블랙박스 사진 전달','결제정보 별도 전달 완료'];
- var map={'고객 최종 선택 완료':'고객 보험사 선택','차량 사진 전달':'차량 사진 수령','계기판 사진 전달':'계기판 사진 수령','블랙박스 사진 전달':'블랙박스 사진 수령','결제정보 별도 전달 완료':'결제정보 총무 전달'};
- var t='[자동차보험 계약 진행 요청]\n\n고객명: '+(afwVal('afw-name')||'-')+'\n선택 보험사: '+(afwVal('afw-choice')||'-')+'\n차량번호: '+(afwVal('afw-car')||'-')+'\n보험 시작일: '+(afwVal('afw-expiry')||'-')+'\n운전자 범위: '+(afwVal('afw-driver')||'-')+'\n최저연령: '+(afwVal('afw-age')||'-')+'\n\n확인 완료:\n'+done.map(d=>'- '+d+': '+(c.includes(map[d])?'완료':'확인 필요')).join('\n')+'\n\n계약 진행 부탁드립니다.';
- document.getElementById('afw-contract-out').value=t;
-}
-async function afwCopy(id){var e=document.getElementById(id);if(!e||!e.value){alert('먼저 문장을 생성해 주세요.');return;}try{await navigator.clipboard.writeText(e.value);alert('복사했습니다.');}catch(_e){e.select();document.execCommand('copy');alert('복사했습니다.');}}
-document.addEventListener('change',function(e){if(e.target&&e.target.closest&&e.target.closest('#afw-flow-panel'))afwRefresh();});
-</script>
+
 <script id="sara-manager-js">
 /* ══ Noah: 사라업무실장 1차 — 기존 데이터 read-only, 신규 저장 없음 ══ */
 var _saraMgrMode='start';
@@ -33260,6 +33124,9 @@ function openDesignProgressModal(){
         .find(prefix=>url.pathname.startsWith(prefix));
       if(policyPrefix && isVerified() && request.method==='GET' && !url.search){
         const path=decodeURIComponent(url.pathname.slice(policyPrefix.length));
+        if(path.startsWith(uid+'/')&&wd09ClaimOverviewFiles.has(path)){
+          return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+        }
         const custId=_vid;
         const customer=getCusts().find(c=>c.id==custId);
         const ownsPolicy=getContracts().some(c=>customerPolicyMeta(c,'contracts',uid,custId)?.path===path)
@@ -33267,6 +33134,27 @@ function openDesignProgressModal(){
         if(ownsPolicy)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
       const table = url.pathname.startsWith('/rest/v1/') && url.pathname.slice('/rest/v1/'.length);
+      const claim=wd09ClaimSubmission;
+      if(claim && isVerified() && request.method==='POST' &&
+          getCusts().some(customer=>String(customer.id)===claim.custId)){
+        const uploadPrefix='/storage/v1/object/wd-partners-attachments/';
+        if(claim.filePath && !url.search && url.pathname.startsWith(uploadPrefix) &&
+            decodeURIComponent(url.pathname.slice(uploadPrefix.length))===claim.filePath &&
+            claim.filePath.startsWith(uid+'/'+claim.custId+'/claims/'+claim.recId+'/')){
+          return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+        }
+        if(table==='wd_partners_claim_records' && url.searchParams.size===1 &&
+            url.searchParams.get('on_conflict')==='uid,customer_id,id' &&
+            request.headers.get('Prefer')?.split(',').some(value=>value.trim()==='resolution=ignore-duplicates')){
+          const rows=await request.clone().json();
+          const row=Array.isArray(rows)&&rows.length===1&&rows[0];
+          if(row && row.uid===uid && String(row.customer_id)===claim.custId &&
+              row.id===claim.recId && (row.data?.file_path||'')===claim.filePath &&
+              isVerified() && wd09ClaimSubmission===claim){
+            return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+          }
+        }
+      }
       if (!isVerified() || request.method!=='GET' || !allowedTables.has(table) ||
           (table==='wd_partners_managers' && uid!=='WD23000')) {
         throw new Error('이 TEST에서는 본인 자료 조회만 가능합니다.');
@@ -33726,6 +33614,165 @@ const wd09GoogleHome = (function initSimpleHome(){
   return {verify,activate,refresh,reset};
 })();
 </script>
+<script id="wd09-claim-overview-script">
+function wd09OpenOverviewCustomer(id,pane){
+  const customer=getCusts().find(item=>String(item.id)===String(id));
+  if(!customer)return;
+  goPage('cust');
+  showDetail(customer.id);
+  const tab=document.querySelector('#det-tabs [data-det-pane="'+pane+'"]');
+  if(tab)swDetTab(tab,pane);
+}
+
+function wd09OpenCustomerRegistration(){
+  openCustModal();
+  document.getElementById('cust-save-btn').textContent='저장하고 작성 계속';
+}
+
+function wd09FillEntryCustomers(pickerId,selected=''){
+  const picker=document.getElementById(pickerId);
+  const customers=getCusts().slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
+  picker.replaceChildren(new Option(customers.length?'고객을 선택해 주세요.':'등록된 고객이 없습니다.',''));
+  for(const customer of customers){
+    const birth=(customer.birth||'').slice(0,4);
+    picker.add(new Option((customer.name||'이름 없음')+(birth?' ('+birth+'년생)':''),customer.id));
+  }
+  picker.disabled=!customers.length;
+  if(customers.some(customer=>String(customer.id)===String(selected)))picker.value=String(selected);
+}
+
+function wd09SyncAutoCustomer(){
+  const id=document.getElementById('wd09-auto-customer').value;
+  document.getElementById('auto-edit-custid').value=id;
+  wd09SetAutoCustomerRequired(!id);
+}
+
+function wd09SetAutoCustomerRequired(required){
+  const fields=document.getElementById('wd09-auto-entry-fields');
+  fields.disabled=required;
+  fields.inert=required;
+  document.getElementById('wd09-auto-save').disabled=required;
+  document.getElementById('wd09-auto-customer-hint').hidden=!required;
+}
+
+async function wd09StartAutoRegistration(){
+  openAutoAdd(true);
+  document.getElementById('auto-customer-field').hidden=false;
+  wd09FillEntryCustomers('wd09-auto-customer');
+  wd09SyncAutoCustomer();
+  if(typeof loadCustomersFromSupa==='function'&&_custUidLoaded!==_UID){
+    const result=await loadCustomersFromSupa();
+    const field=document.getElementById('auto-customer-field');
+    if(result.ok&&!field.hidden&&document.getElementById('modal-auto-rec').classList.contains('open')){
+      wd09FillEntryCustomers('wd09-auto-customer',document.getElementById('wd09-auto-customer').value);
+      wd09SyncAutoCustomer();
+    }
+  }
+}
+
+function wd09ResumeEntryWithCustomer(id){
+  if(document.getElementById('modal-claim-rec').classList.contains('open')){
+    wd09FillEntryCustomers('clm-customer',id);
+    clmUpdateSteps();
+    return true;
+  }
+  if(document.getElementById('modal-auto-rec').classList.contains('open')){
+    wd09FillEntryCustomers('wd09-auto-customer',id);
+    wd09SyncAutoCustomer();
+    return true;
+  }
+  return false;
+}
+
+function wd09MountClaimOverview(loadRows,emptyMessage='고객관리에 등록된 청구 기록이 없습니다.'){
+  const filter=document.getElementById('wd09-claim-status-filter');
+  const message=document.getElementById('wd09-claim-list-message');
+  const frame=document.getElementById('wd09-claim-list-frame');
+  const body=document.getElementById('wd09-claim-overview-rows');
+  const retry=document.getElementById('wd09-claim-retry');
+  const add=document.getElementById('wd09-claim-add');
+  let rows=[], customers=new Map(), revision=0;
+  const statuses={접수중:'청구접수중',진행중:'청구진행중',완료:'보험금지급완료'};
+  const standardStatuses=Object.values(statuses);
+  function status(row){
+    const label=String(row.status||'').trim();
+    const compact=label.replace(/\s+/g,'');
+    if(Object.hasOwn(statuses,compact))return statuses[compact];
+    return standardStatuses.includes(compact)?compact:label||'미입력';
+  }
+
+  function renderState(text){
+    message.textContent='';
+    body.innerHTML='<tr role="row"><td class="wd09-claim-state" role="cell" colspan="6"><span role="status">'
+      +esc(text)+'</span></td></tr>';
+  }
+
+  function render(){
+    const visible=rows.filter(row=>!filter.value||filter.value===status(row));
+    if(!visible.length){
+      renderState(filter.value?'선택한 상태의 청구 기록이 없습니다.':emptyMessage);
+      return;
+    }
+    body.innerHTML=visible.map(row=>{
+      const customer=customers.get(String(row.customer_id));
+      const name=customer
+        ?'<button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-claim\')">'+esc(customer.name||'이름 없음')+'</button>'
+        :'고객 정보 없음';
+      const filename=esc(row.file_name||(row.file_path?'청구첨부파일':'—'));
+      const file=row.file_path
+        ?'<button class="btn-sm p" type="button" data-path="'+esc(row.file_path)+'" onclick="wd09DownloadClaimFile(this.dataset.path)" title="청구파일 다운로드">'
+          +'<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/></svg>'
+          +filename+'</button>'
+        :filename;
+      return '<tr role="row">'
+        +'<td role="cell" data-label="요청일">'+esc(row.date||'—')+'</td>'
+        +'<td role="cell" class="wd09-claim-person">'+name+'</td>'
+        +'<td role="cell" data-label="보험사">'+esc(row.ins_company||'—')+'</td>'
+        +'<td role="cell" data-label="유형">'+esc(row.claim_type||'—')+'</td>'
+        +'<td role="cell" class="wd09-claim-status">'+clmStatusBadge(status(row))+'</td>'
+        +'<td role="cell" class="wd09-claim-file">'+file+'</td></tr>';
+    }).join('');
+    message.textContent=filter.value?visible.length+'건 / 전체 '+rows.length+'건':'전체 '+rows.length+'건';
+  }
+
+  async function refresh(){
+    const request=++revision;
+    frame.setAttribute('aria-busy','true');
+    filter.disabled=true;
+    add.disabled=true;
+    retry.hidden=true;
+    renderState('청구 목록을 불러오는 중이에요.');
+    try{
+      const next=await loadRows();
+      if(request!==revision)return;
+      rows=next;
+      customers=new Map(getCusts().map(customer=>[String(customer.id),customer]));
+      const selected=filter.value;
+      const options=[...new Set([...standardStatuses,...rows.map(status)])];
+      filter.innerHTML='<option value="">전체 상태</option>'
+        +options.map(value=>'<option value="'+esc(value)+'">'+esc(value)+'</option>').join('');
+      filter.value=options.includes(selected)?selected:'';
+      filter.disabled=false;
+      add.disabled=false;
+      render();
+    }catch(error){
+      if(request!==revision)return;
+      renderState('청구 목록을 불러오지 못했습니다.');
+      retry.hidden=false;
+    }finally{
+      if(request===revision)frame.removeAttribute('aria-busy');
+    }
+  }
+
+  filter.addEventListener('change',render);
+  add.addEventListener('click',()=>openClaimAdd(true));
+  retry.addEventListener('click',refresh);
+  return refresh;
+}
+</script>
+<script>
+const wd09RefreshClaimOverview=wd09MountClaimOverview(loadClaimOverviewRows);
+</script>
 <script id="wd09-drive-shared-script">
 const WD09_DRIVE_FOLDER_TYPE='application/vnd.google-apps.folder';
 const WD09_DRIVE_ROOT_NAME='WD 보험폴더';
@@ -33736,9 +33783,6 @@ const WD09_DRIVE_FOLDERS=[
   ['materials','4.고객자료실'],
   ['resources','5.보험자료']
 ];
-const WD09_DRIVE_SAMPLE_NAME='WD_연결확인_샘플.txt';
-const WD09_DRIVE_SAMPLE_TEXT='WD 설계사허브 9번 TEST 연결 확인용 가상 파일입니다.\n';
-
 function wd09DriveFolderService(api,adviserId,adviserName){
   const adviserFolderName=adviserName+' 보험자료';
   async function folder(parent,key,name,createMissing){
@@ -33758,16 +33802,7 @@ function wd09DriveFolderService(api,adviserId,adviserName){
   }
   return {
     inspect,
-    create:()=>api.lock(()=>inspect(true)),
-    uploadTest:()=>api.lock(async ()=>{
-      const state=await inspect();
-      if(!state.ready)throw new Error('폴더 상태를 새로고침한 뒤 다시 확인해 주세요.');
-      const parent=state.children.materials.id;
-      const existing=await api.find(parent,'sample','text/plain');
-      const file=existing||await api.uploadText(parent,'sample',WD09_DRIVE_SAMPLE_NAME,WD09_DRIVE_SAMPLE_TEXT);
-      if(await api.readText(file.id)!==WD09_DRIVE_SAMPLE_TEXT)throw new Error('테스트 파일 내용을 확인하지 못했어요.');
-      return {state,existing:!!existing};
-    })
+    create:()=>api.lock(()=>inspect(true))
   };
 }
 
@@ -33775,7 +33810,6 @@ function wd09MountDriveSetup(connectDrive,home){
   const byId=id=>document.getElementById(id);
   const open=byId('wd09-drive-open');
   const action=byId('wd09-drive-action');
-  const sample=byId('wd09-drive-test-upload');
   const folderLink=byId('wd09-drive-folder-link');
   const account=byId('wd09-drive-account');
   const tree=byId('wd09-drive-tree');
@@ -33793,8 +33827,6 @@ function wd09MountDriveSetup(connectDrive,home){
     open.dataset.connected=String(!!session);
     action.textContent=session?(folders?.ready===false?'폴더 생성':'새로고침'):'Google 계정 연결';
     action.disabled=pending;
-    sample.disabled=pending;
-    sample.hidden=!folders?.ready;
     account.hidden=!session;
     account.textContent=session?'Google 계정 · '+session.account:'';
     tree.hidden=!folders;
@@ -33864,15 +33896,6 @@ function wd09MountDriveSetup(connectDrive,home){
       reportFolders();
     });
   });
-  sample.addEventListener('click',()=>{
-    if(!session||!folders?.ready)return;
-    run('가상 파일을 확인하고 있어요.',async isCurrent=>{
-      const result=await session.service.uploadTest();
-      if(!isCurrent())return;
-      folders=result.state;
-      message=result.existing?'기존 테스트 파일을 다시 열어 확인했어요.':'고객자료실에 가상 파일을 올리고 다시 열어 확인했어요.';
-    });
-  });
   render();
   return reset;
 }
@@ -33928,7 +33951,7 @@ function wd09MountDriveSetup(connectDrive,home){
     const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
     const homeSession=withHome?{token:grant.access_token,pendingTasks:new Set()}:null;
     if(homeSession)await wd09GoogleHome.verify(homeSession);
-    async function request(url,{method='GET',body,contentType,asText=false}={}){
+    async function request(url,{method='GET',body,contentType}={}){
       if(uid!==_UID||!getSbClient()||Date.now()>=expiresAt){
         throw Object.assign(new Error('Google 계정에 다시 연결해 주세요.'),{reconnect:true});
       }
@@ -33951,7 +33974,7 @@ function wd09MountDriveSetup(connectDrive,home){
         throw new Error('이 Google 계정의 Drive 파일 권한을 확인해 주세요.');
       }
       if(!response.ok)throw new Error('Drive 작업에 실패했어요. 다시 시도해 주세요.');
-      return asText?response.text():response.json();
+      return response.json();
     }
     const about=await request(base+'/about?fields=user(permissionId,emailAddress,displayName)');
     const user=about.user;
@@ -33980,19 +34003,6 @@ function wd09MountDriveSetup(connectDrive,home){
           method:'POST',body:JSON.stringify(metadata(parent,key,name,WD09_DRIVE_FOLDER_TYPE)),contentType:'application/json'
         });
       },
-      uploadText(parent,key,name,text){
-        const boundary='wd09-'+crypto.randomUUID();
-        const body=new Blob([
-          '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',
-          JSON.stringify(metadata(parent,key,name,'text/plain')),
-          '\r\n--'+boundary+'\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n',text,
-          '\r\n--'+boundary+'--\r\n'
-        ]);
-        return request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',{
-          method:'POST',body,contentType:'multipart/related; boundary='+boundary
-        });
-      },
-      readText(id){return request(base+'/files/'+encodeURIComponent(id)+'?alt=media',{asText:true});},
       lock(task){
         return navigator.locks?.request('wd09-drive:'+user.permissionId,task)??task();
       }
