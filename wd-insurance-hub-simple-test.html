@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js https://accounts.google.com/gsi/client https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0; style-src 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://upload.wikimedia.org/wikipedia/commons/4/44/Meritz_Logo.svg https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png; connect-src https://accounts.google.com/gsi/ https://www.googleapis.com https://tasks.googleapis.com https://tiwgzmmizmkbvbyfgmyw.supabase.co https://zkgvcxyrrtdnsxukihdv.supabase.co; frame-src https://accounts.google.com/gsi/ blob:; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js https://accounts.google.com/gsi/client https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0; style-src 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://upload.wikimedia.org/wikipedia/commons/4/44/Meritz_Logo.svg https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png; connect-src https://accounts.google.com/gsi/ https://www.googleapis.com https://tasks.googleapis.com https://sheets.googleapis.com https://tiwgzmmizmkbvbyfgmyw.supabase.co https://zkgvcxyrrtdnsxukihdv.supabase.co; frame-src https://accounts.google.com/gsi/ blob:; form-action 'none'; base-uri 'none'">
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
 <meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/>
 <meta content="no-cache" http-equiv="Pragma"/>
@@ -12242,6 +12242,7 @@ const wdTest09Storage = (() => {
 <div class="card-hd">
 <h2 class="card-title">고객업무기록</h2>
 <div class="wd09-info-actions">
+<button type="button" class="btn-sm" onclick="wd09SyncOpenCustomerSheets()">Drive 시트 동기화</button>
 <button type="button" class="btn-sm" popovertarget="det-work-filter-popover">검색·필터</button>
 <button type="button" class="btn-sm p" onclick="openCommAdd()">+ 고객업무기록</button>
 </div>
@@ -12321,6 +12322,7 @@ const wdTest09Storage = (() => {
 <div class="card">
 <div class="card-hd"><h2 class="card-title">청구현황</h2>
 <div class="wd09-info-actions">
+<button type="button" class="btn-sm" onclick="wd09SyncOpenCustomerSheets()">Drive 시트 동기화</button>
 <button type="button" class="btn-sm" popovertarget="det-claim-filter-popover">검색·필터</button>
 <button type="button" class="btn-sm p" onclick="openClaimAdd()">+ 청구문의 추가</button>
 </div></div>
@@ -16032,6 +16034,11 @@ const wdTest09Storage = (() => {
 <div style="font-size:32px;margin-bottom:14px;">🗑</div>
 <div class="modal-title" style="margin-bottom:8px;">고객 삭제</div>
 <div style="font-size:13px;color:var(--s600);margin-bottom:6px;line-height:1.5;">이 고객을 삭제하면 상담이력, 다음연락예정, 청구문의, 가입보험, 설계의뢰 등 연결된 모든 기록이 함께 삭제됩니다.<br/>삭제 후 복구할 수 없습니다. 정말 삭제하시겠습니까?</div>
+<fieldset style="text-align:left;margin:12px 0">
+<legend>Google Drive 기록 시트</legend>
+<label style="display:block"><input type="radio" name="wd09-delete-drive" value="keep" checked> Drive에 남기기</label>
+<label style="display:block"><input type="radio" name="wd09-delete-drive" value="trash"> 이 고객의 업무기록·청구현황 시트도 휴지통으로 이동</label>
+</fieldset>
 <div id="del-cust-name" style="font-size:16px;font-weight:800;color:var(--rd700);margin-bottom:24px;"></div>
 <div style="display:flex;justify-content:center;gap:12px;">
 <button class="btn-s" onclick="closeModal('modal-del-cust')">아니오</button>
@@ -17280,13 +17287,13 @@ async function loadCustomersFromSupa(){
   }
 }
 // 저장: d(전체 고객 배열)를 Supabase에 upsert(uid+id 기준). 실패 시 캐시 갱신 안 함(저장 성공처럼 보이지 않게).
-async function saveCusts(d){
+async function saveCusts(d,changed=d){
   var sb=getSbClient();
   if(!sb){
     alert('고객 저장 실패 — 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
-  var rows=d.map(function(c){
+  var rows=changed.map(function(c){
     return {
       uid:_UID,
       id:c.id,
@@ -17563,9 +17570,10 @@ async function _custBuildRecord(){
   if(fam===null)return null; // 가족 줄 유효성 실패 — 저장하지 않음
   if(eid){cs=cs.map(function(c){return c.id==eid?d:c;});}else{cs=cs.concat([d]);}
   if(fam.length)cs=cs.concat(fam);
-  var result=await saveCusts(cs);
+  var result=await saveCusts(cs,[d,...fam]);
   if(!result.ok)return null; // 저장 실패 시 유효성 실패와 동일하게 처리(화면 진행 안 함)
   if(fam.length){cfr_reset(true);} /* 저장 성공 후 가족 줄 초기화 — 재저장 시 중복 생성 방지 */
+  if(!eid)for(const customer of [d,...fam])wd09QueueCustomerSheets(customer.id);
   return d;
 }
 function cfr_closeAfterMainSave(){
@@ -17666,18 +17674,7 @@ function setCustActionBtns(enabled){
   var hint=document.getElementById('cust-act-hint');
   if(hint)hint.style.display=enabled?'':'none';
 }
-async function deleteCust(){
-  if(!_vid)return;
-  var c=getCusts().find(function(x){return x.id==_vid;});
-  if(!c)return;
-  var warnMsg='"'+c.name+'" 고객을 삭제하시겠습니까?\n\n이 고객을 삭제하면 상담이력, 다음연락예정, 청구문의, 가입보험, 설계의뢰 등 연결된 모든 기록이 함께 삭제됩니다. 삭제 후 복구할 수 없습니다. 정말 삭제하시겠습니까?';
-  if(!confirm(warnMsg))return;
-  var id=_vid;
-  var result=await deleteCustomerFromSupa(id);
-  if(!result.ok)return; // 삭제 실패 시 화면 갱신하지 않음(삭제된 것처럼 보이지 않게)
-  CURRENT_CUSTOMERS=CURRENT_CUSTOMERS.filter(function(x){return x.id!=id;});
-  _vid=null;showCustList();renderCustList();renderHomeCusts();
-}
+function deleteCust(){if(_vid)confirmDeleteCust(_vid);}
 
 /* ══ 만나이 계산 ══ */
 /* ══ 고객구분 4기준 통일 ══ */
@@ -17960,6 +17957,7 @@ async function saveComms(d){
       return {ok:false,reason:'SAVE_ERROR'};
     }
     COMM_CACHE_BY_CUST_ID[custId]=d;
+    wd09QueueCustomerSheets(custId,"work");
     return {ok:true};
   }catch(e){
     if(e&&e.code==='COMM_SAVE_TIMEOUT'){
@@ -17990,6 +17988,7 @@ async function _commRecordDeleteFromSupa(id){
     return false;
   }
   COMM_CACHE_BY_CUST_ID[custId]=(COMM_CACHE_BY_CUST_ID[custId]||[]).filter(function(x){return x.id!=id;});
+  wd09QueueCustomerSheets(custId,"work");
   return true;
 }
 
@@ -18612,16 +18611,26 @@ function confirmDeleteCust(id){
   var c=getCusts().find(function(x){return x.id==id;});
   if(!c)return;
   _delCustId=id;
+  document.querySelector('[name=wd09-delete-drive][value=keep]').checked=true;
   document.getElementById('del-cust-name').textContent=c.name;
   openModal('modal-del-cust');
 }
 async function deleteCustById(){
   if(!_delCustId)return;
   var id=_delCustId;
+  const customer=getCusts().find(c=>String(c.id)===String(id));
+  const trash=document.querySelector('[name=wd09-delete-drive]:checked').value==='trash';
+  const drive=window.wd09CustomerSheets;
+  if(trash&&!drive){alert('Drive에 연결한 다음 다시 시도해 주세요.');return;}
   var result=await deleteCustomerFromSupa(id);
   if(!result.ok)return; // 삭제 실패 시 모달 닫지 않고 화면도 갱신하지 않음
   CURRENT_CUSTOMERS=CURRENT_CUSTOMERS.filter(function(x){return x.id!=id;});
   if(_vid==id){_vid=null;}
+  wd09PendingCustomerSheets.delete(String(id));
+  if(trash&&customer){
+    try{await drive.trash(customer);}
+    catch(error){alert('앱 고객은 삭제했지만 Drive 시트를 휴지통으로 옮기지 못했어요. Drive에서 확인해 주세요.');}
+  }
   _delCustId=null;
   closeModal('modal-del-cust');
   renderCustList();
@@ -18831,6 +18840,7 @@ async function saveClaimDs(d,custId=_vid,newOverviewClaim=false){
     CLAIMD_CACHE_BY_CUST_ID[custId]=newOverviewClaim
       ?(CLAIMD_CACHE_BY_CUST_ID[custId]||[]).filter(item=>item.id!=d[0].id).concat(d)
       :d;
+    wd09QueueCustomerSheets(custId,"claims");
     return {ok:true};
   }catch(e){
     console.error('[claimd save]',e&&e.message);
@@ -19065,6 +19075,7 @@ async function _claimRecordDeleteFromSupa(id){
     return false;
   }
   CLAIMD_CACHE_BY_CUST_ID[custId]=(CLAIMD_CACHE_BY_CUST_ID[custId]||[]).filter(function(x){return x.id!=id;});
+  wd09QueueCustomerSheets(custId,"claims");
   return true;
 }
 async function deleteClaimD(id){
@@ -19165,6 +19176,7 @@ async function changeClaimStatusInline(id,newStatus){
   }
   var newList=list.slice();newList[idx]=updatedData;
   CLAIMD_CACHE_BY_CUST_ID[custId]=newList;
+  wd09QueueCustomerSheets(custId,"claims");
   renderClaimList();
 }
 // 첨부 셀: Storage에 실제 업로드된 파일(file_path)이 있으면 클릭 가능한 다운로드 버튼, 없으면 텍스트만(또는 '-')
@@ -33157,6 +33169,34 @@ function openDesignProgressModal(){
           }
         }
       }
+      if(isVerified() && request.method!=='GET'){
+        const customers='wd_partners_customers';
+        const records=['wd_partners_communications','wd_partners_claim_records'];
+        const ownsCustomer=id=>getCusts().some(customer=>String(customer.id)===String(id));
+        const matched=key=>url.searchParams.getAll(key).length===1
+          ?/^eq[.](\d+)$/.exec(url.searchParams.get(key))?.[1]:null;
+        const exactOwner=url.searchParams.getAll('uid').length===1&&url.searchParams.get('uid')==='eq.'+uid;
+        let authorized=false;
+        if(request.method==='POST'&&url.searchParams.size===1&&
+            ((table===customers&&url.searchParams.get('on_conflict')==='uid,id')||
+            (records.includes(table)&&url.searchParams.get('on_conflict')==='uid,customer_id,id'))){
+          const rows=await request.clone().json();
+          authorized=Array.isArray(rows)&&rows.length>0&&rows.every(row=>
+            row?.uid===uid&&/^\d+$/.test(String(row.id))&&
+            (table===customers||ownsCustomer(row.customer_id)));
+        }else if(request.method==='PATCH'&&records.includes(table)&&exactOwner&&
+                 matched('id')&&ownsCustomer(matched('customer_id'))&&url.searchParams.size===3){
+          const row=await request.clone().json();
+          authorized=row&&Object.keys(row).every(key=>!['uid','id','customer_id'].includes(key));
+        }else if(request.method==='DELETE'&&exactOwner){
+          const isCustomer=table===customers&&url.searchParams.size===2&&matched('id')===String(_delCustId);
+          const isCascade=[...records,'wd_partners_contracts','wd_partners_design_requests'].includes(table)&&
+            url.searchParams.size===2&&matched('customer_id')===String(_delCustId);
+          const isRecord=records.includes(table)&&url.searchParams.size===3&&!!matched('id')&&ownsCustomer(matched('customer_id'));
+          authorized=(isCustomer||isCascade)&&ownsCustomer(_delCustId)||isRecord;
+        }
+        if(authorized&&isVerified())return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+      }
       if (!isVerified() || request.method!=='GET' || !allowedTables.has(table) ||
           (table==='wd_partners_managers' && uid!=='WD23000')) {
         throw new Error('이 TEST에서는 본인 자료 조회만 가능합니다.');
@@ -33786,25 +33826,78 @@ const WD09_DRIVE_FOLDERS=[
   ['resources','5.보험자료']
 ];
 function wd09DriveFolderService(api,adviserId,adviserName){
-  const adviserFolderName=adviserName+' 보험자료';
+  const adviserFolderName='WD '+adviserName+' 보험폴더';
   async function folder(parent,key,name,createMissing){
     const found=await api.find(parent,key,WD09_DRIVE_FOLDER_TYPE);
     return found||(createMissing?api.createFolder(parent,key,name):null);
   }
   async function inspect(createMissing=false){
-    const root=await folder('root','root',WD09_DRIVE_ROOT_NAME,createMissing);
-    const adviser=root?await folder(root.id,'adviser:'+adviserId,adviserFolderName,createMissing):null;
+    const key='adviser:'+adviserId;
+    const direct=await folder('root',key,adviserFolderName,false);
+    const root=direct?null:await folder('root','root',WD09_DRIVE_ROOT_NAME,false);
+    const legacy=root?await folder(root.id,key,adviserFolderName,false):null;
+    const adviser=direct||legacy||(createMissing?await folder('root',key,adviserFolderName,true):null);
     const entries=adviser?await Promise.all(WD09_DRIVE_FOLDERS.map(async ([key,name])=>[
       key,await folder(adviser.id,key,name,createMissing)
     ])):[];
     const children=Object.fromEntries(entries);
-    const tree=[root?.name||WD09_DRIVE_ROOT_NAME,'  '+(adviser?.name||adviserFolderName),
+    const tree=[adviser?.name||adviserFolderName,
       ...WD09_DRIVE_FOLDERS.map(([key,name])=>'    '+(children[key]?.name||name))].join('\n');
     return {adviser,children,tree,ready:!!adviser&&WD09_DRIVE_FOLDERS.every(([key])=>children[key]?.id)};
   }
   return {
     inspect,
     create:()=>api.lock(()=>inspect(true))
+  };
+}
+
+const WD09_CUSTOMER_SHEETS={
+  work:{
+    title:'고객업무기록시트',table:'wd_partners_communications',
+    headers:['날짜','업무 유형','업무 내용','처리상태','다음 할 일','다음 예정일','첨부파일명','수정일','기록 ID'],
+    row:r=>[r.date,r.type,r.content||r.note,r.workStatus||r.status,r.nextContent,r.nextDate,r.fileName,r.updated,r.id]
+  },
+  claims:{
+    title:'청구현황시트',table:'wd_partners_claim_records',
+    headers:['청구요청일','보험사','청구 유형','청구 내용','처리상태','첨부파일명','수정일','기록 ID'],
+    row:r=>[r.date,r.insCompany,r.type,r.content||r.note,r.status,r.fileName,r.updated,r.id]
+  }
+};
+function wd09CustomerSheetService(api,folders,uid){
+  const mime='application/vnd.google-apps.spreadsheet';
+  async function getFile(customer,kind,create){
+    const parent=folders.children[kind].id;
+    const key='customer:'+uid+':'+customer.id+':'+kind;
+    const existing=await api.find(parent,key,mime);
+    if(existing||!create)return existing;
+    const year=/^(\d{4})/.exec(customer.birth||'')?.[1]?.slice(-2)
+      ||/^(\d{2})\d{4}/.exec(customer.rrnFull||customer.rrn||'')?.[1]||'연도미확인';
+    const date=customerAttachmentDay(customer.created).slice(2).replace(/-/g,'');
+    const name=customerAttachmentPart(customer.name)+'('+year+')_'+WD09_CUSTOMER_SHEETS[kind].title+'_'+date;
+    return api.createFile(parent,key,name,mime);
+  }
+  return {
+    sync(customer,kinds,readRows){
+      return api.lock(async()=>{
+        for(const kind of kinds){
+          const sheet=WD09_CUSTOMER_SHEETS[kind];
+          const rows=await readRows(sheet.table,customer.id);
+          const file=await getFile(customer,kind,true);
+          const previous=await api.readSheet(file.id);
+          const values=[sheet.headers,...rows.map(row=>sheet.row(row).map(value=>String(value??'')))];
+          while(values.length<previous.length)values.push(Array(sheet.headers.length).fill(''));
+          await api.writeSheet(file.id,values);
+        }
+      });
+    },
+    trash(customer){
+      return api.lock(async()=>{
+        for(const kind of Object.keys(WD09_CUSTOMER_SHEETS)){
+          const file=await getFile(customer,kind,false);
+          if(file)await api.trash(file.id);
+        }
+      });
+    }
   };
 }
 
@@ -33847,11 +33940,13 @@ function wd09MountDriveSetup(connectDrive,home){
     pending=false;
     message=note||connectMessage;
     home?.reset(note);
+    window.wd09CustomerSheets=null;
     render();
   }
   function reportFolders(){
     message=folders.ready?'':'필요한 보험자료 폴더를 만들어 주세요.';
     if(folders.ready){
+      session.onReady?.(folders);
       closeModal('wd09-drive-setup');
       open.focus();
     }
@@ -33907,6 +34002,56 @@ function wd09MountDriveSetup(connectDrive,home){
   });
   render();
   return reset;
+}
+</script>
+<script id="wd09-customer-sync-script">
+const wd09PendingCustomerSheets=new Map();
+let wd09CustomerSheetSyncing=false;
+function wd09QueueCustomerSheets(id,kind){
+  const key=String(id);
+  const pending=wd09PendingCustomerSheets.get(key)||new Set();
+  for(const item of kind?[kind]:Object.keys(WD09_CUSTOMER_SHEETS))pending.add(item);
+  wd09PendingCustomerSheets.set(key,pending);
+  void wd09FlushCustomerSheetQueue();
+}
+async function wd09ReadCustomerSheetRows(table,id){
+  const sb=getSbClient(), uid=_UID;
+  if(!sb||!uid)throw Error('설계사허브에 다시 로그인해 주세요.');
+  const rows=[];
+  for(let start=0;;start+=500){
+    const res=await sb.from(table).select('id,data').eq('uid',uid).eq('customer_id',id)
+      .order('id',{ascending:true}).range(start,start+499);
+    if(res.error||_UID!==uid)throw Error('앱에서 기록을 불러오지 못했어요.');
+    rows.push(...res.data.map(item=>({...item.data,id:item.id})));
+    if(res.data.length<500)return rows;
+  }
+}
+async function wd09FlushCustomerSheetQueue(){
+  const service=window.wd09CustomerSheets;
+  if(!service||wd09CustomerSheetSyncing)return;
+  wd09CustomerSheetSyncing=true;
+  try{
+    while(wd09PendingCustomerSheets.size&&window.wd09CustomerSheets===service){
+      const [id,kinds]=wd09PendingCustomerSheets.entries().next().value;
+      const customer=getCusts().find(c=>String(c.id)===id);
+      wd09PendingCustomerSheets.delete(id);
+      if(!customer)continue;
+      try{
+        await service.sync(customer,kinds,wd09ReadCustomerSheetRows);
+      }catch(error){
+        const pending=wd09PendingCustomerSheets.get(id)||new Set();
+        for(const kind of kinds)pending.add(kind);
+        wd09PendingCustomerSheets.set(id,pending);
+        alert('앱 저장은 끝났어요. Google 시트 반영에 실패했어요. '+(error.message||''));
+        break;
+      }
+    }
+  }finally{wd09CustomerSheetSyncing=false;}
+}
+function wd09SyncOpenCustomerSheets(){
+  if(!_vid)return;
+  if(!window.wd09CustomerSheets){alert('먼저 상단에서 Google Drive를 연결해 주세요.');return;}
+  wd09QueueCustomerSheets(_vid);
 }
 </script>
 <script id="wd09-drive-auth-script">
@@ -33978,7 +34123,7 @@ function wd09MountDriveSetup(connectDrive,home){
         const result=await response.json().catch(()=>null);
         if(result?.error?.details?.some(detail=>detail.reason==='SERVICE_DISABLED')||
            result?.error?.errors?.some(error=>error.reason==='accessNotConfigured')){
-          throw new Error('Google Cloud에서 Drive API를 사용 설정한 뒤 다시 연결해 주세요.');
+          throw new Error('Google Cloud에서 해당 Google API를 사용 설정한 뒤 다시 연결해 주세요.');
         }
         throw new Error('이 Google 계정의 Drive 파일 권한을 확인해 주세요.');
       }
@@ -34007,10 +34152,24 @@ function wd09MountDriveSetup(connectDrive,home){
           query.set('pageToken',page.nextPageToken);
         }
       },
-      createFolder(parent,key,name){
+      createFile(parent,key,name,mimeType){
         return request(base+'/files?fields=id,name',{
-          method:'POST',body:JSON.stringify(metadata(parent,key,name,WD09_DRIVE_FOLDER_TYPE)),contentType:'application/json'
+          method:'POST',body:JSON.stringify(metadata(parent,key,name,mimeType)),contentType:'application/json'
         });
+      },
+      createFolder(parent,key,name){return this.createFile(parent,key,name,WD09_DRIVE_FOLDER_TYPE);},
+      trash(id){
+        return request(base+'/files/'+encodeURIComponent(id)+'?fields=id,trashed',{
+          method:'PATCH',body:JSON.stringify({trashed:true}),contentType:'application/json'
+        });
+      },
+      async readSheet(id){
+        const result=await request('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/A:I');
+        return result.values||[];
+      },
+      writeSheet(id,values){
+        const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/A1?valueInputOption=RAW';
+        return request(url,{method:'PUT',body:JSON.stringify({values}),contentType:'application/json'});
       },
       lock(task){
         return navigator.locks?.request('wd09-drive:'+user.permissionId,task)??task();
@@ -34018,7 +34177,11 @@ function wd09MountDriveSetup(connectDrive,home){
     };
     return {
       account:user.emailAddress||user.displayName||'연결된 계정',expiresAt,homeSession,
-      service:wd09DriveFolderService(api,uid,adviser.name)
+      service:wd09DriveFolderService(api,uid,adviser.name),
+      onReady(folders){
+        window.wd09CustomerSheets=wd09CustomerSheetService(api,folders,uid);
+        void wd09FlushCustomerSheetQueue();
+      }
     };
   }
   window.wd09DriveReset=wd09MountDriveSetup(connectDrive,wd09GoogleHome);
