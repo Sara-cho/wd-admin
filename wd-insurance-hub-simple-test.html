@@ -10893,10 +10893,22 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     font:inherit; font-weight:800; text-align:left; cursor:pointer;
   }
   #pg-claim .wd09-claim-person button:is(:hover,:focus-visible), #pg-auto .wd09-auto-expiry-table button:is(:hover,:focus-visible) { text-decoration:underline; }
-  #pg-auto .wd09-auto-expiry-table { min-width:1220px; }
-  #pg-auto .wd09-auto-expiry-table :is(th,td):not(.wd09-auto-expiry-memo) { white-space:nowrap; }
+  #pg-auto .wd09-auto-expiry-table { min-width:1120px; table-layout:fixed; }
+  #pg-auto .wd09-auto-expiry-table :is(th,td) {
+    padding:9px 7px; text-align:left; white-space:normal; overflow-wrap:anywhere; vertical-align:middle;
+  }
+  #pg-auto .wd09-auto-expiry-table :is(th,td):nth-child(-n+2) {
+    text-align:center; white-space:nowrap; background:var(--s50);
+  }
+  #pg-auto .wd09-auto-expiry-table :is(th,td):nth-child(7) { text-align:right; white-space:nowrap; }
+  #pg-auto .wd09-auto-expiry-table td:nth-child(7) { font-weight:700; }
+  #pg-auto .wd09-auto-expiry-table td:nth-child(2),
+  #pg-auto .wd09-auto-expiry-table td:nth-child(8),
+  #pg-auto .wd09-auto-expiry-table td:nth-child(9) { font-variant-numeric:tabular-nums; }
+  .wd09-bulk-sheet-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+  #wd09-bulk-sheet-button[hidden], #wd09-bulk-sheet-status:empty { display:none!important; }
+  #wd09-bulk-sheet-status { font-size:12px; color:var(--s600); }
   #pg-auto .wd09-auto-expiry-table a { color:var(--purple); }
-  #pg-auto .wd09-auto-expiry-memo { min-width:135px; overflow-wrap:anywhere; white-space:pre-wrap; }
   #pg-auto #wd09-auto-list-message { margin:8px 0 12px; font-size:13px; color:var(--s600); }
   #pg-claim #claim-doc { max-height:240px; overflow:auto; }
   #pg-claim .wd09-claim-checklist { display:grid; gap:12px; margin:14px 0; padding-inline-start:19px; }
@@ -12194,9 +12206,11 @@ const wdTest09Storage = (() => {
 <div id="cust-list-pg">
 <div class="sec-hd" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
 <div><div class="sec-title">보험 고객관리</div><div class="sec-sub">고객별 보험업무 허브 · 상담기록 · 설계의뢰 · 청구문의</div></div>
-<button class="btn-sm" id="wd09-bulk-sheet-button" type="button" onclick="wd09SyncAllCustomerSheets()" hidden>기존 고객 시트 만들기</button>
+<div class="wd09-bulk-sheet-actions">
 <span id="wd09-bulk-sheet-status" role="status"></span>
+<button class="btn-sm" id="wd09-bulk-sheet-button" type="button" onclick="wd09SyncAllCustomerSheets()" hidden>기존 고객 시트 만들기</button>
 <button class="btn-p" type="button" onclick="openCustModal()">+ 고객 추가</button>
+</div>
 </div>
 <div class="notice-box">이 고객관리는 업무 보조용 기록입니다. 주민번호는 기본 화면에서 마스킹 표시됩니다. 계좌번호, 병력 원문, 보험사 비밀번호 등 민감정보는 저장하지 마세요.</div>
 <!-- V139: 진단보드 안내 배너 — 기존 oi-claim-banner 패턴 재사용, goPage 호출만 -->
@@ -19937,7 +19951,8 @@ function renderAutoManagePage(state){
   message.textContent=rows.length?'전체 '+rows.length+'건':'고객관리에 등록된 자동차보험이 없습니다.';
   list.innerHTML=rows.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame">'
     +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
-    +'<thead><tr>'+['D-day','고객명','연락처','보험회사','차량번호','최종보험료','계약일','보험시작일','만기일','종목','계약자','피보험자','담당설계사']
+    +'<colgroup>'+[5,8,9,9,7,10,9,8,8,7,7,7,6].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
+    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','보험시작일','종목','계약자','피보험자','담당설계사']
       .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
     +rows.map(({customer,record,plate,expiry,days})=>{
       const phone=cstFormatPhone(customer.phone);
@@ -19948,12 +19963,13 @@ function renderAutoManagePage(state){
       const vehicle=record.id!=null?'<button type="button" data-customer="'+esc(customer.id)+'" data-record="'+esc(record.id)+'" onclick="openAutoDetail(this.dataset.customer,this.dataset.record)">'+esc(plate||'상세 보기')+'</button>':esc(plate||'—');
       return '<tr>'
         +'<td><span class="auto-dday '+days.cls+'">'+esc(days.label)+'</span></td>'
+        +'<td>'+esc(expiry||'—')+'</td>'
         +'<td><button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-contracts\')">'+esc(customer.name||'이름 없음')+'</button></td>'
         +'<td>'+phoneCell+'</td>'
         +'<td>'+esc(record.company||record.insurer||'—')+'</td>'
         +'<td>'+vehicle+'</td>'
         +'<td>'+(premium===null?'—':premium.toLocaleString('ko-KR')+'원')+'</td>'
-        +[detail.contractDate,detail.startDate,expiry,detail.line,detail.policyholder,detail.insured,detail.agent]
+        +[detail.contractDate,detail.startDate,detail.line,detail.policyholder,detail.insured,detail.agent]
           .map(value=>'<td>'+esc(value||'—')+'</td>').join('')+'</tr>';
     }).join('')+'</tbody></table></div>':'';
 }
@@ -33417,6 +33433,7 @@ function openDesignProgressModal(){
       screen.hidden = true;
       app.style.display = 'block';
       initApp();
+      window.wd09RefreshBulkSheetButton?.();
       if (rememberId.checked) {
         try { window.localStorage.setItem(rememberedIdKey,uid); } catch (_) {}
       }
@@ -33981,9 +33998,9 @@ function wd09CustomerSheetService(api,folders,uid){
     const existing=await api.find(parent,key,mime);
     if(existing||!create)return existing;
     const year=/^(\d{4})/.exec(customer.birth||'')?.[1]?.slice(-2)
-      ||/^(\d{2})\d{4}/.exec(customer.rrnFull||customer.rrn||'')?.[1]||'연도미확인';
+      ||/^(\d{2})\d{4}/.exec(customer.rrnFull||customer.rrn||'')?.[1]||'';
     const date=customerAttachmentDay(customer.created).slice(2).replace(/-/g,'');
-    const name=customerAttachmentPart(customer.name)+'('+year+')_'+WD09_CUSTOMER_SHEETS[kind].title+'_'+date;
+    const name=customerAttachmentPart(customer.name)+(year?'('+year+')':'')+'_'+WD09_CUSTOMER_SHEETS[kind].title+'_'+date;
     return api.createFile(parent,key,name,mime);
   }
   return {
@@ -34123,9 +34140,10 @@ function wd09RenderBulkSheets(){
   const button=document.getElementById('wd09-bulk-sheet-button');
   const status=document.getElementById('wd09-bulk-sheet-status');
   const job=wd09BulkCustomerSheets;
-  button.hidden=_UID!=='WD23000'||!window.wd09CustomerSheets;
+  button.hidden=_UID!=='WD23000';
   button.disabled=!!job?.running;
-  button.textContent=job?.remaining.size?'시트 만들기 계속':'기존 고객 시트 만들기';
+  button.textContent=!window.wd09CustomerSheets?'Drive 연결 후 시트 만들기':
+    job?.remaining.size?'시트 만들기 계속':'기존 고객 시트 만들기';
   if(job){
     status.textContent='고객 시트 '+(job.total-job.remaining.size)+' / '+job.total+
       (job.error?' · '+job.error:job.remaining.size?'':' 완료');
@@ -34133,10 +34151,11 @@ function wd09RenderBulkSheets(){
 }
 window.wd09RefreshBulkSheetButton=wd09RenderBulkSheets;
 async function wd09SyncAllCustomerSheets(){
-  if(_UID!=='WD23000'||!window.wd09CustomerSheets||wd09BulkCustomerSheets?.running)return;
+  if(_UID!=='WD23000'||wd09BulkCustomerSheets?.running)return;
+  if(!window.wd09CustomerSheets){document.getElementById('wd09-drive-open').click();return;}
   if(!wd09BulkCustomerSheets?.remaining.size){
-    const result=await loadCustomersFromSupa();
-    if(!result.ok||_UID!=='WD23000'||!window.wd09CustomerSheets)return;
+    if(_custUidLoaded!==_UID&&!(await loadCustomersFromSupa()).ok)return;
+    if(_UID!=='WD23000'||!window.wd09CustomerSheets)return;
     const ids=new Set(getCusts().map(c=>String(c.id)));
     if(!ids.size||!confirm('등록 고객 '+ids.size+'명의 업무기록·청구현황 시트를 Drive에 만들거나 갱신할까요?'))return;
     wd09BulkCustomerSheets={total:ids.size,remaining:ids,running:false,error:''};
