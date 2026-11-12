@@ -15573,7 +15573,6 @@ const wdTest09Storage = (() => {
 <pre id="wd09-drive-tree" class="wd09-drive-folder-tree" hidden></pre>
 </div>
 <footer class="modal-ft wd09-entry-footer wd09-drive-footer">
-<a id="wd09-drive-folder-link" class="btn-s" target="_blank" rel="noopener noreferrer" hidden>Drive에서 열기</a>
 <button type="button" class="btn-p" id="wd09-drive-action">Google 계정 연결</button>
 </footer>
 </div>
@@ -33810,7 +33809,6 @@ function wd09MountDriveSetup(connectDrive,home){
   const byId=id=>document.getElementById(id);
   const open=byId('wd09-drive-open');
   const action=byId('wd09-drive-action');
-  const folderLink=byId('wd09-drive-folder-link');
   const account=byId('wd09-drive-account');
   const tree=byId('wd09-drive-tree');
   const feedback=byId('wd09-drive-message');
@@ -33825,15 +33823,17 @@ function wd09MountDriveSetup(connectDrive,home){
   function render(){
     open.textContent=session?'Drive 연결됨':'Drive 연결';
     open.dataset.connected=String(!!session);
-    action.textContent=session?(folders?.ready===false?'폴더 생성':'새로고침'):'Google 계정 연결';
+    const ready=!!folders?.ready;
+    open.setAttribute('aria-disabled',String(ready));
+    if(ready)open.removeAttribute('aria-haspopup');
+    else open.setAttribute('aria-haspopup','dialog');
+    action.hidden=ready;
+    action.textContent=session?(folders?.ready===false?'폴더 생성':'다시 시도'):'Google 계정 연결';
     action.disabled=pending;
     account.hidden=!session;
     account.textContent=session?'Google 계정 · '+session.account:'';
     tree.hidden=!folders;
     tree.textContent=folders?.tree||'';
-    folderLink.hidden=!folders?.ready||!session?.folderUrl;
-    if(folderLink.hidden)folderLink.removeAttribute('href');
-    else folderLink.href=session.folderUrl(folders.adviser.id);
     feedback.textContent=message;
   }
   function reset(note){
@@ -33847,7 +33847,11 @@ function wd09MountDriveSetup(connectDrive,home){
     render();
   }
   function reportFolders(){
-    message=folders.ready?'보험자료 폴더를 확인했어요.':'필요한 보험자료 폴더를 만들어 주세요.';
+    message=folders.ready?'':'필요한 보험자료 폴더를 만들어 주세요.';
+    if(folders.ready){
+      closeModal('wd09-drive-setup');
+      open.focus();
+    }
   }
   async function run(progress,operation){
     if(pending)return;
@@ -33882,10 +33886,12 @@ function wd09MountDriveSetup(connectDrive,home){
     });
   }
   open.addEventListener('click',()=>{
+    if(folders?.ready)return;
     openModal('wd09-drive-setup');
     if(!session&&!pending)connect();
   });
   action.addEventListener('click',()=>{
+    if(folders?.ready)return;
     if(!session){connect();return;}
     const create=folders?.ready===false;
     run(create?'폴더를 준비하고 있어요.':'연결한 서비스를 다시 확인하고 있어요.',async isCurrent=>{
@@ -34009,7 +34015,6 @@ function wd09MountDriveSetup(connectDrive,home){
     };
     return {
       account:user.emailAddress||user.displayName||'연결된 계정',expiresAt,homeSession,
-      folderUrl:id=>'https://drive.google.com/drive/folders/'+encodeURIComponent(id),
       service:wd09DriveFolderService(api,uid,adviser.name)
     };
   }
