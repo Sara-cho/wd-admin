@@ -4,6 +4,10 @@ create table public.work_office_payment_methods (
   id uuid primary key default gen_random_uuid(),
   kind text not null check (kind in ('card', 'account')),
   name text not null check (name = btrim(name) and char_length(name) between 1 and 60),
+  issuer text check (
+    issuer is null or (kind = 'card' and issuer in
+      ('shinhan', 'samsung', 'kb', 'hyundai', 'lotte', 'hana', 'woori', 'nh', 'bc', 'other'))
+  ),
   archived boolean not null default false,
   updated_at timestamptz not null default now()
 );
