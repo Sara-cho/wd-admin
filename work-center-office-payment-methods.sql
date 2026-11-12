@@ -156,4 +156,23 @@ $$;
 revoke all on function public.work_office_reveal_payment_number(uuid,text) from public, anon, authenticated;
 grant execute on function public.work_office_reveal_payment_number(uuid,text) to authenticated;
 
+create function public.work_office_list_account_numbers(p_ids uuid[])
+returns table(method_id uuid, account_number text)
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not wd_office_private.is_payment_owner() then
+    raise exception 'Access denied' using errcode = '42501';
+  end if;
+  perform set_config('response.headers','[{"Cache-Control":"private, no-store"},{"Pragma":"no-cache"}]',true);
+  return query
+    select mapping.method_id, secret.decrypted_secret
+    from wd_office_private.payment_number_secrets mapping
+    join vault.decrypted_secrets secret on secret.id=mapping.secret_id
+    join public.work_office_payment_methods method on method.id=mapping.method_id
+    where method.kind='account' and mapping.method_id=any(p_ids);
+end;
+$$;
+revoke all on function public.work_office_list_account_numbers(uuid[]) from public, anon, authenticated;
+grant execute on function public.work_office_list_account_numbers(uuid[]) to authenticated;
+
 commit;
