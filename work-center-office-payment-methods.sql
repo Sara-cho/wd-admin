@@ -8,6 +8,9 @@ create table public.work_office_payment_methods (
     issuer is null or (kind = 'card' and issuer in
       ('shinhan', 'samsung', 'kb', 'hyundai', 'lotte', 'hana', 'woori', 'nh', 'bc', 'other'))
   ),
+  institution text check (institution is null or (kind = 'account' and
+    institution = btrim(institution) and char_length(institution) between 1 and 60)),
+  last_four text check (last_four is null or last_four ~ '^[0-9]{4}$'),
   archived boolean not null default false,
   updated_at timestamptz not null default now()
 );
@@ -43,5 +46,10 @@ create policy "Work center owner manages payment method aliases"
         and 'work' = any(p.allowed_spaces)
     )
   );
+
+alter table public.work_finance_transactions
+  add column payment_method_id uuid references public.work_office_payment_methods(id);
+alter table public.work_subscriptions
+  add column payment_method_id uuid references public.work_office_payment_methods(id);
 
 commit;
