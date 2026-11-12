@@ -175,4 +175,43 @@ $$;
 revoke all on function public.work_office_list_account_numbers(uuid[]) from public, anon, authenticated;
 grant execute on function public.work_office_list_account_numbers(uuid[]) to authenticated;
 
+create function public.work_office_delete_payment_method(p_id uuid, p_expected_updated_at timestamptz)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare
+  method_name text;
+  number_secret_id uuid;
+begin
+  if not wd_office_private.is_payment_owner() then
+    raise exception 'Access denied' using errcode = '42501';
+  end if;
+  select name into method_name
+    from public.work_office_payment_methods
+    where id=p_id and updated_at=p_expected_updated_at
+    for update;
+  if not found then
+    raise exception 'Payment method changed' using errcode = '40001';
+  end if;
+  if exists (
+    select 1 from public.work_finance_transactions
+    where payment_method_id=p_id or
+      (payment_method_id is null and lower(btrim(payment_method))=lower(method_name))
+  ) or exists (
+    select 1 from public.work_subscriptions
+    where payment_method_id=p_id or
+      (payment_method_id is null and lower(btrim(payment_method))=lower(method_name))
+  ) then
+    raise exception 'Payment method is in use' using errcode = '23503';
+  end if;
+  delete from wd_office_private.payment_number_secrets
+    where method_id=p_id returning secret_id into number_secret_id;
+  delete from public.work_office_payment_methods where id=p_id;
+  if number_secret_id is not null then
+    delete from vault.secrets where id=number_secret_id;
+  end if;
+  return p_id;
+end;
+$$;
+revoke all on function public.work_office_delete_payment_method(uuid,timestamptz) from public, anon, authenticated;
+grant execute on function public.work_office_delete_payment_method(uuid,timestamptz) to authenticated;
+
 commit;
