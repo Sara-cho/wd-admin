@@ -1070,7 +1070,30 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd150-report-instructions .wd97-order-scroll{max-height:270px;overflow:auto}
 #employeeOrderStatus:empty{display:none}
 </style>
-<script src="./wd-talk-backup.js"></script></head><body><div id="root"></div><script>
+<script src="./wd-talk-backup.js"></script><style id="office-ledger-forms-style">
+.office-workspace .office-ledger-table thead th{text-align:center}
+.office-workspace .office-ledger-table tbody td{text-align:center}
+.office-workspace .office-ledger-table tbody .office-ledger-amount{text-align:right;padding-inline:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.office-workspace .office-ledger-table tbody th[scope="row"]{text-align:left}
+.office-workspace .office-statistics-plot rect{fill:var(--series-color);opacity:.85}
+.office-ledger-dialog.office-modal{background:#f2f1f4}
+.office-ledger-dialog .office-modal-header{background:#462873;color:#fff}
+.office-ledger-dialog .office-modal-header h2{color:inherit}
+.office-ledger-dialog .office-entry-card h3{font-size:18px}
+.office-ledger-dialog .office-entry-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(155px,100%),1fr));gap:10px}
+.office-ledger-dialog .office-entry-three{grid-template-columns:1.35fr 1fr 1fr}
+.office-ledger-dialog .office-entry-payment-grid{grid-template-columns:1.35fr 1fr 1fr}
+.office-ledger-dialog .office-entry-grid [hidden],.office-ledger-dialog .office-transfer-fields[hidden]{display:none}
+.office-related{margin-top:14px}
+.office-related h3{margin-bottom:8px}
+#root.embedded-account-info{min-height:100dvh;display:block;background:#f7f5fa;padding:14px}
+#root.embedded-account-info .account-workspace{max-width:none;margin:0}
+@media(max-width:540px){
+  .office-ledger-dialog .office-entry-three,.office-ledger-dialog .office-entry-payment-grid{grid-template-columns:minmax(0,1fr)}
+  #root.embedded-account-info{padding:8px}
+}
+</style>
+</head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
 const defaults=[['2026-11-09','회사 이해 · SNS 조사','WD WAVE의 서비스와 주요 고객을 파악하고, 인스타그램·Threads 운영에 참고할 계정 5개 이상을 조사하세요.','회사 홈페이지·소개서·기존 홍보자료를 확인하세요. 두 SNS의 차이를 살피고, 관련 계정 5개 이상을 조사하여 출처·선정 이유·캡처를 남기세요.','조사기록과 핵심 발견사항'],['2026-11-11','SNS 마케팅 전략 제안','월요일 조사 내용을 바탕으로 WD WAVE의 인스타그램·스레드 홍보전략을 수립하세요.','채널별 목표·고객·운영방식·콘텐츠 유형을 제안하고 다른 방법과 비교한 근거를 작성하세요.','SNS 마케팅 전략 제안서'],['2026-11-16','첫 콘텐츠 기획 · 제작','승인된 전략을 바탕으로 인스타그램과 스레드용 콘텐츠를 기획하고 제작하세요.','형식은 스스로 선택합니다. 선택한 형식의 이유와 예상 효과를 설명하세요. 공개 전 승인받으세요.','채널별 제작물 1건씩'],['2026-11-18','콘텐츠 수정 · 게시 준비','제작물 피드백을 반영하고 채널별 게시를 준비하세요.','검토받은 결과물을 수정하여 제출하세요. 공개는 별도의 대표 승인 후 진행합니다.','게시 준비물·증빙'],['2026-11-23','실무 기록 정리','그동안 수행한 조사·제작 과정을 정리하고 누락된 근거를 보완하세요.','출처·선택 과정·제작 기록과 실제 수행 결과를 연결하세요. 성과분석은 이번 과제 범위 밖입니다.','업무 수행기록'],['2026-11-25','3주 종합보고 · 발표','3주 동안 맡은 업무와 과정을 종합하여 보고서를 제출하세요.','배운 점과 어려웠던 점, 직접 해결한 방법을 정리하여 보고하세요.','실무 종합보고서']];
@@ -3825,7 +3848,7 @@ function employeePayslipList(files){
 const officeLedgerTabs=['수입','지출','구독'];
 const officeTabs=['전체내역',...officeLedgerTabs,'결제수단관리','통계'];
 const officeMethodTable='work_office_payment_methods';
-const officeMethodKinds={card:'결제 카드',account:'결제 계좌'};
+const officeMethodKinds={account:'결제 계좌',card:'결제 카드'};
 
 const officeCalendarTypes=[
   {kind:'subscription',tab:'구독',label:'구독'},
@@ -4041,7 +4064,8 @@ function officeExpenseDetail(row){
     ['금액',officeMoney(row.amount)],['결제 방법',row.payment_display||row.payment_method||'—']
   ];
   if(row.business_area)data.push(['사용처',row.business_area]);
-  if(row.counterparty)data.push(['결제한 곳',row.counterparty]);
+  data.push(['결제한 곳',row.counterparty||'—'],
+    ['담당자명',row.counterparty_contact_name||'—'],['연락처',row.counterparty_phone||'—']);
   if(row.transfer_recipient||row.transfer_account_number){
     data.push(['이체 받는 곳',row.transfer_recipient||'미등록'],['받는 계좌번호',row.transfer_account_number||'미등록']);
   }
@@ -4059,7 +4083,7 @@ function officeExpenseDetail(row){
 
 function officeIncomeTable(entries){
   return entries.length?`<div class="wd105-admin-table office-ledger-scroll"><table class="wd58-list-table office-ledger-table"><thead><tr>
-    <th scope="col">거래일</th><th scope="col">분류 / 상세 내역</th><th scope="col" class="office-ledger-amount">금액</th><th scope="col">입금된 곳</th><th scope="col">메모</th>
+    <th scope="col">입금일</th><th scope="col">분류 / 상세 내역</th><th scope="col" class="office-ledger-amount">금액</th><th scope="col">입금 계좌</th><th scope="col">메모</th>
   </tr></thead><tbody>${entries.map(({row,index})=>`<tr class="office-ledger-clickable" data-office-income-detail="${index}">
     <td>${esc(officeRowDate(row,'수입')||'—')}${row.money_status==='예정'?'<small>예정</small>':''}</td>
     <th scope="row"><button type="button" class="office-subscription-link" aria-haspopup="dialog">${esc(row.title)}</button><small>${esc(row.category||'미분류')}</small>
@@ -4071,8 +4095,9 @@ function officeIncomeTable(entries){
 function officeIncomeDetail(row){
   const data=[
     ['입금일',officeRowDate(row,'수입')||'—'],['수입 분류',row.category||'미분류'],
-    ['입금한 사람·기관',row.counterparty||'—'],['금액',officeMoney(row.amount)],
-    ['입금된 곳',row.payment_display||row.payment_method||'—'],['메모',row.memo||'—']
+    ['입금한 사람·기관',row.counterparty||'—'],['담당자명',row.counterparty_contact_name||'—'],
+    ['연락처',row.counterparty_phone||'—'],['금액',officeMoney(row.amount)],
+    ['입금 계좌',row.payment_display||row.payment_method||'—'],['메모',row.memo||'—']
   ];
   if(row.money_status)data.push(['상태',row.money_status]);
   return `<div class="office-method-detail">
@@ -4132,12 +4157,15 @@ function officeStatisticsChart(rows,series,title,mode){
     <div class="office-statistics-chart-inner">
       <div class="office-statistics-plot" style="--office-chart-count:${rows.length}">
         <svg viewBox="0 0 ${rows.length} 100" preserveAspectRatio="none" aria-hidden="true">
-          ${kinds.map(kind=>`<polyline class="office-stat-${kind}" vector-effect="non-scaling-stroke"
+          ${mode==='month'?kinds.flatMap((kind,seriesIndex)=>rows.map((row,index)=>{
+            const zero=y(0),point=y(row[kind]),width=.72/kinds.length;
+            return row[kind]?`<rect class="office-stat-${kind}" x="${index+.14+seriesIndex*width}" y="${Math.min(zero,point)}" width="${width*.84}" height="${Math.abs(zero-point)}"/>`:'';
+          })).join(''):kinds.map(kind=>`<polyline class="office-stat-${kind}" vector-effect="non-scaling-stroke"
             points="${rows.map((row,index)=>`${index+.5},${y(row[kind])}`).join(' ')}"></polyline>`).join('')}
         </svg>
         ${rows.map((row,index)=>`<button type="button" class="office-statistics-point" tabindex="${index===initial?0:-1}"
           aria-current="${index===initial}" aria-label="${esc(description(row))}" title="${esc(description(row))}">
-          ${kinds.filter(kind=>row[kind]!==0).map(kind=>`<span class="office-stat-${kind}" style="--office-point-y:${y(row[kind])}%" aria-hidden="true"></span>`).join('')}
+          ${kinds.filter(kind=>mode!=='month'&&row[kind]!==0).map(kind=>`<span class="office-stat-${kind}" style="--office-point-y:${y(row[kind])}%" aria-hidden="true"></span>`).join('')}
         </button>`).join('')}
       </div>
       <div class="office-statistics-labels" style="--office-chart-count:${rows.length}" aria-hidden="true">
@@ -4218,7 +4246,7 @@ function officeStatisticsView(data,mode,year,month,series='all'){
 }
 
 async function officePaymentMethods(){
-  const query=new URLSearchParams({select:'id,kind,name,issuer,institution,last_four,has_number,number_length,archived,updated_at',order:'name.asc,id.asc'});
+  const query=new URLSearchParams({select:'id,kind,name,issuer,institution,last_four,has_number,number_length,archived,linked_account_id,updated_at',order:'name.asc,id.asc'});
   const rows=[];
   for(let offset=0;;offset+=200){
     query.set('limit','200');query.set('offset',String(offset));
@@ -4266,9 +4294,11 @@ function officeMethodColor(issuer,index){
 function officePaymentView(rows,accountNumbers=new Map()){
   return `<div class="office-payment-grid">${Object.entries(officeMethodKinds).map(([kind,label])=>{
     const card=kind==='card',entries=rows.filter(row=>row.kind===kind),colorPositions=new Map();
+    const canAdd=!card||rows.some(row=>row.kind==='account'&&!row.archived);
     return `<section class="office-payment-section" aria-labelledby="officeMethod-${kind}">
       <div class="office-detail-head"><h2 id="officeMethod-${kind}">${label} 관리</h2>
-        <button class="primary small" type="button" data-office-method-add="${kind}">${label} 추가</button></div>
+        <button class="primary small" type="button" data-office-method-add="${kind}" ${canAdd?'':'disabled'}>${label} 추가</button></div>
+      ${canAdd?'':'<p class="smallText">결제 계좌를 먼저 등록해 주세요.</p>'}
       ${entries.length?`<ul class="office-method-list" tabindex="0" aria-label="${label} 목록, 좌우로 스크롤">${entries.map(row=>{
         const issuer=card?officeCardIssuer(row):'';
         const position=colorPositions.get(issuer)||0;
@@ -4312,36 +4342,39 @@ function officePaymentSelection(row,methods){
     unavailable:!!(row?.payment_method_id||row?.payment_method)&&(!current||current.archived)};
 }
 
-function officePaymentField(row,methods){
+function officePaymentField(row,methods,tab){
+  const income=tab==='수입',label=income?'입금 계좌':'결제수단';
   const {current,unavailable}=officePaymentSelection(row,methods);
-  return `<label>결제수단<select name="payment_method_id"><option value="">결제수단 선택</option>
-    ${Object.entries(officeMethodKinds).map(([kind,label])=>{
+  const preserve=unavailable||(income&&current?.kind==='card');
+  return `<label>${label}<select name="payment_method_id"><option value="">${label} 선택</option>
+    ${Object.entries(officeMethodKinds).filter(([kind])=>!income||kind==='account').map(([kind,label])=>{
       const choices=methods.filter(item=>!item.archived&&item.kind===kind);
       return choices.length?`<optgroup label="${label}">${choices.map(item=>
         `<option value="${esc(item.id)}" ${item.id===current?.id?'selected':''}>${esc(officeMethodLabel(item))}</option>`).join('')}</optgroup>`:'';
     }).join('')}</select>
-    ${unavailable?`<small>기존 결제수단 ${esc(row.payment_method||'보관된 결제수단')} · 새로 선택하면 변경됩니다.</small>`:''}
+    ${preserve?`<small>기존 기록 ${esc(row.payment_method||'보관된 결제수단')} · 새로 선택하면 변경됩니다.</small>`:''}
   </label>`;
 }
 
-function officePaymentPayload(value,row,methods){
+function officePaymentPayload(value,row,methods,tab){
   if(value){
     const method=methods.find(item=>item.id===value&&!item.archived);
-    if(!method)throw new Error('등록된 결제수단을 다시 선택해 주세요.');
+    if(!method||(tab==='수입'&&method.kind!=='account'))throw new Error('등록된 '+(tab==='수입'?'입금 계좌':'결제수단')+'를 다시 선택해 주세요.');
     return {payment_method_id:method.id,payment_method:method.name};
   }
-  if(officePaymentSelection(row,methods).unavailable)return {};
+  const previous=officePaymentSelection(row,methods);
+  if(previous.unavailable||(tab==='수입'&&previous.current?.kind==='card'))return {};
   return {payment_method_id:null,payment_method:null};
 }
 
 function officeSubscriptionLinks(method,methods,rows){
-  const linked=[],available=[];
-  for(const row of rows){
+  return rows.flatMap(row=>{
     const current=officeMethodForRecord(row,methods);
-    if(current?.id===method.id)linked.push(row);
-    else if(!current&&!row.payment_method_id&&row.is_used!==false&&officeRecordEditable(row,'구독'))available.push(row);
-  }
-  return {linked,available};
+    if(current?.id===method.id)return [{row,via:null}];
+    if(method.kind==='account'&&current?.kind==='card'&&current.linked_account_id===method.id)
+      return [{row,via:current}];
+    return [];
+  });
 }
 
 function showOfficeModal(markup,title,trigger=document.activeElement){
@@ -4375,8 +4408,10 @@ function showOfficeModal(markup,title,trigger=document.activeElement){
   return layer;
 }
 
-function officeMethodDetailView(row){
+function officeMethodDetailView(row,methods){
   const card=row.kind==='card';
+  const account=methods.find(item=>item.kind==='account'&&item.id===row.linked_account_id);
+  const cards=methods.filter(item=>item.kind==='card'&&item.linked_account_id===row.id);
   const institution=card?officeCardIssuers[officeCardIssuer(row)].label:row.institution;
   return `<div class="office-method-detail">
     <dl class="office-modal-fields">
@@ -4392,7 +4427,9 @@ function officeMethodDetailView(row){
         ${!card&&row.has_number?'<p class="smallText" id="officeAccountCopyStatus" role="status"></p>':''}</div>
       <div><dt>상태</dt><dd>${row.archived?'보관됨':'사용 중'}</dd></div>
     </dl>
-    <section aria-labelledby="officeLinkedHeading"><h3 id="officeLinkedHeading">연결된 구독</h3>
+    ${card?`<section class="office-related"><h3>출금 계좌</h3><p>${account?esc([account.institution,account.name,account.last_four?'끝 '+account.last_four:'',account.archived?'보관됨':''].filter(Boolean).join(' · ')):'연결된 출금 계좌가 없어요.'}</p></section>`:
+      `<section class="office-related"><h3>연결된 카드</h3>${cards.length?`<ul class="office-linked-subscriptions">${cards.map(item=>`<li><div><strong>${esc(item.name)}</strong><small>${esc(officeMethodLabel(item)+(item.archived?' · 보관됨':''))}</small></div></li>`).join('')}</ul>`:'<p class="empty">연결된 카드가 없어요.</p>'}</section>`}
+    <section class="office-related" aria-labelledby="officeLinkedHeading"><h3 id="officeLinkedHeading">연결된 구독</h3>
       <div id="officeLinkedRows"><p class="smallText">구독을 불러오는 중…</p></div>
     </section>
     <p id="officeMethodDetailStatus" class="smallText office-modal-status" role="status"></p>
@@ -4404,24 +4441,11 @@ function officeMethodDetailView(row){
   </div>`;
 }
 
-function officeLinkedSubscriptionView(method,linked,available){
-  return `${linked.length?`<ul class="office-linked-subscriptions">${linked.map(row=>`<li>
-    <div><strong>${esc(row.service_name)}</strong><small>${row.is_used===false?'사용 중지 · ':''}${esc(row.next_payment_date||'결제일 미등록')} · ${officeMoney(row.amount)}</small></div>
-    ${officeRecordEditable(row,'구독')?`<button type="button" class="small" data-office-unlink-subscription="${esc(row.id)}">연결 해제</button>`:''}
-  </li>`).join('')}</ul>`:'<p class="empty">연결된 구독이 없어요.</p>'}
-  ${!method.archived&&available.length?`<form id="officeConnectSubscription">
-    <label>연결할 구독<select name="subscription" required><option value="">구독 선택</option>
-      ${available.map(row=>`<option value="${esc(row.id)}">${esc(row.service_name)}${row.next_payment_date?' · '+esc(row.next_payment_date):''}</option>`).join('')}
-    </select></label><button type="submit" class="primary">구독 연결</button>
-  </form>`:''}`;
-}
-
-async function saveOfficeSubscriptionMethod(row,method){
-  const query=new URLSearchParams({select:'id',id:'eq.'+row.id,user_id:'eq.'+managerHqAccount.uid,updated_at:'eq.'+row.updated_at});
-  const [saved]=await officeLedgerRequest('구독',query,'PATCH',{
-    payment_method_id:method?.id||null,payment_method:method?.name||null,updated_at:new Date().toISOString()
-  });
-  if(saved?.id!==row.id)throw new Error('다른 곳에서 구독이 변경됐어요. 새로고침한 뒤 확인해 주세요.');
+function officeLinkedSubscriptionView(method,linked){
+  return linked.length?`<ul class="office-linked-subscriptions">${linked.map(({row,via})=>`<li><div>
+    <strong>${esc(row.service_name)}</strong>
+    <small>${method.kind==='account'?esc(via?'카드 결제 · '+via.name:'계좌 직접 결제')+' · ':''}${row.is_used===false?'사용 중지 · ':''}${esc(row.next_payment_date||'결제일 미등록')} · ${officeMoney(row.amount)}</small>
+  </div></li>`).join('')}</ul>`:'<p class="empty">연결된 구독이 없어요.</p>';
 }
 
 function officeCardNumber(value){
@@ -4507,6 +4531,7 @@ async function officePaymentRpc(name,payload){
     const code=(await response.json().catch(()=>null))?.code;
     if(code==='23505')throw new Error('이미 등록된 결제수단 별칭이에요.');
     if(code==='23503')throw new Error('연결된 내역이 있어 삭제할 수 없어요. 결제수단을 보관할 수 있어요.');
+    if(code==='PWA01')throw new Error('사용 중인 출금 계좌를 선택해 주세요.');
     if(code==='40001')throw new Error('다른 곳에서 결제수단이 변경됐어요. 새로고침해 주세요.');
     throw new Error('결제수단 정보를 처리하지 못했어요.');
   }
@@ -4626,7 +4651,7 @@ async function officeLedgerRows(tab,month){
     query.set('select','id,user_id,service_name,category,amount,next_payment_date,billing_cycle,billing_day,payment_method,payment_method_id,memo,is_used,updated_at');
     query.set('order','next_payment_date.asc.nullslast,id.asc');
   }else{
-    query.set('select','id,user_id,flow_type,category,business_area,counterparty,title,amount,actual_date,expected_date,payment_method,payment_method_id,memo,money_status,source_type,recurrence_cycle,recurrence_day,recurrence_month,updated_at'+(tab==='지출'?',transfer_recipient,transfer_account_number':''));
+    query.set('select','id,user_id,flow_type,category,business_area,counterparty,counterparty_contact_name,counterparty_phone,title,amount,actual_date,expected_date,payment_method,payment_method_id,memo,money_status,source_type,recurrence_cycle,recurrence_day,recurrence_month,updated_at'+(tab==='지출'?',transfer_recipient,transfer_account_number':''));
     query.set('flow_type','eq.'+tab);query.set('order','actual_date.desc.nullslast,expected_date.desc.nullslast,id.asc');
     const [year,monthNumber]=month.split('-').map(Number),first=month+'-01',last=month+'-'+new Date(year,monthNumber,0).getDate();
     const dateFilters=['and(actual_date.gte.'+first+',actual_date.lte.'+last+')',
@@ -4724,48 +4749,63 @@ function officeFixedExpenseLabel(row){
 
 function officeEntryCard(step,heading,fields){
   return `<section class="office-entry-card" data-office-entry-step="${step}">
-    <h3>${heading}<span class="office-entry-complete">입력 완료</span></h3>${fields}
+    <h3><span>${heading}</span><span class="office-entry-complete">입력 완료</span></h3>${fields}
   </section>`;
 }
 
 function officeRecordFields(tab,row,methods){
   const income=tab==='수입',expense=tab==='지출',subscription=tab==='구독';
-  const name=row?officeRecordName(row,tab):'';
-  const title=`<label>${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(name)}"></label>`;
-  const date=`<label>${income?'입금일':expense?'결제일':'다음 결제일'}<input type="date" name="day" required value="${esc((row&&officeRowDate(row,tab))||localDay())}"></label>`;
-  const amount=`<label>금액 (원)<input type="number" name="amount" min="1" max="99999999999999" step="1" required value="${esc(row?.amount??'')}"></label>`;
+  const title=`<label>${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(row?officeRecordName(row,tab):'')}"></label>`;
+  const day=(row&&officeRowDate(row,tab))||localDay();
+  const date=`<label>${income?'입금일':expense?'결제일':'다음 결제일'}<input type="date" name="day" required value="${esc(day)}"></label>`;
+  const amount=`<label>금액 (원)<input type="text" name="amount" inputmode="numeric" required value="${esc(officeAmountInput(row?.amount))}"></label>`;
   const memo=`<label>메모<textarea name="memo" rows="3" maxlength="1000">${esc(row?.memo||'')}</textarea></label>`;
-  const payment=officePaymentField(row,methods);
-  if(subscription)return `<div class="wd108-payroll-fields">
-    <div class="wd110-office-full">${title}</div>${date}${payment}
-    <label>결제 주기<input name="billing_cycle" maxlength="40" list="officeBillingCycles" placeholder="예: 매월" value="${esc(row?.billing_cycle||'')}"></label>
-    <datalist id="officeBillingCycles"><option value="매월"></option><option value="매년"></option><option value="1회"></option></datalist>
-    ${amount}
-  </div>${memo}`;
+  const payment=officePaymentField(row,methods,tab);
+  const grid=(fields,modifier='')=>`<div class="office-entry-grid ${modifier}">${fields}</div>`;
+  if(subscription){
+    const oldCycle=row?.billing_cycle||'';
+    const interval=officeBillingInterval(oldCycle);
+    const cycle=interval===1?'매월':interval===12?'매년':oldCycle||'매월';
+    const dayField=`<label id="officeBillingDayLabel"${cycle==='매월'?'':' hidden'}>매월 결제일<select name="billing_day">
+      ${Array.from({length:31},(_,index)=>{
+        const value=index+1,selected=value===(Number(row?.billing_day)||Number(day.slice(8)));
+        return `<option value="${value}" ${selected?'selected':''}>${value}일</option>`;
+      }).join('')}
+    </select></label>`;
+    return `<div class="office-entry-steps">
+      ${officeEntryCard('transaction','1. 구독 정보',title)}
+      ${officeEntryCard('payment','2. 결제 정보',grid(payment+amount+date,'office-entry-payment-grid'))}
+      ${officeEntryCard('cycle','3. 결제 주기',grid(`<label>결제 주기<select name="billing_cycle">${officeOptions(['매월','매년','1회'],cycle,'선택해 주세요')}</select></label>`+dayField))}
+      ${officeEntryCard('additional','4. 추가 정보',memo)}
+    </div>`;
+  }
 
   const category=`<label>${income?'수입 분류':'지출 분류'}<select name="category" required>${officeOptions(income?officeIncomeCategories:officeExpenseCategories,row?.category,'선택해 주세요')}</select></label>`;
   const area=expense?`<label>사용처 구분<select name="business_area" required>${officeOptions(['집','사무실'],row?.business_area,'집 또는 사무실 선택')}</select></label>`:'';
   const party=`<label>${income?'입금한 사람·기관':'결제한 곳'}<input name="counterparty" maxlength="100"
-    placeholder="${income?'예: 고객명 또는 입금 기관명':'예: 업체명 또는 상호'}" value="${esc(row?.counterparty||'')}"></label>`;
+    placeholder="${income?'고객명 또는 기관명':'업체명 또는 상호'}" value="${esc(row?.counterparty||'')}"></label>
+    <label>담당자명<input name="counterparty_contact_name" maxlength="100" value="${esc(row?.counterparty_contact_name||'')}"></label>
+    <label>연락처<input name="counterparty_phone" type="tel" maxlength="40" value="${esc(row?.counterparty_phone||'')}"></label>`;
   return `<div class="office-entry-steps">
-    ${officeEntryCard('transaction','거래 내용',category+title+area)}
-    ${officeEntryCard('payment',income?'입금 정보':'결제 정보',payment+amount+date)}
-    ${officeEntryCard('party','거래 상대',party+(expense?officeTransferFields(row,methods):''))}
-    ${officeEntryCard('additional','추가 정보',(expense?officeFixedExpenseFields(row):'')+memo)}
+    ${officeEntryCard('transaction','1. 거래 내용',grid(category+title+area))}
+    ${officeEntryCard('party','2. 거래 상대',grid(party,'office-entry-three'))}
+    ${officeEntryCard('payment',income?'3. 입금 정보':'3. 결제 정보',grid(payment+amount+date,'office-entry-payment-grid')+(expense?officeTransferFields(row):''))}
+    ${officeEntryCard('additional','4. 추가 정보',(expense?officeFixedExpenseFields(row):'')+memo)}
   </div>`;
 }
 
-function officeTransferFields(row,methods){
-  const open=row?.transfer_recipient||row?.transfer_account_number||officePaymentSelection(row,methods).current?.kind==='account';
-  return `<details class="wd110-office-full office-transfer-fields" id="officeTransferFields"${open?' open':''}>
-    <summary>계좌이체 정보 <small>선택</small></summary>
-    <div class="wd108-payroll-fields">
-      <label>이체 받는 곳<input name="transfer_recipient" type="text" maxlength="100" autocomplete="off"
-        placeholder="예: 국민은행 · 거래처명" value="${esc(row?.transfer_recipient||'')}"></label>
-      <label>받는 계좌번호<input name="transfer_account_number" type="text" inputmode="numeric" maxlength="47" autocomplete="off"
-        placeholder="받는 사람의 계좌번호" value="${esc(row?.transfer_account_number||'')}"></label>
-    </div>
-  </details>`;
+function officeAmountInput(value){
+  const digits=String(value??'').replace(/[^0-9]/g,'').slice(0,14).replace(/^0+(?=\d)/,'');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+function officeTransferFields(row){
+  return `<div class="office-transfer-fields office-entry-grid" id="officeTransferFields" hidden>
+    <label>이체 받는 곳<input name="transfer_recipient" type="text" maxlength="100" autocomplete="off"
+      placeholder="은행 · 거래처명" value="${esc(row?.transfer_recipient||'')}"></label>
+    <label>받는 계좌번호<input name="transfer_account_number" type="text" inputmode="numeric" maxlength="47" autocomplete="off"
+      placeholder="받는 사람의 계좌번호" value="${esc(row?.transfer_account_number||'')}"></label>
+  </div>`;
 }
 
 function officeTransferPayload(data){
@@ -4774,36 +4814,58 @@ function officeTransferPayload(data){
   return {transfer_recipient:recipient||null,transfer_account_number:officeAccountNumber(data.get('transfer_account_number'))};
 }
 
-function bindOfficeEntryCards(form,row,methods){
+function bindOfficeEntryCards(form,row,methods,tab){
   const cards=[...form.querySelectorAll('[data-office-entry-step]')];
-  if(!cards.length)return;
   const field=name=>form.elements.namedItem(name);
   const value=name=>field(name)?.value.trim()||'';
   const valid=name=>!!value(name)&&field(name).validity.valid;
   const transfer=form.querySelector('#officeTransferFields');
-  const payment=field('payment_method_id');
+  const billingDayLabel=form.querySelector('#officeBillingDayLabel');
+  const amount=field('amount');
   const complete=()=>{
-    const method=methods.find(item=>item.id===payment.value);
-    const transferSelected=transfer&&(method?.kind==='account'||value('transfer_recipient')||value('transfer_account_number'));
-    let transferReady=!transferSelected;
-    if(transferSelected){
-      try{transferReady=!!value('transfer_recipient')&&!!officeAccountNumber(value('transfer_account_number'));}
-      catch{transferReady=false;}
+    const method=methods.find(item=>item.id===value('payment_method_id'));
+    const preservedTransfer=!method&&officePaymentSelection(row,methods).unavailable&&
+      !!(row?.transfer_recipient||row?.transfer_account_number);
+    if(transfer){
+      transfer.hidden=method?.kind!=='account'&&!preservedTransfer;
+      transfer.querySelectorAll('input').forEach(input=>{input.disabled=transfer.hidden;});
     }
+    if(billingDayLabel)billingDayLabel.hidden=officeBillingInterval(value('billing_cycle'))!==1;
     const fixed=field('fixed_expense')?.checked;
     const recurrenceReady=fixed&&valid('recurrence_day')&&
       (value('recurrence_cycle')!=='yearly'||valid('recurrence_month'));
     const filled={
-      transaction:valid('category')&&valid('title')&&(!field('business_area')||valid('business_area')),
-      payment:valid('amount')&&valid('day')&&!!(payment.value||row?.payment_method_id||row?.payment_method),
-      party:valid('counterparty')&&transferReady,
+      transaction:valid('title')&&(!field('category')||valid('category'))&&(!field('business_area')||valid('business_area')),
+      payment:Number(amount.value.replaceAll(',',''))>0&&valid('day')&&!!(method||row?.payment_method_id||row?.payment_method),
+      party:valid('counterparty'),
+      cycle:valid('billing_cycle')&&(billingDayLabel?.hidden||valid('billing_day')),
       additional:fixed?recurrenceReady:!!value('memo')
     };
     for(const card of cards)card.classList.toggle('is-complete',filled[card.dataset.officeEntryStep]);
   };
-  payment.addEventListener('change',()=>{
-    if(transfer&&methods.some(method=>method.id===payment.value&&method.kind==='account'))transfer.open=true;
+  amount.addEventListener('input',()=>{
+    const before=amount.value;
+    const right=before.slice(amount.selectionStart??before.length).replace(/\D/g,'').length;
+    const formatted=officeAmountInput(before);
+    if(formatted!==before){
+      amount.value=formatted;
+      let cursor=formatted.length,count=0;
+      while(cursor>0&&count<right){cursor--;if(/\d/.test(formatted[cursor]))count++;}
+      amount.setSelectionRange(cursor,cursor);
+    }
   });
+  if(tab==='구독'){
+    const date=field('day'),billingDay=field('billing_day');
+    billingDay.addEventListener('change',()=>{
+      if(!validAttendanceDay(date.value))return;
+      const [year,month]=date.value.split('-').map(Number);
+      const day=Math.min(Number(billingDay.value),new Date(year,month,0).getDate());
+      date.value=date.value.slice(0,8)+String(day).padStart(2,'0');
+    });
+    date.addEventListener('change',()=>{
+      if(validAttendanceDay(date.value))billingDay.value=String(Number(date.value.slice(8)));
+    });
+  }
   form.addEventListener('input',complete);
   form.addEventListener('change',complete);
   complete();
@@ -4819,30 +4881,34 @@ async function officeRecordEditor(tab,row,active,reload,trigger){
     ${officeRecordFields(tab,row,methods)}
     <p id="officeRecordStatus" class="smallText office-modal-status" role="status">${methodError}</p><div class="actions office-modal-actions"><button class="primary" type="submit">저장</button></div>
   </form>`,tab+(row?' 수정':' 추가'),trigger);
+  $('modalLayer').querySelector('.office-modal').classList.add('office-ledger-dialog');
   const form=$('officeRecordForm'),button=form.querySelector('button[type="submit"]'),status=$('officeRecordStatus');
   const newId=crypto.randomUUID();
   bindOfficeFixedExpense(form);
-  bindOfficeEntryCards(form,row,methods);
+  bindOfficeEntryCards(form,row,methods,tab);
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active()||!form.isConnected||row&&!officeRecordEditable(row,tab))return;
-    const data=new FormData(form),title=data.get('title').trim(),date=data.get('day'),amount=Number(data.get('amount'));
+    const data=new FormData(form),title=data.get('title').trim(),date=data.get('day'),amount=Number(String(data.get('amount')||'').replaceAll(',',''));
     if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0||amount>99999999999999){status.textContent='거래명, 날짜, 금액을 확인해 주세요.';return;}
     let payment,rule={},transferDetails={};
     try{
-      payment=officePaymentPayload(data.get('payment_method_id'),row,methods);
+      payment=officePaymentPayload(data.get('payment_method_id'),row,methods,tab);
       if(tab==='지출'){rule=officeFixedExpensePayload(data);transferDetails=officeTransferPayload(data);}
     }catch(error){status.textContent=error.message;return;}
     const payload={category:data.get('category')||row?.category||null,amount,...payment,...rule,...transferDetails,memo:data.get('memo').trim()||null};
     if(subscription){
       const cycle=data.get('billing_cycle').trim();
       Object.assign(payload,{service_name:title,next_payment_date:date,billing_cycle:cycle||null});
-      if(officeBillingInterval(cycle))payload.billing_day=(row?.next_payment_date===date&&row.billing_day)||Number(date.slice(8));
+      const interval=officeBillingInterval(cycle);
+      payload.billing_day=interval===1?Number(data.get('billing_day')):interval===12?Number(date.slice(8)):null;
     }
     else{
       const planned=row?!row.actual_date:!!(rule.recurrence_cycle&&date>localDay());
       Object.assign(payload,{title,flow_type:tab,
-        counterparty:data.get('counterparty').trim()||null,business_area:tab==='수입'?payload.category:data.get('business_area'),
+        counterparty:data.get('counterparty').trim()||null,
+        counterparty_contact_name:data.get('counterparty_contact_name').trim()||null,
+        counterparty_phone:data.get('counterparty_phone').trim()||null,business_area:tab==='수입'?payload.category:data.get('business_area'),
         ...(planned?{expected_date:date}:{actual_date:date}),...(!row?{money_status:planned?'예정':'완료'}:{})});
     }
     const query=new URLSearchParams({select:'id'});
@@ -4876,6 +4942,7 @@ function bindOfficeLedger(){
     const {prefix,view}=types[kind];
     previousLayer?.remove();
     const layer=showOfficeModal(view(row,period,methods),officeRecordName(row,kind),trigger);
+    layer.querySelector('.office-modal').classList.add('office-ledger-dialog');
     const edit=$('officeEdit'+prefix+'Detail'),remove=$('officeDelete'+prefix+'Detail');
     const output=$('office'+prefix+'DetailStatus');
     if(edit)edit.onclick=()=>{
@@ -4950,6 +5017,14 @@ function bindOfficeLedger(){
     const openEditor=(kind,row=null,trigger)=>{
       if(!stillHere()||$('modalLayer'))return;
       const card=kind==='card',label=officeMethodKinds[kind];
+      const accounts=rows.filter(item=>item.kind==='account'&&!item.archived);
+      if(card&&!row&&!accounts.length)return;
+      const prior=card&&rows.find(item=>item.id===row?.linked_account_id);
+      const selectAccount=card?`<label>출금 계좌<select name="linked_account_id" ${row?'':'required'}>
+        <option value="">출금 계좌 선택</option>
+        ${prior?.archived?`<option value="${esc(prior.id)}" selected disabled>${esc(prior.name)} · 보관됨</option>`:''}
+        ${accounts.map(item=>`<option value="${esc(item.id)}" ${item.id===prior?.id?'selected':''}>${esc([item.institution,item.name,item.last_four?'끝 '+item.last_four:''].filter(Boolean).join(' · '))}</option>`).join('')}
+      </select></label>`:'';
       showOfficeModal(`<form id="officeMethodEdit">
         ${card?officeIssuerField(row?(row.issuer||officeCardIssuer(row)):''):`<label>은행<input name="institution" maxlength="60" required placeholder="예: 신한은행" value="${esc(row?.institution||'')}"></label>`}
         <label>${card?'카드 별칭':'계좌 별칭'}<input name="name" maxlength="60" required placeholder="${card?'예: 법인카드, 회사결제카드':'예: 운영계좌, 교육비 입금계좌'}" value="${esc(row?.name||'')}"></label>
@@ -4957,7 +5032,7 @@ function bindOfficeLedger(){
           ${row?.last_four?'<small>번호를 바꿀 때만 다시 입력해 주세요.</small>':''}</label>`:
           `<label>계좌번호<input name="account_number" type="text" inputmode="numeric" autocomplete="off" maxlength="47" placeholder="${row?.last_four?'등록 번호 끝 '+esc(row.last_four):'전체 계좌번호 입력'}">
             ${row?.last_four?'<small>번호를 바꿀 때만 다시 입력해 주세요.</small>':''}</label>`}
-        <p id="officeMethodEditStatus" class="smallText office-modal-status" role="status"></p>
+        ${selectAccount}<p id="officeMethodEditStatus" class="smallText office-modal-status" role="status"></p>
         <div class="actions office-modal-actions"><button type="submit" class="primary">저장</button></div></form>`,label+(row?' 수정':' 추가'),trigger);
       const form=$('officeMethodEdit');
       form.onsubmit=event=>{
@@ -4966,6 +5041,11 @@ function bindOfficeLedger(){
         if(!row)changes.kind=kind;
         if(card){
           changes.issuer=data.get('issuer')||null;
+          const accountId=data.get('linked_account_id');
+          if(!row&&!accounts.some(account=>account.id===accountId)){
+            output.textContent='사용 중인 출금 계좌를 선택해 주세요.';return;
+          }
+          if(accountId&&accountId!==prior?.id)changes.linked_account_id=accountId;
         }else changes.institution=data.get('institution').trim()||null;
         try{changes.number=card?officeCardNumber(data.get('card_number')):officeAccountNumber(data.get('account_number'));}
         catch(error){output.textContent=error.message;return;}
@@ -4974,8 +5054,8 @@ function bindOfficeLedger(){
     };
     const openDetails=(method,trigger)=>{
       if(!stillHere()||$('modalLayer'))return;
-      const layer=showOfficeModal(officeMethodDetailView(method),officeMethodKinds[method.kind]+' 정보',trigger);
-      const detailStatus=$('officeMethodDetailStatus'),linkedRows=$('officeLinkedRows'),close=$('closeModal');
+      const layer=showOfficeModal(officeMethodDetailView(method,rows),officeMethodKinds[method.kind]+' 정보',trigger);
+      const detailStatus=$('officeMethodDetailStatus'),linkedRows=$('officeLinkedRows');
       if(method.kind==='card')bindOfficeCardNumber(method,layer,detailStatus);
       else void showOfficeAccountNumber(method,layer,accountNumbers.get(method.id));
       const current=()=>stillHere()&&layer.isConnected;
@@ -4983,30 +5063,8 @@ function bindOfficeLedger(){
         try{
           const subscriptions=await officeLedgerRows('구독');
           if(!current())return;
-          const {linked,available}=officeSubscriptionLinks(method,rows,subscriptions);
-          linkedRows.innerHTML=officeLinkedSubscriptionView(method,linked,available);
-          const update=async(button,row,target)=>{
-            if(button.disabled||!current()||!row||!officeRecordEditable(row,'구독'))return;
-            button.disabled=true;detailStatus.textContent='저장 중…';
-            try{
-              await saveOfficeSubscriptionMethod(row,target);
-              if(current()){
-                detailStatus.textContent=target?'구독을 연결했어요.':'구독 연결을 해제했어요.';
-                await loadLinks();
-                if(current())($('officeConnectSubscription')?.querySelector('select')||close).focus();
-              }
-            }catch(error){if(current())detailStatus.textContent=error.message;}
-            finally{button.disabled=false;}
-          };
-          const form=$('officeConnectSubscription');
-          if(form)form.onsubmit=event=>{
-            event.preventDefault();
-            const id=new FormData(form).get('subscription');
-            void update(form.querySelector('button'),available.find(row=>row.id===id),method);
-          };
-          linkedRows.querySelectorAll('[data-office-unlink-subscription]').forEach(button=>button.onclick=()=>{
-            void update(button,linked.find(row=>row.id===button.dataset.officeUnlinkSubscription),null);
-          });
+          const linked=officeSubscriptionLinks(method,rows,subscriptions);
+          linkedRows.innerHTML=officeLinkedSubscriptionView(method,linked);
         }catch(error){
           if(!current())return;
           linkedRows.textContent='연결된 구독을 불러오지 못했어요.';
@@ -5163,19 +5221,24 @@ const brandingAccountType='브랜딩고객계정';
 const brandingAccountTable='work_branding_customer_accounts';
 const accountTable=type=>type===brandingAccountType?brandingAccountTable:'kit_accounts';
 
-function accountManagementView(){
-  return `<div class="titleRow"><h1>계정관리</h1></div><section class="card account-workspace">
+function accountManagementView(readOnly=false){
+  return `${readOnly?'':'<div class="titleRow"><h1>계정관리</h1></div>'}<section class="card account-workspace">
     <div class="wd109-tabs" role="tablist" aria-label="계정 분류">
       ${nativeAdminTabs.accounts.map(([,label],i)=>`<button type="button" id="accountTab${i}" role="tab" aria-controls="accountPanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${esc(label)}</button>`).join('')}
     </div><section id="accountPanel" role="tabpanel" aria-labelledby="accountTab0">
       <div class="wd109-toolbar"><label class="wd109-search">계정 검색<input type="search" id="accountSearch" placeholder="계정명·아이디·이메일 검색"></label>
-        <button type="button" id="refreshAccounts">새로고침</button><button type="button" class="primary" id="addBrandingAccount" hidden>고객 계정 추가</button></div>
+        <button type="button" id="refreshAccounts">새로고침</button>${readOnly?'':'<button type="button" class="primary" id="addBrandingAccount" hidden>고객 계정 추가</button>'}</div>
       <p class="smallText" id="accountStatus" role="status"></p><div class="account-list-scroll" id="accountRows"></div>
     </section></section>`;
 }
 
 async function accountAccessToken(){
-  if(currentUser==='manager')return verifyManagerHqSession();
+  if(currentUser==='manager'){
+    const token=await verifyManagerHqSession();
+    if(embeddedAccountInfo&&(!embeddedAccountOwner||readHqSession()?.user?.id!==embeddedAccountOwner||readHqToken()!==token))
+      throw hqLoginError();
+    return token;
+  }
   if(currentUser!=='employee'||hqStaffLoginId!==legacyStaffHqLogin||!workspaceMenus().some(([menu])=>menu==='accounts'))
     throw new Error('이 계정의 계정관리 권한을 확인해 주세요.');
   const token=await attendanceHqToken(),identity=await readWorkCenterHqIdentity(token);
@@ -5351,7 +5414,7 @@ function accountDetailsMarkup(detail,type,{info,memo,secretLabel,canEdit}){
     </div>`:''}`;
 }
 
-function accountDetail(row,type,active,onChanged,trigger){
+function accountDetail(row,type,active,onChanged,trigger,readOnly=false){
   if(!safeDriveId(row.id)||$('modalLayer'))return;
   showOfficeModal('<section id="accountDetailBody" class="account-detail" aria-live="polite">계정 정보를 불러오는 중…</section>',row.service_name,trigger);
   const target=$('accountDetailBody'),current=()=>target.isConnected&&active();
@@ -5372,7 +5435,7 @@ function accountDetail(row,type,active,onChanged,trigger){
     const secretLabel=type==='API키'?'API 키':type==='전산세트'?'데이터 비밀번호':'비밀번호';
     const closeAfterChange=message=>{if(current()){$('modalLayer')?.remove();void onChanged();notify(message);}};
     const showDetails=()=>{
-      target.innerHTML=accountDetailsMarkup(detail,type,{info:accountInfo,memo,secretLabel,canEdit:accountOwner(detail)});
+      target.innerHTML=accountDetailsMarkup(detail,type,{info:accountInfo,memo,secretLabel,canEdit:!readOnly&&accountOwner(detail)});
       const reveal=$('revealAccountSecret');
       if(reveal)reveal.onclick=()=>{
         const shown=reveal.getAttribute('aria-pressed')!=='true';
@@ -5394,7 +5457,7 @@ function accountDetail(row,type,active,onChanged,trigger){
       };
     };
     const showEdit=()=>{
-      if(!current()||!accountOwner(detail))return;
+      if(readOnly||!current()||!accountOwner(detail))return;
       const editInfo=setItems?setItems.map(item=>[item.name,item.url].filter(Boolean).join(' | ')).join('\n'):info;
       target.innerHTML=`<form id="workspaceAccountEdit" class="account-edit" autocomplete="off">
         ${type===brandingAccountType?`<label>고객명<input name="customer" required maxlength="120" value="${esc(detail.customer_name||'')}"></label>`:''}
@@ -5435,14 +5498,15 @@ function accountDetail(row,type,active,onChanged,trigger){
   }).catch(error=>{if(current())target.textContent=error.message;});
 }
 
-function bindAccounts(){
+function bindAccounts(readOnly=false){
   const panel=$('accountPanel'),target=$('accountRows'),status=$('accountStatus'),search=$('accountSearch');
   const tabs=nativeAdminTabs.accounts.map((_,i)=>$('accountTab'+i));
   const generation=driveConnectGeneration;
-  const active=()=>panel.isConnected&&S.nav==='accounts'&&generation===driveConnectGeneration;
+  const active=()=>panel.isConnected&&S.nav==='accounts'&&generation===driveConnectGeneration&&
+    (!readOnly||embeddedAccountOwner===readHqSession()?.user?.id);
   let rows=[],type=nativeAdminTabs.accounts[0][1],request=0;
   const add=$('addBrandingAccount'),openGroups=new Set();
-  add.onclick=()=>openBrandingAccountAdd(()=>active()&&type===brandingAccountType,refresh,add);
+  if(add)add.onclick=()=>openBrandingAccountAdd(()=>active()&&type===brandingAccountType,refresh,add);
   const paint=()=>{
     const term=search.value.trim().toLowerCase(),list=rows.filter(row=>[row.service_name,row.account_id,row.customer_name].some(value=>String(value||'').toLowerCase().includes(term)));
     if(type===brandingAccountType){
@@ -5459,7 +5523,7 @@ function bindAccounts(){
         }
       });
       target.querySelectorAll('[data-branding-detail]').forEach(button=>button.onclick=()=>{
-        accountDetail(list[Number(button.dataset.brandingDetail)],type,active,refresh,button);
+        accountDetail(list[Number(button.dataset.brandingDetail)],type,active,refresh,button,readOnly);
       });
       const bindCredentialAction=(selector,key,apply)=>{
         target.querySelectorAll(selector).forEach(button=>button.onclick=async()=>{
@@ -5493,7 +5557,7 @@ function bindAccounts(){
     target.innerHTML=accountListMarkup(list);
     target.querySelectorAll('[data-account-row]').forEach(row=>{
       const trigger=row.querySelector('button');
-      row.onclick=()=>accountDetail(list[Number(row.dataset.accountRow)],type,active,refresh,trigger);
+      row.onclick=()=>accountDetail(list[Number(row.dataset.accountRow)],type,active,refresh,trigger,readOnly);
     });
   };
   const refresh=async()=>{
@@ -5507,11 +5571,35 @@ function bindAccounts(){
   };
   bindWorkspaceTabs(tabs,index=>{
     type=nativeAdminTabs.accounts[index][1];
-    add.hidden=type!==brandingAccountType;
-    search.placeholder=add.hidden?'계정명·아이디·이메일 검색':'고객명·사이트명·아이디·이메일 검색';
+    if(add)add.hidden=type!==brandingAccountType;
+    search.placeholder=type!==brandingAccountType?'계정명·아이디·이메일 검색':'고객명·사이트명·아이디·이메일 검색';
     panel.setAttribute('aria-labelledby',tabs[index].id);search.value='';void refresh();
   });
   search.oninput=paint;$('refreshAccounts').onclick=refresh;void refresh();
+}
+
+const embeddedAccountInfo=new URLSearchParams(location.search).get('view')==='account-info';
+let embeddedAccountOwner='';
+
+async function renderEmbeddedAccountInfo(){
+  const root=$('root');
+  root.classList.add('embedded-account-info');
+  root.innerHTML='<p class="empty" role="status">계정 권한을 확인하는 중…</p>';
+  try{
+    if(location.origin!==adminLegacyOrigin||window.parent===window||window.parent.location.origin!==location.origin||
+      !window.frameElement||window.frameElement.parentElement?.id!=='wdhq-account-info-content')
+      throw hqLoginError();
+    const token=await verifyManagerHqSession();
+    const owner=readHqSession()?.user?.id;
+    if(!owner||token!==readHqToken())throw hqLoginError();
+    embeddedAccountOwner=owner;
+    currentUser='manager';
+    S.nav='accounts';
+    root.innerHTML=accountManagementView(true);
+    bindAccounts(true);
+  }catch{
+    root.innerHTML='<p class="empty" role="status">본진에서 대표 계정으로 로그인한 뒤 계정정보를 다시 열어 주세요.</p>';
+  }
 }
 
 function sensitiveMenuView(){
@@ -8292,5 +8380,6 @@ function taskEditor(t){let isNew=!t;let x=t||{date:'2026-11-30',title:'',objecti
 function openDB(){return new Promise((ok,bad)=>{let q=indexedDB.open(IDB,1);q.onupgradeneeded=()=>q.result.createObjectStore('files',{keyPath:'id'});q.onsuccess=()=>ok(q.result);q.onerror=()=>bad(q.error)})}
 async function uploadFiles(id){let files=Array.from($(id)?.files||[]),result=[];if(!files.length)return result;try{let db=await openDB();for(let file of files){if(file.size>25*1024*1024){notify('25MB 초과 파일은 제외했습니다: '+file.name);continue}let fid='file'+Date.now()+'_'+Math.random().toString(36).slice(2);await new Promise((ok,bad)=>{let q=db.transaction('files','readwrite').objectStore('files').put({id:fid,blob:file,name:file.name,type:file.type});q.onsuccess=ok;q.onerror=()=>bad(q.error)});result.push({id:fid,name:file.name,size:file.size})}db.close()}catch(e){notify('브라우저 파일 저장에 실패했습니다. 첨부를 확인하세요')}return result}
 async function downloadFile(id){try{let db=await openDB(),row=await new Promise((ok,bad)=>{let q=db.transaction('files','readonly').objectStore('files').get(id);q.onsuccess=()=>ok(q.result);q.onerror=()=>bad(q.error)});db.close();if(!row)return notify('저장된 첨부파일을 찾을 수 없습니다');let u=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=u;a.download=row.name;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000)}catch(e){notify('파일을 열 수 없습니다')}}
-render();
+if(embeddedAccountInfo)void renderEmbeddedAccountInfo();
+else render();
 </script></body></html>
