@@ -11013,6 +11013,29 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #modal-comm-detail .wd09-comm-detail-table #cd-next-feedback:empty { display:none; }
 #modal-comm-detail .wd09-comm-detail-table #cd-file { display:table-cell; }
 .wd09-document-button { white-space:nowrap; }
+#modal-auto-rec .wd09-auto-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#modal-auto-rec .wd09-auto-form-wide { grid-column:1/-1; }
+#modal-auto-rec #auto-line-custom { margin-top:7px; }
+#modal-auto-rec :is(#auto-policy-current,#auto-terms-current) { color:var(--s600); overflow-wrap:anywhere; }
+#modal-claim-detail .wd09-claim-detail-modal { max-width:650px; }
+.wd09-claim-detail-card { padding:13px 15px; background:#fff; border:1px solid var(--s200); border-radius:11px; }
+.wd09-claim-detail-card + .wd09-claim-detail-card { margin-top:10px; }
+.wd09-claim-detail-card h3 { margin:0 0 8px; color:var(--purple); font-size:15px; }
+.wd09-claim-detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px 12px; margin:0; }
+.wd09-claim-detail-grid dt { color:var(--s600); font-size:12px; }
+.wd09-claim-detail-grid dd { margin:3px 0 0; font-size:14px; }
+.wd09-claim-detail-content { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+#cld-file .wd09-claim-file-list { display:grid; gap:6px; list-style:none; margin:0; padding:0; }
+#cld-file .wd09-claim-file-list li { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; border-radius:7px; background:var(--s50); overflow-wrap:anywhere; }
+#cld-file .wd09-claim-file-list button { flex:none; }
+.wd09-claim-count { white-space:nowrap; }
+#det-claim-list .wd09-claim-company-group { display:block; color:var(--s600); font-size:11px; }
+.wd09-material-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 8px; }
+.wd09-material-tabs button[aria-pressed="true"] { background:var(--purple); color:#fff; }
+@media(max-width:480px) {
+  #modal-auto-rec .wd09-auto-form-grid { grid-template-columns:minmax(0,1fr); }
+}
+.wd09-material-tabs[hidden] { display:none; }
 </style>
 <style id="wd09-claim-overview-style">
   body:has(:is(#pg-claim,#pg-auto,#pg-cust).on) #content { padding-top:24px!important; }
@@ -12514,6 +12537,12 @@ const wdTest09Storage = (() => {
 <div class="wd09-info-actions">
 <button type="button" class="btn-sm p" onclick="openMatAdd()">+ 자료 추가</button>
 </div>
+</div>
+<div id="wd09-material-tabs" class="wd09-material-tabs" role="group" aria-label="고객자료 종류" hidden>
+<button class="btn-sm g" type="button" data-kind="all" aria-pressed="true">전체</button>
+<button class="btn-sm g" type="button" data-kind="policy" aria-pressed="false">증권</button>
+<button class="btn-sm g" type="button" data-kind="terms" aria-pressed="false">약관</button>
+<button class="btn-sm g" type="button" data-kind="other" aria-pressed="false">고객자료</button>
 </div>
 <div id="det-mat-list-tools" class="cust-work-tools wd09-table-tools"></div>
 <div id="det-mat-list" class="wd09-customer-pane-list"></div>
@@ -16589,21 +16618,27 @@ const wdTest09Storage = (() => {
 </footer>
 </div>
 </div>
-<!-- ── 청구문의기록 상세 모달 ── -->
-<div class="modal-ov" id="modal-claim-detail">
-<div class="modal-bx" role="dialog" aria-modal="true" aria-labelledby="wd09-claim-detail-title" style="max-width:600px;">
-<header class="wd09-detail-modal-header"><h2 id="wd09-claim-detail-title">청구문의기록 상세</h2><button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="closeModal('modal-claim-detail')">×</button></header>
-<div class="cd-row"><div class="cd-label">청구요청날짜</div><div class="cd-val" id="cld-date">-</div></div>
-<div class="cd-row"><div class="cd-label">청구보험사 구분</div><div class="cd-val" id="cld-cat">-</div></div>
-<div class="cd-row"><div class="cd-label">청구보험사</div><div class="cd-val" id="cld-company">-</div></div>
-<div class="cd-row"><div class="cd-label">청구유형</div><div class="cd-val" id="cld-type">-</div></div>
-<div class="cd-row"><div class="cd-label">청구내용</div><div class="cd-box" id="cld-content">-</div></div>
-<div class="cd-row"><div class="cd-label">청구파일</div><div class="cd-val" id="cld-file">첨부 없음</div></div>
-<div class="cd-row" style="margin-bottom:6px;"><div class="cd-label">청구상태</div><div class="cd-val" id="cld-status">-</div></div>
-<div class="modal-ft">
-<button class="btn-s" onclick="claimDetailEdit()" style="background:var(--lav);color:var(--purple);border-color:#DDD6FE;">수정</button>
-<button class="btn-p" onclick="claimDetailDelete()" style="background:linear-gradient(135deg,var(--rd700),#e53e3e);">삭제</button>
+<!-- 청구기록 상세 -->
+<div class="modal-ov wd09-entry-overlay" id="modal-claim-detail">
+<div class="modal-bx wd09-entry-modal wd09-claim-detail-modal" role="dialog" aria-modal="true" aria-labelledby="wd09-claim-detail-title">
+<header class="wd09-entry-header"><h2 id="wd09-claim-detail-title">청구현황 상세</h2><button type="button" class="wd09-modal-close" aria-label="닫기" onclick="closeModal('modal-claim-detail')">×</button></header>
+<div class="wd09-entry-body">
+<section class="wd09-claim-detail-card">
+<h3>청구 기본정보</h3>
+<dl class="wd09-claim-detail-grid">
+<div><dt>청구요청일</dt><dd id="cld-date"></dd></div>
+<div><dt>보험사</dt><dd><span id="cld-company"></span> <small id="cld-cat"></small></dd></div>
+<div><dt>청구유형</dt><dd id="cld-type"></dd></div>
+<div><dt>청구상태</dt><dd id="cld-status"></dd></div>
+</dl>
+</section>
+<section class="wd09-claim-detail-card"><h3>청구내용</h3><p class="wd09-claim-detail-content" id="cld-content"></p></section>
+<section class="wd09-claim-detail-card"><h3 id="cld-file-title">청구파일</h3><div id="cld-file"></div></section>
 </div>
+<footer class="modal-ft wd09-entry-footer">
+<button class="btn-sm p" type="button" onclick="claimDetailEdit()">수정</button>
+<button class="btn-sm d" type="button" onclick="claimDetailDelete()">삭제</button>
+</footer>
 </div>
 </div>
 <!-- ── 자료전달 입력/수정 모달 ── -->
@@ -16687,25 +16722,29 @@ const wdTest09Storage = (() => {
 <p id="wd09-auto-customer-hint" role="status" hidden>고객을 먼저 선택해 주세요.</p>
 </div>
 <fieldset id="wd09-auto-entry-fields" aria-label="자동차보험 정보">
-<div class="wd09-insurance-fields">
+<div class="wd09-insurance-fields wd09-auto-form-grid">
+<div class="fld"><label for="auto-carnum">자동차번호</label><input id="auto-carnum" placeholder="예: 12가3456" type="text"/></div>
+<div class="fld"><label for="auto-line">차량용도</label>
+<select id="auto-line" onchange="wd09ToggleAutoUse()">
+<option value="">선택</option><option>개인용</option><option>개인업무용</option><option>회사용</option><option value="__custom__">직접 입력</option>
+</select>
+<input id="auto-line-custom" aria-label="차량용도 직접 입력" placeholder="차량용도를 입력해 주세요" type="text" hidden/></div>
 <div class="fld"><label for="auto-company">보험사</label><select id="auto-company" onchange="autoToggleCompanyCustom()"></select>
 <div id="auto-company-custom-wrap" style="display:none;"><label for="auto-company-custom">보험사 직접입력</label>
 <input id="auto-company-custom" placeholder="보험사명" type="text"/></div></div>
-<div class="fld"><label for="auto-carnum">차량번호</label><input id="auto-carnum" placeholder="예: 12가3456" type="text"/></div>
-<div class="fld"><label for="auto-year">보험년도</label><input id="auto-year" placeholder="예: 2026" inputmode="numeric" type="text"/></div>
-<div class="fld"><label for="auto-expiry">자동차 만기일</label><input id="auto-expiry" type="date"/></div>
-<div class="fld"><label for="auto-annual-premium">최종보험료 (원)</label>
-<input id="auto-annual-premium" type="number" inputmode="numeric" min="0" step="1" placeholder="선택 입력"/></div>
-<div class="fld"><label for="auto-contract-date">계약일</label><input id="auto-contract-date" type="date"/></div>
-<div class="fld"><label for="auto-start-date">보험시작일</label><input id="auto-start-date" type="date"/></div>
-<div class="fld"><label for="auto-line">종목</label><input id="auto-line" type="text"/></div>
+<div class="fld"><label for="auto-annual-premium">보험료 (원)</label><input id="auto-annual-premium" type="number" inputmode="numeric" min="0" step="1" placeholder="선택 입력"/></div>
 <div class="fld"><label for="auto-holder">계약자</label><input id="auto-holder" type="text"/></div>
 <div class="fld"><label for="auto-insured">피보험자</label><input id="auto-insured" type="text"/></div>
+<div class="fld"><label for="auto-contract-date">계약일</label><input id="auto-contract-date" type="date" onchange="wd09RenderAutoPdfNames()"/></div>
+<div class="fld"><label for="auto-start-date">보험시작일</label><input id="auto-start-date" type="date" onchange="wd09RenderAutoPdfNames()"/></div>
+<div class="fld"><label for="auto-expiry">만기일</label><input id="auto-expiry" type="date"/></div>
 <div class="fld"><label for="auto-agent">담당설계사</label><input id="auto-agent" type="text"/></div>
+<input id="auto-year" type="hidden"/>
 </div>
-<div class="wd09-insurance-fields wd09-insurance-extra">
-<div class="fld"><label for="auto-policy-file">증권 PDF</label><input id="auto-policy-file" type="file" accept="application/pdf,.pdf"/></div>
-<div class="fld"><label for="auto-memo">메모</label><textarea id="auto-memo" placeholder="기타 메모"></textarea></div>
+<div class="wd09-insurance-fields wd09-insurance-extra wd09-auto-form-grid">
+<div class="fld"><label for="auto-policy-file">증권 PDF</label><input id="auto-policy-file" type="file" accept="application/pdf,.pdf" onchange="wd09RenderAutoPdfNames()"/><small id="auto-policy-current"></small></div>
+<div class="fld"><label for="auto-terms-file">약관 PDF</label><input id="auto-terms-file" type="file" accept="application/pdf,.pdf" onchange="wd09RenderAutoPdfNames()"/><small id="auto-terms-current"></small></div>
+<div class="fld wd09-auto-form-wide"><label for="auto-memo">메모</label><textarea id="auto-memo" placeholder="기타 메모"></textarea></div>
 </div>
 <details id="auto-extra-fields">
 <summary>차량 사진·처리상태</summary>
@@ -16754,7 +16793,7 @@ const wdTest09Storage = (() => {
 <div class="cd-row"><div class="cd-label">차량번호</div><div class="cd-val" id="atd-carnum">-</div></div>
 <div class="cd-row"><div class="cd-label">계약일</div><div class="cd-val" id="atd-contract-date">-</div></div>
 <div class="cd-row"><div class="cd-label">보험시작일</div><div class="cd-val" id="atd-start-date">-</div></div>
-<div class="cd-row"><div class="cd-label">종목</div><div class="cd-val" id="atd-line">-</div></div>
+<div class="cd-row"><div class="cd-label">차량용도</div><div class="cd-val" id="atd-line">-</div></div>
 <div class="cd-row"><div class="cd-label">계약자</div><div class="cd-val" id="atd-holder">-</div></div>
 <div class="cd-row"><div class="cd-label">피보험자</div><div class="cd-val" id="atd-insured">-</div></div>
 <div class="cd-row"><div class="cd-label">담당설계사</div><div class="cd-val" id="atd-agent">-</div></div>
@@ -16767,6 +16806,7 @@ const wdTest09Storage = (() => {
 <div class="cd-row" style="margin-bottom:6px;"><div class="cd-label">등록일 / 수정일</div><div class="cd-val" id="atd-dates" style="font-size:12px;color:var(--s500);font-weight:600;">-</div></div>
 <div class="modal-ft">
 <button class="btn-s" id="atd-policy" type="button" hidden>증권 보기</button>
+<button class="btn-s" id="atd-terms" type="button" hidden>약관 보기</button>
 <button class="btn-s" onclick="autoDetailEdit()" style="background:var(--lav);color:var(--purple);border-color:#DDD6FE;">수정</button>
 <button class="btn-p" onclick="autoDetailDelete()" style="background:linear-gradient(135deg,var(--rd700),#e53e3e);">삭제</button>
 </div>
@@ -19620,15 +19660,38 @@ async function changeClaimStatusInline(id,newStatus,custId=_vid){
   if(String(custId)===String(_vid))renderClaimList();
   return true;
 }
-function clmAttachCell(record){
-  const attachments=claimAttachments(record);
-  if(!attachments.length)return '—';
-  return '<div class="wd09-claim-attachment-list">'+attachments.map(file=>{
-    const name=esc(file.fileName||'청구첨부파일');
-    return file.file_path
-      ?'<button class="btn-sm p" type="button" data-path="'+esc(file.file_path)+'" onclick="wd09DownloadClaimFile(this.dataset.path)" title="청구파일 다운로드">'+name+'</button>'
-      :'<span>'+name+'</span>';
-  }).join('')+'</div>';
+function clmAttachmentCount(record){
+  const count=claimAttachments(record).length;
+  return count?'청구파일 '+count+'건':'—';
+}
+function renderClaimDetailFiles(record){
+  const files=claimAttachments(record);
+  document.getElementById('cld-file-title').textContent=files.length?clmAttachmentCount(record):'청구파일';
+  const container=document.getElementById('cld-file');
+  if(!files.length){container.textContent='첨부된 청구파일이 없어요.';return;}
+  const list=document.createElement('ul');
+  list.className='wd09-claim-file-list';
+  for(const file of files){
+    const row=document.createElement('li');
+    const name=document.createElement('span');
+    name.textContent=file.fileName||'청구첨부파일';
+    row.append(name);
+    if(file.file_path){
+      const download=document.createElement('button');
+      download.type='button';
+      download.className='btn-sm p';
+      download.textContent='다운로드';
+      download.setAttribute('aria-label',name.textContent+' 다운로드');
+      download.onclick=async()=>{
+        download.disabled=true;
+        try{await wd09DownloadClaimFile(file.file_path);}
+        finally{download.disabled=false;}
+      };
+      row.append(download);
+    }
+    list.append(row);
+  }
+  container.replaceChildren(list);
 }
 function renderClaimList(){
   var list=getClaimDs().slice().sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
@@ -19673,18 +19736,18 @@ function renderClaimList(){
     +'<th scope="col">청구유형</th>'
     +'<th scope="col">청구내용</th>'
     +'<th scope="col">청구상태</th>'
-    +'<th scope="col">첨부</th>'
+    +'<th scope="col">청구파일</th>'
     +'<th scope="col">관리</th>'
     +'</tr></thead><tbody>'
     +list.map(function(x){
       var preview=(x.content||x.note||'').slice(0,25)+((x.content||x.note||'').length>25?'…':'');
       return'<tr>'
         +'<td class="wd09-table-nowrap">'+esc(x.date||'-')+'</td>'
-        +'<td class="wd09-table-nowrap">'+esc((x.insCategory?x.insCategory+' ':''+(x.insCompany||'-')))+'</td>'
+        +'<td>'+esc(x.insCompany||'—')+(x.insCategory?'<small class="wd09-claim-company-group">'+esc(x.insCategory)+'</small>':'')+'</td>'
         +'<td class="wd09-table-nowrap">'+esc(x.type||'-')+'</td>'
         +'<td title="'+esc(x.content||x.note||'')+'">'+esc(preview||'-')+'</td>'
         +'<td class="wd09-table-nowrap">'+clmStatusSelectInline(x.id,x.status)+'</td>'
-        +'<td class="wd09-table-muted">'+clmAttachCell(x)+'</td>'
+        +'<td class="wd09-table-nowrap">'+(claimAttachments(x).length?'<button class="btn-sm p wd09-claim-count" type="button" onclick="openClaimDetail('+x.id+')">'+clmAttachmentCount(x)+'</button>':'—')+'</td>'
         +'<td class="wd09-table-actions">'
         +'<button class="btn-sm" style="background:var(--s100);color:var(--s700);margin-right:4px;font-size:13px;" onclick="openClaimDetail('+x.id+')">보기</button>'
         +'<button class="btn-sm p" style="margin-right:4px;font-size:13px;" onclick="openClaimEdit('+x.id+')">수정</button>'
@@ -19703,7 +19766,7 @@ function openClaimDetail(id){
   document.getElementById('cld-company').textContent=item.insCompany||'-';
   document.getElementById('cld-type').textContent=item.type||'-';
   document.getElementById('cld-content').textContent=item.content||item.note||'-';
-  document.getElementById('cld-file').innerHTML=clmAttachCell(item);
+  renderClaimDetailFiles(item);
   document.getElementById('cld-status').innerHTML=clmStatusBadge(item.status);
   openModal('modal-claim-detail');
 }
@@ -19992,6 +20055,16 @@ async function matDetailDelete(){
   if(!ok)return; // 실패 시 모달 유지(삭제된 것처럼 보이지 않게)
   if(request===customerMaterialRequest)document.getElementById('wd09-material-dialog').close();
 }
+function wd09MaterialKind(item){
+  if(item.policySource)return item.kind;
+  const category=String(item.file_category||'').trim();
+  if(category==='보험증권'||category==='증권')return 'policy';
+  if(category==='보험약관'||category==='약관')return 'terms';
+  const name=customerMaterialFileName(item);
+  if(/_(?:보험)?증권(?:_\d{6,8})?\.[^.]+$/i.test(name))return 'policy';
+  if(/_(?:보험)?약관(?:_\d{6,8})?\.[^.]+$/i.test(name))return 'terms';
+  return 'other';
+}
 function renderMatList(){
   var c=_matGetCust();if(!c)return;
   var logs=cstMatLogs(c).filter(isDirectCustomerMaterial);
@@ -20008,7 +20081,20 @@ function renderMatList(){
   appendPolicies(cstAutoList(c),'auto');
   var el=document.getElementById('det-mat-list');
   if(!el)return;
-  if(document.getElementById('det-info').dataset.recordView==='det-mat'){
+  const tabs=document.getElementById('wd09-material-tabs');
+  const showTabs=document.getElementById('det-info').dataset.recordView==='det-mat';
+  tabs.hidden=!showTabs;
+  if(tabs.dataset.customer!==String(c.id)){
+    tabs.dataset.customer=String(c.id);
+    tabs.dataset.kind='all';
+  }
+  if(showTabs){
+    const kind=tabs.dataset.kind||'all';
+    for(const button of tabs.querySelectorAll('button')){
+      button.setAttribute('aria-pressed',String(button.dataset.kind===kind));
+      button.onclick=()=>{tabs.dataset.kind=button.dataset.kind;renderMatList();};
+    }
+    if(kind!=='all')logs=logs.filter(item=>wd09MaterialKind(item)===kind);
     logs=customerTableRows('det-mat-list',logs,{
       render:renderMatList, placeholder:'파일명 검색', showSort:false, showReset:false,
       date:customerMaterialUploadDate,
@@ -20064,12 +20150,44 @@ function wd09AutoFields(record){
   detail.annualPremium=insurancePremiumAmount(String(rawPremium??'').replace(/\s*원$/,''));
   return detail;
 }
+function wd09ToggleAutoUse(){
+  const choice=document.getElementById('auto-line');
+  document.getElementById('auto-line-custom').hidden=choice.value!=='__custom__';
+}
+function wd09AutoTarget(){
+  const id=document.getElementById('auto-edit-custid').value||_vid;
+  return getCusts().find(customer=>String(customer.id)===String(id));
+}
+function wd09AutoPdfDate(){
+  return document.getElementById('auto-contract-date').value
+    ||document.getElementById('auto-start-date').value||customerAttachmentDay();
+}
+function wd09AutoPdfName(customer,label,date){
+  return customerAttachmentPrefix(customer)+'_자동차보험_'+label+'_'+date.slice(2).replace(/-/g,'')+'.pdf';
+}
+function wd09RenderAutoPdfNames(){
+  const customer=wd09AutoTarget();
+  const id=document.getElementById('auto-edit-id').value;
+  const record=id?cstAutoList(customer).find(item=>String(item.id)===id):null;
+  for(const {kind,field,label} of WD09_CONTRACT_PDFS){
+    const file=document.getElementById('auto-'+kind+'-file').files[0];
+    const current=customerPolicyMeta(record,'auto',_UID,customer?.id,kind);
+    document.getElementById('auto-'+kind+'-current').textContent=file&&customer
+      ?'저장 파일명 · '+wd09AutoPdfName(customer,label,wd09AutoPdfDate())
+      :current?.name?'현재 · '+current.name:'';
+  }
+}
 function wd09SetAutoFields(record){
   const detail=wd09AutoFields(record);
   document.getElementById('auto-annual-premium').value=detail.annualPremium??'';
   document.getElementById('auto-contract-date').value=detail.contractDate??'';
   document.getElementById('auto-start-date').value=detail.startDate??'';
-  document.getElementById('auto-line').value=detail.line??'';
+  const use=document.getElementById('auto-line');
+  const value=String(detail.line||'');
+  const known=[...use.options].some(option=>option.value===value&&option.value!=='__custom__');
+  use.value=known?value:'__custom__';
+  document.getElementById('auto-line-custom').value=known?'':value;
+  wd09ToggleAutoUse();
   document.getElementById('auto-holder').value=detail.policyholder??'';
   document.getElementById('auto-insured').value=detail.insured??'';
   document.getElementById('auto-agent').value=detail.agent??'';
@@ -20149,7 +20267,7 @@ function openAutoAdd(fromInsurance){
   autoUpdateCompanyOptions(AUTO_INSURERS[0]);
   document.getElementById('auto-company-custom').value='';
   document.getElementById('auto-expiry').value='';
-  document.getElementById('auto-policy-file').value='';
+  for(const {kind} of WD09_CONTRACT_PDFS)document.getElementById('auto-'+kind+'-file').value='';
   wd09SetAutoFields({});
   document.getElementById('auto-carnum').value='';
   ['blackbox','dashboard','plate'].forEach(function(k){
@@ -20158,6 +20276,7 @@ function openAutoAdd(fromInsurance){
   });
   document.getElementById('auto-result-status').value='본사계약';
   document.getElementById('auto-memo').value='';
+  wd09RenderAutoPdfNames();
   openModal('modal-auto-rec');
 }
 // custId 생략 시 현재 고객상세(_vid) 기준 — 상단 관리화면의 "수정"에서는 대상 custId를 명시적으로 넘긴다.
@@ -20180,7 +20299,7 @@ function openAutoEdit(id,custId){
   autoUpdateCompanyOptions(knownCompany?item.company:(item.company?'기타':AUTO_INSURERS[0]));
   document.getElementById('auto-company-custom').value=knownCompany?'':(item.company||'');
   document.getElementById('auto-expiry').value=item.expiryDate||'';
-  document.getElementById('auto-policy-file').value='';
+  for(const {kind} of WD09_CONTRACT_PDFS)document.getElementById('auto-'+kind+'-file').value='';
   wd09SetAutoFields(item);
   document.getElementById('auto-carnum').value=item.carNumber||'';
   var fmap={blackbox:item.blackboxFile,dashboard:item.dashboardFile,plate:item.plateFile};
@@ -20192,14 +20311,13 @@ function openAutoEdit(id,custId){
   });
   document.getElementById('auto-result-status').value=autoContractStatus(item);
   document.getElementById('auto-memo').value=item.memo||'';
+  wd09RenderAutoPdfNames();
   openModal('modal-auto-rec');
 }
 async function saveAutoRecord(){
-  var custIdField=document.getElementById('auto-edit-custid').value;
-  var targetId=custIdField!==''?(isNaN(custIdField)?custIdField:Number(custIdField)):_vid;
-  var c=getCusts().find(function(x){return x.id==targetId;});
+  var c=wd09AutoTarget();
   if(!c)return;
-  var year=document.getElementById('auto-year').value.trim()||String(new Date().getFullYear());
+  var year=document.getElementById('auto-start-date').value.slice(0,4)||document.getElementById('auto-year').value||customerAttachmentDay().slice(0,4);
   var companySel=document.getElementById('auto-company').value;
   var company=companySel==='기타'?document.getElementById('auto-company-custom').value.trim():companySel;
   var expiry=document.getElementById('auto-expiry').value;
@@ -20213,58 +20331,93 @@ async function saveAutoRecord(){
   var list=cstAutoList(c).slice();
   var prev=eid?(list.find(function(x){return x.id==eid;})||{}):{};
   var recId=eid||('auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
-  var policyInput=document.getElementById('auto-policy-file').files[0];
-  var policyPdf=policyInput?await uploadCustomerPolicy('auto',c.id,recId,policyInput):prev.policyPdf;
-  if(policyInput&&!policyPdf)return;
-  var rec={
-    ...prev,
-    id:recId,
-    year:year,
-    company:company,
-    expiryDate:expiry,
-    annualPremium:insurancePremiumAmount(premiumInput.value),
-    finalPremium:insurancePremiumAmount(premiumInput.value),
-    contractDate:document.getElementById('auto-contract-date').value.trim(),
-    startDate:document.getElementById('auto-start-date').value.trim(),
-    line:document.getElementById('auto-line').value.trim(),
-    policyholder:document.getElementById('auto-holder').value.trim(),
-    insured:document.getElementById('auto-insured').value.trim(),
-    agent:document.getElementById('auto-agent').value.trim(),
-    policyPdf:policyPdf,
-    carNumber:carNum,
-    blackboxFile:prev.blackboxFile||{name:'',path:'',url:''},
-    dashboardFile:prev.dashboardFile||{name:'',path:'',url:''},
-    plateFile:prev.plateFile||{name:'',path:'',url:''},
-    contactStatus:prev.contactStatus||'연락 전', // v91수정 3차: UI에서는 분리, 데이터 필드는 하위호환 위해 유지
-    contractStatus:document.getElementById('auto-result-status').value||'본사계약', // v97실행: 고객관리 처리상태 전용 필드(상단메뉴 resultStatus와 분리)
-    resultStatus:prev.resultStatus, // v97실행: 상단 자동차보험 메뉴(올해연락상태) 전용 필드 — 고객관리 화면에서는 절대 덮어쓰지 않음
-    memo:document.getElementById('auto-memo').value,
-    createdAt:prev.createdAt||new Date().toISOString(),
-    updatedAt:new Date().toISOString()
-  };
-  var kindMap={blackbox:'blackboxFile',dashboard:'dashboardFile',plate:'plateFile'};
-  var kindLabel={blackbox:'블랙박스',dashboard:'계기판',plate:'번호판'};
-  for(var k in kindMap){
-    var fi=document.getElementById('auto-file-'+k);
-    var f=(fi&&fi.files&&fi.files[0])?fi.files[0]:null;
-    if(f){
-      var check=validateAttachFile(f);
-      if(!check.ok){alert(check.message);continue;}
-      var up=await uploadAutoAttachment(c.id,recId,k,f);
-      if(up.ok){
-        rec[kindMap[k]]={name:customerAttachmentName(c,'자동차'+kindLabel[k]+'사진',f.name),original_name:f.name,path:up.path,url:''};
+  const use=document.getElementById('auto-line').value;
+  const line=use==='__custom__'?document.getElementById('auto-line-custom').value.trim():use;
+  if(use==='__custom__'&&!line){alert('차량용도를 입력해 주세요.');return;}
+  const documents=WD09_CONTRACT_PDFS.map(doc=>({...doc,file:document.getElementById('auto-'+doc.kind+'-file').files[0]})).filter(doc=>doc.file);
+  const pdfDate=wd09AutoPdfDate();
+  const save=document.getElementById('wd09-auto-save');
+  if(save.disabled)return;
+  const modal=document.getElementById('modal-auto-rec');
+  const entry=modal.querySelector('.wd09-entry-body');
+  const close=modal.querySelector('.wd09-modal-close');
+  const uid=_UID;
+  save.disabled=true;
+  close.disabled=true;
+  entry.inert=true;
+  try{
+    var rec={
+      ...prev,
+      id:recId,
+      year:year,
+      company:company,
+      expiryDate:expiry,
+      annualPremium:insurancePremiumAmount(premiumInput.value),
+      finalPremium:insurancePremiumAmount(premiumInput.value),
+      contractDate:document.getElementById('auto-contract-date').value.trim(),
+      startDate:document.getElementById('auto-start-date').value.trim(),
+      line:line,
+      policyholder:document.getElementById('auto-holder').value.trim(),
+      insured:document.getElementById('auto-insured').value.trim(),
+      agent:document.getElementById('auto-agent').value.trim(),
+      carNumber:carNum,
+      blackboxFile:prev.blackboxFile||{name:'',path:'',url:''},
+      dashboardFile:prev.dashboardFile||{name:'',path:'',url:''},
+      plateFile:prev.plateFile||{name:'',path:'',url:''},
+      contactStatus:prev.contactStatus||'연락 전', // v91수정 3차: UI에서는 분리, 데이터 필드는 하위호환 위해 유지
+      contractStatus:document.getElementById('auto-result-status').value||'본사계약', // v97실행: 고객관리 처리상태 전용 필드(상단메뉴 resultStatus와 분리)
+      resultStatus:prev.resultStatus, // v97실행: 상단 자동차보험 메뉴(올해연락상태) 전용 필드 — 고객관리 화면에서는 절대 덮어쓰지 않음
+      memo:document.getElementById('auto-memo').value,
+      createdAt:prev.createdAt||new Date().toISOString(),
+      updatedAt:new Date().toISOString()
+    };
+    for(const {file,label} of documents){
+      if(_attachExt(file)!=='pdf'||!await validCustomerPolicyPdf(file)){
+        alert(label+'은 PDF 파일만 올릴 수 있어요.');
+        return;
       }
-      else{alert(kindLabel[k]+' 사진 업로드에 실패했습니다. 나머지 항목은 정상 저장됩니다.');}
     }
+    for(const {file,field,label} of documents){
+      if(_UID!==uid||String(wd09AutoTarget()?.id)!==String(c.id))return;
+      save.textContent=label+' 올리는 중…';
+      const name=wd09AutoPdfName(c,label,pdfDate);
+      const path=await uploadMatAttachment(c,file,name,'application/pdf');
+      rec[field]={path,name,original_name:file.name,uploadedAt:new Date().toISOString()};
+    }
+    var kindMap={blackbox:'blackboxFile',dashboard:'dashboardFile',plate:'plateFile'};
+    var kindLabel={blackbox:'블랙박스',dashboard:'계기판',plate:'번호판'};
+    for(var k in kindMap){
+      var fi=document.getElementById('auto-file-'+k);
+      var f=(fi&&fi.files&&fi.files[0])?fi.files[0]:null;
+      if(f){
+        var check=validateAttachFile(f);
+        if(!check.ok){alert(check.message);continue;}
+        var up=await uploadAutoAttachment(c.id,recId,k,f);
+        if(up.ok){
+          rec[kindMap[k]]={name:customerAttachmentName(c,'자동차'+kindLabel[k]+'사진',f.name),original_name:f.name,path:up.path,url:''};
+        }
+        else{alert(kindLabel[k]+' 사진 업로드에 실패했습니다. 나머지 항목은 정상 저장됩니다.');}
+      }
+    }
+    const latest=wd09AutoTarget();
+    if(_UID!==uid||String(latest?.id)!==String(c.id))return;
+    const current=cstAutoList(latest);
+    list=eid?current.map(item=>String(item.id)===eid?rec:item):[...current,rec];
+    if(eid&&!list.includes(rec)){alert('자동차보험 기록을 다시 불러와 주세요.');return;}
+    save.textContent='저장 중…';
+    const result=await _autoSaveList(latest,list);
+    if(!result?.ok)return;
+    closeModal('modal-auto-rec');
+    if(String(_vid)===String(c.id)){renderContractsList();renderMatList();}
+    if(document.getElementById('pg-auto')?.classList.contains('on'))renderAutoManagePage();
+  }catch(error){
+    if(_UID===uid)alert(error.message||'자동차보험을 저장하지 못했어요.');
+  }finally{
+    save.disabled=false;
+    close.disabled=false;
+    entry.inert=false;
+    save.textContent='저장';
   }
-  if(eid){list=list.map(function(x){return x.id==eid?rec:x;});}
-  else{list=list.concat([rec]);}
-  var result=await _autoSaveList(c,list);
-  if(!result||!result.ok)return; // 저장 실패 시 모달 유지(성공처럼 보이지 않게)
-  closeModal('modal-auto-rec');
-  if(_vid===c.id)renderContractsList();
-  var mgmtPg=document.getElementById('pg-auto');
-  if(mgmtPg&&mgmtPg.classList.contains('on'))renderAutoManagePage();
 }
 async function deleteAutoRecord(id,custId){
   var targetId=custId!=null?custId:_vid;
@@ -20311,9 +20464,12 @@ function openAutoDetail(custId,id,index){
   document.getElementById('atd-result').textContent=autoContractStatus(item);
   document.getElementById('atd-memo').textContent=item.memo||'-';
   document.getElementById('atd-dates').textContent='등록 '+(item.createdAt||'').slice(0,10)+' / 수정 '+(item.updatedAt||'').slice(0,10);
-  const policy=document.getElementById('atd-policy');
-  policy.hidden=!customerPolicyMeta(item,'auto',_UID,c.id);
-  policy.onclick=()=>openCustomerPolicy('auto',cstAutoList(c).findIndex(row=>String(row.id)===String(item.id)),c.id);
+  const pdfIndex=records.indexOf(item);
+  for(const {kind} of WD09_CONTRACT_PDFS){
+    const button=document.getElementById('atd-'+kind);
+    button.hidden=!customerPolicyMeta(item,'auto',_UID,c.id,kind);
+    button.onclick=()=>openCustomerPolicy('auto',pdfIndex,c.id,kind);
+  }
   openModal('modal-auto-detail');
 }
 function autoDetailEdit(){if(_autoDetailCustId!=null&&_autoDetailId)openAutoEdit(_autoDetailId,_autoDetailCustId);}
@@ -20357,7 +20513,7 @@ function renderAutoManagePage(state){
   list.innerHTML=rows.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame" tabindex="0" role="region" aria-labelledby="wd09-auto-expiry-title">'
     +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
     +'<colgroup>'+[5,9,10,10,8,10,10,9,7,8,7,7].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
-    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','종목','계약자','피보험자','담당설계사']
+    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','차량용도','계약자','피보험자','담당설계사']
       .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
     +rows.map(({customer,record,index,plate,expiry,days})=>{
       const phone=cstFormatPhone(customer.phone);
@@ -23994,7 +24150,7 @@ const WD09_CONTRACT_PDFS=[
   {kind:'terms',field:'termsPdf',label:'약관'}
 ];
 function customerPolicyMeta(record,source,uid,custId,kind='policy'){
-  var pdf=kind==='terms'&&source==='contracts'?record?.termsPdf:kind==='policy'?record?.policyPdf:null;
+  var pdf=kind==='terms'?record?.termsPdf:kind==='policy'?record?.policyPdf:null;
   if(!pdf||typeof pdf.path!=='string'||!uid||custId==null)return null;
   var parts=pdf.path.split('/');
   if(parts.length===6&&parts[0]===String(uid)&&parts[1]===String(custId)&&parts[2]==='materials'
@@ -24064,23 +24220,6 @@ async function openCustomerPolicy(source,index,custId=_vid,kind='policy'){
     if(request===customerPolicyRequest)document.getElementById('wd09-policy-status').textContent='PDF를 열지 못했어요. 파일 또는 조회 권한을 확인해 주세요.';
   }
 }
-async function uploadCustomerPolicy(source,custId,recordId,file){
-  if(_attachExt(file)!=='pdf'||file.size>ATTACH_MAX_SIZE||!await validCustomerPolicyPdf(file)){
-    alert('10MB 이하 PDF만 증권으로 첨부할 수 있습니다.');
-    return null;
-  }
-  if(!getSbClient()||!_UID||String(custId)!==String(_vid))return null;
-  const customer=getCusts().find(item=>String(item.id)===String(custId));
-  if(!customer)return null;
-  const name=customerAttachmentName(customer,source==='auto'?'자동차보험증권':'보험증권',file.name);
-  try{
-    const path=await uploadMatAttachment(customer,file,name);
-    return {path,name,original_name:file.name};
-  }catch(error){
-    alert(error.message||'증권 PDF를 올리지 못했어요.');
-  }
-  return null;
-}
 function insurancePremiumAmount(value){
   var text=String(value??'').trim();
   if(!/^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)\s*원?$/.test(text))return null;
@@ -24130,7 +24269,7 @@ function openCustomerInsuranceDetail(source,index){
     ['보험 목적',row.purposeLabel],['보험사',row.insurer],['계약일',row.date]
   ];
   if(row.purpose==='auto'){
-    fields.push(['차량번호',row.carNumber],['종목',row.autoFields.line],['보험시작일',row.autoFields.startDate],['만기일',row.expiry],['최종보험료',row.annual?premium:'—'],['계약자',row.autoFields.policyholder],['피보험자',row.autoFields.insured],['담당설계사',row.autoFields.agent]);
+    fields.push(['자동차번호',row.carNumber],['차량용도',row.autoFields.line],['보험시작일',row.autoFields.startDate],['만기일',row.expiry],['최종보험료',row.annual?premium:'—'],['계약자',row.autoFields.policyholder],['피보험자',row.autoFields.insured],['담당설계사',row.autoFields.agent]);
   }else{
     fields.push(['월 보험료',premium],['납입기간',row.payPeriod],['보험기간',row.period],
       ['보험료 출금일',ctDebitNorm(record.debit_date)],['담당 설계사',record.agent],
@@ -24220,7 +24359,7 @@ function renderContractsList(state){
       +'<td>'+esc(row.carNumber||'—')+'</td><td>'+esc(row.autoFields.line||'—')+'</td>'
       +'<td class="wd09-table-nowrap">'+esc(row.autoFields.startDate||'—')+'</td>'
       +'<td class="wd09-table-nowrap">'+esc(row.expiry||'—')+'</td>'
-      +'<td class="wd09-insurance-fee">'+formatAmount(row.annual?row.premium:null)+'</td></tr>';
+      +'<td class="wd09-insurance-fee">'+formatAmount(row.annual?row.premium:null)+'</td><td>'+documentCell(row,'policy','증권')+'</td><td>'+documentCell(row,'terms','약관')+'</td></tr>';
   }
   var monthly=summarize(rows.filter(function(row){return row.purpose!=='auto';}),false);
   var visible=rows.filter(function(row){return !el.dataset.purpose||row.purpose===el.dataset.purpose;});
@@ -24251,7 +24390,7 @@ function renderContractsList(state){
     var auto=purpose==='auto';
     var titleId='wd09-insurance-group-title-'+purpose;
     var columns=auto
-      ?['보험사','차량번호','종목','보험시작일','만기일','최종보험료']
+      ?['보험사','자동차번호','차량용도','보험시작일','만기일','보험료','증권','약관']
       :['보험사','상품명','납입기간','보험기간','월 보험료','계약일','증권','약관'];
     var headers=columns.map(function(label){return '<th scope="col">'+label+'</th>';}).join('');
     var body=groupRows.length?groupRows.map(auto?renderAutoRow:renderInsuranceRow).join('')
@@ -34602,6 +34741,7 @@ function wd09SyncAutoCustomer(){
   const id=document.getElementById('wd09-auto-customer').value;
   document.getElementById('auto-edit-custid').value=id;
   wd09SetAutoCustomerRequired(!id);
+  wd09RenderAutoPdfNames();
 }
 
 function wd09SetAutoCustomerRequired(required){
@@ -34675,7 +34815,7 @@ function wd09MountClaimOverview(loadRows,emptyMessage='고객관리에 등록된
       const name=customer
         ?'<button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-claim\')">'+esc(customer.name||'이름 없음')+'</button>'
         :'고객 정보 없음';
-      const file=clmAttachCell(row);
+      const file=clmAttachmentCount(row);
       return '<tr role="row">'
         +'<td role="cell" data-label="요청일">'+esc(row.date||'—')+'</td>'
         +'<td role="cell" class="wd09-claim-person">'+name+'</td>'
@@ -35530,14 +35670,16 @@ async function wd09RefreshCustomerRecordTab(kind){
         const grant=await authorize([monthlyScope]);
         if(request!==readerLoad||uid!==_UID)return;
         const session={uid,token:grant.access_token,expiresAt:Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000)};
-        readerSession=session;
         if(readerAccount){
-          const about=await (await readerFetch(session,'/about?fields=user(permissionId)')).json();
-          if(about.user?.permissionId!==readerAccount){
-            readerSession=null;
-            throw Error('상단 Drive와 같은 Google 계정을 선택해 주세요.');
-          }
+          const response=await fetch(base+'/about?fields=user(permissionId)',{
+            headers:{Authorization:'Bearer '+session.token},credentials:'omit',cache:'no-store',redirect:'error'
+          });
+          if(!response.ok)throw Error('Drive 계정을 확인하지 못했어요. 다시 연결해 주세요.');
+          const about=await response.json();
+          if(about.user?.permissionId!==readerAccount)throw Error('상단 Drive와 같은 Google 계정을 선택해 주세요.');
         }
+        if(request!==readerLoad||uid!==_UID)return;
+        readerSession=session;
       }
       if(request!==readerLoad||uid!==_UID)return;
       await readWorkkitFiles(readerSession,mode,request,month);
