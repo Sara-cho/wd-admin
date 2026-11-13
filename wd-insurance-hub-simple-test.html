@@ -11122,6 +11122,18 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #wd09-auth-screen :is(input,button):focus-visible { outline:2px solid #6854b2; outline-offset:2px; }
   #wd09-auth-screen .wd09-auth-feedback { color:#5a367f; font-size:13px; overflow-wrap:anywhere; }
   #wd09-auth-screen .wd09-auth-feedback:empty { display:none; }
+  #wd09-auth-screen .wd09-google-login {
+    display:grid; gap:6px; margin:14px 0 0; padding-top:14px; border-top:1px solid var(--s200);
+  }
+  #wd09-google-login { min-height:44px; font:inherit; font-weight:750; }
+  #wd09-auth-screen .wd09-google-login p, #wd09-invite-settings p { margin:0; color:var(--s600); font-size:13px; }
+  #wd09-invite-settings[hidden] { display:none; }
+  #wd09-invite-settings { max-width:560px; margin-top:16px; }
+  #wd09-invite-settings h2 { margin:0 0 8px; font-size:17px; color:var(--navy); }
+  #wd09-invite-form { display:grid; gap:12px; margin-top:12px; }
+  #wd09-invite-form label { display:grid; gap:6px; font-size:13px; font-weight:700; }
+  #wd09-invite-form input { width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--s200); border-radius:8px; font:inherit; }
+  #wd09-invite-form button { min-height:44px; justify-self:start; }
   #wd09-auth-screen .wd09-auth-security {
     margin-top:29px; padding:10px 12px; border:1px solid #e3e1ec; border-radius:9px;
     background:#f6f5fa; color:#46516a; font-size:11px; text-align:center;
@@ -11431,6 +11443,10 @@ const wdTest09Storage = (() => {
         <button type="submit" id="wd09-auth-submit">로그인</button>
         <p class="wd09-auth-feedback" id="wd09-auth-feedback" role="status"></p>
       </form>
+      <div class="wd09-google-login">
+        <button class="btn-s" type="button" id="wd09-google-login">Google로 로그인</button>
+        <p id="wd09-google-login-hint">설계사허브에 등록된 Google 이메일로 로그인해 주세요.</p>
+      </div>
       <p class="wd09-auth-security"><b>보안 접속 안내</b> 승인된 계정으로만 접속하고, 공용 기기에서는 사용 후 로그아웃해 주세요.</p>
       <p class="wd09-auth-copyright">© 2026 WD WAVE. All rights reserved.</p>
     </div>
@@ -14523,6 +14539,16 @@ const wdTest09Storage = (() => {
 <p id="wd09-password-feedback" role="status"></p>
 </form>
 </details>
+<section class="card" id="wd09-invite-settings" aria-labelledby="wd09-invite-title" hidden>
+  <h2 id="wd09-invite-title">설계사 추가</h2>
+  <p>Google 이메일을 등록한 뒤 설계사허브 주소를 전달해 주세요.</p>
+  <form id="wd09-invite-form" method="post">
+    <label>이름<input id="wd09-invite-name" maxlength="40" required></label>
+    <label>Google 이메일<input id="wd09-invite-email" type="email" maxlength="254" required></label>
+    <button class="btn-p" type="submit">설계사 등록</button>
+    <p id="wd09-invite-feedback" role="status"></p>
+  </form>
+</section>
 </div>
 </div>
 <!-- V144_7: 상담업무 진입 허브 (신규 pg-consulthub · 카드 4개 · 기존 기능 진입만, 새 저장 없음 · 향후 확장) -->
@@ -33446,6 +33472,18 @@ function openDesignProgressModal(){
   const confirmPassword = byId('wd09-password-confirm');
   const passwordSubmit = byId('wd09-password-submit');
   const passwordFeedback = byId('wd09-password-feedback');
+  const googleButton = byId('wd09-google-login');
+  const inviteSettings = byId('wd09-invite-settings');
+  const inviteForm = byId('wd09-invite-form');
+  const inviteFeedback = byId('wd09-invite-feedback');
+  // Set these to the separate onboarding project's public configuration before deployment.
+  const googleConfig = {url:'',key:''};
+  const pilotEnabled = Boolean(googleConfig.url && googleConfig.key);
+  const googleStorageKey = 'wd09-google-pkce';
+  googleButton.disabled = !pilotEnabled;
+  if(!pilotEnabled)byId('wd09-google-login-hint').textContent='신규 설계사 Google 로그인을 준비 중이에요.';
+  const googleRedirect = new URL(location.pathname,location.origin==='null'?'https://admin.wdwave.kr':location.origin);
+  googleRedirect.searchParams.set('wd09_google','1');
   const rememberedIdKey = 'wd-test09-remembered-employee-id';
   try {
     const savedId = window.localStorage.getItem(rememberedIdKey);
@@ -33474,20 +33512,27 @@ function openDesignProgressModal(){
     return Array.from(new Uint8Array(digest),value => value.toString(16).padStart(2,'0')).join('');
   }
 
-  function ownedFetch(config, uid, isVerified) {
+  function ownedFetch(config, getUid, isVerified, googleLogin=false) {
     const origin = new URL(config.url).origin;
     return async function requestOwned(input, options) {
+      const uid = getUid();
       const request = new Request(input, options);
       const url = new URL(request.url);
       if (url.origin !== origin) throw new Error('계정에 연결된 프로젝트와 주소가 다릅니다.');
       const authRequest =
         (url.pathname==='/auth/v1/token' && request.method==='POST' &&
-          ['password','refresh_token'].includes(url.searchParams.get('grant_type'))) ||
+          (googleLogin?['pkce','refresh_token']:['password','refresh_token']).includes(url.searchParams.get('grant_type'))) ||
         (url.pathname==='/auth/v1/user' && request.method==='GET') ||
         (url.pathname==='/auth/v1/logout' && request.method==='POST');
       if (authRequest) return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
 
-      if (url.pathname==='/auth/v1/user' && request.method==='PUT' && !url.search && isVerified()) {
+      if (request.method==='POST' && !url.search &&
+          googleLogin && ((!uid && url.pathname==='/rest/v1/rpc/wd09_activate_planner') ||
+          (uid==='WDTESTADMIN' && isVerified() && url.pathname==='/rest/v1/rpc/wd09_invite_planner'))) {
+        return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+      }
+
+      if (!googleLogin && url.pathname==='/auth/v1/user' && request.method==='PUT' && !url.search && isVerified()) {
         const body = await request.clone().json();
         const validPassword = value => typeof value==='string' && value.length>0 && value.length<=4096;
         if (body && Object.keys(body).length===2 &&
@@ -33518,6 +33563,10 @@ function openDesignProgressModal(){
         if(ownsPolicy||ownsAttachment||ownsClaimFile)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
       const table = url.pathname.startsWith('/rest/v1/') && url.pathname.slice('/rest/v1/'.length);
+      if (googleLogin && uid && isVerified() && allowedTables.has(table) && table!=='wd_partners_managers') {
+        // The separate project enforces row ownership for every operation.
+        return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+      }
       const validUpsertQuery=(conflict,rows)=>{
         const params=url.searchParams;
         if(params.getAll('on_conflict').length!==1||params.get('on_conflict')!==conflict)return false;
@@ -33613,6 +33662,37 @@ function openDesignProgressModal(){
 
   passwordToggle.addEventListener('click', () => setPasswordVisible(passwordInput.type === 'password'));
 
+  function activateSession(attempt,uid,user,profile=null) {
+    attempt.verified = true;
+    attempt.userId = user.id;
+    attempt.canInvite = profile?.canInvite===true;
+    if (profile) USERS[uid] = {name:profile.name,role:'planner',driveEmail:profile.email};
+    passwordSettings.hidden = !!profile;
+    inviteSettings.hidden = profile?.canInvite!==true;
+    active = attempt;
+    _UID = uid;
+    _ROLE = USERS[uid].role;
+    window.wd09VerifiedDb = () => active===attempt && attempt.verified && _UID===uid ? attempt.client : null;
+    attempt.client.auth.onAuthStateChange((name,session)=>{
+      if (active!==attempt || leaving) return;
+      if (name==='SIGNED_OUT' || (session && session.user?.id!==user.id)) {
+        setTimeout(leave,0);
+      }
+    });
+    passwordInput.value = '';
+    if (uid!=='WD23000') {
+      byId('wd09-drive-services').textContent='Drive 폴더';
+      byId('wd09-google-events').textContent='구글 일정은 지점장 계정에서 사용합니다.';
+      byId('wd09-google-tasks').textContent='구글 할 일은 지점장 계정에서 사용합니다.';
+    }
+    setUserUI(USERS[uid],uid);
+    byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
+    screen.hidden = true;
+    app.style.display = 'block';
+    initApp();
+    window.wd09RefreshBulkSheetButton?.();
+  }
+
   async function login(event) {
     event.preventDefault();
     if (authenticating || active) return;
@@ -33636,7 +33716,7 @@ function openDesignProgressModal(){
           persistSession:false, autoRefreshToken:true, detectSessionInUrl:false,
           storageKey:'wd-test09-'+uid.toLowerCase()
         },
-        global:{fetch:ownedFetch(config,uid,()=>attempt.verified && active===attempt)}
+        global:{fetch:ownedFetch(config,()=>uid,()=>attempt.verified && active===attempt)}
       });
       const loginUrl = new URL('/functions/v1/wd09-employee-login',config.url);
       const response = await fetch(loginUrl,{
@@ -33664,30 +33744,7 @@ function openDesignProgressModal(){
         throw new Error('이 계정의 자료 권한을 확인하지 못했어요.');
       }
 
-      attempt.verified = true;
-      attempt.userId = user.id;
-      active = attempt;
-      _UID = uid;
-      _ROLE = USERS[uid].role;
-      window.wd09VerifiedDb = () => active===attempt && attempt.verified && _UID===uid ? attempt.client : null;
-      attempt.client.auth.onAuthStateChange((name,session)=>{
-        if (active!==attempt || leaving) return;
-        if (name==='SIGNED_OUT' || (session && session.user?.id!==user.id)) {
-          setTimeout(leave,0);
-        }
-      });
-      passwordInput.value = '';
-      if (uid!=='WD23000') {
-        byId('wd09-drive-services').textContent='Drive 폴더';
-        byId('wd09-google-events').textContent='구글 일정은 지점장 계정에서 사용합니다.';
-        byId('wd09-google-tasks').textContent='구글 할 일은 지점장 계정에서 사용합니다.';
-      }
-      setUserUI(USERS[uid],uid);
-      byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
-      screen.hidden = true;
-      app.style.display = 'block';
-      initApp();
-      window.wd09RefreshBulkSheetButton?.();
+      activateSession(attempt,uid,user);
       if (rememberId.checked) {
         try { window.localStorage.setItem(rememberedIdKey,uid); } catch (_) {}
       }
@@ -33704,6 +33761,115 @@ function openDesignProgressModal(){
       authenticating = false;
       submit.disabled = false;
     }
+  }
+
+  function googleAttempt() {
+    const attempt = {verified:false,client:null,uid:null};
+    const memory = new Map();
+    // The redirect needs the PKCE verifier in this tab. Auth tokens stay in memory.
+    const verifierKey = googleStorageKey+'-code-verifier';
+    const storage = {
+      getItem:key=>key===verifierKey?sessionStorage.getItem(key):memory.get(key)??null,
+      setItem(key,value){
+        if(key===verifierKey)sessionStorage.setItem(key,value);
+        else memory.set(key,value);
+      },
+      removeItem(key){
+        if(key===verifierKey)sessionStorage.removeItem(key);
+        else memory.delete(key);
+      }
+    };
+    attempt.client=window.supabase.createClient(googleConfig.url,googleConfig.key,{
+      auth:{flowType:'pkce',detectSessionInUrl:false,persistSession:true,storage,storageKey:googleStorageKey},
+      global:{fetch:ownedFetch(googleConfig,()=>attempt.uid,()=>attempt.verified && active===attempt,true)}
+    });
+    return attempt;
+  }
+
+  function setLoginBusy(busy) {
+    authenticating=busy;
+    submit.disabled=busy;
+    googleButton.disabled=busy||!pilotEnabled;
+  }
+
+  async function startGoogleLogin() {
+    if(authenticating||active||!pilotEnabled)return;
+    if(location.protocol!=='https:'||!window.supabase?.createClient||!crypto.subtle){
+      status.textContent='HTTPS로 열린 설계사허브에서 Google 로그인을 사용할 수 있어요.';
+      return;
+    }
+    setLoginBusy(true);
+    try{
+      const {data,error}=await googleAttempt().client.auth.signInWithOAuth({
+        provider:'google',options:{redirectTo:googleRedirect.href,queryParams:{prompt:'select_account'},skipBrowserRedirect:true}
+      });
+      if(error||!data?.url)throw new Error();
+      location.assign(data.url);
+    }catch(_){
+      status.textContent='Google 로그인을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+      setLoginBusy(false);
+    }
+  }
+
+  async function finishGoogleLogin() {
+    const callback = new URL(location.href);
+    if(callback.searchParams.get('wd09_google')!=='1')return;
+    const code = callback.searchParams.get('code');
+    history.replaceState(null,'',callback.pathname);
+    if(!pilotEnabled||!code||!window.supabase?.createClient){
+      status.textContent='Google 로그인을 완료하지 못했어요. 다시 시도해 주세요.';
+      return;
+    }
+    setLoginBusy(true);
+    status.textContent='Google 계정과 초대 여부를 확인하고 있어요.';
+    let attempt;
+    try{
+      attempt = googleAttempt();
+      const {data,error}=await attempt.client.auth.exchangeCodeForSession(code);
+      if(error||!data?.session)throw new Error('Google 로그인을 완료하지 못했어요. 다시 시도해 주세요.');
+      const verified=await attempt.client.auth.getUser();
+      const user=verified.data?.user;
+      if(verified.error||!user||user.id!==data.session.user?.id)throw new Error('로그인한 계정을 확인하지 못했어요.');
+      const result=await attempt.client.rpc('wd09_activate_planner');
+      const profile=result.data;
+      if(result.error?.code==='42501')throw new Error('초대된 Google 계정으로 로그인해 주세요.');
+      if(result.error||!(/^(WDG[a-f0-9]{32}|WDTESTADMIN)$/.test(profile?.uid))||!profile.name||!profile.email){
+        throw new Error('설계사 계정을 열지 못했어요. 등록 상태를 확인해 주세요.');
+      }
+      attempt.uid=profile.uid;
+      activateSession(attempt,profile.uid,user,profile);
+    }catch(error){
+      if(active===attempt){leave();return;}
+      await attempt?.client?.auth.signOut({scope:'local'}).catch(()=>{});
+      status.textContent=error.message||'Google 로그인을 완료하지 못했어요.';
+    }finally{
+      setLoginBusy(false);
+    }
+  }
+
+  async function invitePlanner(event) {
+    event.preventDefault();
+    const client=getSbClient();
+    const button=inviteForm.querySelector('button');
+    if(!active?.canInvite||!client||button.disabled)return;
+    const target_name=byId('wd09-invite-name').value.trim();
+    const target_email=byId('wd09-invite-email').value.trim().toLowerCase();
+    if(!target_name||!target_email)return;
+    button.disabled=true;
+    inviteFeedback.textContent='이메일을 등록하고 있어요.';
+    try{
+      const {error}=await client.rpc('wd09_invite_planner',{target_name,target_email});
+      if(error?.code==='23505'){
+        inviteFeedback.textContent='이미 가입한 설계사입니다.';
+      }else if(error){
+        inviteFeedback.textContent='이메일을 등록하지 못했어요. 입력한 주소를 확인해 주세요.';
+      }else{
+        inviteForm.reset();
+        inviteFeedback.textContent=target_email+' 등록 완료. 설계사허브 주소를 전달해 주세요.';
+      }
+    }catch(_){
+      inviteFeedback.textContent='등록 결과를 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+    }finally{button.disabled=false;}
   }
 
   async function changePassword(event) {
@@ -33782,6 +33948,9 @@ function openDesignProgressModal(){
     }
   });
   form.addEventListener('submit',login);
+  inviteForm.addEventListener('submit',invitePlanner);
+  googleButton.addEventListener('click',startGoogleLogin);
+  void finishGoogleLogin();
   byId('wd09-auth-signout').addEventListener('click',leave);
   window.addEventListener('pagehide',()=>{ if (active) app.style.display='none'; });
   window.addEventListener('pageshow',event=>{ if (event.persisted && active) leave(); });
@@ -34623,7 +34792,7 @@ async function wd09RefreshCustomerRecordTab(kind){
     const adviser=USERS[uid];
     if(!adviser||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
     const withHome=uid==='WD23000';
-    const grant=await authorize(withHome?[driveScope,...homeScopes]:[driveScope],[monthlyScope]);
+    const grant=await authorize(withHome?[driveScope,...homeScopes]:[driveScope],adviser.driveEmail?[]:[monthlyScope]);
     if(uid!==_UID||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
     const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
     const homeSession=withHome?{token:grant.access_token,pendingTasks:new Set()}:null;
@@ -34656,6 +34825,9 @@ async function wd09RefreshCustomerRecordTab(kind){
     const about=await request(base+'/about?fields=user(permissionId,emailAddress,displayName)');
     const user=about.user;
     if(!user?.permissionId)throw new Error('Google Drive 계정을 확인하지 못했어요.');
+    if(adviser.driveEmail && user.emailAddress?.toLowerCase()!==adviser.driveEmail){
+      throw new Error('설계사허브에 로그인한 Google 계정의 Drive를 선택해 주세요.');
+    }
 
     function metadata(parent,key,name,mimeType){
       return {name,mimeType,...(parent==='root'?{}:{parents:[parent]}),
@@ -34921,6 +35093,15 @@ async function wd09RefreshCustomerRecordTab(kind){
     try{
       if(!monthlySession||Date.now()>=monthlySession.expiresAt){
         const grant=await authorize([monthlyScope]);
+        const driveEmail=USERS[uid]?.driveEmail;
+        if(driveEmail){
+          const account=await fetch(base+'/about?fields=user(emailAddress)',{
+            headers:{Authorization:'Bearer '+grant.access_token},credentials:'omit',cache:'no-store',redirect:'error'
+          });
+          if(!account.ok||(await account.json()).user?.emailAddress?.toLowerCase()!==driveEmail){
+            throw new Error('설계사허브에 로그인한 Google 계정을 선택해 주세요.');
+          }
+        }
         if(uid!==_UID)return;
         monthlySession={uid,token:grant.access_token,expiresAt:Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000)};
       }
