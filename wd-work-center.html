@@ -1070,7 +1070,10 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd150-report-instructions .wd97-order-scroll{max-height:270px;overflow:auto}
 #employeeOrderStatus:empty{display:none}
 </style>
-<script src="./wd-talk-backup.js"></script><style id="office-ledger-forms-style">
+<script src="./wd-talk-backup.js"></script>
+<link rel="stylesheet" href="./wd-sticky-notes.css">
+<script src="./wd-sticky-notes.js"></script>
+<style id="office-ledger-forms-style">
 .office-workspace .office-ledger-table thead th{text-align:center}
 .office-workspace .office-ledger-table tbody td{text-align:center}
 .office-workspace .office-ledger-table tbody .office-ledger-amount{text-align:right;padding-inline:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -1253,8 +1256,10 @@ function loginView(){
 }
 async function sha(value){let data=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));return Array.from(new Uint8Array(data),b=>b.toString(16).padStart(2,'0')).join('')}
 function logout(){
+  if(workStickyNotes?.hasPending()&&stickyIdentity())return notify('스티커노트 저장이 끝난 뒤 로그아웃하세요');
   if(liveAttendanceSaving)return notify('근무기록 저장이 끝난 뒤 로그아웃하세요');
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
+  workStickyNotes?.reset();workStickyUserId=null;
   closeWorkspaceTalk();stopWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;workCenterDriveEntered=false;clearTimeout(workCenterDriveTimer);staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
   for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
   payrollReminderShown='';
@@ -2338,7 +2343,7 @@ async function loginWorkCenterFromHq(form,{staffOnly=false,expectedStaffId=null}
       if(staffOnly||expectedStaffId)return false;
       await loadWorkCenterManagerGrants(()=>current()&&sameSession(token,identity));
       if(!current()||!sameSession(token,identity))return;
-      managerWorkIdentity=identity;rememberManagerRead(token);managerHqReady=true;currentUser='manager';S.nav='managerHome';render();return true;
+      managerWorkIdentity=identity;rememberManagerRead(token);managerHqReady=true;workStickyUserId=identity.user_id;currentUser='manager';S.nav='managerHome';render();return true;
     }
     const grant=await workCenterAccessFor(identity.login_id,token);
     const legacy=identity.login_id===legacyStaffHqLogin&&identity.staff_role==='ops_lead';
@@ -2356,7 +2361,7 @@ async function loginWorkCenterFromHq(form,{staffOnly=false,expectedStaffId=null}
     const workspace=staffWorkspace(profile.id);
     if(grant)workspace.staffProfiles[0]=applyWorkCenterGrant(workspace.staffProfiles[0],grant);
     if(profileMenus(workspace.staffProfiles[0]).includes('payroll')&&existing?.payslips)workspace.staffProfiles[0].payslips=existing.payslips;
-    activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;hqStaffLoginId=identity.login_id;pinOnlyWorkspace=false;
+    activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;hqStaffLoginId=identity.login_id;workStickyUserId=identity.user_id;pinOnlyWorkspace=false;
     if(legacy)liveAttendanceReady=true;
     render();
     return true;
@@ -5720,6 +5725,7 @@ async function previewMaterial(id){if(!currentUser)return;let item=(S.materials|
 
 function reportsView(){let list=allReportTasks().filter(t=>t.reports.length);return `<div class="titleRow"><div><div class="eyebrow">SUBMISSIONS</div><h1>${currentUser==='manager'?'접수 업무보고':'제출 업무보고'}</h1><p class="muted">일일 업무보고와 이전 제출 이력을 확인합니다.</p></div></div>${list.map(t=>`<section class="card wd24-submission"><div class="eyebrow">${esc(t.date)} · ${t.parentId?'이전 개별 보고 · 할 일 '+t.order:t.reports.some(r=>r.formVersion===4)?'일일 업무보고':'이전 하루 전체 보고'}</div><h2>${esc(t.title)}</h2><span class="pill">${status(t)}</span>${reportList(t)}</section>`).join('')||'<div class="empty">제출된 업무보고가 없습니다.</div>'}` }
 let activeNoteId=null,noteListOpen=false,noteSearch='',lastDeletedNote=null;
+let workStickyUserId=null,workStickyNotes=null;
 const NOTE_COLORS={yellow:{label:'노랑',bg:'#fff5b6',accent:'#ffe887',border:'#ead78b'},purple:{label:'연보라',bg:'#f0e7ff',accent:'#d9c3f6',border:'#d4c2e8'},blue:{label:'하늘',bg:'#e6f3ff',accent:'#bcdcf6',border:'#c0d9ed'},pink:{label:'분홍',bg:'#ffe8ef',accent:'#f7bfd2',border:'#ecc5d3'},peach:{label:'살구',bg:'#ffeddd',accent:'#ffd3ac',border:'#edceb2'},gray:{label:'연회색',bg:'#f0eff3',accent:'#d8d6df',border:'#d6d3dd'}};
 function validNoteColor(color){return Object.hasOwn(NOTE_COLORS,color)?color:'yellow'}
 function noteColorStyle(color){let c=NOTE_COLORS[validNoteColor(color)];return `--note-bg:${c.bg};--note-accent:${c.accent};--note-border:${c.border}`}
@@ -5727,21 +5733,64 @@ function notePalette(color){return `<div class="wd49-palette" role="group" aria-
 function setNoteColor(color){color=validNoteColor(color);let note=normalizeNotes().find(n=>n.id===activeNoteId);if(note){note.color=color;note.updatedAt=now()}else S.stickyDraftColor=color;save();let dock=$('stickyDock');if(dock){dock.setAttribute('data-note-color',color);dock.setAttribute('style',noteColorStyle(color))}document.querySelectorAll('[data-note-color-choice]').forEach(b=>{let selected=b.dataset.noteColorChoice===color;b.setAttribute('aria-pressed',String(selected));b.querySelector('span').textContent=selected?'✓':''});renderNoteList();refreshNoteBoard()}
 function normalizeNotes(){S.ideas=Array.isArray(S.ideas)?S.ideas:[];S.ideas.forEach((n,i)=>{if(!n.id)n.id='note_legacy_'+i+'_'+String(n.at||'').replace(/[^0-9]/g,'')});return S.ideas}
 function noteText(n){if(!n)return S.stickyDraft||'';let body=String(n.desc||'');if(n.title&&body.split('\n')[0].trim().slice(0,60)!==n.title)body=n.title+(body?'\n'+body:'');if(n.url&&!body.includes(n.url))body+='\n'+n.url;return body}
-function visibleNotes(){return normalizeNotes().filter(n=>!noteSearch||(n.title+' '+n.desc).toLowerCase().includes(noteSearch.toLowerCase()))}
+function stickyIdentity(){
+  return currentUser&&workStickyUserId===readHqSession()?.user?.id?workStickyUserId:null;
+}
+function sharedWorkNotes(){
+  if(!stickyIdentity()||!window.WDStickyNotes)return null;
+  if(!workStickyNotes)workStickyNotes=window.WDStickyNotes.bind({
+    base:adminAuthBase,key:adminAuthPublic,identity:stickyIdentity,trigger:()=>$('openSticky'),
+    getToken:async uid=>{
+      if(stickyIdentity()!==uid)return '';
+      const token=await attendanceHqToken();
+      return stickyIdentity()===uid?token:'';
+    },
+    legacyNotes:()=>normalizeNotes().map(n=>({
+      source:'work',id:n.id,body:noteText(n),color:n.color,created_at:n.at
+    })).filter(n=>n.body.trim()),
+    onChange:()=>{if(S.nav==='ideas')refreshNoteBoard();},
+    keepFresh:()=>S.nav==='ideas'&&!!$('noteGrid'),
+    beforeOpen:()=>closeWorkspaceTalk()
+  });
+  return workStickyNotes;
+}
+function notesForBoard(){
+  const cloud=sharedWorkNotes();
+  if(!cloud)return normalizeNotes();
+  return cloud.rows().map(n=>({
+    id:n.id,title:(n.body.split('\n').find(line=>line.trim())||'제목 없는 메모').trim().slice(0,60),
+    desc:n.body,color:n.color,at:new Date(n.updated_at).toLocaleString('ko-KR')
+  }));
+}
+function visibleNotes(){return notesForBoard().filter(n=>!noteSearch||(n.title+' '+n.desc).toLowerCase().includes(noteSearch.toLowerCase()))}
 function notePreview(n){let lines=String(n.desc||'').split('\n');return lines[0].trim().slice(0,60)===n.title?lines.slice(1).join('\n'):n.desc||''}
 function noteCards(){let notes=visibleNotes();return notes.length?notes.map(n=>`<button class="wd48-note" data-note-id="${esc(n.id)}" data-note-color="${validNoteColor(n.color)}" style="${noteColorStyle(n.color)}"><h2>${esc(n.title||'제목 없는 메모')}</h2><p>${esc(notePreview(n))}</p><small>${esc(n.updatedAt||n.at)}</small></button>`).join(''):`<div class="empty wd48-empty">${noteSearch?'검색한 노트가 없습니다.':'새 노트에 메모를 남겨보세요.'}</div>`}
-function ideasView(){return `<div class="titleRow"><div><div class="eyebrow">MY STICKY NOTES</div><h1>아이디어&amp;자료수집함</h1><p class="muted">노트를 선택해 이어 쓰고, 수정하거나 삭제하세요.</p></div><button class="primary" id="newBoardNote">+ 새 노트</button></div><div class="wd48-boardtools"><input id="noteBoardSearch" placeholder="메모 검색" aria-label="스티커노트 검색" value="${esc(noteSearch)}">${lastDeletedNote?'<button class="small" id="undoBoardDelete">삭제 취소</button>':''}</div><div class="wd48-notegrid" id="noteGrid">${noteCards()}</div>`}
+function ideasView(){return `<div class="titleRow"><div><div class="eyebrow">MY STICKY NOTES</div><h1>아이디어&amp;자료수집함</h1><p class="muted">노트를 선택해 이어 쓰고, 수정하거나 삭제하세요.</p></div><button class="primary" id="newBoardNote">+ 새 노트</button></div><div class="wd48-boardtools"><input id="noteBoardSearch" placeholder="메모 검색" aria-label="스티커노트 검색" value="${esc(noteSearch)}">${lastDeletedNote?'<button class="small" id="undoBoardDelete">삭제 취소</button>':''}</div><p class="smallText" id="noteCloudStatus" role="status" hidden></p><div class="wd48-notegrid" id="noteGrid">${noteCards()}</div>`}
 function bindNoteCards(){document.querySelectorAll('[data-note-id]').forEach(b=>b.onclick=()=>openNote(b.dataset.noteId))}
-function refreshNoteBoard(){if($('noteGrid')){$('noteGrid').innerHTML=noteCards();bindNoteCards()}}
-function bindNotes(){if($('newBoardNote'))$('newBoardNote').onclick=()=>openNote(null);if($('noteBoardSearch'))$('noteBoardSearch').oninput=e=>{noteSearch=e.target.value;refreshNoteBoard()};if($('undoBoardDelete'))$('undoBoardDelete').onclick=undoNoteDelete;bindNoteCards()}
-function closeNoteDock(){if($('stickyDock'))$('stickyDock').remove();if($('openSticky'))$('openSticky').setAttribute('aria-expanded','false')}
+function refreshNoteBoard(){
+  if(!$('noteGrid'))return;
+  const status=$('noteCloudStatus'),message=sharedWorkNotes()?.status()||'';
+  if(status){status.hidden=!message;status.textContent=message;}
+  $('noteGrid').innerHTML=noteCards();bindNoteCards();
+}
+function bindNotes(){
+  const cloud=sharedWorkNotes();
+  if(cloud){refreshNoteBoard();void cloud.refresh();}
+  if($('newBoardNote'))$('newBoardNote').onclick=()=>openNote(null);if($('noteBoardSearch'))$('noteBoardSearch').oninput=e=>{noteSearch=e.target.value;refreshNoteBoard()};if($('undoBoardDelete'))$('undoBoardDelete').onclick=undoNoteDelete;bindNoteCards()}
+function closeNoteDock(){if(workStickyNotes?.close()===false)return;if($('stickyDock'))$('stickyDock').remove();if($('openSticky'))$('openSticky').setAttribute('aria-expanded','false')}
 function noteListHTML(){let notes=normalizeNotes();return `<div class="wd48-listhead"><b>내 노트 ${notes.length}개</b></div><div class="wd48-listrows">${notes.map(n=>`<button data-dock-note="${esc(n.id)}" data-note-color="${validNoteColor(n.color)}" style="${noteColorStyle(n.color)}" class="${n.id===activeNoteId?'active':''}"><b>${esc(n.title||'제목 없는 메모')}</b><span>${esc(notePreview(n))}</span><small>${esc(n.updatedAt||n.at)}</small></button>`).join('')||'<p class="smallText">저장된 노트가 없습니다.</p>'}</div>${lastDeletedNote?'<button class="small wd48-undo" id="undoNoteDelete">삭제 취소</button>':''}`}
 function renderNoteList(){if($('dockNoteList')){$('dockNoteList').innerHTML=noteListHTML();document.querySelectorAll('[data-dock-note]').forEach(b=>b.onclick=()=>openNote(b.dataset.dockNote));if($('undoNoteDelete'))$('undoNoteDelete').onclick=undoNoteDelete}}
 function saveNoteText(text){normalizeNotes();let n=S.ideas.find(x=>x.id===activeNoteId);if(!n&&!text.trim()){S.stickyDraft=text;save();return}if(!n){n={id:'note_'+Date.now()+'_'+Math.random().toString(36).slice(2),title:'',desc:'',url:'',at:now(),source:'스티커노트',color:validNoteColor(S.stickyDraftColor)};S.ideas.unshift(n);activeNoteId=n.id}n.desc=text;n.title=(text.split('\n').find(x=>x.trim())||'제목 없는 메모').trim().slice(0,60);n.updatedAt=now();S.stickyDraft='';save();if($('stickyHint'))$('stickyHint').textContent='자동저장됨 · '+n.updatedAt;if($('deleteSticky'))$('deleteSticky').disabled=false;renderNoteList();refreshNoteBoard()}
 function deleteActiveNote(){let index=normalizeNotes().findIndex(n=>n.id===activeNoteId);if(index<0||!confirmWorkCenterDelete(S.ideas[index].title||'노트'))return;lastDeletedNote={note:JSON.parse(JSON.stringify(S.ideas[index])),index};S.deletedNotes=Array.isArray(S.deletedNotes)?S.deletedNotes:[];S.deletedNotes.push(lastDeletedNote.note);S.ideas.splice(index,1);activeNoteId=null;S.stickyDraft='';save();noteListOpen=true;if(S.nav==='ideas')render();openNote(null)}
 function undoNoteDelete(){if(!lastDeletedNote)return;let restored=lastDeletedNote.note;if(!normalizeNotes().some(n=>n.id===restored.id))S.ideas.splice(Math.min(lastDeletedNote.index,S.ideas.length),0,restored);S.deletedNotes=(S.deletedNotes||[]).filter(n=>n.id!==restored.id);lastDeletedNote=null;save();if(S.nav==='ideas')render();openNote(restored.id)}
-function openNote(id=null){normalizeNotes();activeNoteId=id;let n=S.ideas.find(x=>x.id===id);closeNoteDock();let dock=document.createElement('section');dock.id='stickyDock';dock.className='stickyPanel stickyDock wd48-dock'+(noteListOpen?' wd48-withlist':'');dock.setAttribute('role','dialog');dock.setAttribute('aria-label','스티커노트');dock.setAttribute('data-note-color',validNoteColor(n?.color||S.stickyDraftColor));dock.setAttribute('style',noteColorStyle(n?.color||S.stickyDraftColor));dock.innerHTML=`<div class="wd48-dockhead"><div class="wd48-headleft"><button id="toggleStickyList" title="노트 목록" aria-label="노트 목록" aria-expanded="${noteListOpen}"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 5H17M5 10H17M5 15H17M2 5H2.1M2 10H2.1M2 15H2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button id="newSticky" title="새 노트" aria-label="새 노트">＋</button></div><strong>스티커노트</strong><div class="wd48-headright"><button id="deleteSticky" title="노트 삭제" aria-label="노트 삭제" ${n?'':'disabled'}><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5H16M8 3H12M6 5L7 17H13L14 5M9 8V14M11 8V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="closeSticky" title="닫기" aria-label="노트 닫기">×</button></div></div>${notePalette(n?.color||S.stickyDraftColor)}<div class="wd48-dockbody"><section class="wd48-docklist" id="dockNoteList" ${noteListOpen?'':'hidden'}>${noteListHTML()}</section><section class="wd48-editor"><textarea id="stickyText" aria-label="노트 내용" placeholder="여기에 메모하세요. 첫 줄이 노트 제목이 됩니다.">${esc(noteText(n))}</textarea><div class="stickyHint" id="stickyHint">${n?'자동저장됨 · '+esc(n.updatedAt||n.at):'입력하면 자동 저장됩니다.'}</div></section></div>`;document.body.append(dock);if($('openSticky'))$('openSticky').setAttribute('aria-expanded','true');$('stickyText').focus();$('stickyText').oninput=e=>saveNoteText(e.target.value);$('closeSticky').onclick=closeNoteDock;$('newSticky').onclick=()=>{S.stickyDraft='';S.stickyDraftColor='yellow';openNote(null)};document.querySelectorAll('[data-note-color-choice]').forEach(b=>b.onclick=()=>setNoteColor(b.dataset.noteColorChoice));$('deleteSticky').onclick=deleteActiveNote;$('toggleStickyList').onclick=()=>{noteListOpen=!noteListOpen;dock.classList.toggle('wd48-withlist',noteListOpen);$('dockNoteList').hidden=!noteListOpen;$('toggleStickyList').setAttribute('aria-expanded',String(noteListOpen));renderNoteList()};renderNoteList()}
-function stickyModal(){if(!closeWorkspaceTalk())return;if($('stickyDock')){closeNoteDock();return}let n=normalizeNotes().find(x=>x.id===activeNoteId);openNote(n?n.id:null)}
+function openNote(id=null){
+  const cloud=sharedWorkNotes();
+  if(cloud){void cloud.open(id);return;}
+  normalizeNotes();activeNoteId=id;let n=S.ideas.find(x=>x.id===id);closeNoteDock();let dock=document.createElement('section');dock.id='stickyDock';dock.className='stickyPanel stickyDock wd48-dock'+(noteListOpen?' wd48-withlist':'');dock.setAttribute('role','dialog');dock.setAttribute('aria-label','스티커노트');dock.setAttribute('data-note-color',validNoteColor(n?.color||S.stickyDraftColor));dock.setAttribute('style',noteColorStyle(n?.color||S.stickyDraftColor));dock.innerHTML=`<div class="wd48-dockhead"><div class="wd48-headleft"><button id="toggleStickyList" title="노트 목록" aria-label="노트 목록" aria-expanded="${noteListOpen}"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 5H17M5 10H17M5 15H17M2 5H2.1M2 10H2.1M2 15H2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button id="newSticky" title="새 노트" aria-label="새 노트">＋</button></div><strong>스티커노트</strong><div class="wd48-headright"><button id="deleteSticky" title="노트 삭제" aria-label="노트 삭제" ${n?'':'disabled'}><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5H16M8 3H12M6 5L7 17H13L14 5M9 8V14M11 8V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="closeSticky" title="닫기" aria-label="노트 닫기">×</button></div></div>${notePalette(n?.color||S.stickyDraftColor)}<div class="wd48-dockbody"><section class="wd48-docklist" id="dockNoteList" ${noteListOpen?'':'hidden'}>${noteListHTML()}</section><section class="wd48-editor"><textarea id="stickyText" aria-label="노트 내용" placeholder="여기에 메모하세요. 첫 줄이 노트 제목이 됩니다.">${esc(noteText(n))}</textarea><div class="stickyHint" id="stickyHint">${n?'자동저장됨 · '+esc(n.updatedAt||n.at):'입력하면 자동 저장됩니다.'}</div></section></div>`;document.body.append(dock);if($('openSticky'))$('openSticky').setAttribute('aria-expanded','true');$('stickyText').focus();$('stickyText').oninput=e=>saveNoteText(e.target.value);$('closeSticky').onclick=closeNoteDock;$('newSticky').onclick=()=>{S.stickyDraft='';S.stickyDraftColor='yellow';openNote(null)};document.querySelectorAll('[data-note-color-choice]').forEach(b=>b.onclick=()=>setNoteColor(b.dataset.noteColorChoice));$('deleteSticky').onclick=deleteActiveNote;$('toggleStickyList').onclick=()=>{noteListOpen=!noteListOpen;dock.classList.toggle('wd48-withlist',noteListOpen);$('dockNoteList').hidden=!noteListOpen;$('toggleStickyList').setAttribute('aria-expanded',String(noteListOpen));renderNoteList()};renderNoteList()}
+function stickyModal(){
+  const cloud=sharedWorkNotes();
+  if(cloud){void cloud.open();return;}
+  if(!closeWorkspaceTalk())return;if($('stickyDock')){closeNoteDock();return}let n=normalizeNotes().find(x=>x.id===activeNoteId);openNote(n?n.id:null)}
 
 
 function localDay(d=new Date()){let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
@@ -8369,7 +8418,12 @@ async function commitInstruction(d,plan,sender,profile,id){
 function render(){releaseNativeDrivePreview();if(!currentUser){loginView();return}
 if(!workCenterDriveEntered&&(currentUser==='manager'||workspaceDriveAccount()||realAttendanceProfile())){workCenterEntry();return;}
 if(!workspaceMenus().some(([id])=>id===S.nav)&&!(currentUser==='manager'&&S.nav==='month'))S.nav=currentUser==='manager'?'managerHome':'attendance';
-let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?workReportView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():S.nav==='myInstructions'?employeeInstructions(true):dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>{setNav(x.dataset.nav);});document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;syncWorkCenterDriveButton();if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){$('openSticky').onclick=stickyModal;$('openSticky').setAttribute('aria-expanded',String(!!$('stickyDock')))}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindWorkReportView()}else if(currentUser==='manager'&&S.nav==='staff'){
+let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySection('업무매뉴얼','manual'):S.nav==='archive'?librarySection('작업결과 보관','archive'):sensitiveMenus.some(([id])=>id===S.nav)?sensitiveMenuView():currentUser==='manager'&&S.nav==='managerHome'?managerHomeView():currentUser==='manager'&&S.nav==='review'?workReportView():currentUser==='manager'&&S.nav==='staff'?staffManagementView():currentUser==='manager'&&S.nav==='instructions'?instructionView():S.nav==='month'?(currentUser==='manager'&&!staffTasksOpen?staffTable():monthView()):S.nav==='reports'?reportsView():S.nav==='ideas'?ideasView():S.nav==='attendance'?attendanceView():S.nav==='drive'?driveView():S.nav==='myInstructions'?employeeInstructions(true):dashboard();$('root').innerHTML=shell(content);document.querySelectorAll('[data-nav]').forEach(x=>x.onclick=()=>{setNav(x.dataset.nav);});document.querySelectorAll('[data-task]').forEach(x=>x.onclick=()=>S.nav==='month'?taskPreview(x.dataset.task):setTask(x.dataset.task));$('logout').onclick=logout;syncWorkCenterDriveButton();if($('openWorkspaceTalk')){$('openWorkspaceTalk').onclick=openWorkspaceTalk;$('openWorkspaceTalk').setAttribute('aria-expanded',String(!!$('workspaceTalk')));}startWorkspaceTalk();if($('openSticky')){
+  const button=$('openSticky');
+  button.onclick=stickyModal;
+  button.setAttribute('aria-controls',stickyIdentity()&&window.WDStickyNotes?'wd-shared-sticky-dock':'stickyDock');
+  button.setAttribute('aria-expanded',String(Boolean(workStickyNotes?.isOpen()||$('stickyDock'))));
+}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindWorkReportView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
 }else if(currentUser==='manager'&&S.nav==='instructions'){bindInstructionView()}else if(S.nav==='myInstructions'){bindEmployeeInstructions(true)}else if(S.nav==='dashboard'&&usesDirectWorkReport()){bindEmployeeInstructions()}else if(S.nav==='dashboard'&&t){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=Number(b.dataset.tab);save();document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('primary',x===b))});document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));bindBoard(t)}else if(S.nav==='month'){bindTaskReports();bindAdminFilters();document.querySelectorAll('[data-staff-tasks]').forEach(b=>b.onclick=()=>{managerStaffId=b.dataset.staffTasks;staffTasksOpen=true;render()});if($('addTask'))$('addTask').onclick=()=>{setNav('instructions')}}else if(['drive','manual','archive'].includes(S.nav)){bindMaterials()}else if(S.nav==='reports'){bindReportButtons()}else if(S.nav==='ideas'){bindNotes()}document.querySelectorAll('[data-download]').forEach(x=>x.onclick=()=>downloadFile(x.dataset.download))}
 function bindEmployee(t){if($('saveDraft'))$('saveDraft').onclick=()=>{save();notify('수행 기록을 저장했습니다')}}

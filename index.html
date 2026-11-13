@@ -1128,6 +1128,9 @@ body.wdhq-auth-checking #wdhq-noah-backdrop{display:none!important}
 </style>
 
 <script src="./wd-talk-backup.js"></script>
+<link rel="stylesheet" href="./wd-sticky-notes.css">
+<script src="./wd-sticky-notes.js"></script>
+
 </head>
 <body>
 <!-- v1.7.7 보험사업부 독립원본 연결
@@ -1463,7 +1466,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9.3 9.3 0 0 0-8.1 14l-1.1 4.1 4.4-1.1A9.3 9.3 0 1 0 12 3Z"/><g class="wdhq-icon-cutout"><circle cx="8" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="16" cy="12" r="1.25"/></g></svg>
     <span id="wdhq-talk-open-sub" hidden></span><span id="wdhq-talk-badge" aria-live="polite"></span>
   </button>
-  <button id="wdhq-sticky-open" type="button" aria-label="스티커메모" title="스티커메모" aria-expanded="false" aria-controls="wdhq-sticky-panel">
+  <button id="wdhq-sticky-open" type="button" aria-label="스티커노트" title="스티커노트" aria-expanded="false" aria-controls="wd-shared-sticky-dock">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v9.2a2 2 0 0 1-.6 1.4l-4.8 4.8a2 2 0 0 1-1.4.6H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path class="wdhq-icon-cutout" d="M7 7h10v1.8H7zm0 4h8v1.8H7zm8 7.8v-3a.8.8 0 0 1 .8-.8h3z"/></svg>
   </button>
   <button id="wdhq-account-info-open" type="button" aria-label="계정정보" title="계정정보" aria-haspopup="dialog" aria-controls="wdhq-account-info">
@@ -1474,12 +1477,6 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
   <header><h2 id="wdhq-account-info-title">계정정보</h2><button id="wdhq-account-info-close" type="button" aria-label="닫기">×</button></header>
   <div id="wdhq-account-info-content"></div>
 </dialog>
-<section id="wdhq-sticky-panel" class="wdhq-sticky-panel" aria-labelledby="wdhq-sticky-title" hidden>
-  <header><h2 id="wdhq-sticky-title">스티커메모</h2><button id="wdhq-sticky-close" type="button" aria-label="닫기">×</button></header>
-  <textarea id="wdhq-sticky-text" rows="7" maxlength="4000" aria-label="스티커메모 내용" placeholder="기억할 내용을 적어 두세요"></textarea>
-  <p id="wdhq-sticky-status" role="status">이 브라우저에 저장됩니다.</p>
-  <footer><button id="wdhq-sticky-delete" type="button">삭제</button><button id="wdhq-sticky-save" type="button">저장</button></footer>
-</section>
 
 <nav class="mobilebar">
   <button class="active" onclick="goToSection('top')"><b>⌂</b>오늘</button>
@@ -2644,7 +2641,7 @@ function setDate(){
 }
 
 function wdhqClearDisplayState(){
-  window.WDHQStickyNote?.close();
+  window.WDHQStickyNote?.reset();
   document.getElementById('wdhq-account-info')?.close();
   delete document.body.dataset.wdhqRole;
   [WDHQ_AUTH_KEY,WDHQ_USER_KEY,'wd_current_uid','wd_user_name','wd_current_dbk','wd_current_role'].forEach(key=>localStorage.removeItem(key));
@@ -2838,6 +2835,7 @@ async function wdhqVerifyLogin(){
 }
 async function wdhqLogout(){
   if(WDHQ_AUTH_CHECKING)return false;
+  if(window.WDHQStickyNote?.hasPending()){toast('스티커노트 저장이 끝난 뒤 로그아웃하세요.');return false;}
   WDHQ_AUTH_CHECKING=true;
   try{wdhqInitSupabase();await WDHQ_SUPABASE.auth.signOut({scope:'local'})}catch(ignore){}
   WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;wdhqClearDisplayState();WDHQ_AUTH_CHECKING=false;
@@ -5753,20 +5751,6 @@ body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext b{
 - 2026-09-23 추가: 파일첨부(A안) · 회사공통 03_업무공유파일(1akIH85_…)에 Drive 업로드 후 [WDFILE] 메시지 · 100MB 상한 · DB 변경 없음
 - 2026-09-23 추가: 상대 메시지 알림음(Web Audio) · 🔔/🔕 토글(메모리) · 닫힌 상태 미리보기 5초 · 배지 유지
 -->
-<style id="wdhq-sticky-style">
-.wdhq-sticky-fab{position:fixed;right:22px;bottom:92px;z-index:80;display:inline-flex;align-items:center;gap:9px;min-height:54px;padding:8px 14px 8px 10px;border:1px solid #dbcaf5;border-radius:17px;background:#f2eaff;color:#45277d;font:inherit;font-size:13px;cursor:pointer;box-shadow:0 10px 24px #3d236521}
-.wdhq-sticky-fab span{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:#e7d8ff;font-size:20px}
-.wdhq-sticky-panel{position:fixed;right:22px;bottom:158px;z-index:2147483100;width:min(380px,calc(100vw - 32px));padding:16px;border:1px solid #ddcff0;border-radius:15px;background:#fdf9ff;color:#302348;box-shadow:0 15px 34px #30234830}
-.wdhq-sticky-panel[hidden],body.wdhq-auth-locked .wdhq-sticky-fab,body.wdhq-auth-checking .wdhq-sticky-fab,body.wdhq-auth-locked .wdhq-sticky-panel,body.wdhq-auth-checking .wdhq-sticky-panel{display:none!important}
-.wdhq-sticky-panel header,.wdhq-sticky-panel footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.wdhq-sticky-panel h2{margin:0;font-size:17px}
-.wdhq-sticky-panel textarea{display:block;width:100%;margin:10px 0 6px;min-height:120px;padding:10px;border:1px solid #ddcff0;border-radius:9px;background:#fff;font:inherit;resize:vertical}
-.wdhq-sticky-panel p{margin:6px 0 9px;font-size:12px;color:#685b79}
-.wdhq-sticky-panel button{min-height:34px;padding:5px 10px;border:1px solid #ddcff0;border-radius:8px;background:#fff;color:#432974;cursor:pointer}
-.wdhq-sticky-panel footer{justify-content:flex-end}
-.wdhq-sticky-panel #wdhq-sticky-save{background:#6433b7;color:#fff;border-color:#6433b7}
-@media(max-width:760px){.wdhq-sticky-fab{right:13px;bottom:140px;min-height:48px;padding:6px 11px 6px 7px}.wdhq-sticky-panel{right:13px;bottom:194px;max-height:calc(100dvh - 215px);overflow:auto}}
-</style>
 <style id="wdhq-talk-style">
 #wdhq-talk-open{
   position:fixed;right:22px;bottom:162px;z-index:2147483100;
@@ -6465,38 +6449,28 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 
 <script id="wdhq-sticky-script">
 (function(){
-  const get=id=>document.getElementById(id);
-  const open=get('wdhq-sticky-open'),panel=get('wdhq-sticky-panel'),text=get('wdhq-sticky-text');
-  const status=get('wdhq-sticky-status');
-  let owner='';
-  const uid=()=>WDHQ_AUTH_PROFILE?.user_id===WDHQ_AUTH_SESSION?.user?.id?(WDHQ_AUTH_SESSION?.user?.id||''):'';
-  const key=()=> 'wdhq-sticky-note-v1:'+owner;
-  const close=()=>{
-    panel.hidden=true;open.setAttribute('aria-expanded','false');text.value='';owner='';
+  const trigger=()=>document.getElementById('wdhq-sticky-open');
+  const identity=()=>{
+    const profile=WDHQ_AUTH_PROFILE,session=WDHQ_AUTH_SESSION;
+    return profile?.user_id===session?.user?.id&&profile?.is_active===true&&
+      profile.allowed_spaces?.includes('work')?session.user.id:null;
   };
-  open.onclick=()=>{
-    if(!panel.hidden){close();return;}
-    owner=uid();
-    if(!owner)return;
-    window.WDHQTalk?.close();
-    try{text.value=localStorage.getItem(key())||'';status.textContent='이 브라우저에 저장됩니다.';}
-    catch(e){text.value='';status.textContent='브라우저 저장소에 접근하지 못했습니다.';}
-    panel.hidden=false;open.setAttribute('aria-expanded','true');text.focus();
-  };
-  get('wdhq-sticky-close').onclick=()=>{close();open.focus()};
-  get('wdhq-sticky-save').onclick=()=>{
-    if(!owner||owner!==uid())return close();
-    try{localStorage.setItem(key(),text.value);status.textContent='이 브라우저에 저장했어요.';}
-    catch(e){status.textContent='메모를 저장하지 못했습니다.';}
-  };
-  get('wdhq-sticky-delete').onclick=()=>{
-    if(!owner||owner!==uid())return close();
-    if(!window.confirm('스티커메모를 삭제하시겠습니까?'))return;
-    try{localStorage.removeItem(key());text.value='';status.textContent='메모를 삭제했어요.';}
-    catch(e){status.textContent='메모를 삭제하지 못했습니다.';}
-  };
-  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){close();open.focus()}});
-  window.WDHQStickyNote=Object.freeze({close});
+  const notes=window.WDStickyNotes?.bind({
+    base:WDHQ_SB_URL,key:WDHQ_SB_PUBLISHABLE_KEY,identity,trigger,
+    getToken:async uid=>{
+      if(identity()!==uid)return '';
+      const {data}=await WDHQ_SUPABASE.auth.getSession();
+      return identity()===uid&&data?.session?.user?.id===uid?data.session.access_token:'';
+    },
+    beforeOpen:()=>{window.WDHQTalk?.close();return true;}
+  });
+  if(notes){
+    window.WDHQStickyNote=notes;
+    trigger().onclick=()=>{
+      if(!identity()){toast('업무센터 사용 권한이 있는 본진 계정으로 로그인해 주세요.');return;}
+      void notes.open();
+    };
+  }
 })();
 </script>
 <style id="wdhq-quick-style">
@@ -6522,7 +6496,7 @@ body:not([data-wdhq-role="owner"]) #wdhq-account-info-open{display:none}
 #wdhq-quick-dock svg .wdhq-icon-cutout{fill:var(--wdhq-tool-color)}
 #wdhq-quick-dock #wdhq-talk-badge{top:-5px;right:-5px}
 
-#wdhq-talk-panel,#wdhq-sticky-panel,#wdhq-account-info{
+#wdhq-talk-panel,#wdhq-account-info{
   position:fixed;inset:0 0 0 auto;margin:0;width:min(560px,100%);max-width:100%;
   height:100vh;height:100dvh;max-height:none;padding:0;box-sizing:border-box;overflow:hidden;
   border:0;border-left:1px solid #dce4ed;border-radius:0;
@@ -6533,42 +6507,30 @@ body:not([data-wdhq-role="owner"]) #wdhq-account-info-open{display:none}
   transition:transform .24s cubic-bezier(.2,.72,.22,1),visibility 0s linear .24s;
 }
 #wdhq-talk-panel.open{visibility:visible;transform:translateX(0);transition-delay:0s}
-#wdhq-sticky-panel{
-  z-index:2147483200;background:#fffaf0;color:#302711;
-}
-#wdhq-sticky-panel:not([hidden]),#wdhq-account-info[open]{
+#wdhq-account-info[open]{
   display:flex;flex-direction:column;animation:wdhq-drawer-enter .24s cubic-bezier(.2,.72,.22,1) both;
 }
 @keyframes wdhq-drawer-enter{from{transform:translateX(100%)}to{transform:translateX(0)}}
-#wdhq-talk-panel .wdhq-talk-head,#wdhq-sticky-panel header,#wdhq-account-info header{
+#wdhq-talk-panel .wdhq-talk-head,#wdhq-account-info header{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   flex:0 0 auto;min-height:68px;padding:12px 16px;border-bottom:1px solid #dce4ed;
 }
-#wdhq-sticky-panel header{background:#fff0be}
 #wdhq-account-info{background:#fbf7f8;color:#351d25}
 #wdhq-account-info header{background:#fbe8ec}
-#wdhq-sticky-panel h2,#wdhq-account-info h2{margin:0;font-size:18px;color:inherit}
-#wdhq-talk-close,#wdhq-sticky-close,#wdhq-account-info-close{
+#wdhq-account-info h2{margin:0;font-size:18px;color:inherit}
+#wdhq-talk-close,#wdhq-account-info-close{
   display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;
   border:1px solid #dce4ed;border-radius:10px;background:#fff;color:#293b52;
   font:inherit;font-size:21px;line-height:1;cursor:pointer;
 }
-#wdhq-talk-close:hover,#wdhq-sticky-close:hover,#wdhq-account-info-close:hover{background:#eff3f8}
+#wdhq-talk-close:hover,#wdhq-account-info-close:hover{background:#eff3f8}
 #wdhq-talk-list{overscroll-behavior:contain}
 #wdhq-talk-panel .wdhq-talk-composer{flex:0 0 auto;padding-bottom:max(12px,env(safe-area-inset-bottom))}
-#wdhq-sticky-panel textarea{
-  flex:1 1 auto;width:auto;min-height:0;margin:16px 16px 0;padding:14px;
-  border:1px solid #e1d3a7;resize:none;overscroll-behavior:contain;
-}
-#wdhq-sticky-panel p{margin:8px 16px 0;color:#65583a}
-#wdhq-sticky-panel footer{padding:12px 16px max(16px,env(safe-area-inset-bottom))}
-#wdhq-sticky-panel footer button{min-height:44px;padding:8px 14px;border-color:#e1d3a7;color:#392800}
-#wdhq-sticky-panel #wdhq-sticky-save{background:#ffd34f;border-color:#e5b93e;color:#392800;font-weight:750}
 #wdhq-account-info::backdrop{background:#15263b42}
 #wdhq-account-info-content{flex:1 1 auto;min-height:0}
 #wdhq-account-info-content iframe{display:block;width:100%;height:100%;border:0}
 #wdhq-talk-preview{right:86px;bottom:146px}
-body:has(#wdhq-talk-panel.open,#wdhq-sticky-panel:not([hidden]),#wdhq-account-info[open]) :is(#wdhq-quick-dock,#wdhq-talk-preview){
+body:has(#wdhq-talk-panel.open,#wd-shared-sticky-dock,#wdhq-account-info[open]) :is(#wdhq-quick-dock,#wdhq-talk-preview){
   visibility:hidden;
 }
 @media(max-width:760px){
@@ -6578,11 +6540,11 @@ body:has(#wdhq-talk-panel.open,#wdhq-sticky-panel:not([hidden]),#wdhq-account-in
   #wdhq-talk-preview{right:70px;bottom:calc(192px + env(safe-area-inset-bottom));width:min(260px,calc(100vw - 82px))}
 }
 @media(max-width:560px){
-  #wdhq-talk-panel,#wdhq-sticky-panel,#wdhq-account-info{border-left:0}
+  #wdhq-talk-panel,#wdhq-account-info{border-left:0}
 }
 @media(prefers-reduced-motion:reduce){
   #wdhq-quick-dock button,#wdhq-talk-panel{transition:none}
-  #wdhq-sticky-panel:not([hidden]),#wdhq-account-info[open]{animation:none}
+  #wdhq-account-info[open]{animation:none}
 }
 </style>
 <script id="wdhq-account-info-script">
