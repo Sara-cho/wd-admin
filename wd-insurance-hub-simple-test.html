@@ -11026,6 +11026,8 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 </style>
 <style id="wd09-personal-auth-style">
   #wd09-auth-screen[hidden] { display:none !important; }
+  body:not(.wd09-signed-in) :is(#mgr-quick-btn,#quick-memo-btn,#code-mgr-btn,
+    #modal-mgr-quick,#quick-memo-panel,#modal-codemgr,#btab) { display:none !important; }
   #wd09-auth-screen {
     --login-ink:#0c1b34;
     --login-gold:#e7c462;
@@ -11126,14 +11128,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     display:grid; gap:6px; margin:14px 0 0; padding-top:14px; border-top:1px solid var(--s200);
   }
   #wd09-google-login { min-height:44px; font:inherit; font-weight:750; }
-  #wd09-auth-screen .wd09-google-login p, #wd09-invite-settings p { margin:0; color:var(--s600); font-size:13px; }
-  #wd09-invite-settings[hidden] { display:none; }
-  #wd09-invite-settings { max-width:560px; margin-top:16px; }
-  #wd09-invite-settings h2 { margin:0 0 8px; font-size:17px; color:var(--navy); }
-  #wd09-invite-form { display:grid; gap:12px; margin-top:12px; }
-  #wd09-invite-form label { display:grid; gap:6px; font-size:13px; font-weight:700; }
-  #wd09-invite-form input { width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--s200); border-radius:8px; font:inherit; }
-  #wd09-invite-form button { min-height:44px; justify-self:start; }
+  #wd09-auth-screen .wd09-google-login p { margin:0; color:var(--s600); font-size:13px; }
   #wd09-auth-screen .wd09-auth-security {
     margin-top:29px; padding:10px 12px; border:1px solid #e3e1ec; border-radius:9px;
     background:#f6f5fa; color:#46516a; font-size:11px; text-align:center;
@@ -11444,10 +11439,10 @@ const wdTest09Storage = (() => {
         <p class="wd09-auth-feedback" id="wd09-auth-feedback" role="status"></p>
       </form>
       <div class="wd09-google-login">
-        <button class="btn-s" type="button" id="wd09-google-login">Google로 로그인</button>
-        <p id="wd09-google-login-hint">설계사허브에 등록된 Google 이메일로 로그인해 주세요.</p>
+        <button class="btn-s" type="button" id="wd09-google-login">Google로 회원가입 · 로그인</button>
+        <p id="wd09-google-login-hint">처음 오셨다면 본인 Google 계정으로 가입할 수 있어요.</p>
       </div>
-      <p class="wd09-auth-security"><b>보안 접속 안내</b> 승인된 계정으로만 접속하고, 공용 기기에서는 사용 후 로그아웃해 주세요.</p>
+      <p class="wd09-auth-security"><b>보안 접속 안내</b> 공용 기기에서는 사용 후 로그아웃해 주세요.</p>
       <p class="wd09-auth-copyright">© 2026 WD WAVE. All rights reserved.</p>
     </div>
   </section>
@@ -14539,16 +14534,6 @@ const wdTest09Storage = (() => {
 <p id="wd09-password-feedback" role="status"></p>
 </form>
 </details>
-<section class="card" id="wd09-invite-settings" aria-labelledby="wd09-invite-title" hidden>
-  <h2 id="wd09-invite-title">설계사 추가</h2>
-  <p>Google 이메일을 등록한 뒤 설계사허브 주소를 전달해 주세요.</p>
-  <form id="wd09-invite-form" method="post">
-    <label>이름<input id="wd09-invite-name" maxlength="40" required></label>
-    <label>Google 이메일<input id="wd09-invite-email" type="email" maxlength="254" required></label>
-    <button class="btn-p" type="submit">설계사 등록</button>
-    <p id="wd09-invite-feedback" role="status"></p>
-  </form>
-</section>
 </div>
 </div>
 <!-- V144_7: 상담업무 진입 허브 (신규 pg-consulthub · 카드 4개 · 기존 기능 진입만, 새 저장 없음 · 향후 확장) -->
@@ -16795,7 +16780,7 @@ function wd09SaveInsuranceNote(event){
   void wd09PersistInsuranceNotes(next);
 }
 async function openQuickMemo(){
-  if(!_UID)return;
+  if(!_UID||!getSbClient())return;
   openModal('quick-memo-panel');
   const status=document.getElementById('wd09-insurance-note-status');
   const add=document.getElementById('wd09-insurance-note-add');
@@ -20654,7 +20639,7 @@ function swHubSystemTab(btn,id){
 // 별도 localStorage·별도 테이블 사용 안 함. 요소 id는 cm- 접두사로 업무전산(hs-)과 충돌 방지.
 var _cmTab='nonlife', _cmLoadState='idle', _cmRequest=0;
 var _cmPwVis={};
-function codeMgrAllowed(){return !!_UID;}
+function codeMgrAllowed(){return !!(_UID&&getSbClient());}
 function wd09MountCodeMgr(inline){
   const panel=document.getElementById('wd09-code-panel');
   const host=document.getElementById(inline?'hub-system':'modal-codemgr');
@@ -23012,6 +22997,7 @@ function renderManagerList(opts){
 var mgrModalTab='손보';
 var mgrModalSearchQuery='';
 function openMgrQuickModal(){
+  if(!_UID||!getSbClient())return;
   mgrModalTab='손보';mgrModalSearchQuery='';
   var se=document.getElementById('mgr-quick-search');if(se)se.value='';
   var tabsEl=document.getElementById('mgr-quick-tabs');
@@ -33473,15 +33459,12 @@ function openDesignProgressModal(){
   const passwordSubmit = byId('wd09-password-submit');
   const passwordFeedback = byId('wd09-password-feedback');
   const googleButton = byId('wd09-google-login');
-  const inviteSettings = byId('wd09-invite-settings');
-  const inviteForm = byId('wd09-invite-form');
-  const inviteFeedback = byId('wd09-invite-feedback');
   // Set these to the separate onboarding project's public configuration before deployment.
   const googleConfig = {url:'',key:''};
   const pilotEnabled = Boolean(googleConfig.url && googleConfig.key);
   const googleStorageKey = 'wd09-google-pkce';
   googleButton.disabled = !pilotEnabled;
-  if(!pilotEnabled)byId('wd09-google-login-hint').textContent='신규 설계사 Google 로그인을 준비 중이에요.';
+  if(!pilotEnabled)byId('wd09-google-login-hint').textContent='신규 설계사 Google 회원가입을 준비 중이에요.';
   const googleRedirect = new URL(location.pathname,location.origin==='null'?'https://admin.wdwave.kr':location.origin);
   googleRedirect.searchParams.set('wd09_google','1');
   const rememberedIdKey = 'wd-test09-remembered-employee-id';
@@ -33527,8 +33510,7 @@ function openDesignProgressModal(){
       if (authRequest) return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
 
       if (request.method==='POST' && !url.search &&
-          googleLogin && ((!uid && url.pathname==='/rest/v1/rpc/wd09_activate_planner') ||
-          (uid==='WDTESTADMIN' && isVerified() && url.pathname==='/rest/v1/rpc/wd09_invite_planner'))) {
+          googleLogin && !uid && url.pathname==='/rest/v1/rpc/wd09_activate_planner') {
         return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
 
@@ -33642,6 +33624,7 @@ function openDesignProgressModal(){
     const old = active;
     active = null;
     _UID = null;
+    document.body.classList.remove('wd09-signed-in');
     passwordForm.reset();
     passwordSettings.open = false;
     window.wd09DriveReset?.();
@@ -33665,10 +33648,8 @@ function openDesignProgressModal(){
   function activateSession(attempt,uid,user,profile=null) {
     attempt.verified = true;
     attempt.userId = user.id;
-    attempt.canInvite = profile?.canInvite===true;
     if (profile) USERS[uid] = {name:profile.name,role:'planner',driveEmail:profile.email};
     passwordSettings.hidden = !!profile;
-    inviteSettings.hidden = profile?.canInvite!==true;
     active = attempt;
     _UID = uid;
     _ROLE = USERS[uid].role;
@@ -33689,6 +33670,7 @@ function openDesignProgressModal(){
     byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
     screen.hidden = true;
     app.style.display = 'block';
+    document.body.classList.add('wd09-signed-in');
     initApp();
     window.wd09RefreshBulkSheetButton?.();
   }
@@ -33821,7 +33803,7 @@ function openDesignProgressModal(){
       return;
     }
     setLoginBusy(true);
-    status.textContent='Google 계정과 초대 여부를 확인하고 있어요.';
+    status.textContent='Google 계정을 확인하고 있어요.';
     let attempt;
     try{
       attempt = googleAttempt();
@@ -33832,9 +33814,8 @@ function openDesignProgressModal(){
       if(verified.error||!user||user.id!==data.session.user?.id)throw new Error('로그인한 계정을 확인하지 못했어요.');
       const result=await attempt.client.rpc('wd09_activate_planner');
       const profile=result.data;
-      if(result.error?.code==='42501')throw new Error('초대된 Google 계정으로 로그인해 주세요.');
-      if(result.error||!(/^(WDG[a-f0-9]{32}|WDTESTADMIN)$/.test(profile?.uid))||!profile.name||!profile.email){
-        throw new Error('설계사 계정을 열지 못했어요. 등록 상태를 확인해 주세요.');
+      if(result.error||!(/^WDG[a-f0-9]{32}$/.test(profile?.uid))||!profile.name||!profile.email){
+        throw new Error('설계사 계정을 열지 못했어요. Google 계정을 확인하고 다시 시도해 주세요.');
       }
       attempt.uid=profile.uid;
       activateSession(attempt,profile.uid,user,profile);
@@ -33845,31 +33826,6 @@ function openDesignProgressModal(){
     }finally{
       setLoginBusy(false);
     }
-  }
-
-  async function invitePlanner(event) {
-    event.preventDefault();
-    const client=getSbClient();
-    const button=inviteForm.querySelector('button');
-    if(!active?.canInvite||!client||button.disabled)return;
-    const target_name=byId('wd09-invite-name').value.trim();
-    const target_email=byId('wd09-invite-email').value.trim().toLowerCase();
-    if(!target_name||!target_email)return;
-    button.disabled=true;
-    inviteFeedback.textContent='이메일을 등록하고 있어요.';
-    try{
-      const {error}=await client.rpc('wd09_invite_planner',{target_name,target_email});
-      if(error?.code==='23505'){
-        inviteFeedback.textContent='이미 가입한 설계사입니다.';
-      }else if(error){
-        inviteFeedback.textContent='이메일을 등록하지 못했어요. 입력한 주소를 확인해 주세요.';
-      }else{
-        inviteForm.reset();
-        inviteFeedback.textContent=target_email+' 등록 완료. 설계사허브 주소를 전달해 주세요.';
-      }
-    }catch(_){
-      inviteFeedback.textContent='등록 결과를 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.';
-    }finally{button.disabled=false;}
   }
 
   async function changePassword(event) {
@@ -33948,11 +33904,13 @@ function openDesignProgressModal(){
     }
   });
   form.addEventListener('submit',login);
-  inviteForm.addEventListener('submit',invitePlanner);
   googleButton.addEventListener('click',startGoogleLogin);
   void finishGoogleLogin();
   byId('wd09-auth-signout').addEventListener('click',leave);
-  window.addEventListener('pagehide',()=>{ if (active) app.style.display='none'; });
+  window.addEventListener('pagehide',()=>{
+    document.body.classList.remove('wd09-signed-in');
+    if(active)app.style.display='none';
+  });
   window.addEventListener('pageshow',event=>{ if (event.persisted && active) leave(); });
 })();
 </script>
