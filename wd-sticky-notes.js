@@ -20,7 +20,7 @@
   const title=body=>(body.split('\n').find(line=>line.trim())||'제목 없는 메모').trim().slice(0,60);
   const displayDate=value=>new Date(value).toLocaleString('ko-KR');
   const columns='id,body,color,created_at,updated_at,deleted_at,revision';
-  const date=value=>Number.isNaN(Date.parse(value))?undefined:new Date(value).toISOString();
+  const hqLegacyId='legacy-668e6f0a5a538a4b924fa15edb3d71f3f8d3b1442f51e2dd8b4df5ecb2dd0fd8';
 
   function createStore({base,key,uid,getToken}){
     async function request(params, options={}){
@@ -37,7 +37,8 @@
       if(options.expectNoBody)return;
       return response.status===204?[]:response.json();
     }
-    const scope={owner_id:'eq.'+uid};
+    // Only the HQ legacy key was scoped to a verified account. Keep older Work Center imports out of results.
+    const scope={owner_id:'eq.'+uid,or:'(id.not.like.legacy-*,id.eq.'+hqLegacyId+')'};
     async function readOne(id){
       const rows=await request({...scope,id:'eq.'+id,select:columns});
       return rows[0]||null;
@@ -71,27 +72,19 @@
         });
         return rows[0]||null;
       },
-      async import(notes){
-        if(!notes.length)return;
-        const rows=await Promise.all(notes.map(async note=>{
-          const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(note.source+'\n'+note.id));
-          const id='legacy-'+Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
-          return {id,body:note.body,color:colorKey(note.color),created_at:date(note.created_at)||new Date().toISOString()};
-        }));
-        for(let start=0;start<rows.length;start+=100){
-          await request({}, {method:'POST',expectNoBody:true,prefer:'return=minimal,resolution=ignore-duplicates',
-            body:rows.slice(start,start+100)});
-        }
+      async importHqNote(body){
+        await request({}, {method:'POST',expectNoBody:true,prefer:'return=minimal,resolution=ignore-duplicates',
+          body:{id:hqLegacyId,body,color:'yellow',created_at:new Date().toISOString()}});
       }
     };
   }
 
-  function bind({base,key,identity,getToken,trigger,legacyNotes=()=>[],onChange=()=>{},keepFresh=()=>false,beforeOpen=()=>true}){
+  function bind({base,key,identity,getToken,trigger,onChange=()=>{},keepFresh=()=>false,beforeOpen=()=>true}){
     let state=null,dock=null,edit=null,showList=false,draftColor='yellow';
 
     function current(){
       const uid=identity();
-      if(!uid)return null;
+      if(!uid){if(state)reset();return null;}
       if(state?.uid===uid)return state;
       reset();
       state={uid,store:createStore({base,key,uid,getToken}),rows:new Map(),loading:null,
@@ -119,9 +112,7 @@
           if(!context.imported){
             let prior='';
             try{prior=localStorage.getItem('wdhq-sticky-note-v1:'+context.uid)||'';}catch{}
-            const previous=legacyNotes();
-            const notes=prior.trim()?[...previous,{source:'hq',id:'single',body:prior}]:previous;
-            await context.store.import(notes);
+            if(prior.trim())await context.store.importHqNote(prior);
             if(!active(context))return;
             context.imported=true;
           }
@@ -346,10 +337,13 @@
       void refresh();
     }
     const resume=()=>{if(dock||keepFresh())void refresh();};
+    window.addEventListener('storage',()=>{
+      if(state&&!active(state)){reset();onChange();}
+    });
     window.addEventListener('focus',resume);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)resume();});
     setInterval(()=>{
-      if(state&&!active(state)){reset();return;}
+      if(state&&!active(state)){reset();onChange();return;}
       if(!document.hidden)resume();
     },12000);
     window.addEventListener('beforeunload',event=>{
