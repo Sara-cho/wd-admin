@@ -12007,7 +12007,7 @@ const wdTest09Storage = (() => {
     <a href="https://sales.meritzfire.com/" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-meritz" src="https://upload.wikimedia.org/wikipedia/commons/4/44/Meritz_Logo.svg" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>메리츠보장분석</b><span aria-hidden="true">↗</span></a>
     <a href="https://www.bocare.co.kr/v2/views/crm/login/" target="_blank" rel="noopener noreferrer"><span class="wd09-work-link-icon wd09-work-link-icon-bocare" aria-hidden="true">B</span><b>보케어</b><span aria-hidden="true">↗</span></a>
     <a href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-notebook" src="data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+Tm90ZWJvb2tMTTwvdGl0bGU+PHBhdGggZD0iTTExLjk5OSAzLjIwMUM1LjM3MiAzLjIwMSAwIDguNTI4IDAgMTUuMTAxVjIwLjhoMi4yMTJ2LS41NjhjMC0yLjY2NiAyLjE3OC00LjgyNyA0Ljg2Ni00LjgyNyAyLjY4OCAwIDQuODY2IDIuMTYgNC44NjYgNC44Mjd2LjU2OGgyLjIxMnYtLjU2OGMwLTMuODc3LTMuMTctNy4wMTktNy4wNzgtNy4wMTlBNy4wNzUgNy4wNzUgMCAwIDAgMi45OTIgMTQuNWE3LjM1NSA3LjM1NSAwIDAgMSA2LjU2OC00LjAxNmM0LjA1NyAwIDcuMzQ3IDMuMjY0IDcuMzQ3IDcuMjg3VjIwLjhoMi4yMTJWMTcuNzdjMC01LjIzNS00LjI4LTkuNDgxLTkuNTYtOS40ODFhOS41NjMgOS41NjMgMCAwIDAtNi4yMTcgMi4yOEE5Ljc5NSA5Ljc5NSAwIDAgMSAxMiA1LjM5M2M1LjQwNiAwIDkuNzg4IDQuMzQ2IDkuNzg4IDkuNzA3VjIwLjhIMjRWMTUuMWMtLjAwMS02LjU3My01LjM3My0xMS45LTEyLjAwMS0xMS45WiIvPjwvc3ZnPg==" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>노트북LM</b><span aria-hidden="true">↗</span></a>
-    <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-drive" src="https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>구글드라이브</b><span aria-hidden="true">↗</span></a>
+    <a id="wd09-personal-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-drive" src="https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>구글드라이브</b><span aria-hidden="true">↗</span></a>
   </div>
 </section>
 <div class="modal-ov" id="wd-brief-history-modal" onclick="if(event.target===this)wdCloseBriefHistory()">
@@ -16973,7 +16973,7 @@ const wdTest09Storage = (() => {
 <script>
 /* ══ 앱 버전 체크 (배포 후 캐시 대응) ══
    ※ 다음 버전 작업 시 Claude는 이 APP_VERSION 값을 출력 파일 버전에 맞춰 함께 변경할 것 */
-var APP_VERSION='WD_PARTNERS_TEST09_261113_02';
+var APP_VERSION='WD_PARTNERS_TEST09_261113_03';
 (function checkAppVersionRefresh(){
   try{
     /* V128 FIX: file:// 로컬 실행에서는 자기 자신 재이동을 하지 않는다.
@@ -17341,6 +17341,8 @@ function setUserUI(u,uid){
   document.getElementById('my-name').textContent=n+' '+roleLabel+'님';
   document.getElementById('my-id').textContent=uid;
   document.getElementById('dr-admin-main-btn').hidden=u.role!=='branch_manager';
+  const driveLink=document.getElementById('wd09-personal-drive-link');
+  driveLink.href=uid==='WD26002'?'https://drive.google.com/drive/u/5/my-drive':'https://drive.google.com/drive/my-drive';
   if(typeof cwfResetAgentGenderForUid==='function')cwfResetAgentGenderForUid(uid);
 }
 // ══ 앱 초기화 ══
@@ -35504,17 +35506,31 @@ function wd09CustomerSheetService(api,folders,uid){
     const name=customerAttachmentPart(customer.name)+(year?'('+year+')':'')+'_'+WD09_CUSTOMER_SHEETS[kind].title+'_'+date;
     return api.createFile(parent,key,name,mime);
   }
+  async function writeRows(file,kind,rows,previousLength){
+    const sheet=WD09_CUSTOMER_SHEETS[kind];
+    const values=[sheet.headers,...rows.map(row=>sheet.row(row).map(value=>String(value??'')))];
+    while(values.length<previousLength)values.push(Array(sheet.headers.length).fill(''));
+    await api.writeSheet(file.id,values);
+  }
+  const readSheet=(file,kind)=>api.readSheet(file.id,kind==='work'?'A:K':'A:I');
   return {
     sync(customer,kinds,readRows){
       return api.lock(async()=>{
         for(const kind of kinds){
-          const sheet=WD09_CUSTOMER_SHEETS[kind];
-          const rows=await readRows(sheet.table,customer.id);
+          const rows=await readRows(WD09_CUSTOMER_SHEETS[kind].table,customer.id);
           const file=await getFile(customer,kind,true);
-          const previous=await api.readSheet(file.id,kind==='work'?'A:K':'A:I');
-          const values=[sheet.headers,...rows.map(row=>sheet.row(row).map(value=>String(value??'')))];
-          while(values.length<previous.length)values.push(Array(sheet.headers.length).fill(''));
-          await api.writeSheet(file.id,values);
+          await writeRows(file,kind,rows,(await readSheet(file,kind)).length);
+        }
+      });
+    },
+    prepare(customer,readRows){
+      return api.lock(async()=>{
+        for(const kind of Object.keys(WD09_CUSTOMER_SHEETS)){
+          const existing=await getFile(customer,kind,false);
+          if(existing&&(await readSheet(existing,kind)).length)continue;
+          const rows=await readRows(WD09_CUSTOMER_SHEETS[kind].table,customer.id);
+          const file=existing||await getFile(customer,kind,true);
+          await writeRows(file,kind,rows,0);
         }
       });
     },
@@ -35574,6 +35590,7 @@ function wd09MountDriveSetup(connectDrive,home){
     clearTimeout(expiryTimer);
     home?.reset(note);
     window.wd09CustomerSheets=null;
+    if(_UID==='WD26002')byId('wd09-bulk-sheet-status').textContent='';
     window.wd09CustomerFiles=null;
     window.wd09SkillDrive=null;
     window.wd09ShowSkillBoard?.();
@@ -35657,11 +35674,40 @@ function wd09MountDriveSetup(connectDrive,home){
 const wd09PendingCustomerSheets=new Map();
 let wd09CustomerSheetSyncing=false;
 let wd09BulkCustomerSheets=null;
+let wd09InitialCustomerSheets=null;
+async function wd09PreparePlannerSheets(service){
+  const uid=_UID,client=getSbClient();
+  if(uid!=='WD26002'||!client||!service||wd09InitialCustomerSheets?.service===service)return;
+  const current=()=>uid===_UID&&client===getSbClient()&&window.wd09CustomerSheets===service;
+  wd09InitialCustomerSheets={service};
+  const status=document.getElementById('wd09-bulk-sheet-status');
+  status.textContent='기존 고객 시트를 준비하는 중이에요.';
+  try{
+    if(_custUidLoaded!==uid&&!(await loadCustomersFromSupa()).ok)throw Error('고객 목록을 불러오지 못했어요.');
+    if(!current())return;
+    const customers=getCusts().slice();
+    let count=0;
+    for(const customer of customers){
+      if(!current())return;
+      await service.prepare(customer,wd09ReadCustomerSheetRows);
+      if(!current())return;
+      status.textContent='고객 시트 '+(++count)+' / '+customers.length+' 준비';
+    }
+    if(current())status.textContent=customers.length
+      ?'고객 '+customers.length+'명의 업무기록·청구현황 시트 준비 완료'
+      :'시트를 만들 고객이 없어요.';
+  }catch(error){
+    if(current()){
+      wd09InitialCustomerSheets=null;
+      status.textContent='고객 시트 준비 중단 · '+(error.message||'Drive 설정을 다시 확인해 주세요.');
+    }
+  }
+}
 function wd09RenderBulkSheets(){
   const button=document.getElementById('wd09-bulk-sheet-button');
   const status=document.getElementById('wd09-bulk-sheet-status');
   const job=wd09BulkCustomerSheets;
-  button.hidden=!_UID||!getSbClient();
+  button.hidden=_UID!=='WD23000'||!getSbClient();
   button.disabled=!!job?.running;
   button.textContent=!window.wd09CustomerSheets?'Drive 연결 후 시트 만들기':
     job?.remaining.size?'시트 만들기 계속':'기존 고객 시트 만들기';
@@ -35674,7 +35720,7 @@ window.wd09RefreshBulkSheetButton=wd09RenderBulkSheets;
 async function wd09SyncAllCustomerSheets(){
   const uid=_UID,client=getSbClient();
   const current=()=>uid===_UID&&client===getSbClient();
-  if(!uid||!client||wd09BulkCustomerSheets?.running)return;
+  if(uid!=='WD23000'||!client||wd09BulkCustomerSheets?.running)return;
   if(!window.wd09CustomerSheets){document.getElementById('wd09-drive-open').click();return;}
   if(!wd09BulkCustomerSheets?.remaining.size){
     if(_custUidLoaded!==_UID&&!(await loadCustomersFromSupa()).ok)return;
@@ -36361,7 +36407,9 @@ function wd09ArchivePreviewMime(name){
         void window.wd09ShowSkillBoard?.();
       },
       onReady(folders){
-        window.wd09CustomerSheets=wd09CustomerSheetService(api,folders,uid);
+        const customerSheets=wd09CustomerSheetService(api,folders,uid);
+        window.wd09CustomerSheets=customerSheets;
+        void wd09PreparePlannerSheets(customerSheets);
         const uploads=new WeakMap();
         window.wd09CustomerFiles={
           async upload(customer,file,name,kind='materials',mimeType){
@@ -36396,7 +36444,7 @@ function wd09ArchivePreviewMime(name){
         wd09RenderBulkSheets();
         const page=document.getElementById('pg-cust');
         const detail=document.getElementById('cust-det-pg');
-        if(page.classList.contains('on')&&detail.style.display!=='none'){
+        if(uid!=='WD26002'&&page.classList.contains('on')&&detail.style.display!=='none'){
           window.wd09SyncVisibleCustomerSheet(document.getElementById('cust-det-info')?.dataset.recordView
             ||document.getElementById('det-info')?.dataset.recordView);
         }
