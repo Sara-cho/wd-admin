@@ -11026,6 +11026,8 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 </style>
 <style id="wd09-personal-auth-style">
   #wd09-auth-screen[hidden] { display:none !important; }
+  body:not(.wd09-signed-in) :is(#mgr-quick-btn,#quick-memo-btn,#code-mgr-btn,
+    #modal-mgr-quick,#quick-memo-panel,#modal-codemgr,#btab) { display:none !important; }
   #wd09-auth-screen {
     --login-ink:#0c1b34;
     --login-gold:#e7c462;
@@ -16769,7 +16771,7 @@ function wd09SaveInsuranceNote(event){
   void wd09PersistInsuranceNotes(next);
 }
 async function openQuickMemo(){
-  if(!_UID)return;
+  if(!_UID||!getSbClient())return;
   openModal('quick-memo-panel');
   const status=document.getElementById('wd09-insurance-note-status');
   const add=document.getElementById('wd09-insurance-note-add');
@@ -20628,7 +20630,7 @@ function swHubSystemTab(btn,id){
 // 별도 localStorage·별도 테이블 사용 안 함. 요소 id는 cm- 접두사로 업무전산(hs-)과 충돌 방지.
 var _cmTab='nonlife', _cmLoadState='idle', _cmRequest=0;
 var _cmPwVis={};
-function codeMgrAllowed(){return !!_UID;}
+function codeMgrAllowed(){return !!(_UID&&getSbClient());}
 function wd09MountCodeMgr(inline){
   const panel=document.getElementById('wd09-code-panel');
   const host=document.getElementById(inline?'hub-system':'modal-codemgr');
@@ -22986,6 +22988,7 @@ function renderManagerList(opts){
 var mgrModalTab='손보';
 var mgrModalSearchQuery='';
 function openMgrQuickModal(){
+  if(!_UID||!getSbClient())return;
   mgrModalTab='손보';mgrModalSearchQuery='';
   var se=document.getElementById('mgr-quick-search');if(se)se.value='';
   var tabsEl=document.getElementById('mgr-quick-tabs');
@@ -33593,6 +33596,7 @@ function openDesignProgressModal(){
     const old = active;
     active = null;
     _UID = null;
+    document.body.classList.remove('wd09-signed-in');
     passwordForm.reset();
     passwordSettings.open = false;
     window.wd09DriveReset?.();
@@ -33686,6 +33690,7 @@ function openDesignProgressModal(){
       byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
       screen.hidden = true;
       app.style.display = 'block';
+      document.body.classList.add('wd09-signed-in');
       initApp();
       window.wd09RefreshBulkSheetButton?.();
       if (rememberId.checked) {
@@ -33783,7 +33788,10 @@ function openDesignProgressModal(){
   });
   form.addEventListener('submit',login);
   byId('wd09-auth-signout').addEventListener('click',leave);
-  window.addEventListener('pagehide',()=>{ if (active) app.style.display='none'; });
+  window.addEventListener('pagehide',()=>{
+    document.body.classList.remove('wd09-signed-in');
+    if(active)app.style.display='none';
+  });
   window.addEventListener('pageshow',event=>{ if (event.persisted && active) leave(); });
 })();
 </script>
