@@ -11341,6 +11341,11 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   :is(#modal-comm,#modal-claim-rec) [data-step-state="done"] > :is(.wr-label,.wd09-step-title)::after {
     content:"✓ 완료"; margin-inline-start:auto; color:#166534; font-size:12px;
   }
+  #modal-comm .wd09-comm-link-field { margin-top:14px; }
+  #modal-comm .wd09-comm-link-field label { display:block; margin-bottom:6px; }
+  #modal-comm #comm-related-link-error { margin:6px 0 0; color:#b42318; font-size:13px; }
+  #modal-comm #comm-legacy-type[hidden] { display:none; }
+  #modal-comm-detail #cd-related-link { color:var(--purple); overflow-wrap:anywhere; }
   #modal-comm .wd09-comm-skip { margin-top:8px; min-height:var(--wd09-ui-action-height); }
   #modal-comm .wd09-comm-skip[aria-pressed="true"] {
     border-color:#a6d7b6; background:#e1f4e7; color:#166534;
@@ -15721,7 +15726,7 @@ const wdTest09Storage = (() => {
 <button type="button" class="wd09-modal-close" onclick="closeModal('wd09-drive-setup')" aria-label="Google 연결창 닫기">×</button>
 </header>
 <div class="wd09-entry-body wd09-drive-setup">
-<p id="wd09-drive-services">Drive 폴더 · 일정 · 할 일</p>
+<p id="wd09-drive-services">Drive 파일을 허용해 주세요. 일정과 할 일 권한은 홈 화면에서 사용합니다.</p>
 <p id="wd09-drive-account" hidden></p>
 <p id="wd09-drive-message" role="status">사용할 Google 계정을 연결해 주세요.</p>
 <pre id="wd09-drive-tree" class="wd09-drive-folder-tree" hidden></pre>
@@ -16237,15 +16242,12 @@ const wdTest09Storage = (() => {
 <fieldset class="comm-step-sec" id="comm-step-1" aria-labelledby="comm-step-label-1">
 <div class="wr-label" id="comm-step-label-1"><span class="wd09-comm-step-number">1.</span> 업무 종류</div>
 <div class="wr-chips" id="comm-type-btns">
-<button class="wr-chip comm-type-btn" data-val="보험상담" onclick="commTypeSelect(this)" type="button">보험상담</button>
+<button class="wr-chip comm-type-btn" data-val="보험설계문의" onclick="commTypeSelect(this)" type="button">보험설계문의</button>
 <button class="wr-chip comm-type-btn" data-val="단순문의" onclick="commTypeSelect(this)" type="button">단순문의</button>
-<button class="wr-chip comm-type-btn" data-val="설계의뢰문의" onclick="commTypeSelect(this)" type="button">설계의뢰문의</button>
-<button class="wr-chip comm-type-btn" data-val="설계진행" onclick="commTypeSelect(this)" type="button">설계진행</button>
-<button class="wr-chip comm-type-btn" data-val="계약관련" onclick="commTypeSelect(this)" type="button">계약관련</button>
-<button class="wr-chip comm-type-btn" data-val="청구문의" onclick="commTypeSelect(this)" type="button">청구문의</button>
 <button class="wr-chip comm-type-btn" data-val="자료전달" onclick="commTypeSelect(this)" type="button">자료전달</button>
 <button class="wr-chip comm-type-btn" data-val="자동차보험" onclick="commTypeSelect(this)" type="button">자동차보험</button>
 <button class="wr-chip comm-type-btn" data-val="기타" onclick="commTypeSelect(this)" type="button">기타</button>
+<button class="wr-chip comm-type-btn" id="comm-legacy-type" onclick="commTypeSelect(this)" type="button" hidden></button>
 </div>
 </fieldset>
 <fieldset class="comm-step-sec" id="comm-step-2" aria-labelledby="comm-step-label-2" disabled>
@@ -16288,6 +16290,12 @@ const wdTest09Storage = (() => {
 <div class="wr-label" style="margin-bottom:6px;">청구내용</div>
 <textarea class="wr-textarea" id="comm-clm-content" oninput="commUpdateSaveBtnState()" placeholder="고객의 청구 문의 내용을 상세하게 작성"></textarea>
 </div>
+</div>
+<div class="wd09-comm-link-field">
+<label class="wr-label" for="comm-related-link">관련 링크 (선택)</label>
+<input class="wr-input" id="comm-related-link" type="url" inputmode="url" maxlength="4096"
+  aria-describedby="comm-related-link-error" placeholder="https://…" oninput="commUpdateSaveBtnState()"/>
+<p id="comm-related-link-error" role="status" hidden>http:// 또는 https://로 시작하는 주소를 입력해 주세요.</p>
 </div>
 </fieldset>
 <fieldset class="comm-step-sec" id="comm-step-3" aria-labelledby="comm-step-label-3" disabled>
@@ -16357,6 +16365,10 @@ const wdTest09Storage = (() => {
 </div>
 <section class="wd09-comm-detail-section">
 <h4>업무 내용</h4><div class="comm-view-text" id="cd-content"></div>
+</section>
+<section class="wd09-comm-detail-section" id="cd-related-link-row" hidden>
+<h4>관련 링크</h4>
+<a id="cd-related-link" target="_blank" rel="noopener noreferrer"></a>
 </section>
 <section class="wd09-comm-detail-section">
 <h4>다음 할 일</h4><div class="comm-view-text" id="cd-next-content"></div>
@@ -18273,6 +18285,16 @@ var COMM_GOAL_COLORS={
   '보류':'#b45309',
   '완료':'#059669'
 };
+function commRelatedLink(value){
+  var link=String(value||'').trim();
+  if(link.length>4096||!/^https?:\/\/[^\s]+$/i.test(link))return '';
+  try{
+    var url=new URL(link);
+    return url.hostname&&!url.username&&!url.password?url.href:'';
+  }catch{
+    return '';
+  }
+}
 function commParseRecord(content){
   var raw=content||'',goal='',title='',status='',m;
   m=raw.match(COMM_GOAL_MARKER_RE);if(m){goal=m[1].trim();raw=raw.slice(m[0].length);}
@@ -18312,16 +18334,21 @@ function commUpdateSaveBtnState(){
   var contentOk=isClaim
     ?['comm-clm-date','comm-clm-cat','comm-clm-insurer','comm-clm-type','comm-clm-content'].every(value)
     :!!body||skip.getAttribute('aria-pressed')==='true';
+  var linkInput=document.getElementById('comm-related-link');
+  var link=value('comm-related-link');
+  var invalidLink=!!link&&!commRelatedLink(link);
+  document.getElementById('comm-related-link-error').hidden=!invalidLink;
+  linkInput.setAttribute('aria-invalid',String(invalidLink));
   var status=value(isClaim?'comm-clm-status':'comm-work-status-val');
   var choice=value('comm-next-choice');
   var nextOk=choice==='none'||(choice==='yes'&&!!value('comm-next-content'));
-  var active=renderEntrySteps('comm-step-',[!!type,contentOk,!!status,nextOk]);
+  var active=renderEntrySteps('comm-step-',[!!type,contentOk&&!invalidLink,!!status,nextOk]);
   var ok=active===-1;
   document.getElementById('comm-save-btn').disabled=!ok;
   var hint=document.getElementById('comm-save-hint');
   var messages=[
     '업무 종류를 선택해 주세요.',
-    isClaim?'청구 기본정보와 청구 내용을 입력해 주세요.':'업무 내용을 쓰거나 내용 없이 넘어갈 수 있어요.',
+    invalidLink?'관련 링크 주소를 확인해 주세요.':isClaim?'청구 기본정보와 청구 내용을 입력해 주세요.':'업무 내용을 쓰거나 내용 없이 넘어갈 수 있어요.',
     '처리상태를 선택해 주세요.',
     choice==='yes'?'다음 할 일을 입력해 주세요.':'다음 할 일 여부를 선택해 주세요.'
   ];
@@ -18348,7 +18375,8 @@ function commTplInsert(label){}
 function _commNowLocal(){var n=new Date(),p=function(v){return String(v).padStart(2,'0');};return n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'T'+p(n.getHours())+':'+p(n.getMinutes());}
 function openCommAdd(){
   document.getElementById('modal-comm-t').textContent='고객 업무기록 추가';
-  ['comm-edit-id','comm-type-val','comm-title','comm-content','comm-work-status-val','comm-next-content','comm-next-date','comm-goal-val'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('comm-legacy-type').hidden=true;
+  ['comm-edit-id','comm-type-val','comm-title','comm-content','comm-related-link','comm-work-status-val','comm-next-content','comm-next-date','comm-goal-val'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.querySelectorAll('#modal-comm .sel').forEach(function(b){b.classList.remove('sel');});
   document.getElementById('comm-contact-done-val').value='false';
   document.getElementById('comm-next-choice').value='';
@@ -18385,6 +18413,7 @@ function openCommEdit(cid){
   document.getElementById('comm-type-val').value=normType;
   document.getElementById('comm-title').value=p.title||'';
   document.getElementById('comm-content').value=p.body||'';
+  document.getElementById('comm-related-link').value=commRelatedLink(item.relatedLink);
   document.getElementById('comm-skip-content').setAttribute('aria-pressed',String(!p.body));
   document.getElementById('comm-work-status-val').value=p.status||(item.contactDone?'완료':'진행 중');
   document.getElementById('comm-next-content').value=item.nextContent||'';
@@ -18411,7 +18440,12 @@ function openCommEdit(cid){
   }
   document.getElementById('comm-next-choice').value=hasNext?'yes':'none';
   document.getElementById('comm-no-next').checked=!hasNext;
-  document.querySelectorAll('#comm-type-btns .comm-type-btn').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-val')===normType);});
+  var legacy=document.getElementById('comm-legacy-type');
+  var choices=document.querySelectorAll('#comm-type-btns .comm-type-btn');
+  legacy.hidden=Array.from(choices).some(function(b){return b!==legacy&&b.dataset.val===normType;});
+  legacy.dataset.val=legacy.hidden?'':normType;
+  legacy.textContent=legacy.hidden?'':normType+' (기존 기록)';
+  choices.forEach(function(b){b.classList.toggle('sel',b.dataset.val===normType);});
   document.querySelectorAll('#comm-status-btns .wr-status').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-val')===(p.status||(item.contactDone?'완료':'진행 중')));});
   document.querySelectorAll('#modal-comm .comm-next-choice button').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-choice')===(hasNext?'yes':'none'));});
   var fields=document.getElementById('comm-next-fields');if(fields)fields.classList.toggle('on',hasNext);
@@ -18535,11 +18569,12 @@ async function saveComm(){
   if(nextChoice==='none'){goal='';nd='';nc='';}
   var ct=(goal?'[다음 진행 목표: '+goal+']\n':'')+(title?'[업무 제목: '+title+']\n':'')+'[처리 상태: '+status+']\n\n'+body;
   var dt=document.getElementById('comm-date').value||_commNowLocal(),eid=document.getElementById('comm-edit-id').value,list=getComms().slice(),prev=eid?(list.find(function(x){return x.id==eid;})||{}):{},recId=eid||Date.now();
+  var relatedLink=commRelatedLink(document.getElementById('comm-related-link').value);
   var fn=prev.fileName||prev.file_name||'';
   var meta={file_name:prev.file_name,original_file_name:prev.original_file_name,
     file_category:prev.file_category,file_path:prev.file_path,file_size:prev.file_size,
     file_type:prev.file_type,uploaded_at:prev.uploaded_at};
-  var rec=Object.assign({id:recId,type:tp,content:ct,date:dt,fileName:fn,nextDate:nd,nextContent:nc,noNextContact:nextChoice==='none',contactDone:status==='완료',updated:new Date().toISOString()},meta);if(eid){rec.created=prev.created||new Date().toISOString();list=list.map(function(x){return x.id==eid?rec:x;});}else{rec.created=new Date().toISOString();list=list.concat([rec]);}
+  var rec=Object.assign({id:recId,type:tp,content:ct,relatedLink:relatedLink,date:dt,fileName:fn,nextDate:nd,nextContent:nc,noNextContact:nextChoice==='none',contactDone:status==='완료',updated:new Date().toISOString()},meta);if(eid){rec.created=prev.created||new Date().toISOString();list=list.map(function(x){return x.id==eid?rec:x;});}else{rec.created=new Date().toISOString();list=list.concat([rec]);}
   var result=await saveComms(list,[rec]);if(!result.ok)return;
   var claimResult=await syncClaimFromComm(rec,commNormalizeType(prev.type||''));
   if(!claimResult||!claimResult.ok){
@@ -18669,13 +18704,14 @@ function renderCustomerWorkTable(){
     render:renderCustomerWorkTable, placeholder:'업무내용·다음 할 일 검색',
     popoverId:'det-work-filter-popover',
     date:function(x){return x.date||x.created;},
-    search:function(x){var p=commParseRecord(x.content||'');return [x.type,p.title,p.body,x.nextContent,p.goal];},
+    search:function(x){var p=commParseRecord(x.content||'');return [x.type,p.title,p.body,x.relatedLink,x.nextContent,p.goal];},
     filters:[{label:'업무 종류',value:function(x){return x.type||'기타';}},{label:'처리상태',value:getStatus}]
   });
 
   function typeClass(type){
     var map={
       '보험상담':'consult',
+      '보험설계문의':'consult',
       '단순문의':'contact',
       '설계의뢰문의':'design-request',
       '설계진행':'design',
@@ -18711,7 +18747,7 @@ function renderCustomerWorkTable(){
     var p=commParseRecord(x.content||'');
     var status=getStatus(x);
     var type=x.type||'기타';
-    var body=p.body||p.title||'-';
+    var body=p.body||p.title||(x.relatedLink?'관련 링크':'-');
     var idArg=esc(JSON.stringify(x.id));
 
     return '<tr onclick="openCommDetail('+idArg+')" style="cursor:pointer;">'
@@ -18749,6 +18785,12 @@ function openCommDetail(cid){
   statusEl.textContent=status;
   statusEl.classList.toggle('done',status==='완료');
   document.getElementById('cd-content').textContent=p.body||'업무 내용 미입력';
+  var relatedLink=document.getElementById('cd-related-link');
+  var url=commRelatedLink(item.relatedLink);
+  document.getElementById('cd-related-link-row').hidden=!url;
+  relatedLink.textContent=url;
+  if(url)relatedLink.href=url;
+  else relatedLink.removeAttribute('href');
   document.getElementById('cd-next-content').textContent=item.nextContent||(item.nextDate||p.goal?'다음 할 일 내용 미입력':'다음 할 일 없음');
   document.getElementById('cd-next-date').textContent=item.nextDate||'';
   document.getElementById('cd-next-date-row').hidden=!item.nextDate;
@@ -33737,7 +33779,7 @@ function openDesignProgressModal(){
       });
       passwordInput.value = '';
       if (uid!=='WD23000') {
-        byId('wd09-drive-services').textContent='Drive 폴더';
+        byId('wd09-drive-services').textContent='Drive 파일을 허용해 주세요.';
         byId('wd09-google-events').textContent='구글 일정은 지점장 계정에서 사용합니다.';
         byId('wd09-google-tasks').textContent='구글 할 일은 지점장 계정에서 사용합니다.';
       }
@@ -33929,7 +33971,7 @@ const wd09GoogleHome = (function initSimpleHome(){
     add.disabled = true;
     feedback.textContent = message;
     events.textContent = _UID && _UID!=='WD23000'
-      ? '구글 일정은 지점장 계정에서 사용합니다.' : '상단 Drive 연결에서 일정을 연결해 주세요.';
+      ? '구글 일정은 지점장 계정에서 사용합니다.' : '상단 Drive 메뉴에서 Google 일정 권한을 허용해 주세요.';
     renderTasks();
   }
 
@@ -33969,9 +34011,8 @@ const wd09GoogleHome = (function initSimpleHome(){
     return Array.from(new Uint8Array(digest),byte => byte.toString(16).padStart(2,'0')).join('');
   }
 
-  async function verify(session) {
-    const primary = await request(session,calendarApi+'/calendars/primary?fields=id');
-    if (await accountFingerprint(primary.id) !== 'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22') {
+  async function verifyAccount(email) {
+    if (await accountFingerprint(email) !== 'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22') {
       throw new Error('본진에서 연결한 Google 계정을 선택해 주세요.');
     }
   }
@@ -33984,7 +34025,7 @@ const wd09GoogleHome = (function initSimpleHome(){
 
   function activate(session) {
     connection = session;
-    add.disabled = false;
+    add.disabled = !session.hasTasks;
     return refresh();
   }
 
@@ -34018,7 +34059,7 @@ const wd09GoogleHome = (function initSimpleHome(){
 
   async function loadEvents() {
     const session = connection;
-    if (!session) return;
+    if (!session?.hasCalendar) return;
     const version = ++eventVersion;
     const day = selected;
     events.textContent = '일정을 불러오는 중이에요.';
@@ -34065,9 +34106,9 @@ const wd09GoogleHome = (function initSimpleHome(){
   }
 
   function renderTasks() {
-    if (!connection) {
+    if (!connection?.hasTasks) {
       taskList.textContent = _UID && _UID!=='WD23000'
-        ? '구글 할 일은 지점장 계정에서 사용합니다.' : '상단 Drive 연결에서 할 일을 연결해 주세요.';
+        ? '구글 할 일은 지점장 계정에서 사용합니다.' : '상단 Drive 메뉴에서 Google 할 일 권한을 허용해 주세요.';
       return;
     }
     const rows = tasks.filter(task=>task.due ? task.due.slice(0,10)===selected :
@@ -34091,7 +34132,7 @@ const wd09GoogleHome = (function initSimpleHome(){
 
   async function loadTasks() {
     const session = connection;
-    if (!session) return;
+    if (!session?.hasTasks) return;
     const version = ++taskVersion;
     try {
       const lists = await listPages(session,tasksApi+'/users/@me/lists',{maxResults:'100',fields:'nextPageToken,items(id)'});
@@ -34199,7 +34240,7 @@ const wd09GoogleHome = (function initSimpleHome(){
   byId('wd09-calendar-today').addEventListener('click',() => selectDate(todayKey()));
   reset();
   selectDate(selected);
-  return {verify,activate,refresh,reset};
+  return {verifyAccount,activate,refresh,reset};
 })();
 </script>
 <script id="wd09-claim-overview-script">
@@ -34395,8 +34436,8 @@ function wd09DriveFolderService(api,adviserId,adviserName){
 const WD09_CUSTOMER_SHEETS={
   work:{
     title:'고객업무기록시트',table:'wd_partners_communications',
-    headers:['날짜','업무 유형','업무 내용','처리상태','다음 할 일','다음 예정일','첨부파일명','수정일','기록 ID'],
-    row:r=>[r.date,r.type,r.content||r.note,r.workStatus||r.status||commParseRecord(r.content).status,r.nextContent,r.nextDate,r.fileName||r.file_name,r.updated,r.id]
+    headers:['날짜','업무 유형','업무 내용','처리상태','다음 할 일','다음 예정일','첨부파일명','수정일','기록 ID','관련 링크'],
+    row:r=>[r.date,r.type,r.content||r.note,r.workStatus||r.status||commParseRecord(r.content).status,r.nextContent,r.nextDate,r.fileName||r.file_name,r.updated,r.id,commRelatedLink(r.relatedLink)]
   },
   claims:{
     title:'청구현황시트',table:'wd_partners_claim_records',
@@ -34424,7 +34465,7 @@ function wd09CustomerSheetService(api,folders,uid){
           const sheet=WD09_CUSTOMER_SHEETS[kind];
           const rows=await readRows(sheet.table,customer.id);
           const file=await getFile(customer,kind,true);
-          const previous=await api.readSheet(file.id);
+          const previous=await api.readSheet(file.id,kind==='work'?'A:J':'A:I');
           const values=[sheet.headers,...rows.map(row=>sheet.row(row).map(value=>String(value??'')))];
           while(values.length<previous.length)values.push(Array(sheet.headers.length).fill(''));
           await api.writeSheet(file.id,values);
@@ -34467,11 +34508,9 @@ function wd09MountDriveSetup(connectDrive,home){
     homeNotice.hidden=ready;
     homeTitle.textContent=session?'Google Drive 설정을 완료해 주세요':'Google Drive를 연결해 주세요';
     homeConnect.textContent=session?'Drive 설정 열기':'Drive 연결하기';
-    open.setAttribute('aria-disabled',String(ready));
-    if(ready)open.removeAttribute('aria-haspopup');
-    else open.setAttribute('aria-haspopup','dialog');
-    action.hidden=ready;
-    action.textContent=session?(folders?.ready===false?'폴더 생성':'다시 시도'):'Google 계정 연결';
+    open.setAttribute('aria-haspopup','dialog');
+    action.textContent=ready?'Google 계정 다시 연결'
+      :session?(folders?.ready===false?'폴더 생성':'다시 시도'):'Google 계정 연결';
     action.disabled=pending;
     account.hidden=!session;
     account.textContent=session?'Google 계정 · '+session.account:'';
@@ -34479,18 +34518,21 @@ function wd09MountDriveSetup(connectDrive,home){
     tree.textContent=folders?.tree||'';
     feedback.textContent=message;
   }
-  function reset(note){
-    generation++;
+  function resetGoogleServices(note){
     clearTimeout(expiryTimer);
-    session=null;
-    folders=null;
-    pending=false;
-    message=note||connectMessage;
     home?.reset(note);
     window.wd09CustomerSheets=null;
     window.wd09CustomerFiles=null;
     window.wd09ResetMonthly?.();
     window.wd09RefreshBulkSheetButton?.();
+  }
+  function reset(note){
+    generation++;
+    session=null;
+    folders=null;
+    pending=false;
+    message=note||connectMessage;
+    resetGoogleServices(note);
     render();
   }
   function reportFolders(){
@@ -34521,27 +34563,26 @@ function wd09MountDriveSetup(connectDrive,home){
     return run('Google 계정 권한을 확인하고 있어요.',async isCurrent=>{
       const result=await connectDrive();
       if(!isCurrent())return;
+      const state=await result.service.inspect();
+      if(!isCurrent())return;
+      resetGoogleServices();
       session=result;
       if(session.expiresAt){
         expiryTimer=setTimeout(()=>reset('Google 연결이 만료됐어요. 다시 연결해 주세요.'),
           Math.max(0,session.expiresAt-Date.now()));
       }
       if(session.homeSession)void home.activate(session.homeSession);
-      const state=await session.service.inspect();
-      if(!isCurrent())return;
       folders=state;
       reportFolders();
     });
   }
   homeConnect.addEventListener('click',()=>open.click());
   open.addEventListener('click',()=>{
-    if(folders?.ready)return;
     openModal('wd09-drive-setup');
     if(!session&&!pending)connect();
   });
   action.addEventListener('click',()=>{
-    if(folders?.ready)return;
-    if(!session){connect();return;}
+    if(folders?.ready||!session){connect();return;}
     const create=folders?.ready===false;
     run(create?'폴더를 준비하고 있어요.':'연결한 서비스를 다시 확인하고 있어요.',async isCurrent=>{
       if(!create&&session.homeSession)void home.refresh();
@@ -34690,7 +34731,7 @@ async function wd09RefreshCustomerRecordTab(kind){
         client_id:WD09_GOOGLE_CLIENT_ID,scope:[...scopes,...optionalScopes].join(' '),include_granted_scopes:false,
         callback:response=>{
           if(response?.error||!response?.access_token||!oauth.hasGrantedAllScopes(response,...scopes)){
-            const services=scopes.includes('https://www.googleapis.com/auth/drive.readonly')?'Drive 읽기':scopes.length>1?'Drive 파일, 일정, 할 일':'Drive 파일';
+            const services=scopes.includes(monthlyScope)?'Drive 읽기':'Drive 파일';
             reject(new Error(services+' 권한을 허용해 주세요.'));
             return;
           }
@@ -34713,11 +34754,14 @@ async function wd09RefreshCustomerRecordTab(kind){
     const adviser=USERS[uid];
     if(!adviser||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
     const withHome=uid==='WD23000';
-    const grant=await authorize(withHome?[driveScope,...homeScopes]:[driveScope],[monthlyScope]);
+    const grant=await authorize([driveScope],withHome?[...homeScopes,monthlyScope]:[monthlyScope]);
     if(uid!==_UID||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
     const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
-    const homeSession=withHome?{token:grant.access_token,pendingTasks:new Set()}:null;
-    if(homeSession)await wd09GoogleHome.verify(homeSession);
+    const oauth=window.google.accounts.oauth2;
+    const hasCalendar=withHome&&oauth.hasGrantedAllScopes(grant,homeScopes[0]);
+    const hasTasks=withHome&&oauth.hasGrantedAllScopes(grant,homeScopes[1]);
+    const homeSession=hasCalendar||hasTasks
+      ?{token:grant.access_token,hasCalendar,hasTasks,pendingTasks:new Set()}:null;
     async function request(url,{method='GET',body,contentType,binary=false}={}){
       if(uid!==_UID||!getSbClient()||Date.now()>=expiresAt){
         throw Object.assign(new Error('Google 계정에 다시 연결해 주세요.'),{reconnect:true});
@@ -34746,6 +34790,10 @@ async function wd09RefreshCustomerRecordTab(kind){
     const about=await request(base+'/about?fields=user(permissionId,emailAddress,displayName)');
     const user=about.user;
     if(!user?.permissionId)throw new Error('Google Drive 계정을 확인하지 못했어요.');
+    if(withHome){
+      if(!user.emailAddress)throw new Error('Google Drive 계정 이메일을 확인하지 못했어요. 다시 연결해 주세요.');
+      await wd09GoogleHome.verifyAccount(user.emailAddress);
+    }
 
     function metadata(parent,key,name,mimeType){
       return {name,mimeType,...(parent==='root'?{}:{parents:[parent]}),
@@ -34776,8 +34824,8 @@ async function wd09RefreshCustomerRecordTab(kind){
           method:'PATCH',body:JSON.stringify({trashed:true}),contentType:'application/json'
         });
       },
-      async readSheet(id){
-        const result=await request('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/A:I');
+      async readSheet(id,range){
+        const result=await request('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+range);
         return result.values||[];
       },
       writeSheet(id,values){
@@ -35022,7 +35070,10 @@ async function wd09RefreshCustomerRecordTab(kind){
       status.textContent=error.message||'월간자료에 연결하지 못했어요.';
     }finally{monthlyListing=false;button.disabled=false;}
   };
-  window.wd09ResetMonthly=resetMonthly;
+  window.wd09ResetMonthly=()=>{
+    monthlyAdviserFolder='';
+    resetMonthly();
+  };
 
   window.wd09DriveReset=wd09MountDriveSetup(connectDrive,wd09GoogleHome);
   window.addEventListener('pagehide',()=>window.wd09DriveReset());
