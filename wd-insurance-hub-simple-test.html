@@ -10706,8 +10706,23 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px;
   }
   #modal-claim-rec #clm-content { min-height:105px; }
-  #modal-claim-rec #clm-current-file { margin-top:6px; color:var(--s600); font-size:12px; overflow-wrap:anywhere; }
-  #modal-claim-rec #clm-current-file:empty { display:none; }
+  #clm-attachments { display:grid; gap:10px; margin:0 0 10px; }
+  #clm-attachments:empty { display:none; }
+  .wd09-claim-upload {
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px 12px;
+    padding:10px; border:1px solid var(--s200); border-radius:8px;
+  }
+  .wd09-claim-upload > :is(header,p) { grid-column:1/-1; }
+  .wd09-claim-upload > header { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .wd09-claim-upload > p { margin:0; color:var(--s700); font-size:13px; overflow-wrap:anywhere; }
+  .wd09-claim-upload input[type="text"] { margin-top:6px; }
+  .wd09-claim-upload-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+  #clm-attachment-count { color:var(--s600); font-size:12px; }
+  .wd09-claim-attachment-list { display:grid; gap:4px; justify-items:start; }
+  .wd09-claim-attachment-list :is(button,span) { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+  @media(max-width:520px) {
+    .wd09-claim-upload { grid-template-columns:minmax(0,1fr); }
+  }
   .wd09-insurance-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 14px; }
   .wd09-insurance-fields .fld { min-width:0; margin:0; }
   .wd09-insurance-fields .wd09-insurance-span { grid-column:span 2; }
@@ -16329,9 +16344,12 @@ const wdTest09Storage = (() => {
 </select></div>
 </fieldset>
 <fieldset class="wd09-claim-step" id="clm-step-4" aria-labelledby="clm-step-label-4" disabled>
-<h3 class="wd09-step-title" id="clm-step-label-4"><label for="clm-file">4. 첨부파일 (선택)</label></h3>
-<div class="fld"><input id="clm-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.webp" onchange="clmUpdateSteps()"/>
-<input id="clm-file-name" type="hidden"/><p id="clm-current-file"></p></div>
+<h3 class="wd09-step-title" id="clm-step-label-4">4. 청구서류 (선택)</h3>
+<div id="clm-attachments"></div>
+<div class="wd09-claim-upload-controls">
+<button type="button" class="btn-sm p" id="clm-add-attachment" onclick="addClaimAttachment()">+ 첨부파일 추가</button>
+<span id="clm-attachment-count" role="status"></span>
+</div>
 </fieldset>
 <p id="clm-save-hint" role="status">청구 기본정보를 확인해 주세요.</p>
 </div>
@@ -18347,14 +18365,11 @@ async function syncClaimFromComm(rec,previousType){
     insCompany:document.getElementById('comm-clm-insurer').value,
     type:document.getElementById('comm-clm-type').value,
     content:document.getElementById('comm-clm-content').value.trim(),
-    fileName:rec.fileName||'',
-    file_name:rec.file_name,
-    original_file_name:rec.original_file_name,
-    file_category:rec.file_category,
-    file_path:rec.file_path,
-    file_size:rec.file_size,
-    file_type:rec.file_type,
-    uploaded_at:rec.uploaded_at,
+    ...(idx<0?{
+      fileName:rec.fileName||'',file_name:rec.file_name,original_file_name:rec.original_file_name,
+      file_category:rec.file_category,file_path:rec.file_path,file_size:rec.file_size,
+      file_type:rec.file_type,uploaded_at:rec.uploaded_at
+    }:{}),
     status:document.getElementById('comm-clm-status').value,
     created:idx>=0
       ? (list[idx].created||new Date().toISOString())
@@ -18365,7 +18380,7 @@ async function syncClaimFromComm(rec,previousType){
   if(idx>=0)list[idx]=Object.assign({},list[idx],claim);
   else list.push(claim);
 
-  var result=await saveClaimDs(list);
+  var result=await saveClaimDs(list,_vid,false,[idx>=0?list[idx]:claim]);
   if(result.ok)renderClaimList();
   return result;
 }
@@ -18886,7 +18901,7 @@ function lsClaimD(){return'wlp_claimd_'+_UID+'_'+_vid;}
 // 저장은 saveClaimDs()가 Supabase 성공 후에만 캐시 갱신. localStorage는 더 이상 청구문의기록 저장에 쓰지 않음(기존 키는 삭제하지 않음).
 var CLAIMD_CACHE_BY_CUST_ID={};
 var _claimdLoadError=false;
-let wd09ClaimSubmission=null;
+let wd09ClaimSaving=false;
 let wd09ClaimOverviewFiles=new Map();
 function getClaimDs(){return CLAIMD_CACHE_BY_CUST_ID[_vid]||[];}
 async function loadClaimDsFromSupa(custId){
@@ -18917,13 +18932,13 @@ async function loadClaimDsFromSupa(custId){
   }
 }
 // 저장: 현재 고객(_vid) 기준 배열 d를 uid+customer_id+id로 upsert. 실패 시 캐시 갱신 안 함.
-async function saveClaimDs(d,custId=_vid,newOverviewClaim=false){
+async function saveClaimDs(d,custId=_vid,newOverviewClaim=false,changed=d){
   var sb=getSbClient();
   if(!sb){
     alert('청구문의기록 저장 실패 — 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
-  var rows=d.map(function(r){
+  var rows=changed.map(function(r){
     return {
       uid:_UID,
       customer_id:custId,
@@ -18972,9 +18987,7 @@ function openClaimAdd(fromOverview=false){
   document.getElementById('clm-insurer').innerHTML='<option value="">보험 구분을 먼저 선택하세요</option>';
   document.getElementById('clm-type').value='';
   document.getElementById('clm-content').value='';
-  document.getElementById('clm-file').value='';
-  document.getElementById('clm-file-name').value='';
-  document.getElementById('clm-current-file').textContent='';
+  resetClaimAttachments();
   document.getElementById('clm-status').value='';
   document.getElementById('clm-confirm-basic').dataset.confirmed='';
   document.querySelectorAll('.clm-cat-btn').forEach(function(b){b.classList.remove('sel');});
@@ -18990,10 +19003,7 @@ function openClaimEdit(id){
   document.getElementById('clm-ins-cat').value=item.insCategory||'';
   ctSelectOrInject('clm-type',item.type||'');
   document.getElementById('clm-content').value=item.content||item.note||'';
-  var fileName=item.fileName||item.file_name||'';
-  document.getElementById('clm-file').value='';
-  document.getElementById('clm-file-name').value=fileName;
-  document.getElementById('clm-current-file').textContent=fileName?'현재 첨부: '+fileName:'';
+  resetClaimAttachments(item);
   ctSelectOrInject('clm-status',item.status||'청구접수중');
   // 보험사 드롭다운 업데이트
   document.querySelectorAll('.clm-cat-btn').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-val')===(item.insCategory||''));});
@@ -19017,22 +19027,101 @@ function clmUpdateInsurers(cat){
   if(!list.length){sel.innerHTML='<option value="">보험 구분을 먼저 선택하세요</option>';return;}
   sel.innerHTML='<option value="">보험사 선택</option>'+list.map(function(v){return'<option>'+v+'</option>';}).join('');
 }
-// ══ 청구문의기록 첨부파일 — Supabase Storage 연결 (V73) ══
-// bucket: wd-partners-attachments (private, 정책은 사전에 사라님이 직접 SQL Editor에서 생성)
-// 경로: {uid}/{customer_id}/claims/{record_id}/file.{ext} — 원본 파일명은 경로에 쓰지 않음(한글 파일명 InvalidKey 방지),
-//   원본 파일명은 metadata(file_name)에만 보존.
-var CLAIM_ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp'];
-var CLAIM_ATTACH_MAX_SIZE=10*1024*1024; // 10MB
-function _claimAttachExt(file){
-  var name=file&&file.name||'';
-  return name.indexOf('.')>=0?name.split('.').pop().toLowerCase():'';
+const CLAIM_ATTACHMENT_LIMIT=5;
+const CLAIM_ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp'];
+const CLAIM_DOCUMENT_TYPES=[
+  '진료비 영수증','진료비 세부내역서','의사 소견서','진단서','진단명 기재 서류',
+  '입퇴원확인서','수술확인서','수술기록지','조직검사결과지','병리검사결과지'
+];
+let savedClaimAttachments=[];
+let claimAttachmentSequence=0;
+
+function claimAttachments(record){
+  if(Array.isArray(record?.attachments))return record.attachments;
+  const name=record?.fileName||record?.file_name;
+  if(!name&&!record?.file_path)return [];
+  return [{
+    fileName:name||'청구첨부파일',file_path:record.file_path,file_category:record.file_category,
+    original_file_name:record.original_file_name,file_size:record.file_size,file_type:record.file_type,
+    uploaded_at:record.uploaded_at
+  }];
+}
+function resetClaimAttachments(record){
+  savedClaimAttachments=claimAttachments(record);
+  const list=document.getElementById('clm-attachments');
+  list.replaceChildren();
+  for(const attachment of savedClaimAttachments){
+    const row=document.createElement('p');
+    row.className='wd09-material-name-preview';
+    row.textContent='기존 첨부 · '+attachment.fileName;
+    list.appendChild(row);
+  }
+}
+function addClaimAttachment(){
+  const list=document.getElementById('clm-attachments');
+  if(savedClaimAttachments.length+list.querySelectorAll('.wd09-claim-upload').length>=CLAIM_ATTACHMENT_LIMIT)return;
+  const id='clm-attachment-'+(++claimAttachmentSequence);
+  const row=document.createElement('div');
+  row.className='wd09-claim-upload';
+  row.innerHTML='<header><strong>청구서류</strong><button type="button" class="btn-sm">제거</button></header>'
+    +'<div class="fld"><label for="'+id+'-type">서류 구분</label><select id="'+id+'-type"><option value="">서류 구분 선택</option>'
+    +CLAIM_DOCUMENT_TYPES.map(type=>'<option>'+esc(type)+'</option>').join('')
+    +'<option value="__custom__">직접 입력</option></select>'
+    +'<input type="text" maxlength="48" aria-label="서류 구분 직접 입력" placeholder="서류 이름 입력" hidden></div>'
+    +'<div class="fld"><label for="'+id+'-file">첨부파일</label><input type="file" id="'+id+'-file" accept="'
+    +CLAIM_ATTACH_ALLOWED_EXT.map(ext=>'.'+ext).join(',')+'"></div><p hidden></p>';
+  row.querySelector('button').onclick=()=>{
+    row.remove();
+    clmUpdateSteps();
+    document.getElementById('clm-add-attachment').focus();
+  };
+  row.oninput=clmUpdateSteps;
+  row.onchange=clmUpdateSteps;
+  list.appendChild(row);
+  clmUpdateSteps();
+  row.querySelector('select').focus();
+}
+function claimFormCustomerId(){
+  return document.getElementById('clm-customer-field').hidden?_vid:document.getElementById('clm-customer').value;
+}
+function claimPendingAttachments(customer,uploadAt){
+  const rows=[...document.querySelectorAll('#clm-attachments .wd09-claim-upload')];
+  document.getElementById('clm-attachment-count').textContent=(savedClaimAttachments.length+rows.length)+' / '+CLAIM_ATTACHMENT_LIMIT+'개';
+  document.getElementById('clm-add-attachment').disabled=savedClaimAttachments.length+rows.length>=CLAIM_ATTACHMENT_LIMIT;
+  const usedNames=new Set(savedClaimAttachments.map(file=>file.fileName));
+  return rows.map(row=>{
+    const selected=row.querySelector('select').value;
+    const custom=row.querySelector('input[type="text"]');
+    custom.hidden=selected!=='__custom__';
+    const category=customerAttachmentPart(custom.hidden?selected:custom.value);
+    const file=row.querySelector('input[type="file"]').files[0];
+    const preview=row.querySelector('p');
+    let name='', error='';
+    if(!category)error='각 파일의 서류 구분을 선택하거나 직접 입력해 주세요.';
+    else if(!file)error='추가한 줄에 첨부할 파일을 선택해 주세요.';
+    else {
+      error=validateClaimAttachFile(file).message||'';
+      if(customer&&!error){
+        name=customerAttachmentName(customer,category,file.name,uploadAt);
+        for(let number=2;usedNames.has(name);number++){
+          // 같은 구분의 서류는 이름에 번호를 붙여 Drive에서도 구별합니다.
+          const numberedCategory=category.slice(0,44)+'('+number+')';
+          name=customerAttachmentName(customer,numberedCategory,file.name,uploadAt);
+        }
+        usedNames.add(name);
+      }
+    }
+    preview.textContent=name?'저장 파일명 · '+name:'';
+    preview.hidden=!name;
+    return {file,category,name,error};
+  });
 }
 function validateClaimAttachFile(file){
-  var ext=_claimAttachExt(file);
+  var ext=_attachExt(file);
   if(CLAIM_ATTACH_ALLOWED_EXT.indexOf(ext)<0){
     return {ok:false,message:'첨부할 수 없는 파일 형식입니다. PDF, JPG, PNG, HEIC, WEBP 파일만 가능합니다.'};
   }
-  if(file.size>CLAIM_ATTACH_MAX_SIZE){
+  if(file.size>ATTACH_MAX_SIZE){
     return {ok:false,message:'파일 용량이 10MB를 초과합니다. 10MB 이하 파일만 첨부할 수 있습니다.'};
   }
   return {ok:true};
@@ -19044,9 +19133,10 @@ function clmUpdateSteps(){
   var basicOk=!needsCustomer&&!!value('clm-date')&&(confirmBasic.dataset.confirmed==='true'||['clm-ins-cat','clm-insurer','clm-type'].every(value));
   confirmBasic.disabled=needsCustomer||!value('clm-date');
   confirmBasic.hidden=basicOk;
-  var file=document.getElementById('clm-file').files[0];
-  var fileCheck=file?validateClaimAttachFile(file):null;
-  var hasAttachment=fileCheck?fileCheck.ok:!!value('clm-file-name');
+  const customer=getCusts().find(item=>String(item.id)===String(claimFormCustomerId()));
+  const pending=claimPendingAttachments(customer);
+  const error=pending.find(item=>item.error)?.error;
+  const hasAttachment=!error&&!!(pending.length||savedClaimAttachments.length);
   var active=renderEntrySteps('clm-step-',[basicOk,!!value('clm-content'),!!value('clm-status'),hasAttachment]);
   if(needsCustomer){
     var firstStep=document.getElementById('clm-step-1');
@@ -19055,104 +19145,62 @@ function clmUpdateSteps(){
     firstStep.removeAttribute('aria-current');
   }
   var requiredComplete=active===-1||active===3;
-  var canSave=requiredComplete&&(!fileCheck||fileCheck.ok);
+  var canSave=requiredComplete&&!error&&!wd09ClaimSaving;
   document.getElementById('clm-save-btn').disabled=!canSave;
   var hints=['청구 기본정보를 확인해 주세요.','청구 내용을 입력해 주세요.','처리상태를 선택해 주세요.',''];
   var hint=document.getElementById('clm-save-hint');
-  hint.textContent=needsCustomer?'고객을 먼저 선택해 주세요.':requiredComplete?(fileCheck&&!fileCheck.ok?fileCheck.message:''):hints[active];
+  hint.textContent=needsCustomer?'고객을 먼저 선택해 주세요.':requiredComplete?(error||''):hints[active];
   hint.hidden=!hint.textContent;
   return canSave;
 }
-async function uploadClaimAttachment(recordId,file,custId=_vid){
-  var sb=getSbClient();
-  if(!sb){console.error('[claim attachment upload] Supabase client 없음');return {ok:false,reason:'NO_SUPABASE_CLIENT'};}
-  var ext=_claimAttachExt(file);
-  var path=_UID+'/'+custId+'/claims/'+recordId+'/file.'+ext;
-  try{
-    var res=await sb.storage.from('wd-partners-attachments').upload(path,file,{upsert:true});
-    if(res.error){
-      console.error('[claim attachment upload]',res.error.message);
-      return {ok:false,reason:'UPLOAD_ERROR'};
-    }
-    return {ok:true,path:path};
-  }catch(e){
-    console.error('[claim attachment upload]',e&&e.message);
-    return {ok:false,reason:'UPLOAD_EXCEPTION'};
-  }
-}
-async function getClaimAttachmentUrl(filePath){
-  var sb=getSbClient();
-  if(!sb)return null;
-  try{
-    var res=await sb.storage.from('wd-partners-attachments').createSignedUrl(filePath,60); // 60초 유효
-    if(res.error){console.error('[claim attachment signed-url]',res.error.message);return null;}
-    return (res.data&&res.data.signedUrl)?res.data.signedUrl:null;
-  }catch(e){
-    console.error('[claim attachment signed-url]',e&&e.message);
-    return null;
-  }
-}
-async function openClaimAttachment(filePath){
-  if(!filePath){alert('첨부파일 정보를 찾을 수 없습니다.');return;}
-  var url=await getClaimAttachmentUrl(filePath);
-  if(!url){alert('첨부파일을 여는 데 실패했습니다. 잠시 후 다시 시도해주세요.');return;}
-  window.open(url,'_blank','noopener');
-}
 async function saveClaimRecord(){
-  if(wd09ClaimSubmission||!clmUpdateSteps())return;
+  if(wd09ClaimSaving||!clmUpdateSteps())return;
   const overview=!document.getElementById('clm-customer-field').hidden;
-  const custId=overview?document.getElementById('clm-customer').value:_vid;
+  const custId=claimFormCustomerId();
   const customer=getCusts().find(item=>String(item.id)===String(custId));
   if(!customer)return;
   const modal=document.getElementById('modal-claim-rec');
-  var dt=document.getElementById('clm-date').value;
-  var ct=document.getElementById('clm-content').value.trim();
-  var fi=document.getElementById('clm-file');
-  var newFile=(fi&&fi.files&&fi.files[0])?fi.files[0]:null;
-  var fn=document.getElementById('clm-file-name').value||(newFile?newFile.name:'');
-  var eid=document.getElementById('clm-edit-id').value;
-  const recId=eid||(overview
-    ?Number(modal.dataset.newClaimId ||= String(Date.now()*1000+crypto.getRandomValues(new Uint16Array(1))[0]%1000))
-    :Date.now());
-  var rec={
-    id:recId,
-    date:dt,
-    insCategory:document.getElementById('clm-ins-cat').value,
-    insCompany:document.getElementById('clm-insurer').value,
-    type:document.getElementById('clm-type').value,
-    content:ct,
-    fileName:fn,
-    status:document.getElementById('clm-status').value,
-    updated:new Date().toISOString()
+  const value=id=>document.getElementById(id).value;
+  const editId=value('clm-edit-id');
+  const previous=editId?getClaimDs().find(item=>String(item.id)===editId):null;
+  if(editId&&!previous)return;
+  const recId=previous?.id||Number(modal.dataset.newClaimId ||= String(Date.now()*1000+crypto.getRandomValues(new Uint16Array(1))[0]%1000));
+  const uploadAt=new Date().toISOString();
+  const pending=claimPendingAttachments(customer,uploadAt);
+  const drive=window.wd09CustomerFiles;
+  if(pending.length&&!drive){
+    alert('청구서류를 올리려면 먼저 Google Drive를 연결해 주세요.');
+    return;
+  }
+  const attachments=claimAttachments(previous).slice();
+  const record={
+    ...previous,id:recId,date:value('clm-date'),insCategory:value('clm-ins-cat'),
+    insCompany:value('clm-insurer'),type:value('clm-type'),content:value('clm-content').trim(),
+    status:value('clm-status'),created:previous?.created||uploadAt,updated:uploadAt
   };
   const entryBody=modal.querySelector('.wd09-entry-body');
   const closeButton=modal.querySelector('.wd09-modal-close');
-  if(overview){
-    wd09ClaimSubmission={custId,recId,filePath:newFile?_UID+'/'+custId+'/claims/'+recId+'/file.'+_claimAttachExt(newFile):''};
-    entryBody.inert=true;
-    closeButton.disabled=true;
-    document.getElementById('clm-save-btn').disabled=true;
-  }
+  wd09ClaimSaving=true;
+  entryBody.inert=true;
+  closeButton.disabled=true;
+  document.getElementById('clm-save-btn').disabled=true;
   try{
-    if(newFile){
-      const uploadAt=new Date().toISOString();
-      const up=await uploadClaimAttachment(recId,newFile,custId);
-      if(!overview&&custId!==_vid)return;
-      if(!up.ok){alert('첨부파일을 올리지 못했어요. 다시 시도해 주세요.');return;}
-      rec.fileName=customerAttachmentName(customer,'청구서류',newFile.name,uploadAt);
-      rec.file_name=rec.fileName;
-      rec.original_file_name=newFile.name;
-      rec.file_category='청구서류';
-      rec.file_path=up.path;
-      rec.file_size=newFile.size;
-      rec.file_type=newFile.type;
-      rec.uploaded_at=uploadAt;
+    for(const {file,category,name} of pending){
+      const path=await drive.upload(customer,file,name,'claims');
+      attachments.push({
+        fileName:name,file_path:path,file_category:category,original_file_name:file.name,
+        file_size:file.size,file_type:file.type,uploaded_at:uploadAt
+      });
     }
-    if(!eid)rec.created=new Date().toISOString();
-    const list=overview?[rec]:eid
-      ?getClaimDs().map(item=>item.id==eid?Object.assign({},item,rec):item)
-      :getClaimDs().concat(rec);
-    const result=await saveClaimDs(list,custId,overview);
+    if(attachments.length){
+      // Keep the first-file reference for older screens that read the legacy fields.
+      const primary=attachments[0];
+      Object.assign(record,primary,{file_name:primary.fileName,attachments});
+    }
+    const list=overview?[record]:previous
+      ?getClaimDs().map(item=>item.id==recId?record:item)
+      :getClaimDs().concat(record);
+    const result=await saveClaimDs(list,custId,overview,[record]);
     if(!result.ok)return;
     closeModal('modal-claim-rec');
     if(!overview||String(_vid)===String(custId))renderClaimList();
@@ -19160,13 +19208,13 @@ async function saveClaimRecord(){
       document.getElementById('wd09-claim-status-filter').value='';
       wd09RefreshClaimOverview();
     }
+  }catch(error){
+    alert(error.message||'청구서류를 올리지 못했어요. 다시 시도해 주세요.');
   }finally{
-    if(overview){
-      wd09ClaimSubmission=null;
-      entryBody.inert=false;
-      closeButton.disabled=false;
-      clmUpdateSteps();
-    }
+    wd09ClaimSaving=false;
+    entryBody.inert=false;
+    closeButton.disabled=false;
+    clmUpdateSteps();
   }
 }
 // 공용: Supabase에서 청구문의기록 1건 삭제(성공 시에만 true 반환, 캐시는 호출부에서 갱신)
@@ -19214,7 +19262,7 @@ async function loadClaimOverviewRows(){
   for(let start=0;;start+=pageSize){
     if(_UID!==uid||getSbClient()!==sb)throw new Error('로그인 상태를 확인해 주세요.');
     const {data,error}=await sb.from('wd_partners_claim_records')
-      .select('id,customer_id,date,ins_company,claim_type,status,file_name,legacy_file_name:data->>fileName,file_path:data->>file_path')
+      .select('id,customer_id,date,ins_company,claim_type,status,file_name,legacy_file_name:data->>fileName,file_path:data->>file_path,attachments:data->attachments')
       .eq('uid',uid)
       .order('date',{ascending:false,nullsFirst:false})
       .order('customer_id',{ascending:true})
@@ -19228,31 +19276,36 @@ async function loadClaimOverviewRows(){
   const files=new Map();
   for(const row of rows){
     row.file_name ||= row.legacy_file_name;
-    if(row.file_path?.startsWith(uid+'/'+row.customer_id+'/')){
-      files.set(row.file_path,row.file_name||'청구첨부파일');
-    }else{
-      row.file_path=null;
-    }
+    row.attachments=claimAttachments(row).map(file=>{
+      if(file.file_path?.startsWith(uid+'/'+row.customer_id+'/')){
+        files.set(file.file_path,{name:file.fileName,customerId:row.customer_id});
+        return file;
+      }
+      return {...file,file_path:null};
+    });
   }
   wd09ClaimOverviewFiles=files;
   return rows;
 }
 async function wd09DownloadClaimFile(path){
-  const name=wd09ClaimOverviewFiles.get(path);
-  const sb=getSbClient();
-  if(!name||!sb)return;
+  const current=claimAttachmentsForCustomer(path);
+  const entry=current||wd09ClaimOverviewFiles.get(path);
+  if(!entry)return;
+  const customer=getCusts().find(item=>String(item.id)===String(entry.customerId));
+  if(!customer||!path.startsWith(_UID+'/'+customer.id+'/'))return;
   try{
-    const {data,error}=await sb.storage.from('wd-partners-attachments').download(path);
-    if(error||!data)throw error;
-    const url=URL.createObjectURL(data);
-    const link=document.createElement('a');
-    link.href=url;
-    link.download=name;
-    link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),30000);
-  }catch{
-    alert('청구파일을 내려받지 못했어요. 다시 시도해 주세요.');
+    const blob=await loadCustomerMaterialBlob({file_path:path},customer);
+    downloadAttachmentBlob(blob,entry.name);
+  }catch(error){
+    alert(error.message||'청구파일을 내려받지 못했어요. 다시 시도해 주세요.');
   }
+}
+function claimAttachmentsForCustomer(path){
+  for(const record of getClaimDs()){
+    const file=claimAttachments(record).find(item=>item.file_path===path);
+    if(file)return {name:file.fileName,customerId:_vid};
+  }
+  return null;
 }
 function clmStatusSelectInline(id,cur){
   var cls='접수';
@@ -19291,13 +19344,15 @@ async function changeClaimStatusInline(id,newStatus){
   wd09QueueCustomerSheets(custId,"claims");
   renderClaimList();
 }
-// 첨부 셀: Storage에 실제 업로드된 파일(file_path)이 있으면 클릭 가능한 다운로드 버튼, 없으면 텍스트만(또는 '-')
-function clmAttachCell(x){
-  if(x.file_path){
-    var label=x.fileName||x.file_name||'첨부파일';
-    return '<button class="btn-sm" style="font-size:11px;padding:3px 8px;" onclick="event.stopPropagation();openClaimAttachment(\''+x.file_path+'\')">📎 '+esc(label)+'</button>';
-  }
-  return x.fileName?('📎 '+esc(x.fileName)):'-';
+function clmAttachCell(record){
+  const attachments=claimAttachments(record);
+  if(!attachments.length)return '—';
+  return '<div class="wd09-claim-attachment-list">'+attachments.map(file=>{
+    const name=esc(file.fileName||'청구첨부파일');
+    return file.file_path
+      ?'<button class="btn-sm p" type="button" data-path="'+esc(file.file_path)+'" onclick="wd09DownloadClaimFile(this.dataset.path)" title="청구파일 다운로드">'+name+'</button>'
+      :'<span>'+name+'</span>';
+  }).join('')+'</div>';
 }
 function renderClaimList(){
   var list=getClaimDs().slice().sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
@@ -19331,7 +19386,7 @@ function renderClaimList(){
     render:renderClaimList, placeholder:'보험사·청구내용 검색', popoverId:'det-claim-filter-popover',
     showSort:false, showReset:false,
     date:function(x){return x.date;},
-    search:function(x){return [x.insCompany,x.type,x.content||x.note,x.fileName];},
+    search:function(x){return [x.insCompany,x.type,x.content||x.note,...claimAttachments(x).map(file=>file.fileName)];},
     filters:[{label:'청구상태',value:function(x){return x.status||'미입력';}}]
   });
   if(!list.length){el.innerHTML='<div style="text-align:center;padding:20px 0;font-size:13px;color:var(--s400);">표시할 청구 기록이 없습니다.</div>';return;}
@@ -19372,9 +19427,7 @@ function openClaimDetail(id){
   document.getElementById('cld-company').textContent=item.insCompany||'-';
   document.getElementById('cld-type').textContent=item.type||'-';
   document.getElementById('cld-content').textContent=item.content||item.note||'-';
-  document.getElementById('cld-file').innerHTML=item.file_path
-    ?esc(item.fileName||item.file_name||'첨부파일')+' '+customerAttachmentActions(item.file_path,item.file_name||item.fileName,'openClaimAttachment')
-    :(item.fileName?('📎 '+esc(item.fileName)):'첨부 없음');
+  document.getElementById('cld-file').innerHTML=clmAttachCell(item);
   document.getElementById('cld-status').innerHTML=clmStatusBadge(item.status);
   openModal('modal-claim-detail');
 }
@@ -33397,7 +33450,8 @@ function openDesignProgressModal(){
         const ownsAttachment=path.startsWith(uid+'/'+custId+'/')&&customer&&
           (cstMatLogs(customer).some(item=>item.file_path===path)||
            getComms().some(item=>item.file_path===path));
-        if(ownsPolicy||ownsAttachment)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+        const ownsClaimFile=path.startsWith(uid+'/'+custId+'/')&&customer&&claimAttachmentsForCustomer(path);
+        if(ownsPolicy||ownsAttachment||ownsClaimFile)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
       const table = url.pathname.startsWith('/rest/v1/') && url.pathname.slice('/rest/v1/'.length);
       const validUpsertQuery=(conflict,rows)=>{
@@ -33410,26 +33464,6 @@ function openDesignProgressModal(){
         return columns.length===keys.size&&new Set(columns).size===keys.size&&columns.every(column=>
           /^"[a-z_]+"$/.test(column)&&keys.has(column.slice(1,-1)));
       };
-      const claim=wd09ClaimSubmission;
-      if(claim && isVerified() && request.method==='POST' &&
-          getCusts().some(customer=>String(customer.id)===claim.custId)){
-        const uploadPrefix='/storage/v1/object/wd-partners-attachments/';
-        if(claim.filePath && !url.search && url.pathname.startsWith(uploadPrefix) &&
-            decodeURIComponent(url.pathname.slice(uploadPrefix.length))===claim.filePath &&
-            claim.filePath.startsWith(uid+'/'+claim.custId+'/claims/'+claim.recId+'/')){
-          return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
-        }
-        if(table==='wd_partners_claim_records' &&
-            request.headers.get('Prefer')?.split(',').some(value=>value.trim()==='resolution=ignore-duplicates')){
-          const rows=await request.clone().json();
-          const row=Array.isArray(rows)&&rows.length===1&&rows[0];
-          if(row && validUpsertQuery('uid,customer_id,id',rows) && row.uid===uid && String(row.customer_id)===claim.custId &&
-              row.id===claim.recId && (row.data?.file_path||'')===claim.filePath &&
-              isVerified() && wd09ClaimSubmission===claim){
-            return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
-          }
-        }
-      }
       if(isVerified()&&request.method==='POST'&&url.searchParams.size===1){
         const conflict=url.searchParams.get('on_conflict');
         const memo=table==='wd_partners_quickmemo'&&conflict==='uid';
@@ -34040,12 +34074,7 @@ function wd09MountClaimOverview(loadRows,emptyMessage='고객관리에 등록된
       const name=customer
         ?'<button type="button" data-customer="'+esc(customer.id)+'" onclick="wd09OpenOverviewCustomer(this.dataset.customer,\'det-claim\')">'+esc(customer.name||'이름 없음')+'</button>'
         :'고객 정보 없음';
-      const filename=esc(row.file_name||(row.file_path?'청구첨부파일':'—'));
-      const file=row.file_path
-        ?'<button class="btn-sm p" type="button" data-path="'+esc(row.file_path)+'" onclick="wd09DownloadClaimFile(this.dataset.path)" title="청구파일 다운로드">'
-          +'<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/></svg>'
-          +filename+'</button>'
-        :filename;
+      const file=clmAttachCell(row);
       return '<tr role="row">'
         +'<td role="cell" data-label="요청일">'+esc(row.date||'—')+'</td>'
         +'<td role="cell" class="wd09-claim-person">'+name+'</td>'
@@ -34140,7 +34169,7 @@ const WD09_CUSTOMER_SHEETS={
   claims:{
     title:'청구현황시트',table:'wd_partners_claim_records',
     headers:['청구요청일','보험사','청구 유형','청구 내용','처리상태','첨부파일명','수정일','기록 ID'],
-    row:r=>[r.date,r.insCompany,r.type,r.content||r.note,r.status,r.fileName,r.updated,r.id]
+    row:r=>[r.date,r.insCompany,r.type,r.content||r.note,r.status,claimAttachments(r).map(file=>file.fileName).join(' / '),r.updated,r.id]
   }
 };
 function wd09CustomerSheetService(api,folders,uid){
@@ -34527,12 +34556,13 @@ async function wd09RefreshCustomerRecordTab(kind){
         window.wd09CustomerSheets=wd09CustomerSheetService(api,folders,uid);
         const uploads=new WeakMap();
         window.wd09CustomerFiles={
-          async upload(customer,file,name){
+          async upload(customer,file,name,kind='materials'){
+            const folder=kind==='claims'?folders.children.claims:folders.children.materials;
             const cached=uploads.get(file);
-            if(cached?.customer===customer.id)return cached.path;
+            if(cached?.customer===customer.id&&cached.kind===kind&&cached.name===name)return cached.path;
             const boundary='wd09_'+crypto.randomUUID();
             const mime=file.type||'application/octet-stream';
-            const metadata={name,parents:[folders.children.materials.id],mimeType:mime};
+            const metadata={name,parents:[folder.id],mimeType:mime};
             const body=new Blob([
               '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',
               JSON.stringify(metadata),'\r\n--'+boundary+'\r\nContent-Type: '+mime+'\r\n\r\n',
@@ -34542,14 +34572,16 @@ async function wd09RefreshCustomerRecordTab(kind){
               method:'POST',body,contentType:'multipart/related; boundary='+boundary
             });
             if(!uploaded.id)throw Error('Drive에서 첨부파일 저장을 확인하지 못했어요.');
-            const path=uid+'/'+customer.id+'/materials/drive/'+uploaded.id+'/file.'+_attachExt(file);
-            uploads.set(file,{customer:customer.id,path});
+            const path=uid+'/'+customer.id+'/'+kind+'/drive/'+uploaded.id+'/file.'+_attachExt(file);
+            uploads.set(file,{customer:customer.id,kind,name,path});
             return path;
           },
           download(customer,path){
-            const prefix=uid+'/'+customer?.id+'/materials/drive/';
-            const id=path.startsWith(prefix)&&path.slice(prefix.length).split('/')[0];
-            if(!id||!/^[\w-]+$/.test(id))throw Error('첨부파일 정보를 확인할 수 없어요.');
+            const [owner,customerId,kind,storage,id,file,...rest]=path.split('/');
+            if(!customer||owner!==uid||customerId!==String(customer.id)||!['materials','claims'].includes(kind)
+              ||storage!=='drive'||!id||!/^[\w-]+$/.test(id)||!/^file\.[a-z0-9]+$/.test(file)||rest.length){
+              throw Error('첨부파일 정보를 확인할 수 없어요.');
+            }
             return request(base+'/files/'+encodeURIComponent(id)+'?alt=media',{binary:true});
           }
         };
