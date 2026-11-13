@@ -10589,7 +10589,12 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     align-items:start; gap:16px;
   }
   #wd09-customer-overview > * { min-width:0; }
-  #pg-cust.on.wd09-customer-detail { top:0!important; margin-bottom:0!important; }
+  @media(min-width:769px){
+    #pg-cust.on.wd09-customer-detail { top:-96px!important; margin-bottom:-96px!important; }
+  }
+  @media(max-width:768px){
+    #pg-cust.on.wd09-customer-detail { top:0!important; margin-bottom:0!important; }
+  }
   #pg-cust.on.wd09-customer-detail #cust-det-pg { padding-top:8px!important; }
   #cust-det-pg > #det-tabs {
     display:grid; grid-template-columns:minmax(88px,1fr) minmax(0,max-content) minmax(88px,1fr);
@@ -15895,7 +15900,11 @@ const wdTest09Storage = (() => {
 <button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="document.getElementById('wd09-insurance-detail').close()">×</button>
 </header>
 <dl id="wd09-insurance-detail-fields"></dl>
+<div class="wd09-policy-actions" style="margin-top:14px">
 <button type="button" class="btn-sm p" id="wd09-insurance-detail-policy" hidden>증권 보기</button>
+<button type="button" class="btn-sm p" id="wd09-insurance-detail-edit">수정</button>
+<button type="button" class="btn-sm d" id="wd09-insurance-detail-delete">삭제</button>
+</div>
 </dialog>
 <dialog id="wd09-policy-dialog" oncancel="event.preventDefault()" class="wd09-file-drawer" aria-labelledby="wd09-policy-title" onclose="clearCustomerPolicy()">
 <div class="wd09-policy-head">
@@ -16108,7 +16117,6 @@ const wdTest09Storage = (() => {
 <input id="comm-work-status-val" type="hidden"/>
 <input id="comm-contact-done-val" type="hidden" value="false"/>
 <input id="comm-goal-val" type="hidden"/>
-<input id="comm-file-name" type="hidden"/>
 <input id="comm-next-choice" type="hidden"/>
 <input id="comm-no-next" style="display:none;" type="checkbox"/>
 <fieldset class="comm-step-sec" id="comm-step-1" aria-labelledby="comm-step-label-1">
@@ -16200,15 +16208,11 @@ const wdTest09Storage = (() => {
 </div>
 </fieldset>
 <details class="comm-step-sec wd09-comm-extras" id="comm-extras">
-<summary>기록일시·첨부파일</summary>
+<summary>기록일시</summary>
 <div class="wr-grid2">
 <div>
 <label class="wr-label" for="comm-date">기록일시</label>
 <input class="wr-input" id="comm-date" type="datetime-local"/>
-</div>
-<div>
-<label class="wr-label" for="comm-file">첨부파일</label>
-<input id="comm-file" type="file"/>
 </div>
 </div>
 </details>
@@ -16384,7 +16388,7 @@ const wdTest09Storage = (() => {
 </div>
 <div class="fld">
 <label for="mat-file">첨부파일</label>
-<input id="mat-file" type="file" onchange="updateMaterialFileName()"/>
+<input id="mat-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.webp,.hwp,.hwpx,.doc,.docx" onchange="updateMaterialFileName()"/>
 <p id="mat-current-file" style="font-size:12px;color:var(--s600);overflow-wrap:anywhere;" hidden></p>
 </div>
 <p class="wd09-material-name-preview" id="mat-name-preview" role="status" hidden></p>
@@ -17931,10 +17935,8 @@ async function saveCustInline(id){
   renderCustList();renderHomeCusts();
   showDetail(id);
 }
-// ══ 고객소통이력/자료전달 첨부파일 — Supabase Storage 연결 (V74) ══
-// 청구문의기록(V73)과 같은 bucket(wd-partners-attachments)을 쓰되, 경로 prefix만 다름.
-// V73의 validateClaimAttachFile/uploadClaimAttachment 등은 그대로 두고 건드리지 않음 — 여기는 별도 신규 헬퍼.
-var ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp'];
+// 고객자료실 첨부파일 검사 및 Google Drive 업로드
+var ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp','hwp','hwpx','doc','docx'];
 var ATTACH_MAX_SIZE=10*1024*1024; // 10MB
 function _attachExt(file){
   var name=file&&file.name||'';
@@ -17943,34 +17945,17 @@ function _attachExt(file){
 function validateAttachFile(file){
   var ext=_attachExt(file);
   if(ATTACH_ALLOWED_EXT.indexOf(ext)<0){
-    return {ok:false,message:'첨부할 수 없는 파일 형식입니다. PDF, JPG, PNG, HEIC, WEBP 파일만 가능합니다.'};
+    return {ok:false,message:'첨부할 수 없는 파일 형식입니다. PDF, JPG, PNG, HEIC, WEBP, HWP, HWPX, DOC, DOCX 파일을 올릴 수 있어요.'};
   }
   if(file.size>ATTACH_MAX_SIZE){
     return {ok:false,message:'파일 용량이 10MB를 초과합니다. 10MB 이하 파일만 첨부할 수 있습니다.'};
   }
   return {ok:true};
 }
-async function uploadCommAttachment(recordId,file){
-  var sb=getSbClient();
-  if(!sb){console.error('[comm attachment upload] Supabase client 없음');return {ok:false,reason:'NO_SUPABASE_CLIENT'};}
-  var ext=_attachExt(file);
-  var path=_UID+'/'+_vid+'/communications/'+recordId+'/file.'+ext;
-  try{
-    var res=await sb.storage.from('wd-partners-attachments').upload(path,file,{upsert:true});
-    if(res.error){console.error('[comm attachment upload]',res.error.message);return {ok:false,reason:'UPLOAD_ERROR'};}
-    return {ok:true,path:path};
-  }catch(e){console.error('[comm attachment upload]',e&&e.message);return {ok:false,reason:'UPLOAD_EXCEPTION'};}
-}
-async function uploadMatAttachment(recordId,file){
-  var sb=getSbClient();
-  if(!sb){console.error('[mat attachment upload] Supabase client 없음');return {ok:false,reason:'NO_SUPABASE_CLIENT'};}
-  var ext=_attachExt(file);
-  var path=_UID+'/'+_vid+'/materials/'+recordId+'/file.'+ext;
-  try{
-    var res=await sb.storage.from('wd-partners-attachments').upload(path,file,{upsert:true});
-    if(res.error){console.error('[mat attachment upload]',res.error.message);return {ok:false,reason:'UPLOAD_ERROR'};}
-    return {ok:true,path:path};
-  }catch(e){console.error('[mat attachment upload]',e&&e.message);return {ok:false,reason:'UPLOAD_EXCEPTION'};}
+async function uploadMatAttachment(customer,file,name){
+  const drive=window.wd09CustomerFiles;
+  if(!drive)throw Error('고객자료를 올리려면 먼저 Drive를 연결해 주세요.');
+  return drive.upload(customer,file,name);
 }
 async function getAttachmentSignedUrl(filePath){
   var sb=getSbClient();
@@ -18045,14 +18030,14 @@ async function loadCommsFromSupa(custId){
   }
 }
 // 저장: 현재 고객(_vid) 기준 배열 d를 uid+customer_id+id로 upsert. 실패 시 캐시 갱신 안 함.
-async function saveComms(d){
+async function saveComms(d,changed){
   var sb=getSbClient();
   if(!sb){
     alert('고객 업무기록 저장 실패 — 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
   var custId=_vid;
-  var rows=d.map(function(r){
+  var rows=changed.map(function(r){
     return {
       uid:_UID,
       customer_id:custId,
@@ -18078,7 +18063,7 @@ async function saveComms(d){
     var res=await Promise.race([saveReq,timeoutReq]);
     if(res.error){
       console.error('[comm save]',res.error.message);
-      alert('고객 업무기록을 저장하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+      alert('고객 업무기록 저장에 실패했어요. 입력 내용은 남아 있습니다. 다시 시도해 주세요.');
       return {ok:false,reason:'SAVE_ERROR'};
     }
     COMM_CACHE_BY_CUST_ID[custId]=d;
@@ -18091,7 +18076,7 @@ async function saveComms(d){
       return {ok:false,reason:'SAVE_TIMEOUT'};
     }
     console.error('[comm save]',e&&e.message);
-    alert('고객 업무기록을 저장하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+    alert('고객 업무기록 저장에 실패했어요. 입력 내용은 남아 있습니다. 다시 시도해 주세요.');
     return {ok:false,reason:'SAVE_EXCEPTION'};
   }
 }
@@ -18248,7 +18233,7 @@ function commTplInsert(label){}
 function _commNowLocal(){var n=new Date(),p=function(v){return String(v).padStart(2,'0');};return n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'T'+p(n.getHours())+':'+p(n.getMinutes());}
 function openCommAdd(){
   document.getElementById('modal-comm-t').textContent='고객 업무기록 추가';
-  ['comm-edit-id','comm-type-val','comm-title','comm-content','comm-work-status-val','comm-next-content','comm-next-date','comm-goal-val','comm-file-name'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['comm-edit-id','comm-type-val','comm-title','comm-content','comm-work-status-val','comm-next-content','comm-next-date','comm-goal-val'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.querySelectorAll('#modal-comm .sel').forEach(function(b){b.classList.remove('sel');});
   document.getElementById('comm-contact-done-val').value='false';
   document.getElementById('comm-next-choice').value='';
@@ -18261,7 +18246,6 @@ function openCommAdd(){
   document.getElementById('comm-clm-insurer').innerHTML='<option value="">보험 구분을 먼저 선택하세요</option>';
   document.querySelectorAll('#comm-clm-cat-btns .comm-clm-cat-btn').forEach(function(b){b.classList.remove('sel');});
   commToggleClaimFields(false);
-  var f=document.getElementById('comm-file');if(f)f.value='';
   document.getElementById('comm-extras').open=false;
   commUpdateSaveBtnState();openModal('modal-comm');
 }
@@ -18291,8 +18275,6 @@ function openCommEdit(cid){
   document.getElementById('comm-next-content').value=item.nextContent||'';
   document.getElementById('comm-next-date').value=item.nextDate||'';
   document.getElementById('comm-goal-val').value=p.goal||'';
-  document.getElementById('comm-file-name').value=item.fileName||'';
-  document.getElementById('comm-file').value='';
   document.getElementById('comm-date').value=(item.date||'').slice(0,16);
   document.getElementById('comm-contact-done-val').value=(p.status==='완료'||item.contactDone)?'true':'false';
   var hasNext=!!(item.nextContent||item.nextDate||p.goal);
@@ -18441,25 +18423,12 @@ async function saveComm(){
   if(nextChoice==='none'){goal='';nd='';nc='';}
   var ct=(goal?'[다음 진행 목표: '+goal+']\n':'')+(title?'[업무 제목: '+title+']\n':'')+'[처리 상태: '+status+']\n\n'+body;
   var dt=document.getElementById('comm-date').value||_commNowLocal(),eid=document.getElementById('comm-edit-id').value,list=getComms().slice(),prev=eid?(list.find(function(x){return x.id==eid;})||{}):{},recId=eid||Date.now();
-  var fi=document.getElementById('comm-file'),newFile=(fi&&fi.files&&fi.files[0])?fi.files[0]:null,fn=document.getElementById('comm-file-name').value||(prev.fileName||prev.file_name||''),meta={file_name:prev.file_name,original_file_name:prev.original_file_name,file_category:prev.file_category,file_path:prev.file_path,file_size:prev.file_size,file_type:prev.file_type,uploaded_at:prev.uploaded_at};
-  if(newFile){
-    var check=validateAttachFile(newFile);if(!check.ok){alert(check.message);return;}
-    var customer=_matGetCust();
-    var uploadAt=new Date().toISOString();
-    var up=await uploadCommAttachment(recId,newFile);
-    if(!customer||String(customer.id)!==String(_vid))return;
-    if(up.ok){
-      var category=isClaim?'청구서류':tp+'첨부';
-      fn=customerAttachmentName(customer,category,newFile.name,uploadAt);
-      meta={file_name:fn,original_file_name:newFile.name,file_category:category,file_path:up.path,
-        file_size:newFile.size,file_type:newFile.type,uploaded_at:uploadAt};
-    }else{
-      alert('첨부파일 업로드에 실패했습니다. 새 첨부 없이 기록을 저장합니다.');
-      fn=prev.file_path?(prev.fileName||prev.file_name||''):'';
-    }
-  }
+  var fn=prev.fileName||prev.file_name||'';
+  var meta={file_name:prev.file_name,original_file_name:prev.original_file_name,
+    file_category:prev.file_category,file_path:prev.file_path,file_size:prev.file_size,
+    file_type:prev.file_type,uploaded_at:prev.uploaded_at};
   var rec=Object.assign({id:recId,type:tp,content:ct,date:dt,fileName:fn,nextDate:nd,nextContent:nc,noNextContact:nextChoice==='none',contactDone:status==='완료',updated:new Date().toISOString()},meta);if(eid){rec.created=prev.created||new Date().toISOString();list=list.map(function(x){return x.id==eid?rec:x;});}else{rec.created=new Date().toISOString();list=list.concat([rec]);}
-  var result=await saveComms(list);if(!result.ok)return;
+  var result=await saveComms(list,[rec]);if(!result.ok)return;
   var claimResult=await syncClaimFromComm(rec,commNormalizeType(prev.type||''));
   if(!claimResult||!claimResult.ok){
     alert('고객업무기록은 저장됐지만 청구현황 연동에 실패했습니다. 콘솔의 claimd save 오류를 확인해 주세요.');
@@ -18676,10 +18645,6 @@ function openCommDetail(cid){
   var file=document.getElementById('cd-file');
   file.textContent=item.fileName||item.file_name||(item.file_path?'첨부파일':'첨부 없음');
   if(item.file_path){
-    var button=document.createElement('button');
-    button.type='button';button.className='btn-sm p';button.textContent='첨부 열기';
-    button.onclick=function(){openStorageAttachment(item.file_path);};
-    file.appendChild(button);
     var download=document.createElement('button');
     download.type='button';download.className='btn-sm p';download.textContent='다운로드';
     download.onclick=function(){downloadCustomerAttachment(item.file_path,item.file_name||item.fileName);};
@@ -18832,6 +18797,7 @@ function swDetTab(btn,id){
   });
   document.getElementById('det-tabs').querySelectorAll('.itab').forEach(function(tab){tab.classList.toggle('on',tab===btn);});
   if(panelId==='det-info'){renderCustomerWorkTable();renderMatList();}
+  if(id==='det-mat'&&_vid)void loadContractsFromSupa(_vid);
   if(id==='det-flow')renderFlowTab();
   if(id==='det-insure')renderInsureTabV2();
   if(id==='det-design')renderDesignTabV2();
@@ -18876,6 +18842,7 @@ document.getElementById('wd09-customer-card-slot').innerHTML=
 // 고객 업무기록 초기 렌더(캐시) → Supabase 조회 후 재렌더
 cnx_dismiss();
 loadCommsFromSupa(id).then(function(){if(_vid===id)renderCustomerWorkTable();});
+void loadContractsFromSupa(id);
 // 청구문의기록 초기 렌더(캐시) → Supabase 조회 후 재렌더
 renderClaimList();
 loadClaimDsFromSupa(id).then(function(){if(_vid===id)renderClaimList();});
@@ -19491,7 +19458,7 @@ async function _matSaveLogs(c,logs){
     updated:new Date().toISOString()
   });
   var newCs=cs.slice();newCs[idx]=updated;
-  return await saveCusts(newCs);
+  return await saveCusts(newCs,[updated]);
 }
 function openMatAdd(){
   document.getElementById('modal-mat-rec-t').textContent='고객자료 추가';
@@ -19554,11 +19521,12 @@ async function saveMatRecord(){
   if(newFile){
     var check=validateAttachFile(newFile);
     if(!check.ok){alert(check.message);return;}
-    var up=await uploadMatAttachment(rec.id,newFile);
+    var path;
+    try{path=await uploadMatAttachment(c,newFile,rec.file_name);}
+    catch(error){alert(error.message||'첨부파일을 올리지 못했어요.');return;}
     if(c.id!=_vid)return;
-    if(!up.ok){alert('첨부파일을 올리지 못했어요. 다시 시도해 주세요.');return;}
     Object.assign(rec,{
-      file_path:up.path,file_size:newFile.size,file_type:newFile.type,uploaded_at:now
+      file_path:path,file_size:newFile.size,file_type:newFile.type,uploaded_at:now
     });
   }
   logs=eid?logs.map(function(x){return x.id==eid?rec:x;}):logs.concat([rec]);
@@ -19590,7 +19558,12 @@ function clearCustomerMaterial(){
   if(customerMaterialUrl)URL.revokeObjectURL(customerMaterialUrl);
   customerMaterialUrl='';
 }
-async function loadCustomerMaterialBlob(item){
+async function loadCustomerMaterialBlob(item,customer=_matGetCust()){
+  if(item.file_path.split('/')[3]==='drive'){
+    const drive=window.wd09CustomerFiles;
+    if(!drive)throw Error('파일을 열려면 먼저 Drive를 연결해 주세요.');
+    return drive.download(customer,item.file_path);
+  }
   var sb=getSbClient();
   if(!sb)throw Error();
   var res=await sb.storage.from('wd-partners-attachments').download(item.file_path);
@@ -19669,7 +19642,7 @@ async function openMatDetail(id){
       preview.src=customerMaterialUrl;
     }
   }catch(error){
-    if(request===customerMaterialRequest&&panel.open)status.textContent='첨부파일을 열지 못했어요. 파일이나 조회 권한을 확인해 주세요.';
+    if(request===customerMaterialRequest&&panel.open)status.textContent=error.message||'첨부파일을 열지 못했어요. 파일이나 조회 권한을 확인해 주세요.';
   }
 }
 function matDetailEdit(){
@@ -19691,6 +19664,15 @@ async function matDetailDelete(){
 function renderMatList(){
   var c=_matGetCust();if(!c)return;
   var logs=cstMatLogs(c).filter(isDirectCustomerMaterial);
+  function appendPolicies(records,source){
+    records.forEach(function(record,index){
+      const pdf=customerPolicyMeta(record,source,_UID,c.id);
+      if(pdf)logs.push({policySource:source,policyIndex:index,file_name:pdf.name||'보험증권.pdf',
+        file_path:pdf.path,updated:record.updated||record.created||record.updatedAt||record.createdAt});
+    });
+  }
+  appendPolicies(getContracts(),'contracts');
+  appendPolicies(cstAutoList(c),'auto');
   var el=document.getElementById('det-mat-list');
   if(!el)return;
   if(document.getElementById('det-info').dataset.recordView==='det-mat'){
@@ -19710,10 +19692,14 @@ function renderMatList(){
     +records.map(function(x){
       var idArg=esc(JSON.stringify(x.id));
       var name=customerMaterialDisplayName(x);
-      var open=' onclick="openMatDetail('+idArg+')"';
+      var policy=x.policySource;
+      var open=policy?' onclick="openCustomerPolicy(\''+policy+'\','+x.policyIndex+')"':
+        ' onclick="openMatDetail('+idArg+')"';
+      var download=policy?'downloadCustomerPolicy(\''+policy+'\','+x.policyIndex+',this)':
+        'downloadCustomerMaterial('+idArg+',this)';
       return '<tr><td><button type="button" class="wd09-material-link wd09-material-name" title="'+esc(name)+'"'+open+'>'+esc(name)+'</button></td>'
         +'<td><button type="button" class="btn-sm p wd09-document-icon wd09-material-download" aria-label="'+esc(name)+' 다운로드"'
-        +' title="다운로드" onclick="downloadCustomerMaterial('+idArg+',this)"'
+        +' title="다운로드" onclick="'+download+'"'
         +'>'+downloadIcon+'</button></td></tr>';
     }).join('')
     +'</tbody></table></div>';
@@ -23089,13 +23075,14 @@ async function loadContractsFromSupa(custId){
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
   try{
-    var res=await sb.from('wd_partners_contracts').select('data').eq('uid',_UID).eq('customer_id',custId).order('created_at',{ascending:true});
+    var res=await sb.from('wd_partners_contracts').select('id,data').eq('uid',_UID).eq('customer_id',custId).order('created_at',{ascending:true});
     if(res.error){
       _contractLoadError=true;
       console.error('[contracts load]',res.error.message);
       return {ok:false,reason:'LOAD_ERROR'};
     }
-    CONTRACT_CACHE_BY_CUST_ID[custId]=(res.data||[]).map(function(row){return row.data;});
+    CONTRACT_CACHE_BY_CUST_ID[custId]=(res.data||[]).map(function(row){return {...row.data,id:row.id};});
+    if(String(_vid)===String(custId))renderMatList();
     _contractLoadError=false;
     return {ok:true};
   }catch(e){
@@ -23105,15 +23092,14 @@ async function loadContractsFromSupa(custId){
   }
 }
 // 저장: 현재 고객(_vid) 기준 배열 d를 uid+id 기준 upsert. id 없는 레코드는 저장 직전 발급. 실패 시 캐시 갱신 안 함.
-async function saveContracts(d){
+async function saveContracts(d,record,isNew){
   var sb=getSbClient();
   if(!sb){
     alert('가입보험 저장 실패 — 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
     return {ok:false,reason:'NO_SUPABASE_CLIENT'};
   }
   var custId=_vid;
-  var withIds=d.map(function(r){return r.id!=null?r:Object.assign({},r,{id:Date.now()+Math.floor(Math.random()*1000)});});
-  var rows=withIds.map(function(r){
+  var rows=[record].map(function(r){
     return {
       id:r.id,
       uid:_UID,
@@ -23127,13 +23113,16 @@ async function saveContracts(d){
     };
   });
   try{
-    var res=await sb.from('wd_partners_contracts').upsert(rows,{onConflict:'uid,id'});
+    var table=sb.from('wd_partners_contracts');
+    var {uid,customer_id,id,...fields}=rows[0];
+    var res=await (isNew?table.insert(rows[0]):
+      table.update(fields).eq('uid',uid).eq('customer_id',customer_id).eq('id',id));
     if(res.error){
       console.error('[contracts save]',res.error.message);
       alert('가입보험 저장 실패: '+res.error.message);
       return {ok:false,reason:'SAVE_ERROR'};
     }
-    CONTRACT_CACHE_BY_CUST_ID[custId]=withIds;
+    CONTRACT_CACHE_BY_CUST_ID[custId]=d;
     return {ok:true};
   }catch(e){
     console.error('[contracts save]',e&&e.message);
@@ -23710,6 +23699,7 @@ var customerPolicyUrl='', customerPolicyRequest=0;
 function customerPolicyMeta(record,source,uid,custId){
   var pdf=record&&record.policyPdf;
   if(!pdf||typeof pdf.path!=='string'||!uid||custId==null)return null;
+  if(pdf.path.startsWith(uid+'/'+custId+'/materials/drive/')&&/\/drive\/[\w-]+\/file\.pdf$/.test(pdf.path))return pdf;
   var parts=pdf.path.split('/');
   if(parts.length!==5||parts[0]!==String(uid)||parts[1]!==String(custId)||parts[2]!==source
       ||parts[3]!==String(record.id)||!/^[A-Za-z0-9_-]+$/.test(parts[3])
@@ -23745,6 +23735,19 @@ function showCustomerPolicyPdf(blob,name){
 async function validCustomerPolicyPdf(file){
   return file.size<=ATTACH_MAX_SIZE&&await file.slice(0,5).text()==='%PDF-';
 }
+async function downloadCustomerPolicy(source,index,button){
+  const customer=_matGetCust();
+  const record=(source==='auto'?cstAutoList(customer):getContracts())[index];
+  const pdf=customerPolicyMeta(record,source,_UID,customer?.id);
+  if(!pdf)return;
+  button.disabled=true;
+  try{
+    const blob=await loadCustomerMaterialBlob({file_path:pdf.path},customer);
+    if(!await validCustomerPolicyPdf(blob))throw Error('증권 PDF를 확인하지 못했어요.');
+    downloadAttachmentBlob(blob,pdf.name||'보험증권.pdf');
+  }catch(error){alert(error.message||'증권을 내려받지 못했어요.');}
+  finally{button.disabled=false;}
+}
 async function openCustomerPolicy(source,index,custId=_vid){
   var customer=getCusts().find(function(c){return c.id==custId;});
   var records=source==='auto'&&customer?cstAutoList(customer):source==='contracts'?getContracts():[];
@@ -23755,9 +23758,9 @@ async function openCustomerPolicy(source,index,custId=_vid){
   openCustomerPolicyPanel(name);
   var request=customerPolicyRequest;
   try{
-    var result=await sb.storage.from('wd-partners-attachments').download(pdf.path);
-    if(result.error||!result.data||!await validCustomerPolicyPdf(result.data))throw Error();
-    if(request===customerPolicyRequest)showCustomerPolicyPdf(result.data,name);
+    var blob=await loadCustomerMaterialBlob({file_path:pdf.path},customer);
+    if(!await validCustomerPolicyPdf(blob))throw Error();
+    if(request===customerPolicyRequest)showCustomerPolicyPdf(blob,name);
   }catch(error){
     if(request===customerPolicyRequest)document.getElementById('wd09-policy-status').textContent='증권 PDF를 열지 못했습니다. 파일 또는 조회 권한을 확인해 주세요.';
   }
@@ -23767,18 +23770,16 @@ async function uploadCustomerPolicy(source,custId,recordId,file){
     alert('10MB 이하 PDF만 증권으로 첨부할 수 있습니다.');
     return null;
   }
-  var sb=getSbClient();
-  if(!sb||!_UID||String(custId)!==String(_vid))return null;
-  var path=_UID+'/'+custId+'/'+source+'/'+recordId+'/policy-'+crypto.randomUUID()+'.pdf';
+  if(!getSbClient()||!_UID||String(custId)!==String(_vid))return null;
+  const customer=getCusts().find(item=>String(item.id)===String(custId));
+  if(!customer)return null;
+  const name=customerAttachmentName(customer,source==='auto'?'자동차보험증권':'보험증권',file.name);
   try{
-    var result=await sb.storage.from('wd-partners-attachments').upload(path,file,{contentType:'application/pdf',upsert:false});
-    if(!result.error){
-      var customer=getCusts().find(function(item){return String(item.id)===String(custId);});
-      var category=source==='auto'?'자동차보험증권':'보험증권';
-      return {path:path,name:customerAttachmentName(customer,category,file.name),original_name:file.name};
-    }
-  }catch(error){}
-  alert('증권 PDF 첨부에 실패했습니다. 파일 등록 권한을 확인해 주세요.');
+    const path=await uploadMatAttachment(customer,file,name);
+    return {path,name,original_name:file.name};
+  }catch(error){
+    alert(error.message||'증권 PDF를 올리지 못했어요.');
+  }
   return null;
 }
 function insurancePremiumAmount(value){
@@ -23845,6 +23846,15 @@ function openCustomerInsuranceDetail(source,index){
   policy.hidden=!row.policy;
   policy.onclick=function(){openCustomerPolicy(source,index);};
   var dialog=document.getElementById('wd09-insurance-detail');
+  var edit=document.getElementById('wd09-insurance-detail-edit');
+  var remove=document.getElementById('wd09-insurance-detail-delete');
+  edit.hidden=remove.hidden=source!=='contracts';
+  edit.onclick=function(){dialog.close();openContractEdit(index);};
+  remove.onclick=async function(){
+    remove.disabled=true;
+    try{if(await deleteContract(index))dialog.close();}
+    finally{remove.disabled=false;}
+  };
   if(!dialog.open)dialog.showModal();
 }
 function renderContractsList(state){
@@ -24056,9 +24066,9 @@ async function saveContractModal(){
     rec.updated=new Date().toISOString();
     contracts[parseInt(idx,10)]=rec;
   }
-  var result=await saveContracts(contracts);
+  var result=await saveContracts(contracts,rec,idx==='');
   if(!result.ok)return; // 저장 실패 시 모달 유지, 화면 갱신 안 함
-  closeModal('modal-contract'); renderContractsList(); toast();
+  closeModal('modal-contract'); renderContractsList(); renderMatList(); toast();
 }
 async function deleteContract(i){
   if(!confirm('이 가입보험 기록을 삭제할까요?'))return;
@@ -24072,6 +24082,8 @@ async function deleteContract(i){
   var ok=await _contractDeleteFromSupa(target.id);
   if(!ok)return; // 실패 시 화면 갱신하지 않음(삭제된 것처럼 보이지 않게)
   renderContractsList();
+  renderMatList();
+  return true;
 }
 var _contractDetailIdx=null;
 function openContractDetail(i){
@@ -29160,7 +29172,7 @@ async function cwf_finish(){
     };
 
     var list=getComms().slice().concat([consultationRec,designRec]);
-    var result=await saveComms(list);
+    var result=await saveComms(list,[consultationRec,designRec]);
     if(!result.ok)return;
 
     /* 고객업무기록 저장 연결표시만 갱신하고, 상담 완료는 현재 단계 완료에서 처리 */
@@ -33382,9 +33394,22 @@ function openDesignProgressModal(){
           String(c.id)===String(_autoDetailId)&&customerPolicyMeta(c,'auto',uid,selectedAuto.id)?.path===path);
         const ownsPolicy=ownsSelectedAuto||getContracts().some(c=>customerPolicyMeta(c,'contracts',uid,custId)?.path===path)
           ||(customer&&cstAutoList(customer).some(c=>customerPolicyMeta(c,'auto',uid,custId)?.path===path));
-        if(ownsPolicy)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+        const ownsAttachment=path.startsWith(uid+'/'+custId+'/')&&customer&&
+          (cstMatLogs(customer).some(item=>item.file_path===path)||
+           getComms().some(item=>item.file_path===path));
+        if(ownsPolicy||ownsAttachment)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
       const table = url.pathname.startsWith('/rest/v1/') && url.pathname.slice('/rest/v1/'.length);
+      const validUpsertQuery=(conflict,rows)=>{
+        const params=url.searchParams;
+        if(params.getAll('on_conflict').length!==1||params.get('on_conflict')!==conflict)return false;
+        if(params.size===1)return true;
+        if(params.size!==2||params.getAll('columns').length!==1||!Array.isArray(rows))return false;
+        const keys=new Set(rows.flatMap(row=>Object.keys(row||{})));
+        const columns=params.get('columns').split(',');
+        return columns.length===keys.size&&new Set(columns).size===keys.size&&columns.every(column=>
+          /^"[a-z_]+"$/.test(column)&&keys.has(column.slice(1,-1)));
+      };
       const claim=wd09ClaimSubmission;
       if(claim && isVerified() && request.method==='POST' &&
           getCusts().some(customer=>String(customer.id)===claim.custId)){
@@ -33394,12 +33419,11 @@ function openDesignProgressModal(){
             claim.filePath.startsWith(uid+'/'+claim.custId+'/claims/'+claim.recId+'/')){
           return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
         }
-        if(table==='wd_partners_claim_records' && url.searchParams.size===1 &&
-            url.searchParams.get('on_conflict')==='uid,customer_id,id' &&
+        if(table==='wd_partners_claim_records' &&
             request.headers.get('Prefer')?.split(',').some(value=>value.trim()==='resolution=ignore-duplicates')){
           const rows=await request.clone().json();
           const row=Array.isArray(rows)&&rows.length===1&&rows[0];
-          if(row && row.uid===uid && String(row.customer_id)===claim.custId &&
+          if(row && validUpsertQuery('uid,customer_id,id',rows) && row.uid===uid && String(row.customer_id)===claim.custId &&
               row.id===claim.recId && (row.data?.file_path||'')===claim.filePath &&
               isVerified() && wd09ClaimSubmission===claim){
             return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
@@ -33421,17 +33445,21 @@ function openDesignProgressModal(){
       }
       if(isVerified() && request.method!=='GET'){
         const customers='wd_partners_customers';
-        const records=['wd_partners_communications','wd_partners_claim_records'];
+        const contracts='wd_partners_contracts';
+        const records=['wd_partners_communications','wd_partners_claim_records',contracts];
         const ownsCustomer=id=>getCusts().some(customer=>String(customer.id)===String(id));
         const matched=key=>url.searchParams.getAll(key).length===1
           ?/^eq[.](\d+)$/.exec(url.searchParams.get(key))?.[1]:null;
         const exactOwner=url.searchParams.getAll('uid').length===1&&url.searchParams.get('uid')==='eq.'+uid;
         let authorized=false;
-        if(request.method==='POST'&&url.searchParams.size===1&&
-            ((table===customers&&url.searchParams.get('on_conflict')==='uid,id')||
-            (records.includes(table)&&url.searchParams.get('on_conflict')==='uid,customer_id,id'))){
+        if(request.method==='POST'&&table===contracts&&!url.search){
+          const row=await request.clone().json();
+          authorized=row?.uid===uid&&/^\d+$/.test(String(row.id))&&
+            String(row.customer_id)===String(_vid)&&ownsCustomer(row.customer_id);
+        }else if(request.method==='POST'&&table!==contracts&&(table===customers||records.includes(table))){
           const rows=await request.clone().json();
-          authorized=Array.isArray(rows)&&rows.length>0&&rows.every(row=>
+          authorized=validUpsertQuery(table===customers?'uid,id':'uid,customer_id,id',rows)&&
+            Array.isArray(rows)&&rows.length>0&&rows.every(row=>
             row?.uid===uid&&/^\d+$/.test(String(row.id))&&
             (table===customers||ownsCustomer(row.customer_id)));
         }else if(request.method==='PATCH'&&records.includes(table)&&exactOwner&&
@@ -34107,7 +34135,7 @@ const WD09_CUSTOMER_SHEETS={
   work:{
     title:'고객업무기록시트',table:'wd_partners_communications',
     headers:['날짜','업무 유형','업무 내용','처리상태','다음 할 일','다음 예정일','첨부파일명','수정일','기록 ID'],
-    row:r=>[r.date,r.type,r.content||r.note,r.workStatus||r.status,r.nextContent,r.nextDate,r.fileName,r.updated,r.id]
+    row:r=>[r.date,r.type,r.content||r.note,r.workStatus||r.status||commParseRecord(r.content).status,r.nextContent,r.nextDate,r.fileName||r.file_name,r.updated,r.id]
   },
   claims:{
     title:'청구현황시트',table:'wd_partners_claim_records',
@@ -34193,6 +34221,7 @@ function wd09MountDriveSetup(connectDrive,home){
     message=note||connectMessage;
     home?.reset(note);
     window.wd09CustomerSheets=null;
+    window.wd09CustomerFiles=null;
     window.wd09ResetMonthly?.();
     window.wd09RefreshBulkSheetButton?.();
     render();
@@ -34421,7 +34450,7 @@ async function wd09RefreshCustomerRecordTab(kind){
     const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
     const homeSession=withHome?{token:grant.access_token,pendingTasks:new Set()}:null;
     if(homeSession)await wd09GoogleHome.verify(homeSession);
-    async function request(url,{method='GET',body,contentType}={}){
+    async function request(url,{method='GET',body,contentType,binary=false}={}){
       if(uid!==_UID||!getSbClient()||Date.now()>=expiresAt){
         throw Object.assign(new Error('Google 계정에 다시 연결해 주세요.'),{reconnect:true});
       }
@@ -34444,7 +34473,7 @@ async function wd09RefreshCustomerRecordTab(kind){
         throw new Error('이 Google 계정의 Drive 파일 권한을 확인해 주세요.');
       }
       if(!response.ok)throw new Error('Drive 작업에 실패했어요. 다시 시도해 주세요.');
-      return response.json();
+      return binary?response.blob():response.json();
     }
     const about=await request(base+'/about?fields=user(permissionId,emailAddress,displayName)');
     const user=about.user;
@@ -34496,6 +34525,34 @@ async function wd09RefreshCustomerRecordTab(kind){
       service:wd09DriveFolderService(api,uid,adviser.name),
       onReady(folders){
         window.wd09CustomerSheets=wd09CustomerSheetService(api,folders,uid);
+        const uploads=new WeakMap();
+        window.wd09CustomerFiles={
+          async upload(customer,file,name){
+            const cached=uploads.get(file);
+            if(cached?.customer===customer.id)return cached.path;
+            const boundary='wd09_'+crypto.randomUUID();
+            const mime=file.type||'application/octet-stream';
+            const metadata={name,parents:[folders.children.materials.id],mimeType:mime};
+            const body=new Blob([
+              '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',
+              JSON.stringify(metadata),'\r\n--'+boundary+'\r\nContent-Type: '+mime+'\r\n\r\n',
+              file,'\r\n--'+boundary+'--\r\n'
+            ]);
+            const uploaded=await request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+              method:'POST',body,contentType:'multipart/related; boundary='+boundary
+            });
+            if(!uploaded.id)throw Error('Drive에서 첨부파일 저장을 확인하지 못했어요.');
+            const path=uid+'/'+customer.id+'/materials/drive/'+uploaded.id+'/file.'+_attachExt(file);
+            uploads.set(file,{customer:customer.id,path});
+            return path;
+          },
+          download(customer,path){
+            const prefix=uid+'/'+customer?.id+'/materials/drive/';
+            const id=path.startsWith(prefix)&&path.slice(prefix.length).split('/')[0];
+            if(!id||!/^[\w-]+$/.test(id))throw Error('첨부파일 정보를 확인할 수 없어요.');
+            return request(base+'/files/'+encodeURIComponent(id)+'?alt=media',{binary:true});
+          }
+        };
         monthlyAdviserFolder=folders.adviser.id;
         if(String(grant.scope||'').split(/\s+/).includes(monthlyScope)){
           monthlySession={uid,token:grant.access_token,expiresAt};
