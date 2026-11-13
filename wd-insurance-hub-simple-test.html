@@ -7101,7 +7101,17 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #wdnav-desk-panel .card,#wdnav-account-panel .card{min-height:100%;}
 #wdnav-desk-panel .card-title,#wdnav-account-panel .card-title{font-size:17px;}
 #wdnav-account-panel .my-hd{box-shadow:var(--wdnav-soft-shadow);}
-#wdnav-account-panel .wdnav-account-guide{display:flex;flex-direction:column;justify-content:center;}
+#wd09-password-settings{max-width:560px;}
+#wd09-password-settings summary{cursor:pointer;font-size:17px;font-weight:800;color:var(--navy);}
+#wd09-password-form{display:grid;gap:12px;margin-top:16px;}
+#wd09-password-form label{display:grid;gap:6px;color:var(--s700);font-size:13px;font-weight:700;}
+#wd09-password-form input{
+  width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--s200);
+  border-radius:8px;background:#fff;color:var(--navy);font:inherit;font-weight:400;
+}
+#wd09-password-form button{justify-self:start;min-height:44px;}
+#wd09-password-feedback{margin:0;font-size:13px;color:var(--s700);}
+#wd09-password-feedback:empty{display:none;}
 </style>
 <!-- V1_1: PC 퀵버튼 전용 안전 여백 — 기능/위치/모바일 무변경 -->
 <style id="wdnav-quick-safe-rail-v1">
@@ -14488,7 +14498,7 @@ const wdTest09Storage = (() => {
 <!-- ── 마이페이지 ── -->
 <div class="pg" id="pg-mypage">
 <div class="wdnav-my-panel" id="wdnav-account-panel">
-<div class="sec-hd"><div class="sec-title">마이페이지</div><div class="sec-sub">이 파일에서 사용하는 대표님 계정 정보를 확인합니다.</div></div>
+<div class="sec-hd"><div class="sec-title">마이페이지</div><div class="sec-sub">내 계정과 로그인 비밀번호를 관리합니다.</div></div>
 <div class="my-hd">
 <div class="my-av" id="my-av">?</div>
 <div>
@@ -14497,12 +14507,22 @@ const wdTest09Storage = (() => {
 <div class="my-info-app">WD WAVE Partners</div>
 </div>
 </div>
-<div class="wdnav-account-grid">
-<div class="card wdnav-account-guide">
-<div class="card-title">계정 관리 안내</div>
-<div class="info-box" style="margin:0;">이 파일은 대표님 계정으로 바로 열립니다. 내 자리에서는 개인 업무 기록을 볼 수 있습니다.</div>
-</div>
-</div>
+<details class="card" id="wd09-password-settings">
+<summary>로그인 비밀번호 변경</summary>
+<form id="wd09-password-form" method="post">
+<label>현재 비밀번호
+  <input id="wd09-password-current" type="password" autocomplete="current-password" maxlength="4096" required>
+</label>
+<label>새 비밀번호
+  <input id="wd09-password-new" type="password" autocomplete="new-password" maxlength="4096" required>
+</label>
+<label>새 비밀번호 확인
+  <input id="wd09-password-confirm" type="password" autocomplete="new-password" maxlength="4096" required>
+</label>
+<button class="btn-p" id="wd09-password-submit" type="submit">비밀번호 변경</button>
+<p id="wd09-password-feedback" role="status"></p>
+</form>
+</details>
 </div>
 </div>
 <!-- V144_7: 상담업무 진입 허브 (신규 pg-consulthub · 카드 4개 · 기존 기능 진입만, 새 저장 없음 · 향후 확장) -->
@@ -33419,6 +33439,13 @@ function openDesignProgressModal(){
   const passwordInput = byId('wd09-auth-password');
   const passwordToggle = byId('wd09-auth-password-toggle');
   const rememberId = byId('wd09-auth-remember');
+  const passwordForm = byId('wd09-password-form');
+  const passwordSettings = byId('wd09-password-settings');
+  const currentPassword = byId('wd09-password-current');
+  const newPassword = byId('wd09-password-new');
+  const confirmPassword = byId('wd09-password-confirm');
+  const passwordSubmit = byId('wd09-password-submit');
+  const passwordFeedback = byId('wd09-password-feedback');
   const rememberedIdKey = 'wd-test09-remembered-employee-id';
   try {
     const savedId = window.localStorage.getItem(rememberedIdKey);
@@ -33459,6 +33486,16 @@ function openDesignProgressModal(){
         (url.pathname==='/auth/v1/user' && request.method==='GET') ||
         (url.pathname==='/auth/v1/logout' && request.method==='POST');
       if (authRequest) return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+
+      if (url.pathname==='/auth/v1/user' && request.method==='PUT' && !url.search && isVerified()) {
+        const body = await request.clone().json();
+        const validPassword = value => typeof value==='string' && value.length>0 && value.length<=4096;
+        if (body && Object.keys(body).length===2 &&
+            validPassword(body.current_password) && validPassword(body.password) && isVerified()) {
+          return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+        }
+        throw new Error('비밀번호 변경 요청을 확인하지 못했어요.');
+      }
 
       const policyPrefix=['/storage/v1/object/authenticated/wd-partners-attachments/','/storage/v1/object/wd-partners-attachments/']
         .find(prefix=>url.pathname.startsWith(prefix));
@@ -33556,6 +33593,8 @@ function openDesignProgressModal(){
     const old = active;
     active = null;
     _UID = null;
+    passwordForm.reset();
+    passwordSettings.open = false;
     window.wd09DriveReset?.();
     app.style.display = 'none';
     if (old) {
@@ -33626,6 +33665,7 @@ function openDesignProgressModal(){
       }
 
       attempt.verified = true;
+      attempt.userId = user.id;
       active = attempt;
       _UID = uid;
       _ROLE = USERS[uid].role;
@@ -33666,6 +33706,81 @@ function openDesignProgressModal(){
     }
   }
 
+  async function changePassword(event) {
+    event.preventDefault();
+    if (passwordSubmit.disabled) return;
+    const account = active;
+    if (!account?.verified || getSbClient()!==account.client) {
+      passwordFeedback.textContent = '다시 로그인한 뒤 비밀번호를 변경해 주세요.';
+      return;
+    }
+    const current = currentPassword.value;
+    const next = newPassword.value;
+    if (next!==confirmPassword.value) {
+      passwordFeedback.textContent = '새 비밀번호와 확인란의 입력이 달라요.';
+      confirmPassword.focus();
+      return;
+    }
+    if (next===current) {
+      passwordFeedback.textContent = '현재 비밀번호와 다른 비밀번호를 입력해 주세요.';
+      newPassword.focus();
+      return;
+    }
+
+    passwordSubmit.disabled = true;
+    currentPassword.readOnly = newPassword.readOnly = confirmPassword.readOnly = true;
+    passwordFeedback.textContent = '비밀번호를 변경하고 있어요.';
+    try {
+      const {data,error} = await account.client.auth.updateUser({
+        current_password:current,
+        password:next
+      });
+      if (active!==account) return;
+      if (error) {
+        switch (error.code) {
+          case 'invalid_credentials':
+          case 'current_password_mismatch':
+            passwordFeedback.textContent = '현재 비밀번호를 다시 확인해 주세요.';
+            break;
+          case 'weak_password':
+            passwordFeedback.textContent = '새 비밀번호를 더 길고 추측하기 어렵게 만들어 주세요.';
+            break;
+          case 'same_password':
+            passwordFeedback.textContent = '현재 비밀번호와 다른 비밀번호를 입력해 주세요.';
+            break;
+          case 'reauthentication_needed':
+          case 'session_not_found':
+          case 'session_expired':
+            passwordFeedback.textContent = '다시 로그인한 뒤 비밀번호를 변경해 주세요.';
+            break;
+          default:
+            passwordFeedback.textContent = error.status===429
+              ? '변경 요청이 많아요. 잠시 뒤 다시 시도해 주세요.'
+              : '비밀번호를 변경하지 못했어요. 현재 비밀번호를 확인하고 다시 시도해 주세요.';
+        }
+        return;
+      }
+      if (data?.user?.id!==account.userId) {
+        passwordFeedback.textContent = '변경 결과를 확인하지 못했어요.';
+        return;
+      }
+      passwordForm.reset();
+      passwordFeedback.textContent = '비밀번호를 변경했어요. 다음 로그인부터 새 비밀번호를 사용해 주세요.';
+    } catch (_) {
+      if (active===account) passwordFeedback.textContent = '변경 결과를 확인하지 못했어요. 잠시 뒤 다시 확인해 주세요.';
+    } finally {
+      passwordSubmit.disabled = false;
+      currentPassword.readOnly = newPassword.readOnly = confirmPassword.readOnly = false;
+    }
+  }
+
+  passwordForm.addEventListener('submit',changePassword);
+  passwordSettings.addEventListener('toggle',()=>{
+    if (!passwordSettings.open && !passwordSubmit.disabled) {
+      passwordForm.reset();
+      passwordFeedback.textContent = '';
+    }
+  });
   form.addEventListener('submit',login);
   byId('wd09-auth-signout').addEventListener('click',leave);
   window.addEventListener('pagehide',()=>{ if (active) app.style.display='none'; });
