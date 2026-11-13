@@ -33,6 +33,8 @@
         signal:AbortSignal.timeout(10000)
       });
       if(!response.ok)throw new Error('스티커노트 저장소에 연결하지 못했습니다.');
+      // PostgREST returns an empty 201 for imports that request return=minimal.
+      if(options.expectNoBody)return;
       return response.status===204?[]:response.json();
     }
     const scope={owner_id:'eq.'+uid};
@@ -77,7 +79,7 @@
           return {id,body:note.body,color:colorKey(note.color),created_at:date(note.created_at)||new Date().toISOString()};
         }));
         for(let start=0;start<rows.length;start+=100){
-          await request({}, {method:'POST',prefer:'return=minimal,resolution=ignore-duplicates',
+          await request({}, {method:'POST',expectNoBody:true,prefer:'return=minimal,resolution=ignore-duplicates',
             body:rows.slice(start,start+100)});
         }
       }
