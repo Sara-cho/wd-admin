@@ -12,61 +12,16 @@ create schema wd09_private;
 revoke all on schema wd09_private from public;
 grant usage on schema wd09_private to authenticated;
 
-create table wd09_private.planner_access (
-  email text primary key check (email = lower(btrim(email)) and length(email) <= 254),
+create table wd09_private.planner_accounts (
+  auth_user_id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
   display_name text not null check (length(display_name) between 1 and 40),
   planner_uid text not null unique default ('WDG' || replace(gen_random_uuid()::text, '-', '')),
-  auth_user_id uuid unique references auth.users(id),
-  can_invite boolean not null default false,
-  invited_at timestamptz not null default now(),
-  check (can_invite = (planner_uid = 'WDTESTADMIN'))
+  created_at timestamptz not null default now()
 );
 
-alter table wd09_private.planner_access enable row level security;
-revoke all on table wd09_private.planner_access from public, anon, authenticated;
-
-create function wd09_private.invite_planner(target_email text, target_name text)
-returns text
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  normalized_email text := lower(btrim(target_email));
-  normalized_name text := btrim(target_name);
-  invited_uid text;
-begin
-  if not exists (
-    select 1 from wd09_private.planner_access
-    where auth_user_id = (select auth.uid()) and can_invite
-  ) then
-    raise exception using errcode = '42501', message = 'Only the planner administrator can invite users';
-  end if;
-  if normalized_email is null or length(normalized_email) > 254
-    or normalized_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
-    or normalized_name is null or length(normalized_name) not between 1 and 40 then
-    raise exception using errcode = '22023', message = 'Invalid name or email';
-  end if;
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and lower(u.email) = normalized_email
-  ) then
-    raise exception using errcode = '22023', message = 'The administrator already has access';
-  end if;
-
-  insert into wd09_private.planner_access as invitation(email, display_name)
-  values (normalized_email, normalized_name)
-  on conflict (email) do update
-  set display_name = excluded.display_name, invited_at = now()
-  where invitation.auth_user_id is null
-  returning planner_uid into invited_uid;
-
-  if invited_uid is null then
-    raise exception using errcode = '23505', message = 'This planner already has access';
-  end if;
-  return invited_uid;
-end;
-$$;
+alter table wd09_private.planner_accounts enable row level security;
+revoke all on table wd09_private.planner_accounts from public, anon, authenticated;
 
 create function wd09_private.activate_planner()
 returns jsonb
@@ -77,7 +32,8 @@ as $$
 declare
   caller uuid := auth.uid();
   google_email text;
-  profile wd09_private.planner_access%rowtype;
+  google_name text;
+  profile wd09_private.planner_accounts%rowtype;
 begin
   if caller is null or not exists (
     select 1 from jsonb_array_elements(coalesce(auth.jwt()->'amr', '[]'::jsonb)) method
@@ -86,49 +42,26 @@ begin
     raise exception using errcode = '42501', message = 'Google sign-in is required';
   end if;
 
-  select lower(i.identity_data->>'email') into google_email
+  select lower(i.identity_data->>'email'), i.identity_data->>'name'
+  into google_email, google_name
   from auth.identities i join auth.users u on u.id = i.user_id
   where i.user_id = caller and i.provider = 'google'
     and i.identity_data->>'email_verified' = 'true'
-    and lower(i.identity_data->>'email') = lower(u.email);
+    and lower(i.identity_data->>'email') = lower(u.email)
+  limit 1;
 
-  update wd09_private.planner_access invitation
-  set auth_user_id = caller
-  where invitation.email = google_email
-    and (invitation.auth_user_id is null or invitation.auth_user_id = caller)
-  returning * into profile;
-
-  if not found then
-    raise exception using errcode = '42501', message = 'No invitation for this Google account';
+  if google_email is null then
+    raise exception using errcode = '42501', message = 'A verified Google account is required';
   end if;
 
-  return jsonb_build_object(
-    'uid', profile.planner_uid, 'name', profile.display_name,
-    'email', profile.email, 'canInvite', profile.can_invite
-  );
+  insert into wd09_private.planner_accounts (auth_user_id, email, display_name)
+  values (caller, google_email, left(coalesce(nullif(btrim(google_name), ''), split_part(google_email, '@', 1)), 40))
+  on conflict (auth_user_id) do update set email = excluded.email
+  returning * into profile;
+
+  return jsonb_build_object('uid', profile.planner_uid, 'name', profile.display_name, 'email', profile.email);
 end;
 $$;
-
-create function wd09_private.allow_google_signup(event jsonb)
-returns jsonb
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select case when event #>> '{user,app_metadata,provider}' = 'google'
-    and exists (
-      select 1 from wd09_private.planner_access
-      where email = lower(event #>> '{user,email}') and auth_user_id is null
-    )
-    then '{}'::jsonb
-    else jsonb_build_object('error', jsonb_build_object('http_code', 403, 'message', 'An invitation is required'))
-  end
-$$;
-
-grant usage on schema wd09_private to supabase_auth_admin;
-revoke execute on function wd09_private.allow_google_signup(jsonb) from public, anon, authenticated;
-grant execute on function wd09_private.allow_google_signup(jsonb) to supabase_auth_admin;
 
 create function wd09_private.current_planner_uid()
 returns text
@@ -137,20 +70,11 @@ stable
 security definer
 set search_path = ''
 as $$
-  select planner_uid from wd09_private.planner_access where auth_user_id = (select auth.uid())
+  select planner_uid from wd09_private.planner_accounts where auth_user_id = (select auth.uid())
 $$;
 
-revoke execute on function wd09_private.invite_planner(text,text),
-  wd09_private.activate_planner(), wd09_private.current_planner_uid() from public, anon;
-grant execute on function wd09_private.invite_planner(text,text),
-  wd09_private.activate_planner(), wd09_private.current_planner_uid() to authenticated;
-
-create function public.wd09_invite_planner(target_email text, target_name text)
-returns text
-language sql
-security invoker
-set search_path = ''
-as $$ select wd09_private.invite_planner(target_email, target_name) $$;
+revoke execute on function wd09_private.activate_planner(), wd09_private.current_planner_uid() from public, anon;
+grant execute on function wd09_private.activate_planner(), wd09_private.current_planner_uid() to authenticated;
 
 create function public.wd09_activate_planner()
 returns jsonb
@@ -159,8 +83,8 @@ security invoker
 set search_path = ''
 as $$ select wd09_private.activate_planner() $$;
 
-revoke execute on function public.wd09_invite_planner(text,text), public.wd09_activate_planner() from public, anon;
-grant execute on function public.wd09_invite_planner(text,text), public.wd09_activate_planner() to authenticated;
+revoke execute on function public.wd09_activate_planner() from public, anon;
+grant execute on function public.wd09_activate_planner() to authenticated;
 
 create table public.wd_partners_claim_records (
   id bigint not null,
@@ -351,7 +275,7 @@ begin
     'wd_partners_hub_system_accounts'
   ] loop
     execute format(
-      'create policy wd09_invited_planner_owner on public.%I for all to authenticated
+      'create policy wd09_planner_owner on public.%I for all to authenticated
        using (uid = (select wd09_private.current_planner_uid()))
        with check (uid = (select wd09_private.current_planner_uid()))', name
     );
@@ -359,7 +283,7 @@ begin
 end;
 $$;
 
-create policy wd09_invited_planner_own_files on storage.objects for all to authenticated
+create policy wd09_planner_own_files on storage.objects for all to authenticated
   using (
     bucket_id in ('wd-partners-attachments', 'wd-consultation-signatures')
     and (storage.foldername(name))[1] = (select wd09_private.current_planner_uid())
