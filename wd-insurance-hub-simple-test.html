@@ -10946,16 +10946,20 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #wd09-skill-status, #wd09-skill-feedback, #wd09-skill-filename, #wd09-skill-existing { color:var(--s600); font-size:13px; overflow-wrap:anywhere; }
 #wd09-skill-status:empty, #wd09-skill-feedback:empty { display:none; }
 .wd09-skill-table { margin-top:14px; overflow:auto; border:1px solid var(--s200); border-radius:10px; }
-.wd09-skill-table table { width:100%; min-width:670px; border-collapse:collapse; table-layout:fixed; text-align:left; color:var(--navy); }
+.wd09-skill-table table { width:100%; min-width:760px; border-collapse:collapse; table-layout:fixed; text-align:left; color:var(--navy); }
 .wd09-skill-table :is(th,td) { padding:12px 10px; border-bottom:1px solid var(--s200); font-size:13px; }
 .wd09-skill-table th { background:var(--s50); white-space:nowrap; }
-.wd09-skill-table th:nth-child(1) { width:25%; }
-.wd09-skill-table th:nth-child(2) { width:36%; }
-.wd09-skill-table th:nth-child(3) { width:14%; }
+.wd09-skill-search { width:min(100%,360px); min-height:40px; margin-top:14px; padding:8px 12px; border:1px solid var(--s200); border-radius:9px; color:var(--navy); background:#fff; font:inherit; }
+.wd09-skill-table th:nth-child(1) { width:54px; }
+.wd09-skill-table th:nth-child(2) { width:13%; }
+.wd09-skill-table th:nth-child(3) { width:20%; }
+.wd09-skill-table th:nth-child(5) { width:80px; }
+.wd09-skill-table th:nth-child(6) { width:106px; }
+.wd09-skill-table th:nth-child(7) { width:118px; }
+.wd09-skill-table :is(th,td):is(:nth-child(1),:nth-child(5)) { text-align:center; }
 .wd09-skill-table tbody tr:last-child td { border-bottom:0; }
 .wd09-skill-table td { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.wd09-skill-table td:first-child small { display:block; color:var(--purple); }
-.wd09-skill-table td:first-child strong { display:block; overflow:hidden; text-overflow:ellipsis; }
+.wd09-skill-file-icon { min-width:32px; min-height:32px; font-size:16px; }
 #wd09-skill-dialog { inset:0; width:min(calc(100% - 24px),650px); max-height:calc(100dvh - 24px); margin:auto; padding:0; border:1px solid var(--s200); border-radius:14px; color:var(--navy); }
 #wd09-skill-dialog::backdrop { background:#13213b66; }
 #wd09-skill-dialog[open] { display:flex; flex-direction:column; }
@@ -13543,9 +13547,10 @@ const wdTest09Storage = (() => {
       <button type="button" class="btn-sm p" id="wd09-skill-add" disabled>+ 자료 올리기</button>
     </div>
   </header>
+  <input type="search" id="wd09-skill-search" class="wd09-skill-search" aria-label="공유 자료 검색" placeholder="자료구분, 자료명, 설명, 작성자 검색">
   <p id="wd09-skill-status" role="status"></p>
   <div class="wd09-skill-table" tabindex="0" role="region" aria-label="공유 자료 목록">
-    <table><thead><tr><th scope="col">자료명</th><th scope="col">자료내용</th><th scope="col">첨부파일</th><th scope="col">업로드일</th><th scope="col">업로드한 사람</th></tr></thead>
+    <table><thead><tr><th scope="col">번호</th><th scope="col">자료구분</th><th scope="col">자료명</th><th scope="col">자료설명</th><th scope="col">첨부파일</th><th scope="col">업로드일</th><th scope="col">업로드한 사람</th></tr></thead>
     <tbody id="wd09-skill-list"></tbody></table>
   </div>
   <dialog id="wd09-skill-dialog" aria-labelledby="wd09-skill-dialog-title">
@@ -13564,12 +13569,12 @@ const wdTest09Storage = (() => {
         </div>
       </div>
       <form id="wd09-skill-form" hidden>
-        <div class="fld"><label for="wd09-skill-kind">자료 성격</label>
+        <div class="fld"><label for="wd09-skill-kind">자료구분</label>
           <select id="wd09-skill-kind" name="kind" required><option value="">선택</option><option>이미지</option><option>파일</option><option>GPT스킬</option><option>플러그인</option><option value="custom">직접 입력</option></select>
-          <input id="wd09-skill-custom" name="custom" aria-label="자료 성격 직접 입력" maxlength="30" placeholder="예: 체크리스트" hidden>
+          <input id="wd09-skill-custom" name="custom" aria-label="자료구분 직접 입력" maxlength="30" placeholder="예: 체크리스트" hidden>
         </div>
         <div class="fld"><label for="wd09-skill-name">자료명</label><input id="wd09-skill-name" name="title" maxlength="80" required></div>
-        <div class="fld"><label for="wd09-skill-text">자료내용</label><textarea id="wd09-skill-text" name="content" rows="5" maxlength="4000" required></textarea></div>
+        <div class="fld"><label for="wd09-skill-text">자료설명</label><textarea id="wd09-skill-text" name="content" rows="5" maxlength="4000" required></textarea></div>
         <div class="fld"><label for="wd09-skill-file">첨부파일 (선택)</label><input id="wd09-skill-file" name="attachment" type="file"><small id="wd09-skill-existing"></small></div>
         <button type="button" class="btn-sm" id="wd09-skill-connect" hidden>Drive 연결</button>
         <p id="wd09-skill-filename"></p>
@@ -16032,7 +16037,7 @@ const wdTest09Storage = (() => {
 <button type="button" class="wd09-modal-close" onclick="closeModal('wd09-drive-setup')" aria-label="Google 연결창 닫기">×</button>
 </header>
 <div class="wd09-entry-body wd09-drive-setup">
-<p id="wd09-drive-services">Drive 파일을 허용해 주세요. 일정과 할 일 권한은 홈 화면에서 사용합니다.</p>
+<p id="wd09-drive-services">본인의 Google 계정을 선택해 주세요. Drive는 고객 자료와 시트에, Google 캘린더와 할 일은 홈 화면에 연결됩니다.</p>
 <p id="wd09-drive-account" hidden></p>
 <p id="wd09-drive-message" role="status">사용할 Google 계정을 연결해 주세요.</p>
 <pre id="wd09-drive-tree" class="wd09-drive-folder-tree" hidden></pre>
@@ -16968,7 +16973,7 @@ const wdTest09Storage = (() => {
 <script>
 /* ══ 앱 버전 체크 (배포 후 캐시 대응) ══
    ※ 다음 버전 작업 시 Claude는 이 APP_VERSION 값을 출력 파일 버전에 맞춰 함께 변경할 것 */
-var APP_VERSION='WD_PARTNERS_260702_V144_2';
+var APP_VERSION='WD_PARTNERS_TEST09_261113_02';
 (function checkAppVersionRefresh(){
   try{
     /* V128 FIX: file:// 로컬 실행에서는 자기 자신 재이동을 하지 않는다.
@@ -18497,12 +18502,6 @@ async function downloadCustomerAttachment(path,name){
   }catch(error){
     alert('파일을 내려받지 못했어요. 첨부파일과 조회 권한을 확인해 주세요.');
   }
-}
-function customerAttachmentActions(path,name,openAction){
-  var fileArg=esc(JSON.stringify(path));
-  var nameArg=esc(JSON.stringify(name||'첨부파일'));
-  return '<button type="button" class="btn-sm" onclick="event.stopPropagation();'+openAction+'('+fileArg+')">열기</button> '
-    +'<button type="button" class="btn-sm p" onclick="event.stopPropagation();downloadCustomerAttachment('+fileArg+','+nameArg+')">다운로드</button>';
 }
 function lsComm(){return 'wlp_comm_'+_UID+'_'+_vid;}
 // ══ 고객소통이력 — Supabase 연결 (V70) ══
@@ -20638,9 +20637,45 @@ function autoDdayInfo(expiryDate){
   else{label='D-'+days;cls='normal';}
   return {days:days,label:label,cls:cls};
 }
-function autoPhotoCell(f){
-  if(f&&f.path)return esc(f.name||'첨부파일')+' '+customerAttachmentActions(f.path,f.name,'openStorageAttachment');
-  return '첨부 없음';
+function autoPhotoCell(file,kind){
+  if(!file?.path)return '첨부 없음';
+  const name=file.name||'첨부파일';
+  return '<button type="button" class="btn-sm p wd09-document-icon" title="'+esc(name)
+    +'" aria-label="'+esc(name)+' 보기" onclick="openAutoPhoto(\''+kind+'\')"><span aria-hidden="true">📄</span></button> '
+    +'<button type="button" class="btn-sm" onclick="openAutoPhoto(\''+kind+'\',true)">다운로드</button>';
+}
+async function openAutoPhoto(kind,downloadOnly=false,custId=_autoDetailCustId,recordId=_autoDetailId){
+  const customer=getCusts().find(item=>String(item.id)===String(custId));
+  const record=cstAutoList(customer).find(item=>String(item.id)===String(recordId));
+  const field=WD09_AUTO_PHOTOS[kind]?.field;
+  const file=field&&record?.[field];
+  if(!file?.path)return;
+  const name=file.name||'자동차보험 첨부파일';
+  if(!downloadOnly)openCustomerPolicyPanel(name);
+  const version=customerPolicyRequest,uid=_UID;
+  try{
+    const blob=await loadCustomerMaterialBlob({file_path:file.path},customer);
+    if(uid!==_UID)return;
+    if(downloadOnly){downloadAttachmentBlob(blob,name);return;}
+    if(version!==customerPolicyRequest)return;
+    const mime={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',pdf:'application/pdf'}[_attachExt({name:file.path})];
+    customerPolicyUrl=URL.createObjectURL(new Blob([blob],{type:mime||'application/octet-stream'}));
+    const download=document.getElementById('wd09-policy-download');
+    download.href=customerPolicyUrl;
+    download.download=name;
+    download.hidden=false;
+    const status=document.getElementById('wd09-policy-status');
+    if(!mime){status.textContent='이 파일은 다운로드해서 확인할 수 있어요.';return;}
+    const frame=document.getElementById('wd09-policy-frame');
+    frame.src=customerPolicyUrl;
+    frame.hidden=false;
+    status.textContent='';
+  }catch(error){
+    if(uid!==_UID)return;
+    const message=error.message||'자동차보험 첨부파일을 열지 못했어요.';
+    if(downloadOnly)alert(message);
+    else if(version===customerPolicyRequest)document.getElementById('wd09-policy-status').textContent=message;
+  }
 }
 // 보험사 select 옵션 구성(기타 선택 시 직접입력 노출)
 function autoUpdateCompanyOptions(keepVal){
@@ -20656,18 +20691,11 @@ function autoToggleCompanyCustom(){
   if(!sel||!wrap)return;
   wrap.style.display=sel.value==='기타'?'':'none';
 }
-// 첨부파일 — 기존 wd-partners-attachments 버킷 재사용(레코드당 3장: blackbox/dashboard/plate)
-async function uploadAutoAttachment(custId,recordId,kind,file){
-  var sb=getSbClient();
-  if(!sb){console.error('[auto attachment upload] Supabase client 없음');return {ok:false,reason:'NO_SUPABASE_CLIENT'};}
-  var ext=_attachExt(file);
-  var path=_UID+'/'+custId+'/auto/'+recordId+'/'+kind+'.'+ext;
-  try{
-    var res=await sb.storage.from('wd-partners-attachments').upload(path,file,{upsert:true});
-    if(res.error){console.error('[auto attachment upload]',res.error.message);return {ok:false,reason:'UPLOAD_ERROR'};}
-    return {ok:true,path:path};
-  }catch(e){console.error('[auto attachment upload]',e&&e.message);return {ok:false,reason:'UPLOAD_EXCEPTION'};}
-}
+const WD09_AUTO_PHOTOS={
+  blackbox:{field:'blackboxFile',label:'블랙박스'},
+  dashboard:{field:'dashboardFile',label:'계기판'},
+  plate:{field:'plateFile',label:'번호판'}
+};
 function openAutoAdd(fromInsurance){
   document.getElementById('auto-customer-field').hidden=true;
   wd09SetAutoCustomerRequired(false);
@@ -20723,10 +20751,18 @@ function openAutoEdit(id,custId){
   document.getElementById('auto-carnum').value=item.carNumber||'';
   var fmap={blackbox:item.blackboxFile,dashboard:item.dashboardFile,plate:item.plateFile};
   Object.keys(fmap).forEach(function(k){
-    var f=fmap[k]||{};
-    var fi=document.getElementById('auto-file-'+k);if(fi)fi.value='';
-    var cur=document.getElementById('auto-file-'+k+'-cur');
-    if(cur)cur.innerHTML=f.path?('현재: <a onclick="openStorageAttachment(\''+f.path+'\')" style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:underline;">'+esc(f.name||'첨부 보기')+'</a>'):'';
+    const input=document.getElementById('auto-file-'+k);
+    if(input)input.value='';
+    const current=document.getElementById('auto-file-'+k+'-cur');
+    if(!current)return;
+    current.replaceChildren();
+    if(!fmap[k]?.path)return;
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='btn-sm p';
+    button.textContent='📄 '+(fmap[k].name||'첨부 보기');
+    button.onclick=()=>openAutoPhoto(k,false,c.id,item.id);
+    current.append(button);
   });
   document.getElementById('auto-result-status').value=autoContractStatus(item);
   document.getElementById('auto-memo').value=item.memo||'';
@@ -20755,6 +20791,9 @@ async function saveAutoRecord(){
   const line=use==='__custom__'?document.getElementById('auto-line-custom').value.trim():use;
   if(use==='__custom__'&&!line){alert('차량용도를 입력해 주세요.');return;}
   const documents=WD09_CONTRACT_PDFS.map(doc=>({...doc,file:document.getElementById('auto-'+doc.kind+'-file').files[0]})).filter(doc=>doc.file);
+  const photos=Object.entries(WD09_AUTO_PHOTOS).map(([kind,photo])=>({
+    ...photo,file:document.getElementById('auto-file-'+kind)?.files[0]
+  })).filter(photo=>photo.file);
   const pdfDate=wd09AutoPdfDate();
   const save=document.getElementById('wd09-auto-save');
   if(save.disabled)return;
@@ -20797,6 +20836,10 @@ async function saveAutoRecord(){
         return;
       }
     }
+    for(const {file} of photos){
+      const check=validateAttachFile(file);
+      if(!check.ok){alert(check.message);return;}
+    }
     for(const {file,field,label} of documents){
       if(_UID!==uid||String(wd09AutoTarget()?.id)!==String(c.id))return;
       save.textContent=label+' 올리는 중…';
@@ -20804,20 +20847,12 @@ async function saveAutoRecord(){
       const path=await uploadMatAttachment(c,file,name,'application/pdf');
       rec[field]={path,name,original_name:file.name,uploadedAt:new Date().toISOString()};
     }
-    var kindMap={blackbox:'blackboxFile',dashboard:'dashboardFile',plate:'plateFile'};
-    var kindLabel={blackbox:'블랙박스',dashboard:'계기판',plate:'번호판'};
-    for(var k in kindMap){
-      var fi=document.getElementById('auto-file-'+k);
-      var f=(fi&&fi.files&&fi.files[0])?fi.files[0]:null;
-      if(f){
-        var check=validateAttachFile(f);
-        if(!check.ok){alert(check.message);continue;}
-        var up=await uploadAutoAttachment(c.id,recId,k,f);
-        if(up.ok){
-          rec[kindMap[k]]={name:customerAttachmentName(c,'자동차'+kindLabel[k]+'사진',f.name),original_name:f.name,path:up.path,url:''};
-        }
-        else{alert(kindLabel[k]+' 사진 업로드에 실패했습니다. 나머지 항목은 정상 저장됩니다.');}
-      }
+    for(const {file,label,field} of photos){
+      if(_UID!==uid||String(wd09AutoTarget()?.id)!==String(c.id))return;
+      save.textContent=label+' 올리는 중…';
+      const name=customerAttachmentName(c,'자동차'+label+'사진',file.name);
+      const path=await uploadMatAttachment(c,file,name);
+      rec[field]={name,original_name:file.name,path,url:''};
     }
     const latest=wd09AutoTarget();
     if(_UID!==uid||String(latest?.id)!==String(c.id))return;
@@ -20882,9 +20917,9 @@ function openAutoDetail(custId,id,index){
   document.getElementById('atd-insured').textContent=detail.insured||'—';
   document.getElementById('atd-agent').textContent=detail.agent||'—';
   document.getElementById('atd-premium').textContent=detail.annualPremium===null?'—':detail.annualPremium.toLocaleString('ko-KR')+'원';
-  document.getElementById('atd-blackbox').innerHTML=autoPhotoCell(item.blackboxFile);
-  document.getElementById('atd-dashboard').innerHTML=autoPhotoCell(item.dashboardFile);
-  document.getElementById('atd-plate').innerHTML=autoPhotoCell(item.plateFile);
+  document.getElementById('atd-blackbox').innerHTML=autoPhotoCell(item.blackboxFile,'blackbox');
+  document.getElementById('atd-dashboard').innerHTML=autoPhotoCell(item.dashboardFile,'dashboard');
+  document.getElementById('atd-plate').innerHTML=autoPhotoCell(item.plateFile,'plate');
   document.getElementById('atd-result').textContent=autoContractStatus(item);
   document.getElementById('atd-memo').textContent=item.memo||'-';
   document.getElementById('atd-dates').textContent='등록 '+(item.createdAt||'').slice(0,10)+' / 수정 '+(item.updatedAt||'').slice(0,10);
@@ -34433,7 +34468,11 @@ function openDesignProgressModal(){
           (cstMatLogs(customer).some(item=>item.file_path===path)||
            getComms().some(item=>item.file_path===path));
         const ownsClaimFile=path.startsWith(uid+'/'+custId+'/')&&customer&&claimAttachmentsForCustomer(path);
-        if(ownsPolicy||ownsAttachment||ownsClaimFile)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
+        const legacyPhoto=/^([A-Za-z0-9]+)\/(\d+)\/auto\/([\w-]+)\/(blackbox|dashboard|plate)\.[a-z0-9]+$/.exec(path);
+        const ownsLegacyPhoto=legacyPhoto?.[1]===uid&&getCusts().some(item=>
+          String(item.id)===legacyPhoto[2]&&cstAutoList(item).some(record=>
+            String(record.id)===legacyPhoto[3]&&record[WD09_AUTO_PHOTOS[legacyPhoto[4]].field]?.path===path));
+        if(ownsPolicy||ownsAttachment||ownsClaimFile||ownsLegacyPhoto)return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
       const table = url.pathname.startsWith('/rest/v1/') && url.pathname.slice('/rest/v1/'.length);
       const validUpsertQuery=(conflict,rows)=>{
@@ -34524,6 +34563,7 @@ function openDesignProgressModal(){
     document.body.classList.remove('wd09-signed-in');
     resetPasswordFields();
     passwordSettings.open = false;
+    window.wd09ResetSkillBoard?.();
     window.wd09DriveReset?.();
     app.style.display = 'none';
     if (old) {
@@ -34606,11 +34646,6 @@ function openDesignProgressModal(){
         }
       });
       passwordInput.value = '';
-      if (uid!=='WD23000') {
-        byId('wd09-drive-services').textContent='Drive 파일을 허용해 주세요.';
-        byId('wd09-google-events').textContent='구글 일정은 지점장 계정에서 사용합니다.';
-        byId('wd09-google-tasks').textContent='구글 할 일은 지점장 계정에서 사용합니다.';
-      }
       setUserUI(USERS[uid],uid);
       byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
       screen.hidden = true;
@@ -34800,8 +34835,7 @@ const wd09GoogleHome = (function initSimpleHome(){
     input.value = '';
     add.disabled = true;
     feedback.textContent = message;
-    events.textContent = _UID && _UID!=='WD23000'
-      ? '구글 일정은 지점장 계정에서 사용합니다.' : '상단 Drive 메뉴에서 Google 일정 권한을 허용해 주세요.';
+    events.textContent = '상단 Drive 메뉴에서 내 Google 캘린더를 연결해 주세요.';
     renderTasks();
   }
 
@@ -34841,9 +34875,13 @@ const wd09GoogleHome = (function initSimpleHome(){
     return Array.from(new Uint8Array(digest),byte => byte.toString(16).padStart(2,'0')).join('');
   }
 
-  async function verifyAccount(email) {
-    if (await accountFingerprint(email) !== 'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22') {
-      throw new Error('본진에서 연결한 Google 계정을 선택해 주세요.');
+  async function verifyAccount(uid,email) {
+    const expected = {
+      WD23000:'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22',
+      WD26002:'50b28062e1c927740c57812e0a42d1e89a8edc75bcd01284ec9b1a491b703578'
+    };
+    if(!Object.hasOwn(expected,uid)||!email||await accountFingerprint(email)!==expected[uid]){
+      throw Error('이 설계사 계정에 등록된 본인의 Google 계정을 선택해 주세요.');
     }
   }
 
@@ -34937,8 +34975,7 @@ const wd09GoogleHome = (function initSimpleHome(){
 
   function renderTasks() {
     if (!connection?.hasTasks) {
-      taskList.textContent = _UID && _UID!=='WD23000'
-        ? '구글 할 일은 지점장 계정에서 사용합니다.' : '상단 Drive 메뉴에서 Google 할 일 권한을 허용해 주세요.';
+      taskList.textContent = '상단 Drive 메뉴에서 내 Google 할 일을 연결해 주세요.';
       return;
     }
     const rows = tasks.filter(task=>task.due ? task.due.slice(0,10)===selected :
@@ -35497,6 +35534,7 @@ function wd09MountDriveSetup(connectDrive,home){
   const open=byId('wd09-drive-open');
   const homeNotice=byId('wd09-home-drive');
   const homeTitle=byId('wd09-home-drive-title');
+  const homeDescription=homeTitle.closest('strong').nextElementSibling;
   const homeConnect=byId('wd09-home-drive-connect');
   const action=byId('wd09-drive-action');
   const account=byId('wd09-drive-account');
@@ -35512,10 +35550,15 @@ function wd09MountDriveSetup(connectDrive,home){
 
   function render(){
     const ready=!!folders?.ready;
+    const missingHome=ready&&(!session?.homeSession?.hasCalendar||!session?.homeSession?.hasTasks);
     open.textContent=ready?'Drive 연결됨':session?'Drive 설정':'Drive 연결';
     open.dataset.connected=String(ready);
-    homeNotice.hidden=ready;
-    homeTitle.textContent=session?'Google Drive 설정을 완료해 주세요':'Google Drive를 연결해 주세요';
+    homeNotice.hidden=ready&&!missingHome;
+    homeTitle.textContent=missingHome?'Google 캘린더·할 일 연결을 확인해 주세요'
+      :session?'Google Drive 설정을 완료해 주세요':'Google Drive를 연결해 주세요';
+    homeDescription.textContent=missingHome
+      ?'설정을 열어 내 Google 캘린더와 할 일에 필요한 권한을 허용해 주세요.'
+      :'고객자료와 청구서류를 저장하고 월간영업자료를 확인할 수 있어요.';
     homeConnect.textContent=session?'Drive 설정 열기':'Drive 연결하기';
     open.setAttribute('aria-haspopup','dialog');
     action.textContent=ready||folders?.needsFolderAccess?'Google 계정 다시 연결'
@@ -35618,7 +35661,7 @@ function wd09RenderBulkSheets(){
   const button=document.getElementById('wd09-bulk-sheet-button');
   const status=document.getElementById('wd09-bulk-sheet-status');
   const job=wd09BulkCustomerSheets;
-  button.hidden=_UID!=='WD23000';
+  button.hidden=!_UID||!getSbClient();
   button.disabled=!!job?.running;
   button.textContent=!window.wd09CustomerSheets?'Drive 연결 후 시트 만들기':
     job?.remaining.size?'시트 만들기 계속':'기존 고객 시트 만들기';
@@ -35629,13 +35672,19 @@ function wd09RenderBulkSheets(){
 }
 window.wd09RefreshBulkSheetButton=wd09RenderBulkSheets;
 async function wd09SyncAllCustomerSheets(){
-  if(_UID!=='WD23000'||wd09BulkCustomerSheets?.running)return;
+  const uid=_UID,client=getSbClient();
+  const current=()=>uid===_UID&&client===getSbClient();
+  if(!uid||!client||wd09BulkCustomerSheets?.running)return;
   if(!window.wd09CustomerSheets){document.getElementById('wd09-drive-open').click();return;}
   if(!wd09BulkCustomerSheets?.remaining.size){
     if(_custUidLoaded!==_UID&&!(await loadCustomersFromSupa()).ok)return;
-    if(_UID!=='WD23000'||!window.wd09CustomerSheets)return;
+    if(!current()||!window.wd09CustomerSheets)return;
     const ids=new Set(getCusts().map(c=>String(c.id)));
-    if(!ids.size||!confirm('등록 고객 '+ids.size+'명의 업무기록·청구현황 시트를 Drive에 만들거나 갱신할까요?'))return;
+    if(!ids.size){
+      document.getElementById('wd09-bulk-sheet-status').textContent='시트를 만들 고객이 없어요.';
+      return;
+    }
+    if(!confirm('내 고객 '+ids.size+'명의 업무기록·청구현황 시트를 내 Drive에 만들거나 갱신할까요?'))return;
     wd09BulkCustomerSheets={total:ids.size,remaining:ids,running:false,error:''};
   }
   const job=wd09BulkCustomerSheets;
@@ -35732,7 +35781,7 @@ function wd09SkillFileName(post,attachmentName){
     .replace(/\s+/g,' ').trim().replace(/^[. ]+|[. ]+$/g,'');
   const ext=/[.]([a-z0-9]{1,12})$/i.exec(attachmentName)?.[0]||'';
   const kind=clean(post.kind),title=clean(post.title);
-  if(!kind||!title)throw Error('파일명에 사용할 수 있는 자료 성격과 자료명을 입력해 주세요.');
+  if(!kind||!title)throw Error('파일명에 사용할 수 있는 자료구분과 자료명을 입력해 주세요.');
   return '[보험자료]'+kind+'_'+title+'_'+post.date.replace(/-/g,'').slice(2)+ext;
 }
 
@@ -35804,7 +35853,7 @@ function wd09SkillSharedService(client,uid,request=fetch){
     if(uid!==_UID||client!==getSbClient())throw Error('설계사허브에 다시 로그인해 주세요.');
     if(result?.status===401)throw Error('설계사허브 로그인 상태를 확인해 주세요.');
     if(result?.status===409)throw Object.assign(Error('자료가 이미 변경됐어요. 목록을 새로고침해 주세요.'),{conflict:true});
-    if(result?.status===400)throw Error('자료 성격, 이름, 내용과 첨부파일을 확인해 주세요.');
+    if(result?.status===400)throw Error('자료구분, 자료명, 자료설명과 첨부파일을 확인해 주세요.');
     if(!result?.ok)throw Error('공유 게시판에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
     return result.json();
   }
@@ -35851,7 +35900,10 @@ function wd09SkillSharedService(client,uid,request=fetch){
 (() => {
   const el=key=>document.getElementById('wd09-skill-'+key);
   const form=el('form'),dialog=el('dialog');
-  let selected=null,attempt=null,busy=false,revision=0,notice='';
+  const search=el('search');
+  let selected=null,attempt=null,busy=false,revision=0,notice='',posts=[];
+  let emptyMessage='공유 자료를 불러오는 중이에요.';
+  const normalize=value=>String(value??'').normalize('NFKC').toLocaleLowerCase('ko-KR');
   function currentService(){
     const client=getSbClient();
     return client&&_UID?wd09SkillSharedService(client,_UID):null;
@@ -35859,44 +35911,69 @@ function wd09SkillSharedService(client,uid,request=fetch){
   function shown(){
     return document.getElementById('pg-wkit').classList.contains('on')&&document.getElementById('wk-skill-btn').classList.contains('on');
   }
-  function render(posts,empty){
+  function render(){
+    const words=normalize(search.value).trim().split(/\s+/).filter(Boolean);
     const body=el('list');
     body.replaceChildren();
-    if(!posts.length){
-      const cell=body.insertRow().insertCell();
-      cell.colSpan=5;cell.textContent=empty;
-      return;
-    }
-    for(const post of posts){
+    for(const [index,post] of posts.entries()){
+      const fields=normalize([post.kind,post.title,post.content,post.attachment?.originalName,post.date,post.author].join(' '));
+      if(!words.every(word=>fields.includes(word)))continue;
       const row=body.insertRow();
       row.tabIndex=0;row.dataset.wd09DetailRow='';
-      const name=row.insertCell(),category=document.createElement('small'),title=document.createElement('strong');
-      category.textContent=post.kind;title.textContent=post.title;
-      name.append(category,title);
-      for(const value of [post.content,post.attachment?.originalName||'—',post.date,post.author]){
-        const cell=row.insertCell();cell.textContent=value;
+      for(const value of [posts.length-index,post.kind,post.title,post.content]){
+        const cell=row.insertCell();
+        cell.textContent=value;
+        cell.title=String(value);
       }
+      const attachment=row.insertCell();
+      if(post.attachment){
+        const button=document.createElement('button');
+        button.type='button';
+        button.className='btn-sm p wd09-skill-file-icon';
+        button.title=post.attachment.originalName;
+        button.setAttribute('aria-label',post.attachment.originalName+' 첨부파일 보기');
+        const icon=document.createElement('span');
+        icon.setAttribute('aria-hidden','true');
+        icon.textContent='📄';
+        button.append(icon);
+        button.onclick=event=>{event.stopPropagation();showPost(post);};
+        attachment.append(button);
+      }else attachment.textContent='—';
+      for(const value of [post.date,post.author])row.insertCell().textContent=value;
       row.onclick=()=>showPost(post);
       row.onkeydown=event=>{
-        if(event.key==='Enter'||event.key===' '){event.preventDefault();showPost(post);}
+        if(event.target===row&&(event.key==='Enter'||event.key===' ')){
+          event.preventDefault();showPost(post);
+        }
       };
     }
+    if(!body.rows.length){
+      const cell=body.insertRow().insertCell();
+      cell.colSpan=7;
+      cell.textContent=posts.length?'검색 결과가 없어요.':emptyMessage;
+    }
   }
+  function setPosts(items,message){
+    posts=items;
+    emptyMessage=message;
+    render();
+  }
+  search.addEventListener('input',render);
   async function refresh(){
     if(!shown())return;
     const current=++revision,service=currentService();
     el('add').disabled=true;
-    if(!service){render([],'설계사허브에 로그인하면 공유 자료를 볼 수 있어요.');el('status').textContent='';return;}
+    if(!service){setPosts([],'설계사허브에 로그인하면 공유 자료를 볼 수 있어요.');el('status').textContent='';return;}
     el('status').textContent='공유 자료를 불러오는 중이에요.';
     try{
       const posts=await service.list();
       if(current!==revision)return;
-      render(posts,'아직 공유 자료가 없어요.');
+      setPosts(posts,'아직 공유 자료가 없어요.');
       el('add').disabled=false;
       el('status').textContent=notice;
     }catch(error){
       if(current!==revision)return;
-      render([],'공유 자료를 불러오지 못했어요.');
+      setPosts([],'공유 자료를 불러오지 못했어요.');
       el('status').textContent=error.message;
     }
   }
@@ -35910,6 +35987,7 @@ function wd09SkillSharedService(client,uid,request=fetch){
     form.hidden=true;
     el('detail').hidden=false;
     el('download').hidden=!post.attachment;
+    el('download').textContent=post.attachment?'📄 '+post.attachment.originalName+' 다운로드':'첨부파일 다운로드';
     el('edit').hidden=post.authorId!==_UID;
     el('delete').hidden=post.authorId!==_UID;
     if(!dialog.open)dialog.showModal();
@@ -35977,7 +36055,7 @@ function wd09SkillSharedService(client,uid,request=fetch){
   form.addEventListener('submit',event=>{
     event.preventDefault();
     const data=draft();
-    if(!data.kind||!data.title||!data.content){el('feedback').textContent='자료 성격, 자료명, 자료내용을 입력해 주세요.';return;}
+    if(!data.kind||!data.title||!data.content){el('feedback').textContent='자료구분, 자료명, 자료설명을 입력해 주세요.';return;}
     const previous=selected,file=form.elements.attachment.files[0];
     const signature=JSON.stringify(data);
     if(!attempt||attempt.file!==file||attempt.signature!==signature){
@@ -36018,7 +36096,8 @@ function wd09SkillSharedService(client,uid,request=fetch){
     dialog.close();
     form.reset();
     notice='';
-    render([],'공유 자료를 불러오는 중이에요.');
+    search.value='';
+    setPosts([],'공유 자료를 불러오는 중이에요.');
     void refresh();
   };
 })();
@@ -36112,6 +36191,10 @@ function wd09ArchivePreviewMime(name){
       const client=oauth.initTokenClient({
         client_id:WD09_GOOGLE_CLIENT_ID,scope:[...scopes,...optionalScopes].join(' '),include_granted_scopes:false,
         callback:response=>{
+          if(response?.error==='access_denied'){
+            reject(Error('Google 연결이 거절됐어요. 등록된 내 Google 계정을 선택하고, 테스트 사용자와 권한을 확인해 주세요.'));
+            return;
+          }
           if(response?.error||!response?.access_token||!oauth.hasGrantedAllScopes(response,...scopes)){
             const services=scopes.includes(monthlyScope)?'Drive 읽기':'Drive 파일';
             reject(new Error(services+' 권한을 허용해 주세요.'));
@@ -36135,13 +36218,12 @@ function wd09ArchivePreviewMime(name){
     const uid=_UID;
     const adviser=USERS[uid];
     if(!adviser||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
-    const withHome=uid==='WD23000';
-    const grant=await authorize([driveScope],withHome?[...homeScopes,monthlyScope]:[monthlyScope]);
+    const grant=await authorize([driveScope],[...homeScopes,monthlyScope]);
     if(uid!==_UID||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
     const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
     const oauth=window.google.accounts.oauth2;
-    const hasCalendar=withHome&&oauth.hasGrantedAllScopes(grant,homeScopes[0]);
-    const hasTasks=withHome&&oauth.hasGrantedAllScopes(grant,homeScopes[1]);
+    const hasCalendar=oauth.hasGrantedAllScopes(grant,homeScopes[0]);
+    const hasTasks=oauth.hasGrantedAllScopes(grant,homeScopes[1]);
     const homeSession=hasCalendar||hasTasks
       ?{token:grant.access_token,hasCalendar,hasTasks,pendingTasks:new Set()}:null;
     async function request(url,{method='GET',body,contentType,binary=false,raw=false,uploadHeaders={}}={}){
@@ -36204,10 +36286,7 @@ function wd09ArchivePreviewMime(name){
     const about=await request(base+'/about?fields=user(permissionId,emailAddress,displayName)');
     const user=about.user;
     if(!user?.permissionId)throw new Error('Google Drive 계정을 확인하지 못했어요.');
-    if(withHome){
-      if(!user.emailAddress)throw new Error('Google Drive 계정 이메일을 확인하지 못했어요. 다시 연결해 주세요.');
-      await wd09GoogleHome.verifyAccount(user.emailAddress);
-    }
+    await wd09GoogleHome.verifyAccount(uid,user.emailAddress);
 
     function metadata(parent,key,name,mimeType){
       return {name,mimeType,...(parent==='root'?{}:{parents:[parent]}),
@@ -36608,14 +36687,13 @@ function wd09ArchivePreviewMime(name){
         const grant=await authorize([monthlyScope]);
         if(request!==readerLoad||uid!==_UID)return;
         const session={uid,token:grant.access_token,expiresAt:Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000)};
-        if(readerAccount){
-          const response=await fetch(base+'/about?fields=user(permissionId)',{
-            headers:{Authorization:'Bearer '+session.token},credentials:'omit',cache:'no-store',redirect:'error'
-          });
-          if(!response.ok)throw Error('Drive 계정을 확인하지 못했어요. 다시 연결해 주세요.');
-          const about=await response.json();
-          if(about.user?.permissionId!==readerAccount)throw Error('상단 Drive와 같은 Google 계정을 선택해 주세요.');
-        }
+        const response=await fetch(base+'/about?fields=user(permissionId,emailAddress)',{
+          headers:{Authorization:'Bearer '+session.token},credentials:'omit',cache:'no-store',redirect:'error'
+        });
+        if(!response.ok)throw Error('Drive 계정을 확인하지 못했어요. 다시 연결해 주세요.');
+        const about=await response.json();
+        await wd09GoogleHome.verifyAccount(uid,about.user?.emailAddress);
+        if(readerAccount&&about.user?.permissionId!==readerAccount)throw Error('상단 Drive와 같은 Google 계정을 선택해 주세요.');
         if(request!==readerLoad||uid!==_UID)return;
         readerSession=session;
       }
