@@ -33459,9 +33459,9 @@ function openDesignProgressModal(){
   const passwordSubmit = byId('wd09-password-submit');
   const passwordFeedback = byId('wd09-password-feedback');
   const googleButton = byId('wd09-google-login');
-  // Set these to the separate onboarding project's public configuration before deployment.
-  const googleConfig = {url:'',key:''};
-  const pilotEnabled = Boolean(googleConfig.url && googleConfig.key);
+  const googleConfig = SUPABASE_CONFIG_BY_UID.WD23000;
+  // Enable after Google OAuth and the existing-project migration are verified.
+  const pilotEnabled = false;
   const googleStorageKey = 'wd09-google-pkce';
   googleButton.disabled = !pilotEnabled;
   if(!pilotEnabled)byId('wd09-google-login-hint').textContent='신규 설계사 Google 회원가입을 준비 중이에요.';
@@ -33546,7 +33546,7 @@ function openDesignProgressModal(){
       }
       const table = url.pathname.startsWith('/rest/v1/') && url.pathname.slice('/rest/v1/'.length);
       if (googleLogin && uid && isVerified() && allowedTables.has(table) && table!=='wd_partners_managers') {
-        // The separate project enforces row ownership for every operation.
+        // The account-owner policies enforce row ownership for every operation.
         return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
       }
       const validUpsertQuery=(conflict,rows)=>{
@@ -33814,6 +33814,7 @@ function openDesignProgressModal(){
       if(verified.error||!user||user.id!==data.session.user?.id)throw new Error('로그인한 계정을 확인하지 못했어요.');
       const result=await attempt.client.rpc('wd09_activate_planner');
       const profile=result.data;
+      if(result.error?.code==='42501')throw new Error('신규 Google 계정인지 확인해 주세요. 기존 계정은 사번으로 로그인해 주세요.');
       if(result.error||!(/^WDG[a-f0-9]{32}$/.test(profile?.uid))||!profile.name||!profile.email){
         throw new Error('설계사 계정을 열지 못했어요. Google 계정을 확인하고 다시 시도해 주세요.');
       }
