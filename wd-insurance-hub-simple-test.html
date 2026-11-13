@@ -7109,7 +7109,21 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--s200);
   border-radius:8px;background:#fff;color:var(--navy);font:inherit;font-weight:400;
 }
-#wd09-password-form button{justify-self:start;min-height:44px;}
+.wd09-password-field{display:grid;gap:6px;}
+.wd09-password-control{position:relative;}
+#wd09-password-form .wd09-password-control input{padding-inline-end:52px;}
+.wd09-password-control input::-ms-reveal{display:none;}
+.wd09-password-control button{
+  position:absolute;inset-block:0;inset-inline-end:0;display:grid;place-items:center;
+  width:44px;border:0;border-radius:8px;background:transparent;color:var(--purple);cursor:pointer;
+}
+.wd09-password-control button:hover{background:#f4f0ff;}
+.wd09-password-control button:focus-visible{outline:2px solid var(--purple);outline-offset:-3px;}
+.wd09-password-control button[aria-pressed="false"] .wd09-password-eye-slash{display:none;}
+#wd09-password-submit{justify-self:start;min-height:44px;}
+#wd09-password-match{margin:0;color:var(--s700);font-size:13px;}
+#wd09-password-match:empty{display:none;}
+#wd09-password-match[data-match="true"]{color:#166534;}
 #wd09-password-feedback{margin:0;font-size:13px;color:var(--s700);}
 #wd09-password-feedback:empty{display:none;}
 </style>
@@ -14521,15 +14535,49 @@ const wdTest09Storage = (() => {
 <details class="card" id="wd09-password-settings">
 <summary>로그인 비밀번호 변경</summary>
 <form id="wd09-password-form" method="post">
-<label>현재 비밀번호
-  <input id="wd09-password-current" type="password" autocomplete="current-password" maxlength="4096" required>
-</label>
-<label>새 비밀번호
-  <input id="wd09-password-new" type="password" autocomplete="new-password" maxlength="4096" required>
-</label>
-<label>새 비밀번호 확인
-  <input id="wd09-password-confirm" type="password" autocomplete="new-password" maxlength="4096" required>
-</label>
+<div class="wd09-password-field">
+  <label for="wd09-password-current">현재 비밀번호</label>
+  <div class="wd09-password-control">
+    <input id="wd09-password-current" type="password" autocomplete="current-password" maxlength="4096" required>
+    <button type="button" aria-label="현재 비밀번호 표시" aria-pressed="false" aria-controls="wd09-password-current">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+        <path class="wd09-password-eye-slash" d="m3 3 18 18"/>
+      </svg>
+    </button>
+  </div>
+</div>
+<div class="wd09-password-field">
+  <label for="wd09-password-new">새 비밀번호</label>
+  <div class="wd09-password-control">
+    <input id="wd09-password-new" type="password" autocomplete="new-password" maxlength="4096" required>
+    <button type="button" aria-label="새 비밀번호 표시" aria-pressed="false" aria-controls="wd09-password-new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+        <path class="wd09-password-eye-slash" d="m3 3 18 18"/>
+      </svg>
+    </button>
+  </div>
+</div>
+<div class="wd09-password-field">
+  <label for="wd09-password-confirm">새 비밀번호 확인</label>
+  <div class="wd09-password-control">
+    <input id="wd09-password-confirm" type="password" autocomplete="new-password" maxlength="4096" aria-describedby="wd09-password-match" required>
+    <button type="button" aria-label="새 비밀번호 확인 표시" aria-pressed="false" aria-controls="wd09-password-confirm">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/>
+        <circle cx="12" cy="12" r="2.5"/>
+        <path class="wd09-password-eye-slash" d="m3 3 18 18"/>
+      </svg>
+    </button>
+  </div>
+</div>
+<p id="wd09-password-match" aria-live="polite"></p>
 <button class="btn-p" id="wd09-password-submit" type="submit">비밀번호 변경</button>
 <p id="wd09-password-feedback" role="status"></p>
 </form>
@@ -33458,6 +33506,8 @@ function openDesignProgressModal(){
   const confirmPassword = byId('wd09-password-confirm');
   const passwordSubmit = byId('wd09-password-submit');
   const passwordFeedback = byId('wd09-password-feedback');
+  const passwordMatch = byId('wd09-password-match');
+  const passwordToggles = [...passwordForm.querySelectorAll('button[aria-controls]')];
   const googleButton = byId('wd09-google-login');
   const googleConfig = SUPABASE_CONFIG_BY_UID.WD23000;
   // Enable after Google OAuth and the existing-project migration are verified.
@@ -33517,8 +33567,13 @@ function openDesignProgressModal(){
       if (!googleLogin && url.pathname==='/auth/v1/user' && request.method==='PUT' && !url.search && isVerified()) {
         const body = await request.clone().json();
         const validPassword = value => typeof value==='string' && value.length>0 && value.length<=4096;
-        if (body && Object.keys(body).length===2 &&
-            validPassword(body.current_password) && validPassword(body.password) && isVerified()) {
+        // supabase-js updateUser includes these two null fields even for password-only updates.
+        const passwordOnly = body && Object.keys(body).every(key =>
+          key==='current_password' || key==='password' ||
+          ((key==='code_challenge' || key==='code_challenge_method') && body[key]===null)
+        );
+        if (passwordOnly && validPassword(body.current_password) &&
+            validPassword(body.password) && isVerified()) {
           return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
         }
         throw new Error('비밀번호 변경 요청을 확인하지 못했어요.');
@@ -33625,7 +33680,7 @@ function openDesignProgressModal(){
     active = null;
     _UID = null;
     document.body.classList.remove('wd09-signed-in');
-    passwordForm.reset();
+    resetPasswordFields();
     passwordSettings.open = false;
     window.wd09DriveReset?.();
     app.style.display = 'none';
@@ -33851,6 +33906,7 @@ function openDesignProgressModal(){
     }
 
     passwordSubmit.disabled = true;
+    passwordToggles.forEach(button=>setPasswordFieldVisible(button,false));
     currentPassword.readOnly = newPassword.readOnly = confirmPassword.readOnly = true;
     passwordFeedback.textContent = '비밀번호를 변경하고 있어요.';
     try {
@@ -33887,7 +33943,7 @@ function openDesignProgressModal(){
         passwordFeedback.textContent = '변경 결과를 확인하지 못했어요.';
         return;
       }
-      passwordForm.reset();
+      resetPasswordFields();
       passwordFeedback.textContent = '비밀번호를 변경했어요. 다음 로그인부터 새 비밀번호를 사용해 주세요.';
     } catch (_) {
       if (active===account) passwordFeedback.textContent = '변경 결과를 확인하지 못했어요. 잠시 뒤 다시 확인해 주세요.';
@@ -33897,12 +33953,38 @@ function openDesignProgressModal(){
     }
   }
 
+  function setPasswordFieldVisible(button,visible) {
+    byId(button.getAttribute('aria-controls')).type = visible ? 'text' : 'password';
+    button.setAttribute('aria-pressed',String(visible));
+  }
+
+  function showPasswordMatch() {
+    const entered = Boolean(confirmPassword.value);
+    const matches = entered && newPassword.value===confirmPassword.value;
+    passwordMatch.dataset.match = String(matches);
+    passwordMatch.textContent = !entered ? '' : matches
+      ? '새 비밀번호가 일치해요.' : '새 비밀번호가 일치하지 않아요.';
+  }
+
+  function resetPasswordFields() {
+    passwordForm.reset();
+    passwordToggles.forEach(button=>setPasswordFieldVisible(button,false));
+    showPasswordMatch();
+  }
+
+  passwordToggles.forEach(button=>button.addEventListener('click',()=>{
+    setPasswordFieldVisible(button,button.getAttribute('aria-pressed')!=='true');
+  }));
+  passwordForm.addEventListener('input',showPasswordMatch);
   passwordForm.addEventListener('submit',changePassword);
   passwordSettings.addEventListener('toggle',()=>{
-    if (!passwordSettings.open && !passwordSubmit.disabled) {
-      passwordForm.reset();
-      passwordFeedback.textContent = '';
+    if (passwordSettings.open) return;
+    if (passwordSubmit.disabled) {
+      passwordToggles.forEach(button=>setPasswordFieldVisible(button,false));
+      return;
     }
+    resetPasswordFields();
+    passwordFeedback.textContent = '';
   });
   form.addEventListener('submit',login);
   googleButton.addEventListener('click',startGoogleLogin);
