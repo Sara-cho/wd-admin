@@ -36651,10 +36651,22 @@ function wd09ArchivePreviewMime(name){
     el('status').textContent=readerData.length?'':'선택한 자료월에는 지점장이 등록한 자료가 없어요.';
     renderReaderList();
   }
+  // 월간 영업자료 공통 정렬: 본사 → 생명보험 → 손해보험 (두 탭 동일)
+  const wd09LifeCompanies=new Set(["ABL생명","AIA생명","DB생명","KB라이프생명","KDB생명","NH농협생명","교보생명","동양생명","라이나생명","메트라이프생명","미래에셋생명","삼성생명","신한라이프","처브라이프","푸본현대생명","하나생명","한화생명","흥국생명","iM라이프"]);
+  function wd09ReaderGroup(company,mode){
+    const name=String(company||'').trim();
+    if((mode==='news'&&name==='메가상품전략')||
+       (mode==='incentives'&&name.startsWith('메가본사')))return 0;
+    return wd09LifeCompanies.has(name)?1:2;
+  }
+  function wd09ReaderCompanyCompare(a,b){
+    return wd09ReaderGroup(a,readerMode)-wd09ReaderGroup(b,readerMode)
+      ||String(a).localeCompare(String(b),'ko');
+  }
   function renderReaderList(){
     const select=el('company');
     const oldCompany=select.value;
-    const companies=[...new Set([...readerData.map(file=>file.company),...readerFavorites])].sort((a,b)=>a.localeCompare(b,'ko'));
+    const companies=[...new Set([...readerData.map(file=>file.company),...readerFavorites])].sort((a,b)=>wd09ReaderCompanyCompare(a,b));
     select.replaceChildren(new Option('전체 보험사',''),...companies.map(company=>new Option(company,company)));
     if(companies.includes(oldCompany))select.value=oldCompany;
     const company=select.value,search=el('search').value.trim().normalize('NFKC').toLowerCase();
@@ -36665,7 +36677,7 @@ function wd09ArchivePreviewMime(name){
     const files=readerData.filter(file=>(!company||company===file.company)
       &&(company||!el('favorites-only').checked||readerFavorites.has(file.company))
       &&[file.company,file.title,file.name].some(value=>value.normalize('NFKC').toLowerCase().includes(search)))
-      .sort((a,b)=>a.company.localeCompare(b.company,'ko')||a.title.localeCompare(b.title,'ko'));
+      .sort((a,b)=>wd09ReaderCompanyCompare(a.company,b.company)||a.title.localeCompare(b.title,'ko'));
     if(readerFile&&!files.some(file=>file.id===readerFile))clearReaderPreview();
     const list=el('list');
     list.replaceChildren();
