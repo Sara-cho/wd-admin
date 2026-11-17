@@ -1143,6 +1143,11 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-ledger-dialog .office-entry-three{grid-template-columns:1.35fr 1fr 1fr}
 .office-ledger-dialog .office-entry-payment-grid{grid-template-columns:1.35fr 1fr 1fr}
 .office-ledger-dialog .office-entry-grid [hidden],.office-ledger-dialog .office-transfer-fields[hidden]{display:none}
+.office-ledger-dialog .office-entry-extra>summary{cursor:pointer;font-weight:750}
+.office-ledger-dialog .office-entry-extra>summary small{margin-left:6px;font-weight:500}
+.office-ledger-dialog .office-entry-extra[open]>summary{margin-bottom:8px}
+.office-ledger-dialog .office-entry-extra textarea{min-height:72px}
+.office-ledger-dialog .office-entry-card .office-fixed-expense-check{margin:0}
 .office-expense-batch-dialog.office-modal{display:grid;grid-template-rows:auto minmax(0,1fr);width:min(1080px,100%);max-height:min(88dvh,900px);overflow:hidden;padding:0;background:#f7f5fa}
 .office-expense-batch-dialog .office-modal-header{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin:0;padding:14px 20px;border-bottom:1px solid #e7e0ef;background:#fff;color:var(--ink)}
 .office-expense-batch-dialog .office-modal-header h2{font-size:19px}
@@ -1159,11 +1164,11 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-expense-batch-dialog .office-expense-item-fields label{margin:0;min-width:0}
 .office-expense-batch-dialog .office-expense-item-fields input:not([type=checkbox]),.office-expense-batch-dialog .office-expense-item-fields select{min-height:44px;margin-top:4px;padding:8px 10px;min-width:0}
 .office-expense-batch-dialog .office-expense-core{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.office-expense-batch-dialog .office-expense-core+.office-expense-core{margin-top:10px}
 .office-expense-batch-dialog .office-transfer-fields{margin-top:10px}
-.office-expense-batch-dialog .office-expense-extra{margin-top:12px;padding-top:10px;border-top:1px solid #eee8f4}
-.office-expense-batch-dialog .office-expense-extra summary{cursor:pointer;font-size:14px;font-weight:700;color:#59416e}
-.office-expense-batch-dialog .office-expense-extra .office-entry-grid{margin:8px 0 10px}
-.office-expense-batch-dialog .office-expense-extra textarea{min-height:72px;margin-top:4px}
+.office-expense-batch-dialog .office-entry-extra{margin-top:12px;padding-top:10px;border-top:1px solid #eee8f4}
+.office-expense-batch-dialog .office-entry-extra .office-entry-grid{margin:8px 0 10px}
+.office-expense-batch-dialog .office-entry-extra textarea{margin-top:4px}
 .office-expense-batch-dialog .office-fixed-expense-fields{margin-top:8px}
 .office-workspace .office-management-switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .office-workspace .office-management-switch [aria-pressed=true]{border-color:#c3a8ed;background:#f1e9fa;color:#49277d;font-weight:700}
@@ -5153,7 +5158,7 @@ function officeRecordFields(tab,row,methods,categoryItems,compact=false){
   if(subscription){
     const oldCycle=row?.billing_cycle||'';
     const interval=officeBillingInterval(oldCycle);
-    const cycle=interval===1?'매월':interval===12?'매년':oldCycle||'매월';
+    const cycle=interval===1?'매월':interval===12?'매년':oldCycle;
     const dayField=`<label id="officeBillingDayLabel"${cycle==='매월'?'':' hidden'}>매월 결제일<select name="billing_day">
       ${Array.from({length:31},(_,index)=>{
         const value=index+1,selected=value===(Number(row?.billing_day)||Number(day.slice(8)));
@@ -5163,7 +5168,7 @@ function officeRecordFields(tab,row,methods,categoryItems,compact=false){
     return `<div class="office-entry-steps">
       ${officeEntryCard('transaction','1. 구독 정보',title)}
       ${officeEntryCard('payment','2. 결제 정보',grid(payment+amount+date,'office-entry-payment-grid'))}
-      ${officeEntryCard('cycle','3. 결제 주기',grid(`<label>결제 주기<select name="billing_cycle">${officeOptions(['매월','매년','1회'],cycle,'선택해 주세요')}</select></label>`+dayField))}
+      ${officeEntryCard('cycle','3. 결제 주기',grid(`<label>결제 주기<select name="billing_cycle"${row?'':' required'}>${officeOptions(['매월','매년','1회'],cycle,'선택해 주세요')}</select></label>`+dayField))}
       ${officeEntryCard('additional','4. 추가 정보',memo)}
     </div>`;
   }
@@ -5175,16 +5180,18 @@ function officeRecordFields(tab,row,methods,categoryItems,compact=false){
     placeholder="${income?'고객명 또는 기관명':'업체명 또는 상호'}" value="${esc(row?.counterparty||'')}"></label>
     <label>담당자명<input name="counterparty_contact_name" maxlength="100" value="${esc(row?.counterparty_contact_name||'')}"></label>
     <label>연락처<input name="counterparty_phone" type="tel" maxlength="40" value="${esc(row?.counterparty_phone||'')}"></label>`;
-  if(compact&&expense)return `<div class="office-expense-core">${category+area+title+date+payment+amount}</div>
-    ${officeTransferFields(row)}
-    <details class="office-expense-extra"><summary>거래 상대 · 고정비 · 메모</summary>
-      ${grid(party,'office-entry-three')}${memo}${officeFixedExpenseFields(row)}
-    </details>`;
+  const paymentExtras=expense?officeFixedExpenseFields(row)+officeTransferFields(row):'';
+  const additional=`<details class="office-entry-extra${compact?'':' office-entry-card'}">
+    <summary>추가 정보 <small>거래 상대 · 메모</small></summary>
+    ${grid(party,'office-entry-three')}${memo}
+  </details>`;
+  if(compact&&expense)return `<div class="office-expense-core">${category+area+title}</div>
+    <div class="office-expense-core">${payment+amount+date}</div>
+    ${paymentExtras}${additional}`;
   return `<div class="office-entry-steps">
     ${officeEntryCard('transaction','1. 거래 내용',grid(category+title+area))}
-    ${officeEntryCard('party','2. 거래 상대',grid(party,'office-entry-three'))}
-    ${officeEntryCard('payment',income?'3. 입금 정보':'3. 결제 정보',grid(payment+amount+date,'office-entry-payment-grid')+(expense?officeTransferFields(row):''))}
-    ${officeEntryCard('additional','4. 추가 정보',(expense?officeFixedExpenseFields(row):'')+memo)}
+    ${officeEntryCard('payment',income?'2. 입금 정보':'2. 결제 정보',grid(payment+amount+date,'office-entry-payment-grid')+paymentExtras)}
+    ${additional}
   </div>`;
 }
 
@@ -5224,16 +5231,15 @@ function bindOfficeEntryCards(form,row,methods,tab){
       transfer.hidden=method?.kind!=='account'&&!preservedTransfer;
       transfer.querySelectorAll('input').forEach(input=>{input.disabled=transfer.hidden;});
     }
-    if(billingDayLabel)billingDayLabel.hidden=officeBillingInterval(value('billing_cycle'))!==1;
+    if(billingDayLabel)billingDayLabel.hidden=field('billing_day').disabled=officeBillingInterval(value('billing_cycle'))!==1;
     const fixed=field('fixed_expense')?.checked;
-    const recurrenceReady=fixed&&valid('recurrence_day')&&
-      (value('recurrence_cycle')!=='yearly'||valid('recurrence_month'));
+    const recurrenceReady=!fixed||(valid('recurrence_day')&&
+      (value('recurrence_cycle')!=='yearly'||valid('recurrence_month')));
     const filled={
       transaction:valid('title')&&(!field('category')||valid('category'))&&(!field('business_area')||valid('business_area')),
-      payment:Number(amount.value.replaceAll(',',''))>0&&valid('day')&&!!(method||row?.payment_method_id||row?.payment_method),
-      party:valid('counterparty'),
+      payment:Number(amount.value.replaceAll(',',''))>0&&valid('day')&&!!(method||row?.payment_method_id||row?.payment_method)&&recurrenceReady,
       cycle:valid('billing_cycle')&&(billingDayLabel?.hidden||valid('billing_day')),
-      additional:fixed?recurrenceReady:!!value('memo')
+      additional:!!value('memo')
     };
     for(const card of cards)card.classList.toggle('is-complete',filled[card.dataset.officeEntryStep]);
   };
@@ -5273,6 +5279,7 @@ function officeRecordPayload(tab,row,methods,data){
     ...officePaymentPayload(data.get('payment_method_id'),row,methods,tab),memo:data.get('memo').trim()||null};
   if(tab==='구독'){
     const cycle=data.get('billing_cycle').trim(),interval=officeBillingInterval(cycle);
+    if(!row&&!cycle)throw new Error('결제 주기를 선택해 주세요.');
     return {...payload,service_name:title,next_payment_date:date,billing_cycle:cycle||null,
       billing_day:interval===1?Number(data.get('billing_day')):interval===12?Number(date.slice(8)):null};
   }
