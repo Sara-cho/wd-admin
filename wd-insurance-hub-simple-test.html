@@ -12822,7 +12822,7 @@ const wdTest09Storage = (() => {
 </div>
 </div>
 <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-<input id="cust-q" oninput="renderCustList()" placeholder="이름·연락처 검색" style="flex:1;min-width:180px;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'Noto Sans KR',sans-serif;background:#fff;" type="search"/>
+<input id="cust-q" oninput="renderCustList()" aria-label="이름·초성·연락처 검색" placeholder="이름·초성·연락처 검색" style="flex:1;min-width:180px;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'Noto Sans KR',sans-serif;background:#fff;" type="search"/>
 <select id="cust-f" onchange="renderCustList()" style="padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'Noto Sans KR',sans-serif;background:#fff;">
 <option value="">전체 고객</option>
 <option value="가망고객">가망고객</option>
@@ -19807,17 +19807,33 @@ async function deleteCustById(){
   renderHomeCusts();
   if(document.getElementById('cust-det-pg').style.display!=='none'){showCustList();}
 }
-function filtC(){var q=(document.getElementById('cust-q')||{}).value||'',f=(document.getElementById('cust-f')||{}).value||'';return getCusts().filter(function(c){return(!f||normalizeCustomerType(c.ctype)===f)&&(!q||(c.name||'').includes(q)||(c.phone||'').includes(q));});}
+function filtC(){
+  const query=(document.getElementById('cust-q')?.value||'').trim().normalize('NFC');
+  const type=document.getElementById('cust-f')?.value||'';
+  const initials=query.replace(/\s/g,'').normalize('NFKC');
+  const searchByInitials=/^[\u1100-\u1112]+$/.test(initials);
+  return getCusts().filter(customer=>{
+    if(type&&normalizeCustomerType(customer.ctype)!==type)return false;
+    const name=String(customer.name??'').normalize('NFC');
+    if(!query||name.includes(query)||String(customer.phone??'').includes(query))return true;
+    if(!searchByInitials)return false;
+    // 한글 음절은 초성마다 중성 21개와 종성 28개의 조합을 가진다.
+    const nameInitials=name.replace(/\s/g,'').replace(/[\uAC00-\uD7A3]/g,syllable=>
+      String.fromCharCode(0x1100+Math.floor((syllable.charCodeAt(0)-0xAC00)/(21*28))));
+    return nameInitials.normalize('NFKC').includes(initials);
+  });
+}
 function renderCustList(){
   var cs=filtC().slice().sort(function(a,b){return(a.name||'').localeCompare(b.name||'','ko-KR');});
   var tb=document.getElementById('cust-tbody');
   var errMsg='고객 목록을 불러오지 못했습니다. 네트워크 상태를 확인 후 다시 시도해주세요.';
+  var emptyMsg=getCusts().length?'조건에 맞는 고객이 없습니다':'등록된 고객이 없습니다';
   if(tb){if(_custLoadError){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--rd700);">'+errMsg+'</td></tr>';}
-  else if(!cs.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--s400);">등록된 고객이 없습니다</td></tr>';}
+  else if(!cs.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--s400);">'+emptyMsg+'</td></tr>';}
   else{tb.innerHTML=cs.map(function(c){var ctVal=normalizeCustomerType(c.ctype);return'<tr '+wd09DetailRow('showDetail('+c.id+')')+'>'+'<td class="cn">'+esc(c.name)+'</td>'+'<td>'+esc(c.birth||'-')+'</td>'+'<td>'+esc(c.phone||'-')+'</td>'+'<td>'+esc(c.gender||'-')+'</td>'+'<td>'+esc(c.job||'-')+'</td>'+'<td><span style="display:inline-block;padding:3px 10px;border-radius:12px;background:var(--lav);color:var(--purple);font-size:13px;font-weight:700;">'+esc(ctVal)+'</span></td>'+'<td style="text-align:center;white-space:nowrap;">'+'<button class="btn-sm p" style="margin-right:3px;font-size:13px;" onclick="event.stopPropagation();openCustEdit('+c.id+')">수정</button>'+wd09TableTrash('confirmDeleteCust('+c.id+')','고객 삭제')+'</td>'+'</tr>';}).join('');}}
   var m=document.getElementById('cust-tbl-m');
   if(m){if(_custLoadError){m.innerHTML='<div class="empty"><div class="e-ico">⚠️</div><div class="e-txt">'+errMsg+'</div></div>';}
-  else if(!cs.length){m.innerHTML='<div class="empty"><div class="e-ico">👥</div><div class="e-txt">등록된 고객이 없어요</div></div>';}
+  else if(!cs.length){m.innerHTML='<div class="empty"><div class="e-ico">👥</div><div class="e-txt">'+emptyMsg+'</div></div>';}
   else{m.innerHTML=cs.map(function(c){var ctVal=normalizeCustomerType(c.ctype);return'<div class="cust-card-m" '+wd09DetailRow('showDetail('+c.id+')')+'>'+'<div class="cc-top"><div class="cc-name">'+esc(c.name)+'</div>'+'<span style="padding:3px 9px;border-radius:12px;background:var(--lav);color:var(--purple);font-size:11px;font-weight:700;">'+esc(ctVal)+'</span>'+'</div>'+'<div class="cc-meta">'+esc(c.phone||'-')+(c.birth?'<span>'+esc(c.birth)+'</span>':'')+(c.gender?'<span>'+esc(c.gender)+'</span>':'')+(c.job?'<span>'+esc(c.job)+'</span>':'')+'</div>'+'<div class="cc-btns" onclick="event.stopPropagation()">'+'<button class="btn-sm p" style="font-size:13px;" onclick="event.stopPropagation();openCustEdit('+c.id+')">수정</button>'+wd09TableTrash('confirmDeleteCust('+c.id+')','고객 삭제')+'</div>'+'</div>';}).join('');}}
   renderCustStats();
 }
