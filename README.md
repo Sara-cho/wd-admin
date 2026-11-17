@@ -1,20 +1,25 @@
 # WD ADMIN 파일 안내
 
-파일 목록 옆 제목에는 바로 알아볼 수 있는 **한국어 파일 이름**을 씁니다. 날짜가 필요하면 `WD 본진(261117수정본)`처럼 이름 뒤에 붙입니다. 수정 내용은 커밋 본문에 적습니다.
+GitHub 파일 목록 옆 제목은 **본진 메뉴 이름(수정일)**로 적습니다. 테스트 파일은 메뉴 이름 뒤에 **테스트본**을 붙입니다.
 
-## 화면
+예시 `설계사허브테스트본(261117)`, `WD 업무센터(261117)`, `퍼스널브랜딩센터(261101)`
 
-| 화면 이름 | 실제 파일 |
-| --- | --- |
-| **WD 본진** | [index.html](index.html) |
-| **WD 업무센터** | [wd-work-center.html](wd-work-center.html) |
-| **WD 업무보고 TEST** | [wd-work-center-test.html](wd-work-center-test.html) |
-| **설계사허브 간편판** | [wd-insurance-hub-simple-test.html](wd-insurance-hub-simple-test.html) |
-| **지안 2.0 설계사허브 TEST** | [wd-insurance-hub-test.html](wd-insurance-hub-test.html) |
-| **퍼스널브랜딩센터** | [consulting_center_app.html](consulting_center_app.html) |
-| **퍼스널브랜딩센터 TEST** | [wd-personal-branding-center-test.html](wd-personal-branding-center-test.html) |
-| **WD 강의센터** | [lecture_center.html](lecture_center.html) |
-| **WD 제작센터** | [wd-production-center.html](wd-production-center.html) |
+수정·삭제 내용은 커밋 본문에 적습니다.
+
+## 본진 메뉴와 실제 파일
+
+| 본진 메뉴 | GitHub 표시 이름 | 실제 파일 |
+| --- | --- | --- |
+| 홈 | WD본진 | [index.html](index.html) |
+| 설계사허브 | 설계사허브테스트본(261117) | [wd-insurance-hub-simple-test.html](wd-insurance-hub-simple-test.html) |
+| 설계사허브 | 설계사허브테스트본(261107) | [wd-insurance-hub-test.html](wd-insurance-hub-test.html) |
+| 퍼스널브랜딩센터 | 퍼스널브랜딩센터 | [consulting_center_app.html](consulting_center_app.html) |
+| 퍼스널브랜딩센터 | 퍼스널브랜딩센터테스트본 | [wd-personal-branding-center-test.html](wd-personal-branding-center-test.html) |
+| 강의센터 | 강의센터 | [lecture_center.html](lecture_center.html) |
+| WD 업무센터 | WD 업무센터 | [wd-work-center.html](wd-work-center.html) |
+| WD 업무센터 | WD 업무센터테스트본 | [wd-work-center-test.html](wd-work-center-test.html) |
+
+[WD 제작센터](wd-production-center.html)
 
 ## 공용 파일
 
@@ -27,12 +32,3 @@
 | WD ADMIN 주소 연결 | [CNAME](CNAME) |
 
 스티커노트와 TALK 파일은 본진과 업무센터에서 함께 씁니다.
-
-## 자동 화면 검수용
-
-| 파일 이름 | 실제 파일 |
-| --- | --- |
-| 자동 화면 검수 실행 설정 | [package.json](package.json) |
-| 자동 화면 검수 환경 설정 | [playwright.config.js](playwright.config.js) |
-| 자동 화면 검수 테스트 | [qa/](qa/) |
-| GitHub 자동 화면 검수 실행 | [.github/workflows/](.github/workflows/) |
