@@ -6761,12 +6761,23 @@ async function wdhqSignInWithGoogle(credential,nonce,loginId,isCurrent){
   wdhqInitSupabase();
   const {data:ready,error:readError}=await WDHQ_SUPABASE.rpc('wdhq_google_login_ready',{p_login_id:loginId})
     .abortSignal(AbortSignal.timeout(8000));
-  if(readError)throw new Error('Google 연결 상태를 확인하지 못했어요. 기존 아이디로 로그인할 수 있어요.');
-  if(ready!==true)throw new Error('기존 아이디로 로그인한 뒤 계정정보에서 Google을 한 번 연결해 주세요.');
+  if(readError)throw new Error('Google 로그인 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.');
   if(!isCurrent())return;
   wdhqGoogleNonceSubmitted=true;
   try{
-    const {error}=await WDHQ_SUPABASE.auth.signInWithIdToken({provider:'google',token:credential,nonce});
+    let result;
+    if(ready===true){
+      result=await WDHQ_SUPABASE.auth.signInWithIdToken({provider:'google',token:credential,nonce});
+    }else{
+      const response=await fetch(WDHQ_SB_URL+'/functions/v1/wdhq-google-enrollment',{
+        method:'POST',cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(22000),
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({credential,nonce}),
+      });
+      if(!response.ok||!isCurrent())throw new Error('Google 로그인을 완료하지 못했어요. 다시 시도해 주세요.');
+      const {access_token,refresh_token}=await response.json();
+      result=await WDHQ_SUPABASE.auth.setSession({access_token,refresh_token});
+    }
+    const {error}=result;
     if(error)throw new Error('Google 로그인을 완료하지 못했어요. 다시 시도해 주세요.');
     await wdhqVerifySupabaseSession({googleLoginId:loginId});
   }catch(error){
