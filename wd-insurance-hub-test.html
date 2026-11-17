@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js https://accounts.google.com/gsi/client https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0 https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js; style-src 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://upload.wikimedia.org/wikipedia/commons/4/44/Meritz_Logo.svg https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png; connect-src https://accounts.google.com/gsi/ https://www.googleapis.com https://tasks.googleapis.com https://sheets.googleapis.com https://tiwgzmmizmkbvbyfgmyw.supabase.co https://zkgvcxyrrtdnsxukihdv.supabase.co; frame-src https://accounts.google.com/gsi/ https://postcode.map.kakao.com blob:; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js https://accounts.google.com/gsi/client https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0 https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js; style-src 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://upload.wikimedia.org/wikipedia/commons/4/44/Meritz_Logo.svg https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png; connect-src https://accounts.google.com/gsi/ https://openidconnect.googleapis.com/v1/userinfo https://www.googleapis.com https://tasks.googleapis.com https://sheets.googleapis.com https://tiwgzmmizmkbvbyfgmyw.supabase.co https://zkgvcxyrrtdnsxukihdv.supabase.co; frame-src https://accounts.google.com/gsi/ https://postcode.map.kakao.com blob:; form-action 'none'; base-uri 'none'">
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
 <meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/>
 <meta content="no-cache" http-equiv="Pragma"/>
@@ -11992,7 +11992,12 @@ const wdTest09Storage = (() => {
       </div>
       <div class="wd09-auth-form">
         <button type="button" id="wd09-google-login" class="wd09-google-login" hidden>
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="20" height="20">
+          <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#4285F4" d="M43.61 24.46c0-1.36-.12-2.66-.35-3.91H24v7.4h11a9.4 9.4 0 0 1-4.08 6.17v5.13h6.61c3.86-3.55 6.08-8.78 6.08-14.79z"/>
+            <path fill="#34A853" d="M24 44c5.51 0 10.13-1.83 13.51-4.95l-6.61-5.13c-1.83 1.23-4.16 1.96-6.9 1.96-5.32 0-9.83-3.59-11.44-8.42H5.74v5.29A20 20 0 0 0 24 44z"/>
+            <path fill="#FBBC05" d="M12.56 27.46a12 12 0 0 1 0-6.92v-5.29H5.74a20 20 0 0 0 0 17.5l6.82-5.29z"/>
+            <path fill="#EA4335" d="M24 12.12c3 0 5.68 1.03 7.8 3.05l5.85-5.85C34.11 6.02 29.5 4 24 4A20 20 0 0 0 5.74 15.25l6.82 5.29C14.17 15.71 18.68 12.12 24 12.12z"/>
+          </svg>
           <span>Google 계정으로 로그인</span>
         </button>
         <p class="wd09-auth-feedback" id="wd09-auth-feedback" role="status"></p>
@@ -36152,7 +36157,7 @@ function openDesignProgressModal(){
       const profileResponse=await fetch('https://openidconnect.googleapis.com/v1/userinfo',{
         headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit',redirect:'error',
         signal:AbortSignal.timeout(8000)
-      });
+      }).catch(()=>{throw Error('Google 계정 확인에 연결하지 못했어요. 잠시 뒤 다시 눌러 주세요.');});
       if(!profileResponse.ok)throw Error('Google 계정 확인 권한을 허용해 주세요.');
       const profile=await profileResponse.json();
       const emailHash=await fingerprint(profile.email);
@@ -36163,7 +36168,7 @@ function openDesignProgressModal(){
         method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
         body:JSON.stringify({google_access_token:token}),cache:'no-store',credentials:'omit',redirect:'error',
         signal:AbortSignal.timeout(20000)
-      });
+      }).catch(()=>{throw Error('설계사허브 로그인 서버에 연결하지 못했어요. 잠시 뒤 다시 눌러 주세요.');});
       const login=await loginResponse.json().catch(()=>null);
       if(!loginResponse.ok||!login?.access_token||!login?.refresh_token){
         if(login?.error==='account'||login?.error==='owner')throw Error('기존 보험 자료와 연결된 Google 계정을 확인해 주세요.');
