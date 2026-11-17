@@ -349,6 +349,8 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 #wdhq-google-login-retry{border:0;background:none;width:100%;padding:8px;text-decoration:underline}
 #wdhq-password-login summary{padding:8px}
 #wdhq-password-login form{text-align:left}
+#wdhq-sign-out{white-space:nowrap}
+@media(max-width:767px){#wdhq-sign-out{min-height:44px}}
 #wdhq-login-status:empty{display:none}
 #wdhq-google-login-status,#wdhq-google-link-status{font-size:12px;line-height:1.45;margin:5px 0;color:#534a63}
 #wdhq-google-login-status:empty,#wdhq-google-link-status:empty,
@@ -1259,6 +1261,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
           </span>
           <span>새로고침</span>
         </button>
+        <button class="topbtn" id="wdhq-sign-out" type="button" onclick="wdhqLogout()">로그아웃</button>
       </div>
     </header>
 
@@ -2650,6 +2653,23 @@ function wdhqClearDisplayState(){
   [WDHQ_AUTH_KEY,WDHQ_USER_KEY,'wd_current_uid','wd_user_name','wd_current_dbk','wd_current_role'].forEach(key=>localStorage.removeItem(key));
   try{sessionStorage.removeItem(WDHQ_NAV_SESSION_KEY)}catch(e){}
 }
+function wdhqForgetWorkspaceDrive(userId,loginId){
+  try{
+    if(userId)sessionStorage.removeItem('wd-company-drive-user-v1:'+userId);
+    if(loginId==='kfcyk50')sessionStorage.removeItem('wd_work_company_drive_access_v2');
+    if(loginId==='kfcyk30')sessionStorage.removeItem('wd_work_company_drive_access_v2_staff_'+loginId);
+  }catch{}
+}
+function wdhqLocalAuthUser(){
+  try{return JSON.parse(localStorage.getItem(WDHQ_AUTH_STORAGE_KEY)||'null')?.user?.id||'';}catch{return '';}
+}
+function wdhqRecheckSharedSession(){
+  const id=WDHQ_AUTH_PROFILE?.user_id;
+  if(!id||wdhqLocalAuthUser()===id)return;
+  wdhqForgetWorkspaceDrive(id,WDHQ_AUTH_PROFILE.login_id);
+  document.body.classList.add('wdhq-auth-checking');
+  location.reload();
+}
 function wdhqReadSession(){
   if(!WDHQ_AUTH_SESSION||!WDHQ_AUTH_PROFILE)return null;
   const account=wdhqLoginAccount(WDHQ_AUTH_PROFILE.login_id);
@@ -2707,7 +2727,8 @@ function wdhqInitSupabase(){
   });
   WDHQ_SUPABASE.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT'&&!WDHQ_AUTH_CHECKING){
-      WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;wdhqClearDisplayState();wdhqShowLogin('세션이 종료되었습니다. 다시 로그인해 주세요.');
+      if(WDHQ_AUTH_PROFILE){wdhqRecheckSharedSession();return;}
+      WDHQ_AUTH_SESSION=null;wdhqClearDisplayState();wdhqShowLogin('세션이 종료되었습니다. 다시 로그인해 주세요.');
     }
   });
   return WDHQ_SUPABASE;
@@ -2819,9 +2840,22 @@ async function wdhqLogout(){
   if(WDHQ_AUTH_CHECKING)return false;
   if(window.WDHQStickyNote?.hasPending()){toast('스티커노트 저장이 끝난 뒤 로그아웃하세요.');return false;}
   WDHQ_AUTH_CHECKING=true;
-  try{wdhqInitSupabase();await WDHQ_SUPABASE.auth.signOut({scope:'local'})}catch(ignore){}
-  WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;wdhqClearDisplayState();WDHQ_AUTH_CHECKING=false;
-  wdhqShowLogin('정상 로그아웃되었습니다.');
+  const userId=WDHQ_AUTH_PROFILE?.user_id||wdhqLocalAuthUser();
+  const loginId=WDHQ_AUTH_PROFILE?.login_id||localStorage.getItem('wd_current_uid');
+  document.body.classList.add('wdhq-auth-checking');
+  let failure;
+  try{wdhqInitSupabase();failure=(await WDHQ_SUPABASE.auth.signOut({scope:'local'})).error;}catch(error){failure=error;}
+  if(failure&&wdhqLocalAuthUser()===userId){
+    WDHQ_AUTH_CHECKING=false;
+    document.body.classList.remove('wdhq-auth-checking');
+    if(WDHQ_AUTH_PROFILE)toast('로그아웃하지 못했어요. 다시 시도해 주세요.');
+    else wdhqShowLogin('로그아웃하지 못했어요. 다시 시도해 주세요.');
+    return false;
+  }
+  wdhqForgetWorkspaceDrive(userId,loginId);
+  if(!wdhqLocalAuthUser())wdhqClearDisplayState();
+  WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;
+  location.reload();
   return true;
 }
 function wdhqShowAuthNotice(){toast(WDHQ_AUTH_PROFILE?'회사 계정 Auth 연결 정상':'회사 계정 로그인이 필요합니다.')}
@@ -3041,10 +3075,17 @@ wdhqRenderPhase1Agents();
 wdhqInitSavedLoginId();
 wdhqInitSession();
 window.addEventListener('storage',event=>{
+  if(event.key===WDHQ_AUTH_STORAGE_KEY){
+    if(!WDHQ_AUTH_PROFILE&&!WDHQ_AUTH_CHECKING&&event.newValue&&wdhqLocalAuthUser())location.reload();
+    else wdhqRecheckSharedSession();
+  }
   if(event.key==='wd_todos'||String(event.key||'').startsWith('wd_todos_'))hydrateTodos();
   if(event.key===STORE){config=loadConfig();updateConnectionMetric();wdhqRenderSpaceStatus()}
 });
-window.addEventListener('pageshow',()=>{if(wdhqReadSession()){hydrateTodos();updateConnectionMetric()}});
+window.addEventListener('pageshow',event=>{
+  if(event.persisted)wdhqRecheckSharedSession();
+  if(wdhqReadSession()){hydrateTodos();updateConnectionMetric();}
+});
 </script>
 
 
@@ -6248,7 +6289,13 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
               const who=await (await driveApi('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)')).json();
               const email=String(who?.user?.emailAddress||'').toLowerCase();
               const want=DRIVE_ACCOUNTS[me?.loginId]||'';
-              if(want&&email!==want){drive.token='';drive.exp=0;throw new Error('연결된 Google 계정('+email+')이 지정 계정('+want+')과 다릅니다.')}
+              const uid=WDHQ_AUTH_PROFILE?.user_id;
+              if(!want||email!==want||WDHQ_AUTH_PROFILE?.login_id!==me?.loginId||wdhqLocalAuthUser()!==uid){
+                drive.token='';drive.exp=0;throw new Error('현재 본진에 등록된 Google 계정을 확인해 주세요.');
+              }
+              if(uid&&google.accounts.oauth2.hasGrantedAllScopes(resp,DRIVE_SCOPE))try{
+                sessionStorage.setItem('wd-company-drive-user-v1:'+uid,JSON.stringify({token:drive.token,expiresAt:drive.exp,scope:DRIVE_SCOPE}));
+              }catch{}
               p.resolve();
             }catch(e){p.reject(e)}
           },

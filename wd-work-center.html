@@ -1326,14 +1326,8 @@ function logout({signOutWork=false}={}){
   if(workStickyNotes?.hasPending()&&stickyIdentity())return notify('스티커노트 저장이 끝난 뒤 로그아웃하세요');
   if(liveAttendanceSaving)return notify('근무기록 저장이 끝난 뒤 로그아웃하세요');
   if(activeStepUploads||activeMaterialUploads)return notify('첨부 저장이 끝난 뒤 로그아웃하세요');
-  if(signOutWork&&activeWorkAuthKey===workOnlySessionKey){
-    const token=readHqToken();
-    localStorage.removeItem(workOnlySessionKey);
-    activeWorkAuthKey=hqSessionKey;
-    if(token)void fetch(adminAuthBase+'/auth/v1/logout?scope=local',{
-      method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token},signal:AbortSignal.timeout(5000)
-    }).catch(()=>{});
-  }
+  if(signOutWork){void signOutWorkSession();return;}
+  forgetWorkspaceDrive(managerWorkIdentity?.user_id||workStickyUserId,currentUser==='manager'?managerHqAccount.uid:hqStaffLoginId);
   workStickyNotes?.reset();workStickyUserId=null;
   closeWorkspaceTalk();stopWorkspaceTalk();closeNoteDock();acknowledgedWork.clear();employeeDrive=null;managerDriveSession=null;workDriveStartup=null;workCenterDriveEntered=false;clearTimeout(workCenterDriveTimer);staffCloudGrant=null;managerCloudGrants.clear();staffRecordView=null;driveConnectGeneration++;liveAttendanceReady=false;liveAttendanceSaving=false;liveAttendanceMonths.clear();liveAttendanceLoading.clear();
   for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
@@ -1349,6 +1343,37 @@ function logout({signOutWork=false}={}){
   hqAutoLoginBlocked=true;pinOnlyWorkspace=false;managerHqReady=false;hqStaffLoginId='';managerWorkIdentity=null;verifiedManagerRead=null;managerIdentityFlight=null;
   render();
 }
+async function signOutWorkSession(){
+  const key=activeWorkAuthKey;
+  const expected=managerWorkIdentity?.user_id||workStickyUserId;
+  const button=$('logout');
+  if(button?.disabled)return;
+  if(button)button.disabled=true;
+  try{
+    const signOut=async()=>{
+      const raw=localStorage.getItem(key),session=readHqSession();
+      if(!session||session.user?.id!==expected)return;
+      if(session.access_token)try{
+        await fetch(adminAuthBase+'/auth/v1/logout?scope=local',{
+          method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(2500)
+        });
+      }catch{}
+      if(localStorage.getItem(key)!==raw)return;
+      localStorage.removeItem(key);
+      if(key===hqSessionKey)for(const name of ['wd_current_uid','wd_user_name','wd_current_role','wd_current_dbk'])localStorage.removeItem(name);
+    };
+    if(navigator.locks)await navigator.locks.request('lock:'+key,{signal:AbortSignal.timeout(6000)},signOut);
+    else await signOut();
+    logout();
+    if(key===workOnlySessionKey)activeWorkAuthKey=hqSessionKey;
+  }catch{notify('로그아웃하지 못했어요. 다시 시도해 주세요.');}
+  finally{if(button?.isConnected)button.disabled=false;}
+}
+window.addEventListener('pageshow',event=>{
+  if(!event.persisted||embeddedAccountInfo)return;
+  const expected=managerWorkIdentity?.user_id||workStickyUserId;
+  if(expected&&expected!==readHqSession()?.user?.id)logout();
+});
 window.addEventListener('storage',event=>{
   if(event.key===KEY&&event.newValue!==storageVersion){location.reload();return;}
   const owner=currentUser==='manager';
@@ -1357,8 +1382,8 @@ window.addEventListener('storage',event=>{
   const sessionChanged=event.key===activeWorkAuthKey&&previousId&&readHqSession()?.user?.id!==previousId;
   const sharedLoginChanged=activeWorkAuthKey===hqSessionKey&&event.key==='wd_current_uid'&&loginId&&event.newValue!==loginId;
   if(currentUser&&(sessionChanged||sharedLoginChanged)){logout();return;}
-  if(event.key===activeWorkAuthKey&&event.newValue&&!currentUser&&!hqAutoLoginBlocked&&$('root').querySelector('.workGoogleCard')){
-    loginView();return;
+  if(event.key===activeWorkAuthKey&&event.newValue&&!currentUser&&$('root').querySelector('.workGoogleCard')){
+    hqAutoLoginBlocked=false;loginView();return;
   }
   if(event.key===activeWorkAuthKey&&event.newValue&&owner&&$('employeeHqRecovery')){
     $('connectEmployeeDrive')?.refreshOwnerSession?.();return;
@@ -2682,30 +2707,43 @@ const driveSessionScope=()=>employeeReportDriveFolder()||workspaceMenus().some((
   ['upload','edit','delete','replace'].some(action=>libraryCan(id,action)))?driveWriteScope:driveReadScope;
 let managerDriveSession=null,workDriveStartup=null;
 const companyDriveSessionKey='wd_work_company_drive_access_v2';
+function workspaceDriveSessionKey(userId){return 'wd-company-drive-user-v1:'+userId;}
+function loadCachedDriveSession(key,defaultScope){
+  try{
+    const saved=JSON.parse(sessionStorage.getItem(key)||'null');
+    const expires=Number(saved?.expiresAt);
+    if(!saved?.token||!Number.isFinite(expires)||expires<=Date.now()+30000)return null;
+    return {token:saved.token,expires,scope:saved.scope||defaultScope};
+  }catch{return null;}
+}
+function saveVerifiedWorkspaceDrive(session){
+  const userId=managerWorkIdentity?.user_id||workStickyUserId;
+  if(!userId||readHqSession()?.user?.id!==userId)return;
+  try{sessionStorage.setItem(workspaceDriveSessionKey(userId),JSON.stringify({token:session.token,expiresAt:session.expires,scope:session.scope}));}catch{}
+}
+function forgetWorkspaceDrive(userId,loginId){
+  try{
+    if(userId)sessionStorage.removeItem(workspaceDriveSessionKey(userId));
+    if(loginId===managerHqAccount.uid)sessionStorage.removeItem(companyDriveSessionKey);
+    else if(loginId)sessionStorage.removeItem(companyDriveSessionKey+'_staff_'+loginId);
+  }catch{}
+}
 let rejectedCompanyDriveToken='';
 async function restoreCompanyDriveSession(){
   if(currentUser!=='manager')return null;
-  let saved;
-  try{saved=JSON.parse(sessionStorage.getItem(companyDriveSessionKey)||'null');}catch{return null;}
-  if(!saved?.token||saved.token===rejectedCompanyDriveToken||Number(saved.expiresAt)<=Date.now()+30000)return null;
+  const userId=readHqSession()?.user?.id;
+  const saved=(userId&&loadCachedDriveSession(workspaceDriveSessionKey(userId)))||loadCachedDriveSession(companyDriveSessionKey,driveWriteScope);
+  if(!saved||saved.token===rejectedCompanyDriveToken||saved.scope!==driveWriteScope)return null;
   try{
     await verifyManagerHqSession();
     const about=await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',saved.token);
     const {user}=await about.json();
     if(user?.emailAddress?.toLowerCase()!==managerDriveAccount)return null;
-    return {token:saved.token,expires:Number(saved.expiresAt),scope:driveWriteScope};
+    return saved;
   }catch(error){
     if([401,403].includes(error.status))rejectedCompanyDriveToken=saved.token;
     return null;
   }
-}
-function workspaceAccessibleDriveFolders(manager){
-  if(manager)return [companyManualFolder,...workArchiveFolders.map(([,folder])=>folder),...Object.values(employeeDriveFolders)];
-  const menus=staffCloudGrant?.visible_menus||[];
-  const folders=[...(menus.includes('manual')&&availableLibraryCategories('manual').length?[companyManualFolder]:[]),
-    ...(menus.includes('archive')?workArchiveFolders.filter(([category])=>availableLibraryCategories('archive').includes(category)).map(([,folder])=>folder):[])];
-  if(realAttendanceProfile())folders.push(employeeDriveFolders.instruction,employeeDriveFolders.shared);
-  return [...new Set(folders)];
 }
 function resumeWorkspaceDrive(identity){
   const role=currentUser,generation=driveConnectGeneration,staff=activeStaffId;
@@ -2716,8 +2754,7 @@ function resumeWorkspaceDrive(identity){
     try{
       const saved=await (manager?restoreCompanyDriveSession():restoreStaffDriveSession());
       if(!saved||!active())return;
-      await checkEntryDrive(saved.token,workspaceAccessibleDriveFolders(manager));
-      if(!active()||saved.expires<=Date.now())return;
+      if(saved.expires<=Date.now())return;
       if(manager)managerDriveSession=saved;
       else employeeDrive=saved;
       clearTimeout(workCenterDriveTimer);
@@ -2742,16 +2779,18 @@ async function restoreStaffDriveSession(){
   const expected=workspaceDriveAccount(),login=hqStaffLoginId;
   if(currentUser!=='employee'||!expected||!login)return null;
   try{
-    const stored=JSON.parse(sessionStorage.getItem(staffDriveSessionKey())||'null');
-    const legacy=isLegacyStaff()?JSON.parse(sessionStorage.getItem(companyDriveSessionKey)||'null'):null;
-    const saved=stored?.token&&stored.expiresAt>Date.now()+30000?stored:legacy;
-    if(!saved?.token||saved.expiresAt<=Date.now()+30000)return null;
-    const scope=saved.scope||(saved===legacy?driveWriteScope:driveReadScope);
-    if(driveSessionScope()===driveWriteScope&&scope!==driveWriteScope)return null;
+    const userId=readHqSession()?.user?.id;
+    const shared=userId&&loadCachedDriveSession(workspaceDriveSessionKey(userId));
+    const stored=loadCachedDriveSession(staffDriveSessionKey(),driveReadScope);
+    const legacy=isLegacyStaff()?loadCachedDriveSession(companyDriveSessionKey,driveWriteScope):null;
+    const required=driveSessionScope();
+    const saved=[shared,stored,legacy].find(session=>session?.token&&
+      (session.scope===driveWriteScope||required===driveReadScope&&session.scope===driveReadScope));
+    if(!saved)return null;
     const about=await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',saved.token);
     const {user}=await about.json();
     if(hqStaffLoginId!==login||workspaceDriveAccount()!==expected||user?.emailAddress?.toLowerCase()!==expected.toLowerCase())return null;
-    return {token:saved.token,expires:Number(saved.expiresAt),scope};
+    return saved;
   }catch{return null;}
 }
 function retainCompanyDriveSession(session){
@@ -6547,18 +6586,6 @@ async function refreshLiveAttendance(month){
     if(generation===driveConnectGeneration)liveAttendanceLoading.delete(month);
   }
 }
-async function checkEntryDrive(token,folders=[employeeDriveFolders.instruction,employeeDriveFolders.shared]){
-  const checks=await Promise.allSettled(folders.map(async folder=>{
-    const url=driveFileApi+'/'+folder+'?fields=id,capabilities(canListChildren)&supportsAllDrives=true';
-    const data=await (await employeeDriveRequest(url,token)).json();
-    return data.id===folder&&data.capabilities?.canListChildren===true;
-  }));
-  if(checks.every(result=>result.status==='fulfilled'&&result.value))return;
-  const denied=checks.some(result=>result.status==='fulfilled'||[401,403,404].includes(result.reason?.status));
-  const error=new Error(denied?'업무공유폴더 접근 권한을 확인하지 못했어요. 등록된 Google 계정으로 다시 연결해 주세요.':'업무공유폴더 응답이 늦어요. 잠시 뒤 다시 눌러주세요.');
-  if(denied)error.code='DRIVE_PERMISSION';
-  throw error;
-}
 function workCenterDriveSession(){
   return currentUser==='manager'?managerDriveSession:employeeDrive;
 }
@@ -6576,6 +6603,7 @@ function syncWorkCenterDriveButton(){
 function expireWorkCenterDrive(token){
   const session=workCenterDriveSession();
   if(!session||session.token!==token)return;
+  forgetWorkspaceDrive(managerWorkIdentity?.user_id||workStickyUserId,currentUser==='manager'?managerHqAccount.uid:hqStaffLoginId);
   if(currentUser==='manager'){
     rejectedCompanyDriveToken=token;managerDriveSession=null;
   }else{
@@ -6601,13 +6629,13 @@ function workCenterEntry(){
       if(!stillCurrent())return;
       if(manager){retainCompanyDriveSession(session);managerDriveSession=session;}
       else{retainStaffDriveSession(session);employeeDrive=session;}
+      saveVerifiedWorkspaceDrive(session);
       workCenterDriveEntered=true;
       clearTimeout(workCenterDriveTimer);
       workCenterDriveTimer=setTimeout(syncWorkCenterDriveButton,Math.max(0,session.expires-Date.now()));
       render();
     };
     if(manager){
-      await checkEntryDrive(session.token,[companyManualFolder,...workArchiveFolders.map(([,folder])=>folder),...Object.values(employeeDriveFolders)]);
       if(!managerHqReady)await loadWorkCenterManagerGrants(stillCurrent);
       accept();
       return;
@@ -6622,15 +6650,8 @@ function workCenterEntry(){
         S.staffProfiles[0]=applyWorkCenterGrant(S.staffProfiles[0],grant);
       }
     }
-    if(staffCloudGrant){
-      const menus=staffCloudGrant.visible_menus;
-      const folders=[...(menus.includes('manual')&&availableLibraryCategories('manual').length?[companyManualFolder]:[]),
-        ...(menus.includes('archive')?workArchiveFolders.filter(([category])=>availableLibraryCategories('archive').includes(category)).map(([,folder])=>folder):[])];
-      await checkEntryDrive(session.token,folders);
-    }
     if(!stillCurrent())return;
     if(realAttendanceProfile()){
-      await checkEntryDrive(session.token);
       if(!liveAttendanceReady){
         const month=attendanceMonth,rows=await readAttendanceMonth(month);
         if(!stillCurrent())return;
