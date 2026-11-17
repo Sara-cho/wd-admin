@@ -11981,10 +11981,22 @@ const wdTest09Storage = (() => {
         <p>보험설계사의 디지털 사무실</p>
       </header>
       <div class="wd09-auth-intro">
-        <h2>사번과 비밀번호로 접속해 주세요</h2>
+        <h2>Google 계정으로 로그인</h2>
         <p>안전하고 편리한 디지털 보험 업무실에 오신 것을 환영합니다.</p>
       </div>
-      <form class="wd09-auth-form" id="wd09-auth-form">
+      <div class="wd09-auth-form">
+        <div id="wd09-google-button"></div>
+        <button type="button" id="wd09-google-retry" hidden>Google 로그인 다시 시도</button>
+        <p class="wd09-auth-feedback" id="wd09-auth-feedback" role="status"></p>
+        <div id="wd09-google-test-controls" hidden>
+          <a id="wd09-google-connect-link" href="?google-setup=1">기존 계정에 Google 연결</a>
+          <span aria-hidden="true"> · </span>
+          <a id="wd09-google-legacy-link" href="?legacy-test=1">기존 방식으로 TEST 열기</a>
+        </div>
+        <a id="wd09-google-setup-link" href="wd-insurance-hub-test.html" hidden>Google 로그인으로 돌아가기</a>
+      </div>
+      <div id="wd09-google-setup" hidden>
+      <form class="wd09-auth-form" id="wd09-auth-form" method="post">
         <label class="wd09-auth-field" for="wd09-auth-id">사번 / 아이디
           <input id="wd09-auth-id" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="사번 입력" maxlength="12" required>
         </label>
@@ -12003,17 +12015,15 @@ const wdTest09Storage = (() => {
             </button>
           </div>
         </div>
-        <label class="wd09-auth-remember">
-          <input id="wd09-auth-remember" type="checkbox"> 아이디 기억하기
-        </label>
-        <button type="submit" id="wd09-auth-submit">로그인</button>
-        <p class="wd09-auth-feedback" id="wd09-auth-feedback" role="status"></p>
+        <button type="submit" id="wd09-auth-submit">기존 계정 확인</button>
       </form>
+      </div>
       <p class="wd09-auth-security"><b>보안 접속 안내</b> 승인된 계정으로만 접속하고, 공용 기기에서는 사용 후 로그아웃해 주세요.</p>
       <p class="wd09-auth-copyright">© 2026 WD WAVE. All rights reserved.</p>
     </div>
   </section>
 </main>
+<p id="wd09-handoff-loading" role="status" hidden>설계사허브 홈을 여는 중이에요.</p>
 <!-- ══ 앱 ══ -->
 <div id="app">
 <div id="hdr">
@@ -15206,56 +15216,7 @@ const wdTest09Storage = (() => {
 <div class="my-info-app">WD WAVE Partners</div>
 </div>
 </div>
-<details class="card" id="wd09-password-settings">
-<summary>로그인 비밀번호 변경</summary>
-<form id="wd09-password-form" method="post">
-<div class="wd09-password-field">
-  <label for="wd09-password-current">현재 비밀번호</label>
-  <div class="wd09-password-control">
-    <input id="wd09-password-current" type="password" autocomplete="current-password" maxlength="4096" required>
-    <button type="button" aria-label="현재 비밀번호 표시" aria-pressed="false" aria-controls="wd09-password-current">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/>
-        <circle cx="12" cy="12" r="2.5"/>
-        <path class="wd09-password-eye-slash" d="m3 3 18 18"/>
-      </svg>
-    </button>
-  </div>
-</div>
-<div class="wd09-password-field">
-  <label for="wd09-password-new">새 비밀번호</label>
-  <div class="wd09-password-control">
-    <input id="wd09-password-new" type="password" autocomplete="new-password" maxlength="4096" required>
-    <button type="button" aria-label="새 비밀번호 표시" aria-pressed="false" aria-controls="wd09-password-new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/>
-        <circle cx="12" cy="12" r="2.5"/>
-        <path class="wd09-password-eye-slash" d="m3 3 18 18"/>
-      </svg>
-    </button>
-  </div>
-</div>
-<div class="wd09-password-field">
-  <label for="wd09-password-confirm">새 비밀번호 확인</label>
-  <div class="wd09-password-control">
-    <input id="wd09-password-confirm" type="password" autocomplete="new-password" maxlength="4096" aria-describedby="wd09-password-match" required>
-    <button type="button" aria-label="새 비밀번호 확인 표시" aria-pressed="false" aria-controls="wd09-password-confirm">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/>
-        <circle cx="12" cy="12" r="2.5"/>
-        <path class="wd09-password-eye-slash" d="m3 3 18 18"/>
-      </svg>
-    </button>
-  </div>
-</div>
-<p id="wd09-password-match" aria-live="polite"></p>
-<button class="btn-p" id="wd09-password-submit" type="submit">비밀번호 변경</button>
-<p id="wd09-password-feedback" role="status"></p>
-</form>
-</details>
+
 </div>
 </div>
 <!-- V144_7: 상담업무 진입 허브 (신규 pg-consulthub · 카드 4개 · 기존 기능 진입만, 새 저장 없음 · 향후 확장) -->
@@ -35918,32 +35879,8 @@ function openDesignProgressModal(){
   const status = byId('wd09-auth-feedback');
   const submit = byId('wd09-auth-submit');
   const app = byId('app');
-  const employeeId = byId('wd09-auth-id');
   const passwordInput = byId('wd09-auth-password');
   const passwordToggle = byId('wd09-auth-password-toggle');
-  const rememberId = byId('wd09-auth-remember');
-  const passwordForm = byId('wd09-password-form');
-  const passwordSettings = byId('wd09-password-settings');
-  const currentPassword = byId('wd09-password-current');
-  const newPassword = byId('wd09-password-new');
-  const confirmPassword = byId('wd09-password-confirm');
-  const passwordSubmit = byId('wd09-password-submit');
-  const passwordFeedback = byId('wd09-password-feedback');
-  const passwordMatch = byId('wd09-password-match');
-  const passwordToggles = [...passwordForm.querySelectorAll('button[aria-controls]')];
-  const rememberedIdKey = 'wd-test09-remembered-employee-id';
-  try {
-    const savedId = window.localStorage.getItem(rememberedIdKey);
-    if (savedId && Object.hasOwn(SUPABASE_CONFIG_BY_UID, savedId)) {
-      employeeId.value = savedId;
-      rememberId.checked = true;
-    }
-  } catch (_) {}
-  rememberId.addEventListener('change', () => {
-    if (!rememberId.checked) {
-      try { window.localStorage.removeItem(rememberedIdKey); } catch (_) {}
-    }
-  });
   const allowedTables = new Set([
     'wd_partners_preferences',
     'wd_partners_customers','wd_partners_claim_records','wd_partners_communications',
@@ -35968,25 +35905,10 @@ function openDesignProgressModal(){
       if (url.origin !== origin) throw new Error('계정에 연결된 프로젝트와 주소가 다릅니다.');
       const authRequest =
         (url.pathname==='/auth/v1/token' && request.method==='POST' &&
-          ['password','refresh_token'].includes(url.searchParams.get('grant_type'))) ||
+          ['id_token','refresh_token'].includes(url.searchParams.get('grant_type'))) ||
         (url.pathname==='/auth/v1/user' && request.method==='GET') ||
         (url.pathname==='/auth/v1/logout' && request.method==='POST');
       if (authRequest) return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
-
-      if (url.pathname==='/auth/v1/user' && request.method==='PUT' && !url.search && isVerified()) {
-        const body = await request.clone().json();
-        const validPassword = value => typeof value==='string' && value.length>0 && value.length<=4096;
-        // supabase-js updateUser includes these two null fields even for password-only updates.
-        const passwordOnly = body && Object.keys(body).every(key =>
-          key==='current_password' || key==='password' ||
-          ((key==='code_challenge' || key==='code_challenge_method') && body[key]===null)
-        );
-        if (passwordOnly && validPassword(body.current_password) &&
-            validPassword(body.password) && isVerified()) {
-          return fetch(request,{cache:'no-store',credentials:'omit',redirect:'error'});
-        }
-        throw new Error('비밀번호 변경 요청을 확인하지 못했어요.');
-      }
 
       const policyPrefix=['/storage/v1/object/authenticated/wd-partners-attachments/','/storage/v1/object/wd-partners-attachments/']
         .find(prefix=>url.pathname.startsWith(prefix));
@@ -36105,7 +36027,7 @@ function openDesignProgressModal(){
       }
       if (!isVerified() || request.method!=='GET' || !allowedTables.has(table) ||
           (table==='wd_partners_managers' && uid!=='WD23000')) {
-        throw new Error('이 TEST에서는 본인 자료 조회만 가능합니다.');
+        throw new Error('이 설계사허브에서는 본인 자료만 열 수 있어요.');
       }
       const owners = url.searchParams.getAll('uid');
       if (owners.some(owner=>owner!=='eq.'+uid)) throw new Error('다른 계정의 자료는 조회할 수 없습니다.');
@@ -36123,8 +36045,6 @@ function openDesignProgressModal(){
     active = null;
     _UID = null;
     document.body.classList.remove('wd09-signed-in');
-    resetPasswordFields();
-    passwordSettings.open = false;
     window.wd09ResetSkillBoard?.();
     window.wd09DriveReset?.();
     app.style.display = 'none';
@@ -36144,198 +36064,302 @@ function openDesignProgressModal(){
 
   passwordToggle.addEventListener('click', () => setPasswordVisible(passwordInput.type === 'password'));
 
-  async function login(event) {
-    event.preventDefault();
-    if (authenticating || active) return;
-    const uid = byId('wd09-auth-id').value.trim().toUpperCase();
-    const password = passwordInput.value;
-    setPasswordVisible(false);
-    const config = Object.hasOwn(SUPABASE_CONFIG_BY_UID,uid) && SUPABASE_CONFIG_BY_UID[uid];
-    if (!config) { status.textContent='등록된 사번을 확인해 주세요.'; return; }
-    if (window.location.protocol!=='https:' || !window.supabase?.createClient || !crypto.subtle) {
-      status.textContent='이 파일에서는 화면을 미리 볼 수 있어요. 실제 로그인은 연결된 9번 TEST에서 가능합니다.';
-      return;
+  function startHqHandoff() {
+    if(location.origin!=='https://pro.wdwave.kr'||!window.opener||
+      new URLSearchParams(location.search).get('from')!=='wdhq-google')return false;
+    const parent=window.opener;
+    const parentOrigin='https://admin.wdwave.kr';
+    const challenge=crypto.randomUUID();
+    authHandoff=true;
+    screen.hidden=true;
+    byId('wd09-handoff-loading').hidden=false;
+    const finish=()=>{
+      authHandoff=false;
+      byId('wd09-handoff-loading').hidden=true;
+      window.removeEventListener('message',receive);
+      clearTimeout(timeout);
+      window.opener=null;
+    };
+    const fallback=()=>{
+      finish();
+      screen.hidden=false;
+      status.textContent='Google 계정으로 설계사허브에 접속해 주세요.';
+      void renderGoogle();
+    };
+    const timeout=setTimeout(fallback,7000);
+    async function receive(event){
+      const data=event.data;
+      if(event.origin!==parentOrigin||event.source!==parent||data?.type!=='wd-insurance:owner-proof'||
+        data.challenge!==challenge||typeof data.token!=='string'||!authHandoff)return;
+      window.removeEventListener('message',receive);
+      clearTimeout(timeout);
+      const uid='WD23000';
+      const config=SUPABASE_CONFIG_BY_UID[uid];
+      const attempt=createAttempt(config,uid);
+      try{
+        const response=await fetch(config.url+'/functions/v1/wd09-hq-google-session',{
+          method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
+          body:JSON.stringify({hq_access_token:data.token}),cache:'no-store',credentials:'omit',
+          redirect:'error',signal:AbortSignal.timeout(10000)
+        });
+        if(!response.ok)throw new Error(messages.failure);
+        const {access_token,refresh_token}=await response.json();
+        if(!access_token||!refresh_token)throw new Error(messages.failure);
+        const login=await attempt.client.auth.setSession({access_token,refresh_token});
+        const verified=await attempt.client.auth.getUser();
+        if(login.error||verified.error||login.data?.user?.id!==verified.data?.user?.id||
+          !await googleIdentityMatches(verified.data?.user,uid))throw new Error(messages.account);
+        finish();
+        activate(attempt,verified.data.user,uid);
+      }catch{
+        await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
+        if(active===attempt)leave();else fallback();
+      }
     }
+    window.addEventListener('message',receive);
+    parent.postMessage({type:'wd-insurance:ready',challenge},parentOrigin);
+    return true;
+  }
 
-    authenticating = true;
-    submit.disabled = true;
-    status.textContent = '로그인과 자료 권한을 확인하는 중이에요.';
-    const attempt = {verified:false,client:null};
-    try {
-      attempt.client = window.supabase.createClient(config.url,config.key,{
-        auth:{
-          persistSession:false, autoRefreshToken:true, detectSessionInUrl:false,
-          storageKey:'wd-test09-'+uid.toLowerCase()
-        },
-        global:{fetch:ownedFetch(config,uid,()=>attempt.verified && active===attempt)}
-      });
-      const loginUrl = new URL('/functions/v1/wd09-employee-login',config.url);
-      const response = await fetch(loginUrl,{
+  const googleSlot = byId('wd09-google-button');
+  const googleRetry = byId('wd09-google-retry');
+  const setup = byId('wd09-google-setup');
+  const setupLink = byId('wd09-google-setup-link');
+  const isTest = location.origin==='https://admin.wdwave.kr' && location.pathname==='/wd-insurance-hub-test.html';
+  const params = new URLSearchParams(location.search);
+  const testSetup = isTest && params.get('google-setup')==='1';
+  const legacyTest = isTest && !testSetup && params.get('legacy-test')==='1';
+  const supportedOrigin = location.origin==='https://pro.wdwave.kr'||isTest;
+  const migrationNav = byId('wd09-google-test-controls');
+  const connectLink = byId('wd09-google-connect-link');
+  const legacyLink = byId('wd09-google-legacy-link');
+  const googleEmailHashes = Object.freeze({'WD23000': 'a37ec1583d4030b725fefd2fe3a99d8f49886dacde14206475afbae120cd5b22', 'WD26002': '50b28062e1c927740c57812e0a42d1e89a8edc75bcd01284ec9b1a491b703578'});
+  const messages={
+    unavailable:'Google 로그인은 연결된 설계사허브 주소에서 사용할 수 있어요.',
+    unlinked:'기존 설계사허브 계정에 Google을 먼저 연결해 주세요.',
+    account:'설계사허브에 등록된 Google 계정을 선택해 주세요.',
+    failure:'Google 로그인을 완료하지 못했어요. 잠시 뒤 다시 시도해 주세요.'
+  };
+  let linkAccount = null;
+  let googleFlow = 0;
+  let authHandoff = false;
+
+  function createAttempt(config,uid) {
+    const attempt={verified:false,client:null};
+    attempt.client=window.supabase.createClient(config.url,config.key,{
+      auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false,
+        storageKey:'wd-insurance-google-'+uid.toLowerCase()},
+      global:{fetch:ownedFetch(config,uid,()=>attempt.verified&&active===attempt)}
+    });
+    return attempt;
+  }
+
+  async function googleIdentityMatches(user,uid,subject) {
+    const config=SUPABASE_CONFIG_BY_UID[uid];
+    if(!user||user.is_anonymous||await fingerprint(user.id)!==config.authHash||
+       await fingerprint(user.email)!==config.emailHash) return false;
+    for(const identity of user.identities||[]){
+      const claims=identity.identity_data;
+      if(identity.provider==='google'&&claims?.email_verified===true&&
+        (!subject||claims.sub===subject)&&await fingerprint(claims.email)===googleEmailHashes[uid]) return true;
+    }
+    return false;
+  }
+
+  function activate(attempt,user,uid,googleEmail) {
+    attempt.verified=true;
+    active=attempt;
+    attempt.googleEmail=googleEmail||'';
+    window.wd09VerifiedGoogleEmail=()=>active?.verified?active.googleEmail:'';
+    _UID=uid;
+    _ROLE=USERS[uid].role;
+    window.wd09VerifiedDb=()=>active===attempt&&attempt.verified&&_UID===uid?attempt.client:null;
+    attempt.client.auth.onAuthStateChange((name,session)=>{
+      if(active!==attempt||leaving)return;
+      if(name==='SIGNED_OUT'||(session&&session.user?.id!==user.id))setTimeout(leave,0);
+    });
+    setUserUI(USERS[uid],uid);
+    byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
+    screen.hidden=true;
+    app.style.display='block';
+    document.body.classList.add('wd09-signed-in');
+    initApp();
+    window.wd09RefreshBulkSheetButton?.();
+  }
+
+  async function googleReady(config) {
+    const response=await fetch(config.url+'/rest/v1/rpc/wd09_google_login_ready',{
+      method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
+      body:'{}',cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(8000)
+    });
+    if(!response.ok)throw new Error('Google 계정 연결 상태를 확인하지 못했어요.');
+    return await response.json()===true;
+  }
+
+  async function directGoogleLogin(credential,nonce,uid,subject) {
+    const config=SUPABASE_CONFIG_BY_UID[uid];
+    if(!await googleReady(config))throw new Error(messages.unlinked);
+    const attempt=createAttempt(config,uid);
+    try{
+      const logged=await attempt.client.auth.signInWithIdToken({provider:'google',token:credential,nonce});
+      if(logged.error||!logged.data?.session)throw new Error(messages.failure);
+      const verified=await attempt.client.auth.getUser();
+      if(verified.error||verified.data?.user?.id!==logged.data?.user?.id||
+        !await googleIdentityMatches(verified.data.user,uid,subject))throw new Error(messages.account);
+      const googleEmail=verified.data.user.identities.find(item=>
+        item.provider==='google'&&item.identity_data?.sub===subject)?.identity_data?.email;
+      activate(attempt,verified.data.user,uid,googleEmail);
+    }catch(error){
+      if(active===attempt)leave();
+      else await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
+      throw error;
+    }
+  }
+
+  async function legacyProof(event) {
+    event.preventDefault();
+    if((!testSetup&&!legacyTest)||authenticating||active||linkAccount)return;
+    const uid=byId('wd09-auth-id').value.trim().toUpperCase();
+    const config=Object.hasOwn(SUPABASE_CONFIG_BY_UID,uid)&&SUPABASE_CONFIG_BY_UID[uid];
+    if(!config){status.textContent='기존 설계사허브 사번을 확인해 주세요.';return;}
+    authenticating=true;
+    submit.disabled=true;
+    status.textContent='기존 계정을 확인하고 있어요.';
+    const attempt=createAttempt(config,uid);
+    try{
+      const response=await fetch(config.url+'/functions/v1/wd09-employee-login',{
         method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
-        body:JSON.stringify({employee_id:uid,password}),
+        body:JSON.stringify({employee_id:uid,password:passwordInput.value}),
         cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(12000)
-      }).catch(()=>null);
-      if (response?.status===429) throw new Error('로그인 시도가 많아요. 잠시 뒤 다시 시도해 주세요.');
-      if (response?.status===401) throw new Error('사번과 비밀번호를 확인해 주세요.');
-      if (!response?.ok) throw new Error('사번 로그인 연결을 확인해 주세요. 잠시 뒤 다시 시도할 수 있어요.');
+      });
+      if(!response.ok)throw new Error('기존 사번과 비밀번호를 확인해 주세요.');
+      const {access_token,refresh_token}=await response.json();
+      if(!access_token||!refresh_token)throw new Error('기존 계정 연결을 확인해 주세요.');
+      const login=await attempt.client.auth.setSession({access_token,refresh_token});
+      const verified=await attempt.client.auth.getUser();
+      const user=verified.data?.user;
+      if(login.error||verified.error||!user||user.id!==login.data?.user?.id||
+        user.is_anonymous||await fingerprint(user.id)!==config.authHash||
+        await fingerprint(user.email)!==config.emailHash)throw new Error('기존 데이터 소유 계정을 확인해 주세요.');
+      if(legacyTest){activate(attempt,user,uid);return;}
+      linkAccount={uid,config,attempt,userId:user.id};
+      form.hidden=true;
+      status.textContent='연결할 Google 계정을 선택해 주세요.';
+      void renderGoogle();
+    }catch(error){
+      if(active===attempt)leave();
+      else await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
+      status.textContent=error.message||messages.failure;
+    }finally{
+      passwordInput.value='';
+      submit.disabled=false;
+      authenticating=false;
+    }
+  }
 
-      const {access_token,refresh_token} = await response.json();
-      if (typeof access_token!=='string' || !access_token ||
-          typeof refresh_token!=='string' || !refresh_token) {
-        throw new Error('로그인 세션을 확인하지 못했어요.');
-      }
-      const logged = await attempt.client.auth.setSession({access_token,refresh_token});
-      if (logged.error || !logged.data?.session?.access_token || !logged.data?.user?.id) {
-        throw new Error('로그인 세션을 확인하지 못했어요.');
-      }
-      const verified = await attempt.client.auth.getUser();
-      const user = verified.data?.user;
-      if (verified.error || !user || user.is_anonymous || user.id!==logged.data.user.id ||
-          await fingerprint(user.id)!==config.authHash || await fingerprint(user.email)!==config.emailHash) {
-        throw new Error('이 계정의 자료 권한을 확인하지 못했어요.');
-      }
+  async function linkGoogle(credential,nonce,uid,subject) {
+    if(!testSetup||!linkAccount||linkAccount.uid!==uid)throw new Error(messages.account);
+    const {attempt,config,userId}=linkAccount;
+    const {data}=await attempt.client.auth.getSession();
+    const token=data?.session?.access_token;
+    if(!token||data.session.user.id!==userId)throw new Error('기존 계정을 다시 확인해 주세요.');
+    const before=await attempt.client.auth.getUser();
+    if(before.error||before.data?.user?.id!==userId)throw new Error('기존 계정을 다시 확인해 주세요.');
+    if(!await googleIdentityMatches(before.data.user,uid,subject)){
+      const response=await fetch(config.url+'/auth/v1/token?grant_type=id_token',{
+        method:'POST',headers:{apikey:config.key,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+        body:JSON.stringify({provider:'google',id_token:credential,nonce,link_identity:true}),
+        cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(12000)
+      });
+      if(!response.ok)throw new Error('Google 계정을 연결하지 못했어요. 계정과 프로젝트 설정을 확인해 주세요.');
+    }
+    const verified=await attempt.client.auth.getUser();
+    if(verified.error||verified.data?.user?.id!==userId||
+      !await googleIdentityMatches(verified.data.user,uid,subject))throw new Error('기존 계정에 연결됐는지 확인하지 못했어요.');
+    await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
+    linkAccount=null;
+    status.textContent='Google 연결을 확인했어요. 일반 로그인으로 다시 열어 주세요.';
+    setupLink.hidden=false;
+    googleSlot.replaceChildren();
+  }
 
-      attempt.verified = true;
-      attempt.userId = user.id;
-      active = attempt;
-      _UID = uid;
-      _ROLE = USERS[uid].role;
-      window.wd09VerifiedDb = () => active===attempt && attempt.verified && _UID===uid ? attempt.client : null;
-      attempt.client.auth.onAuthStateChange((name,session)=>{
-        if (active!==attempt || leaving) return;
-        if (name==='SIGNED_OUT' || (session && session.user?.id!==user.id)) {
-          setTimeout(leave,0);
+  function waitForGoogle() {
+    return new Promise((resolve,reject)=>{
+      const ends=Date.now()+8000;
+      const check=()=>{
+        if(window.google?.accounts?.id){resolve(window.google.accounts.id);return;}
+        if(Date.now()>=ends){reject(new Error('Google 버튼을 불러오지 못했어요. 다시 시도해 주세요.'));return;}
+        setTimeout(check,100);
+      };
+      check();
+    });
+  }
+
+  async function renderGoogle() {
+    if(!supportedOrigin||!window.supabase?.createClient||!crypto.subtle){
+      status.textContent=messages.unavailable;
+      return;
+    }
+    if(testSetup&&!linkAccount)return;
+    const flow=++googleFlow;
+    googleRetry.hidden=true;
+    googleSlot.replaceChildren();
+    try{
+      const google=await waitForGoogle();
+      const nonce=Array.from(crypto.getRandomValues(new Uint8Array(32)),n=>n.toString(16).padStart(2,'0')).join('');
+      const nonceHash=await fingerprint(nonce);
+      if(flow!==googleFlow)return;
+      google.initialize({
+        client_id:WD09_GOOGLE_CLIENT_ID,nonce:nonceHash,use_fedcm_for_button:true,
+        auto_select:false,button_auto_select:false,
+        callback:async({credential})=>{
+          if(flow!==googleFlow||authenticating||active||authHandoff||!credential)return;
+          authenticating=true;
+          status.textContent='Google 계정과 자료 권한을 확인하고 있어요.';
+          try{
+            const encoded=credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+            const claims=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0))));
+            const emailHash=await fingerprint(claims.email);
+            const uid=Object.keys(googleEmailHashes).find(id=>googleEmailHashes[id]===emailHash);
+            if(!uid||!claims.sub||claims.email_verified!==true||claims.aud!==WD09_GOOGLE_CLIENT_ID||
+              claims.nonce!==nonceHash)throw new Error(messages.account);
+            if(testSetup)await linkGoogle(credential,nonce,uid,claims.sub);
+            else await directGoogleLogin(credential,nonce,uid,claims.sub);
+          }catch(error){
+            status.textContent=error.message||messages.failure;
+            googleRetry.hidden=false;
+          }finally{authenticating=false;}
         }
       });
-      passwordInput.value = '';
-      setUserUI(USERS[uid],uid);
-      byId('wd-day-greeting').textContent='안녕하세요, '+byId('hdr-uname').textContent;
-      screen.hidden = true;
-      app.style.display = 'block';
-      document.body.classList.add('wd09-signed-in');
-      initApp();
-      window.wd09RefreshBulkSheetButton?.();
-      if (rememberId.checked) {
-        try { window.localStorage.setItem(rememberedIdKey,uid); } catch (_) {}
-      }
-    } catch (error) {
-      if (active===attempt) {
-        leave();
-        return;
-      }
-      await attempt.client?.auth.signOut({scope:'local'}).catch(()=>{});
-      status.textContent = error.message || '로그인 상태를 확인하지 못했어요.';
-      passwordInput.value = '';
-      passwordInput.focus();
-    } finally {
-      authenticating = false;
-      submit.disabled = false;
+      google.renderButton(googleSlot,{theme:'outline',size:'large',text:'signin_with',locale:'ko',width:280});
+    }catch(error){
+      status.textContent=error.message||messages.failure;
+      googleRetry.hidden=false;
     }
   }
 
-  async function changePassword(event) {
-    event.preventDefault();
-    if (passwordSubmit.disabled) return;
-    const account = active;
-    if (!account?.verified || getSbClient()!==account.client) {
-      passwordFeedback.textContent = '다시 로그인한 뒤 비밀번호를 변경해 주세요.';
-      return;
-    }
-    const current = currentPassword.value;
-    const next = newPassword.value;
-    if (next!==confirmPassword.value) {
-      passwordFeedback.textContent = '새 비밀번호와 확인란의 입력이 달라요.';
-      confirmPassword.focus();
-      return;
-    }
-    if (next===current) {
-      passwordFeedback.textContent = '현재 비밀번호와 다른 비밀번호를 입력해 주세요.';
-      newPassword.focus();
-      return;
-    }
-
-    passwordSubmit.disabled = true;
-    passwordToggles.forEach(button=>setPasswordFieldVisible(button,false));
-    currentPassword.readOnly = newPassword.readOnly = confirmPassword.readOnly = true;
-    passwordFeedback.textContent = '비밀번호를 변경하고 있어요.';
-    try {
-      const {data,error} = await account.client.auth.updateUser({
-        current_password:current,
-        password:next
-      });
-      if (active!==account) return;
-      if (error) {
-        switch (error.code) {
-          case 'invalid_credentials':
-          case 'current_password_mismatch':
-            passwordFeedback.textContent = '현재 비밀번호를 다시 확인해 주세요.';
-            break;
-          case 'weak_password':
-            passwordFeedback.textContent = '새 비밀번호를 더 길고 추측하기 어렵게 만들어 주세요.';
-            break;
-          case 'same_password':
-            passwordFeedback.textContent = '현재 비밀번호와 다른 비밀번호를 입력해 주세요.';
-            break;
-          case 'reauthentication_needed':
-          case 'session_not_found':
-          case 'session_expired':
-            passwordFeedback.textContent = '다시 로그인한 뒤 비밀번호를 변경해 주세요.';
-            break;
-          default:
-            passwordFeedback.textContent = error.status===429
-              ? '변경 요청이 많아요. 잠시 뒤 다시 시도해 주세요.'
-              : '비밀번호를 변경하지 못했어요. 현재 비밀번호를 확인하고 다시 시도해 주세요.';
-        }
-        return;
-      }
-      if (data?.user?.id!==account.userId) {
-        passwordFeedback.textContent = '변경 결과를 확인하지 못했어요.';
-        return;
-      }
-      resetPasswordFields();
-      passwordFeedback.textContent = '비밀번호를 변경했어요. 다음 로그인부터 새 비밀번호를 사용해 주세요.';
-    } catch (_) {
-      if (active===account) passwordFeedback.textContent = '변경 결과를 확인하지 못했어요. 잠시 뒤 다시 확인해 주세요.';
-    } finally {
-      passwordSubmit.disabled = false;
-      currentPassword.readOnly = newPassword.readOnly = confirmPassword.readOnly = false;
-    }
+  passwordToggle.addEventListener('click',()=>setPasswordVisible(passwordInput.type==='password'));
+  googleRetry.addEventListener('click',()=>void renderGoogle());
+  function setTestLink(link,mode) {
+    const url=new URL(location.href);
+    url.searchParams.delete('legacy-test');
+    url.searchParams.delete('google-setup');
+    if(mode)url.searchParams.set(mode,'1');
+    link.href=url.pathname+url.search;
   }
-
-  function setPasswordFieldVisible(button,visible) {
-    byId(button.getAttribute('aria-controls')).type = visible ? 'text' : 'password';
-    button.setAttribute('aria-pressed',String(visible));
+  if(isTest){
+    migrationNav.hidden=testSetup||legacyTest;
+    setTestLink(connectLink,'google-setup');
+    setTestLink(legacyLink,'legacy-test');
+    setTestLink(setupLink);
   }
-
-  function showPasswordMatch() {
-    const entered = Boolean(confirmPassword.value);
-    const matches = entered && newPassword.value===confirmPassword.value;
-    passwordMatch.dataset.match = String(matches);
-    passwordMatch.textContent = !entered ? '' : matches
-      ? '새 비밀번호가 일치해요.' : '새 비밀번호가 일치하지 않아요.';
-  }
-
-  function resetPasswordFields() {
-    passwordForm.reset();
-    passwordToggles.forEach(button=>setPasswordFieldVisible(button,false));
-    showPasswordMatch();
-  }
-
-  passwordToggles.forEach(button=>button.addEventListener('click',()=>{
-    setPasswordFieldVisible(button,button.getAttribute('aria-pressed')!=='true');
-  }));
-  passwordForm.addEventListener('input',showPasswordMatch);
-  passwordForm.addEventListener('submit',changePassword);
-  passwordSettings.addEventListener('toggle',()=>{
-    if (passwordSettings.open) return;
-    if (passwordSubmit.disabled) {
-      passwordToggles.forEach(button=>setPasswordFieldVisible(button,false));
-      return;
-    }
-    resetPasswordFields();
-    passwordFeedback.textContent = '';
-  });
-  form.addEventListener('submit',login);
+  if(testSetup||legacyTest){
+    setup.hidden=false;
+    setupLink.hidden=false;
+    form.addEventListener('submit',legacyProof);
+    status.textContent=testSetup?'기존 사번으로 한 번 인증한 다음 Google 계정을 연결해 주세요.'
+      :'Google 계정 연결 전에도 기존 방식으로 TEST를 이용할 수 있어요.';
+  }else setTimeout(()=>{if(!startHqHandoff())void renderGoogle();},0);
   byId('wd09-auth-signout').addEventListener('click',leave);
   window.addEventListener('pagehide',()=>{
     document.body.classList.remove('wd09-signed-in');
@@ -37772,10 +37796,10 @@ function wd09ArchivePreviewMime(name){
   const propertiesKey='wd09Setup';
   const propertyPrefix='wd-insurance-test09:';
 
-  function authorize(scopes,optionalScopes=[]){
+  function authorize(scopes,optionalScopes=[],accountHint=''){
     return new Promise((resolve,reject)=>{
       if(location.protocol!=='https:'){
-        reject(new Error('HTTPS로 열린 9번 TEST에서 Google 계정을 연결해 주세요.'));
+        reject(new Error('설계사허브 TEST 주소에서 Google 계정을 연결해 주세요.'));
         return;
       }
       const oauth=window.google?.accounts?.oauth2;
@@ -37785,6 +37809,7 @@ function wd09ArchivePreviewMime(name){
       }
       const client=oauth.initTokenClient({
         client_id:WD09_GOOGLE_CLIENT_ID,scope:[...scopes,...optionalScopes].join(' '),include_granted_scopes:false,
+        ...(accountHint?{hint:accountHint}:{}),
         callback:response=>{
           if(response?.error==='access_denied'){
             reject(Error('Google 연결이 거절됐어요. 등록된 내 Google 계정을 선택하고, 테스트 사용자와 권한을 확인해 주세요.'));
@@ -37805,7 +37830,7 @@ function wd09ArchivePreviewMime(name){
           reject(new Error(messages[error?.type]||'Google 계정 연결을 완료하지 못했어요. 다시 눌러 주세요.'));
         }
       });
-      client.requestAccessToken({prompt:'select_account'});
+      client.requestAccessToken({prompt:accountHint?'':'select_account'});
     });
   }
 
@@ -37813,7 +37838,8 @@ function wd09ArchivePreviewMime(name){
     const uid=_UID;
     const adviser=USERS[uid];
     if(!adviser||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
-    const grant=await authorize([driveScope],[...homeScopes,monthlyScope]);
+    const verifiedEmail=window.wd09VerifiedGoogleEmail?.()||'';
+    const grant=await authorize([driveScope],[...homeScopes,monthlyScope],verifiedEmail);
     if(uid!==_UID||!getSbClient())throw new Error('설계사허브에 먼저 로그인해 주세요.');
     const expiresAt=Date.now()+Math.max(0,(Number(grant.expires_in)||3600)*1000-1000);
     const oauth=window.google.accounts.oauth2;
