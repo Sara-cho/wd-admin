@@ -341,11 +341,18 @@ a{text-decoration:none;color:inherit}
 .wdhq-login-submit:disabled{cursor:wait;opacity:.72}.wdhq-login-status{margin:10px 0 0;color:#687287;font-size:10px;line-height:1.5;text-align:center}
 .wdhq-session-choice{display:none;margin-top:8px}.wdhq-session-choice.wdhq-show{display:block}.wdhq-session-choice-copy{margin:0 0 14px;padding:14px;border:1px solid #dce6f5;border-radius:12px;background:#f5f9ff;color:#33445d;font-size:12px;line-height:1.65;text-align:center}.wdhq-session-choice-copy b{display:block;margin-bottom:3px;color:#152039;font-size:15px}.wdhq-session-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.wdhq-session-actions button{min-height:46px;border-radius:11px;font-weight:900;cursor:pointer}.wdhq-session-continue{border:0;background:linear-gradient(135deg,#1769ed,#5d45bd);color:#fff}.wdhq-session-switch{border:1px solid #cfd7e4;background:#fff;color:#33445d}
 body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!important}
-body.wdhq-auth-checking.wdhq-google-quiet .wdhq-login-screen{visibility:hidden}
-#wdhq-google-login{margin:12px 0 0}
+#wdhq-google-login-slot{min-height:40px}
+#wdhq-google-login-slot:not(:empty){display:flex;justify-content:center}
+#wdhq-google-login-status{text-align:center}
+#wdhq-password-login{text-align:center;margin:14px 0 0}
+#wdhq-password-login summary,#wdhq-google-login-retry{color:#344b66;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+#wdhq-google-login-retry{border:0;background:none;width:100%;padding:8px;text-decoration:underline}
+#wdhq-password-login summary{padding:8px}
+#wdhq-password-login form{text-align:left}
+#wdhq-login-status:empty{display:none}
 #wdhq-google-login-status,#wdhq-google-link-status{font-size:12px;line-height:1.45;margin:5px 0;color:#534a63}
 #wdhq-google-login-status:empty,#wdhq-google-link-status:empty,
-#wdhq-google-login-slot:empty,#wdhq-google-link-slot:empty{display:none}
+#wdhq-google-link-slot:empty{display:none}
 #wdhq-google-link{padding:12px 16px;border-bottom:1px solid #e7deed;background:#fff}
 #wdhq-google-link-open{font:inherit;font-size:13px;font-weight:700;color:#573f8a;background:#f6f2fc;padding:8px 14px;border:1px solid #ded2ef;border-radius:10px;cursor:pointer}
 #wdhq-google-link-open:disabled{opacity:.6;cursor:default}
@@ -1194,6 +1201,11 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       <p class="wdhq-login-card-slogan">함께, 더 좋은 내일을</p>
       <p class="wdhq-login-card-intro">로그인하여 오늘의 업무를 시작하세요.</p>
     </div>
+    <div id="wdhq-google-login-slot"></div>
+    <p id="wdhq-google-login-status" role="status"></p>
+    <button id="wdhq-google-login-retry" type="button" hidden>Google 로그인 다시 불러오기</button>
+    <details id="wdhq-password-login">
+    <summary>기존 아이디로 로그인</summary>
     <form id="wdhq-login-form" onsubmit="event.preventDefault();wdhqVerifyLogin()" novalidate>
       <label class="wdhq-login-field"><span>아이디 또는 이메일</span><input id="wdhq-login-id" type="text" autocomplete="username" inputmode="email" placeholder="아이디 또는 이메일 입력" required></label>
       <label class="wdhq-login-field"><span>비밀번호</span><input id="wdhq-login-password" type="password" autocomplete="current-password" placeholder="비밀번호 입력" required></label>
@@ -1202,19 +1214,10 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
         <span>아이디 저장</span>
       </label>
       <button class="wdhq-login-submit" id="wdhq-login-submit" type="submit">로그인</button>
-      <button class="wdhq-login-submit" id="wdhq-google-login" type="button" onclick="wdhqOpenOwnerGoogle(this,false)">연결된 대표 Google 계정으로 로그인</button>
-      <p id="wdhq-google-login-status" role="status"></p>
-      <div id="wdhq-google-login-slot"></div>
     </form>
-    <div class="wdhq-session-choice" id="wdhq-session-choice" aria-live="polite">
-      <p class="wdhq-session-choice-copy"><b id="wdhq-session-choice-title">로그인된 계정이 있습니다.</b><span id="wdhq-session-choice-detail">계정을 확인한 뒤 본진으로 들어가 주세요.</span></p>
-      <div class="wdhq-session-actions">
-        <button class="wdhq-session-continue" type="button" onclick="wdhqContinueSavedSession()">이 계정으로 들어가기</button>
-        <button class="wdhq-session-switch" type="button" onclick="wdhqSwitchAccount()">다른 계정 로그인</button>
-      </div>
-    </div>
+    </details>
     <div class="wdhq-login-error" id="wdhq-login-error" role="alert" aria-live="polite"></div>
-    <p class="wdhq-login-status" id="wdhq-login-status" aria-live="polite">회사 계정 인증 상태를 확인하고 있습니다.</p>
+    <p class="wdhq-login-status" id="wdhq-login-status" aria-live="polite"></p>
     <p class="wdhq-login-note">아이디 저장은 이 브라우저에만 저장됩니다. 비밀번호와 인증 토큰은 별도 로그에 저장하지 않습니다.</p>
   </section>
   </div>
@@ -1466,8 +1469,8 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
 </nav>
 <dialog id="wdhq-account-info" aria-labelledby="wdhq-account-info-title">
   <header><h2 id="wdhq-account-info-title">계정정보</h2><button id="wdhq-account-info-close" type="button" aria-label="닫기">×</button></header>
-  <section id="wdhq-google-link" aria-label="대표 Google 계정 연결">
-    <button id="wdhq-google-link-open" type="button" onclick="wdhqOpenOwnerGoogle(this,true)">대표 Google 계정 연결</button>
+  <section id="wdhq-google-link" aria-label="Google 계정 연결">
+    <button id="wdhq-google-link-open" type="button">Google 계정 연결</button>
     <p id="wdhq-google-link-status" role="status"></p>
     <div id="wdhq-google-link-slot"></div>
   </section>
@@ -1731,7 +1734,7 @@ const WDHQ_SHARED_USER_IDS=Object.freeze([WDHQ_OWNER_LOGIN_ID,WDHQ_STAFF_LOGIN_I
 const WDHQ_LOGIN_ALIASES=Object.freeze({});
 const WDHQ_LOGIN_ACCOUNTS=Object.freeze({
   [WDHQ_OWNER_LOGIN_ID]:Object.freeze({email:WDHQ_OWNER_EMAIL,googleEmail:'kfcyk20@gmail.com',name:'최윤경',greeting:'대표님',roleLabel:'대표'}),
-  [WDHQ_STAFF_LOGIN_ID]:Object.freeze({email:WDHQ_STAFF_EMAIL,name:'박수진',greeting:'수진님',roleLabel:'운영총괄',loginLabel:WDHQ_STAFF_LOGIN_ID})
+  [WDHQ_STAFF_LOGIN_ID]:Object.freeze({email:WDHQ_STAFF_EMAIL,googleEmail:'woori08944@gmail.com',name:'박수진',greeting:'수진님',roleLabel:'운영총괄',loginLabel:WDHQ_STAFF_LOGIN_ID})
 });
 let WDHQ_SUPABASE=null;
 let WDHQ_AUTH_SESSION=null;
@@ -2643,6 +2646,7 @@ function wdhqClearDisplayState(){
   window.WDHQStickyNote?.reset();
   document.getElementById('wdhq-account-info')?.close();
   delete document.body.dataset.wdhqRole;
+  delete document.body.dataset.wdhqLoginId;
   [WDHQ_AUTH_KEY,WDHQ_USER_KEY,'wd_current_uid','wd_user_name','wd_current_dbk','wd_current_role'].forEach(key=>localStorage.removeItem(key));
   try{sessionStorage.removeItem(WDHQ_NAV_SESSION_KEY)}catch(e){}
 }
@@ -2678,50 +2682,22 @@ function wdhqShowLoginError(message){
 function wdhqClearLoginError(){
   const err=document.getElementById('wdhq-login-error');if(err){err.textContent='';err.style.display='none'}
 }
-function wdhqShowLogin(message='대표님 또는 수진님 회사 계정으로 로그인해 주세요.'){
+function wdhqShowLogin(message=''){
   document.getElementById('wdhq-account-info')?.close();
   document.body.classList.remove('wdhq-auth-checking');
   document.body.classList.add('wdhq-auth-locked');
   document.getElementById('wdhq-login-screen')?.classList.add('wdhq-show');
-  const form=document.getElementById('wdhq-login-form');if(form)form.style.display='block';
-  document.getElementById('wdhq-session-choice')?.classList.remove('wdhq-show');
   const label=document.getElementById('wdhq-user-label');if(label)label.textContent='회사 계정 로그인 필요';
   wdhqSetLoginStatus(message);
   const password=document.getElementById('wdhq-login-password');if(password)password.value='';
-  setTimeout(()=>document.getElementById('wdhq-login-id')?.focus(),50);
+  window.wdhqShowGoogleChoice?.();
 }
 function wdhqHideLogin(){
   document.body.classList.remove('wdhq-auth-checking','wdhq-auth-locked');
   document.getElementById('wdhq-login-screen')?.classList.remove('wdhq-show');
+  document.getElementById('wdhq-password-login').open=false;
+  window.wdhqClearGoogleChoice?.();
   wdhqClearLoginError();
-}
-function wdhqShowSessionChoice(){
-  const profile=WDHQ_AUTH_PROFILE,account=wdhqLoginAccount(profile?.login_id);
-  if(!profile||!account){wdhqShowLogin();return false}
-  const name=String(profile.display_name||account.name).trim()||account.name;
-  document.body.classList.remove('wdhq-auth-checking');
-  document.body.classList.add('wdhq-auth-locked');
-  document.getElementById('wdhq-login-screen')?.classList.add('wdhq-show');
-  const form=document.getElementById('wdhq-login-form');if(form)form.style.display='none';
-  document.getElementById('wdhq-session-choice')?.classList.add('wdhq-show');
-  const title=document.getElementById('wdhq-session-choice-title');if(title)title.textContent=`${name}님 계정으로 로그인되어 있습니다${account.loginLabel?` · ${account.loginLabel}`:''}.`;
-  const detail=document.getElementById('wdhq-session-choice-detail');if(detail)detail.textContent='계정을 확인한 뒤 본진으로 들어가거나 다른 계정으로 바꿔 주세요.';
-  wdhqSetLoginStatus('자동으로 들어가지 않습니다. 사용할 계정을 확인해 주세요.');
-  return true;
-}
-function wdhqContinueSavedSession(){
-  if(!WDHQ_AUTH_SESSION||!WDHQ_AUTH_PROFILE){wdhqShowLogin('세션이 만료되었습니다. 다시 로그인해 주세요.');return false}
-  wdhqApplyUserCopy(WDHQ_AUTH_PROFILE);
-  wdhqHideLogin();hydrateTodos();updateConnectionMetric();wdhqRenderSpaceStatus();
-  return true;
-}
-async function wdhqSwitchAccount(){
-  if(WDHQ_AUTH_CHECKING)return false;
-  WDHQ_AUTH_CHECKING=true;
-  try{wdhqInitSupabase();await WDHQ_SUPABASE.auth.signOut({scope:'local'})}catch(ignore){}
-  WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;wdhqClearDisplayState();WDHQ_AUTH_CHECKING=false;
-  wdhqShowLogin('다른 계정의 아이디와 비밀번호를 입력해 주세요.');
-  return true;
 }
 function wdhqInitSupabase(){
   if(WDHQ_SUPABASE)return WDHQ_SUPABASE;
@@ -2746,7 +2722,7 @@ async function wdhqReadAuthorizedProfile(userId){
   if(data.login_id===WDHQ_OWNER_LOGIN_ID&&data.staff_role!=='owner')throw new Error('대표 계정 권한값이 일치하지 않습니다.');
   return data;
 }
-function wdhqApplyVerifiedAuth(session,profile,enter=true){
+function wdhqApplyVerifiedAuth(session,profile){
   if(!session?.user?.id||!profile||session.user.id!==profile.user_id)throw new Error('회사 계정 인증 연결값이 일치하지 않습니다.');
   const account=wdhqLoginAccount(profile.login_id);
   if(!account)throw new Error('허용된 회사 계정이 아닙니다.');
@@ -2755,7 +2731,7 @@ function wdhqApplyVerifiedAuth(session,profile,enter=true){
   localStorage.setItem('wd_user_name',profile.display_name||account.name);
   localStorage.setItem('wd_current_role',profile.staff_role);
   wdhqApplyUserCopy(profile);
-  if(enter){wdhqHideLogin();hydrateTodos();updateConnectionMetric();wdhqRenderSpaceStatus()}
+  wdhqHideLogin();hydrateTodos();updateConnectionMetric();wdhqRenderSpaceStatus();
   window.WDHQBridge?.audit('staff_auth_verified','hq',profile.login_id,'R0',{result:'getSession|getUser|active-allowlist'});
   return true;
 }
@@ -2776,9 +2752,9 @@ async function wdhqVerifySupabaseSession(options={}){
   const profile=await wdhqReadAuthorizedProfile(userResult.data.user.id);
   const account=wdhqLoginAccount(profile.login_id);
   if(String(userResult.data.user.email||'').toLowerCase()!==account.email)throw new Error('회사 계정 이메일과 프로필이 일치하지 않습니다.');
-  if(options.googleOnly&&(profile.login_id!==WDHQ_OWNER_LOGIN_ID||!wdhqHasApprovedGoogleIdentity(userResult.data.user,account)))
-    throw new Error('계정정보에서 기존 대표 계정과 Google을 먼저 연결해 주세요.');
-  return wdhqApplyVerifiedAuth(session,profile,options.enter!==false);
+  if(options.googleLoginId&&(profile.login_id!==options.googleLoginId||!wdhqHasApprovedGoogleIdentity(userResult.data.user,account)))
+    throw new Error('선택한 Google 계정과 연결된 본진 계정이 일치하지 않아요.');
+  return wdhqApplyVerifiedAuth(session,profile);
 }
 function wdhqLoginEmail(input){
   const value=String(input||'').trim().toLowerCase();
@@ -2853,8 +2829,6 @@ async function wdhqInitSession(){
   if(WDHQ_AUTH_CHECKING)return false;
   WDHQ_AUTH_CHECKING=true;
   document.body.classList.add('wdhq-auth-checking');
-  document.getElementById('wdhq-login-screen')?.classList.add('wdhq-show');
-  wdhqSetLoginStatus('저장된 회사 계정 세션을 확인하고 있습니다.');
   try{
     const params=new URLSearchParams(location.search);
     if(params.get('logout')==='1'){
@@ -2865,18 +2839,14 @@ async function wdhqInitSession(){
     }
   }catch(e){}
   try{
-    document.body.classList.toggle('wdhq-google-quiet',localStorage.getItem('wd_current_uid')===WDHQ_OWNER_LOGIN_ID);
-    await wdhqVerifySupabaseSession({enter:false});
-    if(WDHQ_AUTH_PROFILE.login_id===WDHQ_OWNER_LOGIN_ID)wdhqContinueSavedSession();
-    else wdhqShowSessionChoice();
+    await wdhqVerifySupabaseSession();
     return true;
   }catch(error){
     try{await WDHQ_SUPABASE?.auth.signOut({scope:'local'})}catch(ignore){}
     WDHQ_AUTH_SESSION=null;WDHQ_AUTH_PROFILE=null;wdhqClearDisplayState();
-    wdhqShowLogin(error?.message==='회사 계정 로그인이 필요합니다.'?'대표님 또는 수진님 회사 계정으로 로그인해 주세요.':'세션을 다시 확인해 주세요.');
+    wdhqShowLogin();
     return false;
   }finally{
-    document.body.classList.remove('wdhq-google-quiet');
     WDHQ_AUTH_CHECKING=false;
   }
 }
@@ -3069,12 +3039,7 @@ updateConnectionMetric();
 wdhqRenderSpaceStatus();
 wdhqRenderPhase1Agents();
 wdhqInitSavedLoginId();
-if(new URLSearchParams(location.search).get('wdhqQa')==='1'){
-  document.body.classList.remove('wdhq-auth-checking','wdhq-auth-locked');
-  document.getElementById('wdhq-login-screen')?.classList.remove('wdhq-show');
-}else{
-  wdhqInitSession();
-}
+wdhqInitSession();
 window.addEventListener('storage',event=>{
   if(event.key==='wd_todos'||String(event.key||'').startsWith('wd_todos_'))hydrateTodos();
   if(event.key===STORE){config=loadConfig();updateConnectionMetric();wdhqRenderSpaceStatus()}
@@ -4540,14 +4505,6 @@ body.wdhq-v202-ready .head p{font-size:16px!important}
   }
   document.addEventListener('DOMContentLoaded',function(){const btn=document.getElementById('wdhqFinderButton');const input=document.getElementById('wdhqFinderInput');const results=document.getElementById('wdhqFinderResults');if(btn)btn.addEventListener('click',run);if(input)input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();run();}});document.addEventListener('click',e=>{const target=e.target.closest('[data-wdhq-data-center]');if(target){e.preventDefault();openDataCenterSearch();}});const openData=document.getElementById('wdhqOpenDataCenter');if(openData)openData.addEventListener('click',openDataCenterSearch);const copyBtn=document.getElementById('wdhqHandoffCopyButton');if(copyBtn)copyBtn.addEventListener('click',()=>{const text=(document.getElementById('wdhqHandoffCopy')||{}).textContent||'';if(!text||text.startsWith('없음'))return;if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(text).then(()=>{copyBtn.textContent='복사됨';setTimeout(()=>copyBtn.textContent='복붙코드 복사',1200);}).catch(()=>{});});if(results)results.innerHTML='<div class="wdhq-find-empty">본진 한곳에서 자연스럽게 말하면 여기서 처리할지, 기존 CHAT/WORK로 갈지 먼저 판정합니다.</div>';const placeFinder=()=>{const finder=document.getElementById('wdhqRouteFinder');const home=document.getElementById('wdhq-v202-home');const head=document.querySelector('.content > .head');if(finder&&home&&home.nextElementSibling!==finder)home.insertAdjacentElement('afterend',finder);else if(finder&&!home&&head&&head.nextElementSibling!==finder)head.insertAdjacentElement('afterend',finder);};const normalizeFrontLabels=()=>{const map={'보험사업부':'설계사허브','퍼스널브랜딩':'퍼스널브랜딩센터','WD 강의센터':'AI 강의센터','WD 브랜드디자인센터':'브랜드자산 도구'};[document.querySelector('.sidebar'),document.getElementById('wdhq-v202-home')].filter(Boolean).forEach(root=>{const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode())){const t=node.nodeValue.trim();if(map[t])node.nodeValue=node.nodeValue.replace(t,map[t]);}});};placeFinder();normalizeFrontLabels();setTimeout(()=>{placeFinder();normalizeFrontLabels();},0);});
 })();
-</script>
-<script id="wdhq-system-map-private-qa">
-if(new URLSearchParams(location.search).get('wdhqQa')==='1'){
-  window.__WDHQ_QA_OPENED=[];
-  window.open=function(url){window.__WDHQ_QA_OPENED.push(String(url));return null};
-  document.body.classList.remove('wdhq-auth-checking','wdhq-auth-locked');
-  document.getElementById('wdhq-login-screen')?.classList.remove('wdhq-show');
-}
 </script>
 +<style id="wdhq-data-center-live-style">
 #setupModal .wdhq-system-live-cell{min-width:170px;max-width:300px;white-space:pre-line;word-break:break-word;font-size:12px;line-height:1.5}
@@ -6487,7 +6444,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 }
 body.wdhq-auth-locked #wdhq-quick-dock,body.wdhq-auth-checking #wdhq-quick-dock{display:none}
 body:not(.wdhq-talk-ready) #wdhq-quick-dock #wdhq-talk-open,
-body:not([data-wdhq-role="owner"]) #wdhq-account-info-open{display:none}
+body:not([data-wdhq-login-id="kfcyk50"]):not([data-wdhq-login-id="kfcyk30"]) #wdhq-account-info-open{display:none}
 #wdhq-quick-dock button{
   position:relative;inset:auto;display:grid;place-items:center;width:52px;height:52px;min-height:52px;
   padding:0;border:1px solid #18253924;border-radius:14px;background:var(--wdhq-tool-color);
@@ -6559,119 +6516,145 @@ body:has(#wdhq-talk-panel.open,#wd-shared-sticky-dock,#wdhq-account-info[open]) 
   const button=document.getElementById('wdhq-account-info-open');
   const dialog=document.getElementById('wdhq-account-info');
   const content=document.getElementById('wdhq-account-info-content');
-  const close=()=>{
+  const connect=document.getElementById('wdhq-google-link-open');
+  const status=document.getElementById('wdhq-google-link-status');
+  function close(){
+    if(dialog.open)return;
     content.replaceChildren();
-    document.getElementById('wdhq-google-link-slot').replaceChildren();
-    document.getElementById('wdhq-google-link-status').textContent='';
-    document.getElementById('wdhq-google-link-open').disabled=false;
-  };
-  button.onclick=()=>{
-    if(dialog.open||WDHQ_AUTH_PROFILE?.staff_role!=='owner'||
-      WDHQ_AUTH_PROFILE.user_id!==WDHQ_AUTH_SESSION?.user?.id)return;
+    wdhqResetGoogleFlow(true);
+  }
+  button.onclick=async()=>{
+    const profile=WDHQ_AUTH_PROFILE;
+    const account=wdhqLoginAccount(profile?.login_id);
+    const userId=profile?.user_id;
+    if(dialog.open||!account?.googleEmail||!userId||userId!==WDHQ_AUTH_SESSION?.user?.id)return;
     window.WDHQTalk?.close();window.WDHQStickyNote?.close();
-    const frame=document.createElement('iframe');
-    frame.title='계정정보';frame.allow='clipboard-write';
-    frame.src='./wd-work-center.html?view=account-info';
-    content.replaceChildren(frame);
+    if(profile.login_id===WDHQ_OWNER_LOGIN_ID&&profile.staff_role==='owner'){
+      const frame=document.createElement('iframe');
+      frame.title='계정정보';frame.allow='clipboard-write';
+      frame.src='./wd-work-center.html?view=account-info';
+      content.replaceChildren(frame);
+    }
+    wdhqResetGoogleFlow(true);
+    connect.hidden=false;
+    connect.disabled=true;
     dialog.showModal();
+    try{
+      const {data,error}=await WDHQ_SUPABASE.auth.getUser();
+      if(!dialog.open||WDHQ_AUTH_PROFILE!==profile)return;
+      if(error||data?.user?.id!==userId||data.user.email?.toLowerCase()!==account.email)
+        throw new Error('기존 본진 계정으로 다시 로그인해 주세요.');
+      if(wdhqHasApprovedGoogleIdentity(data.user,account)){
+        connect.hidden=true;
+        status.textContent=`${account.googleEmail} 연결 완료`;
+      }else connect.disabled=false;
+    }catch(error){
+      if(dialog.open&&WDHQ_AUTH_PROFILE===profile)status.textContent=error.message;
+    }
   };
   document.getElementById('wdhq-account-info-close').onclick=()=>dialog.close();
   dialog.addEventListener('close',close);
 })();
 </script>
-<script id="wdhq-owner-google">
-function wdhqMatchesOwnerGoogleCredential(credential,owner,clientId,expectedNonce){
-  try{
-    const encoded=credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    const claims=JSON.parse(atob(encoded));
-    return claims.email?.toLowerCase()===owner.googleEmail&&claims.email_verified===true&&
-      claims.aud===clientId&&claims.nonce===expectedNonce;
-  }catch{return false;}
+<style id="wdhq-sidebar-menu-text">
+@media(min-width:768px){
+  body .shell>.sidebar .nav button{font-size:18px!important;line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}
+  body .shell>.sidebar .navlabel{font-size:14px!important}
 }
-
-async function wdhqLinkOwnerGoogle({credential, nonce, clientId}){
-  wdhqInitSupabase();
-  const {data,error}=await WDHQ_SUPABASE.auth.getSession();
-  const session=data?.session;
-  if(error||!session?.access_token||!session.user?.id)
-    throw new Error('기존 대표 계정으로 본진에 먼저 로그인해 주세요.');
-
-  const owner=WDHQ_LOGIN_ACCOUNTS[WDHQ_OWNER_LOGIN_ID];
-  const {data:verified,error:verificationError}=await WDHQ_SUPABASE.auth.getUser(session.access_token);
-  if(verificationError||verified?.user?.id!==session.user.id||verified.user.email?.toLowerCase()!==owner.email)
-    throw new Error('기존 대표 계정으로 본진에 먼저 로그인해 주세요.');
-
-  const profile=await wdhqReadAuthorizedProfile(verified.user.id);
-  if(profile.login_id!==WDHQ_OWNER_LOGIN_ID||profile.staff_role!=='owner')
-    throw new Error('대표 계정에서만 Google 로그인을 연결할 수 있어요.');
-  if(wdhqHasApprovedGoogleIdentity(verified.user,owner))return 'already-linked';
-
-  const hashed=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(nonce));
-  const expected=Array.from(new Uint8Array(hashed),b=>b.toString(16).padStart(2,'0')).join('');
-  if(!wdhqMatchesOwnerGoogleCredential(credential,owner,clientId,expected))
-    throw new Error('선택한 Google 계정을 확인해 주세요. 등록할 주소는 '+owner.googleEmail+'이에요.');
-
-  // The older bundled client only implements OAuth linking. The Auth endpoint
-  // verifies the ID token and binds it to the existing authenticated user.
-  const response=await fetch(WDHQ_SB_URL+'/auth/v1/token?grant_type=id_token',{
-    method:'POST',cache:'no-store',credentials:'omit',redirect:'error',
-    headers:{apikey:WDHQ_SB_PUBLISHABLE_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
-    body:JSON.stringify({provider:'google',id_token:credential,nonce,link_identity:true}),
-  });
-  if(!response.ok){
-    const failure=await response.json().catch(()=>null);
-    if(failure?.error_code==='identity_already_exists'||failure?.code==='identity_already_exists')
-      throw new Error('이 Google 로그인이 다른 계정에 연결돼 있는지 확인이 필요해요.');
-    throw new Error('Google 로그인을 연결하지 못했어요. Supabase의 계정 연결 설정을 확인해 주세요.');
-  }
-
-  const {data:updated,error:readError}=await WDHQ_SUPABASE.auth.getUser(session.access_token);
-  if(readError||updated?.user?.id!==session.user.id||!wdhqHasApprovedGoogleIdentity(updated.user,owner))
-    throw new Error('Google 계정이 연결됐는지 다시 확인해 주세요.');
-  return 'linked';
+@media(min-width:900px) and (max-width:1199px){
+  body .shell>.sidebar .nav button{font-size:17px!important}
 }
-
-const WDHQ_OWNER_GOOGLE_CLIENT_ID='525415823143-vrl5bfgrfo94rk1f92r2h0v2j2tg7n1g.apps.googleusercontent.com';
-const WDHQ_OWNER_GOOGLE_ORIGIN='https://admin.wdwave.kr';
+@media(min-width:768px) and (max-width:899px){
+  body .shell>.sidebar .nav button{font-size:16px!important}
+}
+</style>
+<script id="wdhq-google-auth">
+const WDHQ_GOOGLE_CLIENT_ID='525415823143-vrl5bfgrfo94rk1f92r2h0v2j2tg7n1g.apps.googleusercontent.com';
+const WDHQ_GOOGLE_ORIGIN='https://admin.wdwave.kr';
 let wdhqGoogleSdkPromise=null;
+let wdhqGoogleFlow=null;
 
 function wdhqLoadGoogleIdentity(){
   if(window.google?.accounts?.id)return Promise.resolve(window.google.accounts.id);
   if(wdhqGoogleSdkPromise)return wdhqGoogleSdkPromise;
   wdhqGoogleSdkPromise=new Promise((resolve,reject)=>{
-    let script=document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-    const fresh=!script;
-    if(fresh){
-      script=document.createElement('script');
-      script.src='https://accounts.google.com/gsi/client';
-      script.async=true;
-    }
-    const fail=()=>reject(new Error('Google 로그인 화면을 불러오지 못했어요.'));
-    const timer=setTimeout(fail,12000);
+    const src='https://accounts.google.com/gsi/client';
+    const existing=document.querySelector(`script[src="${src}"]`);
+    const script=existing||document.createElement('script');
+    const fail=()=>{
+      if(!existing)script.remove();
+      reject(new Error('Google 로그인 버튼을 불러오지 못했어요.'));
+    };
+    const timer=setTimeout(fail,10000);
     script.addEventListener('load',()=>{
       clearTimeout(timer);
-      if(window.google?.accounts?.id)resolve(window.google.accounts.id);else fail();
+      if(window.google?.accounts?.id)resolve(window.google.accounts.id);
+      else fail();
     },{once:true});
     script.addEventListener('error',()=>{clearTimeout(timer);fail();},{once:true});
-    if(fresh)document.head.append(script);
+    if(!existing){script.src=src;script.async=true;document.head.append(script);}
   }).catch(error=>{wdhqGoogleSdkPromise=null;throw error;});
   return wdhqGoogleSdkPromise;
 }
 
-function wdhqGoogleFlowIsCurrent(link){
-  return link
-    ? document.getElementById('wdhq-account-info')?.open===true&&WDHQ_AUTH_PROFILE?.login_id===WDHQ_OWNER_LOGIN_ID
-    : document.getElementById('wdhq-login-screen')?.classList.contains('wdhq-show')&&!WDHQ_AUTH_PROFILE;
+async function wdhqGoogleNonceHash(nonce){
+  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(nonce));
+  return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');
 }
 
-async function wdhqSignInOwnerWithGoogle(credential,nonce){
+function wdhqGoogleLoginId(credential,nonceHash){
+  try{
+    const encoded=credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const claims=JSON.parse(atob(encoded));
+    if(claims.email_verified!==true||claims.aud!==WDHQ_GOOGLE_CLIENT_ID||claims.nonce!==nonceHash)return '';
+    const email=String(claims.email||'').toLowerCase();
+    return WDHQ_SHARED_USER_IDS.find(id=>wdhqLoginAccount(id).googleEmail===email)||'';
+  }catch{return '';}
+}
+
+async function wdhqLinkGoogleIdentity({credential,nonce,loginId,userId,isCurrent}){
+  const account=wdhqLoginAccount(loginId);
+  const {data,error}=await WDHQ_SUPABASE.auth.getSession();
+  const session=data?.session;
+  if(error||!session?.access_token||session.user?.id!==userId)
+    throw new Error('기존 본진 계정으로 다시 로그인해 주세요.');
+  const {data:verified,error:verificationError}=await WDHQ_SUPABASE.auth.getUser(session.access_token);
+  if(verificationError||verified?.user?.id!==userId||verified.user.email?.toLowerCase()!==account.email)
+    throw new Error('기존 본진 계정으로 다시 로그인해 주세요.');
+  const profile=await wdhqReadAuthorizedProfile(userId);
+  if(profile.login_id!==loginId||!isCurrent())throw new Error('현재 로그인한 본진 계정을 다시 확인해 주세요.');
+  if(wdhqHasApprovedGoogleIdentity(verified.user,account))return;
+
+  // The bundled Auth client supports OAuth linking. This endpoint links a Google ID token.
+  const response=await fetch(WDHQ_SB_URL+'/auth/v1/token?grant_type=id_token',{
+    method:'POST',cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(12000),
+    headers:{apikey:WDHQ_SB_PUBLISHABLE_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
+    body:JSON.stringify({provider:'google',id_token:credential,nonce,link_identity:true}),
+  });
+  if(!response.ok){
+    const failure=await response.json().catch(()=>null);
+    if((failure?.error_code||failure?.code)==='identity_already_exists')
+      throw new Error('이 Google 계정이 이미 다른 계정에 연결돼 있어요.');
+    throw new Error('Google 계정 연결을 완료하지 못했어요. 다시 시도해 주세요.');
+  }
+  const {data:updated,error:readError}=await WDHQ_SUPABASE.auth.getUser(session.access_token);
+  if(readError||updated?.user?.id!==userId||!wdhqHasApprovedGoogleIdentity(updated.user,account))
+    throw new Error('Google 계정 연결 상태를 다시 확인해 주세요.');
+}
+
+async function wdhqSignInWithGoogle(credential,nonce,loginId,isCurrent){
   wdhqInitSupabase();
+  const {data:ready,error:readError}=await WDHQ_SUPABASE.rpc('wdhq_google_login_ready',{p_login_id:loginId})
+    .abortSignal(AbortSignal.timeout(8000));
+  if(readError)throw new Error('Google 연결 상태를 확인하지 못했어요. 기존 아이디로 로그인할 수 있어요.');
+  if(ready!==true)throw new Error('기존 아이디로 로그인한 뒤 계정정보에서 Google을 한 번 연결해 주세요.');
+  if(!isCurrent())return;
   try{
     const {error}=await WDHQ_SUPABASE.auth.signInWithIdToken({provider:'google',token:credential,nonce});
-    if(error)throw new Error('Google 로그인을 완료하지 못했어요.');
-    await wdhqVerifySupabaseSession({googleOnly:true});
+    if(error)throw new Error('Google 로그인을 완료하지 못했어요. 다시 시도해 주세요.');
+    await wdhqVerifySupabaseSession({googleLoginId:loginId});
   }catch(error){
-    try{await WDHQ_SUPABASE.auth.signOut({scope:'local'})}catch(ignore){}
+    try{await WDHQ_SUPABASE.auth.signOut({scope:'local'});}catch{}
     WDHQ_AUTH_SESSION=null;
     WDHQ_AUTH_PROFILE=null;
     wdhqClearDisplayState();
@@ -6679,56 +6662,86 @@ async function wdhqSignInOwnerWithGoogle(credential,nonce){
   }
 }
 
-async function wdhqOpenOwnerGoogle(button,link){
-  if(WDHQ_AUTH_CHECKING||button.disabled||!wdhqGoogleFlowIsCurrent(link))return;
+function wdhqResetGoogleFlow(link){
+  if(wdhqGoogleFlow?.link===link)wdhqGoogleFlow=null;
   const prefix=link?'wdhq-google-link':'wdhq-google-login';
-  const state=document.getElementById(prefix+'-status');
+  document.getElementById(prefix+'-slot').replaceChildren();
+  document.getElementById(prefix+'-status').textContent='';
+}
+
+async function wdhqRenderGoogleChoice(link=false,{keepMessage=false}={}){
+  const prefix=link?'wdhq-google-link':'wdhq-google-login';
   const slot=document.getElementById(prefix+'-slot');
-  const owner=WDHQ_LOGIN_ACCOUNTS[WDHQ_OWNER_LOGIN_ID];
-  const clientId=WDHQ_OWNER_GOOGLE_CLIENT_ID;
-  if(location.origin!==WDHQ_OWNER_GOOGLE_ORIGIN){
-    state.textContent='Google 연결과 로그인은 admin.wdwave.kr에서 열어 주세요.';
+  const state=document.getElementById(prefix+'-status');
+  const retry=document.getElementById('wdhq-google-login-retry');
+  const connect=document.getElementById('wdhq-google-link-open');
+  const loginId=link?WDHQ_AUTH_PROFILE?.login_id:null;
+  const userId=link?WDHQ_AUTH_PROFILE?.user_id:null;
+  const account=link?wdhqLoginAccount(loginId):null;
+  const flow={link};
+  const isCurrent=()=>wdhqGoogleFlow===flow&&(link
+    ?document.getElementById('wdhq-account-info').open&&WDHQ_AUTH_PROFILE?.login_id===loginId&&WDHQ_AUTH_SESSION?.user?.id===userId
+    :document.getElementById('wdhq-login-screen').classList.contains('wdhq-show')&&!WDHQ_AUTH_PROFILE);
+  wdhqGoogleFlow=flow;
+  if(!isCurrent())return;
+  if(!keepMessage)state.textContent='';
+  if(!link)retry.hidden=true;
+  slot.replaceChildren();
+  if(location.origin!==WDHQ_GOOGLE_ORIGIN){
+    state.textContent='Google 로그인은 admin.wdwave.kr에서 사용할 수 있어요.';
     return;
   }
-  button.disabled=true;
-  state.textContent='Google 로그인 화면을 준비하고 있어요.';
+  if(link)connect.disabled=true;
   try{
     const google=await wdhqLoadGoogleIdentity();
-    const nonce=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
-    const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(nonce));
-    const expected=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
-    if(!wdhqGoogleFlowIsCurrent(link))return;
-    state.textContent=owner.googleEmail+' 계정을 선택해 주세요.';
-    let used=false;
+    const nonce=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
+    const nonceHash=await wdhqGoogleNonceHash(nonce);
+    if(!isCurrent())return;
     google.initialize({
-      client_id:clientId,nonce:expected,login_hint:owner.googleEmail,auto_select:false,
+      client_id:WDHQ_GOOGLE_CLIENT_ID,nonce:nonceHash,auto_select:false,button_auto_select:false,use_fedcm_for_button:true,
+      ...(link?{login_hint:account.googleEmail}:{}),
       callback:async({credential})=>{
-        if(used||WDHQ_AUTH_CHECKING||!wdhqGoogleFlowIsCurrent(link))return;
-        used=true;
-        slot.replaceChildren();
+        if(!isCurrent()||WDHQ_AUTH_CHECKING)return;
         WDHQ_AUTH_CHECKING=true;
         let linked=false;
         try{
-          if(!wdhqMatchesOwnerGoogleCredential(credential,owner,clientId,expected))
-            throw new Error('Google에서 '+owner.googleEmail+' 계정을 선택해 주세요.');
-          state.textContent=link?'기존 대표 계정에 연결하고 있어요.':'기존 대표 계정으로 로그인하고 있어요.';
+          const selectedId=wdhqGoogleLoginId(credential,nonceHash);
+          if(!selectedId||link&&selectedId!==loginId)
+            throw new Error(link?`${account.googleEmail} 계정을 선택해 주세요.`:'대표님 또는 수진님의 등록된 Google 계정을 선택해 주세요.');
+          state.textContent='';
           if(link){
-            await wdhqLinkOwnerGoogle({credential,nonce,clientId});
-            state.textContent='대표 Google 계정이 연결됐어요.';
+            await wdhqLinkGoogleIdentity({credential,nonce,loginId,userId,isCurrent});
+            if(!isCurrent())return;
             linked=true;
+            slot.replaceChildren();
+            connect.hidden=true;
+            state.textContent=`${account.googleEmail} 연결 완료`;
           }else{
-            await wdhqSignInOwnerWithGoogle(credential,nonce);
-            state.textContent='';
+            await wdhqSignInWithGoogle(credential,nonce,selectedId,isCurrent);
           }
-        }catch(error){state.textContent=error.message;}
-        finally{WDHQ_AUTH_CHECKING=false;button.disabled=linked;}
+        }catch(error){
+          if(isCurrent())state.textContent=error.message||'Google 연결을 다시 시도해 주세요.';
+        }finally{
+          WDHQ_AUTH_CHECKING=false;
+          if(!linked&&isCurrent())void wdhqRenderGoogleChoice(link,{keepMessage:true});
+        }
       }
     });
-    slot.replaceChildren();
-    google.renderButton(slot,{type:'standard',theme:'outline',size:'large',text:link?'continue_with':'signin_with',locale:'ko'});
-  }catch(error){state.textContent=error.message;}
-  finally{button.disabled=false;}
+    google.renderButton(slot,{type:'standard',theme:'outline',size:'large',text:link?'continue_with':'signin_with',
+      locale:'ko',width:Math.min(slot.clientWidth||280,400)});
+  }catch(error){
+    if(!isCurrent())return;
+    state.textContent=error.message;
+    if(link)connect.disabled=false;
+    else retry.hidden=false;
+  }
 }
+
+window.wdhqShowGoogleChoice=()=>wdhqRenderGoogleChoice();
+window.wdhqClearGoogleChoice=()=>wdhqResetGoogleFlow(false);
+document.getElementById('wdhq-google-login-retry').onclick=window.wdhqShowGoogleChoice;
+document.getElementById('wdhq-google-link-open').onclick=()=>wdhqRenderGoogleChoice(true);
+if(document.getElementById('wdhq-login-screen').classList.contains('wdhq-show'))void wdhqRenderGoogleChoice();
 </script>
 </body>
 </html>
