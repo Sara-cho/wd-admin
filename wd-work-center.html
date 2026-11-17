@@ -303,6 +303,8 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd67-day-staff b{font-size:12px}
 .wd67-day-staff span{margin-top:2px}
 .wd67-calendar-attendance{display:contents}
+.wd67-day-staff.wd67-work-completed,.wd87-summary-row .wd67-work-completed,.wd68-attendance .wd67-work-completed{background:#ddf3e5;color:#195c36}
+.wd87-summary-row .wd67-work-completed,.wd68-attendance .wd67-work-completed{display:inline-block;padding:1px 5px;border-radius:4px}
 .wd67-legend{margin:9px 0 0}
 .wd67-day-panel h3{font-size:15px;margin:14px 0 5px}
 .wd67-line{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 0;border-bottom:1px solid #eee7f5;font-size:13px}
@@ -1001,6 +1003,7 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd132-instruction-date{display:grid;gap:8px;margin:0 0 16px}
 .wd132-instruction-date :is(input,select){height:48px;min-width:0;margin:0;padding:0 14px;font-family:inherit;font-size:14px;font-weight:600;line-height:normal}
 .wd132-instruction-date input::-webkit-datetime-edit{padding:0}
+.wd132-instruction-day-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px 14px}
 .wd132-instruction-body-label{display:block;margin:0 0 8px}
 #simpleInstructionForm textarea{display:block}
 #simpleInstructionForm .wd116-instruction-recipient{margin-top:10px}
@@ -6583,7 +6586,8 @@ function homeCalendarAttendanceMarkup(staff,day,today){
     const time=record?timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):''):
       hours?.start&&hours?.end?hours.start+' ~ '+hours.end:'';
     const state=record?homeAttendanceState(row,day,today):'예정';
-    return `<span class="wd67-day-staff wd88-person" ${homeStaffColor(profile.id)}><b>${esc(profile.name)}</b><span>${esc(state+(time?' '+time:''))}</span></span>`;
+    const treatment=record?.outAt?'class="wd67-day-staff wd67-work-completed"':`class="wd67-day-staff wd88-person" ${homeStaffColor(profile.id)}`;
+    return `<span ${treatment}><b>${esc(profile.name)}</b><span>${esc(state+(time?' '+time:''))}</span></span>`;
   }).join('');
 }
 
@@ -6592,16 +6596,17 @@ function homeWeeklyAttendanceMarkup(week,profiles,today){
   for(const date of week)for(const row of dayAttendance(date,profiles)){
     const id=row.profile.id;
     if(!weeklyStaff.has(id))weeklyStaff.set(id,[]);
-    weeklyStaff.get(id).push(attendanceDate(date)+' '+(row.record?homeAttendanceState(row,date,today):'예정'));
+    const label=esc(attendanceDate(date)+' '+(row.record?homeAttendanceState(row,date,today):'예정'));
+    weeklyStaff.get(id).push(row.record?.outAt?`<span class="wd67-work-completed">${label}</span>`:label);
   }
   return profiles.filter(profile=>weeklyStaff.has(profile.id)).map(profile=>`<div class="wd87-summary-row">
-    <strong class="wd88-person" ${homeStaffColor(profile.id)}>${esc(profile.name)}</strong><span>${esc(weeklyStaff.get(profile.id).join(' · '))}</span>
+    <strong class="wd88-person" ${homeStaffColor(profile.id)}>${esc(profile.name)}</strong><span>${weeklyStaff.get(profile.id).join(' · ')}</span>
   </div>`).join('')||'<p class="wd68-empty">이번 주 출근 일정이 없어요.</p>';
 }
 
 function homeDayAttendanceMarkup(staff,day,today){
   const stamp=value=>esc(clockLabel(timeOnly(value)));
-  return staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${homeStaffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText">${!row.record&&day<today?'출근 기록 없음':homeAttendanceState(row,day,today)}</span>
+  return staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${homeStaffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText${row.record?.outAt?' wd67-work-completed':''}">${!row.record&&day<today?'출근 기록 없음':homeAttendanceState(row,day,today)}</span>
     ${row.record?`<small>출근 ${stamp(row.record.inAt)}${row.record.outAt?' · 퇴근 '+stamp(row.record.outAt):''}</small>`:
       row.planned?`<small>예정 ${esc(scheduledHoursLabel(row.hours))}</small>`:''}</div></div>`).join('')||'<p class="wd68-empty">출근 예정이나 기록이 없습니다.</p>';
 }
@@ -7122,33 +7127,10 @@ async function encryptStaffPin(pin){
   return {iv:Array.from(iv),cipher:Array.from(new Uint8Array(cipher))};
 }
 
-function confirmLegacyStaffPin(profile,reveal){
-  showModal(`<p>이 스탭의 기존 비밀번호를 한 번 입력하면, 비밀번호 변경 없이 눈 버튼으로 확인할 수 있습니다.</p>
-    <form id="legacyPinForm"><label for="legacyStaffPin">기존 비밀번호</label><input id="legacyStaffPin" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
-    <div class="actions"><button class="primary" id="confirmLegacyPin" type="submit">확인</button></div></form>`,'기존 비밀번호 확인');
-  const form=$('legacyPinForm'),button=$('confirmLegacyPin');
-  $('legacyStaffPin').focus();
-  form.onsubmit=async event=>{
-    event.preventDefault();
-    const pin=$('legacyStaffPin').value;
-    if(button.disabled||!/^\d{6}$/.test(pin))return;
-    button.disabled=true;
-    try{
-      if(await sha(pin)!==profile.pin)return notify('기존 비밀번호가 일치하지 않습니다');
-      const cipher=await encryptStaffPin(pin);
-      if($('legacyPinForm')!==form||currentUser!=='manager')return;
-      profile.pinCipher=cipher;
-      try{save()}catch(e){delete profile.pinCipher;throw e;}
-      $('modalLayer').remove();reveal(pin);
-    }catch(e){notify('비밀번호 확인 정보를 저장하지 못했습니다');}
-    finally{button.disabled=false;}
-  };
-}
-
 function unlockStaffPins(button,afterUnlock){
   if(!S.pins.manager)return notify('관리자 로그인에서 업무센터 비밀번호를 먼저 설정해 주세요.');
   if($('modalLayer'))return;
-  showModal(`<p>이 로그인에서 한 번만 업무센터 관리자 비밀번호를 입력하세요.</p>
+  showModal(`<p>본진 로그인으로 들어온 경우, 이 로그인에서 처음 한 번 업무센터 관리자 비밀번호로 암호화를 해제합니다.</p>
     <form id="unlockStaffPinForm"><label for="unlockStaffPin">관리자 비밀번호</label>
       <input id="unlockStaffPin" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
       <div class="actions"><button class="primary" id="confirmStaffPinUnlock" type="submit">열람 잠금 해제</button></div>
@@ -7199,12 +7181,11 @@ function bindStaffPrivateValues(profile){
     setStaffPrivateValue(accountButton,accountField,'계좌번호',show?account:hiddenStaffAccount,show);
   };
   const button=$('showSavedStaffPin'),field=$('savedStaffPin');
-  if(!button)return;
+  if(!button||!profile?.pinCipher)return;
   const current=()=>currentUser==='manager'&&$('showSavedStaffPin')===button&&managerStaffId===profile.id;
   const reveal=pin=>{if(current())setStaffPrivateValue(button,field,'기존 비밀번호',pin,true);};
   const open=async()=>{
     if(!current())return;
-    if(!profile.pinCipher)return confirmLegacyStaffPin(profile,reveal);
     button.disabled=true;
     try{
       const {iv,cipher}=profile.pinCipher;
@@ -7239,7 +7220,9 @@ function passwordEye(id,inputId,label='비밀번호'){
 }
 
 function savedStaffPinMarkup(profile){
-  return profile.pin?`<span id="savedStaffPin">••••••</span>${passwordEye('showSavedStaffPin','savedStaffPin','기존 비밀번호')}`:'미등록';
+  if(!profile.pin)return '미등록';
+  if(!profile.pinCipher)return '<span class="smallText">열람하려면 수정에서 비밀번호를 다시 저장하세요.</span>';
+  return `<span id="savedStaffPin">••••••</span>${passwordEye('showSavedStaffPin','savedStaffPin','기존 비밀번호')}`;
 }
 
 function staffProfileEditor(profile){
@@ -8518,7 +8501,9 @@ function bindInstructionHistory(profile,root){
     });
     const scroll=preserveScroll?pane.scrollTop:0;
     form.hidden=day!==today;
-    heading.textContent=attendanceDate(day,true)+' 업무지시';
+    const composeDate=$('simpleInstructionDate').value;
+    heading.textContent=day===today&&composeDate!==today&&validAttendanceDay(composeDate)?
+      attendanceDate(composeDate,true)+' 업무지시 작성':attendanceDate(day,true)+' 업무지시';
     const rows=days.get(day);
     if(rows?.length)void showInstructionDocuments(pane,rows,profile,()=>select(day,{focus:true}));
     else pane.innerHTML=`<p class="empty">${archivePending?'업무지시를 불러오는 중이에요.':'등록된 업무지시가 없어요.'}</p>`;
@@ -8568,10 +8553,25 @@ function bindInstructionHistory(profile,root){
   });
 }
 
+function instructionScheduledDays(staffId){
+  const today=payrollCalendar.format(new Date());
+  return Object.entries(S.workRoster||{}).filter(([day,ids])=>day>=today&&validAttendanceDay(day)&&ids.includes(staffId))
+    .map(([day])=>day).sort();
+}
+
 function instructionComposeForm(profile){
   const d=instructionDraftFor(profile.id);
+  const days=instructionScheduledDays(profile.id);
   return `<form id="simpleInstructionForm">
-        <label class="wd132-instruction-date">업무일 <input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required></label>
+        <div class="wd132-instruction-day-fields">
+          <label class="wd132-instruction-date">예정 근무일<select id="simpleInstructionSchedule" ${days.length?'':'disabled'}>
+            <option value="">${days.length?'예정 근무일 선택':'등록된 예정 근무일 없음'}</option>
+            ${days.map(day=>{
+              const hours=S.workSchedule?.[day]?.[profile.id];
+              return `<option value="${day}" ${day===d.date?'selected':''}>${esc(attendanceDate(day,true)+(hours?.start&&hours?.end?' · '+hours.start+' ~ '+hours.end:''))}</option>`;
+            }).join('')}</select></label>
+          <label class="wd132-instruction-date">업무일 직접 입력 <input type="date" id="simpleInstructionDate" value="${esc(d.date)}" required></label>
+        </div>
         <label class="wd132-instruction-body-label" for="instructionInput">업무지시 내용</label>
         <textarea id="instructionInput" rows="4" maxlength="50000" required placeholder="업무지시를 작성하거나 복사한 내용을 그대로 붙여넣으세요.">${esc(d.raw)}</textarea>
         <p class="smallText wd116-instruction-recipient">보내는 사람 <strong>${esc(instructionSenderFor(managerWorkIdentity)?.name||'본진 로그인 이름')}</strong>
@@ -8584,12 +8584,18 @@ function instructionComposeForm(profile){
 function bindSimpleInstruction(profile){
   const d=instructionDraftFor(profile.id),form=$('simpleInstructionForm'),button=$('assignInstruction');
   const input=$('instructionInput'),dateInput=$('simpleInstructionDate'),history=$('simpleInstructionHistory');
+  const schedule=$('simpleInstructionSchedule');
   input.oninput=()=>{d.raw=input.value;};
   bindInstructionHistory(profile,history);
-  dateInput.onchange=()=>{
-    if(!validAttendanceDay(dateInput.value))return;
-    d.date=dateInput.value;
+  const selectDate=date=>{
+    if(!validAttendanceDay(date))return;
+    d.date=date;
+    dateInput.value=date;
+    schedule.value=[...schedule.options].some(option=>option.value===date)?date:'';
+    $('instructionComposeTitle').textContent=attendanceDate(date,true)+' 업무지시 작성';
   };
+  dateInput.onchange=()=>selectDate(dateInput.value);
+  schedule.onchange=()=>selectDate(schedule.value);
   form.onsubmit=async event=>{
     event.preventDefault();
     d.raw=input.value;
