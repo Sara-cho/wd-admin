@@ -10752,6 +10752,12 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #modal-claim-rec .wd09-claim-step .fld { margin:0; }
   .wd09-claim-basics { display:grid; gap:12px; }
   .wd09-claim-basics input[type="date"] { max-width:190px; }
+  .wd09-claim-date-row { display:flex; flex-wrap:wrap; align-items:flex-start; gap:10px 16px; }
+  .wd09-claim-date-row > .fld { flex:0 1 190px; min-width:0; }
+  #modal-claim-rec .wd09-claim-date-row :is(.fld > label,#clm-status-label) {
+    margin:0 0 5px; color:var(--s600); font-size:var(--wd09-ui-form-label-font); font-weight:700;
+  }
+  #modal-claim-rec .wd09-claim-date-row .fld > input { min-height:44px; }
   .wd09-claim-policy-options { display:grid; gap:6px; max-height:240px; overflow:auto; padding:2px; }
   .wd09-claim-policy-options:empty { display:none; }
   .wd09-claim-status-options { display:flex; gap:8px; flex-wrap:wrap; }
@@ -17105,20 +17111,24 @@ const wdTest09Storage = (() => {
 </div>
 <section class="wd09-claim-step wd09-claim-basics" aria-labelledby="clm-main-heading">
 <h3 id="clm-main-heading">1. 청구내용</h3>
+<div class="wd09-claim-date-row">
 <div class="fld"><label for="clm-date">청구요청일</label><input id="clm-date" type="date" onchange="clmUpdateSteps()"/></div>
-<div class="fld"><label for="clm-content">청구내용</label><textarea id="clm-content" placeholder="예: 팔 골절로 통원 치료 및 수술" oninput="clmUpdateSteps()"></textarea></div>
-<div>
-<h4 id="clm-policy-label">가입보험 (복수 선택)</h4>
-<div id="clm-policy" class="wd09-claim-policy-options" role="group" aria-labelledby="clm-policy-label" aria-describedby="clm-policy-feedback" onchange="clmUpdateSteps()"></div>
-<p class="wd09-claim-policy-feedback" id="clm-policy-feedback" role="status"></p>
-<button class="btn-sm wd09-claim-policy-retry" type="button" id="clm-policy-retry" hidden>다시 불러오기</button>
-</div>
 <div>
 <h4 id="clm-status-label">처리상태</h4>
 <div class="wd09-claim-status-options" id="clm-status" role="radiogroup" aria-labelledby="clm-status-label" onchange="clmUpdateSteps()">
 <label><input type="radio" name="clm-status" value="접수전"/>접수전</label>
 <label><input type="radio" name="clm-status" value="접수완료"/>접수완료</label>
 </div>
+</div>
+<div class="fld"><label for="clm-paid">받은 보험금 합계 (원)</label>
+<input id="clm-paid" type="text" inputmode="numeric" placeholder="예: 350,000" oninput="wd09FormatWonInput(this);clmUpdateSteps()"/></div>
+</div>
+<div class="fld"><label for="clm-content">청구내용</label><textarea id="clm-content" placeholder="예: 팔 골절로 통원 치료 및 수술" oninput="clmUpdateSteps()"></textarea></div>
+<div>
+<h4 id="clm-policy-label">가입보험 (복수 선택)</h4>
+<div id="clm-policy" class="wd09-claim-policy-options" role="group" aria-labelledby="clm-policy-label" aria-describedby="clm-policy-feedback" onchange="clmUpdateSteps()"></div>
+<p class="wd09-claim-policy-feedback" id="clm-policy-feedback" role="status"></p>
+<button class="btn-sm wd09-claim-policy-retry" type="button" id="clm-policy-retry" hidden>다시 불러오기</button>
 </div>
 </section>
 <section class="wd09-claim-step wd09-claim-basics" aria-labelledby="clm-extra-heading">
@@ -17131,8 +17141,6 @@ const wdTest09Storage = (() => {
 <span id="clm-attachment-count" role="status"></span>
 </div>
 </div>
-<div class="fld"><label for="clm-paid">받은 보험금 합계 (원)</label>
-<input id="clm-paid" type="text" inputmode="numeric" placeholder="예: 350,000" oninput="wd09FormatWonInput(this);clmUpdateSteps()"/></div>
 <div class="fld"><label for="clm-memo">메모</label><textarea id="clm-memo" rows="2" placeholder="보험금이나 접수에 관한 메모를 자유롭게 적어 주세요."></textarea></div>
 </section>
 <p id="clm-save-hint" role="status">청구 기본정보를 확인해 주세요.</p>
