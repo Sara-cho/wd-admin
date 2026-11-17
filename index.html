@@ -369,7 +369,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
   .identity small{display:none}.topactions .hideTablet{display:none}.content{padding:17px 12px 86px}
   .head h1{font-size:23px}.date{display:none}.control{grid-template-columns:1fr}.revenue{grid-template-columns:1fr}
   .triple{grid-template-columns:1fr}.triple>.group:last-child{grid-column:auto}.extgrid{grid-template-columns:repeat(5,1fr)}
-  .mobilebar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .mobilebar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
   .mobilebar button{min-height:60px;border:0;background:#fff;color:#737e90;font-size:8.5px;padding:6px 3px}.mobilebar b{display:block;font-size:17px;margin-bottom:2px}.mobilebar button.active{color:var(--blue);background:#f7faff}
 }
 @media(max-width:620px){
@@ -955,7 +955,10 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 .wdhq-choice-intro{margin:0 0 16px;color:#667085;font-size:13px;line-height:1.6}
 .wdhq-test-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .wdhq-test-card{min-height:128px;padding:18px;border:1px solid #dee5ec;border-radius:16px;background:#fff;color:#1f2937;text-align:left;cursor:pointer;box-shadow:0 6px 20px rgba(26,46,68,.05);transition:.16s ease}
-.wdhq-test-card:hover{transform:translateY(-2px);border-color:#b9cbe0;box-shadow:0 12px 28px rgba(26,46,68,.10)}
+.wdhq-test-card:not(:disabled):hover{transform:translateY(-2px);border-color:#b9cbe0;box-shadow:0 12px 28px rgba(26,46,68,.10)}
+.wdhq-test-card:disabled{background:#f8fafc;box-shadow:none;cursor:default}
+.wdhq-test-card [data-wdhq-test-status]{margin-top:6px;font-weight:700}
+.wdhq-test-card:not(:disabled) [data-wdhq-test-status]{color:#1769ed}
 .wdhq-test-card span{display:grid;width:42px;height:42px;margin-bottom:16px;place-items:center;border-radius:12px;background:#edf5ff;color:#1769ed;font-size:20px}
 .wdhq-test-card b{display:block;margin-bottom:6px;font-size:16px}.wdhq-test-card small{display:block;color:#667085;font-size:12px;line-height:1.5}
 .wdhq-settings-modal{width:min(900px,100%);height:min(650px,90vh)}
@@ -1003,7 +1006,7 @@ body.wdhq-auth-checking>.shell,body.wdhq-auth-locked>.shell{display:none!importa
 -->
 <!-- 2026-09-23 대표 TEST작업실 7개 TEST 교정
 - 사이드바 '라이브오피스 TEST' 단독 메뉴 제거 → 대표 TEST작업실 안으로 통합
-- TEST 7개: wd-noah-test / wd-insurance-hub-test / wd-personal-branding-center-test / wd-lecture-center-test / wd-live-office-test / wd-sara-house-test / wd-north-star-test (.html)
+- TEST작업실 5개: 본진 / 설계사허브 / 퍼스널브랜딩센터 / 강의센터 / 업무센터
 - TEST 모달 안 '노아' 문구는 운영총괄 치환 대상에서 제외
 -->
 
@@ -1213,30 +1216,16 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       <button class="active" onclick="goToSection('top')"><span class="ico">⌂</span>홈</button>
     </nav>
 
-    <div class="navlabel">대표 운영</div>
-    <nav class="nav">
+    <nav class="nav" aria-label="업무 메뉴">
       <button onclick="openSpace('insurance')"><span class="ico">🛡️</span>설계사허브</button>
-      <button class="wdhq-north-star-trigger" type="button" data-wdhq-north-star-open onclick="WDHQNorthStar.open()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z"/></svg></span>WD WAVE 방향</button>
-      <button onclick="openSpace('house')"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3Z"/><path d="M9 20v-6h6v6"/></svg></span>사라의 집</button>
-      <button type="button" onclick="wdhqOpenRepresentativeTests()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 9h8M8 13h5"/></svg></span>대표 TEST작업실</button>
-    </nav>
-
-    <div class="navlabel">수진 운영</div>
-    <nav class="nav">
       <button onclick="openSpace('brandingBiz')"><span class="ico">✨</span>퍼스널브랜딩센터</button>
       <button onclick="openSpace('lecture')"><span class="ico">🎓</span>강의센터</button>
+    </nav>
+
+    <div class="navlabel">운영관리</div>
+    <nav class="nav" aria-label="운영관리">
+      <button type="button" onclick="wdhqOpenRepresentativeTests()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 9h8M8 13h5"/></svg></span>TEST작업실</button>
       <button onclick="openSpace('work')"><span class="ico">🗂️</span>WD 업무센터</button>
-    </nav>
-
-    <div class="navlabel">연결 관리</div>
-    <nav class="nav">
-      <button onclick="openSetup()"><span class="ico">🔗</span>시스템 연결지도</button>
-      <button type="button" onclick="WDHQNotebookHub.open()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3Z"/><path d="M8 20a3 3 0 0 1 0-6h11M9 8h6M9 11h5"/></svg></span>NotebookLM 모음</button>
-    </nav>
-
-    <div class="navlabel">설정·연결</div>
-    <nav class="nav">
-      <button type="button" onclick="wdhqOpenSettings()"><span class="wdhq-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg></span>설정</button>
     </nav>
   </aside>
 
@@ -1341,15 +1330,6 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
       </div>
 
 
-      <section class="personal" id="live-office-test" aria-label="라이브오피스 TEST">
-        <div>
-          <div class="pk">🏢 LIVE OFFICE · TEST</div>
-          <h2>사람과 AI가 함께 일하는 라이브오피스</h2>
-          <p>현재 발령 직원 · 작업방 · 업무대화 · 대표확인 흐름을 TEST 화면에서 확인합니다.</p>
-        </div>
-        <button type="button" onclick="wdhqOpenRepresentativeTest('liveOffice')">라이브오피스 열기 →</button>
-      </section>
-
       <section class="mobile-quick" aria-label="모바일 빠른 이동">
         <button onclick="openSpace('insurance')"><span>🛡️</span>설계사허브</button>
         <button onclick="openSpace('brandingBiz')"><span>🎨</span>퍼스널브랜딩</button>
@@ -1357,7 +1337,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
         <button onclick="openSpace('work')"><span>🗂️</span>업무</button>
         <button onclick="openSpace('creation')"><span>🏭</span>제작</button>
         <button onclick="openSpace('brandCenter')"><span>🎨</span>브랜드자산</button>
-        <button onclick="openSpace('house')"><span>🏡</span>내 집</button>
+        <button type="button" onclick="wdhqOpenRepresentativeTests()"><span>🧪</span>TEST작업실</button>
       </section>
 
       
@@ -1483,28 +1463,23 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
   <button onclick="goToSection('revenue')"><b>💰</b>수익</button>
   <button onclick="goToSection('spaces')"><b>🏢</b>공간</button>
   <button onclick="goToSection('external')"><b>🔗</b>연결</button>
-  <button onclick="openSpace('house')"><b>🏡</b>내 집</button>
-  <button class="wdhq-north-star-trigger" type="button" data-wdhq-north-star-open onclick="WDHQNorthStar.open()"><b>🧭</b>북극성</button>
+  <button type="button" onclick="wdhqOpenRepresentativeTests()"><b>🧪</b>TEST작업실</button>
 </nav>
 
 <div class="backdrop" id="wdhqRepresentativeTestModal" onclick="if(event.target===this)wdhqCloseRepresentativeTests()">
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="wdhqRepresentativeTestTitle">
     <div class="mhead">
-      <div><h2 id="wdhqRepresentativeTestTitle">대표 TEST작업실</h2><p>지점장님과 함께 확인할 TEST 화면을 선택합니다.</p></div>
+      <div><h2 id="wdhqRepresentativeTestTitle">TEST작업실</h2><p>지점장님과 함께 확인할 TEST 화면을 선택합니다.</p></div>
       <button class="close" type="button" onclick="wdhqCloseRepresentativeTests()" aria-label="닫기">×</button>
     </div>
     <div class="wdhq-choice-body">
-      <p class="wdhq-choice-intro">각 앱 HTML을 운영본에 넣기 전, GitHub에 올린 TEST본을 먼저 확인하는 곳입니다.</p>
+      <p class="wdhq-choice-intro">같은 이름으로 올린 TEST 파일이 있으면 열 수 있습니다.</p>
       <div class="wdhq-test-grid">
-        <button class="wdhq-test-card" type="button" data-wdhq-test="noah" onclick="wdhqOpenRepresentativeTest('noah')"><span>🤖</span><b>1. 노아본진 테스트</b><small>wd-noah-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="insurance" onclick="wdhqOpenRepresentativeTest('insurance')"><span>🛡️</span><b>2. 설계사허브 테스트</b><small>wd-insurance-hub-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="branding" onclick="wdhqOpenRepresentativeTest('branding')"><span>✨</span><b>3. 퍼스널브랜딩센터 테스트</b><small>wd-personal-branding-center-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="lecture" onclick="wdhqOpenRepresentativeTest('lecture')"><span>🎓</span><b>4. 강의센터 테스트</b><small>wd-lecture-center-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="liveOffice" onclick="wdhqOpenRepresentativeTest('liveOffice')"><span>🏢</span><b>5. 라이브오피스 테스트</b><small>wd-live-office-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="house" onclick="wdhqOpenRepresentativeTest('house')"><span>🏠</span><b>6. 사라의집 테스트</b><small>wd-sara-house-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="northStar" onclick="wdhqOpenRepresentativeTest('northStar')"><span>🧭</span><b>7. 북극성 테스트</b><small>wd-north-star-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="workCenter" onclick="wdhqOpenRepresentativeTest('workCenter')"><span>🗂️</span><b>8. 업무센터 테스트</b><small>wd-work-center-test.html</small></button>
-        <button class="wdhq-test-card" type="button" data-wdhq-test="insuranceSimple" onclick="wdhqOpenRepresentativeTest('insuranceSimple')"><span>🛡️</span><b>9. 설계서허브 단순화 test</b><small>wd-insurance-hub-simple-test.html</small></button>
+        <button class="wdhq-test-card" type="button" data-wdhq-test="noah" data-wdhq-test-file="wd-noah-test.html" onclick="wdhqOpenRepresentativeTest(this)" disabled><span aria-hidden="true">🤖</span><b>본진 테스트</b><small>wd-noah-test.html</small><small data-wdhq-test-status role="status">확인 중…</small></button>
+        <button class="wdhq-test-card" type="button" data-wdhq-test="insurance" data-wdhq-test-file="wd-insurance-hub-test.html" onclick="wdhqOpenRepresentativeTest(this)" disabled><span aria-hidden="true">🛡️</span><b>설계사허브 테스트</b><small>wd-insurance-hub-test.html</small><small data-wdhq-test-status role="status">확인 중…</small></button>
+        <button class="wdhq-test-card" type="button" data-wdhq-test="branding" data-wdhq-test-file="wd-personal-branding-center-test.html" onclick="wdhqOpenRepresentativeTest(this)" disabled><span aria-hidden="true">✨</span><b>퍼스널브랜딩센터 테스트</b><small>wd-personal-branding-center-test.html</small><small data-wdhq-test-status role="status">확인 중…</small></button>
+        <button class="wdhq-test-card" type="button" data-wdhq-test="lecture" data-wdhq-test-file="wd-lecture-center-test.html" onclick="wdhqOpenRepresentativeTest(this)" disabled><span aria-hidden="true">🎓</span><b>강의센터 테스트</b><small>wd-lecture-center-test.html</small><small data-wdhq-test-status role="status">확인 중…</small></button>
+        <button class="wdhq-test-card" type="button" data-wdhq-test="workCenter" data-wdhq-test-file="wd-work-center-test.html" onclick="wdhqOpenRepresentativeTest(this)" disabled><span aria-hidden="true">🗂️</span><b>업무센터 테스트</b><small>wd-work-center-test.html</small><small data-wdhq-test-status role="status">확인 중…</small></button>
       </div>
     </div>
     <div class="mfoot"><button class="mbtn" type="button" onclick="wdhqCloseRepresentativeTests()">닫기</button></div>
@@ -2078,50 +2053,58 @@ async function wdhqOpenEmbeddedBrand(){
 window.addEventListener('message',function(event){
   if(event&&event.data&&event.data.type==='wdhq:return-home-brand')wdhqCloseEmbeddedBrand();
 });
+let wdhqTestWorkroomController;
 function wdhqOpenRepresentativeTests(){
   const modal=document.getElementById('wdhqRepresentativeTestModal');
   if(!modal)return;
+  wdhqTestWorkroomController?.abort();
+  wdhqTestWorkroomController=new AbortController();
+  const {signal}=wdhqTestWorkroomController;
   modal.classList.add('show');
-  modal.querySelector('.wdhq-test-card')?.focus();
+  modal.querySelector('.close')?.focus();
+  for(const button of modal.querySelectorAll('[data-wdhq-test-file]')){
+    void wdhqCheckRepresentativeTest(button,signal);
+  }
 }
 function wdhqCloseRepresentativeTests(){
+  wdhqTestWorkroomController?.abort();
+  wdhqTestWorkroomController=null;
   document.getElementById('wdhqRepresentativeTestModal')?.classList.remove('show');
 }
-const WDHQ_REPRESENTATIVE_TEST_ROUTES=Object.freeze({
-  noah:'wd-noah-test.html',
-  insurance:'wd-insurance-hub-test.html',
-  branding:'wd-personal-branding-center-test.html',
-  lecture:'wd-lecture-center-test.html',
-  liveOffice:'wd-live-office-test.html',
-  house:'wd-sara-house-test.html',
-  northStar:'wd-north-star-test.html',
-  workCenter:'wd-work-center-test.html',
-  insuranceSimple:'wd-insurance-hub-simple-test.html'
-});
-function wdhqOpenNoahFromRepresentativeTest(){
-  wdhqCloseRepresentativeTests();
-  const btn=document.getElementById('wdhq-noah-open');
-  if(btn){ btn.click(); return; }
-  toast('노아 TEST 버튼을 찾지 못했습니다.');
-}
-function wdhqOpenRepresentativeTest(target){
-  wdhqCloseRepresentativeTests();
-  const route=WDHQ_REPRESENTATIVE_TEST_ROUTES[target];
-  if(!route){
-    toast('TEST본 연결 주소를 확인해 주세요.');
-    return;
-  }
+async function wdhqCheckRepresentativeTest(button,signal){
+  const status=button.querySelector('[data-wdhq-test-status]');
+  button.disabled=true;
+  status.textContent='확인 중…';
+  const url=new URL(button.dataset.wdhqTestFile,location.href);
+  let message='연결 상태 확인 실패';
   try{
-    const url=new URL(route,location.href);
-    const home=location.href.split('#')[0];
-    url.searchParams.set('home',home);
-    url.searchParams.set('wdhqReturn',home);
-    url.searchParams.set('from','wdhq-test-workroom');
-    window.WDHQBridge?.audit('route_open_external','hq',`test:${target}`,'R0',{result:'test',route:url.pathname});
-    location.assign(url.href);
-  }catch(e){
-    toast('TEST본 주소를 열 수 없습니다. GitHub 파일명을 확인해 주세요.');
+    const response=await fetch(url,{method:'HEAD',cache:'no-store',redirect:'error',signal});
+    if(response.status===404||response.status===410){
+      message='연결 중인 TEST 없음';
+    }else if(response.status===200&&response.headers.get('content-type')?.startsWith('text/html')){
+      if(signal.aborted)return null;
+      button.disabled=false;
+      status.textContent='열기';
+      return url;
+    }
+  }catch(error){
+    if(signal.aborted)return null;
   }
+  if(!signal.aborted)status.textContent=message;
+  return null;
+}
+async function wdhqOpenRepresentativeTest(button){
+  const signal=wdhqTestWorkroomController?.signal;
+  if(!signal||button.disabled)return;
+  const url=await wdhqCheckRepresentativeTest(button,signal);
+  if(!url||signal.aborted)return;
+  const home=location.href.split('#')[0];
+  url.searchParams.set('home',home);
+  url.searchParams.set('wdhqReturn',home);
+  url.searchParams.set('from','wdhq-test-workroom');
+  wdhqCloseRepresentativeTests();
+  window.WDHQBridge?.audit('route_open_external','hq',`test:${button.dataset.wdhqTest}`,'R0',{result:'test',route:url.pathname});
+  location.assign(url.href);
 }
 function wdhqOpenSettings(){
   const modal=document.getElementById('wdhqSettingsModal');
@@ -4621,10 +4604,6 @@ body.wdhq-north-star-open .content>#wdhq-north-star-view{display:block!important
 .wdhq-north-star-item.action b{color:#9a631d}
 @media(max-width:1100px){
   .wdhq-north-star-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:880px){
-  .mobilebar{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .mobilebar .wdhq-north-star-trigger[aria-current="page"]{color:var(--blue);background:#f7faff}
 }
 @media(max-width:620px){
   .wdhq-north-star-head{display:grid;gap:12px}
