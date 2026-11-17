@@ -4924,13 +4924,13 @@ function officeDefaultCategorySettings(){
 async function readOfficeCategories(){
   const rows=await officeLedgerRequest('운영관리',new URLSearchParams({select:'revision,categories'}));
   if(!rows.length)return officeDefaultCategorySettings();
-  const {revision,categories}=rows[0];
-  if(rows.length!==1||!revision||!Object.keys(officeDefaultCategories).every(kind=>{
+  const {revision,categories}=rows[0],kinds=Object.keys(officeDefaultCategories);
+  if(rows.length!==1||!revision||!kinds.every(kind=>{
     const items=categories?.[kind];
     return Array.isArray(items)&&items.every(item=>typeof item?.name==='string'&&item.name.trim()&&typeof item.archived==='boolean')&&
       items.some(item=>!item.archived);
   }))throw new Error('저장된 분류 설정을 확인하지 못했어요.');
-  return {revision,categories};
+  return {revision,categories:Object.fromEntries(kinds.map(kind=>[kind,categories[kind]]))};
 }
 
 async function saveOfficeCategories(previous,categories){
@@ -4938,7 +4938,7 @@ async function saveOfficeCategories(previous,categories){
   if(previous.revision)params.set('revision','eq.'+previous.revision);
   try{
     const [saved]=await officeLedgerRequest('운영관리',params,previous.revision?'PATCH':'POST',{revision,categories});
-    if(saved?.revision===revision)return saved;
+    if(saved?.revision===revision)return {revision,categories};
     throw new Error('분류 설정을 저장하지 못했어요.');
   }catch(error){
     const latest=await readOfficeCategories().catch(()=>null);
