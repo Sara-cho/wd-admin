@@ -11525,12 +11525,48 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     .wd09-insurance-choices button { transition:none; }
     .wd09-insurance-choices button:hover:not(:disabled) { transform:none; }
   }
-  #wd09-bulk-insurance { margin-top:12px; padding-top:10px; border-top:1px solid var(--s200); }
-  #wd09-bulk-insurance-list { display:grid; gap:5px; padding:0; margin:6px 0; list-style:none; }
-  #wd09-bulk-insurance-list li { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:6px 9px; background:#fff; border-radius:7px; }
-  #wd09-bulk-insurance-list li span { min-width:0; overflow-wrap:anywhere; }
-  #wd09-bulk-insurance-status { font-size:13px; color:var(--s700); }
+  #modal-insurance-purpose [hidden] { display:none !important; }
+  #modal-insurance-purpose[data-step="rows"] .wd09-entry-compact { max-width:1120px; }
+  #wd09-insurance-entry-next { display:flex; justify-content:flex-end; }
+  #wd09-insurance-entry-next button { min-width:92px; }
+  .wd09-bulk-table-frame {
+    overflow-x:auto; border:1px solid #e8e3ef; border-radius:12px; background:#fff;
+    box-shadow:0 4px 12px #2517370b;
+  }
+  .wd09-bulk-table { width:100%; min-width:780px; border-collapse:collapse; text-align:left; }
+  .wd09-bulk-table th { background:#f2eff7; padding:10px 8px; color:#51456b; font-size:13px; }
+  .wd09-bulk-table td { padding:8px; border-top:1px solid #eeeaf3; vertical-align:top; }
+  .wd09-bulk-table td:nth-child(1) { width:15%; }
+  .wd09-bulk-table td:nth-child(2) { width:18%; }
+  .wd09-bulk-table td:nth-child(4) { width:13%; }
+  .wd09-bulk-table td:nth-child(5) { width:15%; }
+  .wd09-bulk-table input, .wd09-bulk-table select, .wd09-bulk-table textarea {
+    width:100%; min-width:0; min-height:38px; border:1px solid #ddd6e8; border-radius:7px;
+    padding:6px 8px; background:#fff; color:var(--navy); font:inherit; font-size:13px;
+  }
+  .wd09-bulk-table :is(input,select,textarea):focus-visible { outline:2px solid #78649b; outline-offset:1px; }
+  .wd09-bulk-table .wd09-bulk-kind select:first-child {
+    background:var(--wd09-policy-paper,#fff); color:var(--wd09-policy-tone,var(--navy)); font-weight:700;
+  }
+  .wd09-bulk-kind select + select { margin-top:6px; }
+  .wd09-bulk-row-actions { display:flex; gap:4px; }
+  .wd09-bulk-row-actions button { min-height:38px; white-space:nowrap; }
+  .wd09-bulk-more td { padding:12px; background:#f8f6fb; }
+  .wd09-bulk-more .wd09-bulk-fields {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;
+  }
+  @media(max-width:640px) {
+    #modal-insurance-purpose[data-step="rows"] .wd09-entry-body { padding-inline:12px; }
+    .wd09-bulk-more .wd09-bulk-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  .wd09-bulk-fields label { display:grid; gap:5px; align-content:start; color:var(--s700); font-size:13px; font-weight:600; }
+  .wd09-bulk-fields textarea { resize:vertical; min-height:55px; }
+  .wd09-bulk-actions { margin-top:12px; }
+  .wd09-bulk-actions button { min-height:41px; padding-inline:14px; }
+  #wd09-bulk-insurance-status { margin:10px 0 0; font-size:14px; color:var(--s700); }
+  #wd09-bulk-insurance-status[data-error="true"] { color:#a12b43; }
   #wd09-bulk-insurance-status:empty { display:none; }
+  #wd09-bulk-insurance-footer { justify-content:space-between; }
   .wd09-entry-header, .wd09-detail-modal-header {
     display:flex; align-items:center; justify-content:space-between; gap:12px;
   }
@@ -16544,31 +16580,78 @@ const wdTest09Storage = (() => {
 <h2 id="wd09-insurance-purpose-title">가입보험 등록</h2>
 <button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="closeModal('modal-insurance-purpose')">×</button>
 </header>
-<div class="wd09-entry-body">
+<div class="wd09-entry-body" id="wd09-insurance-entry-chooser">
 <div class="wd09-registration-mode" role="group" aria-label="등록 방식">
 <button type="button" class="btn-sm p" id="wd09-single-insurance-mode" aria-pressed="true" onclick="wd09SetInsuranceEntryMode(false)">한 건 등록</button>
 <button type="button" class="btn-sm p" id="wd09-bulk-insurance-mode" aria-pressed="false" onclick="wd09SetInsuranceEntryMode(true)">다건 등록</button>
 </div>
-<div class="wd09-insurance-choices" role="group" aria-label="보험 종류">
+<div class="wd09-insurance-choices" id="wd09-single-insurance-choices" role="group" aria-label="보험 종류">
 <button type="button" data-insurance-kind="health" onclick="openCustomerInsuranceAdd('health')"><span class="wd09-insurance-icon-shell" aria-hidden="true"><span class="wd09-insurance-pictogram"></span></span><span>보장성보험</span></button>
 <button type="button" data-insurance-kind="savings" onclick="openCustomerInsuranceAdd('savings')"><span class="wd09-insurance-icon-shell" aria-hidden="true"><span class="wd09-insurance-pictogram"></span></span><span>저축성보험</span></button>
 <button type="button" data-insurance-kind="indemnity" onclick="openCustomerInsuranceAdd('indemnity')"><span class="wd09-insurance-icon-shell" aria-hidden="true"><span class="wd09-insurance-pictogram"></span></span><span>실손보험</span></button>
 <button type="button" data-insurance-kind="auto" onclick="openCustomerInsuranceAdd('auto')"><span class="wd09-insurance-icon-shell" aria-hidden="true"><span class="wd09-insurance-pictogram"></span></span><span>자동차보험</span></button>
 </div>
-<div id="wd09-bulk-insurance" hidden>
-<strong id="wd09-bulk-insurance-count">추가한 보험 0건</strong>
-<ul id="wd09-bulk-insurance-list"></ul>
+<div id="wd09-insurance-entry-next" hidden>
+<button type="button" class="btn-p" onclick="wd09OpenInsuranceRows()">다음</button>
+</div>
+</div>
+<div class="wd09-entry-body" id="wd09-bulk-insurance" hidden>
+<div class="wd09-bulk-table-frame" tabindex="0" role="region" aria-label="가입보험 다건 입력 표">
+<table class="wd09-bulk-table" aria-label="가입보험 다건 입력">
+<thead><tr><th scope="col">보험 종류</th><th scope="col">보험사</th><th scope="col">상품명 / 차량번호</th><th scope="col">보험료</th><th scope="col">계약일</th><th scope="col">행 관리</th></tr></thead>
+<tbody id="wd09-bulk-rows"></tbody>
+</table>
+</div>
+<div class="wd09-bulk-actions"><button type="button" class="btn-sm p" onclick="wd09AddInsuranceRow()">+ 행 추가</button></div>
 <p id="wd09-bulk-insurance-status" role="status"></p>
-<div class="modal-ft"><button type="button" class="btn-p" id="wd09-bulk-insurance-save" onclick="wd09SaveInsuranceDrafts()" disabled>전체 저장</button></div>
+</div>
+<footer class="modal-ft wd09-entry-footer" id="wd09-bulk-insurance-footer" hidden>
+<button type="button" class="btn-s" onclick="wd09ShowInsuranceEntryStep('choose')">이전</button>
+<button type="button" class="btn-p" id="wd09-bulk-insurance-save" onclick="wd09SaveInsuranceDrafts()" disabled>전체 저장</button>
+</footer>
 </div>
 </div>
-</div>
-</div>
+<template id="wd09-bulk-row-template">
+<tr>
+<td class="wd09-bulk-kind">
+<select name="purpose" aria-label="보험 종류"><option value="">보험 종류 선택</option><option value="health">보장성보험</option><option value="savings">저축성보험</option><option value="indemnity">실손보험</option><option value="auto">자동차보험</option></select>
+<select name="subtype" aria-label="저축성보험 세부 종류" hidden><option value="">세부 종류 선택</option><option value="whole_life">종신보험</option><option value="annuity">연금보험</option></select>
+<select name="generation" aria-label="실손보험 세대" hidden><option value="">세대 미확인</option><option value="1">1세대</option><option value="2">2세대</option><option value="3">3세대</option><option value="4">4세대</option><option value="5">5세대</option></select>
+</td>
+<td><input name="insurer" type="text" aria-label="보험사" list="wd09-bulk-insurers" placeholder="보험사명" autocomplete="off"/></td>
+<td><input name="product" type="text" aria-label="상품명" placeholder="상품명"/><input name="plate" type="text" aria-label="차량번호" placeholder="예: 12가3456" hidden/></td>
+<td><input name="premium" type="text" aria-label="월 보험료 (원)" inputmode="numeric" placeholder="월 보험료"/></td>
+<td><input name="contractDate" type="date" aria-label="계약일"/></td>
+<td><div class="wd09-bulk-row-actions">
+<button type="button" class="btn-sm" data-action="more" aria-expanded="false">상세</button>
+<button type="button" class="btn-sm" data-action="remove">빼기</button>
+</div></td>
+</tr>
+<tr class="wd09-bulk-more" hidden><td colspan="6"><div class="wd09-bulk-fields">
+<label data-for="policy">보험사 구분<select name="insType"><option value="">자동</option><option>손보</option><option>생보</option></select></label>
+<label data-for="policy">납입기간<input name="payPeriod" type="text" placeholder="예: 20년"/></label>
+<label data-for="policy">보험기간<input name="period" type="text" placeholder="예: 90세"/></label>
+<label data-for="policy">보험료 출금일<select name="debit"><option value="">선택</option></select></label>
+<label data-for="auto" hidden>보험시작일<input name="startDate" type="date"/></label>
+<label data-for="auto" hidden>만기일<input name="expiry" type="date"/></label>
+<label data-for="auto" hidden>차량용도<input name="line" type="text" list="wd09-bulk-car-uses"/></label>
+<label data-for="auto" hidden>계약자<input name="holder" type="text"/></label>
+<label data-for="auto" hidden>피보험자<input name="insured" type="text"/></label>
+<label>담당 설계사<input name="agent" type="text"/></label>
+<label>증권 PDF<input name="policy" type="file" accept="application/pdf,.pdf"/></label>
+<label>약관 PDF<input name="terms" type="file" accept="application/pdf,.pdf"/></label>
+<label data-for="policy">주요 보장 요약<textarea name="coverage"></textarea></label>
+<label>메모<textarea name="memo"></textarea></label>
+</div></td></tr>
+</template>
+<datalist id="wd09-bulk-insurers"></datalist>
+<datalist id="wd09-bulk-auto-insurers"></datalist>
+<datalist id="wd09-bulk-car-uses"><option value="개인용"></option><option value="개인업무용"></option><option value="회사용"></option></datalist>
 <div class="modal-ov wd09-entry-overlay" id="modal-contract">
 <div class="modal-bx wd09-entry-modal" role="dialog" aria-modal="true" aria-labelledby="modal-contract-t">
 <header class="wd09-entry-header">
 <h2 id="modal-contract-t">가입보험 등록</h2>
-<button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="wd09CloseInsuranceEntry('modal-contract')">×</button>
+<button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="closeModal('modal-contract')">×</button>
 </header>
 <div class="wd09-entry-body">
 <input id="ct-idx" type="hidden"/>
@@ -17048,7 +17131,7 @@ const wdTest09Storage = (() => {
 <div class="modal-bx wd09-entry-modal" role="dialog" aria-modal="true" aria-labelledby="modal-auto-rec-t">
 <header class="wd09-entry-header">
 <h2 id="modal-auto-rec-t">자동차보험 기록 추가</h2>
-<button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="wd09CloseInsuranceEntry('modal-auto-rec')">×</button>
+<button type="button" class="wd09-modal-close" aria-label="닫기" title="닫기" onclick="closeModal('modal-auto-rec')">×</button>
 </header>
 <div class="wd09-entry-body">
 <input id="auto-edit-id" type="hidden"/>
@@ -20927,9 +21010,8 @@ const WD09_AUTO_PHOTOS={
   dashboard:{field:'dashboardFile',label:'계기판'},
   plate:{field:'plateFile',label:'번호판'}
 };
-function openAutoAdd(fromInsurance,bulk=false){
-  document.getElementById('modal-auto-rec').dataset.bulk=bulk?'1':'';
-  document.getElementById('wd09-auto-save').textContent=bulk?'목록에 추가':'저장';
+function openAutoAdd(fromInsurance){
+  document.getElementById('wd09-auto-save').textContent='저장';
   document.getElementById('auto-customer-field').hidden=true;
   wd09SetAutoCustomerRequired(false);
   var extra=document.getElementById('auto-extra-fields');
@@ -20957,7 +21039,6 @@ function openAutoAdd(fromInsurance,bulk=false){
 }
 // custId 생략 시 현재 고객상세(_vid) 기준 — 상단 관리화면의 "수정"에서는 대상 custId를 명시적으로 넘긴다.
 function openAutoEdit(id,custId){
-  document.getElementById('modal-auto-rec').dataset.bulk='';
   document.getElementById('wd09-auto-save').textContent='저장';
   document.getElementById('auto-customer-field').hidden=true;
   wd09SetAutoCustomerRequired(false);
@@ -21033,7 +21114,6 @@ async function saveAutoRecord(){
   const save=document.getElementById('wd09-auto-save');
   if(save.disabled)return;
   const modal=document.getElementById('modal-auto-rec');
-  const bulk=!eid&&modal.dataset.bulk==='1';
   const entry=modal.querySelector('.wd09-entry-body');
   const close=modal.querySelector('.wd09-modal-close');
   const uid=_UID;
@@ -21076,10 +21156,6 @@ async function saveAutoRecord(){
       const check=validateAttachFile(file);
       if(!check.ok){alert(check.message);return;}
     }
-    if(bulk){
-      if(_UID===uid&&String(wd09AutoTarget()?.id)===String(c.id))wd09StageInsuranceDraft(modal,'auto',rec,documents,pdfDate);
-      return;
-    }
     for(const {file,field,label} of documents){
       if(_UID!==uid||String(wd09AutoTarget()?.id)!==String(c.id))return;
       save.textContent=label+' 올리는 중…';
@@ -21115,7 +21191,7 @@ async function saveAutoRecord(){
     save.disabled=false;
     close.disabled=false;
     entry.inert=false;
-    save.textContent=bulk?'목록에 추가':'저장';
+    save.textContent='저장';
   }
 }
 async function deleteAutoRecord(id,custId){
@@ -25330,131 +25406,282 @@ let wd09InsuranceDrafts={key:'',bulk:false,rows:[],saving:false};
 function wd09InsuranceEntryKey(){
   return String(_UID)+'/'+String(_vid);
 }
-function wd09RenderInsuranceDrafts(message=''){
-  const {bulk,rows,saving}=wd09InsuranceDrafts;
-  const panel=document.getElementById('wd09-bulk-insurance');
-  panel.hidden=!bulk;
-  const modal=document.getElementById('modal-insurance-purpose');
-  for(const button of modal.querySelectorAll('.wd09-registration-mode button,.wd09-insurance-choices button,.wd09-modal-close')){
-    button.disabled=saving;
-  }
-  document.getElementById('wd09-single-insurance-mode').setAttribute('aria-pressed',String(!bulk));
-  document.getElementById('wd09-bulk-insurance-mode').setAttribute('aria-pressed',String(bulk));
-  document.getElementById('wd09-bulk-insurance-count').textContent='추가한 보험 '+rows.length+'건';
-  document.getElementById('wd09-bulk-insurance-status').textContent=message||(bulk?'보험 종류를 눌러 목록에 추가하세요.':'');
-  document.getElementById('wd09-bulk-insurance-save').disabled=saving||!rows.length;
-  const list=document.getElementById('wd09-bulk-insurance-list');
-  list.replaceChildren(...rows.map((draft,index)=>{
-    const item=document.createElement('li');
-    const label=document.createElement('span');
-    const record=draft.record;
-    label.textContent=draft.source==='auto'
-      ?'자동차보험 · '+record.company+' · '+record.carNumber
-      :WD09_INSURANCE_PURPOSES[record.insurance_purpose]+' · '+record.insurer+(record.product?' · '+record.product:'');
-    const remove=document.createElement('button');
-    remove.className='btn-sm';
-    remove.type='button';
-    remove.textContent='빼기';
-    remove.disabled=saving;
-    remove.onclick=()=>{
-      if(wd09InsuranceDrafts.saving||wd09InsuranceDrafts.rows[index]!==draft)return;
-      wd09InsuranceDrafts.rows.splice(index,1);
-      wd09RenderInsuranceDrafts();
-    };
-    item.append(label,remove);
-    return item;
-  }));
-}
 function wd09SetInsuranceEntryMode(bulk){
   if(wd09InsuranceDrafts.saving)return;
   wd09InsuranceDrafts.bulk=bulk;
-  wd09RenderInsuranceDrafts();
+  document.getElementById('wd09-single-insurance-mode').setAttribute('aria-pressed',String(!bulk));
+  document.getElementById('wd09-bulk-insurance-mode').setAttribute('aria-pressed',String(bulk));
+  document.getElementById('wd09-single-insurance-choices').hidden=bulk;
+  document.getElementById('wd09-insurance-entry-next').hidden=!bulk;
 }
-function wd09CloseInsuranceEntry(id){
-  const modal=document.getElementById(id);
-  closeModal(id);
-  if(modal.dataset.bulk==='1'&&wd09InsuranceDrafts.key===wd09InsuranceEntryKey())openCustomerInsuranceRegistration();
+function wd09ShowInsuranceEntryStep(step){
+  if(wd09InsuranceDrafts.saving)return;
+  const modal=document.getElementById('modal-insurance-purpose');
+  const rows=step==='rows';
+  modal.dataset.step=step;
+  document.getElementById('wd09-insurance-entry-chooser').hidden=rows;
+  document.getElementById('wd09-bulk-insurance').hidden=!rows;
+  document.getElementById('wd09-bulk-insurance-footer').hidden=!rows;
+  document.getElementById('wd09-insurance-purpose-title').textContent=rows?'가입보험 다건 등록':'가입보험 등록';
+  if(rows)wd09InsuranceDrafts.rows[0]?.fields.purpose.focus();
+  else document.getElementById(wd09InsuranceDrafts.bulk?'wd09-bulk-insurance-mode':'wd09-single-insurance-mode').focus();
 }
-function wd09StageInsuranceDraft(modal,source,record,documents,pdfDate){
+function wd09OpenInsuranceRows(){
   const batch=wd09InsuranceDrafts;
-  if(batch.key!==wd09InsuranceEntryKey()||!batch.bulk||batch.saving)return;
-  if(source==='contracts'){
-    while(batch.rows.some(item=>item.source==='contracts'&&item.record.id===record.id)
-      ||getContracts().some(item=>item?.id===record.id))record.id++;
+  if(!batch.bulk||batch.saving||batch.key!==wd09InsuranceEntryKey()||!_matGetCust())return;
+  const insurerLists=[
+    ['wd09-bulk-insurers',[...INSURERS_NONLIFE,...INSURERS_LIFE]],
+    ['wd09-bulk-auto-insurers',AUTO_INSURERS]
+  ];
+  for(const [id,values] of insurerLists){
+    const options=Array.from(new Set(values),value=>new Option(value,value));
+    document.getElementById(id).replaceChildren(...options);
   }
-  batch.rows.push({source,record,documents:documents.slice(),pdfDate});
-  closeModal(modal.id);
-  openCustomerInsuranceRegistration();
+  wd09ShowInsuranceEntryStep('rows');
+  if(!batch.rows.length)wd09AddInsuranceRow();
+}
+function wd09AddInsuranceRow(){
+  const batch=wd09InsuranceDrafts;
+  if(batch.saving||batch.key!==wd09InsuranceEntryKey())return;
+  const fragment=document.getElementById('wd09-bulk-row-template').content.cloneNode(true);
+  const [main,detail]=fragment.children;
+  const fields=Object.fromEntries([...fragment.querySelectorAll('[name]')].map(input=>[input.name,input]));
+  const more=main.querySelector('[data-action="more"]');
+  const remove=main.querySelector('[data-action="remove"]');
+  const row={main,detail,fields,uploaded:{},id:null,pending:null};
+  fields.debit.insertAdjacentHTML('beforeend',ctDebitOptions());
+  const toggleDetails=open=>{
+    detail.hidden=!open;
+    more.setAttribute('aria-expanded',String(open));
+  };
+  fields.purpose.onchange=()=>{
+    const purpose=fields.purpose.value;
+    const auto=purpose==='auto';
+    main.dataset.insuranceKind=purpose;
+    fields.subtype.hidden=purpose!=='savings';
+    fields.generation.hidden=purpose!=='indemnity';
+    fields.plate.hidden=!auto;
+    fields.product.hidden=auto;
+    fields.insurer.setAttribute('list',auto?'wd09-bulk-auto-insurers':'wd09-bulk-insurers');
+    const premium=auto?'연 보험료':'월 보험료';
+    fields.premium.placeholder=premium;
+    fields.premium.setAttribute('aria-label',premium+' (원)');
+    for(const label of detail.querySelectorAll('[data-for]'))label.hidden=label.dataset.for!==(auto?'auto':'policy');
+    if(auto)toggleDetails(true);
+  };
+  fields.premium.oninput=()=>wd09FormatWonInput(fields.premium);
+  fields.startDate.oninput=()=>{
+    const expiry=fields.expiry;
+    if(!expiry.value||expiry.value===expiry.dataset.autoFilled){
+      expiry.value=wd09AutoExpiryForStart(fields.startDate.value);
+      expiry.dataset.autoFilled=expiry.value;
+    }
+  };
+  fields.expiry.oninput=()=>delete fields.expiry.dataset.autoFilled;
+  more.onclick=()=>toggleDetails(detail.hidden);
+  remove.onclick=()=>{
+    if(batch.saving||row.pending)return;
+    const index=batch.rows.indexOf(row);
+    batch.rows.splice(index,1);
+    main.remove();
+    detail.remove();
+    document.getElementById('wd09-bulk-insurance-save').disabled=!batch.rows.length;
+    const next=batch.rows[index]||batch.rows[index-1];
+    (next?.fields.purpose||document.querySelector('.wd09-bulk-actions button')).focus();
+  };
+  batch.rows.push(row);
+  document.getElementById('wd09-bulk-rows').append(fragment);
+  document.getElementById('wd09-bulk-insurance-save').disabled=false;
+  wd09InsuranceRowsStatus('');
+  fields.purpose.focus();
+}
+function wd09InsuranceRowsStatus(message,error=false){
+  const status=document.getElementById('wd09-bulk-insurance-status');
+  status.dataset.error=String(error);
+  status.textContent=message;
+}
+function wd09ReadInsuranceRow(row){
+  const {fields}=row;
+  const val=name=>fields[name].value.trim();
+  const requireValue=(name,message)=>{
+    const value=val(name);
+    if(!value)throw Object.assign(new Error(message),{input:fields[name]});
+    return value;
+  };
+  const purpose=requireValue('purpose','보험 종류를 선택해 주세요.');
+  const insurer=requireValue('insurer','보험사를 입력해 주세요.');
+  const premium=insurancePremiumAmount(val('premium'));
+  if(val('premium')&&premium===null)throw Object.assign(new Error('보험료를 확인해 주세요.'),{input:fields.premium});
+  const agent=val('agent');
+  const memo=val('memo');
+  const contractDate=val('contractDate');
+  const documents=WD09_CONTRACT_PDFS.map(doc=>({...doc,input:fields[doc.kind],file:fields[doc.kind].files[0]})).filter(doc=>doc.file);
+  const now=new Date().toISOString();
+  if(purpose==='auto'){
+    const carNumber=requireValue('plate','차량번호를 입력해 주세요.');
+    const expiryDate=requireValue('expiry','자동차 만기일을 입력해 주세요.');
+    const startDate=val('startDate');
+    return {
+      source:'auto',documents,pdfDate:contractDate||startDate||customerAttachmentDay(),
+      record:{
+        year:(startDate||customerAttachmentDay()).slice(0,4),company:insurer,expiryDate,
+        annualPremium:premium,finalPremium:premium,contractDate,startDate,
+        line:val('line'),policyholder:val('holder'),insured:val('insured'),agent,carNumber,memo,
+        contactStatus:'연락 전',contractStatus:'본사계약',createdAt:now,updatedAt:now
+      }
+    };
+  }
+  const subtype=purpose==='savings'?requireValue('subtype','저축성보험의 세부 종류를 선택해 주세요.'):'';
+  const generation=wd09IndemnityGeneration(val('generation'));
+  const product=val('product');
+  if(documents.length&&!customerAttachmentPart(product)){
+    throw Object.assign(new Error('증권·약관 파일명에 사용할 상품명을 입력해 주세요.'),{input:fields.product});
+  }
+  const record={
+    insurance_purpose:purpose,insurer,product,contract_date:contractDate||today(),contract_type:'신계약',
+    ins_type:val('insType')||(INSURERS_LIFE.includes(insurer)?'생보':'손보'),
+    fee:ctFeeFmt(val('premium')),pay_period:val('payPeriod'),ins_period:val('period'),
+    status:'계약진행중',agent,debit_date:val('debit'),guide_sent:false,cov_summary:val('coverage'),memo,created:now
+  };
+  if(subtype)record.insurance_subtype=subtype;
+  if(purpose==='indemnity'&&generation)record.indemnity_generation=generation;
+  return {source:'contracts',record,documents};
 }
 async function wd09SaveInsuranceDrafts(){
   const batch=wd09InsuranceDrafts;
-  if(batch.saving||!batch.bulk||!batch.rows.length||batch.key!==wd09InsuranceEntryKey())return;
   const ready=()=>batch===wd09InsuranceDrafts&&batch.key===wd09InsuranceEntryKey()&&!!_matGetCust();
-  let saved=0,message='';
+  if(batch.saving||!batch.bulk||!ready()||document.getElementById('modal-insurance-purpose').dataset.step!=='rows')return;
+  const body=document.getElementById('wd09-bulk-insurance');
+  const save=document.getElementById('wd09-bulk-insurance-save');
+  const back=document.querySelector('#wd09-bulk-insurance-footer .btn-s');
+  const close=document.querySelector('#modal-insurance-purpose .wd09-modal-close');
   batch.saving=true;
+  body.inert=true;
+  save.disabled=back.disabled=close.disabled=true;
+  let saved=0,active=null,invalid=null;
+  const customer=_matGetCust();
+  const current=source=>source==='auto'?cstAutoList(_matGetCust()):getContracts();
+  const confirmPending=async row=>{
+    const {source,id}=row.pending;
+    const refresh=source==='auto'?await loadCustomersFromSupa():await loadContractsFromSupa(customer.id);
+    if(!ready())return false;
+    if(!refresh?.ok)throw new Error('저장 결과를 확인하지 못했어요. 다시 저장하면 먼저 확인합니다.');
+    row.pending=null;
+    row.main.querySelector('[data-action="remove"]').disabled=false;
+    return current(source).some(item=>item?.id===id);
+  };
+  const finishRow=row=>{
+    batch.rows.splice(batch.rows.indexOf(row),1);
+    row.main.remove();
+    row.detail.remove();
+    saved++;
+  };
   try{
-    while(batch.rows.length&&ready()){
-      const {source,record,documents,pdfDate}=batch.rows[0];
-      const customer=_matGetCust();
-      const auto=source==='auto';
-      wd09RenderInsuranceDrafts((saved+1)+'번째 보험 저장 중…');
-      while(documents.length&&ready()){
-        const {file,field,label}=documents[0];
-        const name=auto?wd09AutoPdfName(customer,label,pdfDate):contractPdfName(customer,record.product,label);
-        const path=await uploadMatAttachment(customer,file,name,'application/pdf');
-        record[field]={path,name,original_name:file.name,uploadedAt:new Date().toISOString()};
-        documents.shift();
-      }
-      if(!ready())break;
-      const current=auto?cstAutoList(_matGetCust()):getContracts();
-      const found=records=>records.some(item=>item?.id===record.id);
-      if(!found(current)){
-        const result=auto?await _autoSaveList(_matGetCust(),[...current,record]):await saveContracts([...current,record],record,true);
-        if(!ready())break;
-        if(!result?.ok){
-          const refresh=auto?await loadCustomersFromSupa():await loadContractsFromSupa(customer.id);
-          if(!ready())break;
-          if(!refresh?.ok||!found(auto?cstAutoList(_matGetCust()):getContracts()))throw new Error('보험 저장에 실패했어요.');
-        }
-      }
-      batch.rows.shift();
-      saved++;
+    for(const row of batch.rows.slice()){
+      if(!ready())return;
+      active=row;
+      if(row.pending&&await confirmPending(row))finishRow(row);
     }
-    if(ready()&&!batch.rows.length){message='보험 '+saved+'건을 저장했어요.';toast();}
+    if(!ready())return;
+    const drafts=[];
+    for(const row of batch.rows){
+      if(!Object.values(row.fields).some(input=>input.value))continue;
+      active=row;
+      const draft=wd09ReadInsuranceRow(row);
+      for(const {file,label,input} of draft.documents){
+        if(_attachExt(file)!=='pdf'||!await validCustomerPolicyPdf(file)){
+          throw Object.assign(new Error(label+'은 PDF 파일만 올릴 수 있어요.'),{input});
+        }
+        if(!ready())return;
+      }
+      drafts.push({row,...draft});
+    }
+    if(!drafts.length&&!saved){
+      wd09InsuranceRowsStatus('저장할 보험을 입력해 주세요.',true);
+      invalid=batch.rows[0]?.fields.purpose;
+      return;
+    }
+    for(const {row,source,record,documents,pdfDate} of drafts){
+      if(!ready())return;
+      active=row;
+      wd09InsuranceRowsStatus((batch.rows.indexOf(row)+1)+'번째 행 저장 중…');
+      const auto=source==='auto';
+      if(row.id?.source!==source){
+        let id=auto?'auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,7):Date.now();
+        while(!auto&&getContracts().some(item=>item?.id===id))id++;
+        row.id={source,value:id};
+      }
+      record.id=row.id.value;
+      for(const {file,field,label} of documents){
+        const name=auto?wd09AutoPdfName(customer,label,pdfDate):contractPdfName(customer,record.product,label);
+        const previous=row.uploaded[field];
+        if(previous?.file!==file||previous.attachment.name!==name){
+          const path=await uploadMatAttachment(customer,file,name,'application/pdf');
+          row.uploaded[field]={file,attachment:{path,name,original_name:file.name,uploadedAt:new Date().toISOString()}};
+        }
+        if(!ready())return;
+        record[field]=row.uploaded[field].attachment;
+      }
+      const records=current(source);
+      row.pending={source,id:record.id};
+      row.main.querySelector('[data-action="remove"]').disabled=true;
+      const result=auto?await _autoSaveList(_matGetCust(),[...records,record]):await saveContracts([...records,record],record,true);
+      if(!ready())return;
+      if(!result?.ok){
+        const found=await confirmPending(row);
+        if(!ready())return;
+        if(!found)throw new Error('보험을 저장하지 못했어요. 입력 내용을 유지했어요.');
+      }
+      finishRow(row);
+    }
+    wd09InsuranceRowsStatus('보험 '+saved+'건을 저장했어요.');
   }catch(error){
-    message=(saved?'저장 완료 '+saved+'건 · ':'')+(error.message||'저장에 실패했어요.')+' 남은 목록에서 다시 저장할 수 있어요.';
+    if(!ready())return;
+    invalid=error.input;
+    const number=batch.rows.indexOf(active)+1;
+    wd09InsuranceRowsStatus((saved?'저장 완료 '+saved+'건 · ':'')+(number?number+'번째 행 · ':'')+error.message,true);
   }finally{
     batch.saving=false;
+    body.inert=false;
+    back.disabled=close.disabled=false;
+    save.disabled=!batch.rows.length;
     if(ready()){
-      wd09RenderInsuranceDrafts(message);
-      renderContractsList();
-      renderMatList();
+      if(saved){renderContractsList();renderMatList();}
+      if(invalid){
+        if(active?.detail.hidden&&active.detail.contains(invalid))active.main.querySelector('[data-action="more"]').click();
+        invalid.focus();
+      }else if(saved)document.querySelector('.wd09-bulk-actions button').focus();
     }
   }
 }
 function openCustomerInsuranceRegistration(){
   const customer=_matGetCust();
-  if(!customer)return;
+  if(!customer||wd09InsuranceDrafts.saving)return;
   const modal=document.getElementById('modal-insurance-purpose');
   modal.dataset.customer=String(customer.id);
   modal.dataset.owner=String(_UID);
   const key=wd09InsuranceEntryKey();
-  if(wd09InsuranceDrafts.key!==key)wd09InsuranceDrafts={key,bulk:false,rows:[],saving:false};
-  wd09RenderInsuranceDrafts();
+  if(wd09InsuranceDrafts.key!==key){
+    wd09InsuranceDrafts={key,bulk:false,rows:[],saving:false};
+    document.getElementById('wd09-bulk-rows').replaceChildren();
+    document.getElementById('wd09-bulk-insurance-save').disabled=true;
+    wd09InsuranceRowsStatus('');
+  }
+  wd09SetInsuranceEntryMode(wd09InsuranceDrafts.bulk);
   openModal('modal-insurance-purpose');
-  modal.querySelector('.wd09-insurance-choices button')?.focus();
+  wd09ShowInsuranceEntryStep('choose');
 }
 function openCustomerInsuranceAdd(purpose){
   const modal=document.getElementById('modal-insurance-purpose');
-  if(!modal.classList.contains('open')||wd09InsuranceDrafts.saving)return;
+  if(!modal.classList.contains('open')||wd09InsuranceDrafts.bulk||wd09InsuranceDrafts.saving)return;
   if(modal.dataset.owner!==String(_UID)||modal.dataset.customer!==String(_vid)||!_matGetCust()){
     closeModal('modal-insurance-purpose');
     return;
   }
   if(purpose==='unknown'||!Object.hasOwn(WD09_INSURANCE_PURPOSES,purpose))return;
   closeModal('modal-insurance-purpose');
-  if(purpose==='auto')openAutoAdd(true,wd09InsuranceDrafts.bulk);
-  else openContractAdd(purpose,wd09InsuranceDrafts.bulk);
+  if(purpose==='auto')openAutoAdd(true);
+  else openContractAdd(purpose);
 }
 function contractPdfName(customer,product,label){
   return customerAttachmentPrefix(customer)+'_'+customerAttachmentPart(product)+'_'+label+'.pdf';
@@ -25500,11 +25727,9 @@ function wd09SetContractInsuranceType(type,subtype,allowUnclassified,generation)
   const name=_matGetCust()?.name;
   document.getElementById('ct-customer-name').textContent=name?'고객 · '+name:'';
 }
-function openContractAdd(purpose,bulk=false){
+function openContractAdd(purpose){
   wd09RestorePolicyEditor();
-  const modal=document.getElementById('modal-contract');
-  modal.dataset.bulk=bulk?'1':'';
-  document.getElementById('ct-save').textContent=bulk?'목록에 추가':'저장';
+  document.getElementById('ct-save').textContent='저장';
   document.getElementById('modal-contract-t').textContent='가입보험 등록';
   wd09SetContractInsuranceType(purpose,'',false);
   document.getElementById('ct-idx').value='';
@@ -25526,7 +25751,6 @@ function openContractAdd(purpose,bulk=false){
 }
 function openContractEdit(i,inline=false){
   wd09RestorePolicyEditor();
-  document.getElementById('modal-contract').dataset.bulk='';
   document.getElementById('ct-save').textContent='저장';
   var c=getContracts()[i];if(!c)return;
   document.getElementById('modal-contract-t').textContent='가입보험 수정';
@@ -25568,7 +25792,6 @@ async function saveContractModal(){
   const modal=document.getElementById('modal-contract');
   const inline=wd09PolicyEditor;
   const surface=inline?document.getElementById('wd09-insurance-detail'):modal;
-  const bulk=!inline&&modal.dataset.bulk==='1';
   const uid=_UID;
   const custId=_vid;
   const sameCustomer=()=>_UID===uid&&_vid===custId
@@ -25654,10 +25877,6 @@ async function saveContractModal(){
         return;
       }
     }
-    if(bulk){
-      if(sameCustomer())wd09StageInsuranceDraft(modal,'contracts',rec,files);
-      return;
-    }
     for(const {file,field,label} of files){
       if(!sameCustomer())return;
       save.textContent=label+' 올리는 중…';
@@ -25682,7 +25901,7 @@ async function saveContractModal(){
     entry.inert=false;
     close.disabled=false;
     if(inline)cancel.disabled=false;
-    save.textContent=bulk?'목록에 추가':'저장';
+    save.textContent='저장';
   }
 }
 async function deleteContract(i){
