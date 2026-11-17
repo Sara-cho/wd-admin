@@ -10481,6 +10481,20 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     font:inherit; font-size:12px; font-weight:800; white-space:nowrap; cursor:pointer;
   }
   #hdr .wd09-drive-button[data-connected="true"] { background:#eaf6ee; color:#166534; }
+  #hdr .wd09-drive-actions { display:grid; gap:2px; }
+  #hdr .wd09-drive-actions .wd09-drive-button { justify-content:center; }
+  #hdr .wd09-customer-refresh {
+    display:none; min-height:26px; padding:2px 8px; border:0; border-radius:6px;
+    background:var(--s100); color:var(--s700); font:inherit; font-size:12px;
+    font-weight:800; white-space:nowrap; cursor:pointer;
+  }
+  body:has(#pg-cust.on.wd09-customer-detail #det-tabs :is([data-det-pane="det-info"],[data-det-pane="det-work"],[data-det-pane="det-claim"]).on) #hdr .wd09-customer-refresh {
+    display:block;
+  }
+  #hdr .wd09-customer-refresh:not(:disabled):hover {
+    background:var(--s200);
+  }
+  #hdr .wd09-customer-refresh:disabled { opacity:.6; cursor:wait; }
   #dr-admin-main-btn { text-decoration:none; color:#fff; background:rgba(255,255,255,.08); }
   #dr-admin-main-btn:hover { background:rgba(255,255,255,.16); }
   body:not(.wd09-signed-in) #dr-admin-main-btn, #dr-admin-main-btn[hidden], #wd09-home-drive[hidden] { display:none !important; }
@@ -10643,9 +10657,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     justify-self:start; min-height:var(--wd09-ui-action-height);
     padding:6px 8px; gap:4px; font-size:12px; white-space:nowrap;
   }
-  #det-tabs .wd09-customer-add.btn-sm {
-    justify-self:end; min-height:var(--wd09-ui-action-height); white-space:nowrap;
-  }
   #det-tabs .wd09-detail-tabs {
     display:flex; gap:10px; min-width:0; padding:6px 4px;
     overflow-x:auto; justify-content:safe center;
@@ -10661,6 +10672,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #det-info .card-hd { margin-bottom:8px; }
   #det-info .wd09-info-actions { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
   #det-info .wd09-info-actions [popovertarget] { background:var(--s100); color:var(--s700); }
+  #det-info:not([data-record-view="det-work"]) [popovertarget="det-work-filter-popover"] { display:none; }
   #wd09-customer-overview .wd09-table-tools[hidden] { display:none; }
   #cust-info-card .grid-3 {
     grid-template-columns:repeat(auto-fit,minmax(min(100%,104px),1fr));
@@ -10727,7 +10739,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   }
   @media(max-width:1100px) {
     #wd09-customer-overview { grid-template-columns:minmax(0,1fr); }
-    #cust-det-pg > #det-tabs { grid-template-columns:auto minmax(0,1fr) auto; }
+    #cust-det-pg > #det-tabs { grid-template-columns:auto minmax(0,1fr); }
   }
   #modal-claim-rec .wd09-claim-step {
     margin:0 0 10px; padding:12px 14px; border:1px solid var(--s200); border-radius:10px;
@@ -11685,6 +11697,10 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   .wd09-material-custom-category { margin-top:8px; }
   .wd09-material-fields .wd09-material-note-field { grid-column:1/-1; }
   .wd09-material-note-field textarea { min-height:88px; }
+  #wd09-material-policy-guide {
+    margin:0 0 14px; padding:9px 12px; border-radius:8px;
+    background:var(--s50); color:var(--s700); font-size:13px; line-height:1.5;
+  }
   .wd09-material-name-preview {
     grid-column:1/-1; margin:0; color:var(--s700); font-size:13px; overflow-wrap:anywhere;
   }
@@ -11926,7 +11942,10 @@ const wdTest09Storage = (() => {
 <button class="hn-btn" id="hn-links" onclick="goPage('links')">업무허브</button>
 </div>
 <div class="hdr-right">
+<div class="wd09-drive-actions">
+<button class="wd09-customer-refresh" type="button" onclick="wd09RefreshCustomerRecordTab(this)">새로고침</button>
 <button class="wd09-drive-button" type="button" id="wd09-drive-open" aria-haspopup="dialog">Drive 연결</button>
+</div>
 <div class="hdr-user-btn" id="user-btn" onclick="toggleDd()">
 <div class="hdr-av" id="hdr-av">?</div>
 <div><div class="hdr-uname" id="hdr-uname">-</div><div class="hdr-uid" id="hdr-uid">-</div></div>
@@ -12821,7 +12840,6 @@ const wdTest09Storage = (() => {
 <button class="itab" data-det-pane="det-claim" onclick="swDetTab(this,'det-claim')">청구현황</button>
 <button class="itab" data-det-pane="det-mat" onclick="swDetTab(this,'det-mat')">고객자료실</button>
 </div>
-<button class="btn-sm p wd09-customer-add" type="button" onclick="openCustModal()">+ 고객 추가</button>
 </nav>
 <div id="wd09-customer-overview">
 <div id="wd09-customer-card-slot"></div>
@@ -12832,7 +12850,6 @@ const wdTest09Storage = (() => {
 <div class="card-hd">
 <h2 class="card-title">고객업무기록</h2>
 <div class="wd09-info-actions">
-<button type="button" class="btn-sm" onclick="wd09RefreshCustomerRecordTab('work')">새로고침</button>
 <button type="button" class="btn-sm" popovertarget="det-work-filter-popover">검색·필터</button>
 <button type="button" class="btn-sm p" onclick="openCommAdd()">+ 고객업무기록</button>
 </div>
@@ -12926,7 +12943,6 @@ const wdTest09Storage = (() => {
 <div class="card">
 <div class="card-hd"><h2 class="card-title">청구현황</h2>
 <div class="wd09-info-actions">
-<button type="button" class="btn-sm" onclick="wd09RefreshCustomerRecordTab('claims')">새로고침</button>
 <button type="button" class="btn-sm" popovertarget="det-claim-filter-popover">검색·필터</button>
 <button type="button" class="btn-sm p" onclick="openClaimAdd()">+ 청구문의 추가</button>
 </div></div>
@@ -17140,6 +17156,7 @@ const wdTest09Storage = (() => {
 <div class="wd09-entry-body">
 <input id="mat-edit-id" type="hidden"/>
 <input id="mat-date" type="hidden"/>
+<p id="wd09-material-policy-guide">보험증권과 보험약관은 계약별로 관리할 수 있도록 가입보험에서 등록해 주세요.</p>
 <div class="wd09-material-fields">
 <div class="fld">
 <label for="mat-category">파일 구분</label>
@@ -17147,9 +17164,7 @@ const wdTest09Storage = (() => {
 <option value="">파일 구분 선택</option>
 <option>보장분석표</option>
 <option>가입제안서</option>
-<option>보험증권</option>
 <option>보장비교표</option>
-<option>보험약관</option>
 <option>보험청구서류</option>
 <option>상담서류</option>
 <option value="__custom__">직접 입력</option>
@@ -18827,7 +18842,6 @@ function calcAge(birthStr){
 
 // 고객자료실 첨부파일 검사 및 Google Drive 업로드
 var ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp','hwp','hwpx','doc','docx'];
-var ATTACH_MAX_SIZE=10*1024*1024; // 10MB
 function _attachExt(file){
   var name=file&&file.name||'';
   return name.indexOf('.')>=0?name.split('.').pop().toLowerCase():'';
@@ -18836,9 +18850,6 @@ function validateAttachFile(file){
   var ext=_attachExt(file);
   if(ATTACH_ALLOWED_EXT.indexOf(ext)<0){
     return {ok:false,message:'첨부할 수 없는 파일 형식입니다. PDF, JPG, PNG, HEIC, WEBP, HWP, HWPX, DOC, DOCX 파일을 올릴 수 있어요.'};
-  }
-  if(file.size>ATTACH_MAX_SIZE){
-    return {ok:false,message:'파일 용량이 10MB를 초과합니다. 10MB 이하 파일만 첨부할 수 있습니다.'};
   }
   return {ok:true};
 }
@@ -19512,6 +19523,7 @@ function customerTableRows(id,rows,config){
     if(!popover)config.render();
   };
   var criteria=popover?tools.appliedCriteria:readCriteria();
+  if(config.showAll)criteria={query:'',sort:'desc',filters:[]};
   var term=criteria.query.trim().toLocaleLowerCase('ko-KR');
   var list=rows.filter(function(row){
     return filters.every(function(filter,index){return !criteria.filters[index]||String(filter.value(row))===criteria.filters[index];})
@@ -19546,6 +19558,7 @@ function renderCustomerWorkTable(){
   var list=customerTableRows('det-work-list',all,{
     render:renderCustomerWorkTable, placeholder:'업무내용·다음 할 일 검색',
     popoverId:'det-work-filter-popover',
+    showAll:document.getElementById('det-info').dataset.recordView!=='det-work',
     date:function(x){return x.date||x.created;},
     search:function(x){var p=commParseRecord(x.content||'');return [x.type,p.title,p.body,x.relatedLink,x.nextContent,p.goal];},
     filters:[{label:'업무 종류',value:function(x){return x.type||'기타';}},{label:'처리상태',value:customerWorkStatus}]
@@ -19824,6 +19837,10 @@ function setCustomerDetailVisibility(show){
 function showCustList(){setCustomerDetailVisibility(false);}
 function setCustomerRecordView(id){
   var isRecordTab=id==='det-work'||id==='det-mat';
+  if(id!=='det-work'){
+    var filter=document.getElementById('det-work-filter-popover');
+    if(filter?.matches(':popover-open'))filter.hidePopover();
+  }
   document.getElementById('det-info').dataset.recordView=isRecordTab?id:'det-info';
   document.getElementById('det-work').hidden=id==='det-mat';
   document.getElementById('det-mat').hidden=id==='det-work';
@@ -20689,6 +20706,10 @@ async function saveMatRecord(){
   var custom=document.getElementById('mat-category').value==='__custom__';
   if(!category&&(newFile||prev?.file_category||custom)){
     alert(custom?'파일 구분을 직접 입력해 주세요.':'파일 구분을 선택해 주세요.');
+    return;
+  }
+  if(/^(?:보험)?(?:증권|약관)$/.test(category.replace(/\s/g,''))&&(newFile||category!==prev?.file_category)){
+    alert(document.getElementById('wd09-material-policy-guide').textContent);
     return;
   }
   var now=new Date().toISOString();
@@ -36809,15 +36830,22 @@ window.wd09SyncVisibleCustomerSheet=function(view){
   if(!window.wd09CustomerSheets||!_vid)return;
   if(view==='det-work'||view==='det-claim')wd09QueueCustomerSheets(_vid,view==='det-work'?'work':'claims');
 };
-async function wd09RefreshCustomerRecordTab(kind){
+async function wd09RefreshCustomerRecordTab(button){
   const id=_vid;
   if(!id)return;
-  const work=kind==='work';
-  const result=await (work?loadCommsFromSupa(id):loadClaimDsFromSupa(id));
-  if(String(_vid)!==String(id))return;
-  if(work)renderCustomerWorkTable();
-  else renderClaimList();
-  if(result.ok&&window.wd09CustomerSheets)wd09QueueCustomerSheets(id,kind);
+  const work=!document.querySelector('#det-tabs [data-det-pane="det-claim"].on');
+  button.disabled=true;
+  button.textContent='불러오는 중…';
+  try{
+    const result=await (work?loadCommsFromSupa(id):loadClaimDsFromSupa(id));
+    if(String(_vid)!==String(id))return;
+    if(work)renderCustomerWorkTable();
+    else renderClaimList();
+    if(result.ok&&window.wd09CustomerSheets)wd09QueueCustomerSheets(id,work?'work':'claims');
+  }finally{
+    button.disabled=false;
+    button.textContent='새로고침';
+  }
 }
 </script>
 <script id="wd09-skill-board-script">
