@@ -6665,7 +6665,10 @@ body:has(#wdhq-talk-panel.open,#wd-shared-sticky-dock,#wdhq-account-info[open]) 
 const WDHQ_GOOGLE_CLIENT_ID='525415823143-vrl5bfgrfo94rk1f92r2h0v2j2tg7n1g.apps.googleusercontent.com';
 const WDHQ_GOOGLE_ORIGIN='https://admin.wdwave.kr';
 let wdhqGoogleSdkPromise=null;
+let wdhqGoogleClientPromise=null;
 let wdhqGoogleFlow=null;
+let wdhqGoogleButtonId=0;
+let wdhqGoogleNonceSubmitted=false;
 
 function wdhqLoadGoogleIdentity(){
   if(window.google?.accounts?.id)return Promise.resolve(window.google.accounts.id);
@@ -6695,6 +6698,24 @@ async function wdhqGoogleNonceHash(nonce){
   return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');
 }
 
+function wdhqGetGoogleClient(){
+  if(wdhqGoogleClientPromise)return wdhqGoogleClientPromise;
+  wdhqGoogleClientPromise=(async()=>{
+    const google=await wdhqLoadGoogleIdentity();
+    const nonce=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
+    const nonceHash=await wdhqGoogleNonceHash(nonce);
+    google.initialize({
+      client_id:WDHQ_GOOGLE_CLIENT_ID,nonce:nonceHash,auto_select:false,button_auto_select:false,use_fedcm_for_button:true,
+      callback:response=>{
+        const flow=wdhqGoogleFlow;
+        if(flow?.buttonId===response.state)return flow.receive(response.credential,nonce,nonceHash);
+      }
+    });
+    return google;
+  })().catch(error=>{wdhqGoogleClientPromise=null;throw error;});
+  return wdhqGoogleClientPromise;
+}
+
 function wdhqGoogleLoginId(credential,nonceHash){
   try{
     const encoded=credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
@@ -6719,6 +6740,7 @@ async function wdhqLinkGoogleIdentity({credential,nonce,loginId,userId,isCurrent
   if(wdhqHasApprovedGoogleIdentity(verified.user,account))return;
 
   // The bundled Auth client supports OAuth linking. This endpoint links a Google ID token.
+  wdhqGoogleNonceSubmitted=true;
   const response=await fetch(WDHQ_SB_URL+'/auth/v1/token?grant_type=id_token',{
     method:'POST',cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(12000),
     headers:{apikey:WDHQ_SB_PUBLISHABLE_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
@@ -6742,6 +6764,7 @@ async function wdhqSignInWithGoogle(credential,nonce,loginId,isCurrent){
   if(readError)throw new Error('Google 연결 상태를 확인하지 못했어요. 기존 아이디로 로그인할 수 있어요.');
   if(ready!==true)throw new Error('기존 아이디로 로그인한 뒤 계정정보에서 Google을 한 번 연결해 주세요.');
   if(!isCurrent())return;
+  wdhqGoogleNonceSubmitted=true;
   try{
     const {error}=await WDHQ_SUPABASE.auth.signInWithIdToken({provider:'google',token:credential,nonce});
     if(error)throw new Error('Google 로그인을 완료하지 못했어요. 다시 시도해 주세요.');
@@ -6762,7 +6785,7 @@ function wdhqResetGoogleFlow(link){
   document.getElementById(prefix+'-status').textContent='';
 }
 
-async function wdhqRenderGoogleChoice(link=false,{keepMessage=false}={}){
+async function wdhqRenderGoogleChoice(link=false){
   const prefix=link?'wdhq-google-link':'wdhq-google-login';
   const slot=document.getElementById(prefix+'-slot');
   const state=document.getElementById(prefix+'-status');
@@ -6771,13 +6794,14 @@ async function wdhqRenderGoogleChoice(link=false,{keepMessage=false}={}){
   const loginId=link?WDHQ_AUTH_PROFILE?.login_id:null;
   const userId=link?WDHQ_AUTH_PROFILE?.user_id:null;
   const account=link?wdhqLoginAccount(loginId):null;
-  const flow={link};
-  const isCurrent=()=>wdhqGoogleFlow===flow&&(link
+  const visible=()=>link
     ?document.getElementById('wdhq-account-info').open&&WDHQ_AUTH_PROFILE?.login_id===loginId&&WDHQ_AUTH_SESSION?.user?.id===userId
-    :document.getElementById('wdhq-login-screen').classList.contains('wdhq-show')&&!WDHQ_AUTH_PROFILE);
+    :document.getElementById('wdhq-login-screen').classList.contains('wdhq-show')&&!WDHQ_AUTH_PROFILE;
+  if(!visible()||wdhqGoogleFlow?.isCurrent()&&wdhqGoogleFlow.link===link)return;
+  const flow={link,buttonId:String(++wdhqGoogleButtonId),isCurrent};
+  function isCurrent(){return wdhqGoogleFlow===flow&&visible();}
   wdhqGoogleFlow=flow;
-  if(!isCurrent())return;
-  if(!keepMessage)state.textContent='';
+  state.textContent='';
   if(!link)retry.hidden=true;
   slot.replaceChildren();
   if(location.origin!==WDHQ_GOOGLE_ORIGIN){
@@ -6785,45 +6809,45 @@ async function wdhqRenderGoogleChoice(link=false,{keepMessage=false}={}){
     return;
   }
   if(link)connect.disabled=true;
-  try{
-    const google=await wdhqLoadGoogleIdentity();
-    const nonce=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');
-    const nonceHash=await wdhqGoogleNonceHash(nonce);
-    if(!isCurrent())return;
-    google.initialize({
-      client_id:WDHQ_GOOGLE_CLIENT_ID,nonce:nonceHash,auto_select:false,button_auto_select:false,use_fedcm_for_button:true,
-      ...(link?{login_hint:account.googleEmail}:{}),
-      callback:async({credential})=>{
-        if(!isCurrent()||WDHQ_AUTH_CHECKING)return;
-        WDHQ_AUTH_CHECKING=true;
-        let linked=false;
-        try{
-          const selectedId=wdhqGoogleLoginId(credential,nonceHash);
-          if(!selectedId||link&&selectedId!==loginId)
-            throw new Error(link?`${account.googleEmail} 계정을 선택해 주세요.`:'대표님 또는 수진님의 등록된 Google 계정을 선택해 주세요.');
-          state.textContent='';
-          if(link){
-            await wdhqLinkGoogleIdentity({credential,nonce,loginId,userId,isCurrent});
-            if(!isCurrent())return;
-            linked=true;
-            slot.replaceChildren();
-            connect.hidden=true;
-            state.textContent=`${account.googleEmail} 연결 완료`;
-          }else{
-            await wdhqSignInWithGoogle(credential,nonce,selectedId,isCurrent);
-          }
-        }catch(error){
-          if(isCurrent())state.textContent=error.message||'Google 연결을 다시 시도해 주세요.';
-        }finally{
-          WDHQ_AUTH_CHECKING=false;
-          if(!linked&&isCurrent())void wdhqRenderGoogleChoice(link,{keepMessage:true});
+  if(wdhqGoogleNonceSubmitted){
+    state.textContent=link?'새로고침한 뒤 계정정보에서 다시 연결해 주세요.':'아래 버튼을 눌러 Google 로그인을 다시 시도해 주세요.';
+    if(!link)retry.hidden=false;
+    return;
+  }
+  flow.receive=async(credential,nonce,nonceHash)=>{
+    if(!isCurrent()||WDHQ_AUTH_CHECKING||wdhqGoogleNonceSubmitted)return;
+    WDHQ_AUTH_CHECKING=true;
+    try{
+      const selectedId=wdhqGoogleLoginId(credential,nonceHash);
+      if(!selectedId||link&&selectedId!==loginId)
+        throw new Error(link?`${account.googleEmail} 계정을 선택해 주세요.`:'대표님 또는 수진님의 등록된 Google 계정을 선택해 주세요.');
+      state.textContent='';
+      if(link){
+        await wdhqLinkGoogleIdentity({credential,nonce,loginId,userId,isCurrent});
+        if(!isCurrent())return;
+        slot.replaceChildren();
+        connect.hidden=true;
+        state.textContent=`${account.googleEmail} 연결 완료`;
+      }else await wdhqSignInWithGoogle(credential,nonce,selectedId,isCurrent);
+    }catch(error){
+      if(isCurrent()){
+        state.textContent=error.message||'Google 연결을 다시 시도해 주세요.';
+        if(wdhqGoogleNonceSubmitted){
+          slot.replaceChildren();
+          if(link)state.textContent+=' 새로고침한 뒤 계정정보에서 다시 시도해 주세요.';
+          else retry.hidden=false;
         }
       }
-    });
+    }finally{WDHQ_AUTH_CHECKING=false;}
+  };
+  try{
+    const google=await wdhqGetGoogleClient();
+    if(!isCurrent())return;
     google.renderButton(slot,{type:'standard',theme:'outline',size:'large',text:link?'continue_with':'signin_with',
-      locale:'ko',width:Math.min(slot.clientWidth||280,400)});
+      state:flow.buttonId,locale:'ko',width:Math.min(slot.clientWidth||280,400)});
   }catch(error){
     if(!isCurrent())return;
+    wdhqGoogleFlow=null;
     state.textContent=error.message;
     if(link)connect.disabled=false;
     else retry.hidden=false;
@@ -6832,7 +6856,10 @@ async function wdhqRenderGoogleChoice(link=false,{keepMessage=false}={}){
 
 window.wdhqShowGoogleChoice=()=>wdhqRenderGoogleChoice();
 window.wdhqClearGoogleChoice=()=>wdhqResetGoogleFlow(false);
-document.getElementById('wdhq-google-login-retry').onclick=window.wdhqShowGoogleChoice;
+document.getElementById('wdhq-google-login-retry').onclick=()=>{
+  if(wdhqGoogleNonceSubmitted)location.reload();
+  else void wdhqRenderGoogleChoice();
+};
 document.getElementById('wdhq-google-link-open').onclick=()=>wdhqRenderGoogleChoice(true);
 if(document.getElementById('wdhq-login-screen').classList.contains('wdhq-show'))void wdhqRenderGoogleChoice();
 </script>
