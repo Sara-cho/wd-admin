@@ -1214,8 +1214,13 @@ const finalStaffId=m=>m.staffId||(m.registeredBy==='manager'?'manager':'mina');
 const tasksForStaff=id=>S.tasks.filter(t=>taskStaffId(t)===id&&!t.dailyJournal);
 const staffName=()=>staffById(activeStaffId||managerStaffId)?.name||'스탭';
 const isEmployeeWorkspace=()=>currentUser==='employee'&&staffById(activeStaffId)?.workType==='employee';
+const isMinaWorkCenter=()=>{
+  const profile=staffById(activeStaffId);
+  return currentUser==='employee'&&!!profile&&(profile.id==='mina'||profile.name==='김민아');
+};
+const usesUnifiedWorkCenter=()=>isEmployeeWorkspace()||isMinaWorkCenter();
 const isEmployeeTask=task=>task.simpleInstruction??(staffById(taskStaffId(task))?.workType==='employee');
-const usesDirectWorkReport=()=>currentUser==='employee'&&(isEmployeeWorkspace()||
+const usesDirectWorkReport=()=>currentUser==='employee'&&(usesUnifiedWorkCenter()||
   (!S.tasks.some(task=>task.id===S.selected&&!task.directInstruction&&!task.dailyJournal)&&S.tasks.some(task=>task.directInstruction)));
 
 function staffWorkspace(id){
@@ -1270,17 +1275,17 @@ if(['drive','manual','archive'].includes(x)){materialTab=x==='archive'?'final':'
 if(x==='instructions'){
   instructionStaffId=instructionRecipient;instructionDay=selectedDay;
 }
-if(x==='myInstructions'||(x==='dashboard'&&isEmployeeWorkspace()&&selectedDay)){
+if(x==='myInstructions'||(x==='dashboard'&&usesUnifiedWorkCenter()&&selectedDay)){
   employeeReportDate=selectedDay||localDay();S.selected=null;
 }
 if(S.nav==='staff'&&x!=='staff')staffRecordView=null;
-if(x==='dashboard'&&currentUser==='employee'&&!isEmployeeWorkspace()&&S.tasks.some(task=>task.directInstruction)){
+if(x==='dashboard'&&currentUser==='employee'&&!usesUnifiedWorkCenter()&&S.tasks.some(task=>task.directInstruction)){
   S.selected=null;employeeReportDate=null;
 }
 S.nav=x==='reports'?'month':x;if(S.nav==='month')staffTasksOpen=false;if(S.nav!=='staff'&&editingStaff){editingStaff=false;staffDetailOpen=!!managerStaffId}save();render()}
 function setTask(id){
   const task=S.tasks.find(item=>item.id===id);
-  if(isEmployeeWorkspace()||currentUser==='employee'&&task?.directInstruction)employeeReportDate=task?.date||localDay();
+  if(usesUnifiedWorkCenter()||currentUser==='employee'&&task?.directInstruction)employeeReportDate=task?.date||localDay();
   S.selected=id;S.nav='dashboard';save();render();
 }
 function loginView(){
@@ -1429,7 +1434,7 @@ function libraryCan(menu,action){
 function workspaceMenus(){
   if(currentUser==='manager')return [...navMgr,...sharedMenus,...sensitiveMenus.filter(([id])=>['tax','accounts','office'].includes(id))];
   const selected=profileMenus(staffById(activeStaffId));
-  const workMenus=isEmployeeWorkspace()?navEmployee:S.tasks.some(task=>task.directInstruction)?
+  const workMenus=usesUnifiedWorkCenter()?navEmployee:S.tasks.some(task=>task.directInstruction)?
     navStaff.map(([id,label])=>[id,id==='dashboard'?'업무보고':label]):navStaff;
   return [...workMenus,...configurableMenus.filter(([id])=>selected.includes(id))];
 }
@@ -1746,11 +1751,11 @@ async function refreshEmployeeDrive(date,fallback,hasLocalOrder=false){
   }
   statusLine.textContent='Drive에서 불러오는 중…';
   const results=await Promise.allSettled([
-    isEmployeeWorkspace()||hasLocalOrder?null:employeeDriveInstruction(date,session.token),
+    usesUnifiedWorkCenter()||hasLocalOrder?null:employeeDriveInstruction(date,session.token),
     employeeDriveList(employeeDriveFolders.shared,session.token)
   ]);
   if(!current())return;
-  if(!isEmployeeWorkspace()&&results[0].status==='fulfilled'){
+  if(!usesUnifiedWorkCenter()&&results[0].status==='fulfilled'){
     if(results[0].value){
       orders.innerHTML='<div class="wd92-original">'+esc(results[0].value)+'</div>';
       $('employeeOrderExpand').hidden=false;
@@ -1979,7 +1984,7 @@ async function sendEmployeeReportToDrive(date,outcome,attachments,session){
 
 function employeeReportContext(instructionOnly=false){
   const date=employeeReportDate||payrollCalendar.format(new Date());
-  const tasks=tasksForStaff(activeStaffId).filter(task=>task.date===date&&(instructionOnly||isEmployeeWorkspace()||task.directInstruction));
+  const tasks=tasksForStaff(activeStaffId).filter(task=>task.date===date&&(instructionOnly||usesUnifiedWorkCenter()||task.directInstruction));
   return {date,tasks,task:tasks.find(item=>item.id===S.selected)||tasks[0]};
 }
 
@@ -1992,7 +1997,7 @@ function employeeWorkDateRows(dates,selectedDate){
 
 function employeeWorkDateHistory(date,instructionOnly){
   return [localDay(),date,...tasksForStaff(activeStaffId)
-    .filter(task=>instructionOnly||isEmployeeWorkspace()||task.directInstruction).map(task=>task.date)];
+    .filter(task=>instructionOnly||usesUnifiedWorkCenter()||task.directInstruction).map(task=>task.date)];
 }
 
 const employeeRemoteWorkDates=new WeakMap();
@@ -2113,11 +2118,12 @@ function bindEmployeeWorkCalendar(date,pickDate){
 
 function employeeInstructions(instructionOnly=false){
   const {date,tasks,task}=employeeReportContext(instructionOnly);
-  const combined=!instructionOnly&&isEmployeeWorkspace();
+  const combined=!instructionOnly&&usesUnifiedWorkCenter();
   const shared=S.materials.filter(item=>item.kind==='shared'&&!item.deletedAt&&item.category!=='manual');
   const assignedFiles=tasks.flatMap(item=>item.instructionFiles||[]);
   const order=task;
   const supportsDrive=!!expectedEmployeeDriveAccount();
+  const supportsSharedDrive=supportsDrive||(isMinaWorkCenter()&&!!workspaceDriveAccount());
   const driveReady=employeeDrive?.expires>Date.now();
   const name=instructionOnly?'업무지시':'업무보고';
   const orderText=combined?tasks.map(instructionTaskText).filter(text=>text.trim()).join('\n\n'):'';
@@ -2126,7 +2132,7 @@ function employeeInstructions(instructionOnly=false){
         ${(instructionOnly||combined)&&supportsDrive?`${instructionOnly&&driveReady?'<button type="button" class="small" id="refreshEmployeeOrders">새로고침</button>':''}
           <p id="employeeOrderStatus" class="smallText" role="status">${driveReady?'':'상단에서 Drive 연결을 갱신해 주세요.'}</p>`:(instructionOnly||combined)&&staffHqConnectionNeeded()?staffHqConnectionLink():''}
         ${!combined&&tasks.length>1?`<label>이날 업무지시<select id="employeeReportTask">${tasks.map(item=>`<option value="${esc(item.id)}" ${item.id===task?.id?'selected':''}>${esc(item.title)}</option>`).join('')}</select></label>`:''}
-        <div class="wd97-order-scroll" tabindex="0" role="region" aria-label="업무지시 원문과 피드백"><div id="employeeDriveOrder" class="${combined?'wd92-original':'wd92-order-body'}">${combined?esc(orderText):order?
+        <div class="wd97-order-scroll" tabindex="0" role="region" aria-label="업무지시 원문과 피드백"><div id="employeeDriveOrder" class="${combined?'wd92-original':'wd92-order-body'}">${combined?(orderText||!isMinaWorkCenter()?esc(orderText):'<p class="empty">이날 등록된 업무지시가 없습니다.</p>'):order?
           `<p class="smallText">보낸 사람 <strong>${esc(order.instructionSender?.name||'기록 없음')}</strong></p>${employeeInstructionList(order.todos||[],order.objective||order.title,order.directInstruction)}`:`<p class="empty">${staffHqConnectionNeeded()?'본진 직원 계정 연결 후 Drive 업무지시를 확인할 수 있어요.':'이날 등록된 업무지시가 없습니다.'}</p>`}</div>
         ${feedback?`<h3>피드백</h3>${feedback}`:''}
         ${instructionOnly?instructionFilesList(order?.instructionFiles||[]):''}</div>
@@ -2135,15 +2141,15 @@ function employeeInstructions(instructionOnly=false){
           <div id="employeeOrderLargeText" class="wd92-order-large${combined?' wd92-original':''}" tabindex="0"></div>
         </dialog>
   `;
-  const sharedRefresh=supportsDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':'';
+  const sharedRefresh=supportsSharedDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':'';
   const sharedDetails=instructionOnly?'':`<section class="wd97-share">
         ${!combined||sharedRefresh?`<div class="wd92-order-head">${combined?'':'<h2>업무공유파일</h2>'}${sharedRefresh}</div>`:''}
-        ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 상단에서 Drive 연결을 갱신해 주세요.'}</p>
+        ${supportsSharedDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 상단에서 Drive 연결을 갱신해 주세요.'}</p>
         `:'<p class="smallText">TEST에서 회사가 공유한 파일이에요.</p>'}
         <div class="wd97-share-scroll" tabindex="0" role="region" aria-label="업무공유파일 목록">
-        ${supportsDrive?'<div id="employeeDriveFiles"></div>':''}
+        ${supportsSharedDrive?'<div id="employeeDriveFiles"></div>':''}
         ${assignedFiles.length?instructionFilesList(assignedFiles):''}
-        ${shared.length?`<ul class="wd91-file-list">${shared.map(item=>`<li><span>${esc(item.title)}</span><button class="small" data-material-view="${esc(item.id)}">보기</button><button class="small" data-download="${esc(item.file.id)}">다운로드</button></li>`).join('')}</ul>`:supportsDrive||assignedFiles.length?'':'<p class="empty">등록된 업무공유파일이 없습니다.</p>'}</div>
+        ${shared.length?`<ul class="wd91-file-list">${shared.map(item=>`<li><span>${esc(item.title)}</span><button class="small" data-material-view="${esc(item.id)}">보기</button><button class="small" data-download="${esc(item.file.id)}">다운로드</button></li>`).join('')}</ul>`:supportsSharedDrive||assignedFiles.length?'':'<p class="empty">등록된 업무공유파일이 없습니다.</p>'}</div>
       </section>`;
   const reportOrderContent=`<div class="wd92-order-head"><h2>업무지시</h2>
     <button type="button" class="small" id="employeeOrderExpand" ${(combined?orderText:order)?'':'hidden'}>크게 보기</button></div>
@@ -2277,15 +2283,85 @@ function bindEmployeeInstructions(instructionOnly=false){
   const updateReportDates=$('employeeWorkCalendar')?bindEmployeeWorkCalendar(context.date,pickDate):null;
   if($('employeeOrderExpand'))$('employeeOrderExpand').onclick=()=>{
     const large=$('employeeOrderLargeText'),order=$('employeeDriveOrder');
-    if(!instructionOnly&&isEmployeeWorkspace())large.textContent=order.textContent;
+    if(!instructionOnly&&usesUnifiedWorkCenter())large.textContent=order.textContent;
     else large.innerHTML=order.innerHTML;
     $('employeeOrderDialog').showModal();
   };
   if(instructionOnly||isEmployeeWorkspace())bindEmployeeInstructionRefresh(context,instructionOnly);
   if(!instructionOnly){
     bindReportDriveRefresh(context.date,!!context.task?.instructionSender);
-    bindCloudEmployeeReport(context.date,dates,updateReportDates);
+    if(isMinaWorkCenter())bindMinaWorkReport(context.date,updateReportDates);
+    else bindCloudEmployeeReport(context.date,dates,updateReportDates);
   }
+}
+
+function bindMinaWorkReport(date,updateReportDates){
+  const staffId=activeStaffId,form=$('employeeReportForm'),output=$('employeeCloudReport');
+  const statusLine=$('employeeReportSendStatus'),button=$('employeeReportSubmit'),fileInput=$('employeeReportFiles');
+  const current=()=>isMinaWorkCenter()&&activeStaffId===staffId&&$('employeeReportForm')===form&&form.isConnected;
+  const reportDays=S.tasks.filter(task=>taskStaffId(task)===staffId&&dayReportCount(task));
+  updateReportDates?.(reportDays.map(task=>({workDate:task.date})));
+  const entries=reportDays.filter(task=>task.date===date).flatMap(submittedReportEntries);
+  statusLine.textContent='업무보고는 이 브라우저의 민아 업무센터에 저장돼요.';
+  if(entries.length){
+    output.innerHTML=entries.map(({owner,report})=>reportDocument(owner,report)).join('');
+    output.querySelectorAll('[data-download]').forEach(link=>link.onclick=()=>downloadFile(link.dataset.download));
+    output.hidden=false;
+    return;
+  }
+  form.hidden=false;
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(button.disabled||!current()||!validAttendanceDay(date))return;
+    const outcome=$('employeeReportText').value.trim();
+    if(!outcome)return;
+    const attachments=Array.from(fileInput.files);
+    if(attachments.some(file=>file.size>25*1024*1024)){
+      statusLine.textContent='첨부파일은 개당 25MB까지 저장할 수 있어요.';
+      return;
+    }
+    button.disabled=true;
+    activeStepUploads++;
+    let files=[],committed=false;
+    try{
+      files=attachments.length?await uploadFiles('employeeReportFiles'):[];
+      if(files.length!==attachments.length)throw new Error('일부 첨부파일을 저장하지 못했어요. 파일을 확인해 주세요.');
+      if(!current())return;
+      const prior=S.tasks;
+      const journal=prior.find(task=>taskStaffId(task)===staffId&&task.dailyJournal&&task.date===date);
+      if(journal?.reports.length)return;
+      const title='업무보고';
+      const report={id:crypto.randomUUID(),formVersion:5,at:now(),outcome,files,
+        snapshot:{date,title,staffName:staffName(),recipientName:'대표'}};
+      const updated=journal?{...journal,reports:[report]}:{
+        id:'report-'+crypto.randomUUID(),staffId,date,title,dailyJournal:true,todos:[],reports:[report],feedback:[]
+      };
+      S.tasks=journal?prior.map(task=>task===journal?updated:task):[...prior,updated];
+      try{persistState();}
+      catch(error){S.tasks=prior;throw error;}
+      committed=true;
+      render();
+      notify('업무보고를 이 브라우저에 저장했어요.');
+    }catch(error){
+      if(current())statusLine.textContent=error.message||'업무보고를 저장하지 못했어요.';
+    }finally{
+      if(!committed&&files.length){
+        try{
+          const db=await openDB();
+          try{
+            await new Promise((resolve,reject)=>{
+              const transaction=db.transaction('files','readwrite');
+              transaction.oncomplete=resolve;
+              transaction.onabort=()=>reject(transaction.error);
+              files.forEach(file=>transaction.objectStore('files').delete(file.id));
+            });
+          }finally{db.close();}
+        }catch{}
+      }
+      button.disabled=false;
+      activeStepUploads--;
+    }
+  };
 }
 
 function bindCloudEmployeeReport(date,dates,updateReportDates){
@@ -6711,7 +6787,7 @@ function employeeHomeSummary(today){
 
 function bindEmployeeHomeSummary(){
   const link=$('employeeHomeOrdersLink'),day=link.dataset.orderDate;
-  const menu=isEmployeeWorkspace()?'dashboard':'myInstructions';
+  const menu=usesUnifiedWorkCenter()?'dashboard':'myInstructions';
   link.onclick=()=>setNav(menu,null,day);
   document.querySelectorAll('[data-employee-home-order]').forEach(button=>button.onclick=()=>{
     const taskId=button.dataset.employeeHomeOrder;
