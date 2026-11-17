@@ -10880,8 +10880,24 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     #det-contracts .wd09-insurance-summary dd { margin:0; text-align:right; }
   }
   #det-contracts .wd09-insurance-table { min-width:650px; }
+  @media(min-width:1101px) {
+    #content:has(#pg-cust.on.wd09-customer-detail #wd09-customer-insurance-tab.on) { max-width:1660px!important; }
+    #pg-cust.wd09-customer-detail:has(#wd09-customer-insurance-tab.on),
+    #cust-det-pg:has(#wd09-customer-insurance-tab.on) { max-width:1600px; }
+    #cust-det-pg:has(#wd09-customer-insurance-tab.on) #wd09-customer-overview {
+      grid-template-columns:minmax(250px,24fr) minmax(0,76fr);
+    }
+  }
+  #det-contracts .wd09-insurance-table th:not(:nth-child(2)) { width:1%; }
+  #pg-cust #cust-det-pg .wd09-insurance-table td:not(.wd09-insurance-product) {
+    white-space:nowrap; overflow-wrap:normal;
+  }
   #det-contracts .wd09-insurance-record { cursor:pointer; }
-  #pg-cust #det-contracts .wd09-insurance-product { color:var(--navy); font-weight:800; }
+  #pg-cust #det-contracts .wd09-insurance-product { min-width:170px; color:var(--navy); font-weight:800; }
+  #det-contracts .wd09-insurance-product-name {
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+    white-space:normal; word-break:keep-all; overflow-wrap:anywhere;
+  }
   #pg-cust #det-contracts .wd09-insurance-fee { white-space:nowrap; color:var(--purple); font-weight:800; }
   #det-contracts .wd09-insurance-group-heading {
     display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px;
@@ -16684,6 +16700,7 @@ const wdTest09Storage = (() => {
 <label><span data-indemnity-date-label>계약일</span><input name="contractDate" type="date"/></label>
 <label data-for="policy">납입기간<input name="payPeriod" type="text" placeholder="예: 20년"/></label>
 <label data-for="policy">보험기간<input name="period" type="text" placeholder="예: 90세"/></label>
+<label data-for="policy">갱신 구분<select name="renewalType"><option value="">미확인</option><option>갱신형</option><option>비갱신형</option></select></label>
 <label data-for="policy">보험료 출금일<select name="debit"><option value="">선택</option></select></label>
 <label data-for="auto" hidden>보험시작일<input name="startDate" type="date"/></label>
 <label data-for="auto" hidden>만기일<input name="expiry" type="date"/></label>
@@ -16770,6 +16787,8 @@ const wdTest09Storage = (() => {
 <select id="ct-ins_period" onchange="ctToggleInsPeriodCustom()"><option>70세</option><option>75세</option><option>80세</option><option>85세</option><option>90세</option><option>95세</option><option>100세</option><option>그외 직접입력</option></select>
 <div id="ct-ins_period-custom-wrap" style="display:none;"><label for="ct-ins_period-custom">보험기간 직접입력</label>
 <input id="ct-ins_period-custom" placeholder="예: 종신" type="text"/></div></div>
+<div class="fld"><label for="ct-renewal-type">갱신 구분</label>
+<select id="ct-renewal-type"><option value="">미확인</option><option>갱신형</option><option>비갱신형</option></select></div>
 </div>
 <div class="wd09-insurance-fields wd09-insurance-extra">
 <div class="fld"><label for="ct-debit_date">보험료 출금일</label><select id="ct-debit_date"></select></div>
@@ -25327,6 +25346,9 @@ function wd09SyncIndemnityPanel(panel,group,record,manualInput){
   note.hidden=!['1','2','3'].includes(result.generation);
   note.textContent=note.hidden?'':WD09_INDEMNITY_NOTICE;
 }
+function wd09PolicyRenewalType(value){
+  return value==='갱신형'||value==='비갱신형'?value:'';
+}
 function customerInsuranceRow(c,source,index){
   var auto=source==='auto';
   var purpose=auto?'auto':wd09InsurancePurpose(c.insurance_purpose);
@@ -25343,6 +25365,7 @@ function customerInsuranceRow(c,source,index){
     policy:customerPolicyMeta(c,source,_UID,_vid),
     terms:customerPolicyMeta(c,source,_UID,_vid,'terms'),
     payPeriod:c.pay_period, period:c.ins_period, date:auto?(autoFields.contractDate||c.contract_date):c.contract_date,
+    renewalType:wd09PolicyRenewalType(c.renewal_type),
     autoFields:autoFields,
     carNumber:c.carNumber||c.car_number, expiry:c.expiryDate||c.expiry_date,
     premium:annual?autoFields.annualPremium:insurancePremiumAmount(c.fee), annual:annual,
@@ -25386,7 +25409,8 @@ function openCustomerInsuranceDetail(source,index){
       ['차량용도',row.autoFields.line],['보험시작일',row.autoFields.startDate],['만기일',row.expiry],['계약일',row.date],
       ['계약자',row.autoFields.policyholder],['피보험자',row.autoFields.insured],['담당 설계사',row.autoFields.agent]]
     :[['보험 종류',row.purposeLabel],['보험사',row.insurer],['월 보험료',premium],['보험료 출금일',ctDebitNorm(record.debit_date)],
-      ['납입기간',row.payPeriod],['보험기간',row.period],[indemnity?'가입일':'계약일',row.date],['담당 설계사',record.agent]];
+      ['납입기간',row.payPeriod],['보험기간',row.period],['갱신 구분',row.renewalType||'미확인'],
+      [indemnity?'가입일':'계약일',row.date],['담당 설계사',record.agent]];
   document.getElementById('wd09-insurance-detail-title').textContent=row.product||'가입보험 상세';
   document.getElementById('wd09-insurance-detail-fields').innerHTML=fields.map(function([label,value],position){
     return '<div'+(position===2?' class="wd09-insurance-detail-premium"':'')+'><dt>'+label
@@ -25434,7 +25458,7 @@ function wd09MountPolicyEditor(record){
   const fields=[];
   const slots={
     product:['ct-product'],
-    fields:['ct-insurance-purpose','ct-ins_type','ct-insurer','ct-fee','ct-debit_date','ct-pay_period','ct-ins_period','ct-contract_date','ct-agent','ct-insurance-subtype','ct-indemnity-generation'],
+    fields:['ct-insurance-purpose','ct-ins_type','ct-insurer','ct-fee','ct-debit_date','ct-pay_period','ct-ins_period','ct-renewal-type','ct-contract_date','ct-agent','ct-insurance-subtype','ct-indemnity-generation'],
     coverage:['ct-cov_summary'],
     memo:['ct-memo'],
     attachments:['ct-policy-file','ct-terms-file']
@@ -25581,17 +25605,21 @@ function renderContractsList(state){
   }
   function recordStart(row,label){
     var action="openCustomerInsuranceDetail('"+row.source+"',"+row.index+")";
+    const text=esc(label||'—');
+    const name=row.purpose==='auto'?'<td>'+text+'</td>'
+      :'<td class="wd09-insurance-product"><span class="wd09-insurance-product-name" title="'+text+'">'+text+'</span></td>';
     return '<tr class="wd09-insurance-record" '+wd09DetailRow(action)+'>'
-      +'<td>'+esc(row.insurer||'—')+'</td><td class="wd09-insurance-product">'+esc(label||'—')+'</td>';
+      +'<td>'+esc(row.insurer||'—')+'</td>'+name;
   }
   function renderInsuranceRow(row){
     var fee=wd09FormatInsuranceAmount(row.premium);
     const generation=row.purpose==='indemnity'
       ?'<td><span class="wd09-indemnity-badge" data-review="'+row.indemnityReview+'">'
         +(row.indemnityType==='medical'?WD09_INDEMNITY_TYPES.medical:wd09IndemnityStatus(row.indemnityGeneration,row.indemnityReview))+'</span>'
-        +(row.indemnityKind?'<br><small>'+WD09_INDEMNITY_KINDS[row.indemnityKind]+'</small>':'')+'</td>':'';
+        +(row.indemnityKind?' <small>· '+WD09_INDEMNITY_KINDS[row.indemnityKind]+'</small>':'')+'</td>':'';
     return recordStart(row,row.product)+'<td>'+esc(row.payPeriod||'—')+'</td>'
-      +'<td>'+esc(row.period||'—')+'</td><td class="wd09-insurance-fee">'+fee+'</td><td>'+esc(row.date||'—')+'</td>'
+      +'<td>'+esc(row.period||'—')+'</td><td>'+esc(row.renewalType||'미확인')+'</td>'
+      +'<td class="wd09-insurance-fee">'+fee+'</td><td>'+esc(row.date||'—')+'</td>'
       +generation+'<td>'+documentCell(row,'policy','증권')+'</td><td>'+documentCell(row,'terms','약관')+'</td></tr>';
   }
   function renderAutoRow(row){
@@ -25626,7 +25654,7 @@ function renderContractsList(state){
     var indemnity=purpose==='indemnity';
     var columns=auto
       ?['보험사','자동차번호','차량용도','보험시작일','만기일','보험료','증권','약관']
-      :['보험사','상품명','납입기간','보험기간','월 보험료',...(indemnity?['가입일','실손 구분']:['계약일']),'증권','약관'];
+      :['보험사','상품명','납입기간','보험기간','갱신 구분','월 보험료',...(indemnity?['가입일','실손 구분']:['계약일']),'증권','약관'];
     var headers=columns.map(function(label){return '<th scope="col">'+label+'</th>';}).join('');
     var body=groupRows.length?groupRows.map(auto?renderAutoRow:renderInsuranceRow).join('')
       :'<tr><td class="wd09-insurance-empty" colspan="'+columns.length+'">등록된 '+WD09_INSURANCE_PURPOSES[purpose]+' 내역이 없습니다.</td></tr>';
@@ -25634,7 +25662,7 @@ function renderContractsList(state){
       +(indemnity?'<div class="wd09-insurance-group-head">':'')
       +'<h3 class="wd09-insurance-group-heading '+purpose+'" data-insurance-kind="'+purpose+'" id="'+titleId+'">'+groupHeading(purpose,groupRows)+'</h3>'
       +(indemnity?'<button class="btn-sm p" type="button" onclick="if(_matGetCust())openContractAdd(\'indemnity\')">+ 실손보험 등록</button></div>':'')
-      +'<div class="wd09-customer-table-frame"><table aria-labelledby="'+titleId+'" class="wd09-insurance-table wd09-customer-table">'
+      +'<div class="wd09-customer-table-frame" tabindex="0" role="region" aria-labelledby="'+titleId+'"><table aria-labelledby="'+titleId+'" class="wd09-insurance-table wd09-customer-table">'
       +'<thead><tr>'+headers+'</tr></thead><tbody>'+body+'</tbody></table></div></section>';
   }).join('');
   el.innerHTML='<div class="wd09-insurance-scroll">'+groups+'</div>';
@@ -25800,6 +25828,7 @@ function wd09ReadInsuranceRow(row){
     insurance_purpose:purpose,insurer,product,contract_date:purpose==='indemnity'?contractDate:(contractDate||today()),contract_type:'신계약',
     ins_type:val('insType')||(INSURERS_LIFE.includes(insurer)?'생보':'손보'),
     fee:ctFeeFmt(val('premium')),pay_period:val('payPeriod'),ins_period:val('period'),
+    renewal_type:wd09PolicyRenewalType(val('renewalType')),
     status:'계약진행중',agent,debit_date:val('debit'),guide_sent:false,cov_summary:val('coverage'),memo,created:now
   };
   if(subtype)record.insurance_subtype=subtype;
@@ -26016,6 +26045,7 @@ function openContractAdd(purpose){
   ctUpdateInsurerOptions('');
   document.getElementById('ct-pay_period').selectedIndex=0;
   document.getElementById('ct-ins_period').selectedIndex=0;
+  _ctSetVal('ct-renewal-type','');
   ctToggleInsPeriodCustom();
   var debitSel=document.getElementById('ct-debit_date');
   debitSel.innerHTML=ctDebitOptions();
@@ -26050,6 +26080,7 @@ function openContractEdit(i,inline=false){
   _ctSetVal('ct-indemnity-generation',wd09InitIndemnityKind(document.getElementById('ct-indemnity-kind'),c));
   _ctSetVal('ct-fee',wd09WonText(c.fee));
   ctSelectOrInject('ct-pay_period',c.pay_period||'');
+  _ctSetVal('ct-renewal-type',wd09PolicyRenewalType(c.renewal_type));
   if(c.ins_period&&['70세','75세','80세','85세','90세','95세','100세'].indexOf(c.ins_period)<0){
     document.getElementById('ct-ins_period').value='그외 직접입력';
     _ctSetVal('ct-ins_period-custom',c.ins_period);
@@ -26124,6 +26155,7 @@ async function saveContractModal(){
     fee:ctFeeFmt(document.getElementById('ct-fee').value),
     pay_period:document.getElementById('ct-pay_period').value,
     ins_period:insPeriod,
+    renewal_type:wd09PolicyRenewalType(document.getElementById('ct-renewal-type').value),
     status:old.status||'계약진행중',
     agent:document.getElementById('ct-agent').value.trim(),
     debit_date:document.getElementById('ct-debit_date').value,
