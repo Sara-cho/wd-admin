@@ -302,6 +302,7 @@ button.wd62-status:hover{filter:brightness(.97)}
 .wd67-day-staff b,.wd67-day-staff span{display:block}
 .wd67-day-staff b{font-size:12px}
 .wd67-day-staff span{margin-top:2px}
+.wd67-calendar-attendance{display:contents}
 .wd67-legend{margin:9px 0 0}
 .wd67-day-panel h3{font-size:15px;margin:14px 0 5px}
 .wd67-line{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 0;border-bottom:1px solid #eee7f5;font-size:13px}
@@ -1065,10 +1066,62 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 }
 </style>
 <style>
-.wd150-report-instructions{margin:0 0 12px}
-.wd150-report-instructions section{margin:0}
-.wd150-report-instructions .wd97-order-scroll{max-height:270px;overflow:auto}
 #employeeOrderStatus:empty{display:none}
+.titleRow.wd-employee-report-toolbar{align-items:center;justify-content:flex-start;gap:12px 18px;flex-wrap:wrap}
+#employeeWorkCalendarOpen{display:inline-flex;align-items:center;gap:12px;min-height:44px}
+#employeeWorkCalendarOpen svg{width:18px;height:18px;flex:none}
+#employeeWorkCalendar{width:min(740px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:clamp(12px,3vw,26px);border:1px solid #e5d8f6;border-radius:16px;overflow:auto;color:var(--ink);background:#fff}
+#employeeWorkCalendar::backdrop{background:rgba(30,22,48,.4)}
+.wd-work-calendar-head,.wd-work-calendar-month,.wd-work-calendar-legend{display:flex;align-items:center;gap:8px}
+.wd-work-calendar-head,.wd-work-calendar-month{justify-content:space-between}
+.wd-work-calendar-head h2{margin:0}
+.wd-work-calendar-month{margin-top:14px}
+.wd-work-calendar-month button{padding-inline:14px;font-size:20px;line-height:1}
+.wd-work-calendar-month-fields{display:flex;align-items:center;gap:6px;min-width:0}
+.wd-work-calendar-month-fields select{width:auto;min-width:0;min-height:44px;margin:0;padding:7px 10px;font-weight:700}
+.wd-work-calendar-legend{margin:12px 0;flex-wrap:wrap}
+.wd-work-calendar-flag{display:inline-block;padding:2px 6px;border-radius:5px;font-size:12px;line-height:1.35;font-weight:700;white-space:nowrap}
+.wd-work-calendar-flag.order{background:#efe5ff;color:#592f96}
+.wd-work-calendar-flag.report{background:#e4f6ed;color:#1a6543}
+.wd-work-calendar-status:empty{display:none}
+.wd-work-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.wd-work-calendar-grid>span{text-align:center;font-size:13px;color:#625970}
+.wd-work-calendar-grid button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;min-height:74px;padding:6px 7px;text-align:left}
+.wd-work-calendar-grid button[aria-pressed=true]{border-color:#7546c3;background:#f7f1ff;box-shadow:inset 0 0 0 1px #7546c3}
+.wd-work-calendar-grid button[aria-current=date] time{color:#6133a2;border-bottom:2px solid #9b77d4}
+.wd-work-calendar-grid time{font-weight:650;line-height:1.2}
+.wd-work-calendar-grid button:focus-visible{outline:2px solid #7546c3;outline-offset:1px}
+@media(max-width:560px){
+  .wd-work-calendar-grid{gap:3px}
+  .wd-work-calendar-grid button{min-height:64px;padding:4px;gap:2px}
+  .wd-work-calendar-grid .wd-work-calendar-flag{font-size:10px;padding:2px 3px}
+}
+.wd-employee-report-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+.wd-employee-report-columns>.card{display:flex;flex-direction:column;min-width:0;min-height:0;margin:0;overflow-wrap:anywhere}
+.wd-employee-report-columns>.wd91-order{background:#f3edfc;border:1px solid #e5d8f6}
+.wd-employee-report-columns h2{font-size:18px}
+.wd-employee-report-columns .wd92-order-head{margin-bottom:12px}
+.wd-employee-report-columns .wd97-order-scroll{min-height:0;padding:14px 16px;border:1px solid #e8e0f3;border-radius:9px;background:#fcfaff;scrollbar-gutter:stable}
+.wd-employee-report-columns .wd149-report-reference{flex:none;margin-bottom:0}
+.wd-employee-report-columns .wd149-report-reference .wd92-order-head{margin:12px 0 8px}
+.wd-employee-report-columns .wd97-share-scroll{max-height:112px}
+.wd-employee-report-columns .wd149-report-paper{max-width:none;padding:clamp(16px,2.2vw,28px)}
+.wd-employee-report-columns .wd149-report-paper h2{margin:0}
+.wd-employee-report-columns #employeeReportForm{display:flex;flex:1;flex-direction:column;min-height:0;overflow:auto}
+.wd-employee-report-columns #employeeReportForm[hidden],.wd-employee-report-columns #employeeReportSendStatus:empty{display:none}
+.wd-employee-report-columns #employeeReportForm>*{flex-shrink:0}
+.wd-employee-report-columns #employeeReportForm>.actions{justify-content:flex-end}
+.wd-employee-report-columns #employeeReportText{flex:1 1 0;height:auto;min-height:130px}
+.wd-employee-report-columns #employeeCloudReport{min-height:0;overflow:auto}
+.wd-employee-report-columns #employeeCloudReport .wd122-report-body{max-height:none;overflow:visible}
+@media(min-width:901px){
+  .wd-employee-report-columns{align-items:stretch;height:clamp(530px,calc(100dvh - 156px),700px);grid-template-rows:minmax(0,1fr)}
+}
+@media(max-width:900px){
+  .wd-employee-report-columns{grid-template-columns:minmax(0,1fr)}
+  .wd-employee-report-columns .wd97-order-scroll{flex:auto;min-height:120px;max-height:320px}
+  .wd-employee-report-columns #employeeReportText{flex:none;height:215px}
+}
 </style>
 <script src="./wd-talk-backup.js"></script>
 <link rel="stylesheet" href="./wd-sticky-notes.css">
@@ -1264,6 +1317,7 @@ function logout(){
   for(const id of ['todayWorkGate','modalLayer','payrollReminder'])$(id)?.remove();
   payrollReminderShown='';
   clearPrintDocument?.();
+  clearTimeout(homeAttendanceTimer);homeAttendanceMonths.clear();
   currentUser=null;activeStaffId=null;managerStaffId=null;homeDay=null;staffDetailOpen=false;editingStaff=false;managerStaffPinKey=null;staffSummaryMonth=localDay().slice(0,7);staffTasksOpen=false;instructionStaffId=null;driveReportFilters={date:'',staff:''};instructionDrafts.clear();
   staffListRole='';staffListOrder='name';reportStaffListOrder='seniority';staffListQuery='';
   noteSearch='';lastDeletedMaterial=null;
@@ -1903,37 +1957,144 @@ function paintEmployeeRemoteDates(dates,date,instructionOnly,source,days){
   const known=employeeRemoteWorkDates.get(dates)||{};
   known[source]=days;
   employeeRemoteWorkDates.set(dates,known);
+  const history=[...employeeWorkDateHistory(date,instructionOnly),...Object.values(known).flat()];
   const focusedDay=document.activeElement?.dataset?.employeeWorkDay;
   const scrollTop=dates.scrollTop;
-  dates.innerHTML=employeeWorkDateRows([...employeeWorkDateHistory(date,instructionOnly),...Object.values(known).flat()],date);
+  dates.innerHTML=employeeWorkDateRows(history,date);
   dates.scrollTop=scrollTop;
   if(validAttendanceDay(focusedDay))dates.querySelector(`[data-employee-work-day="${focusedDay}"]`)?.focus({preventScroll:true});
+}
+
+function employeeWorkCalendarMarkup(date){
+  return `<button type="button" id="employeeWorkCalendarOpen" aria-haspopup="dialog" aria-controls="employeeWorkCalendar" aria-label="${esc(date)} 업무일 달력 열기">
+      <time datetime="${esc(date)}">${esc(date)}</time>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></svg>
+    </button>
+    <dialog id="employeeWorkCalendar" aria-labelledby="employeeWorkCalendarTitle">
+      <div class="wd-work-calendar-head"><h2 id="employeeWorkCalendarTitle">업무일 달력</h2><button type="button" id="employeeWorkCalendarClose" class="small">닫기</button></div>
+      <div class="wd-work-calendar-month">
+        <button type="button" id="employeeWorkCalendarBack" aria-label="이전 달">‹</button>
+        <div class="wd-work-calendar-month-fields">
+          <select id="employeeWorkCalendarYear" aria-label="연도 선택"></select>
+          <select id="employeeWorkCalendarMonth" aria-label="월 선택">${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('')}</select>
+        </div>
+        <button type="button" id="employeeWorkCalendarNext" aria-label="다음 달">›</button>
+      </div>
+      <div class="wd-work-calendar-legend"><span class="wd-work-calendar-flag order">업무지시</span><span class="wd-work-calendar-flag report">업무보고</span></div>
+      <p role="status" class="smallText wd-work-calendar-status" id="employeeWorkCalendarStatus"></p>
+      <div class="wd-work-calendar-grid" id="employeeWorkCalendarGrid"></div>
+    </dialog>`;
+}
+
+function employeeWorkCalendarDays(month,selected,orders,reports,today){
+  const {days,leading,trailing}=monthCalendarDates(month);
+  return [...'월화수목금토일'].map(day=>`<span>${day}</span>`).join('')+
+    '<span aria-hidden="true"></span>'.repeat(leading)+days.map(day=>{
+      const hasOrder=orders.has(day),hasReport=reports.has(day);
+      const labels=[attendanceDate(day),hasOrder?'업무지시 있음':'',hasReport?'업무보고 있음':''].filter(Boolean).join(', ');
+      return `<button type="button" data-work-calendar-day="${day}" aria-label="${esc(labels)}" aria-pressed="${day===selected}"${day===today?' aria-current="date"':''}>
+        <time datetime="${day}">${Number(day.slice(-2))}</time>${hasOrder?'<span class="wd-work-calendar-flag order">지시</span>':''}${hasReport?'<span class="wd-work-calendar-flag report">보고</span>':''}</button>`;
+    }).join('')+'<span aria-hidden="true"></span>'.repeat(trailing);
+}
+
+function bindEmployeeWorkCalendar(date,pickDate){
+  const dialog=$('employeeWorkCalendar'),trigger=$('employeeWorkCalendarOpen');
+  const grid=$('employeeWorkCalendarGrid'),status=$('employeeWorkCalendarStatus');
+  const yearPicker=$('employeeWorkCalendarYear'),monthPicker=$('employeeWorkCalendarMonth');
+  const localOrders=tasksForStaff(activeStaffId).filter(task=>validAttendanceDay(task.date)&&instructionTaskText(task).trim()).map(task=>task.date);
+  const today=payrollCalendar.format(new Date());
+  const nearbyYears=Array.from({length:16},(_,i)=>Number(today.slice(0,4))+5-i);
+  let month=date.slice(0,7),orders=new Set(localOrders),reports=new Set();
+  let yearOptions='',orderStatus='',reportStatus='업무보고 날짜를 확인하는 중이에요.',orderRequest;
+  const paint=focusDay=>{
+    const focus=focusDay||document.activeElement?.dataset?.workCalendarDay;
+    const [year,number]=month.split('-');
+    const years=new Set([Number(year),...nearbyYears]);
+    for(const days of [orders,reports])for(const day of days)years.add(Number(day.slice(0,4)));
+    const options=[...years].sort((a,b)=>b-a).map(value=>`<option value="${value}">${value}년</option>`).join('');
+    if(options!==yearOptions){yearPicker.innerHTML=options;yearOptions=options;}
+    yearPicker.value=year;
+    monthPicker.value=number;
+    status.textContent=[orderStatus,reportStatus].filter(Boolean).join(' ');
+    grid.innerHTML=employeeWorkCalendarDays(month,date,orders,reports,today);
+    if(validAttendanceDay(focus))grid.querySelector(`[data-work-calendar-day="${focus}"]`)?.focus({preventScroll:true});
+  };
+  const goToMonth=value=>{
+    if(!validAttendanceDay(value+'-01'))return;
+    month=value;
+    paint();
+  };
+  const move=amount=>{
+    const target=new Date(month+'-01T12:00:00');
+    target.setMonth(target.getMonth()+amount);
+    goToMonth(localDay(target).slice(0,7));
+  };
+  yearPicker.onchange=monthPicker.onchange=()=>goToMonth(yearPicker.value+'-'+monthPicker.value);
+  trigger.onclick=()=>{
+    if(dialog.open)return;
+    month=date.slice(0,7);
+    dialog.showModal();
+    const session=employeeDrive;
+    if(expectedEmployeeDriveAccount()&&session?.expires>Date.now()){
+      if(!orderRequest){
+        orderStatus='업무지시 날짜를 확인하는 중이에요.';
+        const current=()=>$('employeeWorkCalendar')===dialog&&employeeDrive===session;
+        orderRequest=employeeDriveInstructionFiles(null,session.token).then(files=>{
+          if(!current())return;
+          orders=new Set([...localOrders,...files.map(file=>workDriveDate(file.name)).filter(validAttendanceDay)]);
+          orderStatus='';
+        }).catch(()=>{if(current())orderStatus='일부 업무지시 날짜를 확인하지 못했어요.';}).finally(()=>{
+          orderRequest=null;
+          if(current()&&dialog.open)paint();
+        });
+      }
+    }else if(expectedEmployeeDriveAccount()||staffHqConnectionNeeded())orderStatus='Drive에 연결하면 업무지시 날짜를 확인할 수 있어요.';
+    paint(date);
+  };
+  $('employeeWorkCalendarBack').onclick=()=>move(-1);
+  $('employeeWorkCalendarNext').onclick=()=>move(1);
+  $('employeeWorkCalendarClose').onclick=()=>dialog.close();
+  grid.onclick=event=>{
+    const day=event.target.closest('[data-work-calendar-day]')?.dataset.workCalendarDay;
+    if(!day)return;
+    if(day===date)dialog.close();
+    else if(!pickDate(day))return;
+    $('employeeWorkCalendarOpen')?.focus();
+  };
+  return (rows,message='')=>{
+    reports=new Set(rows.map(employeeReportWorkDay).filter(validAttendanceDay));
+    reportStatus=message;
+    if(dialog.open)paint();
+  };
 }
 
 function employeeInstructions(instructionOnly=false){
   const {date,tasks,task}=employeeReportContext(instructionOnly);
   const combined=!instructionOnly&&isEmployeeWorkspace();
-  const history=employeeWorkDateHistory(date,instructionOnly);
   const shared=S.materials.filter(item=>item.kind==='shared'&&!item.deletedAt&&item.category!=='manual');
   const assignedFiles=tasks.flatMap(item=>item.instructionFiles||[]);
   const order=task;
   const supportsDrive=!!expectedEmployeeDriveAccount();
   const driveReady=employeeDrive?.expires>Date.now();
   const name=instructionOnly?'업무지시':'업무보고';
+  const orderText=combined?tasks.map(instructionTaskText).filter(text=>text.trim()).join('\n\n'):'';
+  const feedback=(combined?tasks:task?[task]:[]).filter(item=>item.feedback.some(entry=>!entry.reviewedOnly)).map(feedbackHTML).join('');
   const instructionDetails=`
-        ${(instructionOnly||combined)&&supportsDrive?`${driveReady?'<button type="button" class="small" id="refreshEmployeeOrders">새로고침</button>':''}
+        ${(instructionOnly||combined)&&supportsDrive?`${instructionOnly&&driveReady?'<button type="button" class="small" id="refreshEmployeeOrders">새로고침</button>':''}
           <p id="employeeOrderStatus" class="smallText" role="status">${driveReady?'':'상단에서 Drive 연결을 갱신해 주세요.'}</p>`:(instructionOnly||combined)&&staffHqConnectionNeeded()?staffHqConnectionLink():''}
-        ${tasks.length>1?`<label>이날 업무지시<select id="employeeReportTask">${tasks.map(item=>`<option value="${esc(item.id)}" ${item.id===task?.id?'selected':''}>${esc(item.title)}</option>`).join('')}</select></label>`:''}
-        <div class="wd97-order-scroll" tabindex="0" role="region" aria-label="업무지시 원문과 피드백"><div id="employeeDriveOrder" class="wd92-order-body">${order?
+        ${!combined&&tasks.length>1?`<label>이날 업무지시<select id="employeeReportTask">${tasks.map(item=>`<option value="${esc(item.id)}" ${item.id===task?.id?'selected':''}>${esc(item.title)}</option>`).join('')}</select></label>`:''}
+        <div class="wd97-order-scroll" tabindex="0" role="region" aria-label="업무지시 원문과 피드백"><div id="employeeDriveOrder" class="${combined?'wd92-original':'wd92-order-body'}">${combined?esc(orderText):order?
           `<p class="smallText">보낸 사람 <strong>${esc(order.instructionSender?.name||'기록 없음')}</strong></p>${employeeInstructionList(order.todos||[],order.objective||order.title,order.directInstruction)}`:`<p class="empty">${staffHqConnectionNeeded()?'본진 직원 계정 연결 후 Drive 업무지시를 확인할 수 있어요.':'이날 등록된 업무지시가 없습니다.'}</p>`}</div>
-        ${task?.feedback.some(f=>!f.reviewedOnly)?`<h3>피드백</h3>${feedbackHTML(task)}`:''}
+        ${feedback?`<h3>피드백</h3>${feedback}`:''}
         ${instructionOnly?instructionFilesList(order?.instructionFiles||[]):''}</div>
         <dialog id="employeeOrderDialog" class="wd62-month-dialog wd92-order-dialog" aria-labelledby="employeeOrderDialogTitle">
           <div class="wd62-month-dialog-head"><div><h3 id="employeeOrderDialogTitle">업무지시</h3><p>${esc(attendanceDate(date))}</p></div><form method="dialog"><button type="submit">닫기</button></form></div>
-          <div id="employeeOrderLargeText" class="wd92-order-large" tabindex="0"></div>
+          <div id="employeeOrderLargeText" class="wd92-order-large${combined?' wd92-original':''}" tabindex="0"></div>
         </dialog>
   `;
-  const sharedDetails=instructionOnly?'':`<section class="wd97-share"><div class="wd92-order-head"><h2>업무공유파일</h2> ${supportsDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':''}</div>
+  const sharedRefresh=supportsDrive&&driveReady?'<button type="button" class="small" id="refreshEmployeeDrive">새로고침</button>':'';
+  const sharedDetails=instructionOnly?'':`<section class="wd97-share">
+        ${!combined||sharedRefresh?`<div class="wd92-order-head">${combined?'':'<h2>업무공유파일</h2>'}${sharedRefresh}</div>`:''}
         ${supportsDrive?`<p id="employeeDriveStatus" class="smallText" role="status">${driveReady?'공유파일을 불러오는 중…':'공유파일을 보려면 상단에서 Drive 연결을 갱신해 주세요.'}</p>
         `:'<p class="smallText">TEST에서 회사가 공유한 파일이에요.</p>'}
         <div class="wd97-share-scroll" tabindex="0" role="region" aria-label="업무공유파일 목록">
@@ -1941,13 +2102,11 @@ function employeeInstructions(instructionOnly=false){
         ${assignedFiles.length?instructionFilesList(assignedFiles):''}
         ${shared.length?`<ul class="wd91-file-list">${shared.map(item=>`<li><span>${esc(item.title)}</span><button class="small" data-material-view="${esc(item.id)}">보기</button><button class="small" data-download="${esc(item.file.id)}">다운로드</button></li>`).join('')}</ul>`:supportsDrive||assignedFiles.length?'':'<p class="empty">등록된 업무공유파일이 없습니다.</p>'}</div>
       </section>`;
-  const reportOrders=`<section class="wd91-order"><div class="wd92-order-head"><h2>업무지시</h2>
-    <button type="button" class="small" id="employeeOrderExpand" ${order?'':'hidden'}>크게 보기</button></div>
-    ${instructionDetails}
-  </section>`;
-  const reportDetails=instructionOnly?'':`${combined?`<div class="wd149-report-reference wd150-report-instructions">${reportOrders}</div>`:''}
-    <article class="wd133-instruction-paper wd149-report-paper">
-      <header class="wd133-instruction-paper-head"><div><h3>${esc(attendanceDate(date,true))} 업무보고</h3></div></header>
+  const reportOrderContent=`<div class="wd92-order-head"><h2>업무지시</h2>
+    <button type="button" class="small" id="employeeOrderExpand" ${(combined?orderText:order)?'':'hidden'}>크게 보기</button></div>
+    ${instructionDetails}`;
+  const reportPaper=instructionOnly?'':`<article class="wd133-instruction-paper wd149-report-paper${combined?' card':''}">
+      <header class="wd133-instruction-paper-head"><div>${combined?'<h2>업무보고</h2>':`<h3>${esc(attendanceDate(date,true))} 업무보고</h3>`}</div></header>
       <p id="employeeReportSendStatus" class="smallText" role="status">Drive 업무보고를 확인하는 중이에요.</p>
       ${staffHqConnectionNeeded()?staffHqConnectionLink():''}
       <div id="employeeCloudReport" hidden></div>
@@ -1956,18 +2115,29 @@ function employeeInstructions(instructionOnly=false){
         <label for="employeeReportFiles">파일 첨부 (선택)</label><input id="employeeReportFiles" type="file" multiple>
         <div class="actions"><button type="submit" class="primary" id="employeeReportSubmit">업무보고 제출</button></div>
       </form>
-    </article>
-    <details class="wd149-report-reference"><summary>${combined?'업무공유파일':'업무지시 및 공유파일'}</summary>
-      ${combined?'':reportOrders}
+    </article>`;
+  const reportDetails=`${reportPaper}
+    <details class="wd149-report-reference"><summary>업무지시 및 공유파일</summary>
+      <section class="wd91-order">${reportOrderContent}</section>
       ${sharedDetails}
     </details>`;
+  if(combined)return `<div class="titleRow wd-employee-report-toolbar"><h1>업무보고</h1>
+    ${employeeWorkCalendarMarkup(date)}
+  </div>
+  <div class="wd-employee-report-columns">
+    <section class="card wd91-order">
+      ${reportOrderContent}
+      <details class="wd149-report-reference" open><summary>업무공유파일</summary>${sharedDetails}</details>
+    </section>
+    ${reportPaper}
+  </div>`;
   return `<div class="titleRow"><h1>${name}</h1></div>
     <div class="wd135-work-layout wd149-employee-work">
       <section class="card"><h2>${name} 목록</h2>
-        <label for="employeeReportDate">${instructionOnly||combined?'업무일':'보고일'}</label>
+        <label for="employeeReportDate">${instructionOnly?'업무일':'보고일'}</label>
         <input type="date" id="employeeReportDate" value="${esc(date)}">
         <div id="employeeWorkDates" class="wd135-work-scroll wd149-work-dates" tabindex="0" role="region" aria-label="${name} 날짜 목록">
-          ${employeeWorkDateRows(history,date)}
+          ${employeeWorkDateRows(employeeWorkDateHistory(date,instructionOnly),date)}
         </div>
       </section>
       <section class="card">
@@ -1986,13 +2156,14 @@ function employeeInstructions(instructionOnly=false){
 
 function bindEmployeeInstructionRefresh({date,tasks},instructionOnly){
   const button=$('refreshEmployeeOrders');
-  if(!button)return;
   const output=$('employeeDriveOrder'),statusLine=$('employeeOrderStatus'),expand=$('employeeOrderExpand');
-  const initial=tasks.length?output.innerHTML:'';
+  if(!statusLine||!(employeeDrive?.expires>Date.now()))return;
+  const plainText=!instructionOnly&&isEmployeeWorkspace();
+  const initial=plainText?output.textContent:tasks.length?output.innerHTML:'';
   const refresh=async({reloadDates=false}={})=>{
-    if(button.disabled)return;
+    if(button?.disabled)return;
     const session=employeeDrive,current=()=>$('employeeDriveOrder')===output&&employeeDrive===session;
-    button.disabled=true;
+    if(button)button.disabled=true;
     statusLine.textContent='Drive 업무지시를 확인하는 중이에요.';
     try{
       if(!session||session.expires<=Date.now())throw new Error('업무센터 Drive 연결을 갱신해 주세요.');
@@ -2014,17 +2185,24 @@ function bindEmployeeInstructionRefresh({date,tasks},instructionOnly){
       const files=await additionalEmployeeInstructions(date,session.token,tasks,true);
       const results=await Promise.allSettled(files.map(row=>readDriveReportBody(row,session.token)));
       if(!current())return;
-      const documents=results.map((result,index)=>result.status==='fulfilled'?
-        `<article class="wd138-remote-order"><h3>${esc(files[index].name)}</h3>${instructionDocument(result.value||'저장된 본문이 없어요.')}</article>`:'').join('');
-      const hasDaily=files.some((file,index)=>file.appProperties?.wdInstructionDay&&results[index].status==='fulfilled');
-      const content=(hasDaily?'':initial)+documents;
-      output.innerHTML=content||'<p class="empty">이날 등록된 업무지시가 없습니다.</p>';
-      expand.hidden=!content;
+      const loaded=results.flatMap((result,index)=>result.status==='fulfilled'?[{file:files[index],body:result.value}]:[]);
+      const local=loaded.some(({file})=>file.appProperties?.wdInstructionDay)?'':initial;
+      if(plainText){
+        const content=[local,...loaded.map(({body})=>body)].filter(text=>text?.trim()).join('\n\n');
+        output.textContent=content;
+        expand.hidden=!content;
+      }else{
+        const documents=loaded.map(({file,body})=>
+          `<article class="wd138-remote-order"><h3>${esc(file.name)}</h3>${instructionDocument(body||'저장된 본문이 없어요.')}</article>`).join('');
+        const content=local+documents;
+        output.innerHTML=content||'<p class="empty">이날 등록된 업무지시가 없습니다.</p>';
+        expand.hidden=!content;
+      }
       statusLine.textContent=results.some(result=>result.status==='rejected')?'일부 Drive 업무지시를 불러오지 못했어요.':'';
     }catch(error){if(current())statusLine.textContent=error.message||'Drive 업무지시를 불러오지 못했어요.';}
-    finally{button.disabled=false;}
+    finally{if(button)button.disabled=false;}
   };
-  button.onclick=()=>refresh({reloadDates:true});
+  if(button)button.onclick=()=>refresh({reloadDates:true});
   void refresh();
 }
 
@@ -2037,11 +2215,13 @@ function bindEmployeeInstructions(instructionOnly=false){
     if(activeStepUploads){notify('첨부 저장이 끝난 뒤 이동하세요');return false;}
     employeeReportDate=day;S.selected=null;render();return true;
   };
-  $('employeeReportDate').onchange=event=>{
-    if(pickDate(event.target.value))$('employeeReportDate')?.focus();
+  const context=employeeReportContext(instructionOnly);
+  const dateInput=$('employeeReportDate');
+  if(dateInput)dateInput.onchange=event=>{
+    if(pickDate(event.target.value))$(event.target.id)?.focus();
     else event.target.value=employeeReportContext(instructionOnly).date;
   };
-  dates.onclick=event=>{
+  if(dates)dates.onclick=event=>{
     const button=event.target.closest('[data-employee-work-day]');
     if(!button||button.getAttribute('aria-pressed')==='true')return;
     const day=button.dataset.employeeWorkDay,scrollTop=dates.scrollTop;
@@ -2051,35 +2231,40 @@ function bindEmployeeInstructions(instructionOnly=false){
     newDates.querySelector(`[data-employee-work-day="${day}"]`)?.focus({preventScroll:true});
   };
   if($('employeeReportTask'))$('employeeReportTask').onchange=event=>{S.selected=event.target.value;render();$('employeeReportTask')?.focus();};
-  const context=employeeReportContext(instructionOnly);
+  const updateReportDates=$('employeeWorkCalendar')?bindEmployeeWorkCalendar(context.date,pickDate):null;
   if($('employeeOrderExpand'))$('employeeOrderExpand').onclick=()=>{
-    $('employeeOrderLargeText').innerHTML=$('employeeDriveOrder').innerHTML;
+    const large=$('employeeOrderLargeText'),order=$('employeeDriveOrder');
+    if(!instructionOnly&&isEmployeeWorkspace())large.textContent=order.textContent;
+    else large.innerHTML=order.innerHTML;
     $('employeeOrderDialog').showModal();
   };
   if(instructionOnly||isEmployeeWorkspace())bindEmployeeInstructionRefresh(context,instructionOnly);
   if(!instructionOnly){
     bindReportDriveRefresh(context.date,!!context.task?.instructionSender);
-    bindCloudEmployeeReport(context.date,dates);
+    bindCloudEmployeeReport(context.date,dates,updateReportDates);
   }
 }
 
-function bindCloudEmployeeReport(date,dates){
+function bindCloudEmployeeReport(date,dates,updateReportDates){
   const form=$('employeeReportForm'),output=$('employeeCloudReport'),statusLine=$('employeeReportSendStatus');
   const session=employeeDrive;
   const current=()=>$('employeeCloudReport')===output&&employeeDrive===session;
   if(!employeeReportDriveFolder()){
     statusLine.textContent='업무보고는 본진에 연결된 직원 계정으로 제출할 수 있어요.';
+    updateReportDates?.([],statusLine.textContent);
     return;
   }
   if(!session||session.expires<=Date.now()||session.scope!==driveWriteScope){
     statusLine.textContent='상단에서 Drive 연결을 확인해 주세요.';
+    updateReportDates?.([],'Drive에 연결하면 업무보고 날짜를 확인할 수 있어요.');
     return;
   }
   const load=async savedRow=>{
     const rows=await employeeReportDriveRows(session.token);
     if(savedRow&&!rows.some(row=>row.id===savedRow.id))rows.unshift(savedRow);
     if(!current())return;
-    paintEmployeeRemoteDates(dates,date,false,'reports',rows.map(employeeReportWorkDay));
+    if(dates)paintEmployeeRemoteDates(dates,date,false,'reports',rows.map(employeeReportWorkDay));
+    updateReportDates?.(rows);
     const dayRows=rows.filter(row=>employeeReportWorkDay(row)===date);
     if(!dayRows.length){
       statusLine.textContent='';output.hidden=true;form.hidden=false;
@@ -2124,7 +2309,11 @@ function bindCloudEmployeeReport(date,dates){
     }catch(error){if($('employeeCloudReport')===output)statusLine.textContent=error.message||'Drive 업무보고 저장을 확인하지 못했어요.';}
     finally{button.disabled=false;activeStepUploads--;}
   };
-  void load().catch(error=>{if($('employeeCloudReport')===output)statusLine.textContent=error.message||'Drive 업무보고를 확인하지 못했어요.';});
+  void load().catch(error=>{
+    if(!current())return;
+    statusLine.textContent=error.message||'Drive 업무보고를 확인하지 못했어요.';
+    updateReportDates?.([],'업무보고 날짜를 확인하지 못했어요.');
+  });
 }
 
 function completeEmployeeReview(task){
@@ -6346,13 +6535,107 @@ function monthCalendarDates(month){
   return {days,leading,trailing:(7-(leading+count)%7)%7};
 }
 
+const homeAttendanceMonths=new Map();
+let homeAttendanceTimer;
+
+function homeAttendanceMonth(login,month){
+  const entry=homeAttendanceMonths.get(login+'|'+month);
+  return entry?.generation===driveConnectGeneration?entry:null;
+}
+
+function loadHomeAttendanceMonth(login,month){
+  const prior=homeAttendanceMonth(login,month);
+  if(prior?.pending)return prior.pending;
+  if(prior?.loadedAt&&Date.now()-prior.loadedAt<30000)return Promise.resolve();
+  const entry={...prior,generation:driveConnectGeneration};
+  homeAttendanceMonths.set(login+'|'+month,entry);
+  entry.pending=readManagerWorkMonth(login,month,true).then(rows=>{
+    entry.days=new Map(rows.map(ledgerRow).filter(Boolean).map(row=>[row.day,row]));
+    entry.loadedAt=Date.now();
+  }).finally(()=>{entry.pending=null;});
+  return entry.pending;
+}
+
 function dayAttendance(day,profiles){
   const planned=new Set(S.workRoster?.[day]||[]);
   const start=row=>row.record?timeOnly(row.record.inAt):row.hours?.start||'99:99';
+  const month=day.slice(0,7);
   return profiles.map(profile=>({profile,planned:planned.has(profile.id),hours:S.workSchedule?.[day]?.[profile.id],
-    record:(S.staffData[profile.id]?.attendance||[]).find(row=>row.day===day&&row.inAt)}))
+    record:homeAttendanceMonth(payrollEmployeeLogin(profile),month)?.days?.get(day)||
+      (S.staffData[profile.id]?.attendance||[]).find(row=>row.day===day&&row.inAt)}))
     .filter(row=>row.planned||row.record)
     .sort((a,b)=>start(a).localeCompare(start(b))||a.profile.name.localeCompare(b.profile.name,'ko'));
+}
+
+function homeAttendanceState(row,day,today){
+  return row.record?(row.record.outAt?'근무 완료':day===today?'근무 중':'퇴근 미기록'):'출근 예정';
+}
+
+function homeStaffColor(id){
+  const hues=[263,214,330,28,190,290,347,43];
+  const index=S.staffProfiles.findIndex(profile=>profile.id===id);
+  return `style="--staff-hue:${index<0?263:hues[index]??Math.round((72+index*137.508)%360)}"`;
+}
+
+function homeCalendarAttendanceMarkup(staff,day,today){
+  return staff.map(row=>{
+    const {profile,record,hours}=row;
+    const time=record?timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):''):
+      hours?.start&&hours?.end?hours.start+' ~ '+hours.end:'';
+    const state=record?homeAttendanceState(row,day,today):'예정';
+    return `<span class="wd67-day-staff wd88-person" ${homeStaffColor(profile.id)}><b>${esc(profile.name)}</b><span>${esc(state+(time?' '+time:''))}</span></span>`;
+  }).join('');
+}
+
+function homeWeeklyAttendanceMarkup(week,profiles,today){
+  const weeklyStaff=new Map();
+  for(const date of week)for(const row of dayAttendance(date,profiles)){
+    const id=row.profile.id;
+    if(!weeklyStaff.has(id))weeklyStaff.set(id,[]);
+    weeklyStaff.get(id).push(attendanceDate(date)+' '+(row.record?homeAttendanceState(row,date,today):'예정'));
+  }
+  return profiles.filter(profile=>weeklyStaff.has(profile.id)).map(profile=>`<div class="wd87-summary-row">
+    <strong class="wd88-person" ${homeStaffColor(profile.id)}>${esc(profile.name)}</strong><span>${esc(weeklyStaff.get(profile.id).join(' · '))}</span>
+  </div>`).join('')||'<p class="wd68-empty">이번 주 출근 일정이 없어요.</p>';
+}
+
+function homeDayAttendanceMarkup(staff,day,today){
+  const stamp=value=>esc(clockLabel(timeOnly(value)));
+  return staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${homeStaffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText">${!row.record&&day<today?'출근 기록 없음':homeAttendanceState(row,day,today)}</span>
+    ${row.record?`<small>출근 ${stamp(row.record.inAt)}${row.record.outAt?' · 퇴근 '+stamp(row.record.outAt):''}</small>`:
+      row.planned?`<small>예정 ${esc(scheduledHoursLabel(row.hours))}</small>`:''}</div></div>`).join('')||'<p class="wd68-empty">출근 예정이나 기록이 없습니다.</p>';
+}
+
+function bindHomeAttendance(day){
+  const status=$('homeAttendanceStatus');
+  const today=localDay(),week=weeklyDays(today),profiles=activeProfiles();
+  const months=[...new Set([day.slice(0,7),...week.map(date=>date.slice(0,7))])];
+  const logins=[...new Set(profiles.map(payrollEmployeeLogin).filter(Boolean))];
+  clearTimeout(homeAttendanceTimer);
+  if(!logins.length)return;
+  const active=()=>currentUser==='manager'&&$('homeAttendanceStatus')===status;
+  const refresh=async()=>{
+    if(!active())return;
+    if(!document.hidden){
+      if(!logins.every(login=>months.every(month=>homeAttendanceMonth(login,month)?.loadedAt))){
+        status.hidden=false;status.textContent='실제 근무기록을 확인 중이에요.';
+      }
+      const results=await Promise.allSettled(logins.flatMap(login=>months.map(month=>loadHomeAttendanceMonth(login,month))));
+      if(!active())return;
+      for(const cell of document.querySelectorAll('[data-home-attendance]')){
+        const date=cell.dataset.homeAttendance;
+        cell.innerHTML=homeCalendarAttendanceMarkup(dayAttendance(date,profiles),date,today);
+      }
+      $('homeWeeklyAttendanceRows').innerHTML=homeWeeklyAttendanceMarkup(week,profiles,today);
+      const staff=dayAttendance(day,profiles);
+      $('homeDayAttendanceCount').textContent=staff.length+'명';
+      $('homeDayAttendanceRows').innerHTML=homeDayAttendanceMarkup(staff,day,today);
+      status.hidden=!results.some(result=>result.status==='rejected');
+      status.textContent=status.hidden?'':'일부 실제 근무기록을 확인하지 못했어요.';
+    }
+    if(active())homeAttendanceTimer=setTimeout(refresh,60000);
+  };
+  void refresh();
 }
 
 function homeRosterEditor(profiles){
@@ -6374,48 +6657,27 @@ function managerHomeView(){
   const month=day.slice(0,7);
   const {days,leading,trailing}=monthCalendarDates(month);
   const thisWeek=weeklyDays(today);
-  const calendar=new Map([...days,...thisWeek].map(date=>[date,{staff:[],tasks:[]}]));
-  for(const task of visibleAdminTasks())if(!task.dailyJournal)calendar.get(task.date)?.tasks.push(task);
-  for(const [date,entry] of calendar)entry.staff=dayAttendance(date,profiles);
-  const selected=calendar.get(day);
-  const weeklyStaff=new Map();
-  for(const date of thisWeek)for(const {profile} of calendar.get(date).staff){
-    if(!weeklyStaff.has(profile.id))weeklyStaff.set(profile.id,[]);
-    weeklyStaff.get(profile.id).push(date);
-  }
-  const hues=[263,214,330,28,190,290,347,43];
-  const staffHues=new Map(S.staffProfiles.map((profile,i)=>[profile.id,hues[i]??Math.round((72+i*137.508)%360)]));
-  const staffColor=id=>`style="--staff-hue:${staffHues.get(id)??263}"`;
-  const attendanceState=row=>row.record?(row.record.outAt?'퇴근 완료':'출근 완료'):day<today?'출근 기록 없음':'출근 예정';
-  const stamp=value=>esc(clockLabel(timeOnly(value)));
+  const selectedStaff=dayAttendance(day,profiles);
+  const selectedTasks=visibleAdminTasks().filter(task=>task.date===day&&!task.dailyJournal);
   return `<div class="wd67-home">
     <section class="card wd67-calendar"><div class="wd65-section-head"><div><h2>${esc(staffMonthLabel(month))} 일정</h2></div>
       <div class="wd67-month-nav"><button class="small" id="prevHomeMonth" aria-label="이전 달">‹</button><button class="small" id="todayHomeMonth">오늘</button><button class="small" id="nextHomeMonth" aria-label="다음 달">›</button>
       </div></div>
+    <p id="homeAttendanceStatus" class="smallText" role="status" hidden></p>
     <div class="wd87-month-grid" aria-label="${esc(staffMonthLabel(month))} 출근 달력">
       ${'월화수목금토일'.split('').map(label=>`<span class="wd87-weekday">${label}</span>`).join('')}
       ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(leading)}
-      ${days.map(date=>{
-      const staff=calendar.get(date).staff;
-      return `<button type="button" class="wd67-day" data-home-day="${date}" aria-pressed="${date===day}" ${date===today?'aria-current="date"':''}
+      ${days.map(date=>`<button type="button" class="wd67-day" data-home-day="${date}" aria-pressed="${date===day}" ${date===today?'aria-current="date"':''}
         aria-label="${esc(attendanceDate(date))} 일정 보기">
         <span class="wd90-day-head"><strong>${Number(date.slice(8))}</strong>${date===today?'<small>오늘</small>':''}</span>
-        ${staff.map(({profile,record,hours})=>{
-          const time=record
-            ? timeOnly(record.inAt)+(record.outAt?' ~ '+timeOnly(record.outAt):' · 퇴근 미기록')
-            : hours?.start&&hours?.end?'예정 '+hours.start+' ~ '+hours.end:'';
-          return `<span class="wd67-day-staff wd88-person" ${staffColor(profile.id)}><b>${esc(profile.name)}</b>${time?`<span>${esc(time)}</span>`:''}</span>`;
-        }).join('')}
-      </button>`;
-    }).join('')}
+        <span class="wd67-calendar-attendance" data-home-attendance="${date}">${homeCalendarAttendanceMarkup(dayAttendance(date,profiles),date,today)}</span>
+      </button>`).join('')}
     ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(trailing)}
     </div><p class="smallText wd67-legend">날짜를 누르면 근무 일정을 추가하거나 업무지시를 볼 수 있어요.</p></section>
     <div class="wd87-home-summary" role="region" aria-label="이번 주 출근과 이번 주 업무보고, 업무공유폴더">
       <section class="card"><h2>이번 주 출근</h2>
         <p class="smallText">${esc(thisWeek[0].slice(5).replace('-','/'))} ~ ${esc(thisWeek.at(-1).slice(5).replace('-','/'))}</p>
-        ${profiles.filter(profile=>weeklyStaff.has(profile.id)).map(profile=>`<div class="wd87-summary-row">
-          <strong class="wd88-person" ${staffColor(profile.id)}>${esc(profile.name)}</strong><span>${weeklyStaff.get(profile.id).map(date=>esc(attendanceDate(date))).join(' · ')}</span>
-        </div>`).join('')||'<p class="wd68-empty">이번 주 출근 일정이 없어요.</p>'}
+        <div id="homeWeeklyAttendanceRows">${homeWeeklyAttendanceMarkup(thisWeek,profiles,today)}</div>
       </section>
       <section class="card"><div class="wd132-instruction-head"><h2>이번 주 업무보고</h2>
         <button type="button" class="small" id="homeWeeklyReportsLink">업무보고 보기</button></div>
@@ -6428,19 +6690,18 @@ function managerHomeView(){
     </div>
     <dialog id="homeDayDialog" class="wd62-month-dialog wd87-day-dialog wd67-day-panel" aria-labelledby="homeDayTitle">
     <div class="wd62-month-dialog-head"><h2 id="homeDayTitle">${esc(attendanceDate(day))} 일정</h2><form method="dialog"><button type="submit">닫기</button></form></div>
-    <div class="wd68-day-heading"><h3>출근 인원 <span class="pill">${selected.staff.length}명</span></h3></div>
+    <div class="wd68-day-heading"><h3>출근 인원 <span class="pill" id="homeDayAttendanceCount">${selectedStaff.length}명</span></h3></div>
     ${homeRosterEditor(profiles)}
-    ${selected.staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${staffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText">${attendanceState(row)}</span>
-      ${row.planned?`<small>예정 ${esc(scheduledHoursLabel(row.hours))}</small>`:''}
-      ${row.record?`<small>출근 ${stamp(row.record.inAt)}${row.record.outAt?' · 퇴근 '+stamp(row.record.outAt):''}</small>`:''}</div></div>`).join('')||'<p class="wd68-empty">출근 예정이나 기록이 없습니다.</p>'}
-    <h3>업무지시 <span class="pill">${selected.tasks.length}건</span></h3>
-    ${selected.tasks.map(task=>`<button type="button" class="wd65-task wd67-task-line" data-home-task="${esc(task.id)}"><strong>${esc(taskStaffName(task))}</strong> · ${esc(task.title)}</button>`).join('')||'<p class="wd68-empty">등록된 업무지시가 없습니다.</p>'}
+    <div id="homeDayAttendanceRows">${homeDayAttendanceMarkup(selectedStaff,day,today)}</div>
+    <h3>업무지시 <span class="pill">${selectedTasks.length}건</span></h3>
+    ${selectedTasks.map(task=>`<button type="button" class="wd65-task wd67-task-line" data-home-task="${esc(task.id)}"><strong>${esc(taskStaffName(task))}</strong> · ${esc(task.title)}</button>`).join('')||'<p class="wd68-empty">등록된 업무지시가 없습니다.</p>'}
     </dialog>
   </div>`;
 }
 
 function bindManagerHome(){
   const day=homeDay||localDay();
+  bindHomeAttendance(day);
   const select=date=>{homeDay=date;render();};
   const openDay=date=>{
     select(date);
