@@ -11198,7 +11198,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #wd09-auto-expiry-tabs { display:flex; gap:6px; margin:12px 0 7px; }
 #wd09-auto-expiry-tabs button[aria-pressed="true"] { color:#fff; background:var(--purple); }
 #pg-auto .wd09-auto-expiry-table :is(th,td):last-child { text-align:center; white-space:nowrap; }
-.wd09-auto-contact input { width:18px; height:18px; vertical-align:middle; accent-color:var(--purple); cursor:pointer; }
 #wk-client.wd09-copy-drawer { width:min(100%,740px); margin-inline:auto; grid-template-columns:minmax(0,1fr) minmax(0,340px); gap:clamp(16px,3vw,30px); }
 #wk-client .wd09-copy-phone { height:clamp(334px,51vh,440px); width:min(100%,340px); }
 #wk-client .wd09-copy-field input { width:100%; min-height:40px; padding:8px 12px; border:1px solid var(--s200); border-radius:9px; color:var(--navy); font:inherit; }
@@ -11219,7 +11218,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   body:has(:is(#pg-claim,#pg-auto,#pg-cust).on) #content { padding-top:24px!important; }
   #pg-auto .wd09-auto-expiry-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   #pg-auto .wd09-auto-expiry-header h2 { margin:0; }
-  #pg-auto .wd09-auto-expiry-header button { min-height:40px; }
   #pg-claim .wd09-claim-layout {
     display:grid; grid-template-columns:minmax(290px,1fr) minmax(0,2.35fr); gap:16px;
   }
@@ -11299,15 +11297,29 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   }
   #pg-claim .wd09-claim-person button:is(:hover,:focus-visible) { text-decoration:underline; }
   #pg-auto .wd09-auto-expiry-frame { max-height:clamp(250px,calc(100dvh - 310px),680px); }
-  #pg-auto .wd09-auto-expiry-table { min-width:1080px; table-layout:fixed; border-collapse:separate; border-spacing:0; }
+  #pg-auto .wd09-auto-expiry-table { min-width:1210px; table-layout:fixed; border-collapse:separate; border-spacing:0; }
   #pg-auto .wd09-auto-expiry-table th { z-index:1; background:var(--s50); }
   #pg-auto .wd09-auto-expiry-table :is(th,td):last-child {
     position:sticky; right:0; border-left:1px solid var(--s200); background:#fff; text-align:center;
   }
   #pg-auto .wd09-auto-expiry-table th:last-child { z-index:2; background:var(--s50); }
-  #app #pg-auto .wd09-auto-expiry-table .wd09-auto-contact { padding:0; }
-  .wd09-auto-contact label { display:grid; place-items:center; min-height:44px; cursor:pointer; }
-  #pg-auto .wd09-auto-expiry-table td.wd09-auto-contact:has(input:checked) { background:#eaf6ee; }
+  #pg-auto .wd09-auto-expiry-table :is(.wd09-auto-phone,.wd09-auto-use) {
+    white-space:nowrap; word-break:normal; overflow:hidden; text-overflow:ellipsis;
+  }
+  #pg-auto .wd09-auto-renewal .btn-sm { min-height:36px; white-space:nowrap; }
+  #pg-auto .wd09-auto-renewal .clm-badge { white-space:nowrap; }
+  #modal-auto-rec .wd09-auto-renewal-context {
+    margin:0 0 14px; padding:9px 12px; border-radius:8px;
+    background:var(--s100); color:var(--s700); font-size:14px; overflow-wrap:anywhere;
+  }
+  #modal-auto-detail .wd09-auto-history-card { margin-top:16px; }
+  .wd09-auto-history-row {
+    display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+    padding:8px 0; font-size:13px;
+  }
+  .wd09-auto-history-row + .wd09-auto-history-row { border-top:1px solid var(--s200); }
+  .wd09-auto-history-row strong { display:block; margin-bottom:3px; }
+  .wd09-auto-history-row .btn-sm { min-height:36px; }
   #pg-auto .wd09-auto-expiry-table :is(th,td):not(:last-child) { border-right:1px solid var(--s100); }
   #pg-auto .wd09-auto-expiry-table tbody tr { cursor:pointer; }
   #pg-auto .wd09-auto-expiry-table tbody tr:is(:hover,:focus-within) td { background:var(--s50); }
@@ -13407,8 +13419,7 @@ const wdTest09Storage = (() => {
   <div class="sec-hd"><h1 class="sec-title">자동차보험</h1></div>
   <section class="card" aria-labelledby="wd09-auto-expiry-title">
     <header class="wd09-auto-expiry-header">
-      <h2 class="card-title" id="wd09-auto-expiry-title">만기 연락 목록</h2>
-      <button class="btn-sm p" type="button" onclick="wd09StartAutoRegistration()">+ 자동차보험 추가</button>
+      <h2 class="card-title" id="wd09-auto-expiry-title">자동차보험 만기 목록</h2>
     </header>
     <div id="wd09-auto-expiry-tabs" role="group" aria-label="자동차보험 만기 범위">
       <button class="btn-sm p" type="button" data-range="soon" aria-pressed="true" onclick="wd09SetAutoExpiryRange('soon')">만기 30일 이내</button>
@@ -17316,12 +17327,7 @@ const wdTest09Storage = (() => {
 <div class="wd09-entry-body">
 <input id="auto-edit-id" type="hidden"/>
 <input id="auto-edit-custid" type="hidden"/>
-<div class="fld wd09-entry-customer" id="auto-customer-field" hidden>
-<label for="wd09-auto-customer">고객</label>
-<select id="wd09-auto-customer" onchange="wd09SyncAutoCustomer()"></select>
-<button type="button" class="btn-sm p" onclick="wd09OpenCustomerRegistration()">+ 고객 추가</button>
-<p id="wd09-auto-customer-hint" role="status" hidden>고객을 먼저 선택해 주세요.</p>
-</div>
+<p id="wd09-auto-renewal-context" class="wd09-auto-renewal-context" hidden></p>
 <fieldset id="wd09-auto-entry-fields" aria-label="자동차보험 정보">
 <div class="wd09-insurance-fields wd09-auto-form-grid">
 <div class="fld"><label for="auto-carnum">자동차번호</label><input id="auto-carnum" placeholder="예: 12가3456" type="text"/></div>
@@ -17410,6 +17416,10 @@ const wdTest09Storage = (() => {
 <div class="cd-row wd09-auto-detail-wide"><div class="cd-label">메모</div><div class="cd-box" id="atd-memo">-</div></div>
 <div class="cd-row wd09-auto-detail-wide"><div class="cd-label">등록일 / 수정일</div><div class="cd-val" id="atd-dates" style="font-size:12px;color:var(--s500);font-weight:600;">-</div></div>
 </div>
+<section class="wd09-insurance-detail-card wd09-auto-history-card" aria-labelledby="wd09-auto-history-title">
+<h3 id="wd09-auto-history-title">이 차량의 재가입 이력</h3>
+<div id="wd09-auto-history"></div>
+</section>
 </div>
 <footer class="modal-ft wd09-entry-footer">
 <button class="btn-s" id="atd-policy" type="button" hidden>증권 보기</button>
@@ -21274,12 +21284,10 @@ const WD09_AUTO_PHOTOS={
   dashboard:{field:'dashboardFile',label:'계기판'},
   plate:{field:'plateFile',label:'번호판'}
 };
-function openAutoAdd(fromInsurance){
-  document.getElementById('wd09-auto-save').textContent='저장';
-  document.getElementById('auto-customer-field').hidden=true;
-  wd09SetAutoCustomerRequired(false);
+function openAutoAdd(){
+  wd09ResetAutoRenewal();
   var extra=document.getElementById('auto-extra-fields');
-  extra.open=false;extra.hidden=fromInsurance===true;
+  extra.open=false;extra.hidden=false;
   document.getElementById('modal-auto-rec-t').textContent='자동차보험 기록 추가';
   document.getElementById('auto-edit-id').value='';
   document.getElementById('auto-edit-custid').value=_vid;
@@ -21303,14 +21311,12 @@ function openAutoAdd(fromInsurance){
 }
 // custId 생략 시 현재 고객상세(_vid) 기준 — 상단 관리화면의 "수정"에서는 대상 custId를 명시적으로 넘긴다.
 function openAutoEdit(id,custId){
-  document.getElementById('wd09-auto-save').textContent='저장';
-  document.getElementById('auto-customer-field').hidden=true;
-  wd09SetAutoCustomerRequired(false);
   var targetId=custId!=null?custId:_vid;
   var c=getCusts().find(function(x){return x.id==targetId;});
   if(!c)return;
   var item=cstAutoList(c).find(function(x){return x.id==id;});
   if(!item)return;
+  wd09ResetAutoRenewal();
   closeModal('modal-auto-detail');
   var extra=document.getElementById('auto-extra-fields');
   extra.open=false;extra.hidden=false;
@@ -21352,7 +21358,10 @@ function openAutoEdit(id,custId){
 async function saveAutoRecord(){
   var c=wd09AutoTarget();
   if(!c)return;
-  var year=document.getElementById('auto-start-date').value.slice(0,4)||document.getElementById('auto-year').value||customerAttachmentDay().slice(0,4);
+  const renewal=wd09AutoRenewal;
+  if(renewal&&(renewal.uid!==_UID||String(c.id)!==String(renewal.customerId)))return;
+  const startDate=document.getElementById('auto-start-date').value;
+  var year=startDate.slice(0,4)||document.getElementById('auto-year').value||customerAttachmentDay().slice(0,4);
   var companySel=document.getElementById('auto-company').value;
   var company=companySel==='기타'?document.getElementById('auto-company-custom').value.trim():companySel;
   var expiry=document.getElementById('auto-expiry').value;
@@ -21366,7 +21375,15 @@ async function saveAutoRecord(){
   var eid=document.getElementById('auto-edit-id').value;
   var list=cstAutoList(c).slice();
   var prev=eid?(list.find(function(x){return x.id==eid;})||{}):{};
-  var recId=eid||('auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  var recId=eid||renewal?.draftId||('auto_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  if(renewal&&(!startDate||startDate<renewal.expiry||expiry<=startDate)){
+    alert('재가입 시작일은 이전 만기일부터 입력할 수 있어요. 새 만기일은 시작일보다 뒤여야 해요.');
+    return;
+  }
+  if(renewal&&wd09AutoVehicleKey({carNumber:carNum})!==renewal.vehicleKey){
+    alert('재가입할 차량번호를 확인해 주세요.');
+    return;
+  }
   const use=document.getElementById('auto-line').value;
   const line=use==='__custom__'?document.getElementById('auto-line-custom').value.trim():use;
   if(use==='__custom__'&&!line){alert('차량용도를 입력해 주세요.');return;}
@@ -21394,7 +21411,7 @@ async function saveAutoRecord(){
       annualPremium:premium,
       finalPremium:premium,
       contractDate:document.getElementById('auto-contract-date').value.trim(),
-      startDate:document.getElementById('auto-start-date').value.trim(),
+      startDate,
       line:line,
       policyholder:document.getElementById('auto-holder').value.trim(),
       insured:document.getElementById('auto-insured').value.trim(),
@@ -21424,15 +21441,21 @@ async function saveAutoRecord(){
       if(_UID!==uid||String(wd09AutoTarget()?.id)!==String(c.id))return;
       save.textContent=label+' 올리는 중…';
       const name=wd09AutoPdfName(c,label,pdfDate);
+      const previous=renewal?.uploaded.get(field);
+      if(previous?.file===file&&previous.attachment.name===name){rec[field]=previous.attachment;continue;}
       const path=await uploadMatAttachment(c,file,name,'application/pdf');
       rec[field]={path,name,original_name:file.name,uploadedAt:new Date().toISOString()};
+      renewal?.uploaded.set(field,{file,attachment:rec[field]});
     }
     for(const {file,label,field} of photos){
       if(_UID!==uid||String(wd09AutoTarget()?.id)!==String(c.id))return;
       save.textContent=label+' 올리는 중…';
       const name=customerAttachmentName(c,'자동차'+label+'사진',file.name);
+      const previous=renewal?.uploaded.get(field);
+      if(previous?.file===file&&previous.attachment.name===name){rec[field]=previous.attachment;continue;}
       const path=await uploadMatAttachment(c,file,name);
       rec[field]={name,original_name:file.name,path,url:''};
+      renewal?.uploaded.set(field,{file,attachment:rec[field]});
     }
     const latest=wd09AutoTarget();
     if(_UID!==uid||String(latest?.id)!==String(c.id))return;
@@ -21444,18 +21467,22 @@ async function saveAutoRecord(){
     }):[...current,rec];
     if(eid&&!list.includes(rec)){alert('자동차보험 기록을 다시 불러와 주세요.');return;}
     save.textContent='저장 중…';
-    const result=await _autoSaveList(latest,list);
-    if(!result?.ok)return;
+    const result=renewal?await wd09SaveAutoRenewal(renewal,rec):await _autoSaveList(latest,list);
+    if(!result?.ok||_UID!==uid)return;
     closeModal('modal-auto-rec');
+    wd09ResetAutoRenewal();
     if(String(_vid)===String(c.id)){renderContractsList();renderMatList();}
-    if(document.getElementById('pg-auto')?.classList.contains('on'))renderAutoManagePage();
+    if(document.getElementById('pg-auto')?.classList.contains('on')){
+      renderAutoManagePage();
+      if(renewal)document.getElementById('wd09-auto-list-message').textContent='재가입을 저장했어요. 이전 계약은 재가입 이력에 남아 있어요.';
+    }
   }catch(error){
     if(_UID===uid)alert(error.message||'자동차보험을 저장하지 못했어요.');
   }finally{
     save.disabled=false;
     close.disabled=false;
     entry.inert=false;
-    save.textContent='저장';
+    save.textContent=wd09AutoRenewal?'재가입 저장':'저장';
   }
 }
 async function deleteAutoRecord(id,custId){
@@ -21483,12 +21510,13 @@ function openAutoDetail(custId,id,index){
   _autoDetailId=item.id;
   document.getElementById('atd-customer').textContent=c.name||'—';
   document.getElementById('atd-phone').textContent=cstFormatPhone(c.phone)||'—';
-  var dd=autoDdayInfo(item.expiryDate);
+  const expiry=wd09AutoRecordExpiry(item);
+  var dd=autoDdayInfo(expiry);
   document.getElementById('atd-year').textContent=item.year||'-';
   document.getElementById('atd-company').textContent=item.company||'-';
-  document.getElementById('atd-expiry').textContent=item.expiryDate||'-';
+  document.getElementById('atd-expiry').textContent=expiry||'-';
   document.getElementById('atd-dday').textContent=dd.label;
-  document.getElementById('atd-carnum').textContent=item.carNumber||'-';
+  document.getElementById('atd-carnum').textContent=wd09AutoVehicle(item)||'-';
   const detail=wd09AutoFields(item);
   document.getElementById('atd-contract-date').textContent=detail.contractDate||'—';
   document.getElementById('atd-start-date').textContent=detail.startDate||'—';
@@ -21509,54 +21537,172 @@ function openAutoDetail(custId,id,index){
     button.hidden=!customerPolicyMeta(item,'auto',_UID,c.id,kind);
     button.onclick=()=>openCustomerPolicy('auto',pdfIndex,c.id,kind);
   }
+  wd09RenderAutoHistory(c,item);
   openModal('modal-auto-detail');
+  document.querySelector('#modal-auto-detail .wd09-entry-body').scrollTop=0;
 }
 function autoDetailEdit(){if(_autoDetailCustId!=null&&_autoDetailId)openAutoEdit(_autoDetailId,_autoDetailCustId);}
 function autoDetailDelete(){if(_autoDetailCustId!=null&&_autoDetailId)deleteAutoRecord(_autoDetailId,_autoDetailCustId);}
-function wd09AutoContactDone(record){
-  return /^(?:만기\s*)?연락\s*완료$/.test(String(record.contactStatus||''));
+let wd09AutoRenewal=null;
+
+function wd09AutoVehicle(record){
+  return String(record?.carNumber||record?.car_number||'').trim();
 }
+function wd09AutoVehicleKey(record){
+  return wd09AutoVehicle(record).replace(/[\s-]+/g,'').toUpperCase();
+}
+function wd09AutoRecordExpiry(record){
+  const expiry=String(record?.expiryDate||record?.expiry_date||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(expiry))return '';
+  const date=new Date(expiry+'T00:00:00Z');
+  return !Number.isNaN(date.getTime())&&date.toISOString().slice(0,10)===expiry?expiry:'';
+}
+function wd09AutoLegacyKey(record){
+  const fields=wd09AutoFields(record);
+  return JSON.stringify([wd09AutoVehicleKey(record),wd09AutoRecordExpiry(record),fields.startDate,fields.contractDate,
+    record.company||record.insurer||'',record.createdAt||'']);
+}
+function wd09AutoRenewalSource(records,draft){
+  const matches=records.map((record,index)=>({record,index})).filter(({record})=>record&&(
+    draft.sourceId!==null?String(record.id)===draft.sourceId:record.id==null&&wd09AutoLegacyKey(record)===draft.legacyKey
+  ));
+  if(matches.length!==1)return null;
+  const selected=matches[0];
+  return wd09AutoVehicleKey(selected.record)===draft.vehicleKey&&wd09AutoRecordExpiry(selected.record)===draft.expiry?selected:null;
+}
+function wd09AutoHasLaterContract(records,source){
+  const key=wd09AutoVehicleKey(source), expiry=wd09AutoRecordExpiry(source);
+  return records.some(record=>record&&record!==source&&(
+    source.id!=null&&String(record.renewalPreviousId??'')===String(source.id)
+    || wd09AutoVehicleKey(record)===key&&wd09AutoRecordExpiry(record)>expiry
+  ));
+}
+function wd09ResetAutoRenewal(){
+  wd09AutoRenewal=null;
+  document.getElementById('auto-carnum').readOnly=false;
+  document.getElementById('wd09-auto-renewal-context').hidden=true;
+  document.getElementById('wd09-auto-save').textContent='저장';
+}
+function wd09OpenAutoRenewal(customerId,recordId,index){
+  const customer=getCusts().find(item=>String(item.id)===String(customerId));
+  const records=cstAutoList(customer);
+  const source=recordId?records.find(item=>String(item?.id)===String(recordId)):records[index];
+  const expiry=wd09AutoRecordExpiry(source), vehicleKey=wd09AutoVehicleKey(source);
+  if(!source||!expiry||!vehicleKey||!_UID)return;
+  if(wd09AutoHasLaterContract(records,source)){
+    renderAutoManagePage();
+    document.getElementById('wd09-auto-list-message').textContent='이 차량의 다음 계약이 이미 등록되어 있어요.';
+    return;
+  }
+  const detail=wd09AutoFields(source);
+  const draftId='auto_'+crypto.randomUUID();
+  openAutoAdd();
+  wd09AutoRenewal={
+    uid:_UID,customerId:customer.id,sourceId:source.id==null?null:String(source.id),
+    legacyKey:source.id==null?wd09AutoLegacyKey(source):null,
+    expiry,vehicleKey,draftId,assignedSourceId:'auto_'+crypto.randomUUID(),uploaded:new Map()
+  };
+  document.getElementById('auto-edit-custid').value=customer.id;
+  document.getElementById('modal-auto-rec-t').textContent='자동차보험 재가입';
+  document.getElementById('wd09-auto-save').textContent='재가입 저장';
+  const context=document.getElementById('wd09-auto-renewal-context');
+  context.textContent=[customer.name||'고객',wd09AutoVehicle(source),'이전 만기 '+expiry].join(' · ');
+  context.hidden=false;
+  const plate=document.getElementById('auto-carnum');
+  plate.value=wd09AutoVehicle(source);
+  plate.readOnly=true;
+  wd09SetAutoFields({line:detail.line,policyholder:detail.policyholder,insured:detail.insured,agent:detail.agent,startDate:expiry});
+  const insurer=source.company||source.insurer||'';
+  const known=AUTO_INSURERS.includes(insurer);
+  autoUpdateCompanyOptions(known?insurer:insurer?'기타':AUTO_INSURERS[0]);
+  document.getElementById('auto-company-custom').value=known?'':insurer;
+  wd09SyncAutoExpiry();
+}
+
+// Make one scoped update of the latest customer record, with a version check for another tab's changes.
+async function wd09SaveAutoRenewal(draft,record){
+  const sb=getSbClient();
+  if(!sb||draft.uid!==_UID)throw Error('로그인 상태를 확인해 주세요.');
+  const current=()=>_UID===draft.uid&&getSbClient()===sb;
+  const key=query=>query.eq('uid',draft.uid).eq('id',draft.customerId);
+  const result=await key(sb.from('wd_partners_customers').select('data,updated_at')).maybeSingle();
+  if(!current())return {ok:false};
+  if(result.error||!result.data?.data)throw Error('고객 정보를 다시 불러오지 못했어요.');
+  const customer=result.data.data;
+  const records=cstAutoList(customer);
+  const remember=updated=>{
+    CURRENT_CUSTOMERS=getCusts().map(item=>String(item.id)===String(draft.customerId)?updated:item);
+    return {ok:true};
+  };
+  if(records.some(item=>item?.id===draft.draftId))return remember(customer);
+  const source=wd09AutoRenewalSource(records,draft);
+  if(!source)throw Error('이전 계약 정보가 변경됐어요. 만기 목록에서 계약을 다시 열어 주세요.');
+  if(wd09AutoHasLaterContract(records,source.record))throw Error('이 차량의 다음 계약이 이미 등록되어 있어요.');
+  const sourceId=source.record.id??draft.assignedSourceId;
+  if(source.record.id==null)records[source.index]={...source.record,id:sourceId};
+  const now=new Date().toISOString();
+  const data={...customer,updated:now,autoInsurance:[...records,{...record,renewalPreviousId:String(sourceId)}]};
+  const update=key(sb.from('wd_partners_customers').update({data,updated_at:now}));
+  const versioned=result.data.updated_at==null?update.is('updated_at',null):update.eq('updated_at',result.data.updated_at);
+  const saved=await versioned.select('data').maybeSingle();
+  if(!current())return {ok:false};
+  if(saved.error)throw Error('재가입을 저장하지 못했어요. 입력 내용을 유지했습니다.');
+  if(!saved.data?.data)throw Error('고객 정보가 다른 화면에서 바뀌었어요. 저장을 다시 눌러 주세요.');
+  return remember(saved.data.data);
+}
+
+function wd09RenderAutoHistory(customer,selected){
+  const panel=document.getElementById('wd09-auto-history');
+  const vehicleKey=wd09AutoVehicleKey(selected);
+  const records=vehicleKey?cstAutoList(customer).map((record,index)=>({record,index}))
+    .filter(({record})=>wd09AutoVehicleKey(record)===vehicleKey):[];
+  records.sort((a,b)=>wd09AutoRecordExpiry(b.record).localeCompare(wd09AutoRecordExpiry(a.record))
+    ||b.index-a.index);
+  const byId=new Map(records.filter(({record})=>record.id!=null).map(({record})=>[String(record.id),record]));
+  panel.replaceChildren();
+  if(records.length<2){
+    panel.textContent='이 차량의 다른 자동차보험 계약 이력이 없어요.';
+    return;
+  }
+  for(const [position,{record,index}] of records.entries()){
+    const detail=wd09AutoFields(record);
+    const previous=byId.get(String(record.renewalPreviousId??''))||records[position+1]?.record;
+    const previousExpiry=wd09AutoRecordExpiry(previous);
+    const start=detail.startDate;
+    const continuity=start&&previousExpiry?start===previousExpiry?'연속 가입':start>previousExpiry?'기간 공백':'기간 겹침':'';
+    const row=document.createElement('div');
+    row.className='wd09-auto-history-row';
+    const info=document.createElement('div');
+    const period=document.createElement('strong');
+    period.textContent=(start||'시작일 미등록')+' ~ '+(wd09AutoRecordExpiry(record)||'만기일 미등록');
+    const subtitle=document.createElement('div');
+    subtitle.textContent=[record.company||record.insurer||'보험사 미등록',
+      detail.annualPremium===null?'보험료 미등록':detail.annualPremium.toLocaleString('ko-KR')+'원',continuity].filter(Boolean).join(' · ');
+    info.append(period,subtitle);
+    row.append(info);
+    if(record===selected){
+      const badge=document.createElement('span');
+      badge.className='clm-badge 접수';
+      badge.textContent='보는 중';
+      row.append(badge);
+    }else{
+      const open=document.createElement('button');
+      open.type='button';
+      open.className='btn-sm';
+      open.textContent='계약 보기';
+      open.setAttribute('aria-label',period.textContent+' 계약 보기');
+      open.onclick=()=>openAutoDetail(customer.id,record.id,index);
+      row.append(open);
+    }
+    panel.append(row);
+  }
+}
+
 let wd09AutoExpiryRange='soon';
-let wd09AutoContactSaving=false;
 function wd09SetAutoExpiryRange(range){
   if(wd09AutoExpiryRange===range)return;
   wd09AutoExpiryRange=range;
   renderAutoManagePage(_custUidLoaded!==_UID?(_custLoadError?'error':'loading'):'');
-}
-async function wd09SaveAutoContact(input){
-  const row=input.closest('tr');
-  const uid=_UID;
-  const customer=getCusts().find(item=>String(item.id)===row.dataset.customer);
-  const list=cstAutoList(customer);
-  const index=row.dataset.record?list.findIndex(item=>String(item?.id)===row.dataset.record):Number(row.dataset.index);
-  const record=list[index];
-  if(!customer||!record||!uid||wd09AutoContactSaving){
-    input.checked=!!record&&wd09AutoContactDone(record);
-    return;
-  }
-  const message=document.getElementById('wd09-auto-list-message');
-  const checkboxList=document.querySelectorAll('#auto-mgmt-list .wd09-auto-contact input');
-  wd09AutoContactSaving=true;
-  for(const checkbox of checkboxList)checkbox.disabled=true;
-  const checked=input.checked;
-  try{
-    list[index]={...record,contactStatus:checked?'연락 완료':'연락 전'};
-    const result=await _autoSaveList(customer,list);
-    if(_UID!==uid)return;
-    if(!result?.ok)throw Error('연락 상태를 저장하지 못했어요.');
-    if(!input.isConnected)renderAutoManagePage();
-    message.textContent=(checked?'연락 완료':'연락 전')+'로 저장했어요.';
-  }catch(error){
-    if(_UID===uid){
-      input.checked=wd09AutoContactDone(record);
-      message.textContent=error.message||'연락 상태를 저장하지 못했어요.';
-    }
-  }finally{
-    wd09AutoContactSaving=false;
-    if(_UID===uid){
-      for(const checkbox of document.querySelectorAll('#auto-mgmt-list .wd09-auto-contact input'))checkbox.disabled=false;
-    }
-  }
 }
 
 function renderAutoManagePage(state){
@@ -21572,21 +21718,28 @@ function renderAutoManagePage(state){
     return;
   }
 
+  const soon=wd09AutoExpiryRange==='soon';
   const rows=getCusts().flatMap(customer=>{
     const vehicles=new Map();
     const unknownVehicles=[];
-    for(const [index,record] of cstAutoList(customer).entries()){
+    const records=cstAutoList(customer);
+    const renewedIds=new Set(records.map(record=>record?.renewalPreviousId).filter(id=>id!=null).map(String));
+    for(const [index,record] of records.entries()){
       if(!record)continue;
-      const plate=String(record.carNumber||record.car_number||'').trim();
-      const expiry=String(record.expiryDate||record.expiry_date||'').trim();
-      const row={customer,record,index,plate,expiry,days:autoDdayInfo(expiry)};
-      const key=plate.replace(/[\s-]+/g,'').toUpperCase();
+      const plate=wd09AutoVehicle(record);
+      const expiry=wd09AutoRecordExpiry(record);
+      const days=autoDdayInfo(expiry);
+      const renewed=record.id!=null&&renewedIds.has(String(record.id));
+      const row={customer,record,index,plate,expiry,days,renewed};
+      const key=wd09AutoVehicleKey(record);
       if(!key){unknownVehicles.push(row);continue;}
       const previous=vehicles.get(key);
-      const dateRank=row.days.days??-Infinity;
-      const previousRank=previous?.days.days??-Infinity;
-      if(!previous||dateRank>previousRank||(dateRank===previousRank&&String(record.updatedAt||record.createdAt||'')>String(previous.record.updatedAt||previous.record.createdAt||''))){
-        vehicles.set(key,row);
+      const showCompleted=soon&&renewed&&days.days!==null&&days.days>=0&&days.days<=30;
+      if(!previous||Number(showCompleted)>Number(previous.showCompleted)
+        ||showCompleted===previous.showCompleted&&(
+          expiry>previous.expiry||(expiry===previous.expiry&&String(record.updatedAt||record.createdAt||'')>String(previous.record.updatedAt||previous.record.createdAt||''))
+        )){
+        vehicles.set(key,{...row,showCompleted});
       }
     }
     return [...vehicles.values(),...unknownVehicles];
@@ -21597,16 +21750,15 @@ function renderAutoManagePage(state){
     return expiryGroup(first)-expiryGroup(second)||(first<0?second-first:first-second)
       ||String(a.customer.name||'').localeCompare(String(b.customer.name||''),'ko');
   });
-  const soon=wd09AutoExpiryRange==='soon';
   const visible=soon?rows.filter(row=>row.days.days!==null&&row.days.days>=0&&row.days.days<=30):rows;
   message.textContent=visible.length?(soon?'만기 30일 이내 ':'전체 ')+visible.length+'건'
     :soon?'오늘부터 30일 이내에 만기인 자동차보험이 없어요.':'고객관리에 등록된 자동차보험이 없습니다.';
   list.innerHTML=visible.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame" tabindex="0" role="region" aria-labelledby="wd09-auto-expiry-title">'
     +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
-    +'<colgroup>'+[5,9,8,9,8,8,10,8,6,7,7,7,8].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
-    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','차량용도','계약자','피보험자','담당설계사','연락 완료']
+    +'<colgroup>'+[5,8,7,10,8,7,9,8,9,7,7,6,9].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
+    +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','차량용도','계약자','피보험자','담당설계사','재가입 상태']
       .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
-    +visible.map(({customer,record,index,plate,expiry,days})=>{
+    +visible.map(({customer,record,index,plate,expiry,days,renewed})=>{
       const phone=cstFormatPhone(customer.phone);
       const detail=wd09AutoFields(record);
       const premium=detail.annualPremium;
@@ -21616,18 +21768,22 @@ function renderAutoManagePage(state){
         +'<td><span class="auto-dday '+days.cls+'">'+esc(days.label)+'</span></td>'
         +'<td>'+esc(expiry||'—')+'</td>'
         +'<td class="wd09-auto-customer">'+name+'</td>'
-        +'<td>'+esc(phone||'—')+'</td>'
+        +'<td class="wd09-auto-phone" title="'+esc(phone||'')+'">'+esc(phone||'—')+'</td>'
         +'<td>'+esc(record.company||record.insurer||'—')+'</td>'
         +'<td>'+esc(plate||'—')+'</td>'
         +'<td>'+(premium===null?'—':premium.toLocaleString('ko-KR')+'원')+'</td>'
-        +[detail.contractDate,detail.line,detail.policyholder,detail.insured,detail.agent]
-          .map(value=>'<td>'+esc(value||'—')+'</td>').join('')
-        +'<td class="wd09-auto-contact"><label><input type="checkbox" aria-label="'+name+' '+esc(plate)+' 만기 연락 완료"'
-        +(wd09AutoContactDone(record)?' checked':'')+(wd09AutoContactSaving?' disabled':'')+'></label></td></tr>';
+        +'<td>'+esc(detail.contractDate||'—')+'</td>'
+        +'<td class="wd09-auto-use" title="'+esc(detail.line||'')+'">'+esc(detail.line||'—')+'</td>'
+        +[detail.policyholder,detail.insured,detail.agent].map(value=>'<td>'+esc(value||'—')+'</td>').join('')
+        +'<td class="wd09-auto-renewal">'+(renewed?'<span class="clm-badge 완료">재가입 완료</span>':plate&&expiry
+          ?'<button type="button" class="btn-sm p" aria-label="'+name+' '+esc(plate)+' 재가입" data-auto-renewal>재가입</button>'
+          :'—')+'</td></tr>';
     }).join('')+'</tbody></table></div>':'';
-  list.onchange=event=>{
-    const input=event.target;
-    if(input.matches('.wd09-auto-contact input'))void wd09SaveAutoContact(input);
+  list.onclick=event=>{
+    const button=event.target.closest('[data-auto-renewal]');
+    if(!button)return;
+    const row=button.closest('tr');
+    wd09OpenAutoRenewal(row.dataset.customer,row.dataset.record,Number(row.dataset.index));
   };
 }
 function renderHomeCusts(){
@@ -25507,7 +25663,7 @@ function openCustomerInsuranceDetail(source,index){
   const currentRecords=()=>source==='auto'?cstAutoList(_matGetCust()):source==='contracts'?getContracts():[];
   const record=currentRecords()[index];
   if(!record)return;
-  if(source==='auto'&&record.id!=null){openAutoDetail(customerId,record.id);return;}
+  if(source==='auto'){openAutoDetail(customerId,record.id,index);return;}
   const row=customerInsuranceRow(record,source,index);
   const auto=row.purpose==='auto';
   const premium=wd09FormatInsuranceAmount(row.premium);
@@ -36496,45 +36652,10 @@ function wd09FillEntryCustomers(pickerId,selected=''){
   if(customers.some(customer=>String(customer.id)===String(selected)))picker.value=String(selected);
 }
 
-function wd09SyncAutoCustomer(){
-  const id=document.getElementById('wd09-auto-customer').value;
-  document.getElementById('auto-edit-custid').value=id;
-  wd09SetAutoCustomerRequired(!id);
-  wd09RenderAutoPdfNames();
-}
-
-function wd09SetAutoCustomerRequired(required){
-  const fields=document.getElementById('wd09-auto-entry-fields');
-  fields.disabled=required;
-  fields.inert=required;
-  document.getElementById('wd09-auto-save').disabled=required;
-  document.getElementById('wd09-auto-customer-hint').hidden=!required;
-}
-
-async function wd09StartAutoRegistration(){
-  openAutoAdd(true);
-  document.getElementById('auto-customer-field').hidden=false;
-  wd09FillEntryCustomers('wd09-auto-customer');
-  wd09SyncAutoCustomer();
-  if(typeof loadCustomersFromSupa==='function'&&_custUidLoaded!==_UID){
-    const result=await loadCustomersFromSupa();
-    const field=document.getElementById('auto-customer-field');
-    if(result.ok&&!field.hidden&&document.getElementById('modal-auto-rec').classList.contains('open')){
-      wd09FillEntryCustomers('wd09-auto-customer',document.getElementById('wd09-auto-customer').value);
-      wd09SyncAutoCustomer();
-    }
-  }
-}
-
 function wd09ResumeEntryWithCustomer(id){
   if(document.getElementById('modal-claim-rec').classList.contains('open')){
     wd09FillEntryCustomers('clm-customer',id);
     clmRefreshPolicies();
-    return true;
-  }
-  if(document.getElementById('modal-auto-rec').classList.contains('open')){
-    wd09FillEntryCustomers('wd09-auto-customer',id);
-    wd09SyncAutoCustomer();
     return true;
   }
   return false;
