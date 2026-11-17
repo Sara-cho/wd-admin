@@ -11576,6 +11576,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   .wd09-indemnity-panel :is(select,p) { grid-column:1 / -1; }
   .wd09-indemnity-panel p, #wd09-indemnity-detail-note { margin:0; color:var(--s700); font-size:12px; line-height:1.5; }
   .wd09-indemnity-kind { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; max-width:372px; }
+  .wd09-indemnity-type { grid-column:1 / -1; grid-template-columns:repeat(2,minmax(0,1fr)); }
   .wd09-indemnity-kind > span {
     grid-column:1 / -1; color:var(--s700); font-size:13px; font-weight:750;
   }
@@ -16689,8 +16690,13 @@ const wdTest09Storage = (() => {
 <label data-for="auto" hidden>차량용도<input name="line" type="text" list="wd09-bulk-car-uses"/></label>
 <label>담당 설계사<input name="agent" type="text"/></label>
 <div class="wd09-indemnity-panel" data-for="indemnity" hidden>
-<div class="wd09-indemnity-kind" role="group" aria-label="가입 구분">
+<div class="wd09-indemnity-kind wd09-indemnity-type" data-indemnity-product-type role="group" aria-label="가입 구분">
 <span aria-hidden="true">가입 구분</span>
+<button type="button" data-kind="standard" aria-pressed="true">기본실손보험</button>
+<button type="button" data-kind="medical" aria-pressed="false">유병자실손보험</button>
+</div>
+<div class="wd09-indemnity-kind" data-indemnity-history role="group" aria-label="가입 이력">
+<span aria-hidden="true">가입 이력</span>
 <button type="button" data-kind="new" aria-pressed="false">신규 가입</button>
 <button type="button" data-kind="conversion" aria-pressed="false">계약 전환</button>
 <button type="button" data-kind="reenrollment" aria-pressed="false">재가입</button>
@@ -16740,8 +16746,13 @@ const wdTest09Storage = (() => {
 <div class="fld"><label id="ct-contract-date-label" for="ct-contract_date">계약일</label><input id="ct-contract_date" type="date" oninput="delete this.dataset.assumed;wd09SyncContractIndemnity()"/></div>
 <div class="fld" id="ct-indemnity-generation-field" hidden>
 <div class="wd09-indemnity-panel">
-<div id="ct-indemnity-kind" class="wd09-indemnity-kind" role="group" aria-label="가입 구분" onclick="if(wd09ChooseIndemnityKind(event))wd09SyncContractIndemnity()">
+<div id="ct-indemnity-product-type" class="wd09-indemnity-kind wd09-indemnity-type" data-indemnity-product-type role="group" aria-label="가입 구분" onclick="if(wd09ChooseIndemnityKind(event))wd09SyncContractIndemnity()">
 <span aria-hidden="true">가입 구분</span>
+<button type="button" data-kind="standard" aria-pressed="true">기본실손보험</button>
+<button type="button" data-kind="medical" aria-pressed="false">유병자실손보험</button>
+</div>
+<div id="ct-indemnity-kind" class="wd09-indemnity-kind" data-indemnity-history role="group" aria-label="가입 이력" onclick="if(wd09ChooseIndemnityKind(event))wd09SyncContractIndemnity()">
+<span aria-hidden="true">가입 이력</span>
 <button type="button" data-kind="new" aria-pressed="false">신규 가입</button>
 <button type="button" data-kind="conversion" aria-pressed="false">계약 전환</button>
 <button type="button" data-kind="reenrollment" aria-pressed="false">재가입</button>
@@ -25204,6 +25215,14 @@ function wd09IndemnityGeneration(value){
 }
 const WD09_INDEMNITY_NOTICE='※ 가입 시기와 생명보험사·손해보험사, 상품에 따라 보장이 다를 수 있으므로 정확한 내용은 보험증권과 약관을 확인하세요.';
 const WD09_INDEMNITY_KINDS={new:'신규 가입',conversion:'계약 전환',reenrollment:'재가입'};
+const WD09_INDEMNITY_TYPES={standard:'기본실손보험',medical:'유병자실손보험'};
+function wd09IndemnityProductType(record,group){
+  const picked=group?.dataset.picked;
+  if(Object.hasOwn(WD09_INDEMNITY_TYPES,picked))return picked;
+  const stored=record.indemnity_product_type;
+  if(Object.hasOwn(WD09_INDEMNITY_TYPES,stored))return stored;
+  return /(?:유병력자|유병자)\s*(?:전용\s*)?실손/.test(record.product||'')?'medical':'standard';
+}
 function wd09IndemnityKind(value){
   return Object.hasOwn(WD09_INDEMNITY_KINDS,value)?value:'';
 }
@@ -25260,11 +25279,15 @@ function wd09IndemnityEntry(record,{kind,legacyReview},manual){
   const generation=wd09IndemnityGeneration(manual);
   return {generation,source:generation?'manual':'review'};
 }
-function wd09StoreIndemnity(record,group,manual){
+function wd09StoreIndemnity(record,group,manual,typeGroup){
+  const productType=record.insurance_purpose==='indemnity'?wd09IndemnityProductType(record,typeGroup):'';
+  delete record.indemnity_product_type;
   delete record.indemnity_enrollment_kind;
   delete record.indemnity_generation;
   delete record.indemnity_generation_source;
-  if(record.insurance_purpose!=='indemnity')return;
+  if(!productType)return;
+  record.indemnity_product_type=productType;
+  if(productType==='medical')return;
   const selection=wd09IndemnitySelection(group,record);
   const result=wd09IndemnityEntry(record,selection,manual);
   if(selection.kind)record.indemnity_enrollment_kind=selection.kind;
@@ -25274,13 +25297,26 @@ function wd09StoreIndemnity(record,group,manual){
 function wd09IndemnityStatus(generation,review){
   return review?'확인 필요':generation?generation+'세대':'세대 미확인';
 }
-function wd09SyncIndemnityPanel(panel,group,record,manualInput){
-  const selection=wd09IndemnitySelection(group,record);
+function wd09ShowIndemnityChoice(group,selected){
   for(const button of group.querySelectorAll('[data-kind]')){
-    button.setAttribute('aria-pressed',String(button.dataset.kind===selection.kind));
+    button.setAttribute('aria-pressed',String(button.dataset.kind===selected));
   }
-  const result=wd09IndemnityEntry(record,selection,manualInput.value);
+}
+function wd09SyncIndemnityPanel(panel,group,record,manualInput){
+  const typeGroup=panel.querySelector('[data-indemnity-product-type]');
+  const productType=wd09IndemnityProductType(record,typeGroup);
+  const medical=productType==='medical';
+  wd09ShowIndemnityChoice(typeGroup,productType);
   const display=panel.querySelector('[data-indemnity-result]');
+  const note=panel.querySelector('[data-indemnity-note]');
+  group.hidden=display.hidden=medical;
+  if(medical){
+    manualInput.hidden=note.hidden=true;
+    return;
+  }
+  const selection=wd09IndemnitySelection(group,record);
+  wd09ShowIndemnityChoice(group,selection.kind);
+  const result=wd09IndemnityEntry(record,selection,manualInput.value);
   const needsReview=result.source==='review';
   display.textContent=result.source
     ?wd09IndemnityStatus(result.generation,needsReview)+(result.source==='date'?' · 가입일 기준':'')
@@ -25288,7 +25324,6 @@ function wd09SyncIndemnityPanel(panel,group,record,manualInput){
   display.dataset.review=String(needsReview);
   manualInput.hidden=!needsReview&&result.source!=='manual';
   if(manualInput.hidden)manualInput.value='';
-  const note=panel.querySelector('[data-indemnity-note]');
   note.hidden=!['1','2','3'].includes(result.generation);
   note.textContent=note.hidden?'':WD09_INDEMNITY_NOTICE;
 }
@@ -25297,8 +25332,10 @@ function customerInsuranceRow(c,source,index){
   var purpose=auto?'auto':wd09InsurancePurpose(c.insurance_purpose);
   var autoFields=purpose==='auto'?wd09AutoFields(c):null;
   var annual=auto||!!(autoFields&&autoFields.annualPremium!==null);
-  const indemnityKind=purpose==='indemnity'?wd09IndemnityKind(c.indemnity_enrollment_kind)||wd09IndemnityKindHint(c):'';
-  const review=purpose==='indemnity'&&(c.indemnity_generation_source==='review'
+  const indemnityType=purpose==='indemnity'?wd09IndemnityProductType(c):'';
+  const standard=indemnityType==='standard';
+  const indemnityKind=standard?wd09IndemnityKind(c.indemnity_enrollment_kind)||wd09IndemnityKindHint(c):'';
+  const review=standard&&(c.indemnity_generation_source==='review'
     ||(!c.indemnity_generation_source&&['conversion','reenrollment'].includes(indemnityKind)));
   return {
     purpose:purpose, purposeLabel:WD09_INSURANCE_PURPOSES[purpose], source:source, index:index,
@@ -25309,8 +25346,8 @@ function customerInsuranceRow(c,source,index){
     autoFields:autoFields,
     carNumber:c.carNumber||c.car_number, expiry:c.expiryDate||c.expiry_date,
     premium:annual?autoFields.annualPremium:insurancePremiumAmount(c.fee), annual:annual,
-    status:c.status, indemnityGeneration:review?'':wd09IndemnityGeneration(c.indemnity_generation),
-    indemnityReview:review, indemnityKind,
+    status:c.status, indemnityGeneration:standard&&!review?wd09IndemnityGeneration(c.indemnity_generation):'',
+    indemnityReview:review, indemnityKind, indemnityType,
     recordDate:auto?(c.updatedAt||c.createdAt):(c.updated||c.created)
   };
 }
@@ -25335,7 +25372,12 @@ function openCustomerInsuranceDetail(source,index){
   let kind='';
   if(row.purpose==='savings'&&Object.hasOwn(WD09_INSURANCE_SUBTYPES,record.insurance_subtype))kind=WD09_INSURANCE_SUBTYPES[record.insurance_subtype];
   const indemnity=row.purpose==='indemnity';
-  if(indemnity)kind=[wd09IndemnityStatus(row.indemnityGeneration,row.indemnityReview),WD09_INDEMNITY_KINDS[row.indemnityKind]].filter(Boolean).join(' · ');
+  if(indemnity){
+    kind=WD09_INDEMNITY_TYPES[row.indemnityType];
+    if(row.indemnityType==='standard'){
+      kind=[kind,wd09IndemnityStatus(row.indemnityGeneration,row.indemnityReview),WD09_INDEMNITY_KINDS[row.indemnityKind]].filter(Boolean).join(' · ');
+    }
+  }
   const note=document.getElementById('wd09-indemnity-detail-note');
   note.hidden=!indemnity||!['1','2','3'].includes(row.indemnityGeneration);
   note.textContent=note.hidden?'':WD09_INDEMNITY_NOTICE;
@@ -25460,11 +25502,13 @@ function wd09CurrentAutoContracts(rows,day){
 }
 function wd09RenderInsuranceSummary(rows,state){
   const ready=state!=='loading'&&state!=='error';
-  const monthly=wd09SummarizeInsurancePremiums(ready?rows.filter(row=>row.purpose==='health'||row.purpose==='savings'):[],false);
+  const monthlyRows=ready?rows.filter(row=>row.purpose==='health'||row.purpose==='savings'):[];
+  const monthly=wd09SummarizeInsurancePremiums(monthlyRows,false);
+  const healthCount=monthlyRows.filter(row=>row.purpose==='health').length;
+  const savingsCount=monthlyRows.length-healthCount;
   document.getElementById('wd09-insurance-total').textContent=wd09FormatInsuranceAmount(monthly.amount);
-  document.getElementById('wd09-insurance-total-note').textContent=[
-    '보장성보험 + 저축성보험',monthly.missing?'보험료 미등록 '+monthly.missing+'건 제외':''
-  ].filter(Boolean).join(' · ');
+  document.getElementById('wd09-insurance-total-note').textContent=ready
+    ?'보장성보험 '+healthCount+'건 + 저축성보험 '+savingsCount+'건':'보장성보험 + 저축성보험';
 
   const current=wd09CurrentAutoContracts(ready?rows:[],customerAttachmentDay());
   const auto=wd09SummarizeInsurancePremiums(current.rows,true);
@@ -25477,12 +25521,15 @@ function wd09RenderInsuranceSummary(rows,state){
 
   const indemnity=ready?rows.filter(row=>row.purpose==='indemnity'):[];
   const active=indemnity.filter(row=>!['계약해지','계약철회','계약취소','만기','만기종료'].includes(ctStatusNorm(row.status)));
-  const generations=[...new Set(active.map(row=>row.indemnityGeneration).filter(Boolean))].sort();
-  const review=active.filter(row=>row.indemnityReview).length;
-  const missing=active.filter(row=>!row.indemnityGeneration&&!row.indemnityReview).length;
+  const standard=active.filter(row=>row.indemnityType!=='medical');
+  const generations=[...new Set(standard.map(row=>row.indemnityGeneration).filter(Boolean))].sort();
+  const names=generations.map(generation=>generation+'세대');
+  if(standard.length<active.length)names.push(WD09_INDEMNITY_TYPES.medical);
+  const review=standard.filter(row=>row.indemnityReview).length;
+  const missing=standard.filter(row=>!row.indemnityGeneration&&!row.indemnityReview).length;
   const indemnityStatus=document.getElementById('wd09-indemnity-status');
   if(!ready)indemnityStatus.textContent='—';
-  else if(generations.length)indemnityStatus.textContent=generations.map(generation=>generation+'세대').join(' · ');
+  else if(names.length)indemnityStatus.textContent=names.join(' · ');
   else if(active.length)indemnityStatus.textContent=review?'확인 필요':'세대 미확인';
   else indemnityStatus.textContent=indemnity.length?'유지 기록 없음':'등록 내역 없음';
   const indemnityPremium=wd09SummarizeInsurancePremiums(active,false);
@@ -25491,8 +25538,8 @@ function wd09RenderInsuranceSummary(rows,state){
   premiumNote.textContent=premiumNote.hidden?''
     :(indemnityPremium.missing?'월 보험료(등록분) ':'월 보험료 ')+wd09FormatInsuranceAmount(indemnityPremium.amount);
   document.getElementById('wd09-indemnity-note').textContent=[
-    review&&generations.length?'확인 필요 '+review+'건':'',
-    missing&&(generations.length||review)?'세대 미확인 '+missing+'건':'',
+    review&&names.length?'확인 필요 '+review+'건':'',
+    missing&&(names.length||review)?'세대 미확인 '+missing+'건':'',
     indemnity.length&&!active.length?'종료된 계약만 등록됨':''
   ].filter(Boolean).join(' · ');
   document.getElementById('wd09-insurance-summary-status').textContent=state==='loading'
@@ -25541,7 +25588,7 @@ function renderContractsList(state){
     var fee=wd09FormatInsuranceAmount(row.premium);
     const generation=row.purpose==='indemnity'
       ?'<td><span class="wd09-indemnity-badge" data-review="'+row.indemnityReview+'">'
-        +wd09IndemnityStatus(row.indemnityGeneration,row.indemnityReview)+'</span>'
+        +(row.indemnityType==='medical'?WD09_INDEMNITY_TYPES.medical:wd09IndemnityStatus(row.indemnityGeneration,row.indemnityReview))+'</span>'
         +(row.indemnityKind?'<br><small>'+WD09_INDEMNITY_KINDS[row.indemnityKind]+'</small>':'')+'</td>':'';
     return recordStart(row,row.product)+'<td>'+esc(row.payPeriod||'—')+'</td>'
       +'<td>'+esc(row.period||'—')+'</td><td class="wd09-insurance-fee">'+fee+'</td><td>'+esc(row.date||'—')+'</td>'
@@ -25579,7 +25626,7 @@ function renderContractsList(state){
     var indemnity=purpose==='indemnity';
     var columns=auto
       ?['보험사','자동차번호','차량용도','보험시작일','만기일','보험료','증권','약관']
-      :['보험사','상품명','납입기간','보험기간','월 보험료',...(indemnity?['가입일','세대']:['계약일']),'증권','약관'];
+      :['보험사','상품명','납입기간','보험기간','월 보험료',...(indemnity?['가입일','실손 구분']:['계약일']),'증권','약관'];
     var headers=columns.map(function(label){return '<th scope="col">'+label+'</th>';}).join('');
     var body=groupRows.length?groupRows.map(auto?renderAutoRow:renderInsuranceRow).join('')
       :'<tr><td class="wd09-insurance-empty" colspan="'+columns.length+'">등록된 '+WD09_INSURANCE_PURPOSES[purpose]+' 내역이 없습니다.</td></tr>';
@@ -25642,8 +25689,10 @@ function wd09AddInsuranceRow(){
   const premiumLabel=card.querySelector('.wd09-bulk-premium-label');
   const dateLabel=card.querySelector('[data-indemnity-date-label]');
   const indemnityPanel=card.querySelector('.wd09-indemnity-panel');
-  const indemnityKind=indemnityPanel.querySelector('.wd09-indemnity-kind');
+  const indemnityKind=indemnityPanel.querySelector('[data-indemnity-history]');
+  const indemnityType=indemnityPanel.querySelector('[data-indemnity-product-type]');
   row.indemnityKind=indemnityKind;
+  row.indemnityType=indemnityType;
   wd09InitIndemnityKind(indemnityKind);
   const categoryFields=card.querySelectorAll('[data-for]');
   fields.debit.insertAdjacentHTML('beforeend',ctDebitOptions());
@@ -25669,7 +25718,7 @@ function wd09AddInsuranceRow(){
   };
   fields.contractDate.oninput=fields.product.oninput=fields.insurer.oninput=syncIndemnity;
   fields.generation.onchange=syncIndemnity;
-  indemnityKind.onclick=event=>{if(wd09ChooseIndemnityKind(event))syncIndemnity();};
+  indemnityKind.onclick=indemnityType.onclick=event=>{if(wd09ChooseIndemnityKind(event))syncIndemnity();};
   fields.premium.oninput=()=>wd09FormatWonInput(fields.premium);
   fields.startDate.oninput=()=>{
     const expiry=fields.expiry;
@@ -25754,7 +25803,7 @@ function wd09ReadInsuranceRow(row){
     status:'계약진행중',agent,debit_date:val('debit'),guide_sent:false,cov_summary:val('coverage'),memo,created:now
   };
   if(subtype)record.insurance_subtype=subtype;
-  wd09StoreIndemnity(record,row.indemnityKind,val('generation'));
+  wd09StoreIndemnity(record,row.indemnityKind,val('generation'),row.indemnityType);
   return {source:'contracts',record,documents};
 }
 async function wd09SaveInsuranceDrafts(){
@@ -25960,6 +26009,7 @@ function openContractAdd(purpose){
   const date=document.getElementById('ct-contract_date');
   date.value=purpose==='indemnity'?'':today();
   date.dataset.assumed=date.value;
+  document.getElementById('ct-indemnity-product-type').dataset.picked='';
   wd09InitIndemnityKind(document.getElementById('ct-indemnity-kind'));
   _ctSetVal('ct-indemnity-generation','');
   document.getElementById('ct-ins_type').value='손보';
@@ -25996,6 +26046,7 @@ function openContractEdit(i,inline=false){
   _ctSetVal('ct-product',c.product);
   _ctSetVal('ct-contract_date',c.contract_date);
   delete document.getElementById('ct-contract_date').dataset.assumed;
+  document.getElementById('ct-indemnity-product-type').dataset.picked=c.insurance_purpose==='indemnity'?wd09IndemnityProductType(c):'';
   _ctSetVal('ct-indemnity-generation',wd09InitIndemnityKind(document.getElementById('ct-indemnity-kind'),c));
   _ctSetVal('ct-fee',wd09WonText(c.fee));
   ctSelectOrInject('ct-pay_period',c.pay_period||'');
@@ -26082,7 +26133,8 @@ async function saveContractModal(){
   });
   if(purpose==='savings'&&subtype)rec.insurance_subtype=subtype;
   else delete rec.insurance_subtype;
-  wd09StoreIndemnity(rec,document.getElementById('ct-indemnity-kind'),document.getElementById('ct-indemnity-generation').value);
+  wd09StoreIndemnity(rec,document.getElementById('ct-indemnity-kind'),document.getElementById('ct-indemnity-generation').value,
+    document.getElementById('ct-indemnity-product-type'));
   if(idx===''){
     rec.id=recId;
     rec.created=new Date().toISOString();
