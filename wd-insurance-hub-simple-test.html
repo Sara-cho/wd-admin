@@ -913,12 +913,6 @@ body.cdh-lock{overflow:hidden;}
 .clm-status-sel.진행{background:var(--lav);color:var(--purple);}
 .clm-status-sel.완료{background:var(--lime-bg);color:var(--lime);}
 /* 인라인 수정 모드 */
-.ie-fld{margin-bottom:10px;}
-.ie-fld label{display:block;font-size:11px;font-weight:700;color:var(--s500);margin-bottom:4px;}
-.ie-fld input,.ie-fld select,.ie-fld textarea{width:100%;padding:8px 11px;border:1.5px solid var(--s200);border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;color:var(--s800);background:var(--s50);}
-.ie-fld input:focus,.ie-fld select:focus,.ie-fld textarea:focus{outline:none;border-color:var(--purple);}
-.ie-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
-.ie-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 /* 청구상태 뱃지 */
 .clm-badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:13px;font-weight:700;}
 .clm-badge.접수{background:#EFF6FF;color:#2563EB;}
@@ -1086,7 +1080,6 @@ body.cdh-lock{overflow:hidden;}
 /* 모바일 최적화 v79 추가작업 — 표 가로 넘침 방지 (카드형 전환 대신 최소 스크롤 보호) */
 #det-insure-list,#det-claim-list,#det-mat-list,#design-req-list{overflow-x:auto;}
 @media(max-width:768px){
-  .ie-grid-3,.ie-grid-2{grid-template-columns:1fr;}
 }
 @media(max-width:600px){
   #dw-co-nonlife,#dw-co-life{grid-template-columns:1fr!important;}
@@ -11532,6 +11525,19 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   }
   .wd09-customer-entry-card + .wd09-customer-entry-card { margin-top:12px; }
   #modal-cust .wd09-entry-modal { width:100%; max-width:880px; height:auto; max-height:calc(100dvh - 24px); border-radius:var(--wd09-ui-modal-radius); }
+  #modal-cust .wd09-entry-body { overflow-y:auto; scrollbar-gutter:stable; }
+  #modal-cust .wd09-entry-footer [hidden] { display:none; }
+  #modal-cust .wd09-entry-footer { padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+  #modal-cust .wd09-customer-form-grid {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px;
+  }
+  #modal-cust .wd09-customer-form-grid .fld { min-width:0; margin:0; }
+  #modal-cust .wd09-customer-form-wide { grid-column:1/-1; }
+  #modal-cust .wd09-customer-form-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  #modal-cust #ci-zip { width:min(120px,50%); }
+  #modal-cust #ci-rrn1, #modal-cust #ci-rrn2 { flex:1 1 0; }
+  #modal-cust #wd09-edit-family-summary { margin:0 0 10px; color:var(--s700); font-size:13px; overflow-wrap:anywhere; }
+  #modal-cust .wd09-entry-footer .btn-s { min-height:var(--wd09-ui-action-height); }
   .wd09-material-fields .fld { margin:0; }
   .wd09-material-custom-category { margin-top:8px; }
   .wd09-material-fields .wd09-material-note-field { grid-column:1/-1; }
@@ -11609,6 +11615,8 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   @media(max-width:640px) {
     .wd09-material-fields { grid-template-columns:minmax(0,1fr); }
     #modal-cust .wd09-customer-entry-card :is(.fld-row,.fld-row-3) { grid-template-columns:minmax(0,1fr); }
+    #modal-cust .wd09-customer-form-grid { grid-template-columns:minmax(0,1fr); }
+    #modal-cust .wd09-entry-modal { height:100dvh; max-height:100dvh; border-radius:0; }
     .wd09-table-trash { min-width:44px; min-height:44px; }
   }
 </style>
@@ -16084,23 +16092,21 @@ const wdTest09Storage = (() => {
 <div class="modal-bx wd09-entry-modal" role="dialog" aria-modal="true" aria-labelledby="modal-cust-t">
 <header class="wd09-entry-header">
   <h2 id="modal-cust-t">고객 추가</h2>
-  <button type="button" class="wd09-modal-close" onclick="closeModal('modal-cust')" aria-label="고객 등록창 닫기">×</button>
+  <button type="button" class="wd09-modal-close" onclick="closeCustomerForm()" aria-label="고객 정보 창 닫기">×</button>
 </header>
 <div class="wd09-entry-body">
 <input id="ec-id" type="hidden"/>
 <!-- 기본정보 섹션 -->
 <section class="wd09-customer-entry-card" aria-labelledby="wd09-customer-entry-basic">
 <div class="cust-sec-label" id="wd09-customer-entry-basic">기본정보</div>
-<!-- 1줄: 고객이름 / 연락처 / 통신사 -->
-<div class="fld-row-3" style="margin-bottom:13px;">
-<div class="fld"><label>고객이름 *</label><input id="ci-name" placeholder="예: 홍길동" type="text"/></div>
-<div class="fld"><label>연락처</label><input id="ci-phone" maxlength="13" oninput="cstFormatPhoneInput(this)" placeholder="010-xxxx-xxxx" type="tel"/></div>
-<div class="fld"><label>통신사</label><select id="ci-telecom" onchange="cstToggleTelecomEtc()"><option value="">선택</option><option>SKT</option><option>KT</option><option>LG U+</option><option>SKT알뜰폰</option><option>KT알뜰폰</option><option>LG알뜰폰</option><option>기타</option></select><input id="ci-telecom-etc" type="text" placeholder="기타 통신사를 입력하세요" style="display:none;margin-top:8px;"/></div>
-</div>
-<!-- 2줄: 주민번호 / 고객구분 -->
-<div class="fld-row" style="margin-bottom:13px;">
-<div class="fld"><label>주민번호 (선택 · 기본 화면 마스킹 표시)</label>
-<div style="display:flex;gap:8px;align-items:center;">
+<div class="wd09-customer-form-grid">
+<div class="fld"><label for="ci-name">고객이름 *</label><input id="ci-name" placeholder="고객이름" type="text"/></div>
+<div class="fld"><label for="ci-ctype">고객구분</label><select id="ci-ctype"><option>가망고객</option><option>계약고객</option><option>해지고객</option><option>VIP고객</option></select></div>
+<div class="fld"><label for="ci-phone">연락처</label><input id="ci-phone" maxlength="13" oninput="cstFormatPhoneInput(this)" placeholder="010-xxxx-xxxx" type="tel"/></div>
+<div class="fld"><label for="ci-telecom">통신사</label><select id="ci-telecom" onchange="cstToggleTelecomEtc()"><option value="">선택</option><option>SKT</option><option>KT</option><option>LG U+</option><option>SKT알뜰폰</option><option>KT알뜰폰</option><option>LG알뜰폰</option><option>기타</option></select><input id="ci-telecom-etc" type="text" aria-label="기타 통신사" placeholder="기타 통신사를 입력하세요" style="display:none;margin-top:8px;"/></div>
+<div class="fld wd09-customer-form-wide"><label for="ci-rrn1">주민번호 (선택)</label>
+<div id="ci-rrn-current" class="wd09-customer-entry-hint" hidden></div>
+<div class="wd09-customer-form-row">
 <input id="ci-rrn1" aria-label="주민번호 앞 6자리" aria-describedby="ci-rrn-hint" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'');cstAutoBirthGender()" placeholder="앞 6자리" style="flex:1;" type="text"/>
 <span style="color:var(--s400);font-size:16px;font-weight:700;">-</span>
 <input id="ci-rrn2" aria-label="주민번호 뒷 7자리" aria-describedby="ci-rrn-hint" inputmode="numeric" maxlength="7" oninput="this.value=this.value.replace(/\D/g,'');cstAutoBirthGender()" placeholder="뒷 7자리" style="flex:1;" type="password"/>
@@ -16108,42 +16114,37 @@ const wdTest09Storage = (() => {
 <div id="ci-rrn-hint" class="wd09-customer-entry-hint">뒷자리 첫 숫자가 1·2면 1900년대생, 3·4면 2000년대생이에요.</div>
 <div id="ci-rrn-error" class="wd09-customer-entry-hint" role="status" hidden></div>
 </div>
-<div class="fld"><label>고객구분</label><select id="ci-ctype"><option>가망고객</option><option>계약고객</option><option>해지고객</option><option>VIP고객</option></select></div>
-</div>
-<!-- 3줄: 생년월일(자동) / 성별(자동) -->
-<div class="fld-row" style="margin-bottom:13px;">
-<div class="fld"><label>생년월일 (자동)</label><input id="ci-birth" placeholder="주민번호 입력 시 자동" readonly="" style="background:var(--s50);" type="text"/></div>
-<div class="fld"><label>성별 (자동)</label><input id="ci-gender" placeholder="주민번호 입력 시 자동" readonly="" style="background:var(--s50);" type="text"/></div>
-</div>
-<!-- 4줄: 주소 -->
-<div class="fld" style="margin-bottom:13px;"><label>주소</label>
-<div style="display:flex;gap:8px;margin-bottom:8px;">
-<input id="ci-zip" aria-label="우편번호" inputmode="numeric" maxlength="5" placeholder="우편번호" style="flex:0 0 120px;" type="text"/>
+<div class="fld"><label for="ci-birth">생년월일</label><input id="ci-birth" placeholder="주민번호 입력 시 자동" readonly type="text"/></div>
+<div class="fld" id="ci-gender-auto-field"><label for="ci-gender">성별</label><input id="ci-gender" placeholder="주민번호 입력 시 자동" readonly type="text"/></div>
+<div class="fld" id="ci-gender-edit-field" hidden><label for="ci-gender-edit">성별</label><select id="ci-gender-edit"><option value="">선택</option><option>남</option><option>여</option></select></div>
+<div class="fld wd09-customer-form-wide"><label for="ci-addr1">주소</label>
+<div class="wd09-customer-form-row">
+<input id="ci-zip" aria-label="우편번호" inputmode="numeric" maxlength="5" placeholder="우편번호" type="text"/>
 <button class="btn-s wd09-address-search" type="button" onclick="wd09OpenAddressSearch(this)">주소 검색</button>
 </div>
 <input id="ci-addr1" aria-label="기본주소" placeholder="도로명 또는 지번 주소" style="margin-bottom:8px;" type="text"/>
 <input id="ci-addr2" aria-label="상세주소" placeholder="상세주소 (직접 입력)" type="text"/>
 <div class="wd09-customer-entry-hint">검색 결과를 선택하면 우편번호와 기본주소가 입력돼요.</div>
 </div>
+</div>
 </section>
 <!-- 추가정보 섹션 -->
 <section class="wd09-customer-entry-card" aria-labelledby="wd09-customer-entry-extra">
 <div class="cust-sec-label" id="wd09-customer-entry-extra">추가정보</div>
-<!-- V144_6: 직업 / 하는 일 / 최초 등록일 + 방문경로(묶음 정돈)·소개자 검색 -->
-<div class="fld-row-3" style="margin-bottom:13px;">
-<div class="fld"><label>직업</label><input id="ci-job" placeholder="예: 회사원" type="text"/></div>
-<div class="fld"><label>하는 일 (구체적으로)</label><input id="ci-jobdetail" placeholder="예: 내근 사무 / 현장 용접 / 배달 운전" type="text"/></div>
-<div class="fld"><label>최초 등록일</label><input id="ci-regdate" type="date"/></div>
-</div>
-<div class="fld" style="margin-bottom:13px;"><label>방문경로</label>
+<div class="wd09-customer-form-grid">
+<div class="fld"><label for="ci-job">직업</label><input id="ci-job" placeholder="예: 회사원" type="text"/></div>
+<div class="fld"><label for="ci-jobdetail">하는 일 (구체)</label><input id="ci-jobdetail" placeholder="예: 내근 사무 / 현장 용접 / 배달 운전" type="text"/></div>
+<div class="fld"><label for="ci-route">방문경로</label>
 <select id="ci-route" onchange="cref_onRoute()">
 <option value="">선택</option>
 <optgroup label="── 소개·관계 ──"><option>지인소개</option><option>기존고객 소개</option><option>가족·세대 등록</option></optgroup>
 <optgroup label="── 직접 유입 ──"><option>내방</option><option>전화상담</option><option>온라인</option></optgroup>
 <optgroup label="── 기타 ──"><option>DB</option><option>기타</option></optgroup>
 </select>
-<div id="ci-ref-box" style="display:none;background:#FFF7EE;border:1px solid #F0D8B8;border-radius:10px;padding:10px 12px;margin-top:8px;">
-<label style="font-size:11.5px;font-weight:700;color:#B45309;display:block;margin-bottom:4px;">소개해 준 고객 — 검색해서 선택</label>
+</div>
+<div class="fld"><label for="ci-regdate">최초 등록일</label><input id="ci-regdate" type="date"/></div>
+<div class="fld wd09-customer-form-wide" id="ci-ref-box" style="display:none;background:#FFF7EE;border:1px solid #F0D8B8;border-radius:10px;padding:10px 12px;">
+<label for="ci-ref-q">소개해 준 고객</label>
 <input id="ci-ref-id" type="hidden"/>
 <div id="ci-ref-pick">
 <input autocomplete="off" id="ci-ref-q" oninput="cref_search(this.value)" placeholder="🔍 이름 또는 연락처 뒷자리" type="text"/>
@@ -16154,10 +16155,12 @@ const wdTest09Storage = (() => {
 <button class="btn-sm" onclick="cref_clearPick()" style="background:var(--s100);color:var(--s700);font-size:11px;" type="button">변경</button>
 </div>
 </div>
+<div class="fld wd09-customer-form-wide"><label for="ci-special">특이사항</label><textarea id="ci-special" placeholder="특이사항 (병력 원문은 입력 금지)" style="min-height:70px;"></textarea></div>
 </div>
-<!-- 2줄: 특이사항 -->
-<div class="fld"><label>특이사항</label><textarea id="ci-special" placeholder="특이사항 (병력 원문은 입력 금지)" style="min-height:54px;"></textarea></div>
-<!-- ══ V144_6: 가족 함께 등록 (접힘 기본 · 신규 등록 전용 · prefix cfr_) ══ -->
+</section>
+<section class="wd09-customer-entry-card" aria-labelledby="wd09-customer-entry-family">
+<div class="cust-sec-label" id="wd09-customer-entry-family">가족·대표 연결</div>
+<p id="wd09-edit-family-summary" hidden></p>
 <button class="cfr-toggle" id="cfr-toggle" onpointerdown="event.stopPropagation()" onclick="cfr_open(event)" type="button">👨‍👩‍👧 ＋ 가족 함께 등록 (선택) — 배우자·자녀·부모를 이 화면에서 한 번에</button>
 <div id="cfr-sec" style="display:none;border-top:1px dashed var(--s200);margin-top:14px;padding-top:12px;">
 <div style="font-size:12.5px;font-weight:800;color:var(--purple);">👨‍👩‍👧 가족 함께 등록</div>
@@ -16169,6 +16172,7 @@ const wdTest09Storage = (() => {
 </section>
 </div>
 <footer class="modal-ft wd09-entry-footer">
+<button class="btn-s" type="button" id="cust-edit-cancel" onclick="closeCustomerForm()" hidden>취소</button>
 <button class="btn-p" type="button" id="cust-save-btn" onpointerdown="event.stopPropagation()" onclick="event.preventDefault();event.stopImmediatePropagation();saveCust()">저장하고 고객상세 열기</button>
 </footer>
 </div>
@@ -18230,7 +18234,41 @@ function cstSetTelecomValue(value){
     etc.style.display='none';
   }
 }
-function openCustModal(){cfr_reset(true);document.getElementById('modal-cust-t').textContent='고객 추가';document.getElementById('ec-id').value='';
+function wd09SetCustomerFormMode(customer){
+  const editing=Boolean(customer);
+  const birth=document.getElementById('ci-birth');
+  birth.readOnly=!editing;
+  birth.placeholder=editing?'YYYY-MM-DD':'주민번호 입력 시 자동';
+  document.getElementById('ci-gender-auto-field').hidden=editing;
+  document.getElementById('ci-gender-edit-field').hidden=!editing;
+  document.getElementById('ci-gender-edit').value=customer?.gender||'';
+  document.getElementById('cust-edit-cancel').hidden=!editing;
+  const rrn=document.getElementById('ci-rrn-current');
+  const digits=String(customer?.rrnFull||customer?.rrn||'').replace(/\D/g,'');
+  const masked=cstMaskedFromFullRrn(digits)||(digits.length===6?digits+'-*******':'');
+  rrn.hidden=!editing;
+  rrn.textContent=masked?'현재 '+masked+' · 변경할 때만 입력':'등록된 주민번호 없음';
+  const family=document.getElementById('wd09-edit-family-summary');
+  const linked=editing?getCusts().filter(c=>String(c.famRepId||'')===String(customer.id)):[];
+  const representative=customer?.famRepId?getCusts().find(c=>String(c.id)===String(customer.famRepId)):null;
+  family.textContent=[
+    representative?'대표 고객 '+representative.name:'',
+    linked.length?'연결된 구성원 '+linked.map(c=>[c.name,c.famRel].filter(Boolean).join(' ')).join(', '):''
+  ].filter(Boolean).join(' · ');
+  family.hidden=!family.textContent;
+  document.getElementById('ci-route').querySelector('option[data-existing-route]')?.remove();
+  document.querySelector('#modal-cust .wd09-entry-body').scrollTop=0;
+}
+function closeCustomerForm(){
+  if(document.getElementById('cust-save-btn').disabled)return;
+  const editing=!!document.getElementById('ec-id').value;
+  document.getElementById('ci-rrn1').value='';
+  document.getElementById('ci-rrn2').value='';
+  closeModal('modal-cust');
+  if(editing)document.getElementById('wd09-customer-edit-button')?.focus({preventScroll:true});
+}
+function openCustModal(){document.getElementById('modal-cust-t').textContent='고객 추가';document.getElementById('ec-id').value='';
+wd09SetCustomerFormMode(null);
 ['ci-name','ci-phone','ci-memo','ci-mat','ci-next','ci-birth','ci-gender','ci-rrn1','ci-rrn2','ci-zip','ci-addr1','ci-addr2','ci-job','ci-jobdetail','ci-special','ci-telecom-etc'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
 ['ci-status','ci-type','ci-design','ci-claim','ci-telecom','ci-ctype','ci-route'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
 cstSetTelecomValue('');
@@ -18255,8 +18293,11 @@ function cstAutoBirthGender(){
   const front=document.getElementById('ci-rrn1').value;
   const rear=document.getElementById('ci-rrn2').value;
   const {birth,gender}=customerBirthGender(front,rear);
-  document.getElementById('ci-birth').value=birth;
-  document.getElementById('ci-gender').value=gender;
+  const editing=!!document.getElementById('ec-id').value;
+  if(!editing){
+    document.getElementById('ci-birth').value=birth;
+    document.getElementById('ci-gender').value=gender;
+  }
   const error=document.getElementById('ci-rrn-error');
   const invalid=front.length===6&&!!rear&&!birth;
   error.textContent=invalid?'생년월일과 뒷자리 첫 숫자를 확인해 주세요.':'';
@@ -18282,46 +18323,70 @@ function cstBojangNotice(){alert('보장분석은 WD WAVE 전산(메인)에서 �
    - 해지환급금 형태 드롭다운
    - 고객 필수 안내 문장 정리
    ════════════════════════════════════════════════════════════ */
-function openCustEdit(id){cfr_reset(true);var c=getCusts().find(function(x){return x.id==id;});if(!c)return;
-document.getElementById('modal-cust-t').textContent='고객 수정';document.getElementById('ec-id').value=id;
+function openCustEdit(id){var c=getCusts().find(function(x){return x.id==id;});if(!c)return;
+document.getElementById('modal-cust-t').textContent='고객정보 수정';document.getElementById('ec-id').value=id;
+wd09SetCustomerFormMode(c);
 function sv(k,v){var el=document.getElementById(k);if(el)el.value=v||'';}
 sv('ci-name',c.name);sv('ci-phone',cstFormatPhone(c.phone));sv('ci-birth',c.birth);sv('ci-gender',c.gender);
 sv('ci-status',c.status||'신규');sv('ci-type',c.type);sv('ci-design',c.design||'미의뢰');sv('ci-claim',c.claim||'없음');
 sv('ci-next',c.next);sv('ci-memo',c.memo);sv('ci-mat',c.mat);
-cstSetTelecomValue(c.telecom);sv('ci-ctype',c.ctype);sv('ci-zip',c.zip);sv('ci-addr1',c.addr1);sv('ci-addr2',c.addr2);
+cstSetTelecomValue(c.telecom);sv('ci-ctype',normalizeCustomerType(c.ctype));sv('ci-zip',c.zip);sv('ci-addr1',c.addr1);sv('ci-addr2',c.addr2);
+const route=document.getElementById('ci-route');
+if(c.route&&![...route.options].some(option=>option.value===c.route)){
+  const option=new Option(c.route,c.route);
+  option.dataset.existingRoute='';
+  route.add(option);
+}
 sv('ci-job',c.job);sv('ci-jobdetail',c.jobDetail);sv('ci-route',c.route);sv('ci-regdate',c.regdate);sv('ci-special',c.special);
 document.getElementById('ci-rrn1').value='';document.getElementById('ci-rrn2').value='';
 document.getElementById('ci-rrn-error').hidden=true;
 cref_bind(c); cfr_reset(true); /* V144_6_1: 사라님 지시 — 수정 모달에서도 신규와 동일하게 가족 함께 등록 가능. 저장 시 새 가족은 이 대표(eid)에 famRepId 연결, 저장 후 줄 초기화로 중복 방지 */
 setCustActionBtns(true);
-openModal('modal-cust');}
+openModal('modal-cust');
+}
 async function _custBuildRecord(){
-  var n=document.getElementById('ci-name').value.trim();if(!n){alert('고객이름을 입력하세요.');return null;}
+  var n=document.getElementById('ci-name').value.trim();
+  if(!n){alert('고객이름을 입력하세요.');document.getElementById('ci-name').focus();return null;}
   var eid=document.getElementById('ec-id').value,cs=getCusts();
-  var prev=eid?(cs.find(function(x){return x.id==eid;})||{}):{};
+  var prev=eid?cs.find(function(x){return x.id==eid;}):{};
+  if(!prev){alert('고객 정보를 다시 불러온 뒤 수정해 주세요.');return null;}
   var rrn1=(document.getElementById('ci-rrn1').value||'').replace(/\D/g,'');var rrn2=(document.getElementById('ci-rrn2').value||'').replace(/\D/g,'');
-  const details=customerBirthGender(rrn1,rrn2);
-  if(rrn1.length===6&&rrn2&&!details.birth){
-    cstAutoBirthGender();
+  const savedRear=eid&&/^\d{13}$/.test(prev.rrnFull||'')?prev.rrnFull.slice(6):'';
+  const rear=rrn2||(rrn1?savedRear:'');
+  const details=customerBirthGender(rrn1,rear);
+  const incomplete=eid&&((rrn1&&rrn1.length!==6)||(rrn2&&(rrn1.length!==6||rrn2.length!==7)));
+  if(incomplete||(rrn1.length===6&&rear&&!details.birth)){
+    const error=document.getElementById('ci-rrn-error');
+    error.textContent=incomplete?'주민번호 앞 6자리와 변경할 뒷자리를 확인해 주세요.':'생년월일과 뒷자리 첫 숫자를 확인해 주세요.';
+    error.hidden=false;
     document.getElementById('ci-rrn1').focus();
     return null;
   }
-  var rrnFull=(rrn1&&rrn2)?(rrn1+rrn2):'';
+  var rrnFull=(rrn1&&rear)?(rrn1+rear):'';
   var rrnMasked=rrnFull?cstMaskedFromFullRrn(rrnFull):(rrn1?rrn1+'-?******':'');
   var finalRrn=rrnMasked||prev.rrn||'';
   function gv(k){var el=document.getElementById(k);return el?el.value.trim():'';}
   function svv(k,def){var el=document.getElementById(k);return el?el.value:(def||'');}
-  var d={id:claimNumericId(eid||Date.now()),name:n,phone:cstFormatPhone(gv('ci-phone')),
-    birth:details.birth||prev.birth||'',gender:details.gender||prev.gender||'',rrn:finalRrn,rrnFull:rrnFull||prev.rrnFull||'',
+  const route=svv('ci-route',prev.route||'');
+  var d={...prev,id:eid?prev.id:claimNumericId(Date.now()),name:n,phone:cstFormatPhone(gv('ci-phone')),
+    birth:details.birth||(eid?gv('ci-birth'):'')||prev.birth||'',
+    gender:details.gender||(eid?gv('ci-gender-edit'):'')||prev.gender||'',rrn:finalRrn,
+    rrnFull:eid&&rrn1?rrnFull:rrnFull||prev.rrnFull||'',
     telecom:cstTelecomValue(prev.telecom||''),ctype:normalizeCustomerType(svv('ci-ctype',prev.ctype||'')),
     zip:gv('ci-zip'),addr1:gv('ci-addr1'),addr2:gv('ci-addr2'),
-    job:gv('ci-job'),jobDetail:gv('ci-jobdetail'),route:svv('ci-route',prev.route||''),refId:cref_val(prev),regdate:gv('ci-regdate')||prev.regdate||'',special:gv('ci-special'),
+    job:gv('ci-job'),jobDetail:gv('ci-jobdetail'),route,
+    refId:eid&&route===prev.route&&route!=='기존고객 소개'?(prev.refId||''):cref_val(prev),
+    regdate:gv('ci-regdate')||prev.regdate||'',special:gv('ci-special'),
     status:svv('ci-status',prev.status||'신규'),type:svv('ci-type',prev.type||''),
     design:prev.design||'미의뢰',claim:prev.claim||'없음',
     next:prev.next||'',memo:prev.memo||'',mat:prev.mat||'',matLogs:Array.isArray(prev.matLogs)?prev.matLogs:[],
     famRepId:prev.famRepId||'',famRel:prev.famRel||'', /* V144_5_1: 연결 편집은 고객정보 카드에서만 — 팝업 저장 시 기존 값 유지 */
     created:eid?(prev.created||new Date().toISOString()):new Date().toISOString(),updated:new Date().toISOString()};
-  if(d.route==='기존고객 소개'&&!d.refId){alert('방문경로가 \'기존고객 소개\'입니다.\n소개자를 검색해 선택해 주세요.');return null;} /* V144_6_1: 소개자 필수 */
+  if(d.route==='기존고객 소개'&&!d.refId&&(!eid||prev.route!==d.route)){
+    alert('방문경로가 \'기존고객 소개\'입니다.\n소개자를 검색해 선택해 주세요.');
+    document.getElementById('ci-ref-q').focus();
+    return null;
+  }
   var fam=cfr_collect(d); /* V144_6: 가족 줄 수집·검증 (없으면 []) */
   if(fam===null)return null; // 가족 줄 유효성 실패 — 저장하지 않음
   if(eid){cs=cs.map(function(c){return c.id==eid?d:c;});}else{cs=cs.concat([d]);}
@@ -18343,9 +18408,10 @@ function cfr_closeAfterMainSave(){
   if(list)list.innerHTML='';
 }
 async function saveCust(){
-  var saveBtn=document.getElementById('cust-save-btn');
-  if(saveBtn?.disabled)return;
-  if(saveBtn)saveBtn.blur();
+  const saveBtn=document.getElementById('cust-save-btn');
+  if(saveBtn.disabled)return;
+  const editing=!!document.getElementById('ec-id').value;
+  const uid=_UID;
   /* 일반 저장은 접힌 가족 영역이나 남아 있는 DOM을 절대 가족 고객으로 처리하지 않음 */
   var familyRequested=cfr_familyModeActive===true;
   if(!familyRequested){
@@ -18357,18 +18423,33 @@ async function saveCust(){
   /* V144_6_1: 저장 성공 → 모달 닫기 → 목록 갱신 → 방금 저장한 대표 고객 상세(기본정보 탭) 진입.
      저장·유효성 실패(_custBuildRecord가 null) 시 모달 유지, 이동·저장 표시 없음.
      가족 함께 등록 시에도 d = 대표 레코드 → 대표 상세로 진입. */
-  const insuranceEntry=document.getElementById('modal-insurance-purpose').classList.contains('open');
   const close=document.querySelector('#modal-cust .wd09-modal-close');
+  const cancel=document.getElementById('cust-edit-cancel');
+  const body=document.querySelector('#modal-cust .wd09-entry-body');
+  saveBtn.disabled=close.disabled=cancel.disabled=true;
   let d;
-  if(insuranceEntry)saveBtn.disabled=close.disabled=true;
-  try{d=await _custBuildRecord();}
-  finally{if(insuranceEntry)saveBtn.disabled=close.disabled=false;}
-  if(!d)return;
+  let focused;
+  try{
+    const pending=_custBuildRecord();
+    focused=document.activeElement;
+    body.inert=true;
+    d=await pending;
+  }finally{
+    saveBtn.disabled=close.disabled=cancel.disabled=false;
+    body.inert=false;
+  }
+  if(uid!==_UID)return;
+  if(!d){focused?.focus();return;}
   cfr_closeAfterMainSave();
-  closeModal('modal-cust');
+  closeCustomerForm();
   renderCustList();renderHomeCusts();
-  if(wd09ResumeEntryWithCustomer(d.id))return;
-  showDetail(d.id); /* 내부에서 기본정보 탭으로 리셋됨 */
+  if(!editing&&wd09ResumeEntryWithCustomer(d.id))return;
+  if(editing&&String(d.id)===String(_vid)){
+    renderCustomerCard(d);
+    document.getElementById('wd09-customer-edit-button')?.focus({preventScroll:true});
+    return;
+  }
+  showDetail(d.id);
 }
 async function saveCustGo(dest){
   var d=await _custBuildRecord();if(!d)return;
@@ -18411,8 +18492,6 @@ function normalizeCustomerType(v){
   return '가망고객';
 }
 function calcAge(birthStr){
-/* ── 숫자만 입력 허용 헬퍼 ── */
-function ieNumOnly(el){el.value=(el.value||'').replace(/\D/g,'');}
   if(!birthStr||birthStr==='-')return '';
   var p=birthStr.split('-');if(p.length<3)return '';
   var now=new Date();var birth=new Date(+p[0],+p[1]-1,+p[2]);if(isNaN(birth.getTime()))return '';
@@ -18421,117 +18500,6 @@ function ieNumOnly(el){el.value=(el.value||'').replace(/\D/g,'');}
   return '만 '+age+'세';
 }
 
-/* ══ 카드 내 직접 수정 ══ */
-function enterCustEditMode(id){
-  var c=getCusts().find(function(x){return x.id==id;});
-  if(!c)return;
-  var card=document.getElementById('cust-info-card');
-  if(!card)return;
-  card.innerHTML=
-    '<div class="card-hd">'
-    +'<div style="font-size:16px;font-weight:900;color:var(--navy);">✏️ 정보 수정</div>'
-    +'<div style="display:flex;gap:8px;">'
-    +'<button class="btn-s" style="font-size:12px;padding:7px 16px;" onclick="cancelCustEditMode('+id+')">취소</button>'
-    +'<button class="btn-p" style="font-size:12px;padding:7px 16px;" onclick="saveCustInline('+id+')">저장</button>'
-    +'</div></div>'
-    +'<div class="cust-sec-label" style="margin-top:8px;">기본정보</div>'
-    // 고객이름 / 고객구분
-    +'<div class="ie-grid-2">'
-    +'<div class="ie-fld"><label>고객이름 *</label><input id="ie-name" value="'+esc(c.name||'')+'" placeholder="고객이름"></div>'
-    +'<div class="ie-fld"><label>고객구분</label><select id="ie-ctype"><option'+(normalizeCustomerType(c.ctype)==='가망고객'?' selected':'')+'>가망고객</option><option'+(normalizeCustomerType(c.ctype)==='계약고객'?' selected':'')+'>계약고객</option><option'+(normalizeCustomerType(c.ctype)==='해지고객'?' selected':'')+'>해지고객</option><option'+(normalizeCustomerType(c.ctype)==='VIP고객'?' selected':'')+'>VIP고객</option></select></div>'
-    +'</div>'
-    // 연락처 / 통신사 / 주민번호
-    +'<div class="ie-grid-3">'
-    +'<div class="ie-fld"><label>연락처</label><input id="ie-phone" value="'+esc(cstFormatPhone(c.phone)||'')+'" placeholder="010-xxxx-xxxx" maxlength="13" oninput="cstFormatPhoneInput(this)"></div>'
-    +'<div class="ie-fld"><label>통신사</label><select id="ie-telecom"><option value="">선택</option><option'+(c.telecom==='SKT'?' selected':'')+'>SKT</option><option'+(c.telecom==='KT'?' selected':'')+'>KT</option><option'+(c.telecom==='LG U+'?'selected':'')+'>LG U+</option><option'+(c.telecom==='알뜰폰'?' selected':'')+'>알뜰폰</option></select></div>'
-    +'<div class="ie-fld"><label>주민번호 (앞 6자리)</label><input id="ie-rrn1" value="" placeholder="앞 6자리 (재입력)" maxlength="6" oninput="ieNumOnly(this)"></div>'
-    +'</div>'
-    // 생년월일 / 성별
-    +'<div class="ie-grid-2">'
-    +'<div class="ie-fld"><label>생년월일</label><input id="ie-birth" value="'+esc(c.birth||'')+'" placeholder="예: 1990-01-01"></div>'
-    +'<div class="ie-fld"><label>성별</label><select id="ie-gender"><option value="">선택</option><option'+(c.gender==='남'?' selected':'')+'>남</option><option'+(c.gender==='여'?' selected':'')+'>여</option></select></div>'
-    +'</div>'
-    // 주소
-    +'<div class="ie-fld"><label>주소</label>'
-    +'<div style="display:flex;gap:8px;margin-bottom:6px;"><input id="ie-zip" value="'+esc(c.zip||'')+'" aria-label="우편번호" inputmode="numeric" maxlength="5" placeholder="우편번호" style="flex:0 0 100px;padding:7px 10px;border:1.5px solid var(--s200);border-radius:8px;font-size:12px;font-family:inherit;"><button class="btn-s wd09-address-search" type="button" onclick="wd09OpenAddressSearch(this)">주소 검색</button></div>'
-    +'<input id="ie-addr1" value="'+esc(c.addr1||'')+'" aria-label="기본주소" placeholder="도로명 또는 지번 주소" style="width:100%;margin-bottom:6px;padding:7px 10px;border:1.5px solid var(--s200);border-radius:8px;font-size:12px;font-family:inherit;background:var(--s50);"><input id="ie-addr2" value="'+esc(c.addr2||'')+'" placeholder="상세주소" style="width:100%;padding:7px 10px;border:1.5px solid var(--s200);border-radius:8px;font-size:12px;font-family:inherit;">'
-    +'</div>'
-    +'<div class="cust-sec-label" style="margin-top:10px;">추가정보</div>'
-    // 직업 / 방문경로 / 최초등록일
-    +'<div class="ie-grid-3">'
-    +'<div class="ie-fld"><label>직업</label><input id="ie-job" value="'+esc(c.job||'')+'" placeholder="예: 회사원"></div>'
-    +'<div class="ie-fld"><label>하는 일 (구체적으로)</label><input id="ie-jobdetail" value="'+esc(c.jobDetail||'')+'" placeholder="예: 내근 사무 / 현장 용접"></div>'
-    +'<div class="ie-fld"><label>방문경로</label><select id="ie-route"><option value="">선택</option>'
-    +'<optgroup label="── 소개·관계 ──"><option'+(c.route==='지인소개'?' selected':'')+'>지인소개</option><option'+(c.route==='기존고객 소개'?' selected':'')+'>기존고객 소개</option><option'+(c.route==='가족·세대 등록'?' selected':'')+'>가족·세대 등록</option></optgroup>'
-    +'<optgroup label="── 직접 유입 ──"><option'+(c.route==='내방'?' selected':'')+'>내방</option><option'+(c.route==='전화상담'?' selected':'')+'>전화상담</option><option'+(c.route==='온라인'?' selected':'')+'>온라인</option></optgroup>'
-    +'<optgroup label="── 기타 ──"><option'+(c.route==='DB'?' selected':'')+'>DB</option><option'+(c.route==='기타'?' selected':'')+'>기타</option></optgroup>'
-    +'</select></div>'
-    +'<div class="ie-fld"><label>최초 등록일</label><input type="date" id="ie-regdate" value="'+esc(c.regdate||'')+'"></div>'
-    +'</div>'
-    // 특이사항
-    +'<div class="ie-fld"><label>특이사항</label><textarea id="ie-special" style="min-height:70px;">'+esc(c.special||'')+'</textarea></div>'
-    // V144_6_3: 가족 함께 등록 — 모달과 동일한 cfr_ 시스템 재사용 (인라인 수정에서도 세대 등록 가능)
-    +'<div style="border-top:1px dashed var(--s200);margin-top:14px;padding-top:12px;">'
-    +'<button type="button" class="cfr-toggle" id="cfr-toggle" onclick="cfr_open()">👨‍👩‍👧 ＋ 가족 함께 등록 (선택) — 배우자·자녀·부모를 이 화면에서 한 번에</button>'
-    +'<div id="cfr-sec" style="display:none;border-top:1px dashed var(--s200);margin-top:14px;padding-top:12px;">'
-    +'<div style="font-size:12.5px;font-weight:800;color:var(--purple);">👨‍👩‍👧 가족 함께 등록</div>'
-    +'<div style="font-size:11px;color:var(--s400);margin-bottom:4px;" id="cfr-desc">이 세대의 보험료는 대표 고객이 관리 · 가족은 각자 정식 고객으로 등록 · 방문경로 자동 "가족·세대 등록"</div>'
-    +'<div id="cfr-list"></div>'
-    +'<button type="button" class="btn-sm p" style="width:100%;padding:9px;" onclick="cfr_addRow()">＋ 가족 한 명 더</button>'
-    +'<div style="font-size:11px;color:var(--s400);margin-top:4px;">이름·관계만 있으면 저장됩니다. 나머지는 아는 만큼만 — 나중에 각자 상세에서 보완. 줄을 전부 지우면 대표 정보만 저장됩니다.</div>'
-    +'</div></div>';
-  cfr_reset(true); /* V144_6_3: 인라인 진입 시 가족 구역 초기화 (접힘) */
-}
-
-function cancelCustEditMode(id){showDetail(id);}
-
-async function saveCustInline(id){
-  var n=(document.getElementById('ie-name').value||'').trim();
-  if(!n){alert('고객이름을 입력하세요.');return;}
-  var cs=getCusts().slice();var idx=cs.findIndex(function(x){return x.id==id;});
-  if(idx<0)return;
-  var prev=cs[idx];
-  function gv(k){var el=document.getElementById(k);return el?el.value.trim():'';}
-  // 주민번호: 재입력이 있으면 업데이트, 없으면 기존 유지
-  var rrn1=gv('ie-rrn1').replace(/\D/g,'');
-  var newRrnFull=rrn1?(rrn1+(prev.rrnFull||'').slice(6)):'';
-  var finalRrnFull=newRrnFull||prev.rrnFull||'';
-  var finalRrn=finalRrnFull?cstMaskedFromFullRrn(finalRrnFull):(prev.rrn||'');
-  cs[idx]={
-    id:prev.id,
-    name:n,
-    phone:cstFormatPhone(gv('ie-phone')),
-    birth:gv('ie-birth')||prev.birth||'',
-    gender:(document.getElementById('ie-gender').value)||prev.gender||'',
-    rrn:finalRrn,rrnFull:finalRrnFull,
-    telecom:(document.getElementById('ie-telecom').value)||prev.telecom||'',
-    ctype:normalizeCustomerType((document.getElementById('ie-ctype').value)||prev.ctype||''),
-    zip:gv('ie-zip'),
-    addr1:gv('ie-addr1'),
-    addr2:gv('ie-addr2'), /* V144_7_6: 인라인 주소 id를 ie-*로 분리 — 등록 모달 ci-*와 중복 제거 */
-    job:gv('ie-job'),jobDetail:gv('ie-jobdetail'),
-    route:(document.getElementById('ie-route').value)||prev.route||'',
-    regdate:gv('ie-regdate')||prev.regdate||'',
-    special:gv('ie-special'),
-    status:prev.status||'신규',type:prev.type||'',
-    design:prev.design||'미의뢰',claim:prev.claim||'없음',
-    next:prev.next||'',memo:prev.memo||'',
-    mat:prev.mat||'',matLogs:Array.isArray(prev.matLogs)?prev.matLogs:[],
-    famRepId:prev.famRepId||'',famRel:prev.famRel||'',refId:prev.refId||'', /* V144_6: 가족·소개 연결 편집은 등록창·상세 두 곳만 — 인라인 저장 시 기존 값 유지 */
-    created:prev.created||new Date().toISOString(),
-    updated:new Date().toISOString()
-  };
-  var repRec=cs[idx];
-  /* V144_6_3: 가족 함께 등록 — 모달과 동일하게 cfr_collect로 수집. 실패 시 저장 중단(폼 유지) */
-  var fam=cfr_collect(repRec);
-  if(fam===null)return;
-  if(fam.length)cs=cs.concat(fam);
-  var result=await saveCusts(cs);
-  if(!result.ok)return; // 저장 실패 시 화면 갱신하지 않음(성공처럼 보이지 않게)
-  if(fam.length){cfr_reset(true);} /* 저장 성공 후 가족 줄 초기화 — 재저장 중복 방지 */
-  renderCustList();renderHomeCusts();
-  showDetail(id);
-}
 // 고객자료실 첨부파일 검사 및 Google Drive 업로드
 var ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp','hwp','hwpx','doc','docx'];
 var ATTACH_MAX_SIZE=10*1024*1024; // 10MB
@@ -19544,8 +19512,7 @@ function loadCustomerInsurance(){
     if(_vid===custId)renderContractsList(result.ok?'':'error');
   });
 }
-function showDetail(id){_vid=id;var c=getCusts().find(function(x){return x.id==id;});if(!c)return;
-// 왼쪽 고객카드 렌더
+function renderCustomerCard(c){
 function dr(l,v,extra){return'<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--s400);margin-bottom:2px;">'+l+'</div><div style="font-size:14px;font-weight:600;color:var(--s800);"'+(extra?' '+extra:'')+'>'+esc(v||'-')+'</div></div>';}
 function rrnDr(){var rid='rrn-view-'+c.id;var full=c.rrnFull||'';var masked=c.rrn||'미입력';return '<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--s400);margin-bottom:2px;">주민번호</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><div id="'+rid+'" data-full="'+esc(full)+'" data-masked="'+esc(masked)+'" data-open="0" style="font-size:14px;font-weight:600;color:var(--s800);">'+esc(masked)+'</div><button type="button" class="btn-sm p" onclick="cstToggleRrn(this,\''+rid+'\')">👁</button></div></div>';}
 var _fullAddr=[c.zip?'('+c.zip+')':'',c.addr1||'',c.addr2||''].filter(Boolean).join(' ');
@@ -19556,7 +19523,7 @@ var _age=calcAge(c.birth);
 var birthGender=(c.birth||'-')+(_age?' ('+_age+')':'')+(c.gender?' / '+esc(c.gender):'');
 document.getElementById('wd09-customer-card-slot').innerHTML=
   '<div class="card" id="cust-info-card">'
-  +'<div class="card-hd"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><div style="font-size:22px;font-weight:800;">'+esc(c.name)+'</div>'+ctypeBadge+'</div><button class="btn-sm p" onclick="enterCustEditMode('+c.id+')">✏️ 수정</button></div>'
+  +'<div class="card-hd"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><div style="font-size:22px;font-weight:800;">'+esc(c.name)+'</div>'+ctypeBadge+'</div><button type="button" class="btn-sm p" id="wd09-customer-edit-button" onclick="openCustEdit('+c.id+')">✏️ 수정</button></div>'
   +'<div class="cust-sec-label" style="margin-top:4px;">기본정보</div>'
   // 1줄: 연락처 / 통신사 / 주민번호
   +'<div class="grid-3" style="margin-bottom:10px;">'+dr('연락처',cstFormatPhone(c.phone))+dr('통신사',c.telecom||'-')+rrnDr()+'</div>'
@@ -19570,13 +19537,16 @@ document.getElementById('wd09-customer-card-slot').innerHTML=
   +'<div id="cf-fam-box"></div>'
   +'<div style="font-size:11px;color:var(--s400);margin-top:10px;">등록 '+(c.created||'').slice(0,10)+' / 수정 '+(c.updated||'').slice(0,10)+'</div>'
   +'</div>';
+  cf_renderFam(c);
+}
+function showDetail(id){_vid=id;var c=getCusts().find(function(x){return x.id==id;});if(!c)return;
+renderCustomerCard(c);
 // 고객 업무기록 초기 렌더(캐시) → Supabase 조회 후 재렌더
 loadCommsFromSupa(id).then(function(){if(_vid===id)renderCustomerWorkTable();});
 void loadContractsFromSupa(id);
 // 청구문의기록 초기 렌더(캐시) → Supabase 조회 후 재렌더
 renderClaimList();
 loadClaimDsFromSupa(id).then(function(){if(_vid===id)renderClaimList();});
-cf_renderFam(c); /* V144_5: 가족·대표 연결 표시 (읽기 전용) */
 swDetTab(document.getElementById('wd09-customer-info-tab'),'det-info');
 renderStagebar();
 setCustomerDetailVisibility(true);window.scrollTo(0,0);}
@@ -22013,7 +21983,7 @@ document.addEventListener('keydown',function(e){
 });
 /* ══ V144_5_3: 가족·대표(보험료 관리) 연결 — prefix cf_
    편집 ①: 구성원 쪽 — ✏️ 정보 수정 폼에서 내 대표 지정 / 편집 ②: 대표 쪽 — 카드의 [+ 구성원 추가] / 표시: 기본정보 카드 하단.
-   저장은 고객 레코드 famRepId·famRel 키 2개뿐 — 기존 saveCusts(saveCustInline 경유) 흐름 그대로.
+   저장은 고객 레코드 famRepId·famRel 키 2개뿐 — 기존 saveCusts 흐름 그대로.
    새 테이블·컬럼·SQL·localStorage 없음. 대표 지정은 설계사 몫(앱 자동 판단 없음). ══ */
 var CF_RELS=['배우자','부','모','자녀','직원','기타'];
 /* ══ V144_6: 가족·소개 연결 표시/편집 — prefix cf_(상세) · 공용 검색 선택기 cf_pickList
@@ -22298,7 +22268,7 @@ function cfr_updateSaveLabel(){
   if(n>0){
     var nm=(document.getElementById('ci-name')||{value:''}).value.trim();
     btn.textContent='세대 전체 저장 — '+(nm||'대표')+' + 가족 '+n+'명';
-  }else{btn.textContent='저장하고 고객상세 열기';} /* V144_6_1: 기본 라벨 — 하단 버튼 정리와 일치 */
+  }else{btn.textContent=document.getElementById('ec-id').value?'저장':'저장하고 고객상세 열기';}
 }
 function cfr_collect(repRec){
   /* 가족 함께 등록 버튼을 직접 누르지 않았다면 가족 레코드는 절대 수집하지 않음 */
@@ -34604,9 +34574,10 @@ function openDesignProgressModal(){
   document.addEventListener('keydown', function(event){
     if(event.key!=='Escape')return;
     var modal=document.getElementById('modal-cust');
-    if(modal&&modal.classList.contains('open')){
+    if(modal&&modal.classList.contains('open')&&!document.getElementById('wd09-postcode-dialog')?.open){
       event.preventDefault();
       event.stopImmediatePropagation();
+      if(document.getElementById('ec-id').value)closeCustomerForm();
     }
   }, true);
 })();
@@ -37130,10 +37101,10 @@ function wd09PostcodeService(){
   return wd09PostcodeScript;
 }
 async function wd09OpenAddressSearch(button){
-  const form=button.closest('.cfr-addr,.ie-fld,.fld');
-  const zip=form?.querySelector('#ci-zip,#ie-zip,.cfr-zip');
-  const address=form?.querySelector('#ci-addr1,#ie-addr1,.cfr-addr1');
-  const detail=form?.querySelector('#ci-addr2,#ie-addr2,.cfr-addr2');
+  const form=button.closest('.cfr-addr,.fld');
+  const zip=form?.querySelector('#ci-zip,.cfr-zip');
+  const address=form?.querySelector('#ci-addr1,.cfr-addr1');
+  const detail=form?.querySelector('#ci-addr2,.cfr-addr2');
   if(!zip||!address)return;
   const uid=_UID;
   const dialog=document.getElementById('wd09-postcode-dialog');
