@@ -7127,14 +7127,14 @@ async function encryptStaffPin(pin){
   return {iv:Array.from(iv),cipher:Array.from(new Uint8Array(cipher))};
 }
 
-function unlockStaffPins(button,afterUnlock){
+function unlockStaffPins(button,afterUnlock,{editInput}={}){
   if(!S.pins.manager)return notify('관리자 로그인에서 업무센터 비밀번호를 먼저 설정해 주세요.');
   if($('modalLayer'))return;
-  showModal(`<p>본진 로그인으로 들어온 경우, 이 로그인에서 처음 한 번 업무센터 관리자 비밀번호로 암호화를 해제합니다.</p>
+  showModal(`<p>${editInput?'이 로그인에서 한 번만 업무센터 관리자 비밀번호를 확인하면 기존 번호가 수정 칸에 채워집니다.':'본진 로그인으로 들어온 경우, 이 로그인에서 처음 한 번 업무센터 관리자 비밀번호로 암호화를 해제합니다.'}</p>
     <form id="unlockStaffPinForm"><label for="unlockStaffPin">관리자 비밀번호</label>
       <input id="unlockStaffPin" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
-      <div class="actions"><button class="primary" id="confirmStaffPinUnlock" type="submit">열람 잠금 해제</button></div>
-      <p id="staffPinUnlockStatus" class="smallText" role="status"></p></form>`,'직원 비밀번호 열람');
+      <div class="actions"><button class="primary" id="confirmStaffPinUnlock" type="submit">${editInput?'확인':'열람 잠금 해제'}</button></div>
+      <p id="staffPinUnlockStatus" class="smallText" role="status"></p></form>`,editInput?'직원 비밀번호 수정':'직원 비밀번호 열람');
   const form=$('unlockStaffPinForm'),input=$('unlockStaffPin'),confirm=$('confirmStaffPinUnlock'),status=$('staffPinUnlockStatus');
   input.focus();
   form.onsubmit=async event=>{
@@ -7158,7 +7158,7 @@ function unlockStaffPins(button,afterUnlock){
       managerStaffPinKey=key;
       $('modalLayer').remove();
       await afterUnlock();
-      if(button.isConnected)button.focus();
+      if(button.isConnected)(editInput||button).focus();
     }catch{if(current())status.textContent='열람 잠금을 해제하지 못했어요.';}
     finally{confirm.disabled=false;}
   };
@@ -7254,6 +7254,7 @@ function bindStaffProfilePin(profile,form){
       else unlockStaffPins(eye,()=>current()?prefill(true):undefined);
     };
     if(managerStaffPinKey)void prefill(false);
+    else if(S.pins.manager)unlockStaffPins(eye,()=>prefill(false),{editInput:input});
   }
   return ()=>input.value===savedPin?'':input.value;
 }
@@ -7274,7 +7275,7 @@ function staffProfileEditor(profile){
       <div><label for="staffAccount">계좌번호</label><input id="staffAccount" maxlength="100" inputmode="numeric" autocomplete="off" value="${esc(account)}" placeholder="계좌번호 입력"></div>
       <div>
         <label for="staffPin">로그인 비밀번호</label>
-        <div class="wd58-password"><input id="staffPin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" placeholder="${profile?.pinCipher?'등록된 비밀번호':'숫자 6자리'}">${passwordEye('showStaffPin','staffPin','로그인 비밀번호')}</div>
+        <div class="wd58-password"><input id="staffPin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" placeholder="숫자 6자리">${passwordEye('showStaffPin','staffPin','로그인 비밀번호')}</div>
       </div>
     </div>
     <label for="staffRole">담당 업무</label><input id="staffRole" maxlength="80" value="${esc(profile?.role||'')}" placeholder="예: SNS 콘텐츠 운영">
@@ -7993,7 +7994,7 @@ function bindStaffManagement(){
   const profile=staffById(managerStaffId);
   bindStaffPrivateValues(profile);bindStaffContracts(profile);
   if(profile)void loadStaffRecords(profile,staffSummaryMonth);
-  if($('editStaff'))$('editStaff').onclick=()=>{editingStaff=true;render();$('staffName').focus();};
+  if($('editStaff'))$('editStaff').onclick=()=>{editingStaff=true;render();if(!$('unlockStaffPinForm'))$('staffName').focus();};
   if($('editStaffPermissions'))$('editStaffPermissions').onclick=()=>openStaffPermissions(profile);
   if($('cancelStaffEdit'))$('cancelStaffEdit').onclick=()=>{editingStaff=false;staffDetailOpen=!!profile;render();$(profile?'editStaff':'addStaff')?.focus();};
   const form=$('staffProfileForm');
