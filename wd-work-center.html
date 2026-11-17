@@ -1143,6 +1143,35 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-ledger-dialog .office-entry-three{grid-template-columns:1.35fr 1fr 1fr}
 .office-ledger-dialog .office-entry-payment-grid{grid-template-columns:1.35fr 1fr 1fr}
 .office-ledger-dialog .office-entry-grid [hidden],.office-ledger-dialog .office-transfer-fields[hidden]{display:none}
+.office-expense-batch-dialog.office-modal{display:grid;grid-template-rows:auto minmax(0,1fr);width:min(1080px,100%);max-height:min(88dvh,900px);overflow:hidden;padding:0;background:#f7f5fa}
+.office-expense-batch-dialog .office-modal-header{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin:0;padding:14px 20px;border-bottom:1px solid #e7e0ef;background:#fff;color:var(--ink)}
+.office-expense-batch-dialog .office-modal-header h2{font-size:19px}
+.office-expense-batch-dialog .office-modal-status{grid-column:1/-1;margin:0}
+.office-expense-batch-dialog .office-expense-batch-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px 20px 20px}
+.office-expense-batch-dialog .office-expense-items{display:grid;gap:12px;margin-bottom:12px}
+.office-expense-batch-dialog .office-expense-item{min-width:0;border:1px solid #e7ddf0;border-radius:12px;background:#fff}
+.office-expense-batch-dialog .office-expense-item fieldset{min-width:0;margin:0;padding:0;border:0}
+.office-expense-batch-dialog .office-expense-item-head{padding:8px 14px;border-radius:11px 11px 0 0;background:#f2edf8;justify-content:space-between}
+.office-expense-batch-dialog .office-expense-item-head h3{margin:0;font-size:16px}
+.office-expense-batch-dialog .office-expense-remove{min-height:44px;padding:7px 13px;color:#fff;background:#a82742;border-color:#a82742;font-size:13px;font-weight:700}
+.office-expense-batch-dialog .office-expense-remove:hover{background:#8e2137;color:#fff}
+.office-expense-batch-dialog .office-expense-item-fields{padding:12px 14px 14px}
+.office-expense-batch-dialog .office-expense-item-fields label{margin:0;min-width:0}
+.office-expense-batch-dialog .office-expense-item-fields input:not([type=checkbox]),.office-expense-batch-dialog .office-expense-item-fields select{min-height:44px;margin-top:4px;padding:8px 10px;min-width:0}
+.office-expense-batch-dialog .office-expense-core{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.office-expense-batch-dialog .office-transfer-fields{margin-top:10px}
+.office-expense-batch-dialog .office-expense-extra{margin-top:12px;padding-top:10px;border-top:1px solid #eee8f4}
+.office-expense-batch-dialog .office-expense-extra summary{cursor:pointer;font-size:14px;font-weight:700;color:#59416e}
+.office-expense-batch-dialog .office-expense-extra .office-entry-grid{margin:8px 0 10px}
+.office-expense-batch-dialog .office-expense-extra textarea{min-height:72px;margin-top:4px}
+.office-expense-batch-dialog .office-fixed-expense-fields{margin-top:8px}
+@media(max-width:620px){
+  .office-expense-batch-dialog .office-modal-header,.office-expense-batch-dialog .office-expense-batch-body{padding-inline:12px}
+  .office-expense-batch-dialog .office-modal-header h2{font-size:16px}
+  .office-expense-batch-dialog .office-expense-batch-save{padding-inline:10px}
+  .office-expense-batch-dialog .office-expense-core{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .office-expense-batch-dialog .office-expense-core>label:has([name=title]){grid-column:1/-1}
+}
 .office-related{margin-top:14px}
 .office-related h3{margin-bottom:8px}
 #root.embedded-account-info{min-height:100dvh;display:block;background:#f7f5fa;padding:14px}
@@ -4797,7 +4826,8 @@ function officeLedgerView(){
       ${officeTabs.map((label,i)=>`<button type="button" id="officeTab${i}" role="tab" aria-controls="officePanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join('')}
     </div><section id="officePanel" role="tabpanel" aria-labelledby="officeTab0">
       <div class="wd109-toolbar"><label id="officeMonthLabel">조회 월<input type="month" id="officeMonth" value="${localDay().slice(0,7)}"></label>
-        <button type="button" id="officeRefresh">새로고침</button><button class="primary" type="button" id="officeAdd" hidden>내역 추가</button></div>
+        <button type="button" id="officeRefresh">새로고침</button><button class="primary" type="button" id="officeAdd" hidden>내역 추가</button>
+        <button type="button" id="officeExpenseBatchAdd" hidden>지출 다건 등록</button></div>
       <p id="officeStatus" class="smallText" role="status"></p><div id="officeContent"></div>
     </section></section>`;
 }
@@ -4897,10 +4927,10 @@ function officeFixedExpenseFields(row){
     `<option value="${i+1}" ${i+1===Number(current)?'selected':''}>${i+1}${unit}</option>`).join('');
   return `<section class="wd110-office-full office-fixed-expense">
     <label class="office-fixed-expense-check"><input type="checkbox" name="fixed_expense" ${row?.recurrence_cycle?'checked':''}> 고정비로 반복</label>
-    <div class="office-fixed-expense-fields" id="officeFixedExpenseFields" hidden>
+    <div class="office-fixed-expense-fields" hidden>
       <label>반복 주기<select name="recurrence_cycle"><option value="monthly">매달</option>
         <option value="yearly" ${row?.recurrence_cycle==='yearly'?'selected':''}>매년</option></select></label>
-      <label id="officeFixedExpenseMonth">반복 월<select name="recurrence_month">${options(12,row?.recurrence_month||day.slice(5,7),'월')}</select></label>
+      <label>반복 월<select name="recurrence_month">${options(12,row?.recurrence_month||day.slice(5,7),'월')}</select></label>
       <label>반복 결제일<select name="recurrence_day">${options(31,row?.recurrence_day||day.slice(8),'일')}</select></label>
       <small class="office-fixed-expense-note">입력한 지출일 이후의 결제 일정에 적용됩니다. 해당 날짜가 없는 달은 말일로 표시합니다.</small>
     </div>
@@ -4912,10 +4942,11 @@ function bindOfficeFixedExpense(form){
   if(!fixed)return;
   const cycle=form.elements.namedItem('recurrence_cycle'),day=form.elements.namedItem('recurrence_day');
   const month=form.elements.namedItem('recurrence_month'),date=form.elements.namedItem('day');
+  const fields=form.querySelector('.office-fixed-expense-fields'),monthLabel=month.closest('label');
   const sync=()=>{
     const yearly=fixed.checked&&cycle.value==='yearly';
-    $('officeFixedExpenseFields').hidden=!fixed.checked;
-    $('officeFixedExpenseMonth').hidden=!yearly;
+    fields.hidden=!fixed.checked;
+    monthLabel.hidden=!yearly;
     cycle.disabled=!fixed.checked;
     day.disabled=!fixed.checked;
     month.disabled=!yearly;
@@ -4950,7 +4981,7 @@ function officeEntryCard(step,heading,fields){
   </section>`;
 }
 
-function officeRecordFields(tab,row,methods){
+function officeRecordFields(tab,row,methods,compact=false){
   const income=tab==='수입',expense=tab==='지출',subscription=tab==='구독';
   const title=`<label>${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(row?officeRecordName(row,tab):'')}"></label>`;
   const day=(row&&officeRowDate(row,tab))||localDay();
@@ -4983,6 +5014,11 @@ function officeRecordFields(tab,row,methods){
     placeholder="${income?'고객명 또는 기관명':'업체명 또는 상호'}" value="${esc(row?.counterparty||'')}"></label>
     <label>담당자명<input name="counterparty_contact_name" maxlength="100" value="${esc(row?.counterparty_contact_name||'')}"></label>
     <label>연락처<input name="counterparty_phone" type="tel" maxlength="40" value="${esc(row?.counterparty_phone||'')}"></label>`;
+  if(compact&&expense)return `<div class="office-expense-core">${category+area+title+date+payment+amount}</div>
+    ${officeTransferFields(row)}
+    <details class="office-expense-extra"><summary>거래 상대 · 고정비 · 메모</summary>
+      ${grid(party,'office-entry-three')}${memo}${officeFixedExpenseFields(row)}
+    </details>`;
   return `<div class="office-entry-steps">
     ${officeEntryCard('transaction','1. 거래 내용',grid(category+title+area))}
     ${officeEntryCard('party','2. 거래 상대',grid(party,'office-entry-three'))}
@@ -4997,7 +5033,7 @@ function officeAmountInput(value){
 }
 
 function officeTransferFields(row){
-  return `<div class="office-transfer-fields office-entry-grid" id="officeTransferFields" hidden>
+  return `<div class="office-transfer-fields office-entry-grid" hidden>
     <label>이체 받는 곳<input name="transfer_recipient" type="text" maxlength="100" autocomplete="off"
       placeholder="은행 · 거래처명" value="${esc(row?.transfer_recipient||'')}"></label>
     <label>받는 계좌번호<input name="transfer_account_number" type="text" inputmode="numeric" maxlength="47" autocomplete="off"
@@ -5016,7 +5052,7 @@ function bindOfficeEntryCards(form,row,methods,tab){
   const field=name=>form.elements.namedItem(name);
   const value=name=>field(name)?.value.trim()||'';
   const valid=name=>!!value(name)&&field(name).validity.valid;
-  const transfer=form.querySelector('#officeTransferFields');
+  const transfer=form.querySelector('.office-transfer-fields');
   const billingDayLabel=form.querySelector('#officeBillingDayLabel');
   const amount=field('amount');
   const complete=()=>{
@@ -5068,12 +5104,31 @@ function bindOfficeEntryCards(form,row,methods,tab){
   complete();
 }
 
+function officeRecordPayload(tab,row,methods,data){
+  const title=data.get('title').trim(),date=data.get('day'),amount=Number(String(data.get('amount')||'').replaceAll(',',''));
+  if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0||amount>99999999999999)
+    throw new Error('거래명, 날짜, 금액을 확인해 주세요.');
+  const payload={category:data.get('category')||row?.category||null,amount,
+    ...officePaymentPayload(data.get('payment_method_id'),row,methods,tab),memo:data.get('memo').trim()||null};
+  if(tab==='구독'){
+    const cycle=data.get('billing_cycle').trim(),interval=officeBillingInterval(cycle);
+    return {...payload,service_name:title,next_payment_date:date,billing_cycle:cycle||null,
+      billing_day:interval===1?Number(data.get('billing_day')):interval===12?Number(date.slice(8)):null};
+  }
+  const rule=tab==='지출'?officeFixedExpensePayload(data):{};
+  const planned=row?!row.actual_date:!!(rule.recurrence_cycle&&date>localDay());
+  return {...payload,...rule,...(tab==='지출'?officeTransferPayload(data):{}),title,flow_type:tab,
+    counterparty:data.get('counterparty').trim()||null,
+    counterparty_contact_name:data.get('counterparty_contact_name').trim()||null,
+    counterparty_phone:data.get('counterparty_phone').trim()||null,business_area:tab==='수입'?payload.category:data.get('business_area'),
+    ...(planned?{expected_date:date}:{actual_date:date}),...(!row?{money_status:planned?'예정':'완료'}:{})};
+}
+
 async function officeRecordEditor(tab,row,active,reload,trigger){
   if(!active()||$('modalLayer'))return;
   let methods,methodError='';
   try{methods=await officePaymentMethods();}catch{methods=[];methodError='결제수단을 불러오지 못했어요.';}
   if(!active()||$('modalLayer'))return;
-  const subscription=tab==='구독';
   showOfficeModal(`<form id="officeRecordForm">
     ${officeRecordFields(tab,row,methods)}
     <p id="officeRecordStatus" class="smallText office-modal-status" role="status">${methodError}</p><div class="actions office-modal-actions"><button class="primary" type="submit">저장</button></div>
@@ -5086,28 +5141,11 @@ async function officeRecordEditor(tab,row,active,reload,trigger){
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active()||!form.isConnected||row&&!officeRecordEditable(row,tab))return;
-    const data=new FormData(form),title=data.get('title').trim(),date=data.get('day'),amount=Number(String(data.get('amount')||'').replaceAll(',',''));
-    if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0||amount>99999999999999){status.textContent='거래명, 날짜, 금액을 확인해 주세요.';return;}
-    let payment,rule={},transferDetails={};
+    const data=new FormData(form),date=data.get('day');
+    let payload;
     try{
-      payment=officePaymentPayload(data.get('payment_method_id'),row,methods,tab);
-      if(tab==='지출'){rule=officeFixedExpensePayload(data);transferDetails=officeTransferPayload(data);}
+      payload=officeRecordPayload(tab,row,methods,data);
     }catch(error){status.textContent=error.message;return;}
-    const payload={category:data.get('category')||row?.category||null,amount,...payment,...rule,...transferDetails,memo:data.get('memo').trim()||null};
-    if(subscription){
-      const cycle=data.get('billing_cycle').trim();
-      Object.assign(payload,{service_name:title,next_payment_date:date,billing_cycle:cycle||null});
-      const interval=officeBillingInterval(cycle);
-      payload.billing_day=interval===1?Number(data.get('billing_day')):interval===12?Number(date.slice(8)):null;
-    }
-    else{
-      const planned=row?!row.actual_date:!!(rule.recurrence_cycle&&date>localDay());
-      Object.assign(payload,{title,flow_type:tab,
-        counterparty:data.get('counterparty').trim()||null,
-        counterparty_contact_name:data.get('counterparty_contact_name').trim()||null,
-        counterparty_phone:data.get('counterparty_phone').trim()||null,business_area:tab==='수입'?payload.category:data.get('business_area'),
-        ...(planned?{expected_date:date}:{actual_date:date}),...(!row?{money_status:planned?'예정':'완료'}:{})});
-    }
     const query=new URLSearchParams({select:'id'});
     if(row){query.set('id','eq.'+row.id);query.set('user_id','eq.'+managerHqAccount.uid);query.set('updated_at','eq.'+row.updated_at);payload.updated_at=new Date().toISOString();}
     else Object.assign(payload,{id:newId,user_id:managerHqAccount.uid});
@@ -5122,8 +5160,111 @@ async function officeRecordEditor(tab,row,active,reload,trigger){
   };
 }
 
+async function saveOfficeExpenseBatch(payloads){
+  const ids=new Set(payloads.map(row=>row.id));
+  try{
+    const saved=await officeLedgerRequest('지출',new URLSearchParams({select:'id'}),'POST',payloads);
+    if(Array.isArray(saved)&&saved.length===ids.size&&new Set(saved.map(row=>row.id)).size===ids.size&&saved.every(row=>ids.has(row.id)))return;
+    throw new Error('지출 저장 결과를 확인하지 못했어요.');
+  }catch(error){
+    const check=new URLSearchParams({id:'in.('+[...ids].join(',')+')',
+      user_id:'eq.'+managerHqAccount.uid,flow_type:'eq.지출',select:Object.keys(payloads[0]).join(',')});
+    const existing=await officeLedgerRequest('지출',check).catch(()=>null);
+    if(existing===null)throw new Error('저장 여부를 확인하지 못했어요. 다시 전체 저장을 누르면 같은 지출이 중복 등록되지 않아요.');
+    if(!existing.length)throw error;
+    const byId=new Map(existing.map(row=>[row.id,row]));
+    const matches=payloads.every(payload=>{
+      const saved=byId.get(payload.id);
+      return saved&&Object.entries(payload).every(([key,value])=>key==='amount'?Number(saved[key])===value:saved[key]===value);
+    });
+    if(!matches)throw new Error('이미 저장된 지출이 있어요. 지출 목록을 확인한 뒤 저장된 카드만 빼고 다시 시도해 주세요.');
+  }
+}
+
+async function officeExpenseBatchEditor(active,reload,trigger){
+  if(!active()||$('modalLayer'))return;
+  let methods=[],methodError='';
+  try{methods=await officePaymentMethods();}catch{methodError='결제수단을 불러오지 못했어요.';}
+  if(!active()||$('modalLayer'))return;
+  const layer=showOfficeModal(`<div class="office-expense-batch-body">
+    <div class="office-expense-items" id="officeExpenseItems"></div>
+    <button type="button" id="officeExpenseAddCard">+ 지출 추가</button>
+  </div>`,'지출 다건 등록',trigger);
+  const dialog=layer.querySelector('.office-modal'),header=dialog.querySelector('.office-modal-header'),close=$('closeModal');
+  dialog.classList.add('office-ledger-dialog','office-expense-batch-dialog');
+  close.insertAdjacentHTML('beforebegin','<button class="primary office-expense-batch-save" type="button" id="officeExpenseSaveAll">전체 저장</button>');
+  header.insertAdjacentHTML('beforeend',`<p id="officeExpenseBatchStatus" class="smallText office-modal-status" role="status">${methodError}</p>`);
+  const list=$('officeExpenseItems'),add=$('officeExpenseAddCard'),saveAll=$('officeExpenseSaveAll'),status=$('officeExpenseBatchStatus');
+  const cards=()=>[...list.children];
+  const renumber=()=>cards().forEach((card,index)=>{
+    const label='지출 '+(index+1);
+    card.querySelector('h3').textContent=label;
+    card.querySelector('.office-expense-remove').setAttribute('aria-label',label+' 카드 삭제');
+  });
+  const appendCard=()=>{
+    const id=crypto.randomUUID();
+    list.insertAdjacentHTML('beforeend',`<form class="office-expense-item" data-expense-id="${id}" aria-labelledby="expense-${id}"><fieldset>
+      <div class="row office-expense-item-head"><h3 id="expense-${id}"></h3>
+        <button class="office-expense-remove" type="button">삭제</button></div>
+      <div class="office-expense-item-fields">${officeRecordFields('지출',null,methods,true)}</div>
+    </fieldset></form>`);
+    const card=list.lastElementChild;
+    bindOfficeFixedExpense(card);
+    bindOfficeEntryCards(card,null,methods,'지출');
+    card.onsubmit=event=>event.preventDefault();
+    card.querySelector('.office-expense-remove').onclick=()=>{
+      const next=card.nextElementSibling||card.previousElementSibling;
+      card.remove();
+      (next||appendCard()).elements.namedItem('category').focus();
+      renumber();
+    };
+    renumber();
+    return card;
+  };
+  add.onclick=()=>appendCard().elements.namedItem('category').focus();
+  appendCard().elements.namedItem('category').focus();
+  saveAll.onclick=async()=>{
+    if(saveAll.disabled||!layer.isConnected||!active())return;
+    status.textContent='';
+    const entries=cards(),payloads=[];
+    for(const [index,card] of entries.entries()){
+      const invalid=card.querySelector('input:invalid,select:invalid,textarea:invalid');
+      if(invalid){
+        const details=invalid.closest('details');
+        if(details)details.open=true;
+        status.textContent='지출 '+(index+1)+'의 입력 항목을 확인해 주세요.';
+        invalid.focus();invalid.reportValidity();return;
+      }
+      try{
+        const payload=officeRecordPayload('지출',null,methods,new FormData(card));
+        payloads.push({id:card.dataset.expenseId,user_id:managerHqAccount.uid,actual_date:null,expected_date:null,...payload});
+      }catch(error){
+        status.textContent='지출 '+(index+1)+' · '+error.message;
+        card.scrollIntoView({block:'nearest'});return;
+      }
+    }
+    close.disabled=add.disabled=saveAll.disabled=true;
+    entries.forEach(card=>{card.querySelector('fieldset').disabled=true;});
+    status.textContent=payloads.length+'건 저장 중…';
+    try{
+      await saveOfficeExpenseBatch(payloads);
+      layer.remove();
+      if(active()){
+        const first=payloads[0];
+        reload((first.actual_date||first.expected_date).slice(0,7));
+        trigger.focus();
+        notify(payloads.length+'건의 지출을 등록했어요.');
+      }
+    }catch(error){if(layer.isConnected)status.textContent=error.message;}
+    finally{
+      close.disabled=add.disabled=saveAll.disabled=false;
+      entries.forEach(card=>{card.querySelector('fieldset').disabled=false;});
+    }
+  };
+}
+
 function bindOfficeLedger(){
-  const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
+  const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),batchAdd=$('officeExpenseBatchAdd'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
   const tabs=officeTabs.map((_,i)=>$('officeTab'+i));
   const active=()=>currentUser==='manager'&&S.nav==='office'&&panel.isConnected;
   let tab=officeTabs[0],request=0,selectedDay='',subscriptionDay='',calendarFilter='all';
@@ -5292,6 +5433,7 @@ function bindOfficeLedger(){
     if(typeof focusMonth==='string')month.value=focusMonth;
     $('officeMonthLabel').hidden=['결제수단관리','통계'].includes(selected);
     add.hidden=!officeLedgerTabs.includes(selected);add.textContent=selected+' 추가';
+    batchAdd.hidden=selected!=='지출';
     status.textContent='';content.replaceChildren();
     const viewMonth=month.value;
     if(!$('officeMonthLabel').hidden&&!validAttendanceDay(viewMonth+'-01')){
@@ -5411,6 +5553,7 @@ function bindOfficeLedger(){
   bindWorkspaceTabs(tabs,index=>{tab=officeTabs[index];panel.setAttribute('aria-labelledby',tabs[index].id);void load();});
   month.onchange=refresh.onclick=()=>void load();
   add.onclick=()=>{const selected=tab;if(officeLedgerTabs.includes(selected))void officeRecordEditor(selected,null,()=>active()&&tab===selected,load);};
+  batchAdd.onclick=()=>{if(tab==='지출')void officeExpenseBatchEditor(()=>active()&&tab==='지출',load,batchAdd);};
   void load();
 }
 
