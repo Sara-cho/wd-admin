@@ -11308,6 +11308,9 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   }
   #pg-auto .wd09-auto-renewal .btn-sm { min-height:36px; white-space:nowrap; }
   #pg-auto .wd09-auto-renewal .clm-badge { white-space:nowrap; }
+  #pg-auto .wd09-auto-renewal-actions { display:flex; gap:4px; justify-content:center; flex-wrap:wrap; }
+  #pg-auto .wd09-auto-renewal .wd09-auto-renew { background:#b91c1c; color:#fff; }
+  #pg-auto .wd09-auto-renewal .wd09-auto-renew:hover { background:#991b1b; }
   #modal-auto-rec .wd09-auto-renewal-context {
     margin:0 0 14px; padding:9px 12px; border-radius:8px;
     background:var(--s100); color:var(--s700); font-size:14px; overflow-wrap:anywhere;
@@ -11636,7 +11639,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   .wd09-bulk-card-body { display:grid; gap:12px; padding:14px; }
   .wd09-bulk-card-group { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(113px,1fr)); }
   .wd09-bulk-card-basic {
-    grid-template-columns:minmax(0,1.15fr) minmax(0,.8fr) minmax(0,1.4fr) minmax(0,2.1fr);
+    grid-template-columns:minmax(0,1.15fr) minmax(0,1.4fr) minmax(0,.8fr) minmax(0,2.1fr);
   }
   .wd09-bulk-card[data-insurance-kind="auto"] .wd09-bulk-card-basic {
     grid-template-columns:minmax(0,1.15fr) minmax(0,1.6fr) minmax(0,2fr);
@@ -16434,7 +16437,7 @@ const wdTest09Storage = (() => {
 <div id="ci-rrn-hint" class="wd09-customer-entry-hint">뒷자리 첫 숫자가 1·2면 1900년대생, 3·4면 2000년대생이에요.</div>
 <div id="ci-rrn-error" class="wd09-customer-entry-hint" role="status" hidden></div>
 </div>
-<div class="fld"><label for="ci-birth">생년월일</label><input id="ci-birth" placeholder="주민번호 입력 시 자동" readonly type="text"/></div>
+<div class="fld"><label for="ci-birth">생년월일</label><input id="ci-birth" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric" oninput="cstFormatBirthInput(this)" readonly type="text"/></div>
 <div class="fld" id="ci-gender-auto-field"><label for="ci-gender">성별</label><input id="ci-gender" placeholder="주민번호 입력 시 자동" readonly type="text"/></div>
 <div class="fld" id="ci-gender-edit-field" hidden><label for="ci-gender-edit">성별</label><select id="ci-gender-edit"><option value="">선택</option><option>남</option><option>여</option></select></div>
 <div class="fld wd09-customer-form-wide"><label for="ci-addr1">주소</label>
@@ -16778,8 +16781,8 @@ const wdTest09Storage = (() => {
 <div class="wd09-bulk-card-body">
 <div class="wd09-bulk-card-group wd09-bulk-card-basic">
 <label>보험 종류<select name="purpose"><option value="">종류 선택</option><option value="health">보장성보험</option><option value="savings">저축성보험</option><option value="indemnity">실손보험</option><option value="auto">자동차보험</option></select></label>
-<label data-for="policy">보험사 구분<select name="insType"><option value="">자동</option><option>손보</option><option>생보</option></select></label>
 <label>보험사<input name="insurer" type="text" list="wd09-bulk-insurers" placeholder="보험사명" autocomplete="off"/></label>
+<label data-for="policy">보험사 구분<select name="insType"><option value="">미확인</option><option>손보</option><option>생보</option></select></label>
 <label class="wd09-bulk-product" data-for="policy">상품명<input name="product" type="text" placeholder="보험 상품명"/></label>
 <label class="wd09-bulk-product" data-for="auto" hidden>차량번호<input name="plate" type="text" placeholder="예: 12가3456"/></label>
 </div>
@@ -16791,7 +16794,9 @@ const wdTest09Storage = (() => {
 <label><span class="wd09-bulk-premium-label">월 보험료 (원)</span><input name="premium" type="text" inputmode="numeric" placeholder="예: 80,000"/></label>
 <label data-for="auto" hidden>보험시작일<input name="startDate" type="date"/></label>
 <label data-for="auto" hidden>만기일<input name="expiry" type="date"/></label>
-<label data-for="auto" hidden>차량용도<input name="line" type="text" list="wd09-bulk-car-uses"/></label>
+<label data-for="auto" hidden>차량용도<select name="line">
+<option value="">선택</option><option>개인용</option><option>업무용(개인)</option><option>업무용(법인)</option><option>영업용</option><option value="__custom__">직접 입력</option>
+</select><input name="lineCustom" aria-label="차량용도 직접 입력" placeholder="차량용도 입력" hidden/></label>
 </div>
 <div class="wd09-bulk-card-group">
 <label><span data-indemnity-date-label>계약일</span><input name="contractDate" type="date"/></label>
@@ -16820,7 +16825,6 @@ const wdTest09Storage = (() => {
 </template>
 <datalist id="wd09-bulk-insurers"></datalist>
 <datalist id="wd09-bulk-auto-insurers"></datalist>
-<datalist id="wd09-bulk-car-uses"><option value="개인용"></option><option value="개인업무용"></option><option value="회사용"></option></datalist>
 <div class="modal-ov wd09-entry-overlay" id="modal-contract">
 <div class="modal-bx wd09-entry-modal" role="dialog" aria-modal="true" aria-labelledby="modal-contract-t">
 <header class="wd09-entry-header">
@@ -17333,7 +17337,7 @@ const wdTest09Storage = (() => {
 <div class="fld"><label for="auto-carnum">자동차번호</label><input id="auto-carnum" placeholder="예: 12가3456" type="text"/></div>
 <div class="fld"><label for="auto-line">차량용도</label>
 <select id="auto-line" onchange="wd09ToggleAutoUse()">
-<option value="">선택</option><option>개인용</option><option>개인업무용</option><option>회사용</option><option value="__custom__">직접 입력</option>
+<option value="">선택</option><option>개인용</option><option>업무용(개인)</option><option>업무용(법인)</option><option>영업용</option><option value="__custom__">직접 입력</option>
 </select>
 <input id="auto-line-custom" aria-label="차량용도 직접 입력" placeholder="차량용도를 입력해 주세요" type="text" hidden/></div>
 <div class="fld"><label for="auto-company">보험사</label><select id="auto-company" onchange="autoToggleCompanyCustom()"></select>
@@ -17811,6 +17815,71 @@ var SUPABASE_CONFIG_BY_UID=Object.freeze({
   }
 });
 function getSbClient(){return window.wd09VerifiedDb?.() || null;}
+const WD09_PRIVATE_PREFERENCES=new Set(['copy_templates','copy_contact','reader_favorites']);
+function wd09PreferenceValueOk(kind,value){
+  return WD09_PRIVATE_PREFERENCES.has(kind)&&(kind==='copy_contact'?typeof value==='string':Array.isArray(value));
+}
+async function wd09AccountPreference(uid,kind,empty,change){
+  const sb=getSbClient();
+  const verify=()=>{
+    if(!sb||uid!==_UID||getSbClient()!==sb||!WD09_PRIVATE_PREFERENCES.has(kind))throw Error('로그인 상태를 확인해 주세요.');
+  };
+  verify();
+  const table=()=>sb.from('wd_partners_preferences');
+  const owned=query=>query.eq('uid',uid).eq('kind',kind);
+  for(let attempt=0;attempt<3;attempt++){
+    const current=await owned(table().select('data,updated_at')).maybeSingle();
+    verify();
+    if(current.error)throw Error('계정 설정을 불러오지 못했어요.');
+    const data=current.data?.data??empty;
+    if(!change)return data;
+    const next=change(data,!!current.data);
+    if(next===data)return data;
+    if(!wd09PreferenceValueOk(kind,next))throw Error('설정 내용을 확인해 주세요.');
+    const previousTime=Date.parse(current.data?.updated_at);
+    const now=Number.isFinite(previousTime)?Math.max(Date.now(),previousTime+1):Date.now();
+    const row={data:next,updated_at:new Date(now).toISOString()};
+    if(!current.data){
+      const saved=await table().upsert([{uid,kind,...row}],{onConflict:'uid,kind',ignoreDuplicates:true});
+      verify();
+      if(saved.error)throw Error('계정 설정을 저장하지 못했어요.');
+      // Re-read after either an insert or a collision. Changes are idempotent.
+      continue;
+    }
+    const saved=await owned(table().update(row)).eq('updated_at',current.data.updated_at).select('data');
+    verify();
+    if(saved.error)throw Error('계정 설정을 저장하지 못했어요.');
+    if(saved.data?.length===1)return saved.data[0].data;
+  }
+  throw Error('다른 화면에서 설정이 바뀌었어요. 다시 시도해 주세요.');
+}
+async function wd09LoadPrivatePreference(uid,kind,legacyKey,empty){
+  const marker='wd09-pref-linked:'+uid+':'+kind;
+  let legacy;
+  try{
+    const raw=localStorage.getItem(legacyKey);
+    if(raw!==null&&!localStorage.getItem(marker))legacy=kind==='copy_contact'?raw:JSON.parse(raw);
+  }catch{}
+  if(!wd09PreferenceValueOk(kind,legacy))return wd09AccountPreference(uid,kind,empty);
+  const merge=(current,exists)=>{
+    if(!exists)return legacy;
+    if(kind==='copy_contact')return current;
+    if(kind==='reader_favorites'){
+      const next=[...new Set([...current,...legacy.filter(value=>typeof value==='string')])];
+      return next.length===current.length?current:next;
+    }
+    const rows=new Map(current.map(row=>[row?.id,row]));
+    for(const row of legacy){
+      if(row&&typeof row.id==='string'&&typeof row.title==='string'&&typeof row.body==='string'&&!rows.has(row.id)){
+        rows.set(row.id,row);
+      }
+    }
+    return rows.size===current.length?current:[...rows.values()];
+  };
+  const value=await wd09AccountPreference(uid,kind,empty,merge);
+  try{localStorage.setItem(marker,'1');}catch{}
+  return value;
+}
 function getManagerSbClient(){return _UID==='WD23000' ? getSbClient() : null;}
 
 function getUsers(){return USERS;}
@@ -18093,7 +18162,7 @@ const wd09CopyCategories=[
   const status=drawer.querySelector('[role="status"]');
   const savedCategory='saved', customSituation='custom';
   const tones=[['공식·업무용','official'],['지인·편한 말투','friendly']];
-  let owner=null, saved=[], editingId=null, editorOwner=null;
+  let owner=null, saved=[], editingId=null, editorOwner=null, loaded=false, loading=null, saving=false;
 
   function storageKey(){return 'wd09-copy-templates:'+owner;}
   function contactKey(){return 'wd09-copy-contact:'+owner;}
@@ -18129,28 +18198,53 @@ const wd09CopyCategories=[
     if(options.some(option=>option.value===selected))situation.value=selected;
     showMessage();
   }
-  function syncOwner(){
+  async function syncOwner(){
     if(owner!==_UID){
       if(editor.open)editor.close();
       owner=_UID;
-      try{
-        const rows=owner?JSON.parse(localStorage.getItem(storageKey())||'[]'):[];
-        saved=Array.isArray(rows)?rows.filter(row=>row&&typeof row.id==='string'&&typeof row.title==='string'&&typeof row.body==='string'):[];
-        contact.value=owner?localStorage.getItem(contactKey())||'':'';
-      }catch{saved=[];contact.value='';}
+      saved=[];
+      contact.value='';
       category.value='0';
       tone.value='official';
+      loaded=false;
+      loading=null;
+      fillSituations();
+    }
+    if(!owner)return false;
+    if(loaded){showMessage();return true;}
+    if(loading)return loading;
+    const uid=owner;
+    status.textContent='저장한 문장을 불러오는 중이에요.';
+    loading=Promise.all([
+      wd09LoadPrivatePreference(uid,'copy_templates',storageKey(),[]),
+      wd09LoadPrivatePreference(uid,'copy_contact',contactKey(),'')
+    ]).then(([rows,number])=>{
+      if(owner!==uid||_UID!==uid)return false;
+      saved=Array.isArray(rows)?rows.filter(row=>row&&typeof row.id==='string'&&typeof row.body==='string'&&typeof row.title==='string'):[];
+      contact.value=typeof number==='string'?number:'';
+      loaded=true;
       status.textContent='';
       fillSituations();
-    }else showMessage();
+      return true;
+    }).catch(()=>{
+      if(owner===uid&&_UID===uid)status.textContent='계정에서 내 문장을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+      return false;
+    }).finally(()=>{if(owner===uid)loading=null;});
+    return loading;
   }
-  function persist(rows){
-    if(!owner||owner!==_UID)return false;
+  async function persist(change){
+    if(saving||!loaded||!owner||owner!==_UID)return false;
+    const uid=owner;
+    saving=true;
     try{
-      localStorage.setItem(storageKey(),JSON.stringify(rows));
+      const rows=await wd09AccountPreference(uid,'copy_templates',[],change);
+      if(owner!==uid||_UID!==uid)return false;
       saved=rows;
       return true;
-    }catch{status.textContent='이 브라우저에 문장을 저장하지 못했어요.';return false;}
+    }catch(error){
+      if(owner===uid&&_UID===uid)status.textContent=error.message;
+      return false;
+    }finally{saving=false;}
   }
   function fillEditorSituations(selected){
     const options=wd09CopyCategories[Number(fields.category.value)][1]
@@ -18159,9 +18253,8 @@ const wd09CopyCategories=[
     fields.situation.replaceChildren(...options);
     if(options.some(option=>option.value===selected))fields.situation.value=selected;
   }
-  function openEditor(row){
-    syncOwner();
-    if(!owner)return;
+  async function openEditor(row){
+    if(!await syncOwner()||!owner||owner!==_UID)return;
     editorOwner=owner;
     editingId=row?.id||null;
     editor.querySelector('h2').textContent=row?'내 문장 수정':'내 문장 등록';
@@ -18186,23 +18279,25 @@ const wd09CopyCategories=[
   situation.onchange=()=>{status.textContent='';showMessage();};
   tone.onchange=()=>{status.textContent='';fillSituations(situation.value);};
   contact.oninput=showMessage;
-  contact.onchange=()=>{
-    if(!owner||owner!==_UID)return;
-    try{localStorage.setItem(contactKey(),contact.value.trim());}
-    catch{status.textContent='이 브라우저에 연락처를 저장하지 못했어요.';}
+  contact.onchange=async()=>{
+    if(!loaded||!owner||owner!==_UID)return;
+    const uid=owner, value=contact.value.trim();
+    try{await wd09AccountPreference(uid,'copy_contact','',()=>value);}
+    catch(error){if(owner===uid&&_UID===uid)status.textContent=error.message;}
   };
   drawer.querySelector('[data-wd09-add]').onclick=()=>openEditor(null);
   edit.onclick=()=>openEditor(findSaved());
-  remove.onclick=()=>{
-    if(!confirm('이 문장을 삭제할까요?'))return;
-    if(persist(saved.filter(row=>row.id!==situation.value))){
+  remove.onclick=async()=>{
+    const id=findSaved()?.id;
+    if(!id||!confirm('이 문장을 삭제할까요?'))return;
+    if(await persist(rows=>rows.filter(row=>row.id!==id))){
       fillSituations();
       status.textContent='내 문장을 삭제했어요.';
     }
   };
-  form.onsubmit=event=>{
+  form.onsubmit=async event=>{
     event.preventDefault();
-    if(!editorOwner||editorOwner!==_UID)return;
+    if(saving||!editorOwner||editorOwner!==_UID)return;
     const body=fields.message.value.trim();
     if(!body){
       editor.querySelector('[role="status"]').textContent='보낼 문장을 입력해 주세요.';
@@ -18211,8 +18306,13 @@ const wd09CopyCategories=[
     const group=fields.category.value, occasion=fields.situation.value;
     const title=fields.title.value.trim()||wd09CopyCategories[Number(group)]?.[1][Number(occasion)]?.[0]||'내 문장';
     const row={id:editingId||crypto.randomUUID(),title,body,category:group,situation:occasion,tone:fields.tone.value,contact:fields.contact.value.trim()};
-    const rows=editingId?saved.map(item=>item.id===editingId?row:item):[...saved,row];
-    if(!persist(rows)){
+    const id=editingId;
+    if(!await persist(rows=>{
+      const exists=rows.some(item=>item.id===row.id);
+      if(id&&!exists)throw Error('다른 화면에서 이 문장을 삭제했어요.');
+      if(!id)return exists?rows:[...rows,row];
+      return rows.map(item=>item.id===id?row:item);
+    })){
       editor.querySelector('[role="status"]').textContent=status.textContent;
       return;
     }
@@ -18220,7 +18320,7 @@ const wd09CopyCategories=[
     category.value=group;
     tone.value=row.tone;
     fillSituations(row.id);
-    status.textContent='이 브라우저에 내 문장을 저장했어요.';
+    status.textContent='계정에 내 문장을 저장했어요.';
   };
   editor.querySelector('[data-wd09-cancel]').onclick=()=>editor.close();
   window.wd09ShowCopyDrawer=syncOwner;
@@ -18664,7 +18764,8 @@ function wd09SetCustomerFormMode(customer){
   const editing=Boolean(customer);
   const birth=document.getElementById('ci-birth');
   birth.readOnly=!editing;
-  birth.placeholder=editing?'YYYY-MM-DD':'주민번호 입력 시 자동';
+  birth.dataset.original=customerBirthDate(customer?.birth)||customer?.birth||'';
+  delete birth.dataset.fromRrn;
   document.getElementById('ci-gender-auto-field').hidden=editing;
   document.getElementById('ci-gender-edit-field').hidden=!editing;
   document.getElementById('ci-gender-edit').value=customer?.gender||'';
@@ -18718,28 +18819,48 @@ setCustActionBtns(false);
 document.getElementById('ci-rrn-error').hidden=true;
 openModal('modal-cust');}
 
-function customerBirthGender(front, rear){
-  const code=rear.charAt(0);
-  const gender=/^[13579]$/.test(code)?'남':/^[02468]$/.test(code)?'여':'';
-  if(!/^\d{6}$/.test(front)||!gender)return {birth:'',gender};
-  const century=/[3478]/.test(code)?'20':/[09]/.test(code)?'18':'19';
-  const birth=century+front.slice(0,2)+'-'+front.slice(2,4)+'-'+front.slice(4);
-  const date=new Date(birth+'T00:00:00Z');
-  const current=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
-  return {birth:Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===birth&&birth<=current?birth:'',gender};
+function customerBirthDate(value){
+  const input=String(value??'').trim();
+  const date=input.replace(/^(\d{4})[-./ ]?(\d{2})[-./ ]?(\d{2})$/,'$1-$2-$3');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return '';
+  const parsed=new Date(date+'T00:00:00Z');
+  const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
+  return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===date&&date<=today?date:'';
 }
-
+function cstFormatBirthInput(field){
+  if(field.readOnly)return;
+  delete field.dataset.fromRrn;
+  const digits=field.value.replace(/\D/g,'').slice(0,8);
+  field.value=[digits.slice(0,4),digits.slice(4,6),digits.slice(6,8)].filter(Boolean).join('-');
+}
+function customerBirthGender(front,rear){
+  const code=rear.charAt(0);
+  if(!/^\d{6}$/.test(front)||!/^\d$/.test(code))return {birth:'',gender:''};
+  const century=/[3478]/.test(code)?'20':/[09]/.test(code)?'18':'19';
+  const birth=customerBirthDate(century+front);
+  const gender=birth?(/[13579]/.test(code)?'남':'여'):'';
+  return {birth,gender};
+}
 function cstAutoBirthGender(){
   const front=document.getElementById('ci-rrn1').value;
   const rear=document.getElementById('ci-rrn2').value;
-  const {birth,gender}=customerBirthGender(front,rear);
-  const editing=!!document.getElementById('ec-id').value;
-  if(!editing){
-    document.getElementById('ci-birth').value=birth;
-    document.getElementById('ci-gender').value=gender;
+  const editId=document.getElementById('ec-id').value;
+  const birthField=document.getElementById('ci-birth');
+  const genderField=document.getElementById(editId?'ci-gender-edit':'ci-gender');
+  const existing=editId?getCusts().find(c=>String(c.id)===editId):null;
+  const code=rear||String(existing?.rrnFull||'').replace(/\D/g,'').slice(6,7);
+  const {birth,gender}=customerBirthGender(front,code);
+  if(birth){
+    birthField.value=birth;
+    birthField.dataset.fromRrn='1';
+    genderField.value=gender;
+  }else if(birthField.dataset.fromRrn){
+    birthField.value=birthField.dataset.original||'';
+    genderField.value=existing?.gender||'';
+    delete birthField.dataset.fromRrn;
   }
   const error=document.getElementById('ci-rrn-error');
-  const invalid=front.length===6&&!!rear&&!birth;
+  const invalid=front.length===6&&!!code&&!birth;
   error.textContent=invalid?'생년월일과 뒷자리 첫 숫자를 확인해 주세요.':'';
   error.hidden=!invalid;
 }
@@ -18769,7 +18890,7 @@ if(!c||!card||String(_vid)!==String(id)||document.getElementById('cust-save-btn'
 document.getElementById('modal-cust-t').textContent='고객정보 수정';document.getElementById('ec-id').value=id;
 wd09SetCustomerFormMode(c);
 function sv(k,v){var el=document.getElementById(k);if(el)el.value=v||'';}
-sv('ci-name',c.name);sv('ci-phone',cstFormatPhone(c.phone));sv('ci-birth',c.birth);sv('ci-gender',c.gender);
+sv('ci-name',c.name);sv('ci-phone',cstFormatPhone(c.phone));sv('ci-birth',customerBirthDate(c.birth)||c.birth);sv('ci-gender',c.gender);
 sv('ci-status',c.status||'신규');sv('ci-type',c.type);sv('ci-design',c.design||'미의뢰');sv('ci-claim',c.claim||'없음');
 sv('ci-next',c.next);sv('ci-memo',c.memo);sv('ci-mat',c.mat);
 cstSetTelecomValue(c.telecom);sv('ci-ctype',normalizeCustomerType(c.ctype));sv('ci-zip',c.zip);sv('ci-addr1',c.addr1);sv('ci-addr2',c.addr2);
@@ -18813,8 +18934,15 @@ async function _custBuildRecord(){
   function gv(k){var el=document.getElementById(k);return el?el.value.trim():'';}
   function svv(k,def){var el=document.getElementById(k);return el?el.value:(def||'');}
   const route=svv('ci-route',prev.route||'');
+  const birthText=eid?gv('ci-birth'):'';
+  const birth=details.birth||customerBirthDate(birthText);
+  if(birthText&&!birth&&birthText!==prev.birth){
+    alert('생년월일을 YYYY-MM-DD 형식으로 확인해 주세요.');
+    document.getElementById('ci-birth').focus();
+    return null;
+  }
   var d={...prev,id:eid?prev.id:claimNumericId(Date.now()),name:n,phone:cstFormatPhone(gv('ci-phone')),
-    birth:details.birth||(eid?gv('ci-birth'):'')||prev.birth||'',
+    birth:birth||customerBirthDate(prev.birth)||prev.birth||'',
     gender:details.gender||(eid?gv('ci-gender-edit'):'')||prev.gender||'',rrn:finalRrn,
     rrnFull:eid&&rrn1?rrnFull:rrnFull||prev.rrnFull||'',
     telecom:cstTelecomValue(prev.telecom||''),ctype:normalizeCustomerType(svv('ci-ctype',prev.ctype||'')),
@@ -19994,7 +20122,7 @@ var _fullAddr=[c.zip?'('+c.zip+')':'',c.addr1||'',c.addr2||''].filter(Boolean).j
 var ctypeBadge='<span id="det-ctype-badge" class="ctype-badge-lg" onclick="openCtypeEdit('+c.id+',this)" title="클릭하여 수정">'+esc(normalizeCustomerType(c.ctype))+'</span>';
 // 생년월일·성별·만나이 묶음
 var _age=calcAge(c.birth);
-var birthGender=(c.birth||'-')+(_age?' ('+_age+')':'')+(c.gender?' / '+esc(c.gender):'');
+var birthGender=(customerBirthDate(c.birth)||c.birth||'-')+(_age?' ('+_age+')':'')+(c.gender?' / '+esc(c.gender):'');
 document.getElementById('wd09-customer-card-slot').innerHTML=
   '<div class="card" id="cust-info-card">'
   +'<div class="card-hd"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><div style="font-size:22px;font-weight:800;">'+esc(c.name)+'</div>'+ctypeBadge+'</div><button type="button" class="btn-sm p" id="wd09-customer-edit-button" onclick="openCustEdit('+c.id+')">✏️ 수정</button></div>'
@@ -21183,7 +21311,10 @@ function wd09SetAutoFields(record){
   document.getElementById('auto-contract-date').value=detail.contractDate??'';
   document.getElementById('auto-start-date').value=detail.startDate??'';
   const use=document.getElementById('auto-line');
-  const value=String(detail.line||'');
+  const raw=String(detail.line||'');
+  const aliases={'개인업무용':'업무용(개인)','업무용개인':'업무용(개인)','회사용':'업무용(법인)','업무용법인':'업무용(법인)'};
+  const label=raw.replace(/\s/g,'');
+  const value=Object.hasOwn(aliases,label)?aliases[label]:raw;
   const known=[...use.options].some(option=>option.value===value&&option.value!=='__custom__');
   use.value=known?value:'__custom__';
   document.getElementById('auto-line-custom').value=known?'':value;
@@ -21588,7 +21719,7 @@ function wd09OpenAutoRenewal(customerId,recordId,index){
   const records=cstAutoList(customer);
   const source=recordId?records.find(item=>String(item?.id)===String(recordId)):records[index];
   const expiry=wd09AutoRecordExpiry(source), vehicleKey=wd09AutoVehicleKey(source);
-  if(!source||!expiry||!vehicleKey||!_UID)return;
+  if(!source||!expiry||!vehicleKey||!_UID||source.renewalDecision==='declined')return;
   if(wd09AutoHasLaterContract(records,source)){
     renderAutoManagePage();
     document.getElementById('wd09-auto-list-message').textContent='이 차량의 다음 계약이 이미 등록되어 있어요.';
@@ -21619,36 +21750,78 @@ function wd09OpenAutoRenewal(customerId,recordId,index){
   wd09SyncAutoExpiry();
 }
 
-// Make one scoped update of the latest customer record, with a version check for another tab's changes.
-async function wd09SaveAutoRenewal(draft,record){
+async function wd09UpdateAutoCustomer(target,updateRecords){
   const sb=getSbClient();
-  if(!sb||draft.uid!==_UID)throw Error('로그인 상태를 확인해 주세요.');
-  const current=()=>_UID===draft.uid&&getSbClient()===sb;
-  const key=query=>query.eq('uid',draft.uid).eq('id',draft.customerId);
+  if(!sb||target.uid!==_UID)throw Error('로그인 상태를 확인해 주세요.');
+  const current=()=>_UID===target.uid&&getSbClient()===sb;
+  const key=query=>query.eq('uid',target.uid).eq('id',target.customerId);
   const result=await key(sb.from('wd_partners_customers').select('data,updated_at')).maybeSingle();
   if(!current())return {ok:false};
   if(result.error||!result.data?.data)throw Error('고객 정보를 다시 불러오지 못했어요.');
   const customer=result.data.data;
+  let updated=customer;
+  const records=updateRecords(cstAutoList(customer));
+  if(records){
+    const now=new Date().toISOString();
+    const patch={data:{...customer,updated:now,autoInsurance:records},updated_at:now};
+    const write=key(sb.from('wd_partners_customers').update(patch));
+    const version=result.data.updated_at==null?write.is('updated_at',null):write.eq('updated_at',result.data.updated_at);
+    const saved=await version.select('data');
+    if(!current())return {ok:false};
+    if(saved.error){
+      console.warn('[auto contract save]',saved.error.code||'request_failed');
+      throw Error('자동차보험을 저장하지 못했어요. 입력 내용은 유지했습니다.');
+    }
+    if(saved.data?.length!==1)throw Error('다른 화면에서 고객 정보가 바뀌었어요. 저장을 다시 눌러 주세요.');
+    updated=saved.data[0].data;
+  }
+  CURRENT_CUSTOMERS=getCusts().map(item=>String(item.id)===String(target.customerId)?updated:item);
+  return {ok:true};
+}
+function wd09SaveAutoRenewal(draft,record){
+  return wd09UpdateAutoCustomer(draft,records=>{
+    if(records.some(item=>item?.id===draft.draftId))return null;
+    const source=wd09AutoRenewalSource(records,draft);
+    if(!source)throw Error('이전 계약 정보가 변경됐어요. 만기 목록에서 계약을 다시 열어 주세요.');
+    if(source.record.renewalDecision==='declined')throw Error('먼저 재가입 안 함을 취소해 주세요.');
+    if(wd09AutoHasLaterContract(records,source.record))throw Error('이 차량의 다음 계약이 이미 등록되어 있어요.');
+    const sourceId=source.record.id??draft.assignedSourceId;
+    if(source.record.id==null)records[source.index]={...source.record,id:sourceId};
+    return [...records,{...record,renewalPreviousId:String(sourceId)}];
+  });
+}
+async function wd09SetAutoRenewalDecision(row,restore,button){
+  if(button.disabled)return;
+  const {customer:customerId,record:recordId,index}=row.dataset;
+  const customer=getCusts().find(item=>String(item.id)===customerId);
   const records=cstAutoList(customer);
-  const remember=updated=>{
-    CURRENT_CUSTOMERS=getCusts().map(item=>String(item.id)===String(draft.customerId)?updated:item);
-    return {ok:true};
-  };
-  if(records.some(item=>item?.id===draft.draftId))return remember(customer);
-  const source=wd09AutoRenewalSource(records,draft);
-  if(!source)throw Error('이전 계약 정보가 변경됐어요. 만기 목록에서 계약을 다시 열어 주세요.');
-  if(wd09AutoHasLaterContract(records,source.record))throw Error('이 차량의 다음 계약이 이미 등록되어 있어요.');
-  const sourceId=source.record.id??draft.assignedSourceId;
-  if(source.record.id==null)records[source.index]={...source.record,id:sourceId};
-  const now=new Date().toISOString();
-  const data={...customer,updated:now,autoInsurance:[...records,{...record,renewalPreviousId:String(sourceId)}]};
-  const update=key(sb.from('wd_partners_customers').update({data,updated_at:now}));
-  const versioned=result.data.updated_at==null?update.is('updated_at',null):update.eq('updated_at',result.data.updated_at);
-  const saved=await versioned.select('data').maybeSingle();
-  if(!current())return {ok:false};
-  if(saved.error)throw Error('재가입을 저장하지 못했어요. 입력 내용을 유지했습니다.');
-  if(!saved.data?.data)throw Error('고객 정보가 다른 화면에서 바뀌었어요. 저장을 다시 눌러 주세요.');
-  return remember(saved.data.data);
+  const record=recordId?records.find(item=>String(item?.id)===recordId):records[Number(index)];
+  if(!record||!_UID)return;
+  const target={uid:_UID,customerId,sourceId:record.id==null?null:String(record.id),
+    legacyKey:record.id==null?wd09AutoLegacyKey(record):null,
+    expiry:wd09AutoRecordExpiry(record),vehicleKey:wd09AutoVehicleKey(record)};
+  const message=document.getElementById('wd09-auto-list-message');
+  button.disabled=true;
+  try{
+    const result=await wd09UpdateAutoCustomer(target,list=>{
+      const source=wd09AutoRenewalSource(list,target);
+      if(!source)throw Error('계약 내용을 다시 불러온 뒤 선택해 주세요.');
+      if(wd09AutoHasLaterContract(list,source.record))throw Error('다음 계약이 이미 등록되어 있어요.');
+      const next={...source.record,updatedAt:new Date().toISOString()};
+      if(restore)delete next.renewalDecision;
+      else next.renewalDecision='declined';
+      list[source.index]=next;
+      return list;
+    });
+    if(result?.ok&&target.uid===_UID){
+      renderAutoManagePage();
+      message.textContent=restore?'재가입 안 함을 취소했어요.':'재가입 안 함으로 표시했어요. 기존 계약은 전체 보기에서 확인할 수 있어요.';
+    }
+  }catch(error){
+    if(target.uid===_UID)message.textContent=error.message||'상태를 저장하지 못했어요.';
+  }finally{
+    button.disabled=false;
+  }
 }
 
 function wd09RenderAutoHistory(customer,selected){
@@ -21730,16 +21903,14 @@ function renderAutoManagePage(state){
       const expiry=wd09AutoRecordExpiry(record);
       const days=autoDdayInfo(expiry);
       const renewed=record.id!=null&&renewedIds.has(String(record.id));
-      const row={customer,record,index,plate,expiry,days,renewed};
+      const declined=record.renewalDecision==='declined';
+      const row={customer,record,index,plate,expiry,days,renewed,declined};
       const key=wd09AutoVehicleKey(record);
       if(!key){unknownVehicles.push(row);continue;}
       const previous=vehicles.get(key);
-      const showCompleted=soon&&renewed&&days.days!==null&&days.days>=0&&days.days<=30;
-      if(!previous||Number(showCompleted)>Number(previous.showCompleted)
-        ||showCompleted===previous.showCompleted&&(
-          expiry>previous.expiry||(expiry===previous.expiry&&String(record.updatedAt||record.createdAt||'')>String(previous.record.updatedAt||previous.record.createdAt||''))
-        )){
-        vehicles.set(key,{...row,showCompleted});
+      if(!previous||expiry>previous.expiry
+        ||(expiry===previous.expiry&&String(record.updatedAt||record.createdAt||'')>String(previous.record.updatedAt||previous.record.createdAt||''))){
+        vehicles.set(key,row);
       }
     }
     return [...vehicles.values(),...unknownVehicles];
@@ -21750,15 +21921,15 @@ function renderAutoManagePage(state){
     return expiryGroup(first)-expiryGroup(second)||(first<0?second-first:first-second)
       ||String(a.customer.name||'').localeCompare(String(b.customer.name||''),'ko');
   });
-  const visible=soon?rows.filter(row=>row.days.days!==null&&row.days.days>=0&&row.days.days<=30):rows;
+  const visible=soon?rows.filter(row=>!row.declined&&row.days.days!==null&&row.days.days>=0&&row.days.days<=30):rows;
   message.textContent=visible.length?(soon?'만기 30일 이내 ':'전체 ')+visible.length+'건'
     :soon?'오늘부터 30일 이내에 만기인 자동차보험이 없어요.':'고객관리에 등록된 자동차보험이 없습니다.';
   list.innerHTML=visible.length?'<div class="wd09-customer-table-frame wd09-auto-expiry-frame" tabindex="0" role="region" aria-labelledby="wd09-auto-expiry-title">'
     +'<table class="wd09-customer-table wd09-auto-expiry-table" aria-labelledby="wd09-auto-expiry-title">'
-    +'<colgroup>'+[5,8,7,10,8,7,9,8,9,7,7,6,9].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
+    +'<colgroup>'+[5,8,7,10,8,7,9,8,8,6,6,5,13].map(width=>'<col style="width:'+width+'%">').join('')+'</colgroup>'
     +'<thead><tr>'+['D-day','만기일','고객명','연락처','보험회사','차량번호','최종보험료','계약일','차량용도','계약자','피보험자','담당설계사','재가입 상태']
       .map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'
-    +visible.map(({customer,record,index,plate,expiry,days,renewed})=>{
+    +visible.map(({customer,record,index,plate,expiry,days,renewed,declined})=>{
       const phone=cstFormatPhone(customer.phone);
       const detail=wd09AutoFields(record);
       const premium=detail.annualPremium;
@@ -21775,15 +21946,20 @@ function renderAutoManagePage(state){
         +'<td>'+esc(detail.contractDate||'—')+'</td>'
         +'<td class="wd09-auto-use" title="'+esc(detail.line||'')+'">'+esc(detail.line||'—')+'</td>'
         +[detail.policyholder,detail.insured,detail.agent].map(value=>'<td>'+esc(value||'—')+'</td>').join('')
-        +'<td class="wd09-auto-renewal">'+(renewed?'<span class="clm-badge 완료">재가입 완료</span>':plate&&expiry
-          ?'<button type="button" class="btn-sm p" aria-label="'+name+' '+esc(plate)+' 재가입" data-auto-renewal>재가입</button>'
+        +'<td class="wd09-auto-renewal">'+(declined
+          ?'<span class="clm-badge">재가입 안 함</span> <button type="button" class="btn-sm" data-auto-renewal="restore">취소</button>'
+          :renewed||(record.renewalPreviousId&&days.days>30)?'<span class="clm-badge 완료">재가입 완료</span>'
+          :plate&&expiry?'<div class="wd09-auto-renewal-actions">'
+            +'<button type="button" class="btn-sm d wd09-auto-renew" aria-label="'+name+' '+esc(plate)+' 재가입" data-auto-renewal="renew">재가입</button>'
+            +'<button type="button" class="btn-sm" aria-label="'+name+' '+esc(plate)+' 재가입 안 함" data-auto-renewal="decline">재가입 안 함</button></div>'
           :'—')+'</td></tr>';
     }).join('')+'</tbody></table></div>':'';
   list.onclick=event=>{
     const button=event.target.closest('[data-auto-renewal]');
     if(!button)return;
     const row=button.closest('tr');
-    wd09OpenAutoRenewal(row.dataset.customer,row.dataset.record,Number(row.dataset.index));
+    if(button.dataset.autoRenewal==='renew')wd09OpenAutoRenewal(row.dataset.customer,row.dataset.record,Number(row.dataset.index));
+    else void wd09SetAutoRenewalDecision(row,button.dataset.autoRenewal==='restore',button);
   };
 }
 function renderHomeCusts(){
@@ -25942,9 +26118,7 @@ function renderContractsList(state){
     var body=groupRows.length?groupRows.map(auto?renderAutoRow:renderInsuranceRow).join('')
       :'<tr><td class="wd09-insurance-empty" colspan="'+columns.length+'">등록된 '+WD09_INSURANCE_PURPOSES[purpose]+' 내역이 없습니다.</td></tr>';
     return '<section class="wd09-insurance-group" data-insurance-purpose="'+purpose+'">'
-      +(indemnity?'<div class="wd09-insurance-group-head">':'')
       +'<h3 class="wd09-insurance-group-heading '+purpose+'" data-insurance-kind="'+purpose+'" id="'+titleId+'">'+groupHeading(purpose,groupRows)+'</h3>'
-      +(indemnity?'<button class="btn-sm p" type="button" onclick="openCustomerInsuranceRegistration(\'indemnity\')">+ 실손보험 등록</button></div>':'')
       +'<div class="wd09-customer-table-frame" tabindex="0" role="region" aria-labelledby="'+titleId+'"><table aria-labelledby="'+titleId+'" class="wd09-insurance-table wd09-customer-table">'
       +'<thead><tr>'+headers+'</tr></thead><tbody>'+body+'</tbody></table></div></section>';
   }).join('');
@@ -25954,6 +26128,14 @@ function _ctSetVal(id,v){var el=document.getElementById(id);if(el)el.value=v||''
 let wd09InsuranceDrafts={key:'',rows:[],saving:false};
 function wd09InsuranceEntryKey(){
   return String(_UID)+'/'+String(_vid);
+}
+function wd09InferInsurerType(value){
+  const key=text=>String(text||'').replace(/\s/g,'').toUpperCase();
+  const name=key(value);
+  if(!name||name==='기타')return '';
+  if(INSURERS_LIFE.some(insurer=>key(insurer)===name)||/(생명|라이프)$/.test(name))return '생보';
+  if([...INSURERS_NONLIFE,...AUTO_INSURERS].some(insurer=>key(insurer)===name)||/(손해보험|화재)$/.test(name))return '손보';
+  return '';
 }
 function wd09PrepareInsuranceInsurers(){
   const insurerLists=[
@@ -26001,7 +26183,17 @@ function wd09AddInsuranceRow(){
     dateLabel.textContent=purpose==='indemnity'?'가입일':'계약일';
     syncIndemnity();
   };
-  fields.contractDate.oninput=fields.product.oninput=fields.insurer.oninput=syncIndemnity;
+  fields.contractDate.oninput=fields.product.oninput=syncIndemnity;
+  fields.insurer.oninput=()=>{
+    const inferred=wd09InferInsurerType(fields.insurer.value);
+    fields.insType.value=inferred;
+    fields.insType.disabled=!!inferred;
+    syncIndemnity();
+  };
+  fields.line.onchange=()=>{
+    fields.lineCustom.hidden=fields.line.value!=='__custom__';
+    if(!fields.lineCustom.hidden)fields.lineCustom.focus();
+  };
   indemnityType.onclick=event=>{if(wd09ChooseIndemnityKind(event))syncIndemnity();};
   fields.premium.oninput=()=>wd09FormatWonInput(fields.premium);
   fields.startDate.oninput=()=>{
@@ -26066,12 +26258,13 @@ function wd09ReadInsuranceRow(row){
     const carNumber=requireValue('plate','차량번호를 입력해 주세요.');
     const expiryDate=requireValue('expiry','자동차 만기일을 입력해 주세요.');
     const startDate=val('startDate');
+    const line=val('line')==='__custom__'?requireValue('lineCustom','차량용도를 입력해 주세요.'):val('line');
     return {
       source:'auto',documents,pdfDate:contractDate||startDate||customerAttachmentDay(),
       record:{
         year:(startDate||customerAttachmentDay()).slice(0,4),company:insurer,expiryDate,
         annualPremium:premium,finalPremium:premium,contractDate,startDate,
-        line:val('line'),policyholder:val('holder'),insured:val('insured'),agent,carNumber,memo,
+        line,policyholder:val('holder'),insured:val('insured'),agent,carNumber,memo,
         contactStatus:'연락 전',contractStatus:'본사계약',createdAt:now,updatedAt:now
       }
     };
@@ -26083,7 +26276,7 @@ function wd09ReadInsuranceRow(row){
   }
   const record={
     insurance_purpose:purpose,insurer,product,contract_date:purpose==='indemnity'?contractDate:(contractDate||today()),contract_type:'신계약',
-    ins_type:val('insType')||(INSURERS_LIFE.includes(insurer)?'생보':'손보'),
+    ins_type:wd09InferInsurerType(insurer)||val('insType'),
     fee:ctFeeFmt(val('premium')),pay_period:wd09PayPeriodChoice(val('payPeriod')),ins_period:val('period'),
     renewal_type:purpose==='savings'?'':wd09PolicyRenewalType(val('renewalType')),
     status:'계약진행중',agent,debit_date:val('debit'),guide_sent:false,cov_summary:val('coverage'),memo,created:now
@@ -35752,6 +35945,7 @@ function openDesignProgressModal(){
     }
   });
   const allowedTables = new Set([
+    'wd_partners_preferences',
     'wd_partners_customers','wd_partners_claim_records','wd_partners_communications',
     'wd_partners_contracts','wd_partners_consultations','wd_partners_design_requests',
     'wd_partners_home_flow','wd_partners_quickmemo','wd_partners_todos','wd_partners_managers','wd_partners_hub_system_accounts'
@@ -35851,7 +36045,23 @@ function openDesignProgressModal(){
           ?/^eq[.](\d+)$/.exec(url.searchParams.get(key))?.[1]:null;
         const exactOwner=url.searchParams.getAll('uid').length===1&&url.searchParams.get('uid')==='eq.'+uid;
         let authorized=false;
-        if(request.method==='POST'&&table===contracts&&!url.search){
+        if(table==='wd_partners_preferences'&&request.method==='POST'){
+          const rows=await request.clone().json();
+          const row=Array.isArray(rows)&&rows.length===1?rows[0]:null;
+          authorized=!!row&&row.uid===uid&&Object.keys(row).length===4
+            &&wd09PreferenceValueOk(row.kind,row.data)&&Number.isFinite(Date.parse(row.updated_at))
+            &&validUpsertQuery('uid,kind',rows);
+        }else if(table==='wd_partners_preferences'&&request.method==='PATCH'&&exactOwner){
+          const params=url.searchParams;
+          const version=params.get('updated_at');
+          const kind=params.get('kind')?.replace(/^eq\./,'');
+          const row=await request.clone().json();
+          authorized=params.size===4&&params.getAll('kind').length===1&&params.get('kind')==='eq.'+kind
+            &&params.getAll('select').length===1&&params.get('select')==='data'
+            &&params.getAll('updated_at').length===1&&/^eq\.\d{4}-\d{2}-\d{2}[T ]/.test(version)
+            &&row&&Object.keys(row).length===2&&Number.isFinite(Date.parse(row.updated_at))
+            &&wd09PreferenceValueOk(kind,row.data);
+        }else if(request.method==='POST'&&table===contracts&&!url.search){
           const row=await request.clone().json();
           authorized=row?.uid===uid&&/^\d+$/.test(String(row.id))&&
             String(row.customer_id)===String(_vid)&&ownsCustomer(row.customer_id);
@@ -35861,6 +36071,14 @@ function openDesignProgressModal(){
             Array.isArray(rows)&&rows.length>0&&rows.every(row=>
             row?.uid===uid&&/^\d+$/.test(String(row.id))&&
             (table===customers||ownsCustomer(row.customer_id)));
+        }else if(request.method==='PATCH'&&table===customers&&exactOwner&&ownsCustomer(matched('id'))){
+          const params=url.searchParams;
+          const version=params.get('updated_at');
+          const row=await request.clone().json();
+          authorized=params.size===4&&params.getAll('select').length===1&&params.get('select')==='data'
+            &&params.getAll('updated_at').length===1&&(version==='is.null'||/^eq\.\d{4}-\d{2}-\d{2}[T ]/.test(version))
+            &&row&&Object.keys(row).length===2&&typeof row.updated_at==='string'&&Number.isFinite(Date.parse(row.updated_at))
+            &&String(row.data?.id)===matched('id')&&row.data.updated===row.updated_at&&Array.isArray(row.data.autoInsurance);
         }else if(request.method==='PATCH'&&records.includes(table)&&exactOwner&&
                  matched('id')&&ownsCustomer(matched('customer_id'))){
           const row=await request.clone().json();
@@ -37825,19 +38043,29 @@ function wd09ArchivePreviewMime(name){
       .map(readerCompany).find(name=>filename.includes(name)||trail.some(part=>part===name))||'미분류';
     return {...file,company,title:filename,standard:false};
   }
-  function readerKey(){return 'wd09-reader-favorites:'+_UID;}
+  let readerPreferencesReady=false, readerPreferenceLoading=false, readerPreferenceSaving=false;
   function syncReaderPreferences(){
-    if(readerUid===_UID)return;
-    readerUid=_UID;
-    readerFavorites=new Set();
-    try{
-      const values=_UID?JSON.parse(localStorage.getItem(readerKey())||'[]'):[];
-      if(Array.isArray(values))readerFavorites=new Set(values.filter(value=>typeof value==='string'));
-    }catch{}
-    el('favorites-only').checked=readerFavorites.size>0;
-    renderReaderMonths([],currentReaderMonth());
-    el('search').value='';
-    el('company').value='';
+    if(readerUid!==_UID){
+      readerUid=_UID;
+      readerFavorites=new Set();
+      readerPreferencesReady=readerPreferenceLoading=false;
+      el('favorites-only').checked=false;
+      renderReaderMonths([],currentReaderMonth());
+      el('search').value='';
+      el('company').value='';
+    }
+    if(!readerUid||readerPreferencesReady||readerPreferenceLoading)return;
+    const uid=readerUid;
+    readerPreferenceLoading=true;
+    void wd09LoadPrivatePreference(uid,'reader_favorites','wd09-reader-favorites:'+uid,[]).then(values=>{
+      if(uid!==readerUid||uid!==_UID)return;
+      readerFavorites=new Set(values.filter(value=>typeof value==='string'));
+      readerPreferencesReady=true;
+      el('favorites-only').checked=readerFavorites.size>0;
+      renderReaderList();
+    }).catch(()=>{
+      if(uid===readerUid&&uid===_UID)el('status').textContent='계정의 즐겨찾기를 불러오지 못했어요.';
+    }).finally(()=>{if(uid===readerUid)readerPreferenceLoading=false;});
   }
   function clearReaderPreview(){
     readerPreview++;
@@ -38119,18 +38347,24 @@ function wd09ArchivePreviewMime(name){
     el('company').value='';
     renderReaderList();
   };
-  el('favorite').onclick=()=>{
-    const company=el('company').value;
-    if(!company||!_UID)return;
-    const next=new Set(readerFavorites);
-    if(next.has(company))next.delete(company);
-    else next.add(company);
+  el('favorite').onclick=async()=>{
+    const company=el('company').value,uid=_UID;
+    if(!company||!uid||readerPreferenceSaving)return;
+    if(!readerPreferencesReady){
+      syncReaderPreferences();
+      return;
+    }
+    const add=!readerFavorites.has(company);
+    readerPreferenceSaving=true;
     try{
-      localStorage.setItem(readerKey(),JSON.stringify([...next]));
-      readerFavorites=next;
-      if(!next.size)el('favorites-only').checked=false;
+      const values=await wd09AccountPreference(uid,'reader_favorites',[],current=>
+        add?(current.includes(company)?current:[...current,company]):current.filter(value=>value!==company));
+      if(uid!==readerUid||uid!==_UID)return;
+      readerFavorites=new Set(values);
+      if(!readerFavorites.size)el('favorites-only').checked=false;
       renderReaderList();
-    }catch{el('status').textContent='이 브라우저에 즐겨찾기를 저장하지 못했어요.';}
+    }catch(error){if(uid===readerUid&&uid===_UID)el('status').textContent=error.message;}
+    finally{readerPreferenceSaving=false;}
   };
   window.wd09ResetMonthly=()=>{
     readerMode='';
