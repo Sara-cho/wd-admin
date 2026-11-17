@@ -7,6 +7,7 @@ create table public.work_office_category_settings (
   constraint work_office_category_settings_format check (
     jsonb_typeof(categories) = 'object'
     and categories ?& array['수입', '지출']
+    and categories - '수입' - '지출' = '{}'::jsonb
     and jsonb_typeof(categories -> '수입') = 'array'
     and jsonb_typeof(categories -> '지출') = 'array'
     and jsonb_path_exists(categories -> '수입', '$[*] ? (@.archived == false)')
@@ -28,7 +29,7 @@ create policy work_office_category_settings_owner
     and exists (
       select 1
       from public.wd_staff_profiles as profile
-      where profile.user_id = owner_id
+      where profile.user_id = work_office_category_settings.owner_id
         and profile.staff_role = 'owner'
         and profile.is_active
     )
@@ -38,7 +39,7 @@ create policy work_office_category_settings_owner
     and exists (
       select 1
       from public.wd_staff_profiles as profile
-      where profile.user_id = owner_id
+      where profile.user_id = work_office_category_settings.owner_id
         and profile.staff_role = 'owner'
         and profile.is_active
     )
