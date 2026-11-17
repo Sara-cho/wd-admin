@@ -6559,14 +6559,14 @@ function loadHomeAttendanceMonth(login,month){
   return entry.pending;
 }
 
-function dayAttendance(day,profiles){
+function dayAttendance(day,profiles,today){
   const planned=new Set(S.workRoster?.[day]||[]);
   const start=row=>row.record?timeOnly(row.record.inAt):row.hours?.start||'99:99';
   const month=day.slice(0,7);
   return profiles.map(profile=>({profile,planned:planned.has(profile.id),hours:S.workSchedule?.[day]?.[profile.id],
     record:homeAttendanceMonth(payrollEmployeeLogin(profile),month)?.days?.get(day)||
       (S.staffData[profile.id]?.attendance||[]).find(row=>row.day===day&&row.inAt)}))
-    .filter(row=>row.planned||row.record)
+    .filter(row=>row.record||(day>=today&&row.planned))
     .sort((a,b)=>start(a).localeCompare(start(b))||a.profile.name.localeCompare(b.profile.name,'ko'));
 }
 
@@ -6593,7 +6593,7 @@ function homeCalendarAttendanceMarkup(staff,day,today){
 
 function homeWeeklyAttendanceMarkup(week,profiles,today){
   const weeklyStaff=new Map();
-  for(const date of week)for(const row of dayAttendance(date,profiles)){
+  for(const date of week)for(const row of dayAttendance(date,profiles,today)){
     const id=row.profile.id;
     if(!weeklyStaff.has(id))weeklyStaff.set(id,[]);
     const label=esc(attendanceDate(date)+' '+(row.record?homeAttendanceState(row,date,today):'예정'));
@@ -6606,7 +6606,7 @@ function homeWeeklyAttendanceMarkup(week,profiles,today){
 
 function homeDayAttendanceMarkup(staff,day,today){
   const stamp=value=>esc(clockLabel(timeOnly(value)));
-  return staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${homeStaffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText${row.record?.outAt?' wd67-work-completed':''}">${!row.record&&day<today?'출근 기록 없음':homeAttendanceState(row,day,today)}</span>
+  return staff.map(row=>`<div class="wd67-line"><strong class="wd88-person" ${homeStaffColor(row.profile.id)}>${esc(row.profile.name)}</strong><div class="wd68-attendance"><span class="smallText${row.record?.outAt?' wd67-work-completed':''}">${homeAttendanceState(row,day,today)}</span>
     ${row.record?`<small>출근 ${stamp(row.record.inAt)}${row.record.outAt?' · 퇴근 '+stamp(row.record.outAt):''}</small>`:
       row.planned?`<small>예정 ${esc(scheduledHoursLabel(row.hours))}</small>`:''}</div></div>`).join('')||'<p class="wd68-empty">출근 예정이나 기록이 없습니다.</p>';
 }
@@ -6629,10 +6629,10 @@ function bindHomeAttendance(day){
       if(!active())return;
       for(const cell of document.querySelectorAll('[data-home-attendance]')){
         const date=cell.dataset.homeAttendance;
-        cell.innerHTML=homeCalendarAttendanceMarkup(dayAttendance(date,profiles),date,today);
+        cell.innerHTML=homeCalendarAttendanceMarkup(dayAttendance(date,profiles,today),date,today);
       }
       $('homeWeeklyAttendanceRows').innerHTML=homeWeeklyAttendanceMarkup(week,profiles,today);
-      const staff=dayAttendance(day,profiles);
+      const staff=dayAttendance(day,profiles,today);
       $('homeDayAttendanceCount').textContent=staff.length+'명';
       $('homeDayAttendanceRows').innerHTML=homeDayAttendanceMarkup(staff,day,today);
       status.hidden=!results.some(result=>result.status==='rejected');
@@ -6662,7 +6662,7 @@ function managerHomeView(){
   const month=day.slice(0,7);
   const {days,leading,trailing}=monthCalendarDates(month);
   const thisWeek=weeklyDays(today);
-  const selectedStaff=dayAttendance(day,profiles);
+  const selectedStaff=dayAttendance(day,profiles,today);
   const selectedTasks=visibleAdminTasks().filter(task=>task.date===day&&!task.dailyJournal);
   return `<div class="wd67-home">
     <section class="card wd67-calendar"><div class="wd65-section-head"><div><h2>${esc(staffMonthLabel(month))} 일정</h2></div>
@@ -6675,7 +6675,7 @@ function managerHomeView(){
       ${days.map(date=>`<button type="button" class="wd67-day" data-home-day="${date}" aria-pressed="${date===day}" ${date===today?'aria-current="date"':''}
         aria-label="${esc(attendanceDate(date))} 일정 보기">
         <span class="wd90-day-head"><strong>${Number(date.slice(8))}</strong>${date===today?'<small>오늘</small>':''}</span>
-        <span class="wd67-calendar-attendance" data-home-attendance="${date}">${homeCalendarAttendanceMarkup(dayAttendance(date,profiles),date,today)}</span>
+        <span class="wd67-calendar-attendance" data-home-attendance="${date}">${homeCalendarAttendanceMarkup(dayAttendance(date,profiles,today),date,today)}</span>
       </button>`).join('')}
     ${'<span class="wd87-empty-day" aria-hidden="true"></span>'.repeat(trailing)}
     </div><p class="smallText wd67-legend">날짜를 누르면 근무 일정을 추가하거나 업무지시를 볼 수 있어요.</p></section>
