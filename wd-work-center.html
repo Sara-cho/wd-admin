@@ -575,7 +575,8 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .wd107-staff-pick .wd105-staff-role{font-size:12px}
 .wd107-trash{display:grid;place-items:center;width:38px;height:38px;flex:none;padding:0;background:transparent;border:1px solid transparent;color:#962e4b;border-radius:8px}
 .wd107-trash:hover,.wd107-trash:focus-visible{background:#fcf0f2;border-color:#efd4dc}
-.wd107-staff-layout .wd58-detail .wd58-panel-head{flex-wrap:wrap}
+.wd107-staff-layout .wd58-detail .wd58-panel-head>div:first-child{min-width:0}
+.wd-staff-profile-actions{display:flex;flex:none;gap:8px}
 .wd107-staff-layout .wd58-profile-data{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
 .wd107-staff-layout .wd58-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 .wd107-staff-layout .wd58-profile-data dd{font-size:15px}
@@ -991,7 +992,6 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 #staffReportDocument h4{margin:0 0 14px;font-size:18px}
 #staffReportDocument .wd122-report-body{max-height:none;overflow:visible;padding:0;line-height:inherit}
 #staffReportDocument .wd19-print{max-width:none;padding:0;font-size:inherit;line-height:inherit}
-.wd126-saved-staff-pin{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;margin-bottom:8px;padding:6px 10px;background:#f7f3fc;border-radius:8px;font-size:13px;font-weight:600}
 @media(max-width:600px){
  #staffReportDialog .wd62-month-dialog-head{padding:14px 16px}
  #staffReportDialogTitle{font-size:20px}
@@ -7164,6 +7164,12 @@ function unlockStaffPins(button,afterUnlock){
   };
 }
 
+async function decryptStaffPin(profile){
+  const {iv,cipher}=profile.pinCipher;
+  const data=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)},managerStaffPinKey,new Uint8Array(cipher));
+  return new TextDecoder().decode(data);
+}
+
 function setStaffPrivateValue(button,field,label,value,visible){
   field.textContent=value;
   button.setAttribute('aria-pressed',String(visible));
@@ -7188,9 +7194,7 @@ function bindStaffPrivateValues(profile){
     if(!current())return;
     button.disabled=true;
     try{
-      const {iv,cipher}=profile.pinCipher;
-      const data=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(iv)},managerStaffPinKey,new Uint8Array(cipher));
-      reveal(new TextDecoder().decode(data));
+      reveal(await decryptStaffPin(profile));
     }catch{if(current())notify('비밀번호를 열 수 없어요. 직원 정보 수정에서 비밀번호를 다시 저장해 주세요.');}
     finally{button.disabled=false;}
   };
@@ -7225,6 +7229,35 @@ function savedStaffPinMarkup(profile){
   return `<span id="savedStaffPin">••••••</span>${passwordEye('showSavedStaffPin','savedStaffPin','기존 비밀번호')}`;
 }
 
+function bindStaffProfilePin(profile,form){
+  const input=$('staffPin'),eye=$('showStaffPin');
+  passwordToggle('staffPin','showStaffPin','로그인 비밀번호');
+  let savedPin,edited=false;
+  if(profile?.pinCipher){
+    const toggle=eye.onclick;
+    const current=()=>currentUser==='manager'&&$('staffProfileForm')===form&&managerStaffId===profile.id;
+    const prefill=async show=>{
+      eye.disabled=true;
+      try{
+        const pin=await decryptStaffPin(profile);
+        if(!current()||edited||input.value)return;
+        savedPin=input.value=pin;
+        if(show)toggle();
+      }catch{
+        if(show&&current())notify('비밀번호를 열 수 없어요. 숫자 6자리를 입력해 다시 저장할 수 있어요.');
+      }finally{eye.disabled=false;}
+    };
+    input.addEventListener('input',()=>{edited=true;});
+    eye.onclick=()=>{
+      if(edited||input.value||savedPin!==undefined)return toggle();
+      if(managerStaffPinKey)void prefill(true);
+      else unlockStaffPins(eye,()=>current()?prefill(true):undefined);
+    };
+    if(managerStaffPinKey)void prefill(false);
+  }
+  return ()=>input.value===savedPin?'':input.value;
+}
+
 function staffProfileEditor(profile){
   const {bank,account}=staffBankInfo(profile);
   const banks=bank&&!payrollBanks.includes(bank)?[...payrollBanks,bank]:payrollBanks;
@@ -7240,10 +7273,8 @@ function staffProfileEditor(profile){
       <div><label for="staffBank">급여은행</label><select id="staffBank"><option value="">은행 선택</option>${banks.map(name=>`<option ${name===bank?'selected':''}>${esc(name)}</option>`).join('')}</select></div>
       <div><label for="staffAccount">계좌번호</label><input id="staffAccount" maxlength="100" inputmode="numeric" autocomplete="off" value="${esc(account)}" placeholder="계좌번호 입력"></div>
       <div>
-        ${profile?.pin?`<div class="wd126-saved-staff-pin"><span>현재 로그인 비밀번호</span>
-          <div class="wd59-pin-display">${savedStaffPinMarkup(profile)}</div></div>`:''}
-        <label for="staffPin">${profile?.pin?'새 비밀번호 (변경할 때만)':'로그인 비밀번호'}</label>
-        <div class="wd58-password"><input id="staffPin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" placeholder="숫자 6자리">${passwordEye('showStaffPin','staffPin',profile?.pin?'새 비밀번호':'비밀번호')}</div>
+        <label for="staffPin">로그인 비밀번호</label>
+        <div class="wd58-password"><input id="staffPin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" placeholder="${profile?.pinCipher?'등록된 비밀번호':'숫자 6자리'}">${passwordEye('showStaffPin','staffPin','로그인 비밀번호')}</div>
       </div>
     </div>
     <label for="staffRole">담당 업무</label><input id="staffRole" maxlength="80" value="${esc(profile?.role||'')}" placeholder="예: SNS 콘텐츠 운영">
@@ -7253,7 +7284,6 @@ function staffProfileEditor(profile){
     </div>
     <details class="wd58-note"><summary>관리 메모</summary><textarea id="staffMemo" maxlength="1000" rows="3" aria-label="관리 메모">${esc(profile?.memo||'')}</textarea></details>
     ${profile?'':newStaffPermissions()}
-    <div class="actions"><button type="button" id="cancelStaffEdit">취소</button><button class="primary" type="submit" id="saveStaffProfile">저장</button></div>
   </form>`;
 }
 
@@ -7659,7 +7689,9 @@ function staffManagementView(){
     ${staffRosterPanel('staffRosterList',S.staffProfiles.filter(person=>!person.hiddenAt),profile?.id,'profile')}
     <section class="card wd58-detail" tabindex="0" aria-label="직원·스탭 상세">
       <div class="wd58-panel-head"><div><div class="eyebrow">${profile?'직원·스탭 상세':'직원관리'}</div><h2>${profile?esc(profile.name):editingStaff?'인원 추가':'직원·스탭 상세'}</h2></div>
-      ${profile&&!profile.archivedAt&&!editingStaff?'<button type="button" id="editStaff">수정</button>':''}</div>
+      ${editingStaff?`<div class="wd-staff-profile-actions"><button type="button" id="cancelStaffEdit">취소</button>
+        <button type="submit" class="primary" id="saveStaffProfile" form="staffProfileForm">저장</button></div>`:
+        profile&&!profile.archivedAt?'<button type="button" id="editStaff">수정</button>':''}</div>
       ${editingStaff?staffProfileEditor(profile):profile?staffProfileSummary(profile):'<p class="muted">스탭을 추가하거나 목록에서 선택하세요.</p>'}
       ${profile?`<div id="staffContractArea">${staffContractView(profile,editingStaff)}</div>`:''}
       ${profile&&!editingStaff?staffPermissionSummary(profile):''}
@@ -7963,16 +7995,16 @@ function bindStaffManagement(){
   if(profile)void loadStaffRecords(profile,staffSummaryMonth);
   if($('editStaff'))$('editStaff').onclick=()=>{editingStaff=true;render();$('staffName').focus();};
   if($('editStaffPermissions'))$('editStaffPermissions').onclick=()=>openStaffPermissions(profile);
-  if($('cancelStaffEdit'))$('cancelStaffEdit').onclick=()=>{editingStaff=false;staffDetailOpen=!!profile;render();};
+  if($('cancelStaffEdit'))$('cancelStaffEdit').onclick=()=>{editingStaff=false;staffDetailOpen=!!profile;render();$(profile?'editStaff':'addStaff')?.focus();};
   const form=$('staffProfileForm');
   if(form){
-    passwordToggle('staffPin','showStaffPin',profile?.pin?'새 비밀번호':'비밀번호');
+    const changedPin=bindStaffProfilePin(profile,form);
     if(!profile)bindNewStaffPermissions(form);
     const grant=managerCloudGrants.get(profile?.id);
     let draftStaffKey;
     form.onsubmit=async event=>{
       event.preventDefault();
-      const button=$('saveStaffProfile'),pin=$('staffPin').value,role=$('staffWorkType').value;
+      const button=$('saveStaffProfile'),pin=changedPin(),role=$('staffWorkType').value;
       if(button.disabled||!['employee','staff'].includes(role))return;
       const fields={
         name:$('staffName').value.trim(),memo:$('staffMemo').value,role:$('staffRole').value.trim(),workType:role==='staff'?'staff':'employee',
