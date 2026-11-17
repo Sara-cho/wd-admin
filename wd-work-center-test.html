@@ -860,6 +860,39 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 @media(max-width:720px){
   .wd135-work-layout.wd149-employee-work{grid-template-columns:minmax(0,1fr);grid-template-rows:260px minmax(420px,68vh)}
 }
+.wd109-toolbar #officeBatch[hidden]{display:none}
+.office-expense-batch{width:min(980px,100%);max-height:88dvh;display:grid;grid-template-rows:auto minmax(0,1fr);padding:0;overflow:hidden}
+.office-expense-batch .office-batch-header{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:14px 18px;border-bottom:1px solid #e7e0ef}
+.office-batch-header h2,.office-batch-header p{margin:0}
+.office-batch-header .smallText{grid-column:1/-1}
+.office-batch-header .smallText:empty{display:none}
+.office-expense-batch-body{overflow:auto;overscroll-behavior:contain;padding:14px 18px}
+.office-expense-items{display:grid;gap:12px;margin-bottom:12px}
+.office-expense-item{min-width:0;border:1px solid #e7ddf0;border-radius:12px;background:#fff}
+.office-expense-item fieldset{min-width:0;margin:0;padding:0;border:0}
+.office-expense-item .office-expense-item-head{padding:8px 14px;border-radius:11px 11px 0 0;background:#f2edf8;justify-content:space-between}
+.office-expense-item-head h3{margin:0;font-size:16px}
+.office-expense-item .office-expense-remove{min-height:40px;color:#9c2947;border-color:#e9c5cf}
+.office-expense-item-fields{padding:12px 14px}
+.office-expense-item-fields .wd108-payroll-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+.office-expense-item-fields .wd108-payroll-fields label{min-width:0;grid-column:auto}
+.office-expense-item-fields :is(input,select){min-height:42px;margin-top:4px;min-width:0;width:100%}
+.office-expense-item-fields details{margin-top:12px}
+.office-expense-item-fields summary{cursor:pointer}
+.office-test-category-panel{margin-top:18px}
+.office-test-category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.office-test-category-grid section{padding:14px;border:1px solid #e7e0ef;border-radius:12px;min-width:0}
+.office-test-category-grid h3{margin:0 0 8px}
+.office-test-category-grid ul{list-style:none;padding:0;margin:8px 0 0}
+.office-test-category-grid li{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid #eee8f4;padding:7px 0;overflow-wrap:anywhere}
+.office-test-category-grid form .row{flex-wrap:wrap}
+.office-test-category-grid form input{min-width:0;flex:1 1 110px}
+@media(max-width:620px){
+  .office-expense-batch .office-batch-header,.office-expense-batch-body{padding:10px}
+  .office-batch-header h2{font-size:16px}
+  .office-expense-item-fields .wd108-payroll-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 </head><body><div id="root"></div><script>
 'use strict';
@@ -3046,17 +3079,18 @@ function openNativeFinanceAdd(kind,active,onSaved){
   if(!config||currentUser!=='manager'||!active())return;
   showModal(`<form id="nativeFinanceForm">
     <label for="financeEntryTitle">운영비 내용</label><input id="financeEntryTitle" required maxlength="120">
-    <label for="financeEntryAmount">금액 (원)</label><input id="financeEntryAmount" type="number" required min="1" step="1">
+    <label for="financeEntryAmount">금액 (원)</label><input id="financeEntryAmount" type="text" inputmode="numeric" required>
     <label for="financeEntryDate">예정일</label><input id="financeEntryDate" type="date" value="${localDay()}" required>
     <label for="financeEntryCategory">분류</label><input id="financeEntryCategory" maxlength="80" value="운영비">
     <p id="financeEntryStatus" class="smallText" role="status"></p>
     <div class="actions"><button type="submit" class="primary" id="saveNativeFinance">운영비 저장</button></div></form>`,'운영비 등록');
   const form=$('nativeFinanceForm'),button=$('saveNativeFinance'),status=$('financeEntryStatus');
+  bindWonInput($('financeEntryAmount'),{min:1});
   let previous='',id='';
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active())return;
-    const title=$('financeEntryTitle').value.trim(),amount=Number($('financeEntryAmount').value),date=$('financeEntryDate').value,
+    const title=$('financeEntryTitle').value.trim(),amount=parseWonInput($('financeEntryAmount').value),date=$('financeEntryDate').value,
       category=$('financeEntryCategory').value.trim()||'운영비';
     if(!title||!Number.isSafeInteger(amount)||amount<=0||!validAttendanceDay(date)){
       status.textContent='내용, 금액, 날짜를 확인해 주세요.';return;
@@ -3092,8 +3126,11 @@ const payrollWorkFields=[['scheduled_hours','소정근로(h)'],['actual_hours','
 const payrollPayFields=[['base_pay','기본급'],['meal_pay','식대 (비과세)'],['development_pay','자기개발비 (비과세)'],['taxable_extra','기타 과세수당']];
 const payrollDeductionFields=[['pension_deduction','국민연금'],['health_deduction','건강보험'],['employment_deduction','고용보험'],['longterm_care_deduction','장기요양보험'],['income_tax','소득세'],['local_income_tax','지방소득세']];
 function payrollAmountFields(fields,hours=false){
-  return fields.map(([name,label])=>`<label>${label}<input name="${name}" type="number" min="0" max="1000000000" step="${hours&&name.endsWith('_hours')?'0.01':'1'}" placeholder="0"></label>`).join('');
+  return fields.map(([name,label])=>`<label>${label}<input name="${name}" ${hours&&name.endsWith('_hours')
+    ?'type="number" min="0" max="1000000000" step="0.01"'
+    :'type="text" inputmode="numeric" data-won'} placeholder="0"></label>`).join('');
 }
+
 function taxPayrollView(){
   return `<div class="titleRow"><h1>세무업무</h1></div><section class="card wd105-admin-view">
     <div class="wd109-tabs" role="tablist" aria-label="세무업무 분류">
@@ -3334,7 +3371,7 @@ function payrollCalculator(){
 }
 
 function payrollCalculation(data){
-  const amount=name=>Number(data.get(name)||0);
+  const amount=name=>name.endsWith('_hours')?Number(data.get(name)||0):parseWonInput(data.get(name))||0;
   const scheduled=amount('scheduled_hours'),actual=amount('actual_hours'),rate=amount('overtime_rate');
   const overtime=data.has('auto_overtime')?Math.max(0,actual-scheduled):amount('overtime_hours');
   const overtimePay=Math.round(overtime*rate/10)*10;
@@ -3352,6 +3389,7 @@ function payrollCalculation(data){
 }
 function bindPayrollCalculator(active,onSaved){
   const form=$('payrollCalculator'),button=$('saveCalculatedPayroll'),status=$('payrollCalcStatus');
+  const refreshAmounts=[...form.querySelectorAll('[data-won]')].map(input=>bindWonInput(input,{max:1000000000}));
   const employeeSelect=$('taxPayrollEmployee'),workStatus=$('taxWorkHoursStatus'),finalStatus=$('taxFinalStatus');
   const fileInput=$('taxFinalPdf'),download=$('downloadTaxFinal');
   const field=name=>form.elements.namedItem(name);
@@ -3371,6 +3409,7 @@ function bindPayrollCalculator(active,onSaved){
       field('position').value='';
       if(profile&&payrollEmployeeLogin(profile)===legacyStaffHqLogin)
         for(const [key,value] of Object.entries(sujinPayrollDefaults))field(key).value=value;
+      refreshAmounts.forEach(sync=>sync());
     }
     workMinutesValue=null;depositLabel='';download.hidden=true;finalStatus.textContent='';fileInput.disabled=!profile;
     paint();
@@ -3403,6 +3442,7 @@ function bindPayrollCalculator(active,onSaved){
     paint();
   };
   form.oninput=event=>{if(event.target.name==='actual_hours')actualRevision++;paint();};
+  form.addEventListener('invalid',event=>{const detail=event.target.closest('details');if(detail)detail.open=true;},true);
   employeeSelect.onchange=()=>void refresh(true);
   field('pay_month').onchange=()=>void refresh(false);
   $('printTaxDraft').onclick=()=>{if(form.reportValidity())printPayrollDraft(new FormData(form),depositLabel);};
@@ -3495,13 +3535,42 @@ function employeePayslipList(files){
 const officeTabs=['수입','지출','구독','관리'];
 const officeCardKey='wd_work_center_test_payment_cards';
 const officeChartColors=['#6737c4','#9c6ade','#c2a5ef','#248c7d','#e6933b','#7486d7','#a44a78','#698164'];
+function formatWonInput(value){
+  const text=String(value??''),digits=text.replace(/[,\s]/g,'');
+  return /^\d*$/.test(digits)?digits.replace(/^0+(?=\d)/,'').replace(/\B(?=(\d{3})+(?!\d))/g,','):text;
+}
+
+function parseWonInput(value){
+  const digits=String(value??'').replace(/[,\s]/g,'');
+  return /^\d*$/.test(digits)?Number(digits):NaN;
+}
+
+function bindWonInput(input,{min=0,max=Number.MAX_SAFE_INTEGER}={}){
+  const sync=()=>{
+    const before=input.value,formatted=formatWonInput(before);
+    if(formatted!==before){
+      const right=before.slice(input.selectionStart??before.length).replace(/\D/g,'').length;
+      input.value=formatted;
+      let cursor=formatted.length,count=0;
+      while(cursor>0&&count<right){cursor--;if(/\d/.test(formatted[cursor]))count++;}
+      input.setSelectionRange(cursor,cursor);
+    }
+    const amount=parseWonInput(formatted);
+    const valid=formatted===''||Number.isSafeInteger(amount)&&amount>=min&&amount<=max;
+    input.setCustomValidity(valid?'':officeMoney(min)+'부터 '+officeMoney(max)+' 사이의 정수 금액을 입력해 주세요.');
+  };
+  input.addEventListener('input',sync);
+  sync();
+  return sync;
+}
+
 function officeLedgerView(){
   return `<div class="titleRow"><h1>사무실 운영</h1></div><section class="card">
     <div class="wd109-tabs wd109-office-tabs" role="tablist" aria-label="사무실 운영 분류">
       ${officeTabs.map((label,i)=>`<button type="button" id="officeTab${i}" role="tab" aria-controls="officePanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join('')}
     </div><section id="officePanel" role="tabpanel" aria-labelledby="officeTab0">
       <div class="wd109-toolbar"><label id="officeMonthLabel">조회 월<input type="month" id="officeMonth" value="${localDay().slice(0,7)}"></label>
-        <button type="button" id="officeRefresh">새로고침</button><button class="primary" type="button" id="officeAdd">수입 추가</button></div>
+        <button type="button" id="officeRefresh">새로고침</button><button type="button" id="officeBatch" hidden>지출 다건 등록</button><button class="primary" type="button" id="officeAdd">수입 추가</button></div>
       <p id="officeStatus" class="smallText" role="status"></p><div id="officeContent"></div>
     </section></section>`;
 }
@@ -3562,17 +3631,91 @@ async function officeLedgerRows(tab,month){
   }
 }
 const officeIncomeCategories=['보험','AI강의','퍼스널브랜딩'];
-const officeExpenseCategories=['생필품','식대','공과금','구독료','경조사','유흥비','직원월급'];
+const officeExpenseCategories=['생필품','식대','공과금','보험료','구독료','경조사','유흥비','직원월급'];
+const officeTestCategoryKey='wd_work_center_test_categories:'+managerHqAccount.uid;
+const sortOfficeTestCategories=names=>[...names].sort((left,right)=>left.localeCompare(right,'ko-KR'));
+function readOfficeTestCategories(){
+  const defaults={'수입':officeIncomeCategories,'지출':officeExpenseCategories};
+  let saved;
+  try{saved=JSON.parse(localStorage.getItem(officeTestCategoryKey)||'null');}
+  catch{}
+  return Object.fromEntries(Object.entries(defaults).map(([kind,names])=>{
+    const list=saved?.[kind];
+    const valid=Array.isArray(list)&&list.length>0&&list.every(name=>typeof name==='string'&&name.trim());
+    return [kind,sortOfficeTestCategories(valid?list:names)];
+  }));
+}
+function bindOfficeTestCategories(root,active){
+  root.className='office-test-category-panel';
+  root.innerHTML='<h2>분류 관리</h2><p class="smallText">이 브라우저의 TEST 입력 목록에 적용됩니다. 기존 거래에 등록된 분류명은 보존됩니다.</p><p class="smallText" role="status"></p><div class="office-test-category-grid"></div>';
+  const grid=root.querySelector('.office-test-category-grid'),status=root.querySelector('[role=status]');
+  let editing=null;
+  const paint=()=>{
+    const categories=readOfficeTestCategories();
+    grid.innerHTML=Object.entries(categories).map(([kind,names])=>{
+      const selected=editing?.kind===kind?editing.name:'';
+      return `<section data-office-category-kind="${kind}"><h3>${kind} 분류</h3>
+        <form><label for="officeCategory-${kind}">${selected?'분류 이름 수정':'새 분류 이름'}</label>
+          <div class="row"><input id="officeCategory-${kind}" name="category" value="${esc(selected)}" required maxlength="80">
+          <button class="primary" type="submit">${selected?'저장':'추가'}</button>
+          ${selected?'<button type="button" data-category-action="cancel">취소</button>':''}</div>
+        </form>
+        <ul>${names.map(name=>`<li><strong>${esc(name)}</strong><div class="row">
+          <button class="small" type="button" data-category-action="edit" data-category-name="${esc(name)}" aria-label="${esc(name)} 이름 수정">이름 수정</button>
+          <button class="small" type="button" data-category-action="delete" data-category-name="${esc(name)}" aria-label="${esc(name)} 삭제">삭제</button>
+        </div></li>`).join('')}</ul></section>`;
+    }).join('');
+  };
+  const finish=(kind,message)=>{
+    editing=null;paint();status.textContent=message;$('officeCategory-'+kind).focus();
+  };
+  const change=(kind,action,name,value='')=>{
+    const latest=readOfficeTestCategories(),names=latest[kind];
+    const normalized=text=>text.normalize('NFKC').toLocaleLowerCase('ko-KR');
+    if(action!=='add'&&!names.includes(name))return finish(kind,'분류가 변경됐어요. 목록을 확인해 주세요.');
+    if(action==='delete'&&names.length===1){status.textContent='사용할 분류를 하나 이상 남겨 주세요.';return;}
+    if(action!=='delete'){
+      if(!value||value.length>80){status.textContent='분류 이름을 1~80자로 입력해 주세요.';return;}
+      if(names.some(item=>item!==name&&normalized(item)===normalized(value))){
+        status.textContent='같은 이름의 분류가 있어요.';return;
+      }
+    }
+    if(action==='delete'&&!window.confirm(name+' 분류를 선택 목록에서 삭제할까요?'))return;
+    const next=action==='add'?[...names,value]:action==='delete'?names.filter(item=>item!==name):names.map(item=>item===name?value:item);
+    try{localStorage.setItem(officeTestCategoryKey,JSON.stringify({...latest,[kind]:sortOfficeTestCategories(next)}));}
+    catch{status.textContent='분류를 저장하지 못했어요.';return;}
+    finish(kind,action==='delete'?'분류를 삭제했어요.':'분류를 저장했어요.');
+  };
+  grid.onsubmit=event=>{
+    event.preventDefault();
+    if(!active())return;
+    const kind=event.target.closest('section').dataset.officeCategoryKind;
+    const name=editing?.kind===kind?editing.name:null;
+    change(kind,name?'rename':'add',name,new FormData(event.target).get('category').trim());
+  };
+  grid.onclick=event=>{
+    const button=event.target.closest('[data-category-action]');
+    if(!active()||!button)return;
+    const kind=button.closest('section').dataset.officeCategoryKind;
+    const {categoryAction:action,categoryName:name}=button.dataset;
+    if(action==='delete'){change(kind,action,name);return;}
+    editing=action==='edit'?{kind,name}:null;
+    status.textContent='';paint();$('officeCategory-'+kind).focus();
+    if(editing)$('officeCategory-'+kind).select();
+  };
+  paint();
+}
+
 function officeOptions(values,current,placeholder){
   return `<option value="">${placeholder}</option>${[...new Set([...values,...(current?[current]:[])])].map(value=>
     `<option value="${esc(value)}" ${value===current?'selected':''}>${esc(value)}</option>`).join('')}`;
 }
-function officeRecordFields(tab,row){
+function officeRecordFields(tab,row,categories){
   const income=tab==='수입',expense=tab==='지출',subscription=tab==='구독';
   const name=row?officeRecordName(row,tab):'';
   const method=row?.payment_method||'';
   return `<div class="wd108-payroll-fields">
-    ${subscription?'':`<label>${income?'수입 분류':'사용 용도'}<select name="category" required>${officeOptions(income?officeIncomeCategories:officeExpenseCategories,row?.category,'선택해 주세요')}</select></label>`}
+    ${subscription?'':`<label>${income?'수입 분류':'사용 용도'}<select name="category" required>${officeOptions(categories,row?.category,'선택해 주세요')}</select></label>`}
     ${expense?`<label>사용처 구분<select name="business_area" required>${officeOptions(['집','사무실'],row?.business_area,'집 또는 사무실 선택')}</select></label>`:''}
     <label class="wd110-office-full">${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(name)}"></label>
     ${income?`<label>누구 건인지<input name="counterparty" maxlength="100" value="${esc(row?.counterparty||'')}"></label>`:''}
@@ -3581,8 +3724,7 @@ function officeRecordFields(tab,row){
       <label>결제 주기<input name="billing_cycle" maxlength="40" placeholder="예: 매월" value="${esc(row?.billing_cycle||'')}"></label>`:
       `<label>${income?'입금된 곳':'결제 방법·카드'}<input name="payment_method" maxlength="60" ${expense?'list="officePaymentChoices"':''}
         placeholder="${income?'예: 회사 계좌':'예: 회사 법인카드'}" value="${esc(method)}"></label>`}
-    ${expense?`<datalist id="officePaymentChoices">${['계좌이체','현금',...officeCards()].map(card=>`<option value="${esc(card)}"></option>`).join('')}</datalist>`:''}
-    <label>금액 (원)<input type="number" name="amount" min="1" step="1" required value="${esc(row?.amount??'')}"></label>
+    <label>금액 (원)<input type="text" name="amount" inputmode="numeric" required value="${esc(formatWonInput(row?.amount))}"></label>
   </div>`;
 }
 
@@ -3590,21 +3732,19 @@ function officeRecordEditor(tab,row,active,reload){
   if(!active()||$('modalLayer'))return;
   const subscription=tab==='구독';
   showModal(`<form id="officeRecordForm">
-    ${officeRecordFields(tab,row)}<label>메모<textarea name="memo" rows="3" maxlength="1000">${esc(row?.memo||'')}</textarea></label>
+    ${officeRecordFields(tab,row,readOfficeTestCategories()[tab])}${tab==='지출'?officeExpensePaymentChoices():''}<label>메모<textarea name="memo" rows="3" maxlength="1000">${esc(row?.memo||'')}</textarea></label>
     <p id="officeRecordStatus" class="smallText" role="status"></p><div class="actions"><button class="primary" type="submit">저장</button></div>
   </form>`,tab+(row?' 수정':' 추가'));
   const form=$('officeRecordForm'),button=form.querySelector('button[type="submit"]'),status=$('officeRecordStatus');
+  bindWonInput(form.elements.namedItem('amount'),{min:1});
   const newId=crypto.randomUUID();
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active()||!form.isConnected||row&&!officeRecordEditable(row,tab))return;
-    const data=new FormData(form),title=data.get('title').trim(),date=data.get('day'),amount=Number(data.get('amount'));
-    if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0){status.textContent='거래명, 날짜, 금액을 확인해 주세요.';return;}
-    const payload={category:data.get('category')||row?.category||null,amount,payment_method:data.get('payment_method').trim()||null,memo:data.get('memo').trim()||null};
-    if(subscription)Object.assign(payload,{service_name:title,next_payment_date:date,billing_cycle:data.get('billing_cycle').trim()||null});
-    else Object.assign(payload,{title,flow_type:tab,
-      ...(tab==='수입'?{counterparty:data.get('counterparty').trim()||null,business_area:payload.category}:{business_area:data.get('business_area')}),
-      ...(row&&!row.actual_date?{expected_date:date}:{actual_date:date}),...(!row?{money_status:'완료'}:{})});
+    const data=new FormData(form),date=data.get('day');
+    let payload;
+    try{payload=officeTestRecordPayload(tab,row,data);}
+    catch(error){status.textContent=error.message;return;}
     const query=new URLSearchParams({select:'id'});
     if(row){query.set('id','eq.'+row.id);query.set('user_id','eq.'+managerHqAccount.uid);query.set('updated_at','eq.'+row.updated_at);payload.updated_at=new Date().toISOString();}
     else Object.assign(payload,{id:newId,user_id:managerHqAccount.uid});
@@ -3619,8 +3759,135 @@ function officeRecordEditor(tab,row,active,reload){
   };
 }
 
+function officeExpensePaymentChoices(){
+  return `<datalist id="officePaymentChoices">${['계좌이체','현금',...officeCards()].map(card=>
+    `<option value="${esc(card)}"></option>`).join('')}</datalist>`;
+}
+
+function officeTestRecordPayload(tab,row,data){
+  const title=data.get('title').trim(),date=data.get('day'),amount=parseWonInput(data.get('amount'));
+  if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0)
+    throw new Error('거래명, 날짜, 금액을 확인해 주세요.');
+  const payload={category:data.get('category')||row?.category||null,amount,
+    payment_method:data.get('payment_method').trim()||null,memo:data.get('memo').trim()||null};
+  if(tab==='구독')return {...payload,service_name:title,next_payment_date:date,billing_cycle:data.get('billing_cycle').trim()||null};
+  return {...payload,title,flow_type:tab,
+    ...(tab==='수입'?{counterparty:data.get('counterparty').trim()||null,business_area:payload.category}:{business_area:data.get('business_area')}),
+    ...(row&&!row.actual_date?{expected_date:date}:{actual_date:date}),...(!row?{money_status:'완료'}:{})};
+}
+
+async function saveOfficeExpenseBatch(payloads){
+  const ids=payloads.map(row=>row.id);
+  try{
+    const saved=await officeLedgerRequest('지출',new URLSearchParams({select:'id'}),'POST',payloads);
+    const returned=new Set(saved.map(row=>row.id));
+    if(saved.length===ids.length&&ids.every(id=>returned.has(id)))return;
+    throw new Error('지출 저장 결과를 확인하지 못했어요.');
+  }catch(error){
+    const existing=[];
+    for(let i=0;i<ids.length;i+=50){
+      const query=new URLSearchParams({id:'in.('+ids.slice(i,i+50).join(',')+')',flow_type:'eq.지출',
+        user_id:'eq.'+managerHqAccount.uid,select:Object.keys(payloads[0]).join(',')});
+      const rows=await officeLedgerRequest('지출',query).catch(()=>null);
+      if(!rows)throw new Error('저장 여부를 확인할 수 없어요. 이 창에서 전체 저장을 다시 눌러 확인해 주세요.');
+      existing.push(...rows);
+    }
+    if(!existing.length)throw error;
+    const byId=new Map(existing.map(row=>[row.id,row]));
+    const matches=payloads.every(payload=>{
+      const row=byId.get(payload.id);
+      return row&&Object.entries(payload).every(([key,value])=>key==='amount'?Number(row[key])===value:row[key]===value);
+    });
+    if(!matches)throw new Error('일부 지출이 이미 저장됐어요. 지출 목록을 확인한 뒤 저장된 건을 빼고 다시 시도해 주세요.');
+  }
+}
+
+function officeExpenseBatchEditor(active,reload,trigger){
+  if(!active()||$('modalLayer'))return;
+  const categories=readOfficeTestCategories()['지출'];
+  showModal(`<div class="office-expense-batch-body">
+    <div class="office-expense-items" id="officeExpenseItems"></div>
+    ${officeExpensePaymentChoices()}<button type="button" id="officeExpenseAddCard">+ 지출 추가</button>
+  </div>`,'지출 다건 등록');
+  const layer=$('modalLayer'),dialog=layer.querySelector('.modal'),heading=dialog.querySelector('h2');
+  dialog.classList.add('office-expense-batch');dialog.setAttribute('role','dialog');
+  dialog.setAttribute('aria-modal','true');heading.id='officeExpenseBatchTitle';
+  dialog.setAttribute('aria-labelledby',heading.id);
+  heading.parentElement.className='office-batch-header';
+  const close=$('closeModal');
+  close.insertAdjacentHTML('beforebegin','<button class="primary" type="button" id="officeExpenseSaveAll">전체 저장</button>');
+  heading.parentElement.insertAdjacentHTML('beforeend','<p class="smallText" id="officeExpenseBatchStatus" role="status"></p>');
+  const items=$('officeExpenseItems'),add=$('officeExpenseAddCard'),saveAll=$('officeExpenseSaveAll'),status=$('officeExpenseBatchStatus');
+  const closeDialog=()=>{
+    if(saveAll.disabled)return;
+    layer.remove();trigger.focus();
+  };
+  close.onclick=closeDialog;
+  layer.onclick=event=>{if(event.target===layer)closeDialog();};
+  layer.onkeydown=event=>{
+    if(event.key==='Escape'){event.preventDefault();closeDialog();return;}
+    if(event.key!=='Tab')return;
+    const controls=[...dialog.querySelectorAll('button,input,select,textarea,summary')].filter(control=>
+      !control.matches(':disabled,[type=hidden]')&&control.getClientRects().length);
+    const first=controls[0],last=controls.at(-1);
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  };
+  const cards=()=>[...items.children];
+  const renumber=()=>cards().forEach((card,index)=>{
+    const label='지출 '+(index+1);
+    card.querySelector('h3').textContent=label;
+    card.querySelector('.office-expense-remove').setAttribute('aria-label',label+' 카드 삭제');
+  });
+  const appendCard=()=>{
+    const id=crypto.randomUUID();
+    items.insertAdjacentHTML('beforeend',`<form class="office-expense-item" data-expense-id="${id}" aria-labelledby="expense-${id}"><fieldset>
+      <div class="row office-expense-item-head"><h3 id="expense-${id}"></h3><button type="button" class="office-expense-remove">삭제</button></div>
+      <div class="office-expense-item-fields">${officeRecordFields('지출',null,categories)}
+        <details><summary>메모</summary><label>메모<textarea name="memo" rows="2" maxlength="1000"></textarea></label></details>
+      </div></fieldset></form>`);
+    const card=items.lastElementChild;
+    bindWonInput(card.elements.namedItem('amount'),{min:1});
+    card.onsubmit=event=>event.preventDefault();
+    card.querySelector('.office-expense-remove').onclick=()=>{
+      const next=card.nextElementSibling||card.previousElementSibling;
+      card.remove();(next||appendCard()).elements.namedItem('category').focus();renumber();
+    };
+    renumber();
+    return card;
+  };
+  add.onclick=()=>appendCard().elements.namedItem('category').focus();
+  appendCard().elements.namedItem('category').focus();
+  saveAll.onclick=async()=>{
+    if(saveAll.disabled||!active()||!layer.isConnected)return;
+    const forms=cards(),payloads=[];
+    for(const [index,form] of forms.entries()){
+      if(!form.reportValidity()){status.textContent='지출 '+(index+1)+'의 입력 항목을 확인해 주세요.';return;}
+      try{
+        payloads.push({id:form.dataset.expenseId,user_id:managerHqAccount.uid,
+          ...officeTestRecordPayload('지출',null,new FormData(form))});
+      }catch(error){status.textContent='지출 '+(index+1)+' · '+error.message;return;}
+    }
+    close.disabled=add.disabled=saveAll.disabled=true;
+    forms.forEach(form=>{form.querySelector('fieldset').disabled=true;});
+    status.textContent=payloads.length+'건 저장 중…';
+    try{
+      await saveOfficeExpenseBatch(payloads);
+      layer.remove();
+      if(active()){
+        reload(payloads[0].actual_date.slice(0,7));trigger.focus();
+        notify(payloads.length+'건의 지출을 등록했어요.');
+      }
+    }catch(error){if(layer.isConnected)status.textContent=error.message;}
+    finally{
+      close.disabled=add.disabled=saveAll.disabled=false;
+      forms.forEach(form=>{form.querySelector('fieldset').disabled=false;});
+    }
+  };
+}
+
 function bindOfficeLedger(){
-  const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
+  const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),batch=$('officeBatch'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
   const tabs=officeTabs.map((_,i)=>$('officeTab'+i));
   const active=()=>currentUser==='manager'&&S.nav==='office'&&panel.isConnected;
   let tab=officeTabs[0],request=0;
@@ -3631,6 +3898,9 @@ function bindOfficeLedger(){
       <ul class="wd110-office-cards">${cards.map((name,i)=>`<li>
         <div class="wd110-card-face"><span>WD WAVE</span><i aria-hidden="true"></i><strong>${esc(name)}</strong></div>
         <button type="button" class="small" data-remove-office-card="${i}">목록에서 제거</button></li>`).join('')}</ul></section>`;
+    const categorySection=document.createElement('section');
+    content.append(categorySection);
+    bindOfficeTestCategories(categorySection,()=>active()&&tab==='관리');
     const store=next=>{try{localStorage.setItem(officeCardKey,JSON.stringify(next));paintCards();}catch{notify('카드 목록을 저장하지 못했어요.');}};
     $('officeCardForm').onsubmit=event=>{
       event.preventDefault();
@@ -3643,7 +3913,7 @@ function bindOfficeLedger(){
     const id=++request,selected=tab;
     if(typeof focusMonth==='string')month.value=focusMonth;
     $('officeMonthLabel').hidden=!['수입','지출'].includes(tab);
-    add.hidden=refresh.hidden=tab==='관리';add.textContent=tab+' 추가';
+    add.hidden=refresh.hidden=tab==='관리';batch.hidden=tab!=='지출';add.textContent=tab+' 추가';
     status.textContent='';content.replaceChildren();
     if(tab==='관리'){paintCards();return;}
     if(!validAttendanceDay(month.value+'-01')){status.textContent='조회 월을 선택해 주세요.';return;}
@@ -3694,6 +3964,7 @@ function bindOfficeLedger(){
   bindWorkspaceTabs(tabs,index=>{tab=officeTabs[index];panel.setAttribute('aria-labelledby',tabs[index].id);void load();});
   month.onchange=refresh.onclick=()=>void load();
   add.onclick=()=>{const selected=tab;if(selected!=='관리')officeRecordEditor(selected,null,()=>active()&&tab===selected,load);};
+  batch.onclick=()=>officeExpenseBatchEditor(()=>active()&&tab==='지출',load,batch);
   void load();
 }
 
