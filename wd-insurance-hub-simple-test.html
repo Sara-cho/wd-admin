@@ -11539,7 +11539,13 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     padding:8px 14px; border-bottom:1px solid #ede9f2; background:var(--wd09-policy-paper,#f5f2f9);
   }
   .wd09-bulk-card-head h3 { margin:0; color:var(--wd09-policy-tone,var(--navy)); font-size:15px; font-weight:800; }
-  .wd09-bulk-card-head button { min-height:32px; padding-inline:8px; }
+  .wd09-bulk-card-head .wd09-bulk-remove {
+    min-width:66px; min-height:36px; padding:6px 13px; background:var(--rd700);
+    color:#fff; font-size:14px; font-weight:750;
+  }
+  .wd09-bulk-card-head .wd09-bulk-remove:hover:not(:disabled) { background:#991b1b; }
+  .wd09-bulk-card-head .wd09-bulk-remove:focus-visible { outline:2px solid var(--rd700); outline-offset:2px; }
+  .wd09-bulk-card-head .wd09-bulk-remove:disabled { background:var(--rd50); color:#8f4c4c; cursor:not-allowed; }
   .wd09-bulk-card-body { display:grid; gap:12px; padding:14px; }
   .wd09-bulk-card-group { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(113px,1fr)); }
   .wd09-bulk-card-basic {
@@ -11574,6 +11580,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     #wd09-bulk-rows .wd09-bulk-card-group { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .wd09-bulk-card-body { gap:10px; padding:10px; }
     .wd09-bulk-card :is(input,select,textarea) { min-height:44px; font-size:16px; }
+    .wd09-bulk-card-head .wd09-bulk-remove { min-height:44px; }
     .wd09-bulk-product { grid-column:1 / -1; }
   }
   .wd09-bulk-actions button { min-height:44px; padding-inline:16px; }
@@ -16626,7 +16633,7 @@ const wdTest09Storage = (() => {
 <article class="wd09-bulk-card">
 <header class="wd09-bulk-card-head">
 <h3>보험</h3>
-<button type="button" class="btn-sm" data-action="remove">빼기</button>
+<button type="button" class="btn-sm wd09-bulk-remove" data-action="remove">삭제</button>
 </header>
 <div class="wd09-bulk-card-body">
 <div class="wd09-bulk-card-group wd09-bulk-card-basic">
@@ -25507,7 +25514,7 @@ function wd09LabelInsuranceCard(row,number){
   const label='보험 '+number;
   row.card.querySelector('h3').textContent=label;
   row.card.setAttribute('aria-label',label);
-  row.removeButton.setAttribute('aria-label',label+' 빼기');
+  row.removeButton.setAttribute('aria-label',label+' 삭제');
 }
 function wd09RemoveInsuranceRow(batch,row){
   const index=batch.rows.indexOf(row);
