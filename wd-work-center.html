@@ -1165,6 +1165,20 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-expense-batch-dialog .office-expense-extra .office-entry-grid{margin:8px 0 10px}
 .office-expense-batch-dialog .office-expense-extra textarea{min-height:72px;margin-top:4px}
 .office-expense-batch-dialog .office-fixed-expense-fields{margin-top:8px}
+.office-workspace .office-management-switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.office-workspace .office-management-switch [aria-pressed=true]{border-color:#c3a8ed;background:#f1e9fa;color:#49277d;font-weight:700}
+.office-workspace .office-category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px;align-items:start}
+.office-workspace .office-category-card{min-width:0;border:1px solid #e7e0ef;border-radius:12px;padding:16px}
+.office-workspace .office-category-card h2{margin:0 0 8px;font-size:18px}
+.office-workspace .office-category-card li{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding:7px 0;border-top:1px solid #eee8f4}
+.office-workspace .office-category-card ul{list-style:none;margin:12px 0 0;padding:0}
+.office-workspace .office-category-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;overflow-wrap:anywhere}
+.office-workspace .office-category-label{margin-top:0}
+.office-workspace .office-category-form-row{display:flex;align-items:center;gap:6px}
+.office-workspace .office-category-form-row input{min-width:0;flex:1}
+.office-workspace .office-category-form-row button{white-space:nowrap}
+.office-workspace .office-category-actions{display:flex;gap:6px}
+.office-workspace .office-category-actions button{min-height:44px}
 @media(max-width:620px){
   .office-expense-batch-dialog .office-modal-header,.office-expense-batch-dialog .office-expense-batch-body{padding-inline:12px}
   .office-expense-batch-dialog .office-modal-header h2{font-size:16px}
@@ -4072,7 +4086,7 @@ function employeePayslipList(files){
 }
 
 const officeLedgerTabs=['수입','지출','구독'];
-const officeTabs=['전체내역',...officeLedgerTabs,'결제수단관리','통계'];
+const officeTabs=['전체내역',...officeLedgerTabs,'결제수단관리','운영관리'];
 const officeMethodTable='work_office_payment_methods';
 const officeMethodKinds={account:'결제 계좌',card:'결제 카드'};
 
@@ -4895,8 +4909,108 @@ async function officeLedgerRows(tab,month){
     if(page.length<200)return tab==='지출'?officeExpenseOccurrences(rows,month):rows;
   }
 }
-const officeIncomeCategories=['보험','AI강의','퍼스널브랜딩'];
-const officeExpenseCategories=['생필품','식대','공과금','구독료','경조사','유흥비','직원월급'];
+const officeDefaultCategories={
+  '수입':['보험','AI강의','퍼스널브랜딩'],
+  '지출':['생필품','식대','공과금','보험료','구독료','경조사','유흥비','직원월급']
+};
+const officeCategoryStorageKey='wd-work-center.office-categories.v1';
+
+function readOfficeCategories(){
+  let stored;
+  try{stored=JSON.parse(localStorage.getItem(officeCategoryStorageKey));}catch{}
+  return Object.fromEntries(Object.entries(officeDefaultCategories).map(([kind,names])=>{
+    const items=stored?.[kind];
+    return [kind,Array.isArray(items)&&items.some(item=>item?.name&&item.archived===false)&&
+      items.every(item=>typeof item?.name==='string'&&item.name.trim()&&typeof item.archived==='boolean')
+      ?items:names.map(name=>({name,archived:false}))];
+  }));
+}
+
+function changeOfficeCategory(items,kind,action,name,value){
+  const index=items.findIndex(item=>item.name===name);
+  const existing=items[index];
+  const subscription=name==='구독료'&&kind==='지출';
+  if(action!=='add'&&!existing)throw new Error('분류가 변경됐어요. 새로고침 후 다시 시도해 주세요.');
+  if(action==='toggle'){
+    if(!existing.archived&&items.filter(item=>!item.archived).length===1)
+      throw new Error('사용할 분류를 하나 이상 남겨 주세요.');
+    return items.map((item,i)=>i===index?{...item,archived:!item.archived}:item);
+  }
+  if(action==='rename'&&subscription)throw new Error('구독료는 구독 집계에 사용하는 이름이에요.');
+  const nextName=value.trim();
+  if(!nextName||nextName.length>80)throw new Error('분류 이름을 1~80자로 입력해 주세요.');
+  const normalize=text=>text.normalize('NFKC').toLocaleLowerCase('ko-KR');
+  if(items.some((item,i)=>i!==index&&normalize(item.name)===normalize(nextName)))
+    throw new Error('같은 이름의 분류가 있어요. 숨긴 분류도 확인해 주세요.');
+  return action==='add'?[...items,{name:nextName,archived:false}]:
+    items.map((item,i)=>i===index?{...item,name:nextName}:item);
+}
+
+function bindOfficeCategoryManager(root,active){
+  root.innerHTML=`<p class="smallText">분류 설정은 이 브라우저에 저장됩니다. 이름 변경과 숨기기는 새 입력에 적용됩니다.</p>
+    <p class="smallText" id="officeCategoryStatus" role="status"></p><div class="office-category-grid"></div>`;
+  const grid=root.querySelector('.office-category-grid'),status=$('officeCategoryStatus');
+  let editing=null;
+  const paint=()=>{
+    const categories=readOfficeCategories();
+    grid.innerHTML=Object.entries(categories).map(([kind,items])=>{
+      const edit=editing?.kind===kind?editing:null;
+      const actions=(item,index)=>`<div class="office-category-actions">
+        ${kind==='지출'&&item.name==='구독료'?'':`<button class="small" type="button" data-category-action="edit" data-index="${index}" aria-label="${esc(item.name)} 이름 변경">이름 변경</button>`}
+        <button class="small" type="button" data-category-action="toggle" data-index="${index}" aria-label="${esc(item.name)} ${item.archived?'다시 사용':'숨기기'}">${item.archived?'다시 사용':'숨기기'}</button>
+      </div>`;
+      return `<section class="office-category-card" data-office-category-kind="${kind}">
+        <h2>${kind} 분류</h2>
+        <form data-office-category-form>
+          <label class="office-category-label" for="officeCategoryName-${kind}">${edit?'분류 이름 변경':'새 분류 이름'}</label>
+          <div class="office-category-form-row"><input id="officeCategoryName-${kind}" name="category" maxlength="80" required value="${esc(edit?.name||'')}">
+            <button type="submit" class="primary">${edit?'저장':'추가'}</button>
+            ${edit?'<button type="button" data-category-action="cancel">취소</button>':''}</div>
+        </form>
+        <ul>${items.map((item,index)=>`<li><div class="office-category-name">
+          <strong>${esc(item.name)}</strong>${item.archived?'<small>숨김</small>':''}
+          ${kind==='지출'&&item.name==='구독료'?'<small>구독 집계에 사용</small>':''}</div>${actions(item,index)}</li>`).join('')}</ul>
+      </section>`;
+    }).join('');
+    for(const section of grid.children){
+      const kind=section.dataset.officeCategoryKind,input=section.querySelector('input');
+      const save=(action,name,value='')=>{
+        if(!active())return;
+        try{
+          const latest=readOfficeCategories();
+          latest[kind]=changeOfficeCategory(latest[kind],kind,action,name,value);
+          localStorage.setItem(officeCategoryStorageKey,JSON.stringify(latest));
+        }catch(error){
+          status.textContent=error.name==='Error'?error.message:'분류 설정을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.';
+          return;
+        }
+        if(editing?.kind===kind)editing=null;
+        paint();
+        status.textContent=kind+' 분류 설정을 저장했어요.';
+        $('officeCategoryName-'+kind).focus();
+      };
+      section.querySelector('form').onsubmit=event=>{
+        event.preventDefault();
+        const edit=editing?.kind===kind?editing:null;
+        save(edit?'rename':'add',edit?.name,input.value);
+      };
+      section.onclick=event=>{
+        const button=event.target.closest('[data-category-action]');
+        if(!button||!active())return;
+        const action=button.dataset.categoryAction;
+        const item=categories[kind][Number(button.dataset.index)];
+        if(action==='toggle'){save('toggle',item.name);return;}
+        editing=action==='edit'?{kind,name:item.name}:null;
+        status.textContent='';
+        paint();
+        $('officeCategoryName-'+kind).focus();
+        if(editing)$('officeCategoryName-'+kind).select();
+      };
+    }
+  };
+  paint();
+}
+
 function officeOptions(values,current,placeholder){
   return `<option value="">${placeholder}</option>${[...new Set([...values,...(current?[current]:[])])].map(value=>
     `<option value="${esc(value)}" ${value===current?'selected':''}>${esc(value)}</option>`).join('')}`;
@@ -5008,7 +5122,8 @@ function officeRecordFields(tab,row,methods,compact=false){
     </div>`;
   }
 
-  const category=`<label>${income?'수입 분류':'지출 분류'}<select name="category" required>${officeOptions(income?officeIncomeCategories:officeExpenseCategories,row?.category,'선택해 주세요')}</select></label>`;
+  const categories=readOfficeCategories()[tab].filter(item=>!item.archived).map(item=>item.name);
+  const category=`<label>${income?'수입 분류':'지출 분류'}<select name="category" required>${officeOptions(categories,row?.category,'선택해 주세요')}</select></label>`;
   const area=expense?`<label>사용처 구분<select name="business_area" required>${officeOptions(['집','사무실'],row?.business_area,'집 또는 사무실 선택')}</select></label>`:'';
   const party=`<label>${income?'입금한 사람·기관':'결제한 곳'}<input name="counterparty" maxlength="100"
     placeholder="${income?'고객명 또는 기관명':'업체명 또는 상호'}" value="${esc(row?.counterparty||'')}"></label>
@@ -5268,6 +5383,7 @@ function bindOfficeLedger(){
   const tabs=officeTabs.map((_,i)=>$('officeTab'+i));
   const active=()=>currentUser==='manager'&&S.nav==='office'&&panel.isConnected;
   let tab=officeTabs[0],request=0,selectedDay='',subscriptionDay='',calendarFilter='all';
+  let managementView='categories';
   let statisticsMode='month',statisticsYear=localDay().slice(0,4);
   let statisticsMonth=localDay().slice(5,7),statisticsSeries='all';
   const openRecord=(row,kind,period,methods,trigger,stillHere,previousLayer=null)=>{
@@ -5431,7 +5547,7 @@ function bindOfficeLedger(){
   const load=async focusMonth=>{
     const id=++request,selected=tab;
     if(typeof focusMonth==='string')month.value=focusMonth;
-    $('officeMonthLabel').hidden=['결제수단관리','통계'].includes(selected);
+    $('officeMonthLabel').hidden=['결제수단관리','운영관리'].includes(selected);
     add.hidden=!officeLedgerTabs.includes(selected);add.textContent=selected+' 추가';
     batchAdd.hidden=selected!=='지출';
     status.textContent='';content.replaceChildren();
@@ -5449,29 +5565,46 @@ function bindOfficeLedger(){
         status.textContent=numbers?'':'전체 계좌번호를 불러오지 못했어요.';
         paintPaymentMethods(rows,numbers||new Map());return;
       }
-      if(selected==='통계'){
+      if(selected==='운영관리'){
+        content.innerHTML=`<div class="office-management-switch" role="group" aria-label="운영관리 보기">
+          <button type="button" id="officeManagementCategories" aria-pressed="${managementView==='categories'}">분류 관리</button>
+          <button type="button" id="officeManagementStatistics" aria-pressed="${managementView==='statistics'}">수입·지출 통계</button>
+        </div><div id="officeManagementContent"></div>`;
+        const selectView=(next,id)=>{
+          managementView=next;
+          void load();
+          $(id).focus();
+        };
+        $('officeManagementCategories').onclick=()=>selectView('categories','officeManagementCategories');
+        $('officeManagementStatistics').onclick=()=>selectView('statistics','officeManagementStatistics');
+        const management=$('officeManagementContent');
+        if(managementView==='categories'){
+          status.textContent='';
+          bindOfficeCategoryManager(management,()=>active()&&tab===selected&&management.isConnected);
+          return;
+        }
         const records=await officeStatisticsRows();
         if(!active()||id!==request)return;
         status.textContent='';
         const data=officeStatisticsData(records,localDay().slice(0,4));
         if(!data.years.includes(statisticsYear))statisticsYear=data.years[0];
         const paint=()=>{
-          content.innerHTML=officeStatisticsView(data,statisticsMode,statisticsYear,statisticsMonth,statisticsSeries);
-          content.querySelectorAll('[data-office-statistics-mode]').forEach(button=>button.onclick=()=>{
+          management.innerHTML=officeStatisticsView(data,statisticsMode,statisticsYear,statisticsMonth,statisticsSeries);
+          management.querySelectorAll('[data-office-statistics-mode]').forEach(button=>button.onclick=()=>{
             statisticsMode=button.dataset.officeStatisticsMode;
             paint();
-            content.querySelector('[data-office-statistics-mode="'+statisticsMode+'"]')?.focus();
+            management.querySelector('[data-office-statistics-mode="'+statisticsMode+'"]')?.focus();
           });
-          content.querySelectorAll('[data-office-statistics-period]').forEach(button=>button.onclick=()=>{
+          management.querySelectorAll('[data-office-statistics-period]').forEach(button=>button.onclick=()=>{
             const period=button.dataset.officeStatisticsPeriod;
             if(statisticsMode==='month')statisticsMonth=period;else statisticsYear=period;
-            paint();content.querySelector('[data-office-statistics-period="'+period+'"]')?.focus();
+            paint();management.querySelector('[data-office-statistics-period="'+period+'"]')?.focus();
           });
-          content.querySelectorAll('[data-office-statistics-series]').forEach(button=>button.onclick=()=>{
+          management.querySelectorAll('[data-office-statistics-series]').forEach(button=>button.onclick=()=>{
             statisticsSeries=button.dataset.officeStatisticsSeries;
-            paint();content.querySelector('[data-office-statistics-series="'+statisticsSeries+'"]')?.focus();
+            paint();management.querySelector('[data-office-statistics-series="'+statisticsSeries+'"]')?.focus();
           });
-          bindOfficeStatisticsChart(content);
+          bindOfficeStatisticsChart(management);
           const year=$('officeStatisticsYear');
           if(year)year.onchange=()=>{statisticsYear=year.value;paint();$('officeStatisticsYear').focus();};
         };
@@ -5550,7 +5683,11 @@ function bindOfficeLedger(){
       };
     }catch(error){if(active()&&id===request)status.textContent=error.message;}
   };
-  bindWorkspaceTabs(tabs,index=>{tab=officeTabs[index];panel.setAttribute('aria-labelledby',tabs[index].id);void load();});
+  bindWorkspaceTabs(tabs,index=>{
+    tab=officeTabs[index];
+    if(tab==='운영관리')managementView='categories';
+    panel.setAttribute('aria-labelledby',tabs[index].id);void load();
+  });
   month.onchange=refresh.onclick=()=>void load();
   add.onclick=()=>{const selected=tab;if(officeLedgerTabs.includes(selected))void officeRecordEditor(selected,null,()=>active()&&tab===selected,load);};
   batchAdd.onclick=()=>{if(tab==='지출')void officeExpenseBatchEditor(()=>active()&&tab==='지출',load,batchAdd);};
