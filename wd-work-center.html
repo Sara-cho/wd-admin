@@ -4866,7 +4866,8 @@ function officeChart(rows,label){
       <span>${esc(category)}<small>${officeMoney(amount)}</small></span><strong>${(amount/total*100).toFixed(1)}%</strong></li>`).join('')}</ul>`:'<p class="smallText">이 달에 분류할 내역이 없어요.</p>'}
   </section>`;
 }
-const officeTable=tab=>tab==='결제수단관리'?officeMethodTable:tab==='구독'?'work_subscriptions':'work_finance_transactions';
+const officeTable=tab=>tab==='결제수단관리'?officeMethodTable:tab==='구독'?'work_subscriptions':
+  tab==='운영관리'?'work_office_category_settings':'work_finance_transactions';
 const officeRecordName=(row,tab)=>tab==='구독'?row.service_name:row.title;
 function officeRowDate(row,tab){return tab==='구독'?row.next_payment_date:row.actual_date||row.expected_date;}
 function officeRecordEditable(row,tab){return !row.recurrence_source&&row.user_id===managerHqAccount.uid&&(tab==='구독'||!row.source_type||row.source_type==='manual');}
@@ -4881,6 +4882,8 @@ async function officeLedgerRequest(tab,params,method='GET',payload){
     throw new Error('사무실 운영의 관리자 로그인과 접근 권한을 확인해 주세요.');
   if(tab==='결제수단관리'&&response.status===404)
     throw new Error('결제수단 공동 저장소가 아직 연결되지 않았어요.');
+  if(tab==='운영관리'&&response.status===404)
+    throw new Error('수입·지출 분류 저장소가 아직 연결되지 않았어요.');
   if(tab==='결제수단관리'&&response.status===409)
     throw new Error('이미 등록된 결제수단 별칭이에요. 새로고침 후 확인해 주세요.');
   if(!response.ok)throw new Error(method==='GET'?'사무실 운영 기록을 불러오지 못했어요.':'사무실 운영 기록을 저장하지 못했어요. 새로고침 후 확인해 주세요.');
@@ -4913,17 +4916,45 @@ const officeDefaultCategories={
   '수입':['보험','AI강의','퍼스널브랜딩'],
   '지출':['생필품','식대','공과금','보험료','구독료','경조사','유흥비','직원월급']
 };
-const officeCategoryStorageKey='wd-work-center.office-categories.v1';
+function officeDefaultCategorySettings(){
+  return {revision:null,categories:Object.fromEntries(Object.entries(officeDefaultCategories).map(([kind,names])=>
+    [kind,names.map(name=>({name,archived:false}))]))};
+}
 
-function readOfficeCategories(){
-  let stored;
-  try{stored=JSON.parse(localStorage.getItem(officeCategoryStorageKey));}catch{}
-  return Object.fromEntries(Object.entries(officeDefaultCategories).map(([kind,names])=>{
-    const items=stored?.[kind];
-    return [kind,Array.isArray(items)&&items.some(item=>item?.name&&item.archived===false)&&
-      items.every(item=>typeof item?.name==='string'&&item.name.trim()&&typeof item.archived==='boolean')
-      ?items:names.map(name=>({name,archived:false}))];
-  }));
+async function readOfficeCategories(){
+  const rows=await officeLedgerRequest('운영관리',new URLSearchParams({select:'revision,categories'}));
+  if(!rows.length)return officeDefaultCategorySettings();
+  const {revision,categories}=rows[0];
+  if(rows.length!==1||!revision||!Object.keys(officeDefaultCategories).every(kind=>{
+    const items=categories?.[kind];
+    return Array.isArray(items)&&items.every(item=>typeof item?.name==='string'&&item.name.trim()&&typeof item.archived==='boolean')&&
+      items.some(item=>!item.archived);
+  }))throw new Error('저장된 분류 설정을 확인하지 못했어요.');
+  return {revision,categories};
+}
+
+async function saveOfficeCategories(previous,categories){
+  const revision=crypto.randomUUID(),params=new URLSearchParams({select:'revision,categories'});
+  if(previous.revision)params.set('revision','eq.'+previous.revision);
+  try{
+    const [saved]=await officeLedgerRequest('운영관리',params,previous.revision?'PATCH':'POST',{revision,categories});
+    if(saved?.revision===revision)return saved;
+    throw new Error('분류 설정을 저장하지 못했어요.');
+  }catch(error){
+    const latest=await readOfficeCategories().catch(()=>null);
+    if(latest?.revision===revision)return latest;
+    if(latest&&latest.revision!==previous.revision)
+      throw Object.assign(new Error('다른 곳에서 분류가 변경돼 최신 목록을 불러왔어요. 확인 후 다시 시도해 주세요.'),{latest});
+    throw error;
+  }
+}
+
+async function loadOfficeEditorOptions(tab){
+  const [payment,settings]=await Promise.all([
+    officePaymentMethods().then(methods=>({methods,methodError:''})).catch(()=>({methods:[],methodError:'결제수단을 불러오지 못했어요.'})),
+    tab==='구독'?null:readOfficeCategories()
+  ]);
+  return {...payment,categoryItems:settings?.categories[tab]};
 }
 
 function changeOfficeCategory(items,kind,action,name,value){
@@ -4946,13 +4977,13 @@ function changeOfficeCategory(items,kind,action,name,value){
     items.map((item,i)=>i===index?{...item,name:nextName}:item);
 }
 
-function bindOfficeCategoryManager(root,active){
-  root.innerHTML=`<p class="smallText">분류 설정은 이 브라우저에 저장됩니다. 이름 변경과 숨기기는 새 입력에 적용됩니다.</p>
+function bindOfficeCategoryManager(root,active,settings){
+  root.innerHTML=`<p class="smallText">같은 관리자 계정으로 접속하면 다른 기기에서도 같은 분류를 사용합니다. 이름 변경과 숨기기는 새 입력에 적용됩니다.</p>
     <p class="smallText" id="officeCategoryStatus" role="status"></p><div class="office-category-grid"></div>`;
   const grid=root.querySelector('.office-category-grid'),status=$('officeCategoryStatus');
-  let editing=null;
+  let editing=null,saving=false;
   const paint=()=>{
-    const categories=readOfficeCategories();
+    const {categories}=settings;
     grid.innerHTML=Object.entries(categories).map(([kind,items])=>{
       const edit=editing?.kind===kind?editing:null;
       const actions=(item,index)=>`<div class="office-category-actions">
@@ -4974,32 +5005,47 @@ function bindOfficeCategoryManager(root,active){
     }).join('');
     for(const section of grid.children){
       const kind=section.dataset.officeCategoryKind,input=section.querySelector('input');
-      const save=(action,name,value='')=>{
-        if(!active())return;
+      const save=async(action,name,value='')=>{
+        if(!active()||saving)return;
+        let next;
         try{
-          const latest=readOfficeCategories();
-          latest[kind]=changeOfficeCategory(latest[kind],kind,action,name,value);
-          localStorage.setItem(officeCategoryStorageKey,JSON.stringify(latest));
+          next={...categories,[kind]:changeOfficeCategory(categories[kind],kind,action,name,value)};
+        }catch(error){status.textContent=error.message;return;}
+        saving=true;
+        const controls=[...grid.querySelectorAll('input,button')];
+        controls.forEach(control=>{control.disabled=true;});
+        status.textContent='분류 설정을 저장하는 중이에요…';
+        try{
+          settings=await saveOfficeCategories(settings,next);
+          if(!active())return;
+          if(editing?.kind===kind)editing=null;
+          paint();
+          status.textContent=kind+' 분류 설정을 저장했어요.';
+          $('officeCategoryName-'+kind).focus();
         }catch(error){
-          status.textContent=error.name==='Error'?error.message:'분류 설정을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.';
-          return;
+          if(!active())return;
+          if(error.latest){
+            settings=error.latest;
+            editing=null;
+            paint();
+          }
+          status.textContent=error.message;
+        }finally{
+          saving=false;
+          controls.forEach(control=>{control.disabled=false;});
         }
-        if(editing?.kind===kind)editing=null;
-        paint();
-        status.textContent=kind+' 분류 설정을 저장했어요.';
-        $('officeCategoryName-'+kind).focus();
       };
       section.querySelector('form').onsubmit=event=>{
         event.preventDefault();
         const edit=editing?.kind===kind?editing:null;
-        save(edit?'rename':'add',edit?.name,input.value);
+        void save(edit?'rename':'add',edit?.name,input.value);
       };
       section.onclick=event=>{
         const button=event.target.closest('[data-category-action]');
-        if(!button||!active())return;
+        if(!button||!active()||saving)return;
         const action=button.dataset.categoryAction;
         const item=categories[kind][Number(button.dataset.index)];
-        if(action==='toggle'){save('toggle',item.name);return;}
+        if(action==='toggle'){void save('toggle',item.name);return;}
         editing=action==='edit'?{kind,name:item.name}:null;
         status.textContent='';
         paint();
@@ -5095,7 +5141,7 @@ function officeEntryCard(step,heading,fields){
   </section>`;
 }
 
-function officeRecordFields(tab,row,methods,compact=false){
+function officeRecordFields(tab,row,methods,categoryItems,compact=false){
   const income=tab==='수입',expense=tab==='지출',subscription=tab==='구독';
   const title=`<label>${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(row?officeRecordName(row,tab):'')}"></label>`;
   const day=(row&&officeRowDate(row,tab))||localDay();
@@ -5122,7 +5168,7 @@ function officeRecordFields(tab,row,methods,compact=false){
     </div>`;
   }
 
-  const categories=readOfficeCategories()[tab].filter(item=>!item.archived).map(item=>item.name);
+  const categories=categoryItems.filter(item=>!item.archived).map(item=>item.name);
   const category=`<label>${income?'수입 분류':'지출 분류'}<select name="category" required>${officeOptions(categories,row?.category,'선택해 주세요')}</select></label>`;
   const area=expense?`<label>사용처 구분<select name="business_area" required>${officeOptions(['집','사무실'],row?.business_area,'집 또는 사무실 선택')}</select></label>`:'';
   const party=`<label>${income?'입금한 사람·기관':'결제한 곳'}<input name="counterparty" maxlength="100"
@@ -5241,11 +5287,12 @@ function officeRecordPayload(tab,row,methods,data){
 
 async function officeRecordEditor(tab,row,active,reload,trigger){
   if(!active()||$('modalLayer'))return;
-  let methods,methodError='';
-  try{methods=await officePaymentMethods();}catch{methods=[];methodError='결제수단을 불러오지 못했어요.';}
+  const options=await loadOfficeEditorOptions(tab).catch(error=>{if(active())notify(error.message);return null;});
+  if(!options)return;
   if(!active()||$('modalLayer'))return;
+  const {methods,methodError,categoryItems}=options;
   showOfficeModal(`<form id="officeRecordForm">
-    ${officeRecordFields(tab,row,methods)}
+    ${officeRecordFields(tab,row,methods,categoryItems)}
     <p id="officeRecordStatus" class="smallText office-modal-status" role="status">${methodError}</p><div class="actions office-modal-actions"><button class="primary" type="submit">저장</button></div>
   </form>`,tab+(row?' 수정':' 추가'),trigger);
   $('modalLayer').querySelector('.office-modal').classList.add('office-ledger-dialog');
@@ -5298,9 +5345,10 @@ async function saveOfficeExpenseBatch(payloads){
 
 async function officeExpenseBatchEditor(active,reload,trigger){
   if(!active()||$('modalLayer'))return;
-  let methods=[],methodError='';
-  try{methods=await officePaymentMethods();}catch{methodError='결제수단을 불러오지 못했어요.';}
+  const options=await loadOfficeEditorOptions('지출').catch(error=>{if(active())notify(error.message);return null;});
+  if(!options)return;
   if(!active()||$('modalLayer'))return;
+  const {methods,methodError,categoryItems}=options;
   const layer=showOfficeModal(`<div class="office-expense-batch-body">
     <div class="office-expense-items" id="officeExpenseItems"></div>
     <button type="button" id="officeExpenseAddCard">+ 지출 추가</button>
@@ -5321,7 +5369,7 @@ async function officeExpenseBatchEditor(active,reload,trigger){
     list.insertAdjacentHTML('beforeend',`<form class="office-expense-item" data-expense-id="${id}" aria-labelledby="expense-${id}"><fieldset>
       <div class="row office-expense-item-head"><h3 id="expense-${id}"></h3>
         <button class="office-expense-remove" type="button">삭제</button></div>
-      <div class="office-expense-item-fields">${officeRecordFields('지출',null,methods,true)}</div>
+      <div class="office-expense-item-fields">${officeRecordFields('지출',null,methods,categoryItems,true)}</div>
     </fieldset></form>`);
     const card=list.lastElementChild;
     bindOfficeFixedExpense(card);
@@ -5579,8 +5627,10 @@ function bindOfficeLedger(){
         $('officeManagementStatistics').onclick=()=>selectView('statistics','officeManagementStatistics');
         const management=$('officeManagementContent');
         if(managementView==='categories'){
+          const settings=await readOfficeCategories();
+          if(!active()||id!==request)return;
           status.textContent='';
-          bindOfficeCategoryManager(management,()=>active()&&tab===selected&&management.isConnected);
+          bindOfficeCategoryManager(management,()=>active()&&tab===selected&&management.isConnected,settings);
           return;
         }
         const records=await officeStatisticsRows();
