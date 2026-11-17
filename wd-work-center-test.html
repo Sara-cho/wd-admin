@@ -1182,6 +1182,7 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
   .office-expense-batch-dialog .office-expense-core{grid-template-columns:repeat(2,minmax(0,1fr))}
   .office-expense-batch-dialog .office-expense-core>label:has([name=title]){grid-column:1/-1}
 }
+#officeToolbar[hidden]{display:none}
 .office-test-category-panel{margin-top:18px}
 .office-test-category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
 .office-test-category-grid section{padding:14px;border:1px solid #e7e0ef;border-radius:12px;min-width:0}
@@ -1190,7 +1191,6 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-test-category-grid li{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid #eee8f4;padding:7px 0;overflow-wrap:anywhere}
 .office-test-category-grid form .row{flex-wrap:wrap}
 .office-test-category-grid form input{min-width:0;flex:1 1 110px}
-.office-category-modal.office-modal{width:min(850px,100%)}
 </style>
 </head><body><div id="root"></div><script>
 'use strict';
@@ -4090,7 +4090,8 @@ function employeePayslipList(files){
 }
 
 const officeLedgerTabs=['수입','지출','구독'];
-const officeTabs=['전체내역',...officeLedgerTabs,'결제수단관리','통계'];
+const officeTabs=['전체내역',...officeLedgerTabs,'통계','관리'];
+const officeManagementTabs=['결제수단관리','분류관리'];
 const officeMethodTable='work_office_payment_methods';
 const officeMethodKinds={account:'결제 계좌',card:'결제 카드'};
 
@@ -4843,8 +4844,13 @@ function officeLedgerView(){
     <div class="wd109-tabs wd109-office-tabs" role="tablist" aria-label="사무실 운영 분류">
       ${officeTabs.map((label,i)=>`<button type="button" id="officeTab${i}" role="tab" aria-controls="officePanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join('')}
     </div><section id="officePanel" role="tabpanel" aria-labelledby="officeTab0">
-      <div class="wd109-toolbar"><label id="officeMonthLabel">조회 월<input type="month" id="officeMonth" value="${localDay().slice(0,7)}"></label>
-        <button type="button" id="officeRefresh">새로고침</button><button type="button" id="officeCategories" hidden>분류 관리</button>
+      <div id="officeManagementNav" hidden>
+        <div class="wd109-tabs wd109-office-tabs" role="tablist" aria-label="관리 메뉴">
+          ${officeManagementTabs.map((label,i)=>`<button type="button" id="officeManagementTab${i}" role="tab" aria-controls="officeContent" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="wd109-toolbar" id="officeToolbar"><label id="officeMonthLabel">조회 월<input type="month" id="officeMonth" value="${localDay().slice(0,7)}"></label>
+        <button type="button" id="officeRefresh">새로고침</button>
         <button type="button" id="officeBatch" hidden>지출 다건 등록</button><button class="primary" type="button" id="officeAdd" hidden>내역 추가</button></div>
       <p id="officeStatus" class="smallText" role="status"></p><div id="officeContent"></div>
     </section></section>`;
@@ -5398,8 +5404,11 @@ async function officeExpenseBatchEditor(active,reload,trigger){
 
 
 function bindOfficeLedger(){
-  const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),batch=$('officeBatch'),categories=$('officeCategories'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
+  const panel=$('officePanel'),month=$('officeMonth'),add=$('officeAdd'),batch=$('officeBatch'),refresh=$('officeRefresh'),status=$('officeStatus'),content=$('officeContent');
   const tabs=officeTabs.map((_,i)=>$('officeTab'+i));
+  const managementTabs=officeManagementTabs.map((_,i)=>$('officeManagementTab'+i));
+  const managementNav=$('officeManagementNav'),toolbar=$('officeToolbar');
+  let managementIndex=0;
   const active=()=>currentUser==='manager'&&S.nav==='office'&&panel.isConnected;
   let tab=officeTabs[0],request=0,selectedDay='',subscriptionDay='',calendarFilter='all';
   let statisticsMode='month',statisticsYear=localDay().slice(0,4);
@@ -5467,7 +5476,7 @@ function bindOfficeLedger(){
   const paintPaymentMethods=(rows,accountNumbers)=>{
     content.innerHTML=officePaymentView(rows,accountNumbers);
     const byId=new Map(rows.map(row=>[row.id,row]));
-    const stillHere=()=>active()&&tab==='결제수단관리';
+    const stillHere=()=>active()&&tab==='관리'&&officeManagementTabs[managementIndex]==='결제수단관리';
     const save=async(button,row,changes,output=status)=>{
       if(button.disabled||!stillHere())return;
       if('name' in changes&&(!changes.name||changes.name.length>60)){
@@ -5565,17 +5574,34 @@ function bindOfficeLedger(){
   const load=async focusMonth=>{
     const id=++request,selected=tab;
     if(typeof focusMonth==='string')month.value=focusMonth;
-    $('officeMonthLabel').hidden=['결제수단관리','통계'].includes(selected);
+    const managing=selected==='관리',managementView=officeManagementTabs[managementIndex];
+    const showingCategories=managing&&managementView==='분류관리';
+    managementNav.hidden=!managing;
+    toolbar.hidden=showingCategories;
+    $('officeMonthLabel').hidden=managing||selected==='통계';
     add.hidden=!officeLedgerTabs.includes(selected);add.textContent=selected+' 추가';
-    batch.hidden=selected!=='지출';categories.hidden=!['수입','지출'].includes(selected);
+    batch.hidden=selected!=='지출';
     status.textContent='';content.replaceChildren();
+    if(managing){
+      content.setAttribute('role','tabpanel');
+      content.setAttribute('aria-labelledby',managementTabs[managementIndex].id);
+    }else{
+      content.removeAttribute('role');
+      content.removeAttribute('aria-labelledby');
+    }
+    if(showingCategories){
+      const categoryPanel=document.createElement('section');
+      content.append(categoryPanel);
+      bindOfficeTestCategories(categoryPanel,()=>active()&&id===request&&categoryPanel.isConnected);
+      return;
+    }
     const viewMonth=month.value;
     if(!$('officeMonthLabel').hidden&&!validAttendanceDay(viewMonth+'-01')){
       status.textContent='조회 월을 선택해 주세요.';return;
     }
     status.textContent='내역을 불러오는 중…';
     try{
-      if(selected==='결제수단관리'){
+      if(managing&&managementView==='결제수단관리'){
         const rows=await officePaymentMethods();
         if(!active()||id!==request)return;
         const numbers=await officeAccountNumbers(rows).catch(()=>null);
@@ -5688,13 +5714,10 @@ function bindOfficeLedger(){
   month.onchange=refresh.onclick=()=>void load();
   add.onclick=()=>{const selected=tab;if(officeLedgerTabs.includes(selected))void officeRecordEditor(selected,null,()=>active()&&tab===selected,load,add);};
   batch.onclick=()=>void officeExpenseBatchEditor(()=>active()&&tab==='지출',load,batch);
-  categories.onclick=()=>{
-    const selected=tab;
-    if(!active()||!['수입','지출'].includes(selected)||$('modalLayer'))return;
-    const layer=showOfficeModal('<div id="officeTestCategoryPanel"></div>','분류 관리',categories);
-    layer.querySelector('.office-modal').classList.add('office-category-modal');
-    bindOfficeTestCategories($('officeTestCategoryPanel'),()=>active()&&tab===selected&&layer.isConnected);
-  };
+  bindWorkspaceTabs(managementTabs,index=>{
+    managementIndex=index;
+    if(tab==='관리')void load();
+  });
   void load();
 }
 
