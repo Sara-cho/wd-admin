@@ -1184,6 +1184,8 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .office-workspace .office-category-form-row button{white-space:nowrap}
 .office-workspace .office-category-actions{display:flex;gap:6px}
 .office-workspace .office-category-actions button{min-height:44px}
+.office-workspace .office-category-delete{color:#9c2947;border-color:#e9c5cf}
+.office-workspace .office-category-delete:hover{background:#fcf0f3}
 @media(max-width:620px){
   .office-expense-batch-dialog .office-modal-header,.office-expense-batch-dialog .office-expense-batch-body{padding-inline:12px}
   .office-expense-batch-dialog .office-modal-header h2{font-size:16px}
@@ -3644,17 +3646,19 @@ function openNativeFinanceAdd(kind,active,onSaved){
   if(!config||currentUser!=='manager'||!active())return;
   showModal(`<form id="nativeFinanceForm">
     <label for="financeEntryTitle">운영비 내용</label><input id="financeEntryTitle" required maxlength="120">
-    <label for="financeEntryAmount">금액 (원)</label><input id="financeEntryAmount" type="number" required min="1" step="1">
+    <label for="financeEntryAmount">금액 (원)</label><input id="financeEntryAmount" type="text" inputmode="numeric" required>
     <label for="financeEntryDate">예정일</label><input id="financeEntryDate" type="date" value="${localDay()}" required>
     <label for="financeEntryCategory">분류</label><input id="financeEntryCategory" maxlength="80" value="운영비">
     <p id="financeEntryStatus" class="smallText" role="status"></p>
     <div class="actions"><button type="submit" class="primary" id="saveNativeFinance">운영비 저장</button></div></form>`,'운영비 등록');
   const form=$('nativeFinanceForm'),button=$('saveNativeFinance'),status=$('financeEntryStatus');
+  const amountInput=$('financeEntryAmount');
+  bindWonInput(amountInput,{min:1});
   let previous='',id='';
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active())return;
-    const title=$('financeEntryTitle').value.trim(),amount=Number($('financeEntryAmount').value),date=$('financeEntryDate').value,
+    const title=$('financeEntryTitle').value.trim(),amount=parseWonInput(amountInput.value),date=$('financeEntryDate').value,
       category=$('financeEntryCategory').value.trim()||'운영비';
     if(!title||!Number.isSafeInteger(amount)||amount<=0||!validAttendanceDay(date)){
       status.textContent='내용, 금액, 날짜를 확인해 주세요.';return;
@@ -3690,7 +3694,9 @@ const payrollWorkFields=[['scheduled_hours','소정근로(h)'],['actual_hours','
 const payrollPayFields=[['base_pay','기본급'],['meal_pay','식대 (비과세)'],['development_pay','자기개발비 (비과세)'],['taxable_extra','기타 과세수당']];
 const payrollDeductionFields=[['pension_deduction','국민연금'],['health_deduction','건강보험'],['employment_deduction','고용보험'],['longterm_care_deduction','장기요양보험'],['income_tax','소득세'],['local_income_tax','지방소득세']];
 function payrollAmountFields(fields,hours=false){
-  return fields.map(([name,label])=>`<label>${label}<input name="${name}" type="number" min="0" max="1000000000" step="${hours&&name.endsWith('_hours')?'0.01':'1'}" placeholder="0"></label>`).join('');
+  return fields.map(([name,label])=>`<label>${label}<input name="${name}" ${hours&&name.endsWith('_hours')
+    ?'type="number" min="0" max="1000000000" step="0.01"'
+    :'type="text" inputmode="numeric" data-won'} placeholder="0"></label>`).join('');
 }
 function taxPayrollView(){
   return `<div class="titleRow"><h1>세무업무</h1></div><section class="card wd105-admin-view">
@@ -3886,14 +3892,13 @@ async function payrollWorkMinutes(profile,month){
 }
 
 function payrollPreviewMarkup(fields,result,depositLabel=''){
-  const won=value=>Number(value||0).toLocaleString('ko-KR')+'원';
-  const rows=(list,values)=>list.map(([key,label])=>`<tr><th scope="row">${label}</th><td>${won(values[key])}</td></tr>`).join('');
+  const rows=(list,values)=>list.map(([key,label])=>`<tr><th scope="row">${label}</th><td>${officeMoney(values[key])}</td></tr>`).join('');
   const deductions={...result,income_tax:result.raw_data.incomeTax,local_income_tax:result.raw_data.localIncomeTax};
   return `<header><span>초안</span><h2>급여명세서</h2><p>${esc(fields.get('pay_month')||'')} · ${esc(fields.get('employee_name')||'직원 선택')}</p></header>
-    <dl class="wd109-payroll-summary"><div><dt>총 지급액</dt><dd>${won(result.gross_pay)}</dd></div><div><dt>실수령액</dt><dd>${won(result.net_pay)}</dd></div></dl>
+    <dl class="wd109-payroll-summary"><div><dt>총 지급액</dt><dd>${officeMoney(result.gross_pay)}</dd></div><div><dt>실수령액</dt><dd>${officeMoney(result.net_pay)}</dd></div></dl>
     <p>${esc(fields.get('company_name'))} · ${esc(fields.get('position')||'—')}<br>실근로 ${result.actual_hours}시간${depositLabel?' · '+esc(depositLabel):''}</p>
     <table><caption>지급 내역</caption><tbody>${rows([...payrollPayFields,['overtime_pay','시간외수당']],result)}</tbody></table>
-    <table><caption>공제 내역</caption><tbody>${rows(payrollDeductionFields,deductions)}<tr><th scope="row">총 공제액</th><td>${won(result.total_deduction)}</td></tr></tbody></table>`;
+    <table><caption>공제 내역</caption><tbody>${rows(payrollDeductionFields,deductions)}<tr><th scope="row">총 공제액</th><td>${officeMoney(result.total_deduction)}</td></tr></tbody></table>`;
 }
 
 function printPayrollDraft(fields,depositLabel){
@@ -3932,7 +3937,7 @@ function payrollCalculator(){
 }
 
 function payrollCalculation(data){
-  const amount=name=>Number(data.get(name)||0);
+  const amount=name=>name.endsWith('_hours')?Number(data.get(name)||0):parseWonInput(data.get(name));
   const scheduled=amount('scheduled_hours'),actual=amount('actual_hours'),rate=amount('overtime_rate');
   const overtime=data.has('auto_overtime')?Math.max(0,actual-scheduled):amount('overtime_hours');
   const overtimePay=Math.round(overtime*rate/10)*10;
@@ -3953,6 +3958,11 @@ function bindPayrollCalculator(active,onSaved){
   const employeeSelect=$('taxPayrollEmployee'),workStatus=$('taxWorkHoursStatus'),finalStatus=$('taxFinalStatus');
   const fileInput=$('taxFinalPdf'),download=$('downloadTaxFinal');
   const field=name=>form.elements.namedItem(name);
+  const syncMoneyFields=[...form.querySelectorAll('[data-won]')].map(input=>bindWonInput(input,{max:1000000000}));
+  form.addEventListener('invalid',event=>{
+    const details=event.target.closest('details');
+    if(details)details.open=true;
+  },true);
   const employee=()=>staffById(employeeSelect.value);
   let depositLabel='';
   const paint=()=>{
@@ -3969,6 +3979,7 @@ function bindPayrollCalculator(active,onSaved){
       field('position').value='';
       if(profile&&payrollEmployeeLogin(profile)===legacyStaffHqLogin)
         for(const [key,value] of Object.entries(sujinPayrollDefaults))field(key).value=value;
+      syncMoneyFields.forEach(sync=>sync());
     }
     workMinutesValue=null;depositLabel='';download.hidden=true;finalStatus.textContent='';fileInput.disabled=!profile;
     paint();
@@ -4029,7 +4040,7 @@ function bindPayrollCalculator(active,onSaved){
     const fields=new FormData(form),result=payrollCalculation(fields);
     const employee=fields.get('employee_name').trim(),company=fields.get('company_name').trim();
     const month=fields.get('pay_month');
-    if(!employee||!company||!validAttendanceDay(month+'-01')||result.net_pay<0){
+    if(!employee||!company||!validAttendanceDay(month+'-01')||!Number.isFinite(result.net_pay)||result.net_pay<0){
       status.textContent='회사명·직원명·급여월과 공제액을 확인해 주세요.';return;
     }
     button.disabled=true;activeMaterialUploads++;status.textContent='기존 명세서를 확인하는 중…';
@@ -4921,9 +4932,13 @@ const officeDefaultCategories={
   '수입':['보험','AI강의','퍼스널브랜딩'],
   '지출':['생필품','식대','공과금','보험료','구독료','경조사','유흥비','직원월급']
 };
+const compareOfficeCategoryNames=(left,right)=>left.localeCompare(right,'ko-KR');
+function orderedOfficeCategories(items){
+  return items.filter(item=>!item.archived).sort((left,right)=>compareOfficeCategoryNames(left.name,right.name));
+}
 function officeDefaultCategorySettings(){
   return {revision:null,categories:Object.fromEntries(Object.entries(officeDefaultCategories).map(([kind,names])=>
-    [kind,names.map(name=>({name,archived:false}))]))};
+    [kind,orderedOfficeCategories(names.map(name=>({name,archived:false})))]))};
 }
 
 async function readOfficeCategories(){
@@ -4935,7 +4950,7 @@ async function readOfficeCategories(){
     return Array.isArray(items)&&items.every(item=>typeof item?.name==='string'&&item.name.trim()&&typeof item.archived==='boolean')&&
       items.some(item=>!item.archived);
   }))throw new Error('저장된 분류 설정을 확인하지 못했어요.');
-  return {revision,categories:Object.fromEntries(kinds.map(kind=>[kind,categories[kind]]))};
+  return {revision,categories:Object.fromEntries(kinds.map(kind=>[kind,orderedOfficeCategories(categories[kind])]))};
 }
 
 async function saveOfficeCategories(previous,categories){
@@ -4962,28 +4977,25 @@ async function loadOfficeEditorOptions(tab){
   return {...payment,categoryItems:settings?.categories[tab]};
 }
 
-function changeOfficeCategory(items,kind,action,name,value){
+function changeOfficeCategory(items,action,name,value){
   const index=items.findIndex(item=>item.name===name);
-  const existing=items[index];
-  const subscription=name==='구독료'&&kind==='지출';
-  if(action!=='add'&&!existing)throw new Error('분류가 변경됐어요. 새로고침 후 다시 시도해 주세요.');
-  if(action==='toggle'){
-    if(!existing.archived&&items.filter(item=>!item.archived).length===1)
-      throw new Error('사용할 분류를 하나 이상 남겨 주세요.');
-    return items.map((item,i)=>i===index?{...item,archived:!item.archived}:item);
+  if(action!=='add'&&index===-1)throw new Error('분류가 변경됐어요. 새로고침 후 다시 시도해 주세요.');
+  if(action==='delete'){
+    if(items.length===1)throw new Error('사용할 분류를 하나 이상 남겨 주세요.');
+    return items.filter((_,i)=>i!==index);
   }
-  if(action==='rename'&&subscription)throw new Error('구독료는 구독 집계에 사용하는 이름이에요.');
   const nextName=value.trim();
   if(!nextName||nextName.length>80)throw new Error('분류 이름을 1~80자로 입력해 주세요.');
   const normalize=text=>text.normalize('NFKC').toLocaleLowerCase('ko-KR');
   if(items.some((item,i)=>i!==index&&normalize(item.name)===normalize(nextName)))
-    throw new Error('같은 이름의 분류가 있어요. 숨긴 분류도 확인해 주세요.');
-  return action==='add'?[...items,{name:nextName,archived:false}]:
+    throw new Error('같은 이름의 분류가 있어요.');
+  const updated=action==='add'?[...items,{name:nextName,archived:false}]:
     items.map((item,i)=>i===index?{...item,name:nextName}:item);
+  return orderedOfficeCategories(updated);
 }
 
 function bindOfficeCategoryManager(root,active,settings){
-  root.innerHTML=`<p class="smallText">같은 관리자 계정으로 접속하면 다른 기기에서도 같은 분류를 사용합니다. 이름 변경과 숨기기는 새 입력에 적용됩니다.</p>
+  root.innerHTML=`<p class="smallText">같은 관리자 계정으로 접속하면 다른 기기에서도 같은 분류를 사용합니다. 이름 수정과 삭제는 새 입력의 선택 목록에 적용됩니다.</p>
     <p class="smallText" id="officeCategoryStatus" role="status"></p><div class="office-category-grid"></div>`;
   const grid=root.querySelector('.office-category-grid'),status=$('officeCategoryStatus');
   let editing=null,saving=false;
@@ -4992,20 +5004,18 @@ function bindOfficeCategoryManager(root,active,settings){
     grid.innerHTML=Object.entries(categories).map(([kind,items])=>{
       const edit=editing?.kind===kind?editing:null;
       const actions=(item,index)=>`<div class="office-category-actions">
-        ${kind==='지출'&&item.name==='구독료'?'':`<button class="small" type="button" data-category-action="edit" data-index="${index}" aria-label="${esc(item.name)} 이름 변경">이름 변경</button>`}
-        <button class="small" type="button" data-category-action="toggle" data-index="${index}" aria-label="${esc(item.name)} ${item.archived?'다시 사용':'숨기기'}">${item.archived?'다시 사용':'숨기기'}</button>
+        <button class="small" type="button" data-category-action="edit" data-index="${index}" aria-label="${esc(item.name)} 이름 수정">이름 수정</button>
+        <button class="small office-category-delete" type="button" data-category-action="delete" data-index="${index}" aria-label="${esc(item.name)} 삭제">삭제</button>
       </div>`;
       return `<section class="office-category-card" data-office-category-kind="${kind}">
         <h2>${kind} 분류</h2>
         <form data-office-category-form>
-          <label class="office-category-label" for="officeCategoryName-${kind}">${edit?'분류 이름 변경':'새 분류 이름'}</label>
+          <label class="office-category-label" for="officeCategoryName-${kind}">${edit?'분류 이름 수정':'새 분류 이름'}</label>
           <div class="office-category-form-row"><input id="officeCategoryName-${kind}" name="category" maxlength="80" required value="${esc(edit?.name||'')}">
             <button type="submit" class="primary">${edit?'저장':'추가'}</button>
             ${edit?'<button type="button" data-category-action="cancel">취소</button>':''}</div>
         </form>
-        <ul>${items.map((item,index)=>`<li><div class="office-category-name">
-          <strong>${esc(item.name)}</strong>${item.archived?'<small>숨김</small>':''}
-          ${kind==='지출'&&item.name==='구독료'?'<small>구독 집계에 사용</small>':''}</div>${actions(item,index)}</li>`).join('')}</ul>
+        <ul>${items.map((item,index)=>`<li><strong class="office-category-name">${esc(item.name)}</strong>${actions(item,index)}</li>`).join('')}</ul>
       </section>`;
     }).join('');
     for(const section of grid.children){
@@ -5014,7 +5024,7 @@ function bindOfficeCategoryManager(root,active,settings){
         if(!active()||saving)return;
         let next;
         try{
-          next={...categories,[kind]:changeOfficeCategory(categories[kind],kind,action,name,value)};
+          next={...categories,[kind]:changeOfficeCategory(categories[kind],action,name,value)};
         }catch(error){status.textContent=error.message;return;}
         saving=true;
         const controls=[...grid.querySelectorAll('input,button')];
@@ -5050,7 +5060,10 @@ function bindOfficeCategoryManager(root,active,settings){
         if(!button||!active()||saving)return;
         const action=button.dataset.categoryAction;
         const item=categories[kind][Number(button.dataset.index)];
-        if(action==='toggle'){void save('toggle',item.name);return;}
+        if(action==='delete'){
+          if(categories[kind].length>1&&!confirmWorkCenterDelete(item.name+' 분류','새 입력의 선택 목록에서 제거합니다.'))return;
+          void save('delete',item.name);return;
+        }
         editing=action==='edit'?{kind,name:item.name}:null;
         status.textContent='';
         paint();
@@ -5151,7 +5164,7 @@ function officeRecordFields(tab,row,methods,categoryItems,compact=false){
   const title=`<label>${subscription?'구독 서비스명':'상세 내역'}<input name="title" maxlength="120" required value="${esc(row?officeRecordName(row,tab):'')}"></label>`;
   const day=(row&&officeRowDate(row,tab))||localDay();
   const date=`<label>${income?'입금일':expense?'결제일':'다음 결제일'}<input type="date" name="day" required value="${esc(day)}"></label>`;
-  const amount=`<label>금액 (원)<input type="text" name="amount" inputmode="numeric" required value="${esc(officeAmountInput(row?.amount))}"></label>`;
+  const amount=`<label>금액 (원)<input type="text" name="amount" inputmode="numeric" required value="${esc(formatWonInput(row?.amount))}"></label>`;
   const memo=`<label>메모<textarea name="memo" rows="3" maxlength="1000">${esc(row?.memo||'')}</textarea></label>`;
   const payment=officePaymentField(row,methods,tab);
   const grid=(fields,modifier='')=>`<div class="office-entry-grid ${modifier}">${fields}</div>`;
@@ -5173,7 +5186,9 @@ function officeRecordFields(tab,row,methods,categoryItems,compact=false){
     </div>`;
   }
 
-  const categories=categoryItems.filter(item=>!item.archived).map(item=>item.name);
+  const categories=categoryItems.map(item=>item.name);
+  if(row?.category&&!categories.includes(row.category))categories.push(row.category);
+  categories.sort(compareOfficeCategoryNames);
   const category=`<label>${income?'수입 분류':'지출 분류'}<select name="category" required>${officeOptions(categories,row?.category,'선택해 주세요')}</select></label>`;
   const area=expense?`<label>사용처 구분<select name="business_area" required>${officeOptions(['집','사무실'],row?.business_area,'집 또는 사무실 선택')}</select></label>`:'';
   const party=`<label>${income?'입금한 사람·기관':'결제한 곳'}<input name="counterparty" maxlength="100"
@@ -5195,9 +5210,33 @@ function officeRecordFields(tab,row,methods,categoryItems,compact=false){
   </div>`;
 }
 
-function officeAmountInput(value){
-  const digits=String(value??'').replace(/[^0-9]/g,'').slice(0,14).replace(/^0+(?=\d)/,'');
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+function formatWonInput(value){
+  const text=String(value??''),digits=text.replace(/[,\s]/g,'');
+  return /^\d*$/.test(digits)?digits.replace(/^0+(?=\d)/,'').replace(/\B(?=(\d{3})+(?!\d))/g,','):text;
+}
+
+function parseWonInput(value){
+  const digits=String(value??'').replace(/[,\s]/g,'');
+  return /^\d*$/.test(digits)?Number(digits):NaN;
+}
+
+function bindWonInput(input,{min=0,max=Number.MAX_SAFE_INTEGER}={}){
+  const sync=()=>{
+    const before=input.value,formatted=formatWonInput(before);
+    if(formatted!==before){
+      const right=before.slice(input.selectionStart??before.length).replace(/\D/g,'').length;
+      input.value=formatted;
+      let cursor=formatted.length,count=0;
+      while(cursor>0&&count<right){cursor--;if(/\d/.test(formatted[cursor]))count++;}
+      input.setSelectionRange(cursor,cursor);
+    }
+    const amount=parseWonInput(formatted);
+    const valid=formatted===''||Number.isSafeInteger(amount)&&amount>=min&&amount<=max;
+    input.setCustomValidity(valid?'':officeMoney(min)+'부터 '+officeMoney(max)+' 사이의 정수 금액을 입력해 주세요.');
+  };
+  input.addEventListener('input',sync);
+  sync();
+  return sync;
 }
 
 function officeTransferFields(row){
@@ -5237,23 +5276,13 @@ function bindOfficeEntryCards(form,row,methods,tab){
       (value('recurrence_cycle')!=='yearly'||valid('recurrence_month')));
     const filled={
       transaction:valid('title')&&(!field('category')||valid('category'))&&(!field('business_area')||valid('business_area')),
-      payment:Number(amount.value.replaceAll(',',''))>0&&valid('day')&&!!(method||row?.payment_method_id||row?.payment_method)&&recurrenceReady,
+      payment:valid('amount')&&parseWonInput(amount.value)>0&&valid('day')&&!!(method||row?.payment_method_id||row?.payment_method)&&recurrenceReady,
       cycle:valid('billing_cycle')&&(billingDayLabel?.hidden||valid('billing_day')),
       additional:!!value('memo')
     };
     for(const card of cards)card.classList.toggle('is-complete',filled[card.dataset.officeEntryStep]);
   };
-  amount.addEventListener('input',()=>{
-    const before=amount.value;
-    const right=before.slice(amount.selectionStart??before.length).replace(/\D/g,'').length;
-    const formatted=officeAmountInput(before);
-    if(formatted!==before){
-      amount.value=formatted;
-      let cursor=formatted.length,count=0;
-      while(cursor>0&&count<right){cursor--;if(/\d/.test(formatted[cursor]))count++;}
-      amount.setSelectionRange(cursor,cursor);
-    }
-  });
+  bindWonInput(amount,{min:1,max:99999999999999});
   if(tab==='구독'){
     const date=field('day'),billingDay=field('billing_day');
     billingDay.addEventListener('change',()=>{
@@ -5272,7 +5301,7 @@ function bindOfficeEntryCards(form,row,methods,tab){
 }
 
 function officeRecordPayload(tab,row,methods,data){
-  const title=data.get('title').trim(),date=data.get('day'),amount=Number(String(data.get('amount')||'').replaceAll(',',''));
+  const title=data.get('title').trim(),date=data.get('day'),amount=parseWonInput(data.get('amount'));
   if(!title||!validAttendanceDay(date)||!Number.isSafeInteger(amount)||amount<=0||amount>99999999999999)
     throw new Error('거래명, 날짜, 금액을 확인해 주세요.');
   const payload={category:data.get('category')||row?.category||null,amount,
@@ -6165,7 +6194,7 @@ async function readNativeAdminData(section,token){
 }
 function adminCell(value,format){
   if(value===null||value===undefined||value==='')return '—';
-  if(format==='money'&&Number.isFinite(Number(value)))return Number(value).toLocaleString('ko-KR')+'원';
+  if(format==='money'&&Number.isFinite(Number(value)))return officeMoney(value);
   return format==='date'?String(value).slice(0,10):String(value);
 }
 function bindNativeAdminView(){
