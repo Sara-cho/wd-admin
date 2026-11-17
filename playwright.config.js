@@ -1,4 +1,4 @@
-// 자동 화면 검수용 설정. 라이브오피스를 PC·태블릿·모바일 크기로 확인합니다.
+// 자동 화면 검수용
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
