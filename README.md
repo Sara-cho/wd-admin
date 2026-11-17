@@ -1,38 +1,38 @@
 # WD ADMIN 파일 안내
 
-WD WAVE 본진과 업무센터, 관련 TEST 화면을 관리하는 저장소입니다.
+파일 목록 옆 제목에는 바로 알아볼 수 있는 **한국어 파일 이름**을 씁니다. 날짜가 필요하면 `WD 본진(261117수정본)`처럼 이름 뒤에 붙입니다. 수정 내용은 커밋 본문에 적습니다.
 
-GitHub 파일 목록 오른쪽 문구는 해당 파일의 최근 변경 제목입니다. 새 변경 제목에는 파일이나 기능 이름과 바뀐 내용을 한국어로 적습니다.
+## 화면
 
-## 주요 화면
-
-| 파일 | 용도 |
+| 화면 이름 | 실제 파일 |
 | --- | --- |
-| `index.html` | WD WAVE 본진 첫 화면 |
-| `wd-work-center.html` | WD 업무센터 |
-| `wd-work-center-test.html` | 직원 업무지시·업무보고 TEST |
-| `wd-insurance-hub-simple-test.html` | 단순화한 설계사허브 TEST |
-| `wd-insurance-hub-test.html` | 지안 2.0 설계사허브 TEST |
-| `consulting_center_app.html` | 퍼스널브랜딩센터 상담·업무 화면 |
-| `wd-personal-branding-center-test.html` | 퍼스널브랜딩센터 TEST |
-| `lecture_center.html` | 강의센터 |
-| `wd-production-center.html` | 제작센터 |
+| **WD 본진** | [index.html](index.html) |
+| **WD 업무센터** | [wd-work-center.html](wd-work-center.html) |
+| **WD 업무보고 TEST** | [wd-work-center-test.html](wd-work-center-test.html) |
+| **설계사허브 간편판** | [wd-insurance-hub-simple-test.html](wd-insurance-hub-simple-test.html) |
+| **지안 2.0 설계사허브 TEST** | [wd-insurance-hub-test.html](wd-insurance-hub-test.html) |
+| **퍼스널브랜딩센터** | [consulting_center_app.html](consulting_center_app.html) |
+| **퍼스널브랜딩센터 TEST** | [wd-personal-branding-center-test.html](wd-personal-branding-center-test.html) |
+| **WD 강의센터** | [lecture_center.html](lecture_center.html) |
+| **WD 제작센터** | [wd-production-center.html](wd-production-center.html) |
 
-## 공용 파일과 배포 주소
+## 공용 파일
 
-| 파일 또는 폴더 | 용도 |
+| 파일 이름 | 실제 파일 |
 | --- | --- |
-| `assets/` | 화면에서 사용하는 공용 이미지 |
-| `wd-sticky-notes.css` | 본진·업무센터 스티커노트 디자인 |
-| `wd-sticky-notes.js` | 본진·업무센터 스티커노트 기능 |
-| `wd-talk-backup.js` | 본진·업무센터 TALK 백업 기능 |
-| `CNAME` | GitHub Pages 주소 `admin.wdwave.kr` 연결 |
+| 공용 이미지 | [assets/](assets/) |
+| 스티커노트 디자인 | [wd-sticky-notes.css](wd-sticky-notes.css) |
+| 스티커노트 기능 | [wd-sticky-notes.js](wd-sticky-notes.js) |
+| TALK 백업 | [wd-talk-backup.js](wd-talk-backup.js) |
+| WD ADMIN 주소 연결 | [CNAME](CNAME) |
 
-## 자동 화면 검수
+스티커노트와 TALK 파일은 본진과 업무센터에서 함께 씁니다.
 
-| 파일 또는 폴더 | 용도 |
+## 자동 화면 검수용
+
+| 파일 이름 | 실제 파일 |
 | --- | --- |
-| `package.json` | 자동 화면 검수용 실행 명령과 도구 |
-| `playwright.config.js` | 자동 화면 검수용 브라우저·화면 크기·보고서 설정 |
-| `qa/` | 자동 화면 검수용 테스트 코드 및 사용 안내 |
-| `.github/workflows/live-office-qa.yml` | GitHub Actions에서 라이브오피스 화면 검수 실행 |
+| 자동 화면 검수 실행 설정 | [package.json](package.json) |
+| 자동 화면 검수 환경 설정 | [playwright.config.js](playwright.config.js) |
+| 자동 화면 검수 테스트 | [qa/](qa/) |
+| GitHub 자동 화면 검수 실행 | [.github/workflows/](.github/workflows/) |
