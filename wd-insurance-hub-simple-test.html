@@ -16343,7 +16343,7 @@ const wdTest09Storage = (() => {
 <select id="wd09-insurance-sort"><option value="desc">최신순</option><option value="asc">오래된순</option></select></div>
 <div class="fld"><label for="wd09-insurance-purpose-filter">보험 종류</label>
 <select id="wd09-insurance-purpose-filter">
-<option value="">전체</option><option value="indemnity">실손보험</option><option value="protection">보장성보험</option><option value="savings">저축성보험</option><option value="auto">자동차보험</option><option value="health">장기보험 (기존)</option><option value="unknown">미분류</option>
+<option value="">전체</option><option value="health">보장성보험</option><option value="savings">저축성보험</option><option value="indemnity">실손보험</option><option value="auto">자동차보험</option><option value="unknown">미분류</option>
 </select></div>
 <div class="modal-ft">
 <button type="button" class="btn-s" popovertarget="wd09-insurance-filter-popover" popovertargetaction="hide">취소</button>
@@ -16359,7 +16359,7 @@ const wdTest09Storage = (() => {
 <div class="wd09-entry-body">
 <div class="fld"><label for="wd09-new-insurance-purpose">보험 종류</label>
 <select id="wd09-new-insurance-purpose" onchange="wd09SyncInsuranceRegistration()">
-<option value="">보험 종류 선택</option><option value="indemnity">실손보험</option><option value="protection">보장성보험</option><option value="savings">저축성보험</option><option value="auto">자동차보험</option>
+<option value="">보험 종류 선택</option><option value="health">보장성보험</option><option value="savings">저축성보험</option><option value="indemnity">실손보험</option><option value="auto">자동차보험</option>
 </select></div>
 <div class="fld" id="wd09-new-insurance-subtype-field" hidden>
 <label for="wd09-new-insurance-subtype">저축성보험 세부 종류</label>
@@ -16390,7 +16390,7 @@ const wdTest09Storage = (() => {
 <p id="ct-customer-name"></p>
 <div class="wd09-insurance-fields">
 <div class="fld"><label for="ct-insurance-purpose">보험 종류</label>
-<select id="ct-insurance-purpose" onchange="wd09SyncContractSubtype()"><option value="">미분류</option><option value="indemnity">실손보험</option><option value="protection">보장성보험</option><option value="savings">저축성보험</option><option value="health">장기보험 (기존)</option></select></div>
+<select id="ct-insurance-purpose" onchange="wd09SyncContractSubtype()"><option value="">미분류</option><option value="health">보장성보험</option><option value="savings">저축성보험</option><option value="indemnity">실손보험</option></select></div>
 <div class="fld" id="ct-insurance-subtype-field" hidden>
 <label for="ct-insurance-subtype">저축성보험 세부 종류</label>
 <select id="ct-insurance-subtype"><option value="">세부 종류 선택</option><option value="whole_life">종신보험</option><option value="annuity">연금보험</option></select></div>
@@ -24851,13 +24851,17 @@ function applyInsuranceFilters(){
   renderContractsList(list.dataset.loadState);
 }
 var WD09_INSURANCE_PURPOSES={
-  indemnity:'실손보험',protection:'보장성보험',savings:'저축성보험',auto:'자동차보험',
-  health:'장기보험',unknown:'미분류'
+  health:'보장성보험',savings:'저축성보험',indemnity:'실손보험',auto:'자동차보험',unknown:'미분류'
 };
 const WD09_INSURANCE_SUBTYPES={whole_life:'종신보험',annuity:'연금보험'};
+function wd09InsurancePurpose(value){
+  // 이전 TEST09에서 등록한 보장성보험도 기존 장기보험과 같은 종류로 표시한다.
+  if(value==='protection')return 'health';
+  return Object.hasOwn(WD09_INSURANCE_PURPOSES,value)?value:'unknown';
+}
 function customerInsuranceRow(c,source,index){
   var auto=source==='auto';
-  var purpose=auto?'auto':Object.hasOwn(WD09_INSURANCE_PURPOSES,c.insurance_purpose)?c.insurance_purpose:'unknown';
+  var purpose=auto?'auto':wd09InsurancePurpose(c.insurance_purpose);
   var autoFields=purpose==='auto'?wd09AutoFields(c):null;
   var annual=auto||!!(autoFields&&autoFields.annualPremium!==null);
   return {
@@ -24999,10 +25003,10 @@ function renderContractsList(state){
     return;
   }
   var selected=el.dataset.purpose;
-  var purposes=Object.hasOwn(WD09_INSURANCE_PURPOSES,selected)?[selected]:['indemnity','protection','savings','auto','health','unknown'];
+  var purposes=Object.hasOwn(WD09_INSURANCE_PURPOSES,selected)?[selected]:Object.keys(WD09_INSURANCE_PURPOSES);
   var groups=purposes.map(function(purpose){
     var groupRows=visible.filter(function(row){return row.purpose===purpose;});
-    if((purpose==='health'||purpose==='unknown')&&selected!==purpose&&!groupRows.length)return '';
+    if(purpose==='unknown'&&selected!==purpose&&!groupRows.length)return '';
     var auto=purpose==='auto';
     var titleId='wd09-insurance-group-title-'+purpose;
     var columns=auto
@@ -25091,14 +25095,13 @@ function wd09SyncContractSubtype(){
   document.getElementById('ct-insurance-subtype-field').hidden=!savings;
   if(!savings)document.getElementById('ct-insurance-subtype').value='';
 }
-function wd09SetContractInsuranceType(type,subtype,allowLegacy){
+function wd09SetContractInsuranceType(type,subtype,allowUnclassified){
   const selector=document.getElementById('ct-insurance-purpose');
-  for(const value of ['','health']){
-    const option=Array.from(selector.options).find(item=>item.value===value);
-    option.hidden=!allowLegacy;
-    option.disabled=!allowLegacy;
-  }
-  selector.value=type||'';
+  const unclassified=selector.options[0];
+  unclassified.hidden=!allowUnclassified;
+  unclassified.disabled=!allowUnclassified;
+  const purpose=wd09InsurancePurpose(type);
+  selector.value=purpose==='unknown'?'':purpose;
   _ctSetVal('ct-insurance-subtype',subtype);
   wd09SyncContractSubtype();
   const modal=document.getElementById('modal-contract');
