@@ -10744,22 +10744,40 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #modal-claim-rec .wd09-claim-step {
     margin:0 0 10px; padding:12px 14px; border:1px solid var(--s200); border-radius:10px;
   }
-  #modal-claim-rec .wd09-claim-step h3 { margin:0 0 9px; font-size:14px; color:var(--navy); }
+  #modal-claim-rec .wd09-claim-step h3 {
+    margin:0; padding-bottom:10px; border-bottom:1px solid var(--s200);
+    color:var(--navy); font-size:16px; font-weight:800;
+  }
+  #modal-claim-rec .wd09-claim-step h4 { margin:0 0 6px; font-size:13px; color:var(--navy); }
   #modal-claim-rec .wd09-claim-step .fld { margin:0; }
   .wd09-claim-basics { display:grid; gap:12px; }
   .wd09-claim-basics input[type="date"] { max-width:190px; }
   .wd09-claim-policy-options { display:grid; gap:6px; max-height:240px; overflow:auto; padding:2px; }
   .wd09-claim-policy-options:empty { display:none; }
   .wd09-claim-status-options { display:flex; gap:8px; flex-wrap:wrap; }
-  :is(.wd09-claim-policy-options,.wd09-claim-status-options) label {
+  .wd09-claim-status-options label {
+    position:relative; display:inline-flex; align-items:center; justify-content:center;
+    min-width:96px; min-height:44px; margin:0; padding:8px 16px;
+    border:1px solid var(--s200); border-radius:8px; background:var(--s50);
+    color:var(--navy); font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .wd09-claim-status-options label:hover { border-color:var(--purple); background:var(--lav); }
+  .wd09-claim-status-options label:has(input:checked) {
+    border-color:var(--purple); background:var(--purple); color:#fff;
+  }
+  .wd09-claim-status-options label:has(input:focus-visible) { outline:2px solid var(--purple); outline-offset:2px; }
+  .wd09-claim-status-options input {
+    position:absolute; width:1px; height:1px; padding:0; margin:0; clip-path:inset(50%);
+  }
+  .wd09-claim-policy-options label {
     display:flex; align-items:center; gap:8px; margin:0; padding:8px 10px; min-height:40px;
     border:1px solid var(--s200); border-radius:8px; background:#fff; cursor:pointer;
     color:var(--navy); font-size:13px; overflow-wrap:anywhere;
   }
-  :is(.wd09-claim-policy-options,.wd09-claim-status-options) label:has(input:checked) {
+  .wd09-claim-policy-options label:has(input:checked) {
     border-color:var(--purple); background:var(--lav); font-weight:700;
   }
-  :is(.wd09-claim-policy-options,.wd09-claim-status-options) label input {
+  .wd09-claim-policy-options label input {
     width:16px; height:16px; min-height:0; margin:0; flex:none; accent-color:var(--purple);
   }
   .wd09-claim-insurance-names { display:grid; gap:4px; overflow-wrap:anywhere; }
@@ -17085,35 +17103,37 @@ const wdTest09Storage = (() => {
 <select id="clm-customer" onchange="clmRefreshPolicies()"></select>
 <button type="button" class="btn-sm p" onclick="wd09OpenCustomerRegistration()">+ 고객 추가</button>
 </div>
-<section class="wd09-claim-step wd09-claim-basics">
+<section class="wd09-claim-step wd09-claim-basics" aria-labelledby="clm-main-heading">
+<h3 id="clm-main-heading">1. 청구내용</h3>
 <div class="fld"><label for="clm-date">청구요청일</label><input id="clm-date" type="date" onchange="clmUpdateSteps()"/></div>
 <div class="fld"><label for="clm-content">청구내용</label><textarea id="clm-content" placeholder="예: 팔 골절로 통원 치료 및 수술" oninput="clmUpdateSteps()"></textarea></div>
-</section>
-<section class="wd09-claim-step" aria-labelledby="clm-policy-label">
-<h3 id="clm-policy-label">가입보험 (복수 선택)</h3>
+<div>
+<h4 id="clm-policy-label">가입보험 (복수 선택)</h4>
 <div id="clm-policy" class="wd09-claim-policy-options" role="group" aria-labelledby="clm-policy-label" aria-describedby="clm-policy-feedback" onchange="clmUpdateSteps()"></div>
 <p class="wd09-claim-policy-feedback" id="clm-policy-feedback" role="status"></p>
 <button class="btn-sm wd09-claim-policy-retry" type="button" id="clm-policy-retry" hidden>다시 불러오기</button>
+</div>
+<div>
+<h4 id="clm-status-label">처리상태</h4>
+<div class="wd09-claim-status-options" id="clm-status" role="radiogroup" aria-labelledby="clm-status-label" onchange="clmUpdateSteps()">
+<label><input type="radio" name="clm-status" value="접수전"/>접수전</label>
+<label><input type="radio" name="clm-status" value="접수완료"/>접수완료</label>
+</div>
+</div>
 </section>
-<section class="wd09-claim-step" aria-labelledby="clm-attachment-label">
-<h3 id="clm-attachment-label">청구서류 (선택)</h3>
+<section class="wd09-claim-step wd09-claim-basics" aria-labelledby="clm-extra-heading">
+<h3 id="clm-extra-heading">2. 기타 내용</h3>
+<div role="group" aria-labelledby="clm-attachment-label">
+<h4 id="clm-attachment-label">청구서류 (선택)</h4>
 <div id="clm-attachments"></div>
 <div class="wd09-claim-upload-controls">
 <button type="button" class="btn-sm p" id="clm-add-attachment" onclick="addClaimAttachment()">+ 첨부파일 추가</button>
 <span id="clm-attachment-count" role="status"></span>
 </div>
-</section>
-<section class="wd09-claim-step wd09-claim-basics">
+</div>
 <div class="fld"><label for="clm-paid">받은 보험금 합계 (원)</label>
 <input id="clm-paid" type="text" inputmode="numeric" placeholder="예: 350,000" oninput="wd09FormatWonInput(this);clmUpdateSteps()"/></div>
 <div class="fld"><label for="clm-memo">메모</label><textarea id="clm-memo" rows="2" placeholder="보험금이나 접수에 관한 메모를 자유롭게 적어 주세요."></textarea></div>
-</section>
-<section class="wd09-claim-step" aria-labelledby="clm-status-label">
-<h3 id="clm-status-label">처리상태</h3>
-<div class="wd09-claim-status-options" id="clm-status" role="radiogroup" aria-labelledby="clm-status-label" onchange="clmUpdateSteps()">
-<label><input type="radio" name="clm-status" value="접수전"/>접수전</label>
-<label><input type="radio" name="clm-status" value="접수완료"/>접수완료</label>
-</div>
 </section>
 <p id="clm-save-hint" role="status">청구 기본정보를 확인해 주세요.</p>
 </div>
@@ -20184,6 +20204,7 @@ function openClaimAdd(fromOverview=false){
   document.getElementById('clm-memo').value='';
   setClaimStatusChoice('clm');
   openModal('modal-claim-rec');
+  document.querySelector('#modal-claim-rec .wd09-entry-body').scrollTop=0;
   clmRefreshPolicies();
 }
 function openClaimEdit(id){
@@ -20198,12 +20219,12 @@ function openClaimEdit(id){
   document.getElementById('clm-memo').value=item.memo||'';
   setClaimStatusChoice('clm',item.status);
   openModal('modal-claim-rec');
+  document.querySelector('#modal-claim-rec .wd09-entry-body').scrollTop=0;
   void loadClaimPolicies('clm',_vid,item,clmUpdateSteps);
 }
 function clmRefreshPolicies(){
   void loadClaimPolicies('clm',claimFormCustomerId(),null,clmUpdateSteps);
 }
-const CLAIM_ATTACHMENT_LIMIT=5;
 const CLAIM_ATTACH_ALLOWED_EXT=['pdf','jpg','jpeg','png','heic','webp'];
 const CLAIM_DOCUMENT_TYPES=[
   '보험금청구서류','진료비계산서','진료비 세부내역서','진단서',
@@ -20235,7 +20256,6 @@ function resetClaimAttachments(record){
 }
 function addClaimAttachment(){
   const list=document.getElementById('clm-attachments');
-  if(savedClaimAttachments.length+list.querySelectorAll('.wd09-claim-upload').length>=CLAIM_ATTACHMENT_LIMIT)return;
   const id='clm-attachment-'+(++claimAttachmentSequence);
   const row=document.createElement('div');
   row.className='wd09-claim-upload';
@@ -20262,10 +20282,8 @@ function claimFormCustomerId(){
 }
 function claimPendingAttachments(customer,uploadAt){
   const rows=[...document.querySelectorAll('#clm-attachments .wd09-claim-upload')];
-  document.getElementById('clm-attachment-count').textContent=(savedClaimAttachments.length+rows.length)+' / '+CLAIM_ATTACHMENT_LIMIT+'개';
-  document.getElementById('clm-add-attachment').disabled=savedClaimAttachments.length+rows.length>=CLAIM_ATTACHMENT_LIMIT;
   const usedNames=new Set(savedClaimAttachments.map(file=>file.fileName));
-  return rows.map(row=>{
+  const pending=rows.map(row=>{
     const selected=row.querySelector('select').value;
     const custom=row.querySelector('input[type="text"]');
     custom.hidden=selected!=='__custom__';
@@ -20281,7 +20299,8 @@ function claimPendingAttachments(customer,uploadAt){
         name=customerAttachmentName(customer,category,file.name,uploadAt);
         for(let number=2;usedNames.has(name);number++){
           // 같은 구분의 서류는 이름에 번호를 붙여 Drive에서도 구별합니다.
-          const numberedCategory=category.slice(0,44)+'('+number+')';
+          const suffix='('+number+')';
+          const numberedCategory=Array.from(category).slice(0,48-suffix.length).join('')+suffix;
           name=customerAttachmentName(customer,numberedCategory,file.name,uploadAt);
         }
         usedNames.add(name);
@@ -20291,6 +20310,9 @@ function claimPendingAttachments(customer,uploadAt){
     preview.hidden=!name;
     return {file,category,name,error};
   });
+  const count=savedClaimAttachments.length+pending.filter(item=>item.file).length;
+  document.getElementById('clm-attachment-count').textContent=count?'첨부 '+count+'개':'';
+  return pending;
 }
 function validateClaimAttachFile(file){
   var ext=_attachExt(file);
