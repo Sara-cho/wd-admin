@@ -32,7 +32,7 @@ const sha=async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-
 const utf=s=>new TextEncoder().encode(s);
 const cleanName=s=>typeof s==='string'&&s.trim().length>0&&s.length<=240&&!/[\x00-\x1f]/.test(s);
 let cached;
-const defaultClient='525415823143-vrl5bfgrfo94rk1f92r2h0v2j2tg7n1g.apps.googleusercontent.com';
+const defaultClient='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com';
 function googleConfig(env){
   return {client_id:env('WD_WORK_GOOGLE_CLIENT_ID')||defaultClient,client_secret:env('WD_WORK_GOOGLE_CLIENT_SECRET')||env('GOOGLE_CLIENT_SECRET')};
 }
@@ -80,6 +80,7 @@ export async function handle(req,env){
     const who=await fetch(base+'/auth/v1/user',{headers:{apikey:key,Authorization:auth}});
     if(!who.ok)fail(401,'업무센터에 다시 로그인해 주세요.');
     const user=await who.json();
+    if(!user.id)fail(401,'업무센터에 다시 로그인해 주세요.');
     const db=async(table,query,options={})=>{
       const r=await fetch(base+'/rest/v1/'+table+'?'+new URLSearchParams(query),{...options,headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',...options.headers}});
       if(!r.ok)fail(503,'업무센터 등록 상태를 확인하지 못했어요.');
@@ -204,7 +205,7 @@ export async function handle(req,env){
         const exportType=f.mimeType===native+'document'?'text/plain':f.mimeType.startsWith(native)?'application/pdf':null;
         if(action==='preview'&&!exportType&&!/^(text\/(plain|markdown|csv)|image\/(png|jpeg|webp|gif)|application\/pdf)$/.test(f.mimeType))fail(415,'이 형식은 미리보기를 지원하지 않아요.');
         if(action==='preview'&&Number(f.size)>maxSize)fail(413,'큰 파일은 다운로드로 확인해 주세요.');
-        if(action==='preview'&&!exportType&&!f.mimeType.startsWith('text/')&&!grant[menu+'_actions'].includes('download')){
+        if(action==='preview'&&exportType!=='text/plain'&&!f.mimeType.startsWith('text/')&&!grant[menu+'_actions'].includes('download')){
           const thumb=await (await drive(api+'/'+f.id+'?fields=thumbnailLink&supportsAllDrives=true')).json();
           const url=thumb.thumbnailLink?new URL(thumb.thumbnailLink):null;
           if(!url||url.protocol!=='https:'||!(url.hostname.endsWith('.googleusercontent.com')||url.hostname==='drive.google.com'))fail(415,'이 자료의 미리보기 이미지가 없어요.');
