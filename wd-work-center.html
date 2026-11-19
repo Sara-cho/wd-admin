@@ -1229,9 +1229,9 @@ const staffName=()=>staffById(activeStaffId||managerStaffId)?.name||'스탭';
 const isEmployeeWorkspace=()=>currentUser==='employee'&&staffById(activeStaffId)?.workType==='employee';
 const isMinaWorkCenter=()=>{
   const profile=staffById(activeStaffId);
-  return currentUser==='employee'&&!!profile&&(profile.id==='mina'||profile.name==='김민아');
+  return currentUser==='employee'&&!!profile&&!enrolledDriveStaff()&&(profile.id==='mina'||profile.name==='김민아');
 };
-const usesUnifiedWorkCenter=()=>isEmployeeWorkspace()||isMinaWorkCenter();
+const usesUnifiedWorkCenter=()=>isEmployeeWorkspace()||isMinaWorkCenter()||enrolledDriveStaff();
 const isEmployeeTask=task=>task.simpleInstruction??(staffById(taskStaffId(task))?.workType==='employee');
 const usesDirectWorkReport=()=>currentUser==='employee'&&(usesUnifiedWorkCenter()||
   (!S.tasks.some(task=>task.id===S.selected&&!task.directInstruction&&!task.dailyJournal)&&S.tasks.some(task=>task.directInstruction)));
@@ -1431,7 +1431,7 @@ function libraryCan(menu,action){
 function workspaceMenus(){
   if(currentUser==='manager')return [...navMgr,...sharedMenus,...sensitiveMenus.filter(([id])=>['tax','accounts','office'].includes(id))];
   const selected=profileMenus(staffById(activeStaffId));
-  const workMenus=usesUnifiedWorkCenter()?navEmployee:S.tasks.some(task=>task.directInstruction)?
+  const workMenus=enrolledDriveStaff()&&!isEmployeeWorkspace()?navStaff.map(([id,label])=>[id,id==='dashboard'?'업무보고':label]):usesUnifiedWorkCenter()?navEmployee:S.tasks.some(task=>task.directInstruction)?
     navStaff.map(([id,label])=>[id,id==='dashboard'?'업무보고':label]):navStaff;
   return [...workMenus,...configurableMenus.filter(([id])=>selected.includes(id))];
 }
@@ -2293,7 +2293,8 @@ function bindEmployeeInstructions(instructionOnly=false){
   if(instructionOnly||isEmployeeWorkspace())bindEmployeeInstructionRefresh(context,instructionOnly);
   if(!instructionOnly){
     bindReportDriveRefresh(context.date,!!context.task?.instructionSender);
-    if(isMinaWorkCenter())bindMinaWorkReport(context.date,updateReportDates);
+    if(enrolledDriveStaff())void bindEnrolledReport(context.date,dates,updateReportDates);
+    else if(isMinaWorkCenter())bindMinaWorkReport(context.date,updateReportDates);
     else bindCloudEmployeeReport(context.date,dates,updateReportDates);
   }
 }
@@ -2703,7 +2704,7 @@ async function loginWorkCenterFromHq(form){
     activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;hqStaffLoginId=identity.login_id;workStickyUserId=identity.user_id;pinOnlyWorkspace=false;
     if(legacy||grant?.enabled)liveAttendanceReady=true;
     workCenterDriveEntered=true;
-    if(workspaceDriveAccount())resumeWorkspaceDrive(identity);
+    if(!enrolledDriveStaff()&&workspaceDriveAccount())resumeWorkspaceDrive(identity);
     render();
     return true;
   }catch{
@@ -6612,7 +6613,7 @@ function syncWorkCenterDriveButton(){
   if(!button)return;
   const session=workCenterDriveSession();
   const required=currentUser==='manager'?driveWriteScope:driveSessionScope();
-  button.hidden=S.nav==='ideas'||!workCenterDriveEntered||!!workDriveStartup||(currentUser==='employee'&&!workspaceDriveAccount())||
+  button.hidden=enrolledDriveStaff()||S.nav==='ideas'||!workCenterDriveEntered||!!workDriveStartup||(currentUser==='employee'&&!workspaceDriveAccount())||
     !!(session&&session.expires>Date.now()&&(required!==driveWriteScope||session.scope===driveWriteScope));
   button.onclick=workCenterEntry;
 }
@@ -7293,9 +7294,13 @@ async function readWorkReportFolder(folder,token,profile){
 }
 
 async function readCompanyDriveReports(token,staffId=''){
-  const profiles=S.staffProfiles.filter(profile=>(!staffId||profile.id===staffId)&&staffWorkDriveFolders(profile));
-  const results=await Promise.allSettled(profiles.map(profile=>
-    readWorkReportFolder(staffWorkDriveFolders(profile).journal,token,profile)));
+  const staff=S.staffProfiles.filter(p=>!staffId||p.id===staffId);
+  const enrolled=staff.some(p=>/^staff_[0-9a-f-]{36}$/.test(managerCloudGrants.get(p.id)?.login_id));
+  const mapping=enrolled?await enrollmentRpc(await attendanceHqToken(),'wd_work_report_folders',{}):[];
+  const folders=new Map(mapping.map(r=>[r.staff_key,r.folder_id]));
+  const reportFolder=p=>folders.get(p.id)||staffWorkDriveFolders(p)?.journal;
+  const profiles=staff.filter(p=>reportFolder(p));
+  const results=await Promise.allSettled(profiles.map(p=>readWorkReportFolder(reportFolder(p),token,p)));
   const failed=new Map(results.flatMap((result,index)=>result.status==='rejected'?[[profiles[index].id,result.reason]]:[]));
   if(profiles.length&&failed.size===profiles.length)throw failed.values().next().value;
   const rows=results.flatMap(result=>result.status==='fulfilled'?result.value:[]);
@@ -8160,7 +8165,7 @@ function staffManagementView(){
     staffDetailOpen=true;
   }
   const profile=staffDetailOpen?staffById(managerStaffId):null;
-  return `<div class="titleRow"><h1>직원관리</h1></div>
+  return `<div class="titleRow"><h1>직원관리</h1><button type="button" class="small" id="setupStaffCompanyDrive" disabled>직원용 회사 Drive 연결</button></div><p class="smallText" role="status" id="staffCompanyDriveStatus"></p>
   <div class="wd135-work-layout wd107-staff-layout">
     ${staffRosterPanel('staffRosterList',S.staffProfiles.filter(person=>!person.hiddenAt),profile?.id,'profile')}
     <section class="card wd58-detail" tabindex="0" aria-label="직원·스탭 상세">
@@ -8419,7 +8424,7 @@ function bindStaffMonthlyReports(profile,month){
       if(button.dataset.staffReport===focusedId)button.focus({preventScroll:true});
     });
   };
-  const linked=!!staffWorkDriveFolders(profile);
+  const linked=!!staffWorkDriveFolders(profile)||/^staff_[0-9a-f-]{36}$/.test(managerCloudGrants.get(profile.id)?.login_id);
   paint(local,linked?'업무보고를 불러오는 중이에요.':'');
   if(!linked)return;
   void (async()=>{
@@ -8437,6 +8442,7 @@ function bindStaffMonthlyReports(profile,month){
 }
 
 function bindStaffManagement(){
+  bindCompanyDriveSetup();
   $('addStaff').onclick=()=>{managerStaffId=null;staffDetailOpen=true;editingStaff=true;render();$('staffName').focus();};
   const roster=$('staffRosterList');
   const bindRoster=()=>{
@@ -8519,6 +8525,10 @@ function bindStaffManagement(){
         if(currentUser!=='manager'||$('staffProfileForm')!==form)return;
         persistStaffProfile(next,remoteSaved);
         managerStaffId=next.id;editingStaff=false;render();notify('직원·스탭 정보를 저장했어요.');
+        if(!profile){
+          try{await staffDriveCall('provision',{staff:next.id,companySession:managerDriveSession?.expires>Date.now()?managerDriveSession.token:undefined});}
+          catch(e){if(currentUser==='manager'&&managerStaffId===next.id)notify('직원 등록 완료 · 업무보고 폴더는 회사 Drive 연결 후 첫 이용 때 생성돼요.');}
+        }
       }catch(error){notify(remoteSaved?'본진 정보를 저장했어요. 브라우저 저장을 다시 확인해 주세요.':error.message||'직원 정보를 저장하지 못했어요.');}
       finally{button.disabled=false;}
     };
@@ -9197,7 +9207,7 @@ let content=drivePageAllowed(S.nav)?nativeDrivePage():S.nav==='manual'?librarySe
   button.onclick=stickyModal;
   button.setAttribute('aria-controls','wd-shared-sticky-dock');
   button.setAttribute('aria-expanded',String(Boolean(stickyIdentity()&&workStickyNotes?.isOpen())));
-}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage'))bindNativeDrivePage();const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindWorkReportView()}else if(currentUser==='manager'&&S.nav==='staff'){
+}if(S.nav==='attendance')bindAttendance();if($('taxPayrollPanel'))bindTaxPayroll();if($('accountPanel'))bindAccounts();if($('officePanel'))bindOfficeLedger();if($('nativeAdminData'))bindNativeAdminView();if($('employeePayslipList'))bindEmployeeCloudPayslips();if($('nativeDrivePage')){if(enrolledDriveStaff())bindEnrolledLibrary();else bindNativeDrivePage();}const t=sel();if(S.nav==='managerHome'&&currentUser==='manager'){bindManagerHome();maybeShowPayrollReminder()}else if(currentUser==='manager'&&S.nav==='review'){bindWorkReportView()}else if(currentUser==='manager'&&S.nav==='staff'){
 bindStaffManagement();
 }else if(currentUser==='manager'&&S.nav==='instructions'){bindInstructionView()}else if(S.nav==='myInstructions'){bindEmployeeInstructions(true)}else if(S.nav==='dashboard'&&usesDirectWorkReport()){bindEmployeeInstructions()}else if(S.nav==='dashboard'&&t){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=Number(b.dataset.tab);save();document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('primary',x===b))});document.querySelectorAll('.three>.pane').forEach((p,i)=>p.classList.toggle('mobileOn',i===S.tab));bindBoard(t)}else if(S.nav==='month'){bindTaskReports();bindAdminFilters();document.querySelectorAll('[data-staff-tasks]').forEach(b=>b.onclick=()=>{managerStaffId=b.dataset.staffTasks;staffTasksOpen=true;render()});if($('addTask'))$('addTask').onclick=()=>{setNav('instructions')}}else if(['drive','manual','archive'].includes(S.nav)){bindMaterials()}else if(S.nav==='reports'){bindReportButtons()}else if(S.nav==='ideas'){bindNotes()}document.querySelectorAll('[data-download]').forEach(x=>x.onclick=()=>downloadFile(x.dataset.download))}
 function bindEmployee(t){if($('saveDraft'))$('saveDraft').onclick=()=>{save();notify('수행 기록을 저장했습니다')}}
@@ -9338,6 +9348,144 @@ async function signInWorkGoogle(card,credential,nonce,email){
   hqAutoLoginBlocked=false;
   if(!await loginWorkCenterFromHq(card)&&card.isConnected&&!currentUser)
     throw new Error('업무센터 계정을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+}
+
+// Newly enrolled staff access company files through their verified work-center account.
+function enrolledDriveStaff(){
+  return currentUser==='employee'&&staffCloudGrant?.enabled&&/^staff_[0-9a-f-]{36}$/.test(staffCloudGrant.login_id)&&!pinOnlyWorkspace;
+}
+async function staffDriveCall(action,body={},format='json'){
+  const token=await attendanceHqToken();
+  if(!token)throw hqLoginError();
+  const form=body instanceof FormData;
+  const response=await fetch(adminAuthBase+'/functions/v1/work-center-company-drive?action='+encodeURIComponent(action),{
+    method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token,...(form?{}:{'Content-Type':'application/json'})},
+    body:form?body:JSON.stringify(body),cache:'no-store'});
+  if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'회사 Drive 연결을 확인해 주세요.');}
+  return response[format]();
+}
+function downloadCompanyBlob(blob,name){
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+async function bindEnrolledReport(date,dates,updateReportDates){
+  const form=$('employeeReportForm'),out=$('employeeCloudReport'),line=$('employeeReportSendStatus'),submit=$('employeeReportSubmit');
+  const active=()=>form.isConnected&&enrolledDriveStaff();
+  const load=async()=>{
+    const rows=await staffDriveCall('reports');
+    if(!active())return;
+    if(dates)paintEmployeeRemoteDates(dates,date,false,'reports',rows.map(r=>r.workDate));
+    updateReportDates?.(rows);
+    const saved=rows.find(row=>row.workDate===date);
+    form.hidden=!!saved;out.hidden=!saved;line.textContent='';
+    if(!saved)return;
+    const text=await staffDriveCall('reportFile',{id:saved.id},'text');
+    if(!active())return;
+    const body=document.createElement('div');body.className='wd122-report-body';body.textContent=text;
+    out.replaceChildren(body);
+    for(const m of text.matchAll(/^(.+) https:\/\/drive\.google\.com\/open\?id=([\w-]+)$/gm)){
+      const b=document.createElement('button');b.type='button';b.className='small';b.textContent=m[1]+' 다운로드';out.append(b);
+      b.onclick=async()=>{try{const blob=await staffDriveCall('reportFile',{id:m[2]},'blob');if(active())downloadCompanyBlob(blob,m[1]);}catch(e){if(active())line.textContent=e.message;}};
+    }
+  };
+  form.onsubmit=async e=>{
+    e.preventDefault();if(submit.disabled||!active())return;
+    const text=$('employeeReportText').value.trim(),files=Array.from($('employeeReportFiles').files);
+    if(!text)return;
+    if(files.length>40||files.some(f=>f.size>25*1024*1024)){line.textContent='첨부는 40개까지, 파일 하나는 25MB까지 저장할 수 있어요.';return;}
+    submit.disabled=true;activeStepUploads++;
+    try{
+      const ids=[];
+      for(const f of files){
+        if(!active())return;
+        line.textContent=f.name+' 저장 중…';const data=new FormData();data.set('date',date);data.set('file',f);ids.push((await staffDriveCall('attach',data)).id);
+      }
+      if(!active())return;
+      line.textContent='회사 Drive에 보고서를 저장하는 중…';
+      await staffDriveCall('submit',{date,text,attachments:ids});
+      if(active())await load();
+    }catch(err){if(active())line.textContent=err.message;}
+    finally{submit.disabled=false;activeStepUploads--;}
+  };
+  try{await load();}catch(e){if(active())line.textContent=e.message;}
+}
+function bindEnrolledLibrary(){
+  const menu=S.nav,groups=availableLibraryCategories(menu),panel=$('nativeDrivePage'),tabs=$('nativeDriveCategories'),list=$('nativeDriveList'),reader=$('nativeDriveReader'),line=$('nativeDriveStatus'),search=$('nativeDriveSearch'),add=$('nativeDriveAdd');
+  let category=groups[0],rows=[],request=0,read=0;
+  const active=()=>panel.isConnected&&enrolledDriveStaff()&&S.nav===menu;
+  const button=(parent,label,run)=>{
+    const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;b.onclick=async()=>{b.disabled=true;try{await run();}catch(e){if(active())line.textContent=e.message;}finally{b.disabled=false;}};parent.append(b);return b;
+  };
+  const upload=(file,action,id,cat)=>{
+    const data=new FormData();data.set('menu',menu);data.set('category',cat);data.set('file',file);if(id)data.set('id',id);
+    return staffDriveCall(action,data);
+  };
+  const pick=(action,id)=>{
+    const cat=category,input=document.createElement('input');input.type='file';
+    input.onchange=async()=>{
+      const file=input.files[0];if(!file||!active()||cat!==category)return;
+      try{if(file.size>25*1024*1024)throw new Error('25MB 이하의 파일을 선택해 주세요.');
+        await upload(file,action,id,cat);if(active()&&cat===category)await refresh();}
+      catch(e){if(active())line.textContent=e.message;}
+    };input.click();
+  };
+  const open=async(row)=>{
+    const n=++read,params={menu,category,id:row.id},same=()=>active()&&n===read;
+    releaseNativeDrivePreview();reader.hidden=false;reader.replaceChildren();line.textContent='';
+    const heading=document.createElement('h2');heading.textContent=row.name;reader.append(heading);
+    if(libraryCan(menu,'download'))button(reader,'다운로드',async()=>{const blob=await staffDriveCall('download',params,'blob');if(same())downloadCompanyBlob(blob,row.name);});
+    if(libraryCan(menu,'edit'))button(reader,'이름 수정',async()=>{const title=prompt('자료 제목',menu==='manual'?cleanManualTitle(row.name):row.name);if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}});
+    if(libraryCan(menu,'replace'))button(reader,'파일 교체',()=>pick('replace',row.id));
+    if(libraryCan(menu,'delete'))button(reader,'삭제',async()=>{if(confirmWorkCenterDelete(row.name)){await staffDriveCall('remove',params);if(same())await refresh();}});
+    const body=document.createElement('div');body.className='wd96-drive-text';reader.append(body);
+    try{
+      const blob=await staffDriveCall('preview',params,'blob');if(!same())return;
+      if(blob.type.startsWith('text/')){const txt=await blob.text();if(same())body.textContent=txt;return;}
+      const img=/^image\/(png|jpeg|gif|webp)\b/.test(blob.type),pdf=blob.type.startsWith('application/pdf');
+      if(!img&&!pdf){body.textContent='이 파일은 다운로드로 확인해 주세요.';return;}
+      const node=document.createElement(img?'img':'iframe');
+      if(!img)node.setAttribute('sandbox','');
+      node.className='wd98-native-preview';node.title=row.name;nativeDrivePreviewUrl=URL.createObjectURL(blob);node.src=nativeDrivePreviewUrl;body.append(node);
+    }catch(e){if(same())body.textContent=e.message;}
+  };
+  const paint=()=>{
+    list.replaceChildren();const found=rows.filter(r=>r.name.toLowerCase().includes(search.value.trim().toLowerCase()));
+    for(const row of found)button(list,row.name,()=>open(row));
+    if(!found.length)list.textContent='표시할 자료가 없어요.';
+  };
+  const refresh=async()=>{
+    const n=++request;++read;releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();list.replaceChildren();rows=[];
+    if(!category){line.textContent='허용된 자료 분류가 없어요.';return;}
+    line.textContent='회사 Drive 자료를 불러오는 중…';
+    tabs.replaceChildren();
+    for(const group of groups){const b=button(tabs,group,async()=>{category=group;await refresh();});b.setAttribute('aria-pressed',String(group===category));}
+    try{const data=await staffDriveCall('list',{menu,category});if(!active()||n!==request)return;rows=data;line.textContent='';search.disabled=false;paint();}
+    catch(e){if(active()&&n===request)line.textContent=e.message;}
+  };
+  add.hidden=!category||!libraryCan(menu,'upload');add.onclick=()=>pick('upload');search.oninput=paint;$('nativeDriveRefresh').onclick=refresh;void refresh();
+}
+function bindCompanyDriveSetup(){
+  const b=$('setupStaffCompanyDrive'),line=$('staffCompanyDriveStatus');if(!b)return;
+  let config;
+  b.disabled=true;
+  const load=async()=>{
+    try{
+      config=await staffDriveCall('setup');if(!b.isConnected)return;
+      if(config.connected){b.textContent='회사 Drive 다시 승인';line.textContent='직원용 회사 Drive가 연결돼 있어요.';}
+      else if(!config.configured){line.textContent='회사 Google OAuth 클라이언트 보안 비밀번호를 WD_WORK_GOOGLE_CLIENT_SECRET 이름으로 한 번 등록한 뒤 새로고침해 주세요. ';
+        const link=document.createElement('a');link.href='https://supabase.com/dashboard/project/mzftzadtoepcrwhnwdmn/functions/secrets';link.textContent='Supabase 비밀 설정 열기';link.target='_blank';link.rel='noopener noreferrer';line.append(link);}
+      else line.textContent='회사 계정으로 한 번 승인하면 직원은 자신의 Google 로그인으로 자료를 열 수 있어요.';
+      if(config.configured){await loadEmployeeDriveClient();b.disabled=false;}
+    }catch(e){if(b.isConnected)line.textContent=e.message;}
+  };
+  b.onclick=()=>{
+    if(!config?.configured)return;
+    google.accounts.oauth2.initCodeClient({client_id:config.client_id,scope:driveWriteScope,ux_mode:'popup',hint:managerDriveAccount,select_account:true,
+      callback:async result=>{
+        if(!result.code||!b.isConnected)return;
+        b.disabled=true;try{await staffDriveCall('authorize',{code:result.code});await load();}catch(e){if(b.isConnected){line.textContent=e.message;b.disabled=false;}}
+      }}).requestCode();
+  };void load();
 }
 
 if(embeddedAccountInfo)void renderEmbeddedAccountInfo();
