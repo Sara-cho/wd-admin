@@ -12041,7 +12041,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #wd09-customer-form #wd09-edit-family-fields { display:grid; gap:8px; margin-bottom:12px; }
 #wd09-customer-form [hidden] { display:none!important; }
 @media (min-width:901px) {
-  #modal-cust #wd09-customer-form > .wd09-entry-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; }
+  #modal-cust #wd09-customer-form > .wd09-entry-body:has(#cfr-sec:not([hidden])) { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; }
   #modal-cust .wd09-customer-main-fields .wd09-customer-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   #modal-cust .wd09-customer-main-fields .fld:has(> #ci-rrn-current) { grid-column:1/-1; }
   #modal-cust .wd09-customer-main-fields .fld:has(> #ci-addr1) { display:block; }
@@ -12098,6 +12098,51 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
   #modal-cust .wd-family-postcode { grid-template-columns:90px auto; }
   #modal-cust .wd-family-fields .cfr-addr input { margin-top:0; }
 }
+</style>
+<style id="wd09-collapsible-customer-layout">
+/* Customer add expands only while the family form is open. */
+#modal-cust .wd09-entry-modal { max-width:650px; }
+#modal-cust .wd09-entry-modal:has(#cfr-sec:not([hidden])) { max-width:1120px; }
+#wd09-customer-form .wd-family-registration:has(#cfr-sec[hidden]):not(:has(#wd09-edit-family-summary:not([hidden]),#wd09-edit-family-fields:not([hidden]))) { display:none; }
+#wd09-customer-form .wd-customer-basic-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#wd09-customer-form .wd-family-launch {
+  display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:5px 9px;
+  border:1px solid #ded6ec; border-radius:8px; color:#4a3380; background:#fff;
+  font:inherit; font-size:12px; letter-spacing:0; cursor:pointer;
+}
+#wd09-customer-form .wd-family-launch:hover { background:#f2edf8; }
+#wd09-customer-form .wd-family-launch:focus-visible { outline:2px solid var(--purple); outline-offset:2px; }
+#wd09-customer-form .wd-family-launch svg { width:16px; height:16px; flex:none; }
+@media (max-width:768px) {
+  #wd09-customer-form .wd-family-launch { min-height:44px; }
+}
+
+/* Keep the summary and family list in one readable column. */
+@media (min-width:769px) {
+  #cust-det-pg:has(#wd09-customer-info-tab.on) { max-width:1160px; }
+  #cust-det-pg:has(#wd09-customer-info-tab.on) > #det-tabs { margin-bottom:12px!important; }
+}
+@media (min-width:1101px) {
+  #cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-overview { grid-template-columns:minmax(295px,330px) minmax(0,1fr); gap:14px; }
+}
+#cust-det-pg:has(#wd09-customer-info-tab.on) #cust-info-card { min-block-size:0; padding:16px 18px; }
+#cust-det-pg:has(#wd09-customer-info-tab.on) #cust-info-card > .card-hd { margin-bottom:14px; }
+#cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-card-view .cust-sec-label { margin:8px 0!important; }
+#cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-card-view .grid-3 { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; }
+#cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-card-view > div:not(.cust-sec-label) { margin-bottom:8px!important; }
+#cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-card-view :is(.grid-3 > div,.wd-family-profile-demographics > div) { margin-bottom:0!important; }
+#wd09-customer-overview #det-info[data-record-view="det-info"] { gap:12px; }
+#wd09-customer-overview #det-info > :is(#wd09-overview-insurance,#wd09-family-summary) { padding:14px 16px; }
+#wd09-overview-insurance #wd09-shared-insurance-summary .wd09-insurance-summary { margin-bottom:0; }
+#wd09-overview-insurance #wd09-shared-insurance-summary .wd09-insurance-summary > div { padding:9px 11px; }
+#wd09-overview-insurance :is(#wd09-indemnity-note:empty,#wd09-indemnity-premium-note[hidden]) { display:none; }
+#wd09-overview-insurance #wd09-insurance-summary-status { margin:6px 0 0; }
+#wd09-family-summary #cf-fam-box .wd-family-list { margin:0; }
+#wd09-family-summary #cf-fam-box .wd-family-person { justify-content:flex-start; gap:5px 10px; padding-inline:6px; }
+#wd09-family-summary #cf-fam-box .wd-family-person:last-child { border-bottom:0; }
+#wd09-family-summary #cf-fam-box .wd-family-relation { background:#f1ecf8; color:#543b7a; border-radius:6px; padding:2px 6px; font-weight:650; }
+#wd09-family-summary #cf-fam-box .wd-family-residence { font-size:12px; }
+#wd09-family-summary #cf-fam-box .wd-family-arrow { margin-inline-start:auto; color:var(--purple); }
 </style>
 </head>
 <body>
@@ -16539,7 +16584,10 @@ const wdTest09Storage = (() => {
 <div class="wd09-customer-main-fields">
 <!-- 기본정보 섹션 -->
 <section class="wd09-customer-entry-card" aria-labelledby="wd09-customer-entry-basic">
-<div class="cust-sec-label" id="wd09-customer-entry-basic">기본정보</div>
+<div class="cust-sec-label wd-customer-basic-heading">
+  <span id="wd09-customer-entry-basic">기본정보</span>
+  <button class="wd-family-launch" id="cfr-toggle" onclick="cfr_open(event)" type="button" aria-expanded="false" aria-controls="cfr-sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="7" r="2.5"/><path d="M3.5 19v-2.3a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4V19M16 5a2.5 2.5 0 0 1 0 4.8M17 13a3.7 3.7 0 0 1 3.5 3.7V19"/></svg><span id="cfr-launch-label">가족대표 등록</span></button>
+</div>
 <div class="wd09-customer-form-grid">
 <div class="fld"><label for="ci-name">고객이름 *</label><input id="ci-name" placeholder="고객이름" type="text" oninput="cfr_updateSaveLabel()"/></div>
 <div class="fld"><label for="ci-ctype">고객구분</label><select id="ci-ctype"><option>가망고객</option><option>계약고객</option><option>해지고객</option><option>VIP고객</option></select></div>
@@ -16607,8 +16655,7 @@ const wdTest09Storage = (() => {
     <label>대표와의 관계<input type="text" id="ci-family-relation" placeholder="예: 배우자"></label>
     <label>대표와 같이 거주<select id="ci-family-cohab"><option value="">미확인</option><option value="together">같이 거주</option><option value="apart">따로 거주</option></select></label>
   </div>
-  <button class="cfr-toggle" id="cfr-toggle" onclick="cfr_open(event)" type="button">+ 가족대표로 등록</button>
-  <div id="cfr-sec" style="display:none">
+  <div id="cfr-sec" hidden>
     <p id="cfr-desc">가족은 이름만으로 등록할 수 있어요. 나머지 정보는 나중에 채워도 됩니다.</p>
     <div id="cfr-list"></div>
     <button class="btn-sm p" onclick="cfr_addRow()" type="button">+ 가족 한 명 더</button>
@@ -18917,6 +18964,7 @@ function wd09SetCustomerFormMode(customer){
   birth.dataset.original=customerBirthDate(customer?.birth)||customer?.birth||'';
   delete birth.dataset.fromRrn;
   document.getElementById('ci-birth-field').hidden=!editing;
+  document.getElementById('cfr-launch-label').textContent=editing?'가족 추가':'가족대표 등록';
   document.getElementById('ci-gender-edit-field').hidden=!editing;
   document.getElementById('ci-gender-edit').value=customer?.gender||'';
   document.getElementById('cust-edit-cancel').hidden=!editing;
@@ -19125,16 +19173,6 @@ async function _custBuildRecord(){
   if(!eid)for(const customer of [d,...fam])wd09QueueCustomerSheets(customer.id);
   return d;
 }
-function cfr_closeAfterMainSave(){
-  var modal=document.getElementById('wd09-customer-form');
-  if(!modal)return;
-  var sec=modal.querySelector('#cfr-sec');
-  var toggle=modal.querySelector('#cfr-toggle');
-  var list=modal.querySelector('#cfr-list');
-  if(sec)sec.style.display='none';
-  if(toggle)toggle.style.display='block';
-  if(list)list.innerHTML='';
-}
 async function saveCust(){
   const saveBtn=document.getElementById('cust-save-btn');
   if(saveBtn.disabled)return;
@@ -19145,7 +19183,7 @@ async function saveCust(){
   if(!familyRequested){
     var familySec=document.getElementById('cfr-sec');
     var familyList=document.getElementById('cfr-list');
-    if(familySec)familySec.style.display='none';
+    if(familySec)familySec.hidden=true;
     if(familyList)familyList.innerHTML='';
   }
   /* V144_6_1: 저장 성공 → 모달 닫기 → 목록 갱신 → 방금 저장한 대표 고객 상세(기본정보 탭) 진입.
@@ -19168,7 +19206,6 @@ async function saveCust(){
   }
   if(uid!==_UID)return;
   if(!d){focused?.focus();return;}
-  cfr_closeAfterMainSave();
   closeCustomerForm();
   renderCustList();renderHomeCusts();
   if(!editing&&wd09ResumeEntryWithCustomer(d.id))return;
@@ -20295,7 +20332,7 @@ document.getElementById('wd09-customer-card-slot').innerHTML=
   // 1줄: 연락처 / 통신사 / 주민번호
   +'<div class="grid-3" style="margin-bottom:10px;">'+dr('연락처',cstFormatPhone(c.phone))+dr('통신사',c.telecom||'-')+rrnDr()+'</div>'
   // 2줄: 생년월일(만나이) / 성별
-  +'<div style="margin-bottom:10px;">'+dr('생년월일 (만나이) / 성별',birthGender)+'</div>'
+  +'<div class="wd-family-profile-demographics" style="margin-bottom:10px;">'+dr('생년월일 (만나이) / 성별',birthGender)+'</div>'
   // 3줄: 주소
   +'<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--s400);margin-bottom:2px;">주소</div><div style="font-size:14px;font-weight:600;color:var(--s800);word-break:break-all;white-space:pre-wrap;line-height:1.55;">'+esc(_fullAddr||'-')+'</div></div>'
   +'<div class="cust-sec-label" style="margin-top:12px;">추가정보</div>'
@@ -23165,12 +23202,19 @@ function cf_renderFam(c){
   box.innerHTML=head+body;
   const list=box.querySelector('.wd-family-list');
   for(const {customer,relation,cohabitation} of people){
-    const button=document.createElement('button'), name=document.createElement('strong'), detail=document.createElement('span');
+    const button=document.createElement('button'), name=document.createElement('strong');
+    const role=document.createElement('span'), residence=document.createElement('span'), arrow=document.createElement('span');
     button.type='button';
     button.className='wd-family-person';
     name.textContent=customer.name;
-    detail.textContent=relation+' · '+cohabitation;
-    button.append(name,detail);
+    role.className='wd-family-relation';
+    role.textContent=relation;
+    residence.className='wd-family-residence';
+    residence.textContent=cohabitation;
+    arrow.className='wd-family-arrow';
+    arrow.textContent='›';
+    arrow.setAttribute('aria-hidden','true');
+    button.append(name,role,residence,arrow);
     button.addEventListener('click',()=>wdOpenFamilyPreview(customer.id,relation,cohabitation));
     list.append(button);
   }
@@ -23240,8 +23284,8 @@ function cfr_reset(showToggle){
   cfr_familyModeActive=false;
   var list=document.getElementById('cfr-list'),sec=document.getElementById('cfr-sec'),tg=document.getElementById('cfr-toggle');
   if(list)list.innerHTML='';
-  if(sec)sec.style.display='none';
-  if(tg)tg.style.display=showToggle?'block':'none';
+  if(sec)sec.hidden=true;
+  if(tg){tg.hidden=!showToggle;tg.setAttribute('aria-expanded','false');}
   cfr_updateSaveLabel();
 }
 function cfr_open(ev){
@@ -23251,8 +23295,8 @@ function cfr_open(ev){
   ev.stopImmediatePropagation();
   cfr_familyModeActive=true;
   var sec=document.getElementById('cfr-sec'),tg=document.getElementById('cfr-toggle'),ds=document.getElementById('cfr-desc');
-  if(tg)tg.style.display='none';
-  if(sec)sec.style.display='block';
+  if(tg){tg.hidden=true;tg.setAttribute('aria-expanded','true');}
+  if(sec)sec.hidden=false;
   if(ds)ds.textContent='가족은 이름만으로 등록할 수 있어요. 나머지 정보는 나중에 채워도 됩니다.';
   if(!document.querySelectorAll('#cfr-list .cfr-row').length)cfr_addRow();
 }
@@ -23332,7 +23376,7 @@ function cfr_updateSaveLabel(){
 }
 function cfr_collect(repRec){
   const section=document.getElementById('cfr-sec');
-  if(!cfr_familyModeActive||section.style.display==='none')return [];
+  if(!cfr_familyModeActive||section.hidden)return [];
   const rows=Array.from(section.querySelectorAll('.cfr-row'));
   const output=[];
   const usedIds=new Set(getCusts().map(c=>String(c.id)));
