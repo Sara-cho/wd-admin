@@ -38321,6 +38321,7 @@ function wd09MountDriveSetup(connectDrive,home){
     if(_UID==='WD26002')byId('wd09-bulk-sheet-status').textContent='';
     window.wd09CustomerFiles=null;
     window.wd09SkillDrive=null;
+    window.wd17SalesDrive=null;
     window.wd09ShowSkillBoard?.();
     window.wd09ResetMonthly?.();
     window.wd09RefreshBulkSheetButton?.();
@@ -39171,6 +39172,69 @@ function wd09ArchivePreviewMime(name){
       service:wd09DriveFolderService(api,uid,adviser.name),
       onConnected(){
         window.wd09SkillDrive=wd09SkillDriveService(request,uploadDriveFile,uid);
+        let salesFolder;
+        const folderName='8.영업관리_임시작업';
+        async function salesFolderId(){
+          if(salesFolder)return salesFolder;
+          const folders=await wd09DriveFolderService(api,uid,adviser.name).inspect(false);
+          if(!folders.adviser)throw Error('Drive에서 WD '+adviser.name+' 보험폴더를 확인해 주세요.');
+          const parent=folders.adviser.id;
+          let folder=await api.findFolder(parent,'sales-work',folderName);
+          if(!folder){
+            if(!api.canListExistingFolders)throw Error('기존 영업관리 폴더를 찾으려면 Drive 읽기 권한을 연결해 주세요.');
+            folder=await api.createFolder(parent,'sales-work',folderName);
+          }
+          if(!folder?.id||folder.name!==folderName)throw Error('영업관리 저장 폴더를 확인할 수 없어요.');
+          salesFolder=folder.id;
+          return salesFolder;
+        }
+        window.wd17SalesDrive={uid,archive:(name,blob,previous,source,context)=>api.lock(async()=>{
+          if(!context?.customerId||!/^\d{4}-(0[1-9]|1[0-2])$/.test(context.month))throw Error('고객과 영업월을 확인해 주세요.');
+          if(typeof name!=='string'||!name.startsWith('[영업관리]')||!(/\.(pdf|json)$/i.test(name))||/[\\/:*?"<>|\x00-\x1f]/.test(name))
+            throw Error('영업관리 저장 이름을 확인해 주세요.');
+          const parent=await salesFolderId();
+          const mime=name.toLowerCase().endsWith('.pdf')?'application/pdf':'application/json';
+          const hash=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))),x=>x.toString(16).padStart(2,'0')).join('');
+          const ownerKey=await hash(JSON.stringify([uid,String(context.customerId),context.month]));
+          const slot=name.replace(/(현재보험보장분석_)\d{6}(\.pdf)$/,'$1날짜$2');
+          const slotKey=await hash(JSON.stringify([ownerKey,slot]));
+          const props={wd17Sales:slotKey,wd17Owner:ownerKey};
+          const fields='id,name,parents,trashed,appProperties';
+          const url=id=>base+'/files/'+encodeURIComponent(id);
+          async function inspect(id){
+            if(typeof id!=='string'||!/^[-\w]+$/.test(id))throw Error('Drive 파일 연결을 확인해 주세요.');
+            const item=await request(url(id)+'?supportsAllDrives=true&fields='+fields);
+            if(item.trashed||!item.parents?.includes(parent)||item.appProperties?.wd17Owner!==ownerKey)throw Error('선택한 고객의 영업관리 파일을 확인해 주세요.');
+            return item;
+          }
+          const q="trashed = false and '"+queryValue(parent)+"' in parents and appProperties has { key='wd17Sales' and value='"+slotKey+"' }";
+          const matches=await request(base+'/files?'+new URLSearchParams({q,spaces:'drive',fields:'files('+fields+'),nextPageToken',pageSize:'2'}));
+          if(matches.files?.length>1||matches.nextPageToken)throw Error('같은 영업기록이 여러 개예요. Drive 자료를 확인해 주세요.');
+          const prior=previous?.id?await inspect(previous.id):matches.files?.[0];
+          if(prior&&prior.appProperties?.wd17Sales!==slotKey)throw Error('이 첨부 위치의 파일이 아니에요.');
+          const meta={name,appProperties:props,...(prior?{}:{parents:[parent]})};
+          let result;
+          if(source?.id){
+            const original=await inspect(source.id);
+            if(original.id===prior?.id)throw Error('원본과 확정 제안서를 구분해 주세요.');
+            meta.appProperties={...props,wd17Source:original.id};
+            if(!prior){
+              result=await request(url(original.id)+'/copy?supportsAllDrives=true&fields=id',{
+                method:'POST',body:JSON.stringify(meta),contentType:'application/json'});
+            }else{
+              const data=await request(url(original.id)+'?alt=media',{binary:true});
+              result=await uploadDriveFile(meta,data,mime,prior.id);
+            }
+          }else{
+            if(!blob||typeof blob.arrayBuffer!=='function')throw Error('업로드할 파일을 다시 선택해 주세요.');
+            result=await uploadDriveFile(meta,blob,mime,prior?.id);
+          }
+          if(!result?.id)throw Error('Drive 저장 결과를 확인하지 못했어요.');
+          const saved=await inspect(result.id);
+          if(saved.name!==name)throw Error('Drive 저장 파일명이 일치하지 않아요.');
+          return {id:saved.id,name:saved.name};
+        })};
+
         readerAccount=user.permissionId;
         readerSession=canUse(monthlyScope)?{uid,token:grant.access_token,expiresAt}:null;
         void window.wd09ShowSkillBoard?.();
@@ -39741,8 +39805,9 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
   }
 
   function session() {
-    const customers=getCusts().map(({id,name,phone,ctype,route})=>({
-      id,name,phoneLast:String(phone||'').replace(/\D/g,'').slice(-4),
+    const customers=getCusts().map(({id,name,phone,birth,rrnFull,rrn,ctype,route})=>({
+      id,name,phone:String(phone||''),birthYear:/^(\d{4})(?:-|\d{4}$|$)/.exec(birth||'')?.[1]||/^(\d{2})\d{4}/.exec(rrnFull||rrn||'')?.[1]||'',
+      age:Number(/만 (\d+)세/.exec(calcAge(String(birth||'')))?.[1]??NaN),phoneLast:String(phone||'').replace(/\D/g,'').slice(-4),
       type:normalizeCustomerType(ctype),source:route==='DB'?'DB영업':String(route||'')
     }));
     if(demo&&_UID==='preview')return {uid:'preview',active:()=>_UID==='preview',customers};
@@ -40209,7 +40274,11 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
       if(request!==visit||!page.classList.contains('on'))return;
       opening=opened;
       frame.hidden=false;
-      frame.srcdoc=window.wdSalesPlanFrameHtml;
+      let source=window.wdSalesPlanFrameHtml;
+    source=source.replace("\u003c/style>\u003c/head>",()=>"\u003c/style>\u003cstyle>\n.wd-board:has(#wd17-plan) main{max-width:100%;padding:8px;box-sizing:border-box}\n.wd-board:has(#wd17-plan) .sales-tabs{display:flex;gap:4px;margin:0 0 6px}\n.wd-board:has(#wd17-plan) .sales-tabs button{flex:1}\n#salesTodayTab{display:none!important}\n#salesPlan:not(.wd17-legacy)>:not(#wd17-plan):not(#wd17-mode){display:none!important}\n#salesPlan.wd17-legacy>#wd17-plan{display:none}\n#wd17-plan{display:block;width:100%;height:calc(100vh - 88px);height:calc(100dvh - 88px);border:0;background:#f5f4f8}\n#wd17-mode{display:block;margin:0 0 4px auto;padding:4px 10px;font-size:14px}\n#wd17-mode[hidden]{display:none}\n\u003c/style>\u003c/head>");
+    source=source.replace("  bindSalesViews();\n  await refreshHubMonth();",()=>"  bindSalesViews();\n  installWd17();\n  await refreshHubMonth();");
+    source=source.replace("\nstart();",()=>"\nfunction installWd17(){\n  const plan=document.getElementById('salesPlan');\n  const child=document.createElement('iframe');\n  child.id='wd17-plan';child.title='이번 달 영업계획';\n  const source=new URL('wd-sales-plan-test-v17.html',parent.location.href);\n  source.search='v=17';\n  const mode=document.createElement('button');\n  mode.id='wd17-mode';mode.type='button';mode.textContent='이전 영업계획 보기';\n  mode.hidden=!state.clients.length&&!Object.keys(state.goals).length;\n  mode.onclick=()=>{\n    const legacy=plan.classList.toggle('wd17-legacy');\n    mode.textContent=legacy?'새 영업계획으로':'이전 영업계획 보기';\n  };\n  window.wd17Connect=win=>{\n    if(win!==child.contentWindow||win.location.origin!==source.origin||win.location.pathname!==source.pathname)throw Error('영업계획 화면을 다시 열어 주세요.');\n    hubSales.assertActive();\n    return Object.freeze({...hubSales,registerContract:input=>hubSales.save(input),\n      setMonth(month){if(/^\\d{4}-(0[1-9]|1[0-2])$/.test(month)&&$('month').value!==month){$('month').value=month;void refreshHubMonth();}},\n    });\n  };\n  plan.prepend(mode,child);\n  child.src=source.href;\n  openSalesTab('plan');\n}\n\nstart();");
+      frame.srcdoc=source;
       feedback.textContent='';
     } catch(error) {
       if(request===visit)feedback.textContent=error.message;
@@ -40239,6 +40308,43 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
       getCustomers:()=>{
         sameSession(opened);
         return opened.customers.map(customer=>({...customer,id:String(customer.id),name:String(customer.name)}));
+      },
+      
+      loadPlans:async()=>{
+        sameSession(opened);
+        if(!opened.sb)throw Error('TEST 주소에서 Google 로그인 후 월 계획을 열어 주세요.');
+        const records=[];
+        for(let offset=0;;offset+=250){
+          const {data,error}=await opened.sb.from('wd_test_sales_months').select('month,plan,revision').eq('uid',opened.uid).order('month').range(offset,offset+249);
+          sameSession(opened);
+          if(error||!Array.isArray(data))throw Error('영업계획을 불러오지 못했어요. 로그인과 연결을 확인해 주세요.');
+          records.push(...data);
+          if(data.length<250)return records;
+        }
+      },
+      savePlan:async(month,plan,expected)=>{
+        sameSession(opened);
+        if(!opened.sb||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||!Array.isArray(plan?.clients))throw Error('영업계획 정보를 확인해 주세요.');
+        const revision=Number(expected||0);
+        if(!Number.isSafeInteger(revision)||revision<0)throw Error('영업계획 버전을 확인해 주세요.');
+        const table=opened.sb.from('wd_test_sales_months');
+        const query=revision===0
+          ?table.insert({uid:opened.uid,month,plan,revision:1})
+          :table.update({plan,revision:revision+1}).eq('uid',opened.uid).eq('month',month).eq('revision',revision);
+        const {data,error}=await query.select('revision').maybeSingle();
+        sameSession(opened);
+        if(error?.code==='23505'||(!error&&!data))throw Error('다른 화면에서 같은 달을 수정했어요. 영업계획을 다시 열어 주세요.');
+        if(error||data?.revision!==revision+1)throw Error('영업계획을 저장하지 못했어요. 연결을 확인해 주세요.');
+        return data.revision;
+      },
+      archive:async(name,blob,previous,source,context)=>{
+        sameSession(opened);
+        const drive=window.wd17SalesDrive;
+        if(!drive||drive.uid!==opened.uid)throw Error('허브 상단에서 내 Google Drive를 연결해 주세요.');
+        if(!opened.customers.some(c=>String(c.id)===String(context?.customerId)))throw Error('로그인 계정의 고객을 확인해 주세요.');
+        const result=await drive.archive(name,blob,previous,source,context);
+        sameSession(opened);
+        return result;
       },
       getResults:(month,period)=>loadResults(opened,month,period),
       getSummary:async month=>{
