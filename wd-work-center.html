@@ -3493,6 +3493,45 @@ function openArchiveAction(action,row,file,perform){
   };
 }
 
+function paintLibraryTable(list,rows,search,manual,selected,clearReader,choose){
+    const words=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const filtered=rows.filter(row=>{
+      const searchable=[row.title,row.name,...(row.attachments||[]).map(file=>file.title)].join(' ').toLowerCase();
+      return words.every(word=>searchable.includes(word));
+    });
+    if(selected&&!filtered.some(row=>row.id===selected))clearReader();
+    list.innerHTML=filtered.length?`<table class="wd98-drive-table"><thead><tr><th scope="col">${manual?'매뉴얼명':'자료명'} <span>${filtered.length}건</span></th>
+      <th scope="col" class="wd101-secondary-col">분류</th><th scope="col" class="wd101-secondary-col">${manual?'생성자':'등록자'}</th>
+      <th scope="col" class="wd101-secondary-col">${manual?'형식':'등록일'}</th><th scope="col">수정일</th></tr></thead>
+      <tbody>${filtered.map(row=>`<tr class="${row.id===selected?'wd98-selected':''}">
+        <td><button type="button" data-native-file="${esc(row.id)}" aria-pressed="${row.id===selected}">${esc(row.title)}</button></td>
+        <td class="wd101-secondary-col">${esc(row.category)}</td>
+        <td class="wd101-secondary-col">${esc(row.author||row.owners?.[0]?.displayName||(row.driveId?'Drive':'—'))}</td>
+        <td class="wd101-secondary-col">${esc(manual?nativeDriveFileKind(row):String(row.created_at||row.createdTime||'').slice(0,10)||'—')}</td>
+        <td>${esc(String(row.modifiedTime||'').slice(0,10)||'—')}</td></tr>`).join('')}</tbody></table>`:
+      `<p class="empty">${words.length?'검색 조건에 맞는 자료가 없어요.':'이 분류에 표시할 자료가 없어요.'}</p>`;
+    list.querySelectorAll('[data-native-file]').forEach(button=>button.onclick=()=>choose(filtered.find(row=>row.id===button.dataset.nativeFile)));
+}
+function markLibrarySelection(list,selected){
+      list.querySelectorAll('[data-native-file]').forEach(button=>{
+        const current=button.dataset.nativeFile===selected;
+        button.setAttribute('aria-pressed',String(current));
+        button.closest('tr').classList.toggle('wd98-selected',current);
+      });
+}
+function openLibraryReader(reader,list,row,onClose){
+  reader.hidden=false;
+    reader.innerHTML=`<header class="wd101-reader-header"><div class="wd101-reader-top">
+      <span class="wd101-reader-tag">${esc(row.category)}</span><div class="wd101-reader-actions">
+      <span class="wd101-archive-actions"></span><button class="small wd101-reader-close" type="button" aria-label="상세 닫기">닫기</button>
+      </div></div><h2>${esc(row.title)}</h2><p class="wd101-reader-meta">${esc(nativeDriveFileKind(row))} · ${esc(String(row.modifiedTime||'').slice(0,10)||'수정일 미등록')}</p></header>
+      <div class="wd96-drive-links" hidden></div><div class="wd96-drive-text" aria-label="자료 미리보기" role="region" tabindex="0"></div>`;
+    reader.querySelector('.wd101-reader-close').onclick=()=>{
+      onClose();
+      list.querySelectorAll('[data-native-file]').forEach(button=>{if(button.dataset.nativeFile===row.id)button.focus();});
+    };
+    if(typeof matchMedia==='function'&&matchMedia('(max-width:900px)').matches)reader.scrollIntoView({block:'nearest'});
+}
 function bindNativeDrivePage(){
   const panel=$('nativeDrivePage'),status=$('nativeDriveStatus'),refresh=$('nativeDriveRefresh'),add=$('nativeDriveAdd');
   const menu=S.nav,account=workspaceModuleAccount(menu),manual=menu==='manual';
@@ -3530,25 +3569,9 @@ function bindNativeDrivePage(){
     if(!row)return;
     const request=++readId;
     selected=row.id;
-    const markSelection=()=>{
-      list.querySelectorAll('[data-native-file]').forEach(button=>{
-        const current=button.dataset.nativeFile===selected;
-        button.setAttribute('aria-pressed',String(current));
-        button.closest('tr').classList.toggle('wd98-selected',current);
-      });
-    };
+    const markSelection=()=>markLibrarySelection(list,selected);
     markSelection();
-    reader.hidden=false;
-    reader.innerHTML=`<header class="wd101-reader-header"><div class="wd101-reader-top">
-      <span class="wd101-reader-tag">${esc(row.category)}</span><div class="wd101-reader-actions">
-      <span class="wd101-archive-actions"></span><button class="small wd101-reader-close" type="button" aria-label="상세 닫기">닫기</button>
-      </div></div><h2>${esc(row.title)}</h2><p class="wd101-reader-meta">${esc(nativeDriveFileKind(row))} · ${esc(String(row.modifiedTime||'').slice(0,10)||'수정일 미등록')}</p></header>
-      <div class="wd96-drive-links" hidden></div><div class="wd96-drive-text" aria-label="자료 미리보기" role="region" tabindex="0"></div>`;
-    reader.querySelector('.wd101-reader-close').onclick=()=>{
-      clearReader();markSelection();
-      list.querySelectorAll('[data-native-file]').forEach(button=>{if(button.dataset.nativeFile===row.id)button.focus();});
-    };
-    if(typeof matchMedia==='function'&&matchMedia('(max-width:900px)').matches)reader.scrollIntoView({block:'nearest'});
+    openLibraryReader(reader,list,row,()=>{clearReader();markSelection();});
     const body=reader.querySelector('.wd96-drive-text'),attachments=reader.querySelector('.wd96-drive-links');
     try{await refreshWorkCenterGrant(menu,undefined,row.category);}
     catch(error){if(active()&&request===readId)body.textContent=error.message;return;}
@@ -3617,25 +3640,7 @@ function bindNativeDrivePage(){
     }
     paintActions();
   };
-  const paintTable=()=>{
-    const words=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const filtered=rows.filter(row=>{
-      const searchable=[row.title,...(row.attachments||[]).map(file=>file.title)].join(' ').toLowerCase();
-      return words.every(word=>searchable.includes(word));
-    });
-    if(selected&&!filtered.some(row=>row.id===selected))clearReader();
-    list.innerHTML=filtered.length?`<table class="wd98-drive-table"><thead><tr><th scope="col">${manual?'매뉴얼명':'자료명'} <span>${filtered.length}건</span></th>
-      <th scope="col" class="wd101-secondary-col">분류</th><th scope="col" class="wd101-secondary-col">${manual?'생성자':'등록자'}</th>
-      <th scope="col" class="wd101-secondary-col">${manual?'형식':'등록일'}</th><th scope="col">수정일</th></tr></thead>
-      <tbody>${filtered.map(row=>`<tr class="${row.id===selected?'wd98-selected':''}">
-        <td><button type="button" data-native-file="${esc(row.id)}" aria-pressed="${row.id===selected}">${esc(row.title)}</button></td>
-        <td class="wd101-secondary-col">${esc(row.category)}</td>
-        <td class="wd101-secondary-col">${esc(row.author||row.owners?.[0]?.displayName||(row.driveId?'Drive':'—'))}</td>
-        <td class="wd101-secondary-col">${esc(manual?nativeDriveFileKind(row):String(row.created_at||row.createdTime||'').slice(0,10)||'—')}</td>
-        <td>${esc(String(row.modifiedTime||'').slice(0,10)||'—')}</td></tr>`).join('')}</tbody></table>`:
-      `<p class="empty">${words.length?'검색 조건에 맞는 자료가 없어요.':'이 분류에 표시할 자료가 없어요.'}</p>`;
-    list.querySelectorAll('[data-native-file]').forEach(button=>button.onclick=()=>choose(filtered.find(row=>row.id===button.dataset.nativeFile)));
-  };
+  const paintTable=()=>paintLibraryTable(list,rows,search,manual,selected,clearReader,choose);
   const paintTabs=()=>{
     tabs.innerHTML=groups.map(group=>`<button class="small" type="button" data-native-category="${esc(group)}" aria-pressed="${category===group}">${esc(group)}</button>`).join('');
     tabs.querySelectorAll('[data-native-category]').forEach(button=>button.onclick=()=>{
@@ -9411,7 +9416,11 @@ async function bindEnrolledReport(date,dates,updateReportDates){
 }
 function bindEnrolledLibrary(){
   const menu=S.nav,groups=availableLibraryCategories(menu),panel=$('nativeDrivePage'),tabs=$('nativeDriveCategories'),list=$('nativeDriveList'),reader=$('nativeDriveReader'),line=$('nativeDriveStatus'),search=$('nativeDriveSearch'),add=$('nativeDriveAdd');
-  let category=groups[0],rows=[],request=0,read=0;
+  const manual=menu==='manual';
+  let category=groups[0],rows=[],request=0,read=0,selected='';
+  const clearReader=()=>{
+    ++read;selected='';releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();
+  };
   const active=()=>panel.isConnected&&enrolledDriveStaff()&&S.nav===menu;
   const button=(parent,label,run)=>{
     const b=document.createElement('button');b.type='button';b.className='small';b.textContent=label;b.onclick=async()=>{b.disabled=true;try{await run();}catch(e){if(active())line.textContent=e.message;}finally{b.disabled=false;}};parent.append(b);return b;
@@ -9431,13 +9440,15 @@ function bindEnrolledLibrary(){
   };
   const open=async(row)=>{
     const n=++read,params={menu,category,id:row.id},same=()=>active()&&n===read;
-    releaseNativeDrivePreview();reader.hidden=false;reader.replaceChildren();line.textContent='';
-    const heading=document.createElement('h2');heading.textContent=row.name;reader.append(heading);
-    if(libraryCan(menu,'download'))button(reader,'다운로드',async()=>{const blob=await staffDriveCall('download',params,'blob');if(same())downloadCompanyBlob(blob,row.name);});
-    if(libraryCan(menu,'edit'))button(reader,'이름 수정',async()=>{const title=prompt('자료 제목',menu==='manual'?cleanManualTitle(row.name):row.name);if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}});
-    if(libraryCan(menu,'replace'))button(reader,'파일 교체',()=>pick('replace',row.id));
-    if(libraryCan(menu,'delete'))button(reader,'삭제',async()=>{if(confirmWorkCenterDelete(row.name)){await staffDriveCall('remove',params);if(same())await refresh();}});
-    const body=document.createElement('div');body.className='wd96-drive-text';reader.append(body);
+    releaseNativeDrivePreview();selected=row.id;markLibrarySelection(list,selected);line.textContent='';
+    openLibraryReader(reader,list,row,()=>{clearReader();markLibrarySelection(list,selected);});
+    const actions=reader.querySelector('.wd101-archive-actions'),body=reader.querySelector('.wd96-drive-text');
+    const actionButton=(action,label,run)=>{const b=button(actions,label,run);b.dataset.archiveAction=action;};
+    if(libraryCan(menu,'download'))actionButton('download','다운로드',async()=>{const blob=await staffDriveCall('download',params,'blob');if(same())downloadCompanyBlob(blob,row.name);});
+    if(libraryCan(menu,'edit'))actionButton('edit','수정',async()=>{const title=prompt('자료 제목',menu==='manual'?cleanManualTitle(row.name):row.name);if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}});
+    if(libraryCan(menu,'replace'))actionButton('replace','교체',()=>pick('replace',row.id));
+    if(libraryCan(menu,'delete'))actionButton('delete','삭제',async()=>{if(confirmWorkCenterDelete(row.name)){await staffDriveCall('remove',params);if(same())await refresh();}});
+    body.textContent='미리보기를 불러오는 중…';
     try{
       const blob=await staffDriveCall('preview',params,'blob');if(!same())return;
       if(blob.type.startsWith('text/')){const txt=await blob.text();if(same())body.textContent=txt;return;}
@@ -9448,18 +9459,16 @@ function bindEnrolledLibrary(){
       node.className='wd98-native-preview';node.title=row.name;nativeDrivePreviewUrl=URL.createObjectURL(blob);node.src=nativeDrivePreviewUrl;body.append(node);
     }catch(e){if(same())body.textContent=e.message;}
   };
-  const paint=()=>{
-    list.replaceChildren();const found=rows.filter(r=>r.name.toLowerCase().includes(search.value.trim().toLowerCase()));
-    for(const row of found)button(list,row.name,()=>open(row));
-    if(!found.length)list.textContent='표시할 자료가 없어요.';
-  };
+  const paint=()=>paintLibraryTable(list,rows,search,manual,selected,clearReader,open);
   const refresh=async()=>{
-    const n=++request;++read;releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();list.replaceChildren();rows=[];
+    const n=++request;clearReader();list.replaceChildren();rows=[];search.disabled=true;
     if(!category){line.textContent='허용된 자료 분류가 없어요.';return;}
     line.textContent='회사 Drive 자료를 불러오는 중…';
     tabs.replaceChildren();
-    for(const group of groups){const b=button(tabs,group,async()=>{category=group;await refresh();});b.setAttribute('aria-pressed',String(group===category));}
-    try{const data=await staffDriveCall('list',{menu,category});if(!active()||n!==request)return;rows=data;line.textContent='';search.disabled=false;paint();}
+    for(const group of groups){const b=button(tabs,group,async()=>{if(category===group)return;category=group;search.value='';await refresh();});b.setAttribute('aria-pressed',String(group===category));}
+    try{const data=await staffDriveCall('list',{menu,category});if(!active()||n!==request)return;rows=data.map(file=>({...file,driveId:file.id,category,title:manual?cleanManualTitle(file.name):file.name}))
+        .sort((a,b)=>String(b.modifiedTime||'').localeCompare(String(a.modifiedTime||'')));
+      line.textContent='';search.disabled=false;paint();}
     catch(e){if(active()&&n===request)line.textContent=e.message;}
   };
   add.hidden=!category||!libraryCan(menu,'upload');add.onclick=()=>pick('upload');search.oninput=paint;$('nativeDriveRefresh').onclick=refresh;void refresh();

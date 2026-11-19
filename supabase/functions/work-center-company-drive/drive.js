@@ -125,8 +125,8 @@ export async function handle(req,env){
       if(!validId(id))fail(400,'파일을 확인해 주세요.');
       return (await drive(fileUrl(id))).json();
     };
-    const list=async parent=>{
-      const q=new URLSearchParams({q:"'"+parent+"' in parents and trashed = false",fields:'nextPageToken,files('+fields+')',pageSize:'1000',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+    const list=async (parent,fileFields=fields)=>{
+      const q=new URLSearchParams({q:"'"+parent+"' in parents and trashed = false",fields:'nextPageToken,files('+fileFields+')',pageSize:'1000',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
       const rows=[];
       for(;;){const p=await (await drive(api+'?'+q)).json();rows.push(...(p.files||[]));if(!p.nextPageToken)break;q.set('pageToken',p.nextPageToken);}
       return rows;
@@ -197,7 +197,13 @@ export async function handle(req,env){
     if(!Object.hasOwn(operations,action))fail(400,'지원하지 않는 작업이에요.');
     const {menu,category}=input,parent=libraryScope(grant,menu,category,operations[action]);
     const title=name=>menu==='manual'?'['+category+'_매뉴얼] '+name:name;
-    if(action==='list')return json((await list(parent)).filter(f=>inScope(f,parent,menu,category)).map(({id,name,mimeType,modifiedTime})=>({id,name,mimeType,modifiedTime})));
+    if(action==='list'){
+      const files=await list(parent,fields+',createdTime,owners(displayName)');
+      return json(files.filter(f=>inScope(f,parent,menu,category)).map(f=>({
+        id:f.id,name:f.name,mimeType:f.mimeType,modifiedTime:f.modifiedTime,createdTime:f.createdTime,
+        author:f.owners?.[0]?.displayName
+      })));
+    }
     if(action!=='upload'){
       const f=await getFile(input.id);
       if(!inScope(f,parent,menu,category))fail(403,'이 분류에 속한 자료만 열 수 있어요.');
