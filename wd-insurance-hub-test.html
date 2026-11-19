@@ -12062,8 +12062,6 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #cf-fam-box .wd-family-person:hover { background:var(--s50); }
 #cf-fam-box .wd-family-person:focus-visible { outline:2px solid var(--purple); outline-offset:-2px; }
 #cf-fam-box .wd-family-person span,#cf-fam-box .wd-family-empty { color:var(--s600); font-size:13px; }
-#cf-fam-box .wd-family-referrals { margin-top:12px; font-size:13px; }
-#cf-fam-box .wd-family-referrals summary { cursor:pointer; color:var(--s700); }
 .wd-family-representative-badge { border-radius:999px; background:#e9e2f8; color:#4a3380; padding:4px 9px; font-size:12px; font-weight:750; }
 #wd-family-preview, #wd-family-link { width:min(440px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:20px; border:1px solid var(--s200); border-radius:16px; color:var(--navy); background:#fff; }
 #wd-family-preview::backdrop, #wd-family-link::backdrop { background:#111b3a66; }
@@ -12164,11 +12162,7 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-card-view > div:not(.cust-sec-label) { margin-bottom:8px!important; }
 #cust-det-pg:has(#wd09-customer-info-tab.on) #wd09-customer-card-view :is(.grid-3 > div,.wd-family-profile-demographics > div) { margin-bottom:0!important; }
 #wd09-customer-overview #det-info[data-record-view="det-info"] { gap:12px; }
-#wd09-customer-overview #det-info > :is(#wd09-overview-insurance,#wd09-family-summary) { padding:14px 16px; }
-#wd09-overview-insurance #wd09-shared-insurance-summary .wd09-insurance-summary { margin-bottom:0; }
-#wd09-overview-insurance #wd09-shared-insurance-summary .wd09-insurance-summary > div { padding:9px 11px; }
-#wd09-overview-insurance :is(#wd09-indemnity-note:empty,#wd09-indemnity-premium-note[hidden]) { display:none; }
-#wd09-overview-insurance #wd09-insurance-summary-status { margin:6px 0 0; }
+#wd09-customer-overview #det-info > #wd09-family-summary { padding:14px 16px; }
 #wd09-family-summary #cf-fam-box .wd-family-list { margin:0; }
 #wd09-family-summary #cf-fam-box .wd-family-person { justify-content:flex-start; gap:5px 10px; padding-inline:6px; }
 #wd09-family-summary #cf-fam-box .wd-family-person:last-child { border-bottom:0; }
@@ -12195,12 +12189,53 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 @media(max-width:450px) {
   #wd09-customer-form .wd09-entry-footer :is(#cfr-toggle,#cust-save-btn) { flex:1 1 135px; }
 }
-#wd09-overview-insurance .wd-policy-counts { margin-top:13px; }
-#wd09-overview-insurance .wd-policy-counts h3 { font-size:13px; color:var(--s700); margin:0 0 7px; }
-#wd09-overview-insurance #wd-policy-count-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(116px,100%),1fr)); gap:7px; margin:0; }
-#wd09-overview-insurance .wd-policy-count { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:3px 8px; min-width:0; padding:7px 10px; background:#faf8fc; border:1px solid #e9e3f0; border-radius:8px; }
-#wd09-overview-insurance .wd-policy-count dt { color:#57496c; font-size:12px; }
-#wd09-overview-insurance .wd-policy-count dd { margin:0; color:#3c2973; font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; }
+#wd09-customer-overview #wd09-overview-cards {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; min-width:0;
+}
+#wd09-customer-overview #wd09-overview-cards[hidden] { display:none; }
+#wd09-overview-cards > .card { min-width:0; margin:0; padding:12px 14px; }
+#wd09-overview-cards .card-hd { margin:0 0 10px; gap:5px 8px; min-height:30px; }
+#wd09-overview-cards .card-title { font-size:16px; }
+#wd09-overview-cards .wd-overview-link {
+  border:0; border-radius:8px; padding:5px 8px; min-height:30px; background:var(--s100);
+  color:var(--s700); cursor:pointer; font:inherit; font-size:12px; font-weight:700;
+}
+#wd09-overview-cards .wd-overview-link:hover { background:#eae3f6; }
+#wd09-overview-cards .wd-overview-data { margin:0; overflow-wrap:anywhere; }
+#wd09-overview-cards .wd-overview-data > div,
+#wd09-overview-insurance .wd-policy-count { display:flex; flex-wrap:wrap; justify-content:space-between; gap:2px 6px; }
+#wd09-overview-cards .wd-overview-data > div { padding:6px 0; }
+#wd09-overview-cards .wd-overview-data > [hidden] { display:none; }
+#wd09-overview-cards .wd-overview-data > div + div { border-top:1px solid var(--s200); }
+#wd09-overview-cards .wd-overview-data dt,
+#wd09-overview-insurance .wd-policy-count dt { color:var(--s700); font-size:12px; }
+#wd09-overview-cards .wd-overview-data dd,
+#wd09-overview-insurance .wd-policy-count dd { margin:0; color:var(--navy); font-size:13px; font-weight:750; }
+#wd09-overview-insurance #wd-overview-monthly { color:#483478; font-size:17px; font-weight:800; }
+#wd09-overview-insurance #wd-policy-count-list {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(min(89px,100%),1fr)); gap:4px 10px;
+  margin:4px 0 0; padding-top:6px; border-top:1px solid var(--s200);
+}
+#wd09-overview-insurance .wd-overview-status { margin:4px 0 0; color:var(--s600); font-size:12px; }
+#wd09-overview-insurance :is(.wd-overview-status:empty,#wd-policy-count-list[hidden]) { display:none; }
+#wd09-customer-card-view .wd-overview-referrer { font-size:13px; }
+#wd09-customer-card-view .wd-overview-referrer-label { color:var(--s400); font-size:11px; margin:0 0 2px; }
+#wd09-customer-card-view .wd-overview-referrer button {
+  display:block; border:0; background:none; color:var(--purple); padding:3px 0; text-align:left;
+  cursor:pointer; font:inherit; font-weight:700; overflow-wrap:anywhere;
+}
+#wd09-customer-card-view .wd-overview-referrer summary {
+  margin-top:5px; cursor:pointer; color:var(--s600); font-size:12px;
+}
+#wd09-customer-form .wd-overview-referrer-pick { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+#wd09-customer-form .wd-overview-referrer-pick[hidden] { display:none; }
+#wd09-customer-form .wd-overview-referrer-pick span { color:var(--s700); font-size:13px; font-weight:650; }
+#wd09-customer-form #ci-ref-list .cref-item { width:100%; text-align:left; font-family:inherit; }
+#wd09-customer-form #ci-ref-list .cref-item small { color:var(--s600); }
+@media(max-width:650px) {
+  #wd09-customer-overview #wd09-overview-cards { grid-template-columns:minmax(0,1fr); }
+  #wd09-overview-cards .wd-overview-link { min-height:44px; }
+}
 #cf-fam-box .wd-family-head-title { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 #cf-fam-box .wd-family-total { color:#543b7a; background:#f1ecf8; border-radius:999px; padding:3px 8px; font-size:12px; font-weight:700; }
 #cf-fam-box .wd-family-group { padding:9px 12px 11px; border:1px solid #eee9f3; background:#fbf9fe; border-radius:12px; }
@@ -13254,11 +13289,31 @@ const wdTest09Storage = (() => {
 <div class="wd09-customer-panels">
 <!-- 고객 기본정보의 요약 및 별도 기록 탭 -->
 <div id="det-info" class="wd09-customer-pane" data-record-view="det-info">
-<section id="wd09-overview-insurance" class="card" aria-labelledby="wd09-overview-insurance-title">
-  <div class="card-hd"><h2 class="card-title" id="wd09-overview-insurance-title">가입보험 요약</h2><button type="button" class="btn-sm" onclick="document.getElementById('wd09-customer-insurance-tab').click()">가입보험 상세</button></div>
-  <div id="wd09-overview-insurance-slot"></div>
-  <div class="wd-policy-counts"><h3 id="wd-policy-count-title">보험 종류별 등록 건수</h3><dl id="wd-policy-count-list" aria-labelledby="wd-policy-count-title"></dl></div>
-</section>
+<div id="wd09-overview-cards">
+  <section id="wd09-overview-insurance" class="card" aria-labelledby="wd09-overview-insurance-title">
+    <div class="card-hd">
+      <h2 class="card-title" id="wd09-overview-insurance-title">가입보험 요약</h2>
+      <button type="button" class="wd-overview-link" aria-label="가입보험 상세" onclick="document.getElementById('wd09-customer-insurance-tab').click()">상세</button>
+    </div>
+    <dl class="wd-overview-data"><div><dt>월 보험료</dt><dd id="wd-overview-monthly">—</dd></div></dl>
+    <dl id="wd-policy-count-list" aria-label="보험 종류별 등록 건수" hidden></dl>
+    <p id="wd-overview-insurance-status" class="wd-overview-status" role="status"></p>
+  </section>
+  <section class="card" aria-labelledby="wd-overview-manager-title">
+    <div class="card-hd"><h2 class="card-title" id="wd-overview-manager-title">보험료 관리</h2></div>
+    <dl class="wd-overview-data">
+      <div><dt>관리자</dt><dd id="wd-overview-manager">미지정</dd></div>
+      <div id="wd-overview-managed-row" hidden><dt>관리 중인 가족</dt><dd id="wd-overview-managed">0명</dd></div>
+    </dl>
+  </section>
+  <section class="card" aria-labelledby="wd-overview-payment-title">
+    <div class="card-hd"><h2 class="card-title" id="wd-overview-payment-title">계좌·카드</h2></div>
+    <dl class="wd-overview-data">
+      <div><dt>계좌</dt><dd id="wd-overview-accounts">0개</dd></div>
+      <div><dt>카드</dt><dd id="wd-overview-payment-cards">0개</dd></div>
+    </dl>
+  </section>
+</div>
 <section id="wd09-family-summary" class="card" aria-label="가족관계"><div id="cf-fam-box"></div></section>
 <dialog id="wd-family-preview" aria-labelledby="wd-family-preview-title">
   <h2 id="wd-family-preview-title">고객 기본정보</h2>
@@ -16766,8 +16821,12 @@ const wdTest09Storage = (() => {
 </select>
 </div>
 <div class="fld"><label for="ci-regdate">최초 등록일</label><input id="ci-regdate" type="date"/></div>
+<div class="fld wd09-customer-form-wide wd-overview-referrer-pick" id="ci-ref-launch">
+  <span>소개자 (선택)</span>
+  <button type="button" class="btn-sm" onclick="cref_open()">기존 고객 선택</button>
+</div>
 <div class="fld wd09-customer-form-wide" id="ci-ref-box" style="display:none;background:#FFF7EE;border:1px solid #F0D8B8;border-radius:10px;padding:10px 12px;">
-<label for="ci-ref-q">소개해 준 고객</label>
+<label for="ci-ref-q">소개자 (기존 고객)</label>
 <input id="ci-ref-id" type="hidden"/>
 <div id="ci-ref-pick">
 <input autocomplete="off" id="ci-ref-q" oninput="cref_search(this.value)" placeholder="🔍 이름 또는 연락처 뒷자리" type="text"/>
@@ -20414,13 +20473,8 @@ function setCustomerRecordView(id){
   document.getElementById('det-info').dataset.recordView=isRecordTab?id:'det-info';
   document.getElementById('det-work').hidden=id!=='det-work';
   document.getElementById('det-mat').hidden=id!=='det-mat';
-  document.getElementById('wd09-overview-insurance').hidden=id!=='det-info';
+  document.getElementById('wd09-overview-cards').hidden=id!=='det-info';
   document.getElementById('wd09-family-summary').hidden=id!=='det-info';
-  if(id==='det-info'||id==='det-contracts'){
-    const slot=document.getElementById(id==='det-info'?'wd09-overview-insurance-slot':'wd09-detail-insurance-slot');
-    const summary=document.getElementById('wd09-shared-insurance-summary');
-    if(summary.parentElement!==slot)slot.append(summary);
-  }
   return isRecordTab?'det-info':id;
 }
 function swDetTab(btn,id){
@@ -20473,9 +20527,11 @@ document.getElementById('wd09-customer-card-slot').innerHTML=
   +'<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--s400);margin-bottom:2px;">주소</div><div style="font-size:14px;font-weight:600;color:var(--s800);word-break:break-all;white-space:pre-wrap;line-height:1.55;">'+esc(_fullAddr||'-')+'</div></div>'
   +'<div class="cust-sec-label" style="margin-top:12px;">추가정보</div>'
   +'<div class="grid-3" style="margin-bottom:10px;">'+dr('직업',c.job)+dr('하는 일 (구체)',c.jobDetail)+dr('방문경로',c.route)+dr('최초 등록일',c.regdate)+'</div>'
+  +'<div id="wd-overview-referral" class="wd-overview-referrer"></div>'
   +'<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--s400);margin-bottom:4px;">특이사항</div><div style="font-size:13px;color:var(--s700);background:var(--s50);border-radius:8px;padding:8px 12px;white-space:pre-wrap;line-height:1.65;word-break:break-all;">'+esc(c.special||'-')+'</div></div>'
   +'<div style="font-size:11px;color:var(--s400);margin-top:10px;">등록 '+(c.created||'').slice(0,10)+' / 수정 '+(c.updated||'').slice(0,10)+'</div>'
   +'</div></div>';
+  wdRenderCustomerOverview(c,getCusts());
   cf_renderFam(c);
 }
 function showDetail(id){_vid=id;var c=getCusts().find(function(x){return x.id==id;});if(!c)return;
@@ -23290,8 +23346,10 @@ async function cf_addSave(){
     dialog.close();
     const current=getCusts().find(customer=>String(customer.id)===currentId);
     if(uid===_UID&&currentId===String(_vid)&&current){
-      if(document.getElementById('wd09-customer-card-view')?.hidden)cf_renderFam(current);
-      else renderCustomerCard(current);
+      if(document.getElementById('wd09-customer-card-view')?.hidden){
+        wdRenderCustomerOverview(current,getCusts());
+        cf_renderFam(current);
+      }else renderCustomerCard(current);
       document.querySelector('#cf-fam-box [aria-haspopup="dialog"]')?.focus({preventScroll:true});
     }
   }finally{
@@ -23395,6 +23453,40 @@ function wdRenderFamilyPortraits(container,people){
   }
 }
 
+function wdRenderCustomerOverview(c,customers){
+  const customerId=String(c.id);
+  const lookup=id=>id?customers.find(person=>String(person.id)===String(id)):null;
+  const manager=lookup(c.famRepId);
+  const managed=customers.filter(person=>String(person.id)!==customerId&&String(person.famRepId||'')===customerId);
+  document.getElementById('wd-overview-manager').textContent=manager?.name||(managed.length?'본인':'미지정');
+  document.getElementById('wd-overview-managed-row').hidden=!managed.length;
+  document.getElementById('wd-overview-managed').textContent=managed.length+'명';
+
+  const methods=Array.isArray(c.paymentMethods)?c.paymentMethods:[];
+  document.getElementById('wd-overview-accounts').textContent=methods.filter(method=>method?.kind==='account').length+'개';
+  document.getElementById('wd-overview-payment-cards').textContent=methods.filter(method=>method?.kind==='card').length+'개';
+
+  const referral=document.getElementById('wd-overview-referral');
+  const label=document.createElement('div');
+  label.className='wd-overview-referrer-label';
+  label.textContent='소개자';
+  const personButton=person=>{
+    const button=document.createElement('button');
+    button.type='button';
+    button.textContent=person.name;
+    button.addEventListener('click',()=>showDetail(person.id));
+    return button;
+  };
+  const referrer=lookup(c.refId);
+  referral.replaceChildren(label,referrer?personButton(referrer):document.createTextNode(c.referralName||'-'));
+  const introduced=customers.filter(person=>String(person.refId||'')===customerId&&String(person.id)!==customerId);
+  if(introduced.length){
+    const details=document.createElement('details'), summary=document.createElement('summary');
+    summary.textContent='소개한 고객 '+introduced.length+'명';
+    details.append(summary,...introduced.map(personButton));
+    referral.append(details);
+  }
+}
 function cf_renderFam(c){
   var box=document.getElementById('cf-fam-box');if(!box)return;
   if(!c){box.replaceChildren();return;}
@@ -23403,46 +23495,43 @@ function cf_renderFam(c){
   var head='<div class="card-hd"><div class="wd-family-head-title"><h2 class="card-title">가족관계</h2>'
     +(people.length>1?'<span class="wd-family-total">'+people.length+'명</span>':'')
     +'</div><button type="button" class="btn-sm" aria-haspopup="dialog">+ 기존 고객 연결</button></div>';
-  var body='<div class="wd-family-list"></div>';
-  /* ── V144_6: 🤝 소개 현황 (읽기 전용 · refId 기반) ── */
-  var refBody='';
-  if(c.refId){
-    var refc=cs.find(function(x){return String(x.id)===String(c.refId);});
-    if(refc){
-      refBody+='<div style="font-size:13px;color:var(--s700);background:var(--s50);border-radius:8px;padding:8px 12px;margin-bottom:6px;">소개자: '
-        +'<span onclick="showDetail('+refc.id+')" style="cursor:pointer;color:var(--purple);font-weight:800;text-decoration:underline;">'+esc(refc.name||'')+'</span> 님 (방문경로: 기존고객 소개)</div>';
-    }
-  }
-  var referred=cs.filter(function(x){return String(x.refId||'')===String(c.id);});
-  if(referred.length){
-    var rchips=referred.map(function(m){
-      var when=(m.regdate||m.created||'').slice(2,7);
-      return '<span onclick="showDetail('+m.id+')" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;padding:4px 11px;border-radius:12px;background:#EDF7EF;color:#16a34a;font-size:12px;font-weight:700;">'
-        +esc(m.name||'')+(when?' <span style="font-weight:500;opacity:.75;">'+esc(when)+' 등록</span>':'')+'</span>';
-    }).join(' ');
-    refBody+='<div><div style="font-size:11px;color:var(--s400);margin-bottom:4px;">🤝 소개한 고객 '+referred.length+'명</div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:5px;">'+rchips+'</div></div>';
-  }
-  if(refBody)body+='<details class="wd-family-referrals"><summary>소개 현황</summary>'+refBody+'</details>';
-  box.innerHTML=head+body;
+  box.innerHTML=head+'<div class="wd-family-list"></div>';
   box.querySelector('[aria-haspopup="dialog"]').addEventListener('click',()=>cf_addOpen(c.id));
   wdRenderFamilyPortraits(box.querySelector('.wd-family-list'),people);
 }
 
 /* ══ V144_6: 등록창 소개자 검색 — prefix cref_ (route='기존고객 소개'일 때만 표시·저장) ══ */
+function cref_open(){
+  document.getElementById('ci-route').value='기존고객 소개';
+  cref_onRoute();
+  document.getElementById('ci-ref-q').focus();
+}
 function cref_onRoute(){
-  var r=document.getElementById('ci-route'),box=document.getElementById('ci-ref-box');
-  if(!r||!box)return;
-  if(r.value==='기존고객 소개'){box.style.display='block';}
-  else{box.style.display='none';cref_clearPick();}
+  const active=document.getElementById('ci-route').value==='기존고객 소개';
+  document.getElementById('ci-ref-box').style.display=active?'block':'none';
+  document.getElementById('ci-ref-launch').hidden=active;
+  if(!active)cref_clearPick();
 }
 function cref_search(q){
-  var box=document.getElementById('ci-ref-list');if(!box)return;
-  var self=document.getElementById('ec-id')?document.getElementById('ec-id').value:'';
-  var hits=cf_pickList(q,self?[self]:[]);
-  box.innerHTML=(q||'').trim()?(hits.length?hits.map(function(c){
-    return '<div class="cref-item" onclick="cref_pick('+c.id+')">'+esc(c.name||'')+' <small>'+esc(c.birth||'')+(c.phone?' · '+cf_phone4(c.phone):'')+'</small></div>'; /* V144_6_1: 연락처 마지막 4자리만 */
-  }).join(''):'<div style="font-size:11px;color:var(--s400);">일치하는 고객이 없습니다</div>'):'';
+  const list=document.getElementById('ci-ref-list');
+  list.replaceChildren();
+  if(!q.trim())return;
+  const editId=document.getElementById('ec-id').value;
+  const hits=cf_pickList(q,editId?[editId]:[]);
+  if(!hits.length){
+    list.textContent='일치하는 고객이 없습니다.';
+    return;
+  }
+  for(const customer of hits){
+    const button=document.createElement('button'), details=document.createElement('small');
+    button.type='button';
+    button.className='cref-item';
+    button.textContent=customer.name+' ';
+    details.textContent=[customerBirthDate(customer.birth),cf_phone4(customer.phone)].filter(Boolean).join(' · ');
+    button.append(details);
+    button.addEventListener('click',()=>cref_pick(customer.id));
+    list.append(button);
+  }
 }
 function cref_pick(id){
   var c=getCusts().find(function(x){return String(x.id)===String(id);});
@@ -23462,21 +23551,15 @@ function cref_clearPick(){
   if(ls)ls.innerHTML='';
 }
 function cref_reset(){
-  var box=document.getElementById('ci-ref-box');if(box)box.style.display='none';
+  document.getElementById('ci-ref-box').style.display='none';
+  document.getElementById('ci-ref-launch').hidden=false;
   cref_clearPick();
 }
 function cref_bind(c){
-  /* 수정 모달 진입 시: 방문경로가 '기존고객 소개'면 박스 표시 + 기존 소개자 복원 */
   cref_reset();
   if(!c)return;
-  var r=document.getElementById('ci-route');
-  if(r&&r.value==='기존고객 소개'){
-    var box=document.getElementById('ci-ref-box');if(box)box.style.display='block';
-    if(c.refId){
-      var refc=getCusts().find(function(x){return String(x.id)===String(c.refId);});
-      if(refc)cref_pick(refc.id);
-    }
-  }
+  cref_onRoute();
+  if(document.getElementById('ci-route').value==='기존고객 소개'&&c.refId)cref_pick(c.refId);
 }
 function cref_val(prev){
   var r=document.getElementById('ci-route');
@@ -26471,11 +26554,16 @@ function wd09RenderInsuranceCounts(rows,ready){
 function wd09RenderInsuranceSummary(rows,state){
   const ready=state!=='loading'&&state!=='error';
   wd09RenderInsuranceCounts(rows,ready);
+  document.getElementById('wd-policy-count-list').hidden=!ready;
+  document.getElementById('wd-overview-insurance-status').textContent=state==='loading'
+    ?'불러오는 중…':state==='error'?'요약을 불러오지 못했어요.':'';
   const monthlyRows=ready?rows.filter(row=>row.purpose==='health'||row.purpose==='savings'):[];
   const monthly=wd09SummarizeInsurancePremiums(monthlyRows,false);
   const healthCount=monthlyRows.filter(row=>row.purpose==='health').length;
   const savingsCount=monthlyRows.length-healthCount;
-  document.getElementById('wd09-insurance-total').textContent=wd09FormatInsuranceAmount(monthly.amount);
+  const formattedMonthly=wd09FormatInsuranceAmount(monthly.amount);
+  document.getElementById('wd09-insurance-total').textContent=formattedMonthly;
+  document.getElementById('wd-overview-monthly').textContent=formattedMonthly;
   document.getElementById('wd09-insurance-total-note').textContent=ready
     ?'보장성보험 '+healthCount+'건 + 저축성보험 '+savingsCount+'건':'보장성보험 + 저축성보험';
 
