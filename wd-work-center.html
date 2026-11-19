@@ -2561,6 +2561,12 @@ async function saveWorkCenterGrant(profile,login,email,enabled){
   if(login===managerHqAccount.uid)throw new Error('관리자 본인 계정은 직원으로 연결할 수 없어요.');
   const current=managerCloudGrants.get(profile.id);
   if(current&&current.login_id!==login)throw new Error('이미 연결된 본진 로그인 ID를 확인해 주세요.');
+  if(current?.pending || (!current && login===profile.id && /^staff_[0-9a-f-]{36}$/.test(login))){
+    const row=await enrollmentRpc(token,'wd_work_save_invitation',{p_grant:payload});
+    if(row?.staff_key!==profile.id)throw new Error('직원 계정 등록을 확인할 수 없어요.');
+    managerCloudGrants.set(profile.id,row);
+    return;
+  }
   const query=new URLSearchParams(current?{login_id:'eq.'+login,staff_key:'eq.'+profile.id}:{});
   const rows=await workCenterAccessRequest(token,query,{
     method:current?'PATCH':'POST',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(payload)
@@ -2568,8 +2574,19 @@ async function saveWorkCenterGrant(profile,login,email,enabled){
   if(rows[0]?.staff_key!==profile.id)throw new Error('Supabase 권한 저장을 확인하지 못했어요.');
   managerCloudGrants.set(profile.id,rows[0]);
 }
+async function enrollmentRpc(token,name,params){
+  const response=await fetch(adminAuthBase+'/rest/v1/rpc/'+name,{
+    method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify(params),cache:'no-store',signal:AbortSignal.timeout(10000)
+  });
+  if(!response.ok)throw new Error(response.status===409?'이미 등록된 Google 이메일이에요.':'직원 계정 등록 상태를 확인하지 못했어요. 다시 시도해 주세요.');
+  return response.json();
+}
 async function loadWorkCenterManagerGrants(stillCurrent){
-  const rows=await workCenterAccessRequest(await attendanceHqToken(),new URLSearchParams({order:'display_name.asc'}));
+  const token=await attendanceHqToken();
+  const pending=await enrollmentRpc(token,'wd_work_pending_invitations',{});
+  const active=await workCenterAccessRequest(token,new URLSearchParams({order:'display_name.asc'}));
+  const rows=[...pending,...active];
   if(!stillCurrent())return;
   managerCloudGrants=new Map(rows.map(row=>[row.staff_key,row]));
   const local=new Map(S.staffProfiles.map(profile=>[profile.id,profile]));
@@ -2684,7 +2701,7 @@ async function loginWorkCenterFromHq(form){
     if(grant)workspace.staffProfiles[0]=applyWorkCenterGrant(workspace.staffProfiles[0],grant);
     if(profileMenus(workspace.staffProfiles[0]).includes('payroll')&&existing?.payslips)workspace.staffProfiles[0].payslips=existing.payslips;
     activeStaffId=profile.id;S=workspace;currentUser='employee';staffCloudGrant=grant;hqStaffLoginId=identity.login_id;workStickyUserId=identity.user_id;pinOnlyWorkspace=false;
-    if(legacy)liveAttendanceReady=true;
+    if(legacy||grant?.enabled)liveAttendanceReady=true;
     workCenterDriveEntered=true;
     if(workspaceDriveAccount())resumeWorkspaceDrive(identity);
     render();
@@ -7722,6 +7739,7 @@ function staffProfileEditor(profile){
   return `<form id="staffProfileForm">
     <div class="wd58-fields">
       <div><label for="staffName">이름</label><input id="staffName" maxlength="60" value="${esc(profile?.name||'')}" required></div>
+      ${profile?'':'<div><label for="newStaffGoogle">업무센터 로그인용 Google 이메일</label><input type="email" id="newStaffGoogle" required maxlength="254" autocomplete="off"></div>'}
       <div><label for="staffContact">연락처</label><input id="staffContact" type="tel" maxlength="40" autocomplete="off" value="${esc(profile?.contact||'')}" placeholder="010-0000-0000"></div>
       <div><label for="staffWorkType">직책</label><select id="staffWorkType" required aria-describedby="staffWorkTypeHint">
         <option value="" ${!profile?'selected':''} disabled>직책 선택</option>
@@ -7730,7 +7748,7 @@ function staffProfileEditor(profile){
       </select><p id="staffWorkTypeHint" class="smallText">직원은 업무보고, 스탭은 업무진행판을 사용해요.</p></div>
       <div><label for="staffBank">급여은행</label><select id="staffBank"><option value="">은행 선택</option>${banks.map(name=>`<option ${name===bank?'selected':''}>${esc(name)}</option>`).join('')}</select></div>
       <div><label for="staffAccount">계좌번호</label><input id="staffAccount" maxlength="100" inputmode="numeric" autocomplete="off" value="${esc(account)}" placeholder="계좌번호 입력"></div>
-      <div>
+      <div ${profile?'':'hidden'}>
         <label for="staffPin">로그인 비밀번호</label>
         <div class="wd58-password"><input id="staffPin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" placeholder="숫자 6자리">${passwordEye('showStaffPin','staffPin','로그인 비밀번호')}</div>
       </div>
@@ -7796,7 +7814,7 @@ function bindNewStaffPermissions(form){
 
 function staffPermissionSummary(profile){
   const grant=managerCloudGrants.get(profile.id),menus=profileMenus(profile);
-  const connection=profile.archivedAt?'로그인 중지':grant?.enabled?'본진 연결됨':grant?'본진 사용 중지':'';
+  const connection=profile.archivedAt?'로그인 중지':grant?.pending&&grant.enabled?'Google 첫 로그인 대기':grant?.enabled?'본진 연결됨':grant?'본진 사용 중지':'';
   const entries=configurableMenus.filter(([id])=>menus.includes(id));
   return `<section class="wd105-permission-summary" aria-labelledby="staffPermissionTitle">
     <div class="wd105-permission-head"><h3 id="staffPermissionTitle">설정된 권한</h3>${connection?`<span class="pill">${connection}</span>`:''}
@@ -7847,7 +7865,7 @@ function openStaffPermissions(profile){
     }
     if(step===selected.length){
       panel.innerHTML=`<fieldset class="wd91-menu-settings"><legend>계정 연결 설정</legend>
-        <div class="wd58-fields"><div><label for="staffHqLogin">본진 로그인 ID</label><input id="staffHqLogin" maxlength="96" value="${esc(connection.login)}" ${grant?'readonly':''} autocomplete="off"></div>
+        <div class="wd58-fields"><div ${grant?.login_id===profile.id?'hidden':''}><label for="staffHqLogin">본진 로그인 ID</label><input id="staffHqLogin" maxlength="96" value="${esc(connection.login)}" ${grant?'readonly':''} autocomplete="off"></div>
         <div><label for="staffGoogleEmail">Google 계정</label><input id="staffGoogleEmail" type="email" maxlength="254" value="${esc(connection.email)}" autocomplete="off"></div></div>
         <label class="wd105-check"><input type="checkbox" id="staffCloudEnabled" ${connection.enabled?'checked':''}>본진 계정으로 업무센터 사용 허용</label>
       </fieldset>`;return;
@@ -8473,7 +8491,7 @@ function bindStaffManagement(){
       const permissions=profile?{}:readNewStaffPermissions(form);
       if(!fields.name)return notify('이름을 입력하세요');
       if(fields.joinedOn&&fields.leftOn&&fields.leftOn<fields.joinedOn)return notify('퇴사일을 입사일 이후로 입력하세요');
-      if((pin||!profile?.pin&&!grant)&&!/^\d{6}$/.test(pin))return notify('숫자 6자리 비밀번호를 입력하세요');
+      if((pin||profile&&!profile.pin&&!grant)&&!/^\d{6}$/.test(pin))return notify('숫자 6자리 비밀번호를 입력하세요');
       if(pin&&!managerStaffPinKey&&S.pins.manager){
         unlockStaffPins(button,()=>{if(form.isConnected)form.requestSubmit(button);});
         return;
@@ -8490,6 +8508,10 @@ function bindStaffManagement(){
         if(profile&&staffAccessRole(next)!==staffAccessRole(profile)){
           next.visibleMenus=profileMenus(profile);
           next.libraryPermissions=Object.fromEntries(libraryPermissionMenus.map(([menu])=>[menu,libraryPreferences(profile,menu)]));
+        }
+        if(!profile){
+          const email=$('newStaffGoogle').value.trim().toLowerCase();
+          await saveWorkCenterGrant(next,next.id,email,true);remoteSaved=true;
         }
         if(grant&&(next.name!==profile.name||staffAccessRole(next)!==staffAccessRole(profile))){
           await saveWorkCenterGrant(next,grant.login_id,grant.google_email,grant.enabled);remoteSaved=true;
@@ -9284,6 +9306,7 @@ async function signInWorkGoogle(card,credential,nonce,email){
       method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
       body:'{}',cache:'no-store',signal:AbortSignal.timeout(10000)
     });
+    // Existing active grants can predate invitations. Verify the profile and enabled grant below.
     if(!activation.ok)throw new Error('업무센터 계정 등록을 확인하지 못했어요. 다시 시도해 주세요.');
   }
   const identity=await readWorkCenterHqIdentity(session.access_token,email);
