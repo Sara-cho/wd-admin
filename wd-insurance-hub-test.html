@@ -10945,23 +10945,13 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
     #wd09-shared-insurance-summary .wd09-insurance-summary dd { margin:0; text-align:right; }
   }
   #det-contracts .wd09-insurance-table { min-width:650px; }
-  @media(min-width:1101px) {
-    #content:has(#pg-cust.on.wd09-customer-detail #wd09-customer-insurance-tab.on) { max-width:1660px!important; }
-    #pg-cust.wd09-customer-detail:has(#wd09-customer-insurance-tab.on),
-    #cust-det-pg:has(#wd09-customer-insurance-tab.on) { max-width:1600px; }
-    #cust-det-pg:has(#wd09-customer-insurance-tab.on) #wd09-customer-overview {
-      grid-template-columns:minmax(250px,24fr) minmax(0,76fr);
-    }
-  }
-  #det-contracts .wd09-insurance-table th:not(:nth-child(2)) { width:1%; }
   #pg-cust #cust-det-pg .wd09-insurance-table td:not(.wd09-insurance-product) {
     white-space:nowrap; overflow-wrap:normal;
   }
   #det-contracts .wd09-insurance-record { cursor:pointer; }
-  #pg-cust #det-contracts .wd09-insurance-product { min-width:170px; color:var(--navy); font-weight:800; }
+  #pg-cust #det-contracts .wd09-insurance-product { width:11em; color:var(--navy); font-weight:800; }
   #det-contracts .wd09-insurance-product-name {
-    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
-    white-space:normal; word-break:keep-all; overflow-wrap:anywhere;
+    display:block; max-width:11em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
   }
   #pg-cust #det-contracts .wd09-insurance-fee { white-space:nowrap; color:var(--purple); font-weight:800; }
   #det-contracts .wd09-insurance-group-heading {
@@ -12238,6 +12228,14 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #wd09-overview-cards .wd-overview-data > div + div { border-top:1px solid var(--s200); }
 #wd09-overview-cards .wd-overview-data dt { color:var(--s700); font-size:12px; }
 #wd09-overview-cards .wd-overview-data dd { margin:0; color:var(--navy); font-size:13px; font-weight:750; }
+#wd-overview-managed-row .wd-overview-managed-list { flex:0 0 100%; }
+#wd-overview-managed-names { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:5px 0 0; padding:0; }
+#wd-overview-managed-names li { max-width:100%; }
+#wd09-overview-cards .wd-overview-customer-link {
+  max-width:100%; min-height:26px; padding:2px 7px; color:#483478; background:#f2ecfa;
+  border:0; border-radius:7px; font:inherit; text-align:left; cursor:pointer; overflow-wrap:anywhere;
+}
+#wd09-overview-cards .wd-overview-customer-link:hover { background:#e7dbf6; }
 #wd09-overview-cards #wd09-overview-insurance .wd-overview-data > div:not([hidden]) {
   display:grid; grid-template-columns:max-content minmax(0,1fr); align-items:baseline; gap:8px;
 }
@@ -12343,12 +12341,21 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 }
 .wd-overview-dialog .wd-overview-results button:hover { background:var(--s50); border-color:var(--purple); }
 .wd-overview-dialog .wd-overview-results small { color:var(--s600); }
-.wd-overview-dialog .wd-overview-method {
-  min-width:0; margin:0 0 8px; padding:8px 10px 10px; border:1px solid var(--s200); border-radius:10px;
+#wd-payment-methods-dialog { width:min(640px,calc(100vw - 24px)); }
+#wd-payment-methods-dialog .wd-payment-table { width:100%; table-layout:fixed; border-collapse:collapse; margin:0 0 9px; }
+#wd-payment-methods-dialog .wd-payment-table th {
+  padding:7px 6px; background:var(--s50); color:var(--s700); text-align:left; font-size:12px;
 }
-.wd-overview-dialog .wd-overview-method legend { padding-inline:4px; color:var(--s700); font-weight:700; font-size:12px; }
-.wd-overview-dialog .wd-overview-method-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(98px,128px); gap:8px; }
-.wd-overview-dialog .wd-overview-method button { margin:7px 0 0; }
+#wd-payment-methods-dialog .wd-payment-table :is(th,td):last-child { width:70px; }
+#wd-payment-methods-dialog .wd-payment-table td { padding:6px; border-bottom:1px solid var(--s200); vertical-align:top; }
+#wd-payment-methods-dialog .wd-payment-table select {
+  width:100%; min-width:0; min-height:38px; padding:7px 4px; border:1px solid var(--s200);
+  border-radius:8px; color:var(--s800); background:#fff; font:inherit; font-size:13px;
+}
+#wd-payment-methods-dialog .wd-payment-table input { font-size:13px; font-variant-numeric:tabular-nums; }
+#wd-payment-methods-dialog .wd-payment-table button { padding-inline:5px; white-space:nowrap; }
+#wd-payment-methods-dialog :is(.wd-payment-primary,.wd-payment-legacy) { display:block; font-size:11px; color:var(--s600); }
+#wd-payment-methods-dialog :is(.wd-payment-primary[hidden],.wd-payment-legacy:empty) { display:none; }
 .wd-overview-dialog .wd-overview-add { width:100%; }
 .wd-overview-dialog .wd-overview-dialog-status { margin:10px 0 0; }
 .wd-overview-dialog .wd-overview-dialog-status:empty { display:none; }
@@ -13388,7 +13395,10 @@ const wdTest09Storage = (() => {
     <div class="card-hd"><h2 class="card-title" id="wd-overview-manager-title">보험료 관리</h2><button type="button" class="wd-overview-link wd-overview-icon" aria-haspopup="dialog" aria-label="보험료 관리자 선택" title="보험료 관리자 선택" onclick="wdOpenPremiumManager()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l5 5M4 20l4.7-1.1L20 7.6a2.1 2.1 0 0 0 0-3L19.4 4a2.1 2.1 0 0 0-3 0L5.1 15.3 4 20z"/></svg></button></div>
     <dl class="wd-overview-data">
       <div><dt>관리자</dt><dd id="wd-overview-manager">미지정</dd></div>
-      <div id="wd-overview-managed-row" hidden><dt>관리 중인 고객</dt><dd id="wd-overview-managed">0명</dd></div>
+      <div id="wd-overview-managed-row" hidden>
+        <dt>관리 중인 고객</dt><dd id="wd-overview-managed">0명</dd>
+        <dd class="wd-overview-managed-list"><ul id="wd-overview-managed-names"></ul></dd>
+      </div>
     </dl>
   </section>
   <section class="card" aria-labelledby="wd-overview-payment-title">
@@ -13419,22 +13429,28 @@ const wdTest09Storage = (() => {
     </footer>
   </form>
 </dialog>
-<dialog id="wd-payment-methods-dialog" class="wd-overview-dialog" aria-labelledby="wd-payment-dialog-title" oncancel="if(this.querySelector('form').inert)event.preventDefault()">
+<dialog id="wd-payment-methods-dialog" class="wd-overview-dialog" aria-labelledby="wd-payment-dialog-title" oncancel="if(this.querySelector('form').inert)event.preventDefault()" onclose="wdClearPaymentDialog(this)">
   <h2 id="wd-payment-dialog-title">계좌·카드 관리</h2>
   <form novalidate onsubmit="event.preventDefault();void wdSavePaymentMethods(this.closest('dialog'))">
-    <p>은행·카드사 이름과 번호 끝 4자리로 납입수단을 구분해요.</p>
+    <p>계좌는 전체번호, 카드는 번호 끝 4자리를 입력해요.</p>
     <div class="wd-overview-options" role="group" aria-label="납입수단 종류">
       <button type="button" class="btn-sm" data-payment-kind="account" aria-controls="wd-pay-account-panel" onclick="wdSelectPaymentKind('account')">계좌</button>
       <button type="button" class="btn-sm" data-payment-kind="card" aria-controls="wd-pay-card-panel" onclick="wdSelectPaymentKind('card')">카드</button>
     </div>
     <section id="wd-pay-account-panel" data-payment-kind="account" aria-label="계좌 목록">
-      <p id="wd-pay-account-empty">등록된 계좌가 없어요.</p>
-      <div id="wd-pay-account-rows"></div>
+      <table class="wd-payment-table">
+        <thead><tr><th scope="col">은행</th><th scope="col">계좌번호</th><th scope="col">구분</th></tr></thead>
+        <tbody id="wd-pay-account-rows"></tbody>
+        <tbody id="wd-pay-account-empty"><tr><td colspan="3">등록된 계좌가 없어요.</td></tr></tbody>
+      </table>
       <button type="button" class="btn-sm wd-overview-add" onclick="wdAddPaymentMethod('account')">+ 계좌 추가</button>
     </section>
     <section id="wd-pay-card-panel" data-payment-kind="card" aria-label="카드 목록" hidden>
-      <p id="wd-pay-card-empty">등록된 카드가 없어요.</p>
-      <div id="wd-pay-card-rows"></div>
+      <table class="wd-payment-table">
+        <thead><tr><th scope="col">카드사</th><th scope="col">번호 끝 4자리</th><th scope="col">구분</th></tr></thead>
+        <tbody id="wd-pay-card-rows"></tbody>
+        <tbody id="wd-pay-card-empty"><tr><td colspan="3">등록된 카드가 없어요.</td></tr></tbody>
+      </table>
       <button type="button" class="btn-sm wd-overview-add" onclick="wdAddPaymentMethod('card')">+ 카드 추가</button>
     </section>
     <p class="wd-overview-dialog-status" role="status"></p>
@@ -13445,14 +13461,11 @@ const wdTest09Storage = (() => {
   </form>
 </dialog>
 <template id="wd-payment-method-template">
-  <fieldset class="wd-overview-method">
-    <legend></legend>
-    <div class="wd-overview-method-fields">
-      <label><span class="wd-pay-issuer-label"></span><input name="issuer" type="text" maxlength="30" autocomplete="off" required></label>
-      <label>번호 끝 4자리<input name="last4" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="0000" autocomplete="off" required></label>
-    </div>
-    <button type="button" class="btn-sm">입력 취소</button>
-  </fieldset>
+  <tr class="wd-overview-method">
+    <td><select name="issuer" required></select></td>
+    <td><input name="number" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" required><small class="wd-payment-legacy"></small></td>
+    <td><small class="wd-payment-primary" hidden>대표</small><button type="button" class="btn-sm">입력 취소</button></td>
+  </tr>
 </template>
 <dialog id="wd-family-preview" aria-labelledby="wd-family-preview-title">
   <h2 id="wd-family-preview-title">고객 기본정보</h2>
@@ -23734,25 +23747,58 @@ function wdUpdatePaymentEmpty(kind){
   document.getElementById('wd-pay-'+kind+'-empty').hidden=
     document.getElementById('wd-pay-'+kind+'-rows').childElementCount>0;
 }
+const WD_PAYMENT_ISSUERS={
+  account:['KB국민은행','신한은행','우리은행','하나은행','NH농협은행','IBK기업은행',
+    'SC제일은행','KDB산업은행','한국씨티은행','Sh수협은행','iM뱅크','부산은행','경남은행','광주은행',
+    '전북은행','제주은행','카카오뱅크','케이뱅크','토스뱅크','우체국','지역농협·축협','지역수협',
+    '새마을금고','신협','산림조합','저축은행','기타 은행'],
+  card:['신한카드','KB국민카드','삼성카드','현대카드','롯데카드','하나카드','우리카드','비씨카드',
+    'NH농협카드','IBK기업은행','SC제일은행','Sh수협은행','iM뱅크','부산은행','경남은행','광주은행',
+    '전북은행','제주은행','카카오뱅크','케이뱅크','토스뱅크','기타 카드사']
+};
 function wdPaymentMethodRow(kind,method,index){
   const row=document.getElementById('wd-payment-method-template').content.firstElementChild.cloneNode(true);
   row.dataset.kind=kind;
   row.dataset.index=String(index);
-  const issuer=row.querySelector('[name="issuer"]'), last4=row.querySelector('[name="last4"]');
-  const savedIssuer=String(method?.issuer||'');
-  issuer.value=savedIssuer.replace(/\D/g,'').length<=4?savedIssuer.slice(0,30):'';
-  last4.value=/^\d{4}$/.test(method?.last4||'')?method.last4:'';
-  row.querySelector('.wd-pay-issuer-label').textContent=kind==='account'?'은행':'카드사';
-  row.querySelector('legend').textContent=(kind==='account'?'계좌':'카드')+(method?.primary?' · 대표':'');
-  last4.addEventListener('input',()=>{
-    last4.value=last4.value.replace(/\D/g,'').slice(0,4);
-    last4.setCustomValidity('');
+  const issuer=row.querySelector('[name="issuer"]'), number=row.querySelector('[name="number"]');
+  const account=kind==='account';
+  const savedIssuer=String(method?.issuer||'').trim();
+  const choices=WD_PAYMENT_ISSUERS[kind];
+  const issuerLabel=account?'은행':'카드사';
+  issuer.setAttribute('aria-label',issuerLabel);
+  issuer.append(new Option(issuerLabel+' 선택',''),...choices.map(name=>new Option(name,name)));
+  if(savedIssuer&&savedIssuer.replace(/\D/g,'').length<=4&&!choices.includes(savedIssuer)){
+    issuer.append(new Option(savedIssuer+' (기존)',savedIssuer));
+  }
+  issuer.value=Array.from(issuer.options).some(option=>option.value===savedIssuer)?savedIssuer:'';
+  if(method?.primary)row.querySelector('.wd-payment-primary').hidden=false;
+
+  const last4=/^\d{4}$/.test(method?.last4||'')?method.last4:'';
+  const accountNumber=/^\d{5,24}$/.test(method?.accountNumber||'')?method.accountNumber:'';
+  const legacy=account&&!!last4&&!accountNumber;
+  number.setAttribute('aria-label',account?'계좌번호 전체':'카드 번호 끝 4자리');
+  number.required=!legacy;
+  number.pattern=account?'[0-9]{5,24}':'[0-9]{4}';
+  number.maxLength=account?24:4;
+  number.value=account?accountNumber:last4;
+  number.placeholder=account?'계좌번호 전체':'0000';
+  if(legacy)row.querySelector('.wd-payment-legacy').textContent='기존 끝자리 '+last4;
+  number.addEventListener('input',()=>{
+    number.value=number.value.replace(/\D/g,'');
+    number.setCustomValidity('');
   });
-  last4.addEventListener('paste',event=>{
-    if((event.clipboardData?.getData('text')||'').replace(/\D/g,'').length<=4)return;
+  number.addEventListener('paste',event=>{
+    const pasted=event.clipboardData?.getData('text');
+    if(pasted==null)return;
+    const digits=pasted.replace(/\D/g,'');
     event.preventDefault();
-    last4.setCustomValidity('번호 끝 4자리만 입력해 주세요.');
-    last4.reportValidity();
+    if(digits.length>number.maxLength||!digits||!/^[\d\s-]+$/.test(pasted)){
+      number.setCustomValidity(account?'계좌번호 숫자를 확인해 주세요.':'카드 번호 끝 4자리만 입력해 주세요.');
+      number.reportValidity();
+      return;
+    }
+    number.value=digits;
+    number.setCustomValidity('');
   });
   const cancel=row.querySelector('button');
   cancel.hidden=index>=0;
@@ -23765,29 +23811,35 @@ function wdAddPaymentMethod(kind){
   wdUpdatePaymentEmpty(kind);
   row.querySelector('[name="issuer"]').focus();
 }
+function wdClearPaymentDialog(dialog){
+  if(dialog.open)return;
+  delete dialog.paymentSnapshot;
+  for(const kind of Object.keys(WD_PAYMENT_ISSUERS)){
+    document.getElementById('wd-pay-'+kind+'-rows').replaceChildren();
+  }
+}
 function wdSavePaymentMethods(dialog){
-  if(dialog.querySelector('form').inert)return;
+  if(!dialog.open||dialog.querySelector('form').inert)return;
   const entries=[];
   for(const row of dialog.querySelectorAll('.wd-overview-method')){
-    const issuer=row.querySelector('[name="issuer"]'), last4=row.querySelector('[name="last4"]');
-    const kind=row.dataset.kind;
-    issuer.value=issuer.value.trim();
-    issuer.setCustomValidity(issuer.value.replace(/\D/g,'').length>4?'은행이나 카드사 이름만 입력해 주세요.':'');
-    const invalid=!issuer.checkValidity()?issuer:!last4.checkValidity()?last4:null;
+    const issuer=row.querySelector('[name="issuer"]'), number=row.querySelector('[name="number"]');
+    const {kind,index}=row.dataset;
+    const invalid=!issuer.checkValidity()?issuer:!number.checkValidity()?number:null;
     if(invalid){
       wdSelectPaymentKind(kind);
       invalid.reportValidity();
       return;
     }
-    entries.push({index:Number(row.dataset.index),kind,issuer:issuer.value,last4:last4.value});
+    entries.push({index:Number(index),kind,issuer:issuer.value,number:number.value});
   }
   return wdOverviewSave(dialog,customer=>{
     const stored=wdOverviewPaymentMethods(customer);
     if(JSON.stringify(stored)!==dialog.paymentSnapshot)return '다른 화면에서 납입수단이 변경됐어요. 팝업을 닫고 다시 열어 주세요.';
     const methods=stored.slice();
-    for(const {index,kind,issuer,last4} of entries){
-      const previous=methods[index];
-      const method={id:previous?.id||crypto.randomUUID(),kind,issuer,last4,primary:!!previous?.primary};
+    for(const {index,kind,issuer,number} of entries){
+      const previous=stored[index];
+      const method={id:previous?.id||crypto.randomUUID(),kind,issuer,last4:number.slice(-4)||previous?.last4||'',primary:!!previous?.primary};
+      if(kind==='account'&&number)method.accountNumber=number;
       if(index<0)methods.push(method);else methods[index]=method;
     }
     return {paymentMethods:methods};
@@ -23799,9 +23851,26 @@ function wdRenderCustomerOverview(c,customers){
   const managerId=wdOverviewManagerId(c,customers);
   const manager=lookup(managerId);
   const managed=customers.filter(person=>String(person.id)!==customerId&&String(person.premiumManagerId??person.famRepId??'')===customerId);
-  document.getElementById('wd-overview-manager').textContent=managerId===customerId?'본인':manager?.name||(managerId?'확인 필요':'미지정');
+  const managerField=document.getElementById('wd-overview-manager');
+  const managerLink=person=>{
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='wd-overview-customer-link';
+    button.textContent=person.name;
+    button.addEventListener('click',()=>showDetail(person.id));
+    return button;
+  };
+  if(managerId===customerId)managerField.textContent=c.name+' (본인)';
+  else if(manager)managerField.replaceChildren(managerLink(manager));
+  else managerField.textContent=managerId?'확인 필요':'미지정';
   document.getElementById('wd-overview-managed-row').hidden=!managed.length;
   document.getElementById('wd-overview-managed').textContent=managed.length+'명';
+  const names=managed.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));
+  document.getElementById('wd-overview-managed-names').replaceChildren(...names.map(person=>{
+    const item=document.createElement('li');
+    item.append(managerLink(person));
+    return item;
+  }));
 
   const methods=wdOverviewPaymentMethods(c);
   document.getElementById('wd-overview-accounts').textContent=methods.filter(method=>method?.kind==='account').length+'개';
@@ -26976,9 +27045,12 @@ function renderContractsList(state){
   }
   function recordStart(row,label){
     var action="openCustomerInsuranceDetail('"+row.source+"',"+row.index+")";
-    const text=esc(label||'—');
+    const fullName=String(label||'—');
+    const text=esc(fullName);
+    const characters=Array.from(fullName);
+    const shortName=characters.length>10?esc(characters.slice(0,10).join(''))+'…':text;
     const name=row.purpose==='auto'?'<td>'+text+'</td>'
-      :'<td class="wd09-insurance-product"><span class="wd09-insurance-product-name" title="'+text+'">'+text+'</span></td>';
+      :'<td class="wd09-insurance-product"><span class="wd09-insurance-product-name" title="'+text+'">'+shortName+'</span></td>';
     return '<tr class="wd09-insurance-record" '+wd09DetailRow(action)+'>'
       +'<td>'+esc(row.insurer||'—')+'</td>'+name;
   }
@@ -27025,7 +27097,9 @@ function renderContractsList(state){
     var columns=auto
       ?['보험사','자동차번호','차량용도','보험시작일','만기일','보험료','증권','약관']
       :['보험사','상품명',purpose==='savings'?'세부 종류':'갱신 구분','납입기간','보장기간','월 보험료',...(indemnity?['가입일','실손 구분']:['계약일']),'증권','약관'];
-    var headers=columns.map(function(label){return '<th scope="col">'+label+'</th>';}).join('');
+    var headers=columns.map(function(label){
+      return '<th scope="col"'+(label==='상품명'?' class="wd09-insurance-product"':'')+'>'+label+'</th>';
+    }).join('');
     var body=groupRows.length?groupRows.map(auto?renderAutoRow:renderInsuranceRow).join('')
       :'<tr><td class="wd09-insurance-empty" colspan="'+columns.length+'">등록된 '+WD09_INSURANCE_PURPOSES[purpose]+' 내역이 없습니다.</td></tr>';
     return '<section class="wd09-insurance-group" data-insurance-purpose="'+purpose+'">'
@@ -39645,7 +39719,10 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
     const validMethods=methods=>methods===undefined||Array.isArray(methods)&&methods.every(m=>m
       &&typeof m.id==='string'&&['account','card'].includes(m.kind)&&typeof m.issuer==='string'
       &&!!m.issuer.trim()&&m.issuer.length<=30&&/^\d{4}$/.test(m.last4)
-      &&typeof m.primary==='boolean'&&Object.keys(m).every(key=>['id','kind','issuer','last4','primary'].includes(key)));
+      &&typeof m.primary==='boolean'
+      &&(m.accountNumber===undefined||(m.kind==='account'&&typeof m.accountNumber==='string'
+        &&/^\d{5,24}$/.test(m.accountNumber)&&m.accountNumber.endsWith(m.last4)))
+      &&Object.keys(m).every(key=>['id','kind','issuer','last4','primary','accountNumber'].includes(key)));
     const from=table=>{
       const source={
         wd_partners_customers:customerRows,
@@ -39673,6 +39750,7 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
             const copy=structuredClone(row);
             delete copy.data.rrnFull;
             delete copy.data.rrn;
+            for(const method of copy.data.paymentMethods||[])delete method.accountNumber;
             data.hubCustomers[copy.id]=copy;
           }
           writePreview(data);
