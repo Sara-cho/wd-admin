@@ -12073,6 +12073,32 @@ ul.co-dash li::before{content:'·';margin-right:8px;color:var(--gold);font-weigh
 #wd-family-preview dd { margin:0; overflow-wrap:anywhere; }
 #wd-family-preview footer { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
 </style>
+<style id="wd09-compact-new-customer">
+@media (min-width:901px) {
+  #modal-cust .wd09-entry-modal { --wd09-ui-form-control-height:38px; }
+  #modal-cust .wd09-entry-header { padding-block:10px; }
+  #modal-cust #wd09-customer-form > .wd09-entry-body { padding-block:12px; }
+  #modal-cust .wd09-customer-entry-card > .cust-sec-label { margin-bottom:8px; padding-block:7px; }
+  #modal-cust .wd09-customer-form-grid, #modal-cust .wd-family-fields { row-gap:7px; }
+  #modal-cust .wd09-customer-form-grid .fld > label { margin-bottom:3px; }
+  #modal-cust .wd09-customer-form-grid .fld :is(input,select,textarea) { padding-block:7px; }
+  #modal-cust .wd09-customer-form-grid .wd09-customer-form-row { margin-bottom:3px; }
+  #modal-cust .wd09-customer-form-grid .wd09-customer-entry-hint { margin-top:3px; }
+  #modal-cust .wd09-customer-main-fields .fld:has(> #ci-addr1),
+  #modal-cust .wd-family-fields .cfr-addr {
+    display:grid;
+    grid-template-columns:max-content minmax(0,1fr);
+    align-items:center;
+    gap:6px 8px;
+  }
+  #modal-cust .wd09-customer-main-fields .fld:has(> #ci-addr1) > :is(label,#ci-addr2,.wd09-customer-entry-hint),
+  #modal-cust .wd-family-fields .cfr-addr2 { grid-column:1/-1; }
+  #modal-cust .wd09-customer-main-fields .fld:has(> #ci-addr1) > .wd09-customer-form-row { margin:0; }
+  #modal-cust .wd09-customer-main-fields #ci-addr1 { margin:0!important; }
+  #modal-cust .wd-family-postcode { grid-template-columns:90px auto; }
+  #modal-cust .wd-family-fields .cfr-addr input { margin-top:0; }
+}
+</style>
 </head>
 <body>
 <script>
@@ -16526,11 +16552,11 @@ const wdTest09Storage = (() => {
 <span style="color:var(--s400);font-size:16px;font-weight:700;">-</span>
 <input id="ci-rrn2" aria-label="주민번호 뒷 7자리" aria-describedby="ci-rrn-hint" inputmode="numeric" maxlength="7" oninput="this.value=this.value.replace(/\D/g,'');cstAutoBirthGender()" placeholder="뒷 7자리" style="flex:1;" type="password"/>
 </div>
-<div id="ci-rrn-hint" class="wd09-customer-entry-hint">뒷자리 첫 숫자가 1·2면 1900년대생, 3·4면 2000년대생이에요.</div>
+<div id="ci-rrn-hint" class="wd09-customer-entry-hint">주민번호를 입력하면 생년월일과 성별이 자동으로 저장돼요.</div>
 <div id="ci-rrn-error" class="wd09-customer-entry-hint" role="status" hidden></div>
 </div>
-<div class="fld"><label for="ci-birth">생년월일</label><input id="ci-birth" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric" oninput="cstFormatBirthInput(this)" readonly type="text"/></div>
-<div class="fld" id="ci-gender-auto-field"><label for="ci-gender">성별</label><input id="ci-gender" placeholder="주민번호 입력 시 자동" readonly type="text"/></div>
+<div class="fld" id="ci-birth-field" hidden><label for="ci-birth">생년월일</label><input id="ci-birth" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric" oninput="cstFormatBirthInput(this)" readonly type="text"/></div>
+<div class="fld" id="ci-gender-auto-field" hidden><label for="ci-gender">성별</label><input id="ci-gender" placeholder="주민번호 입력 시 자동" readonly type="text"/></div>
 <div class="fld" id="ci-gender-edit-field" hidden><label for="ci-gender-edit">성별</label><select id="ci-gender-edit"><option value="">선택</option><option>남</option><option>여</option></select></div>
 <div class="fld wd09-customer-form-wide"><label for="ci-addr1">주소</label>
 <div class="wd09-customer-form-row">
@@ -16597,11 +16623,9 @@ const wdTest09Storage = (() => {
       <label>같이 거주<select class="cfr-cohab"><option value="">미확인</option><option value="together">같이 거주</option><option value="apart">따로 거주</option></select></label>
       <label>연락처<input type="tel" class="cfr-phone" maxlength="13" placeholder="010-xxxx-xxxx" oninput="cstFormatPhoneInput(this)"></label>
       <div><label>통신사<select class="cfr-telecom" onchange="cfrToggleTelecomEtc(this)"></select></label><input class="cfr-telecom-etc" type="text" aria-label="기타 통신사" placeholder="기타 통신사" style="display:none;margin-top:6px"></div>
-      <div class="wd-family-wide"><span class="wd-family-label">주민번호 (선택)</span>
-        <div class="wd-family-rrn"><input type="text" class="cfr-rrn1" aria-label="주민번호 앞 6자리" inputmode="numeric" maxlength="6" placeholder="앞 6자리" oninput="cfrFillBirthGender(this)"><span>–</span><input type="password" class="cfr-rrn2" aria-label="주민번호 뒤 7자리" inputmode="numeric" maxlength="7" placeholder="뒤 7자리" oninput="cfrFillBirthGender(this)"></div>
+      <div class="wd-family-wide"><span class="wd-family-label">주민번호 (선택 · 생년월일·성별 자동)</span>
+        <div class="wd-family-rrn"><input type="text" class="cfr-rrn1" aria-label="주민번호 앞 6자리" inputmode="numeric" maxlength="6" placeholder="앞 6자리" oninput="this.value=this.value.replace(/\D/g,'')"><span>–</span><input type="password" class="cfr-rrn2" aria-label="주민번호 뒤 7자리" inputmode="numeric" maxlength="7" placeholder="뒤 7자리" oninput="this.value=this.value.replace(/\D/g,'')"></div>
       </div>
-      <label>생년월일<input type="text" class="cfr-birth" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" oninput="cstFormatBirthInput(this)"></label>
-      <label>성별<select class="cfr-gender"><option value="">선택</option><option>남</option><option>여</option></select></label>
       <div class="wd-family-wide"><label class="cfr-ck"><input type="checkbox" class="cfr-same" onchange="this.closest('.cfr-row').querySelector('.cfr-addr').hidden=this.checked"> 대표와 주소 같음</label>
         <div class="cfr-addr"><div class="wd-family-postcode"><input type="text" class="cfr-zip" aria-label="우편번호" inputmode="numeric" maxlength="5" placeholder="우편번호"><button type="button" class="btn-s wd09-address-search" onclick="wd09OpenAddressSearch(this)">주소 검색</button></div>
           <input type="text" class="cfr-addr1" aria-label="기본주소" placeholder="도로명 또는 지번 주소"><input type="text" class="cfr-addr2" aria-label="상세주소" placeholder="상세주소 (직접 입력)">
@@ -18892,7 +18916,7 @@ function wd09SetCustomerFormMode(customer){
   birth.readOnly=!editing;
   birth.dataset.original=customerBirthDate(customer?.birth)||customer?.birth||'';
   delete birth.dataset.fromRrn;
-  document.getElementById('ci-gender-auto-field').hidden=editing;
+  document.getElementById('ci-birth-field').hidden=!editing;
   document.getElementById('ci-gender-edit-field').hidden=!editing;
   document.getElementById('ci-gender-edit').value=customer?.gender||'';
   document.getElementById('cust-edit-cancel').hidden=!editing;
@@ -23242,21 +23266,6 @@ function cfrToggleTelecomEtc(selectEl){
   etc.style.display=show?'block':'none';
   if(!show)etc.value='';
 }
-function cfrFillBirthGender(field){
-  field.value=field.value.replace(/\D/g,'');
-  const row=field.closest('.cfr-row');
-  const details=customerBirthGender(row.querySelector('.cfr-rrn1').value,row.querySelector('.cfr-rrn2').value);
-  for(const key of ['birth','gender']){
-    const target=row.querySelector('.cfr-'+key);
-    if(details[key]&&(!target.value||target.dataset.fromRrn===target.value)){
-      target.value=details[key];
-      target.dataset.fromRrn=details[key];
-    }else if(!details[key]&&target.dataset.fromRrn===target.value){
-      target.value='';
-      delete target.dataset.fromRrn;
-    }
-  }
-}
 function cfrToggleReferral(select){
   const referral=select.closest('.cfr-row').querySelector('.cfr-ref');
   referral.hidden=select.value!=='기존고객 소개';
@@ -23337,7 +23346,7 @@ function cfr_collect(repRec){
     const route=value('route');
     const r1=value('rrn1'),r2=value('rrn2');
     const useRepresentativeAddress=field('same').checked;
-    const hasInputs=['rel','cohab','phone','rrn1','rrn2','birth','gender','telecom','job','jobdetail','special']
+    const hasInputs=['rel','cohab','phone','rrn1','rrn2','telecom','job','jobdetail','special']
       .some(key=>value(key))||useRepresentativeAddress||
       ['zip','addr1','addr2'].some(key=>value(key))||value('ctype')!=='가망고객'||route!=='가족·세대 등록'||
       Boolean(value('regdate')&&value('regdate')!==field('regdate').defaultValue);
@@ -23352,8 +23361,6 @@ function cfr_collect(repRec){
     if((r1||r2)&&(!/^\d{6}$/.test(r1)||(r2&&(!/^\d{7}$/.test(r2)||!details.birth)))){
       return reject('주민번호를 확인해 주세요.','rrn1');
     }
-    const birth=value('birth');
-    if(birth&&!customerBirthDate(birth))return reject('생년월일을 YYYY-MM-DD 형식으로 입력해 주세요.','birth');
     const refId=route==='기존고객 소개'?value('ref-id'):'';
     if(route==='기존고객 소개'&&!refId)return reject('소개 고객을 선택해 주세요.','ref-query');
     const full=r1&&r2?r1+r2:'';
@@ -23362,8 +23369,8 @@ function cfr_collect(repRec){
     usedIds.add(String(id));
     const address=key=>useRepresentativeAddress?(repRec[key]||''):value(key);
     output.push({
-      id,name,phone:cstFormatPhone(value('phone')),birth:details.birth||customerBirthDate(birth),
-      gender:details.gender||value('gender'),rrn:full?cstMaskedFromFullRrn(full):r1?r1+'-?******':'',rrnFull:full,
+      id,name,phone:cstFormatPhone(value('phone')),birth:details.birth,
+      gender:details.gender,rrn:full?cstMaskedFromFullRrn(full):r1?r1+'-?******':'',rrnFull:full,
       telecom:value('telecom')==='기타'?value('telecom-etc'):value('telecom'),ctype:normalizeCustomerType(value('ctype')),
       zip:address('zip'),addr1:address('addr1'),addr2:address('addr2'),
       job:value('job'),jobDetail:value('jobdetail'),route,refId,regdate:value('regdate')||today(),special:value('special'),
