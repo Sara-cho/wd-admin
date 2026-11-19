@@ -9306,7 +9306,8 @@ async function signInWorkGoogle(card,credential,nonce,email){
       method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
       body:'{}',cache:'no-store',signal:AbortSignal.timeout(10000)
     });
-    if(!activation.ok||await activation.json()!==true)throw new Error('업무센터 계정 등록을 확인하지 못했어요. 다시 시도해 주세요.');
+    // Existing active grants can predate invitations. Verify the profile and enabled grant below.
+    if(!activation.ok)throw new Error('업무센터 계정 등록을 확인하지 못했어요. 다시 시도해 주세요.');
   }
   const identity=await readWorkCenterHqIdentity(session.access_token,email);
   if(identity.user_id!==session.user.id||sharedLoginId&&identity.login_id!==sharedLoginId)throw hqLoginError();
