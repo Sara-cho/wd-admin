@@ -103,10 +103,6 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 .dialog-head p {font-size:13px;color:var(--muted);margin-top:4px}
 .close {border:1px solid var(--line);background:white;border-radius:8px;width:42px;height:42px;flex:none;font:23px/1 system-ui}
 .dialog-body {padding:20px 21px}
-.flow {display:grid;grid-template-columns:repeat(3,1fr);list-style:none;padding:0;margin:0 0 18px;gap:3px;text-align:center}
-.flow li {min-width:0;padding:7px 0;border-radius:6px;background:#f5f3f6;color:var(--muted);font-size:12px}
-.flow li[data-step="done"] {background:#eee6f6;color:#564268}
-.flow li[aria-current="step"] {background:var(--purple);color:#fff;font-weight:760}
 .details {display:grid;gap:13px;margin:0}
 .details div {padding-bottom:10px;border-bottom:1px solid var(--line)}
 .details dt {font-size:12px;color:var(--muted);margin-bottom:3px}
@@ -227,6 +223,67 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
   .case-list tbody tr {grid-template-columns:1fr;gap:4px}
   .case-list td:nth-child(2) {text-align:left}
 }
+.detail-return {margin-bottom:11px}
+.detail-banner {
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:22px 25px;background:linear-gradient(120deg,#fff 23%,#f3ebfa);border-color:#e8deed;
+}
+.detail-banner h1 {font-size:clamp(24px,3vw,35px);line-height:1.25}
+.detail-banner .sub {margin-top:6px}
+.detail-org {color:#665376;font-size:13px;margin-bottom:5px}
+.detail-tabs {
+  display:flex;gap:3px;overflow:auto;margin:16px 0 13px;padding:4px;
+  border:1px solid var(--line);border-radius:11px;background:white;
+}
+.detail-tabs button {
+  flex:0 0 auto;min-height:42px;padding:8px 16px;border:0;
+  border-radius:8px;background:transparent;font-weight:700;white-space:nowrap;
+}
+.detail-tabs button[aria-pressed="true"] {background:#efe6f8;color:#58367e}
+.detail-card {padding:18px 22px}
+.detail-card h2 {font-size:20px}
+.detail-card h3 {font-size:16px}
+.detail-columns {display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:15px;align-items:start}
+.detail-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:14px}
+.detail-fields label,.file-form label {display:grid;gap:5px;font-size:13px;font-weight:700}
+.detail-fields .wide {grid-column:1/-1}
+.detail-fields :is(input,textarea),.file-form :is(input,select),.session-select select {
+  width:100%;min-width:0;min-height:42px;padding:8px 10px;border:1px solid #e2d9e9;border-radius:8px;background:white;color:var(--ink);font:inherit;
+}
+.detail-fields textarea {min-height:100px;resize:vertical}
+.detail-form-actions {display:flex;justify-content:flex-end;margin-top:13px}
+.session-select {display:flex;gap:9px;align-items:center;white-space:nowrap;font-size:14px;font-weight:700}
+.session-select select {width:auto;max-width:100%}
+.detail-list,.asset-list {list-style:none;padding:0;margin:10px 0 0}
+.asset-list li {border-top:1px solid var(--line)}
+.asset-list li .asset-row {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 0;
+}
+.asset-name {display:block;overflow-wrap:anywhere;font-size:14px;font-weight:690}
+.asset-meta {color:var(--muted);font-size:12px}
+.asset-actions {display:flex;gap:4px}
+.asset-actions button {font-size:12px;min-height:38px;padding:7px}
+.file-badge {display:inline-flex;align-items:center;gap:4px;color:#654685;font-size:12px}
+.file-count {color:#694790;background:#f2eaf8;border-radius:7px;padding:3px 7px;font-size:12px}
+.asset-empty {font-size:13px;color:var(--muted);margin-top:9px}
+.asset-categories {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:12px}
+.save-status {font-size:13px;margin-top:10px;color:#315d4c}
+.save-status:empty {display:none}
+.save-status[data-error="true"] {color:#a03245}
+.storage-note {margin-top:13px;font-size:13px;color:var(--muted)}
+.file-form {display:grid;gap:12px}
+.file-form input[type=file] {font-size:13px}
+.file-form button {justify-self:end}
+.media-preview {max-width:100%;max-height:64dvh;display:block;margin:auto}
+#media-dialog {width:min(780px,calc(100% - 26px))}
+@media(max-width:880px) {.detail-columns {grid-template-columns:1fr}}
+@media(max-width:650px) {
+  .detail-banner,.detail-card {padding:14px}
+  .detail-fields,.asset-categories {grid-template-columns:1fr}
+  .detail-tabs button {font-size:13px;padding-inline:10px}
+  .session-select {flex-wrap:wrap}
+  .asset-list li .asset-row {grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -331,6 +388,65 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
           </table>
         </div>
       </section>
+      <section data-view="lecture" hidden aria-labelledby="lecture-title">
+        <div class="detail-return"><button class="btn text" type="button" id="lecture-back">← 강의건 목록</button></div>
+        <header class="panel detail-banner">
+          <div><p class="detail-org" id="lecture-org"></p><h1 id="lecture-title" tabindex="-1"></h1><p class="sub" id="lecture-progress"></p></div>
+        </header>
+        <nav class="detail-tabs" aria-label="강의 상세 메뉴">
+          <button type="button" data-detail-tab="basic" aria-pressed="true">강의 기본정보</button>
+          <button type="button" data-detail-tab="sessions" aria-pressed="false">회차별 준비</button>
+          <button type="button" data-detail-tab="materials" aria-pressed="false">강의자료실</button>
+        </nav>
+        <div class="detail-columns" data-detail-pane="basic">
+          <section class="panel detail-card" aria-labelledby="lecture-info-title">
+            <h2 id="lecture-info-title">강의 기본정보</h2>
+            <form id="lecture-info-form">
+              <div class="detail-fields">
+                <label>강의명<input name="title" maxlength="70" required></label>
+                <label>기관명<input name="org" maxlength="70" required></label>
+                <label>강의 일정<input name="schedule" maxlength="140"></label>
+                <label>강의 장소<input name="location" maxlength="140"></label>
+                <label>전체 회차<input type="number" name="totalSessions" min="1" max="200" step="1"></label>
+              </div>
+              <div class="detail-form-actions"><button class="btn primary" type="submit">기본정보 저장</button></div>
+            </form>
+          </section>
+          <section class="panel detail-card" aria-labelledby="lecture-notes-title">
+            <h2 id="lecture-notes-title">강의 기록</h2>
+            <dl class="details" id="lecture-summary-list"></dl>
+          </section>
+        </div>
+        <div data-detail-pane="sessions" hidden>
+          <div class="head" style="margin-bottom:12px">
+            <label class="session-select">강의 회차 <select id="lecture-session" aria-label="강의 회차"></select></label>
+            <button class="btn primary" type="button" data-add-file="lesson" data-current-session>+ 회차 자료 추가</button>
+          </div>
+          <div class="detail-columns">
+            <section class="panel detail-card" aria-labelledby="session-note-title">
+              <h2 id="session-note-title">회차별 준비</h2>
+              <form id="lecture-session-form">
+                <div class="detail-fields">
+                  <label>회차 주제<input name="topic" maxlength="140"></label>
+                  <label>강의 날짜<input type="date" name="date"></label>
+                  <label class="wide">준비 메모<textarea name="notes" maxlength="8000"></textarea></label>
+                </div>
+                <div class="detail-form-actions"><button class="btn primary" type="submit">회차 준비 저장</button></div>
+              </form>
+            </section>
+            <section class="panel detail-card" aria-labelledby="session-files-title">
+              <h2 id="session-files-title">이 회차에 첨부한 자료</h2>
+              <div id="lecture-session-assets"></div>
+            </section>
+          </div>
+        </div>
+        <div data-detail-pane="materials" hidden>
+          <div class="head"><h2>강의자료실</h2><button class="btn primary" type="button" data-add-file="lesson">+ 자료 추가</button></div>
+          <div class="asset-categories" id="lecture-assets"></div>
+        </div>
+        <p id="lecture-save-status" class="save-status" role="status"></p>
+        <p class="storage-note">TEST에서 추가한 메모와 파일은 이 브라우저에 저장됩니다. 다른 기기와는 공유되지 않습니다.</p>
+      </section>
       <section data-view="courses" hidden>
         <div class="title-row"><h1>교육과정·자료</h1></div>
         <div class="asset-grid" id="course-cards"></div>
@@ -356,14 +472,29 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
   <div class="dialog-body" id="drawer-body"></div>
 </dialog>
 <dialog id="add-dialog" aria-labelledby="add-heading">
-  <div class="dialog-head"><div><h2 id="add-heading">강의건 추가</h2><p>시안에서만 임시로 추가됩니다.</p></div><button class="close" type="button" data-close aria-label="닫기">×</button></div>
+  <div class="dialog-head"><div><h2 id="add-heading">강의건 추가</h2><p>이 브라우저에 강의건을 추가합니다.</p></div><button class="close" type="button" data-close aria-label="닫기">×</button></div>
   <form id="new-lecture" class="dialog-body form">
     <label>강의명<input class="search" name="title" required maxlength="70"></label>
     <label>기관명<input class="search" name="org" required maxlength="70"></label>
     <label>다음 행동<input class="search" name="next" required maxlength="100"></label>
     <label>예정일<input class="search" name="due" type="date"></label>
+    <p id="add-save-status" class="save-status" role="status" data-error="true"></p>
     <footer><button class="btn" type="button" data-close>취소</button><button class="btn primary">추가</button></footer>
   </form>
+</dialog>
+<dialog id="asset-dialog" aria-labelledby="asset-title">
+  <div class="dialog-head"><h2 id="asset-title">강의자료 추가</h2><button class="close" type="button" data-close aria-label="닫기">×</button></div>
+  <form id="lecture-file-form" class="file-form dialog-body">
+    <label>자료 종류<select name="kind"></select></label>
+    <label>관련 회차<select name="session"></select></label>
+    <label>첨부파일<input name="files" type="file" multiple required></label>
+    <p id="lecture-file-status" class="save-status" role="status"></p>
+    <button type="submit" class="btn primary">파일 저장</button>
+  </form>
+</dialog>
+<dialog id="media-dialog" aria-labelledby="media-title">
+  <div class="dialog-head"><h2 id="media-title"></h2><button class="close" type="button" data-close aria-label="닫기">×</button></div>
+  <div id="media-body" class="dialog-body"></div>
 </dialog>
 <script>
 const lectures = [
@@ -448,7 +579,7 @@ function renderRows() {
     return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td>'+
       '<td class="case-progress '+stage+'">'+escapeText(caseProgress(item,stage))+'</td></tr>';
   });
-  const courses=lectures.filter(item=>item.totalSessions>0);
+  const courses=lectures.filter(item=>item.totalSessions>0 && caseStage(item)!=="proposal");
   renderSummary(courses);
   $("#active-rows").innerHTML=courses.length ? courses.map(item=>{
     const current=courseStages.findIndex(stage=>stage.key===lectureStage(item));
@@ -467,24 +598,25 @@ function renderRows() {
 function show(page) {
   nodes("[data-view]").forEach(el => {el.hidden = el.dataset.view !== page;});
   nodes(".nav [data-page]").forEach(button => {
-    if(button.dataset.page===page) button.setAttribute("aria-current","page");
+    if(button.dataset.page===(page==="lecture"?"cases":page)) button.setAttribute("aria-current","page");
     else button.removeAttribute("aria-current");
   });
   window.scrollTo(0,0);
 }
 
-function detail(title,subtitle,parts,stage) {
-  $("#drawer-title").textContent = title;
-  $("#drawer-subtitle").textContent = subtitle;
-  let stepFlow = "";
-  if(stage) {
-    const index=caseStages.findIndex(([key])=>key===stage);
-    stepFlow = '<ol class="flow" aria-label="강의 진행 단계">'+caseStages.map(([,name],i)=>'<li '+(i===index?'aria-current="step"':i<index?'data-step="done"':'')+'>'+name+'</li>').join("")+'</ol>';
-  }
-  $("#drawer-body").innerHTML = stepFlow+'<dl class="details">'+parts.map(([name,value])=>{
-    const answer = Array.isArray(value) ? '<ul>'+value.map(entry=>'<li>'+escapeText(entry)+'</li>').join("")+'</ul>' : escapeText(value);
+function detailRows(parts) {
+  return parts.map(([name,value])=>{
+    const answer=Array.isArray(value)
+      ? '<ul>'+value.map(entry=>'<li>'+escapeText(entry)+'</li>').join("")+'</ul>'
+      : escapeText(value);
     return '<div><dt>'+escapeText(name)+'</dt><dd>'+answer+'</dd></div>';
-  }).join("")+'</dl>';
+  }).join("");
+}
+
+function detail(title,subtitle,parts) {
+  $("#drawer-title").textContent=title;
+  $("#drawer-subtitle").textContent=subtitle;
+  $("#drawer-body").innerHTML='<dl class="details">'+detailRows(parts)+'</dl>';
   drawer.showModal();
 }
 
@@ -509,26 +641,353 @@ for(const [group,entries] of Object.entries(collections)){
   $("#"+(group==="courses"?"course":"asset")+"-cards").innerHTML=entries.map((item,i)=>'<article class="panel"><h2>'+escapeText(item.title)+'</h2><p>'+escapeText(item.summary)+'</p><button class="btn" type="button" data-collection="'+group+'" data-index="'+i+'">목록 보기 →</button></article>').join("");
 }
 
-function openLecture(id, fromOverview=false) {
-  const item=lectures.find(lecture=>lecture.id===id);
-  if(!item) return;
-  const stage=caseStage(item);
-  if(fromOverview){
-    setCaseFilter(stage);
-    $("#search").value="";
-    renderRows();
-    show("cases");
-    nodes("#all-rows [data-lecture]").find(button=>button.dataset.lecture===id)?.focus();
-  }
+const assetKinds = {
+  lesson: {label:"강의교안·실습자료"},
+  photo: {label:"강의사진",accept:"image/*"},
+  video: {label:"강의영상",accept:"video/*"},
+  certificate: {label:"기관 확인서·출강 증빙",accept:".pdf,image/*,.doc,.docx,.hwp,.hwpx"}
+};
+const fileDialog=$("#asset-dialog");
+const mediaDialog=$("#media-dialog");
+let lectureDb;
+let selectedLectureId;
+let selectedSession=1;
+let sessionEntries=[];
+let sessionsLoading=false;
+let lectureFiles=[];
+let mediaUrl;
 
-  const stageLabel=caseStages.find(([key])=>key===stage)[1];
-  const parts=[["강의 일정",item.schedule]];
+function database() {
+  if(!lectureDb){
+    lectureDb=new Promise((resolve,reject)=>{
+      const request=indexedDB.open("wd-wave-lecture-center-test",1);
+      request.onupgradeneeded=()=>{
+        const db=request.result;
+        db.createObjectStore("lectures",{keyPath:"id"});
+        db.createObjectStore("sessions",{keyPath:"id"}).createIndex("lectureId","lectureId");
+        db.createObjectStore("files",{keyPath:"id"}).createIndex("lectureId","lectureId");
+      };
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error);
+    }).catch(error=>{lectureDb=null;throw error;});
+  }
+  return lectureDb;
+}
+
+async function storeData(name,mode,action) {
+  const db=await database();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(name,mode);
+    transaction.onabort=()=>reject(transaction.error||new Error("저장 작업이 중단됐어요."));
+    const request=action(transaction.objectStore(name));
+    transaction.oncomplete=()=>resolve(request?.result);
+  });
+}
+
+function itemsForLecture(store,id) {
+  return storeData(store,"readonly",data=>data.index("lectureId").getAll(id));
+}
+
+function savedLecture(item) {
+  return storeData("lectures","readwrite",data=>data.put(item));
+}
+
+function setStatus(selector,text,error=false) {
+  const status=$(selector);
+  status.textContent=text;
+  status.dataset.error=String(error);
+}
+
+function showLectureTab(key) {
+  nodes("[data-detail-tab]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.detailTab===key)));
+  nodes("[data-detail-pane]").forEach(pane=>{pane.hidden=pane.dataset.detailPane!==key;});
+}
+
+function renderLectureSummary(item) {
+  $("#lecture-title").textContent=item.title;
+  $("#lecture-org").textContent=item.org;
+  $("#lecture-progress").textContent=caseProgress(item,caseStage(item));
+  const form=$("#lecture-info-form");
+  const defaultLocation=item.sections.find(([key])=>key==="강의 장소")?.[1]||"";
+  Object.entries({title:item.title,org:item.org,schedule:item.schedule,location:item.location??defaultLocation,totalSessions:item.totalSessions||""}).forEach(([name,value])=>{
+    form.elements[name].value=value??"";
+  });
+
+  const parts=[];
   if(item.prepDone!==undefined) parts.push(["강의 준비",item.prepDone+" / 4 완료"]);
-  if(item.totalSessions>0) parts.push(["출강 회차","전체 "+item.totalSessions+"회 중 "+item.completedSessions+"회 완료"]);
+  if(item.totalSessions) parts.push(["출강 회차","전체 "+item.totalSessions+"회 중 "+item.completedSessions+"회 완료"]);
   if(item.next) parts.push(["다음 행동",item.next]);
   if(item.due) parts.push(["예정일",item.due]);
-  parts.push(...item.sections);
-  detail(item.title,item.org+" · "+stageLabel,parts,stage);
+  parts.push(...item.sections.filter(([key])=>key!=="강의 장소"));
+  $("#lecture-summary-list").innerHTML=detailRows(parts.length ? parts : [["강의 기록","등록된 기록이 없습니다."]]);
+}
+
+function sessionOptions(item,includeGeneral=false) {
+  const general=includeGeneral ? '<option value="">강의 전체</option>' : "";
+  return general+Array.from({length:item.totalSessions||0},(_,index)=>'<option value="'+(index+1)+'">'+(index+1)+'회차</option>').join("");
+}
+
+function showSession(item) {
+  const form=$("#lecture-session-form");
+  const sessionSelect=$("#lecture-session");
+  const hasSessions=Boolean(item.totalSessions);
+  sessionSelect.disabled=!hasSessions||sessionsLoading;
+  $("[data-current-session]").disabled=!hasSessions||sessionsLoading;
+  for(const field of form.elements) field.disabled=!hasSessions||sessionsLoading;
+  if(!hasSessions){
+    sessionSelect.innerHTML='<option>회차 미정</option>';
+    form.reset();
+    $("#lecture-session-assets").innerHTML='<p class="asset-empty">기본정보에서 전체 회차를 저장하면 회차별로 자료를 정리할 수 있어요.</p>';
+    return;
+  }
+  sessionSelect.innerHTML=sessionOptions(item);
+  sessionSelect.value=selectedSession;
+  const saved=sessionEntries.find(entry=>entry.session===selectedSession);
+  for(const key of ["topic","date","notes"]) form.elements[key].value=saved?.[key]||"";
+  $("#lecture-session-assets").innerHTML=fileList(lectureFiles.filter(file=>file.session===selectedSession));
+}
+
+function fileList(files) {
+  if(!files.length) return '<p class="asset-empty">첨부한 파일이 없습니다.</p>';
+  return '<ul class="asset-list">'+files.map(file=>{
+    const id=escapeText(file.id);
+    const scope=file.session ? file.session+"회차" : "강의 전체";
+    const savedDate=new Date(file.addedAt).toLocaleDateString("ko-KR");
+    return '<li><div class="asset-row"><div><strong class="asset-name">'+escapeText(file.name)+'</strong><small class="asset-meta">'+scope+' · '+escapeText(savedDate)+'</small></div>'+
+      '<div class="asset-actions">'+(supportedPreview(file) ? '<button class="btn" type="button" data-preview-file="'+id+'">미리보기</button>' : '')+
+      '<button class="btn" type="button" data-download-file="'+id+'">다운로드</button></div></div></li>';
+  }).join("")+'</ul>';
+}
+
+function showMaterials() {
+  $("#lecture-assets").innerHTML=Object.entries(assetKinds).map(([key,kind])=>{
+    const files=lectureFiles.filter(file=>file.kind===key);
+    return '<section class="panel detail-card"><div class="head"><h3>'+kind.label+'</h3><span class="file-count">'+files.length+'개</span></div>'+fileList(files)+'</section>';
+  }).join("");
+}
+
+function renderAttachments(item) {
+  showSession(item);
+  showMaterials();
+}
+
+async function openLecture(id,fromOverview=false) {
+  const item=lectures.find(lecture=>lecture.id===id);
+  if(!item) return;
+  if(fromOverview){
+    setCaseFilter(caseStage(item));
+    $("#search").value="";
+    renderRows();
+  }
+  selectedLectureId=id;
+  selectedSession=Math.max(1,Math.min(item.totalSessions||1,(item.completedSessions||0)+1));
+  sessionEntries=[];
+  sessionsLoading=true;
+  lectureFiles=[];
+  setStatus("#lecture-save-status","");
+  renderLectureSummary(item);
+  renderAttachments(item);
+  showLectureTab("basic");
+  show("lecture");
+  $("#lecture-title").focus();
+
+  try{
+    const [sessions,files]=await Promise.all([itemsForLecture("sessions",id),itemsForLecture("files",id)]);
+    if(selectedLectureId!==id) return;
+    sessionsLoading=false;
+    sessionEntries=sessions;
+    lectureFiles=files.sort((a,b)=>b.addedAt-a.addedAt);
+    showSession(item);
+    showMaterials();
+  }catch(error){
+    if(selectedLectureId!==id) return;
+    sessionsLoading=false;
+    showSession(item);
+    setStatus("#lecture-save-status","저장된 자료를 열 수 없어요. 이 브라우저의 저장공간을 확인해 주세요.",true);
+  }
+}
+
+function openFileForm(defaultKind,useSession) {
+  const item=lectures.find(lecture=>lecture.id===selectedLectureId);
+  if(!item) return;
+  const form=$("#lecture-file-form");
+  form.reset();
+  form.dataset.lectureId=item.id;
+  form.elements.kind.innerHTML=Object.entries(assetKinds).map(([key,kind])=>'<option value="'+key+'">'+kind.label+'</option>').join("");
+  form.elements.kind.value=defaultKind;
+  form.elements.session.innerHTML=sessionOptions(item,true);
+  form.elements.session.value=useSession ? String(selectedSession) : "";
+  updateFileType();
+  setStatus("#lecture-file-status","");
+  fileDialog.showModal();
+}
+
+function updateFileType() {
+  const fields=$("#lecture-file-form").elements;
+  const type=assetKinds[fields.kind.value];
+  const courseOnly=fields.kind.value==="certificate";
+  if(courseOnly) fields.session.value="";
+  fields.session.disabled=courseOnly;
+  fields.files.accept=type.accept||"";
+}
+
+function supportedPreview(file) {
+  return /^(image\/(png|jpeg|gif|webp|avif|bmp)|video\/(mp4|webm|ogg|quicktime))$/i.test(file.blob.type);
+}
+
+function accessFile(id,preview) {
+  const file=lectureFiles.find(record=>record.id===id);
+  if(!file) return;
+
+  const url=URL.createObjectURL(file.blob);
+  if(preview && supportedPreview(file)){
+    mediaUrl=url;
+    const element=document.createElement(file.blob.type.startsWith("image/")?"img":"video");
+    element.className="media-preview";
+    element.src=url;
+    if(element.tagName==="IMG") element.alt=file.name;
+    else element.controls=true;
+    $("#media-title").textContent=file.name;
+    $("#media-body").replaceChildren(element);
+    mediaDialog.showModal();
+  }else{
+    const link=document.createElement("a");
+    link.href=url;
+    link.download=file.name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+}
+
+function bindLectureForms() {
+  $("#lecture-back").addEventListener("click",()=>{
+    const id=selectedLectureId;
+    show("cases");
+    nodes("#all-rows [data-lecture]").find(button=>button.dataset.lecture===id)?.focus();
+  });
+  $("#lecture-session").addEventListener("change",event=>{
+    selectedSession=Number(event.target.value);
+    showSession(lectures.find(lecture=>lecture.id===selectedLectureId));
+  });
+  $("#lecture-file-form").elements.kind.addEventListener("change",updateFileType);
+  mediaDialog.addEventListener("close",()=>{
+    $("#media-body").replaceChildren();
+    URL.revokeObjectURL(mediaUrl);
+    mediaUrl=null;
+  });
+
+  $("#lecture-info-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    const item=lectures.find(lecture=>lecture.id===selectedLectureId);
+    const fields=new FormData(event.currentTarget);
+    const title=fields.get("title").trim();
+    const org=fields.get("org").trim();
+    if(!title||!org) {
+      setStatus("#lecture-save-status","강의명과 기관명을 입력해 주세요.",true);
+      return;
+    }
+
+    const totalSessions=Number(fields.get("totalSessions"));
+    const button=event.submitter;
+    button.disabled=true;
+    try{
+      const [sessions,files]=await Promise.all([itemsForLecture("sessions",item.id),itemsForLecture("files",item.id)]);
+      const occupied=Math.max(item.completedSessions||0,...sessions.map(entry=>entry.session),...files.map(file=>file.session||0));
+      if(totalSessions<occupied){
+        if(selectedLectureId===item.id) setStatus("#lecture-save-status","기록이 있는 "+occupied+"회차까지 유지해 주세요.",true);
+        return;
+      }
+
+      const updated={...item,title,org,schedule:fields.get("schedule").trim(),location:fields.get("location").trim(),
+        totalSessions:totalSessions||undefined,completedSessions:item.completedSessions||0};
+      if(caseStage(item)==="closed" && totalSessions>0) updated.completedSessions=totalSessions;
+      await savedLecture(updated);
+      Object.assign(item,updated);
+      renderRows();
+      if(selectedLectureId!==item.id) return;
+      selectedSession=Math.min(selectedSession,totalSessions||1);
+      renderLectureSummary(item);
+      renderAttachments(item);
+      setStatus("#lecture-save-status","강의 기본정보를 저장했어요.");
+    }catch(error){
+      if(selectedLectureId===item.id) setStatus("#lecture-save-status","기본정보를 저장하지 못했어요. 저장공간을 확인해 주세요.",true);
+    }finally{
+      button.disabled=false;
+    }
+  });
+
+  $("#lecture-session-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    const id=selectedLectureId;
+    const item=lectures.find(lecture=>lecture.id===id);
+    const session=selectedSession;
+    if(!item.totalSessions || session>item.totalSessions) return;
+    const fields=new FormData(event.currentTarget);
+    const entry={id:id+":"+session,lectureId:id,session,topic:fields.get("topic").trim(),date:fields.get("date"),notes:fields.get("notes").trim()};
+    const button=event.submitter;
+    button.disabled=true;
+    try{
+      await storeData("sessions","readwrite",data=>data.put(entry));
+      if(selectedLectureId!==id) return;
+      sessionEntries=sessionEntries.filter(saved=>saved.session!==session);
+      sessionEntries.push(entry);
+      setStatus("#lecture-save-status",session+"회차 준비 내용을 저장했어요.");
+    }catch(error){
+      if(selectedLectureId===id) setStatus("#lecture-save-status","회차 준비 내용을 저장하지 못했어요.",true);
+    }finally{
+      button.disabled=false;
+    }
+  });
+
+  $("#lecture-file-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    const form=event.currentTarget;
+    const item=lectures.find(lecture=>lecture.id===form.dataset.lectureId);
+    const {kind,session,files}=form.elements;
+    if(!item || !files.files.length) return;
+    const sessionNumber=kind.value==="certificate"?null:Number(session.value)||null;
+    if(sessionNumber && sessionNumber>item.totalSessions){
+      setStatus("#lecture-file-status","관련 회차를 다시 선택해 주세요.",true);
+      return;
+    }
+    const records=Array.from(files.files,blob=>({
+      id:crypto.randomUUID(),lectureId:item.id,kind:kind.value,session:sessionNumber,
+      name:blob.name,blob,addedAt:Date.now()
+    }));
+    const button=event.submitter;
+    button.disabled=true;
+    setStatus("#lecture-file-status","파일 저장 중…");
+    try{
+      await storeData("files","readwrite",data=>{for(const record of records) data.add(record);});
+      if(selectedLectureId===item.id){
+        lectureFiles=[...records,...lectureFiles];
+        $("#lecture-session-assets").innerHTML=fileList(lectureFiles.filter(file=>file.session===selectedSession));
+        showMaterials();
+        setStatus("#lecture-save-status",records.length+"개 파일을 저장했어요.");
+      }
+      fileDialog.close();
+    }catch(error){
+      setStatus("#lecture-file-status","파일을 저장하지 못했어요. 브라우저 저장공간을 확인해 주세요.",true);
+    }finally{
+      button.disabled=false;
+    }
+  });
+}
+
+async function loadSavedLectures() {
+  try{
+    const saved=await storeData("lectures","readonly",data=>data.getAll());
+    for(const item of saved){
+      const current=lectures.find(lecture=>lecture.id===item.id);
+      if(current) Object.assign(current,item);
+      else lectures.push(item);
+    }
+    renderRows();
+  }catch(error){
+    // The sample remains browsable when local storage is unavailable.
+  }
 }
 
 document.addEventListener("click",event=>{
@@ -539,7 +998,11 @@ document.addEventListener("click",event=>{
   }
   const button=event.target.closest("button");
   if(!button) return;
-  const {page,lecture,collection,index}=button.dataset;
+  const {page,lecture,collection,index,detailTab,addFile,previewFile,downloadFile}=button.dataset;
+  if(detailTab) showLectureTab(detailTab);
+  if(addFile) openFileForm(addFile,button.hasAttribute("data-current-session"));
+  if(previewFile) accessFile(previewFile,true);
+  if(downloadFile) accessFile(downloadFile,false);
   if(page) show(page);
   if(button.hasAttribute("data-close")) button.closest("dialog").close();
   if(button.hasAttribute("data-add")) addDialog.showModal();
@@ -555,7 +1018,7 @@ document.addEventListener("click",event=>{
 });
 $("#search").addEventListener("input",renderRows);
 $(".task-list").addEventListener("change",updateTasks);
-$("#new-lecture").addEventListener("submit",event=>{
+$("#new-lecture").addEventListener("submit",async event=>{
   event.preventDefault();
   const form=event.currentTarget;
   const fields=new FormData(form);
@@ -563,7 +1026,19 @@ $("#new-lecture").addEventListener("submit",event=>{
   const org=fields.get("org").trim();
   const next=fields.get("next").trim();
   if(!title||!org||!next) return;
-  lectures.unshift({id:"sample-"+(lectures.length+1),registeredAt:new Date().toISOString(),title,org,next,due:fields.get("due"),status:"proposal",schedule:"일정 협의 중",sections:[]});
+  const item={id:crypto.randomUUID(),registeredAt:new Date().toISOString(),title,org,next,due:fields.get("due"),status:"proposal",sections:[]};
+  const button=event.submitter;
+  button.disabled=true;
+  try{
+    await savedLecture(item);
+  }catch(error){
+    $("#add-save-status").textContent="강의건을 저장하지 못했어요. 브라우저 저장공간을 확인해 주세요.";
+    return;
+  }finally{
+    button.disabled=false;
+  }
+  lectures.unshift(item);
+  $("#add-save-status").textContent="";
   form.reset();
   addDialog.close();
   setCaseFilter("proposal");
@@ -572,6 +1047,8 @@ $("#new-lecture").addEventListener("submit",event=>{
   show("cases");
 });
 renderRows();
+bindLectureForms();
+void loadSavedLectures();
 </script>
 </body>
 </html>
