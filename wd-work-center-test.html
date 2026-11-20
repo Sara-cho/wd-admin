@@ -1200,8 +1200,8 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 <link rel="stylesheet" href="./wd-talk-panel.css">
 <script src="./wd-talk-read.js"></script>
 <script src="./wd-talk-backup.js?v=txt1"></script>
-<link rel="stylesheet" href="./wd-talk-rooms-test.css">
-<script src="./wd-talk-rooms-test.js"></script>
+<link rel="stylesheet" href="./wd-talk-rooms-test.css?v=tools2">
+<script src="./wd-talk-rooms-test.js?v=tools2"></script>
 <link rel="stylesheet" href="./wd-sticky-notes.css">
 <script src="./wd-sticky-notes.js?v=20261113-private"></script>
 <style id="office-ledger-forms-style">
@@ -3183,12 +3183,47 @@ function connectWorkspaceTalkDrive(state,privateFile=false){
     }catch(error){fail(error);}
   });
 }
-async function uploadWorkspaceTalkFile(file,token,requestId,role,privatePeer='',current=()=>true){
+async function uploadTalkChunks(location,file,type,current,onProgress){
+  const chunkSize=8*1024*1024;
+  let start=0,checkStatus=false,stalls=0;
+  while(current()){
+    const end=Math.min(start+chunkSize,file.size);
+    const range=checkStatus?'bytes */'+file.size:'bytes '+start+'-'+(end-1)+'/'+file.size;
+    let response;
+    try{
+      response=await fetch(location,{method:'PUT',
+        headers:{'Content-Type':type,'Content-Range':range},
+        body:checkStatus?null:file.slice(start,end),signal:AbortSignal.timeout(240000)});
+    }catch{/* After an interrupted PUT the server may already have part or all of the chunk. */}
+    if(!current())break;
+    if(response?.ok)return response;
+    if(response?.status===308){
+      const received=response.headers.get('Range');
+      const match=received&&/^bytes=0-(\d+)$/i.exec(received);
+      const next=match?Number(match[1])+1:0;
+      if((received&&!match)||!Number.isSafeInteger(next)||next<start||next>end||next>=file.size)
+        throw new Error('Drive 업로드 위치를 확인하지 못했어요. 다시 보내 주세요.');
+      checkStatus=false;
+      if(next>start){start=next;stalls=0;onProgress(start);continue;}
+    }else if(!response||response.status===408||response.status===429||response.status>=500){
+      checkStatus=true;
+    }else if(response.status===404){
+      throw new Error('Drive 업로드 시간이 만료됐어요. 보내기를 다시 눌러 주세요.');
+    }else{
+      return response;
+    }
+    if(++stalls>3)throw new Error('Drive 업로드가 중단됐어요. 연결을 확인한 뒤 다시 보내 주세요.');
+    await new Promise(resolve=>setTimeout(resolve,500*2**(stalls-1)));
+  }
+  throw new Error('대화 상대를 다시 확인해 주세요.');
+}
+async function uploadWorkspaceTalkFile(file,token,requestId,role,privatePeer='',current=()=>true,onProgress=()=>{}){
   const folder=privatePeer?'root':employeeDriveFolders.shared;
   const locationQuery=privatePeer?"'me' in owners":"'"+folder+"' in parents";
   const lookup=new URLSearchParams({q:locationQuery+" and trashed = false and appProperties has { key='wdTalkRequest' and value='"+requestId+"' }",
     fields:'files(id)',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
   const previous=await (await employeeDriveRequest(driveFileApi+'?'+lookup,token)).json();
+  if(!current())throw new Error('대화 상대를 다시 확인해 주세요.');
   const type=file.type||'application/octet-stream';
   let id=previous.files?.find(row=>safeDriveId(row.id))?.id;
   if(!id){
@@ -3209,7 +3244,7 @@ async function uploadWorkspaceTalkFile(file,token,requestId,role,privatePeer='',
       let location;
       try{location=new URL(init.headers.get('Location'));}catch{}
       if(!init.ok||location?.origin!=='https://www.googleapis.com')throw new Error('Drive 업로드를 시작하지 못했어요.');
-      response=await fetch(location.href,{method:'PUT',headers:{...auth,'Content-Type':type},body:file,signal:AbortSignal.timeout(240000)});
+      response=await uploadTalkChunks(location.href,file,type,current,onProgress);
     }
     const row=await response.json().catch(()=>null);
     if(!response.ok||!safeDriveId(row?.id)||(!privatePeer&&!row.parents?.includes(folder)))throw new Error('업무공유폴더에 파일을 저장하지 못했어요.');
@@ -3251,11 +3286,14 @@ function selectWorkTalkRoom(state,room){
   panel.id='workspaceTalk';panel.className='wd109-talk-dock wd-talk-surface';
   panel.setAttribute('aria-labelledby','workspaceTalkTitle');
   panel.innerHTML=`<header class="talk-heading"><div class="talk-room-title"><button type="button" id="workspaceTalkBack" aria-label="대화방 목록으로">‹ 목록</button><div><h2 id="workspaceTalkTitle">${esc(room.peer_name)}</h2><span class="talk-peer">1:1 대화</span></div></div>
-    <div class="wd110-talk-controls talk-tools"><button type="button" class="small" id="workspaceTalkSound"></button><details class="talk-manage"><summary>대화 관리</summary><div class="talk-menu">
+    <div class="wd110-talk-controls talk-tools"><details class="talk-manage"><summary>대화 관리</summary><div class="talk-menu">
       <button type="button" data-talk-backup>TXT 백업 다운로드</button>
       <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
     </div></details>
-    <button type="button" class="small" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button></div></header>
+    <button type="button" class="talk-icon" id="workspaceTalkSound" aria-label="알림 소리" aria-pressed="${state.sound}">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="talk-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="talk-muted-slash" d="m3 3 18 18"/></svg>
+    </button>
+    <button type="button" class="talk-icon talk-close" id="closeWorkspaceTalk" aria-label="WD TALK 닫기" title="닫기">×</button></div></header>
     <form id="workspaceTalkSearchForm" class="wd111-talk-search talk-search" role="search" aria-label="TALK 대화 검색">
       <input id="workspaceTalkSearch" type="search" maxlength="100" aria-label="대화 내용 검색" placeholder="이전 대화에서 검색">
       <button type="submit" class="small">검색</button><button type="button" class="small" id="clearWorkspaceTalkSearch" hidden>검색 닫기</button>
@@ -3295,7 +3333,8 @@ function selectWorkTalkRoom(state,room){
       log.querySelectorAll('details').forEach(item=>{item.open=expanded.has(item.dataset.talkExpand);});
       log.scrollTop=stick?log.scrollHeight:previous;ids=next;
     }
-    sound.textContent=state.sound?'소리 켜짐':'소리 꺼짐';sound.setAttribute('aria-pressed',String(state.sound));
+    sound.setAttribute('aria-pressed',String(state.sound));
+    sound.title=state.sound?'소리 켜짐 · 누르면 음소거':'음소거 · 누르면 소리 켜기';
     if(!sending&&!picked&&!uploaded)status.textContent='';
     controls();
   };
@@ -3376,7 +3415,7 @@ function selectWorkTalkRoom(state,room){
     if(!active())return;
     const file=fileInput.files?.[0];
     if(!file)return;
-    if(!file.size||file.size>100*1024*1024){clearFile();status.textContent='내용이 있는 100MB 이하 파일을 선택해 주세요.';return;}
+    if(!file.size){clearFile();status.textContent='내용이 있는 파일을 선택해 주세요.';return;}
     picked=file;requestId=crypto.randomUUID();remove.hidden=false;
     $('workspaceTalkFileName').textContent=file.name;send.textContent='보내기';controls();status.textContent='파일은 보내기를 누르면 공유됩니다.';
   };
@@ -3401,7 +3440,9 @@ function selectWorkTalkRoom(state,room){
           recipient=String(email||(room.peer_owner?managerDriveAccount:'')).trim().toLowerCase();
           if(!recipient)throw new Error('대화 상대의 Google 계정 등록을 확인해 주세요.');
         }
-        uploaded=await uploadWorkspaceTalkFile(file,drive.token,requestId,state.role,recipient,active);
+        uploaded=await uploadWorkspaceTalkFile(file,drive.token,requestId,state.role,recipient,active,bytes=>{
+          status.textContent='Drive에 파일을 저장하고 있어요. '+Math.floor(100*bytes/file.size)+'%';
+        });
         if(!active())return;
       }
       const {token,uid}=await workspaceTalkIdentity();

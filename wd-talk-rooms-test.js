@@ -21,7 +21,7 @@ const workTalkRooms = (() => {
     panel.className = 'wd109-talk-dock wd-talk-surface wd-room-list';
     panel.setAttribute('aria-labelledby', 'workspaceTalkTitle');
     panel.innerHTML = `<header class="talk-heading"><h2 id="workspaceTalkTitle">WD TALK</h2><div class="talk-tools">
-      <button type="button" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button>
+      <button type="button" class="talk-icon talk-close" id="closeWorkspaceTalk" aria-label="WD TALK 닫기" title="닫기">×</button>
       </div></header><div class="wd-room-section"><h3 id="workspaceTalkRoomHeading">대화방</h3></div>
       <p id="workspaceRoomNotice" class="talk-info" role="status"></p><div id="workspaceTalkRoomList" aria-labelledby="workspaceTalkRoomHeading"></div>`;
     document.body.append(panel);
