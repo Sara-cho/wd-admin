@@ -24,7 +24,7 @@ export async function handle(request) {
   const reply = (status, data) => Response.json(data, {status, headers:cors});
   if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:cors});
   if (request.method !== 'POST') return reply(405, {});
-  if (Deno.env.get('SUPABASE_URL') !== insurance) return reply(503, {});
+  if (Deno.env.get('SUPABASE_URL')?.replace(/\/$/, '') !== insurance) return reply(503, {});
   try {
     const {hq_access_token: token} = await request.json();
     if (typeof token !== 'string' || token.length > 16384 || token.split('.').length !== 3) return reply(401, {});
