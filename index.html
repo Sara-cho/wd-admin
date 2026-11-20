@@ -1462,7 +1462,7 @@ WD 경량 뉴본진 대표통합관제판 v2.0.1 · 본진·독립업무공간·
 
 <nav id="wdhq-quick-dock" aria-label="본진 빠른 메뉴">
   <button id="wdhq-talk-open" type="button" aria-label="TALK" title="TALK" aria-expanded="false" aria-controls="wdhq-talk-panel">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9.3 9.3 0 0 0-8.1 14l-1.1 4.1 4.4-1.1A9.3 9.3 0 1 0 12 3Z"/><g class="wdhq-icon-cutout"><circle cx="8" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="16" cy="12" r="1.25"/></g></svg>
+    <span aria-hidden="true">💬</span> TALK
     <span id="wdhq-talk-open-sub" hidden></span><span id="wdhq-talk-badge" aria-live="polite"></span>
   </button>
   <button id="wdhq-sticky-open" type="button" aria-label="스티커노트" title="스티커노트" aria-expanded="false" aria-controls="wd-shared-sticky-dock">
@@ -5947,62 +5947,11 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 </style>
 
 <button id="wdhq-talk-preview" type="button" aria-live="polite" aria-label="새 TALK 메시지 열기"><b id="wdhq-talk-preview-name"></b><span id="wdhq-talk-preview-text"></span></button>
-<section id="wdhq-talk-panel" role="dialog" aria-label="WD TALK" aria-hidden="true">
-  <header class="wdhq-talk-head">
-    <div class="wdhq-talk-head-copy">
-      <span class="wdhq-talk-brand">WD TALK</span>
-      <h2 id="wdhq-talk-partner">상대방</h2>
-      <p id="wdhq-talk-last">마지막 메시지 없음</p>
-    </div>
-    <button id="wdhq-talk-sound" type="button" aria-pressed="true" title="새 메시지 알림음">🔔 소리 켜짐</button>
-    <button id="wdhq-talk-close" type="button" aria-label="TALK 닫기">×</button>
-  </header>
-  <div id="wdhq-talk-list" aria-live="polite"></div>
-  <div class="wdhq-talk-composer">
-    <div class="wdhq-talk-backup-tools">
-      <button type="button" data-talk-backup>백업 다운로드</button>
-      <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
-    </div>
-    <p class="wdhq-talk-backup-status" data-talk-backup-status role="status"></p>
-    <div id="wdhq-talk-filebar" aria-live="polite"></div>
-    <input id="wdhq-talk-file-input" type="file" hidden>
-    <div class="wdhq-talk-input-wrap">
-      <button id="wdhq-talk-attach" type="button" aria-label="파일추가" title="📎 파일추가 (최대 100MB)">📎</button>
-      <textarea id="wdhq-talk-input" rows="1" maxlength="2000" placeholder="메시지를 입력하세요"></textarea>
-      <button id="wdhq-talk-send" type="button">보내기</button>
-    </div>
-    <div class="wdhq-talk-foot">Enter 전송 · Shift+Enter 줄바꿈</div>
-  </div>
-</section>
-
-<script id="wdhq-talk-script">
+<section id="wdhq-talk-panel" role="dialog" aria-label="WD TALK" aria-hidden="true"></section>
+<script id="wdhq-company-drive-script">
 (function(){
-  'use strict';
-  if(window.WDHQTalk)return;
-  const TABLE='wd_talk_messages';
-  const MEMBERS=['kfcyk50','kfcyk30'];
-  const HISTORY_LIMIT=300;
-  const HISTORY_REFRESH_MS=12000;
   const $=id=>document.getElementById(id);
-  const openBtn=$('wdhq-talk-open'),panel=$('wdhq-talk-panel'),list=$('wdhq-talk-list'),
-        input=$('wdhq-talk-input'),sendBtn=$('wdhq-talk-send'),badge=$('wdhq-talk-badge');
-
-  let me=null;            // {uid, loginId}
-  let channel=null;
-  let historyRequest=null;
-  let historyTimer=null;
-  let historyReady=false;
-  let messages=[];        // 시간순
-  const seen=new Set();   // id 중복 방지
-  let unread=0;           // 메모리 전용
-  let isOpen=false;
-  let sending=false;
-  let starting=false;
-  let soundOn=true;       // 메모리 전용 (저장 안 함)
-  let audioCtx=null;
-  let previewTimer=null;
-  const preview=$('wdhq-talk-preview');
-
+  const MEMBERS=['kfcyk50','kfcyk30'];
   function authState(){
     try{
       const s=(typeof WDHQ_AUTH_SESSION!=='undefined')?WDHQ_AUTH_SESSION:null;
@@ -6013,339 +5962,11 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       return {uid:s.user.id,loginId:p.login_id,client:c};
     }catch(e){return null}
   }
-  function account(id){
-    try{return (typeof WDHQ_LOGIN_ACCOUNTS!=='undefined'&&WDHQ_LOGIN_ACCOUNTS[id])||null}catch(e){return null}
-  }
-  function partnerLabel(){
-    const other=MEMBERS.find(id=>id!==me?.loginId);
-    const a=account(other);
-    if(!a)return '상대방';
-    return other==='kfcyk50'?(a.name+' 대표'):a.name;
-  }
-  function fmtTime(iso){
-    const d=new Date(iso);if(isNaN(d))return '';
-    return d.toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'});
-  }
-  function fmtDay(iso){
-    const d=new Date(iso);if(isNaN(d))return '';
-    return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
-  }
-  function dayKey(iso){const d=new Date(iso);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()}
-  function setBadge(){
-    badge.textContent=unread>99?'99+':String(unread);
-    badge.classList.toggle('show',unread>0);
-    openBtn.setAttribute('aria-label',unread>0?('WD TALK 열기 · 새 메시지 '+unread+'개'):'WD TALK 열기');
-  }
-  function setLast(){
-    const last=messages[messages.length-1];
-    $('wdhq-talk-last').textContent=last?('마지막 메시지 · '+fmtDay(last.created_at)+' '+fmtTime(last.created_at)):'마지막 메시지 없음';
-  }
-  function state(text,isErr){
-    list.replaceChildren();
-    const p=document.createElement('p');p.className='wdhq-talk-state'+(isErr?' err':'');p.textContent=text;list.appendChild(p);
-  }
-  function nearBottom(){return list.scrollHeight-list.scrollTop-list.clientHeight<80}
-  function scrollBottom(){list.scrollTop=list.scrollHeight}
-  function render(){
-    const stick=nearBottom();
-    list.replaceChildren();
-    if(!messages.length){
-      const p=document.createElement('p');p.className='wdhq-talk-empty';p.textContent='아직 대화가 없습니다. 첫 메시지를 보내 보세요.';list.appendChild(p);
-      setLast();return;
-    }
-    let prevDay='';
-    const frag=document.createDocumentFragment();
-    messages.forEach(m=>{
-      const k=dayKey(m.created_at);
-      if(k!==prevDay){prevDay=k;const d=document.createElement('div');d.className='wdhq-talk-day';d.textContent=fmtDay(m.created_at);frag.appendChild(d)}
-      const row=document.createElement('div');row.className='wdhq-talk-row '+(m.sender_id===me?.uid?'mine':'theirs');
-      const bubble=document.createElement('div');bubble.className='wdhq-talk-bubble';fillBubble(bubble,m);
-      const time=document.createElement('span');time.className='wdhq-talk-time';time.textContent=fmtTime(m.created_at);
-      row.append(bubble,time);frag.appendChild(row);
-    });
-    list.appendChild(frag);
-    setLast();
-    if(stick||isOpen)scrollBottom();
-  }
-  const messageOrder=(a,b)=>String(a.created_at).localeCompare(String(b.created_at))||String(a.id).localeCompare(String(b.id));
-  function newIncoming(m){
-    if(m.sender_id===me?.uid)return;
-    if(!isOpen){unread++;setBadge()}
-    try{notify(m)}catch(e){}
-  }
-  function add(m,fromRealtime){
-    if(!m?.id||seen.has(m.id))return;
-    seen.add(m.id);messages.push(m);
-    historyRequest?.arrivals.push(m);
-    messages.sort(messageOrder);
-    if(messages.length>HISTORY_LIMIT)messages.splice(0,messages.length-HISTORY_LIMIT);
-    if(fromRealtime)newIncoming(m);
-    render();
-  }
-  function loadHistory(){
-    const a=authState(),account=me;
-    if(!a||!account||a.uid!==account.uid)return;
-    if(historyRequest?.account===account)return historyRequest.promise;
-    const request={account,promise:null,arrivals:[],cleared:new Set()};
-    historyRequest=request;
-    request.promise=(async()=>{
-      try{
-        const {data,error}=await a.client.from(TABLE).select('id,sender_id,body,created_at')
-          .order('created_at',{ascending:false}).order('id',{ascending:false}).limit(HISTORY_LIMIT);
-        if(me!==account||authState()?.uid!==account.uid)return;
-        if(error)throw error;
-        const merged=new Map();
-        for(const row of [...(data||[]),...request.arrivals])if(!request.cleared.has(row.id))merged.set(row.id,row);
-        const next=[...merged.values()].sort(messageOrder).slice(-HISTORY_LIMIT);
-        const changed=!historyReady||next.length!==messages.length||next.some((row,i)=>row.id!==messages[i]?.id);
-        if(historyReady)for(const row of next)if(!seen.has(row.id))newIncoming(row);
-        messages=next;seen.clear();
-        for(const row of next)seen.add(row.id);
-        historyReady=true;
-        if(changed)render();
-      }catch(e){
-        if(me===account&&!historyReady)state('대화 내용을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.',true);
-      }finally{
-        if(historyRequest===request)historyRequest=null;
-      }
-    })();
-    return request.promise;
-  }
-  async function subscribe(){
-    const a=authState(),account=me;
-    if(!a||!account||a.uid!==account.uid)return;
-    try{
-      const {data}=await a.client.auth.getSession();
-      const token=data?.session?.access_token;
-      if(token&&a.client.realtime?.setAuth)await a.client.realtime.setAuth(token);
-    }catch(e){}
-    if(me!==account||authState()?.uid!==account.uid)return;
-    channel=a.client.channel('wdhq-talk-'+a.uid)
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:TABLE},payload=>{
-        if(me===account&&authState()?.uid===account.uid)add(payload.new,true);
-      })
-      .subscribe(status=>{
-        if(status==='SUBSCRIBED'&&me===account)void loadHistory();
-      });
-  }
-  async function start(a){
-    if(starting)return;starting=true;
-    const account={uid:a.uid,loginId:a.loginId};
-    try{
-      me=account;historyReady=false;talkBackup?.reset();
-      $('wdhq-talk-partner').textContent=partnerLabel();
-      $('wdhq-talk-open-sub').textContent=partnerLabel()+'님과 대화';
-      document.body.classList.add('wdhq-talk-ready');
-      state('대화 내용을 불러오는 중입니다.');
-      historyTimer=setInterval(()=>{if(!document.hidden)void loadHistory()},HISTORY_REFRESH_MS);
-      await loadHistory();
-      if(me===account)await subscribe();
-    }finally{starting=false}
-  }
-  function stop(){
-    clearInterval(historyTimer);historyTimer=null;historyRequest=null;historyReady=false;
-    try{if(channel)(authState()?.client||WDHQ_SUPABASE)?.removeChannel(channel)}catch(e){}
-    channel=null;me=null;messages=[];seen.clear();unread=0;setBadge();
-    document.body.classList.remove('wdhq-talk-ready');
-    hidePreview();close();list.replaceChildren();
-    try{drive.token='';drive.uid='';pickedFile=null;uploaded=null;barShow(null)}catch(e){}
-  }
-  // ── 알림음: Web Audio API · 실패해도 수신에는 영향 없음 ──
-  function ensureAudio(){
-    try{
-      const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;
-      if(!audioCtx)audioCtx=new AC();
-      if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
-      return audioCtx;
-    }catch(e){return null}
-  }
-  function chime(){
-    if(!soundOn)return;
-    try{
-      const ctx=ensureAudio();if(!ctx||ctx.state!=='running')return;
-      const t=ctx.currentTime;
-      [[880,0],[1318.5,0.12]].forEach(([f,d])=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.type='sine';o.frequency.value=f;
-        g.gain.setValueAtTime(0.0001,t+d);
-        g.gain.exponentialRampToValueAtTime(0.18,t+d+0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.22);
-        o.connect(g);g.connect(ctx.destination);o.start(t+d);o.stop(t+d+0.25);
-      });
-      window.__wdhqTalkChimeCount=(window.__wdhqTalkChimeCount||0)+1;
-    }catch(e){}
-  }
-  function setSoundBtn(){
-    const b=$('wdhq-talk-sound');b.setAttribute('aria-pressed',String(soundOn));
-    b.textContent=soundOn?'🔔 소리 켜짐':'🔕 소리 끔';
-  }
-  function hidePreview(){clearTimeout(previewTimer);previewTimer=null;preview.classList.remove('show')}
-  function showPreview(m){
-    try{
-      $('wdhq-talk-preview-name').textContent=partnerLabel();
-      $('wdhq-talk-preview-text').textContent=previewText(m);
-      preview.classList.add('show');
-      clearTimeout(previewTimer);previewTimer=setTimeout(hidePreview,5000);
-    }catch(e){}
-  }
-  function notify(m){           // 상대 메시지 · 신규 id 1회만 호출됨
-    chime();
-    if(!isOpen)showPreview(m);
-  }
-
-  function open(){
-    if(!me)return;
-    ensureAudio();
-    window.WDHQStickyNote?.close();
-    hidePreview();
-    try{if(window.WDHQNoah&&document.getElementById('wdhq-noah-panel')?.classList.contains('open'))window.WDHQNoah.close()}catch(e){}
-    isOpen=true;unread=0;setBadge();
-    panel.classList.add('open');panel.setAttribute('aria-hidden','false');
-    openBtn.setAttribute('aria-expanded','true');
-    if(historyReady){render();scrollBottom();}
-    void loadHistory();
-    setTimeout(()=>input.focus(),60);
-  }
-  function close(){
-    isOpen=false;talkBackup?.reset();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
-    openBtn.setAttribute('aria-expanded','false');
-  }
-  function autoSize(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px'}
-  async function send(){
-    if(sending)return;
-    const a=authState();if(!a){if(typeof toast==='function')toast('로그인 상태를 확인해 주세요.');return}
-    const body=input.value.replace(/\s+$/,'');
-    if(!body.trim())return;
-    if(body.length>2000){if(typeof toast==='function')toast('메시지는 2000자까지 보낼 수 있습니다.');return}
-    sending=true;sendBtn.disabled=true;
-    try{
-      const {data,error}=await a.client.from(TABLE).insert({body}).select('id,sender_id,body,created_at').single();
-      if(error)throw error;
-      input.value='';autoSize();
-      add(data,false);scrollBottom();
-    }catch(e){
-      if(typeof toast==='function')toast('메시지를 보내지 못했습니다. 다시 시도해 주세요.');
-    }finally{
-      sending=false;sendBtn.disabled=false;input.focus();
-    }
-  }
-
-  const talkBackup=window.WDTalkBackup?.bind({
-    root:panel,active:()=>isOpen&&!!me,canDelete:()=>me?.loginId==='kfcyk50',
-    getIdentity:async()=>{
-      const identity=authState();
-      if(!identity||identity.uid!==me?.uid)throw new Error('계정이 바뀌었어요. TALK를 다시 열어 주세요.');
-      return identity;
-    },
-    readPage:async({client},after,limit)=>{
-      let query=client.from(TABLE).select('id,sender_id,body,created_at').order('id',{ascending:true}).limit(limit);
-      if(after)query=query.gt('id',after);
-      const {data,error}=await query;
-      if(error)throw new Error('대화 백업 목록을 불러오지 못했어요.');
-      return data;
-    },
-    deleteMessages:async({client},ids)=>{
-      const {data,error}=await client.rpc('wd_talk_delete_backed_up',{p_message_ids:ids});
-      if(error)throw new Error(error.code==='PGRST202'?'TALK 대화 삭제 기능을 연결한 뒤 사용할 수 있어요.':'대화 삭제를 확인하지 못했어요.');
-      return data;
-    },
-    onDeleted:ids=>{
-      const removed=new Set(ids);
-      if(historyRequest)for(const id of ids)historyRequest.cleared.add(id);
-      messages=messages.filter(row=>!removed.has(row.id));
-      for(const id of ids)seen.delete(id);
-      unread=0;setBadge();render();void loadHistory();
-    }
-  });
-  if(!talkBackup)panel.querySelector('.wdhq-talk-backup-tools').hidden=true;
-
-  openBtn.addEventListener('click',()=>isOpen?close():open());
-  const dismiss=()=>{close();openBtn.focus();};
-  $('wdhq-talk-close').addEventListener('click',dismiss);
-  $('wdhq-talk-sound').addEventListener('click',()=>{soundOn=!soundOn;setSoundBtn();if(soundOn)ensureAudio()});
-  preview.addEventListener('click',()=>{ensureAudio();open()});
-  // 새로고침 후 TALK를 누르기 전이라도 첫 클릭·키 입력 때 오디오 준비 (브라우저 자동재생 정책)
-  const unlock=()=>{ensureAudio();if(audioCtx&&audioCtx.state==='running'){document.removeEventListener('pointerdown',unlock,true);document.removeEventListener('keydown',unlock,true)}};
-  document.addEventListener('pointerdown',unlock,true);
-  document.addEventListener('keydown',unlock,true);
-  sendBtn.addEventListener('click',send);
-  input.addEventListener('input',autoSize);
-  input.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();send()}
-  });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isOpen)dismiss()});
-  document.getElementById('wdhq-noah-open')?.addEventListener('click',()=>{if(isOpen)close()});
-
-
-  // ───────── TALK 파일첨부 (A안 · DB 변경 없음) ─────────
-  // 원본: WD WAVE 회사공통 > 01_업무공유폴더 > 03_업무공유파일 (업무센터와 같은 폴더 ID)
-  const FILE_PREFIX='[WDFILE]';
-  const DRIVE_FOLDER_ID='1akIH85_fbbPkshgPLWCkzxv3doMgJU0W';
   const DRIVE_CLIENT_ID='525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com'; // 업무센터와 동일 Client
   const DRIVE_SCOPE='https://www.googleapis.com/auth/drive';
   const DRIVE_ACCOUNTS={kfcyk50:'kfcyk20@gmail.com',kfcyk30:'woori08944@gmail.com'};
-  const MAX_FILE=100*1024*1024;
-  const MULTIPART_MAX=5*1024*1024;
-  const FILE_ID_RE=/^[A-Za-z0-9_-]{10,200}$/;
   const drive={token:'',uid:'',pending:null};
   const companyDriveButton=$('wdhq-company-drive');
-  let pickedFile=null;      // 선택만 된 파일
-  let uploaded=null;        // Drive 업로드 완료 · TALK 전달 실패 시 재전송용
-  let uploading=false;
-  const fileInput=$('wdhq-talk-file-input'),attachBtn=$('wdhq-talk-attach'),bar=$('wdhq-talk-filebar');
-
-  function parseFileBody(body){
-    const s=String(body||'');
-    if(s.indexOf(FILE_PREFIX)!==0)return null;
-    try{
-      const o=JSON.parse(s.slice(FILE_PREFIX.length));
-      if(!o||typeof o!=='object')return {invalid:true};
-      const id=String(o.id||''),name=String(o.name||'').slice(0,200),size=Number(o.size),mime=String(o.mime||'').slice(0,120);
-      if(!FILE_ID_RE.test(id)||!name||!isFinite(size)||size<0)return {invalid:true};
-      return {id,name,size,mime};
-    }catch(e){return {invalid:true}}
-  }
-  function previewText(m){
-    const f=parseFileBody(m&&m.body);
-    if(!f)return String((m&&m.body)||'');
-    return f.invalid?'📎 파일':'📎 '+f.name;
-  }
-  function fmtSize(n){n=Number(n||0);if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(n<10485760?1:0)+'MB'}
-  function fileKind(f){
-    const m=f.mime||'',ext=(f.name.split('.').pop()||'').toUpperCase();
-    if(m.indexOf('image/')===0)return ['🖼️',ext||'이미지'];
-    if(m==='application/pdf')return ['📕','PDF'];
-    if(m.indexOf('spreadsheet')>=0||m.indexOf('excel')>=0)return ['📊',ext||'시트'];
-    if(m.indexOf('presentation')>=0||m.indexOf('powerpoint')>=0)return ['📽️',ext||'슬라이드'];
-    if(m.indexOf('document')>=0||m.indexOf('word')>=0)return ['📄',ext||'문서'];
-    if(m.indexOf('zip')>=0||m.indexOf('compressed')>=0)return ['🗜️',ext||'압축'];
-    return ['📎',ext&&ext.length<=6?ext:'파일'];
-  }
-  function driveViewUrl(id){return 'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view'}
-  function fillBubble(bubble,m){
-    const f=parseFileBody(m.body);
-    if(!f){bubble.textContent=m.body;return}
-    bubble.classList.add('file');
-    if(f.invalid){bubble.textContent='📎 파일 정보를 읽을 수 없습니다.';return}
-    const [icon,kind]=fileKind(f);
-    const head=document.createElement('div');head.className='wdhq-talk-file-head';
-    const ic=document.createElement('span');ic.className='wdhq-talk-file-icon';ic.textContent=icon;
-    const nm=document.createElement('b');nm.className='wdhq-talk-file-name';nm.textContent=f.name;nm.title=f.name;
-    head.append(ic,nm);
-    const meta=document.createElement('div');meta.className='wdhq-talk-file-meta';meta.textContent=kind+' · '+fmtSize(f.size);
-    const who=document.createElement('div');who.className='wdhq-talk-file-who';
-    who.textContent=(m.sender_id===me?.uid?myLabel():partnerLabel())+' · '+fmtTime(m.created_at);
-    const acts=document.createElement('div');acts.className='wdhq-talk-file-acts';
-    const ob=document.createElement('button');ob.type='button';ob.textContent='열기';
-    ob.addEventListener('click',()=>window.open(driveViewUrl(f.id),'_blank','noopener,noreferrer'));
-    const db=document.createElement('button');db.type='button';db.textContent='다운로드';
-    db.addEventListener('click',()=>downloadFile(f,db));
-    acts.append(ob,db);
-    bubble.append(head,meta,who,acts);
-  }
-  function myLabel(){const a=account(me?.loginId);if(!a)return '나';return me.loginId==='kfcyk50'?(a.name+' 대표'):a.name}
-
-  // ── TALK 전용 Drive 연결 (본진 Gmail/Calendar/Tasks 연결과 별개) ──
   function driveIdentity(){
     const identity=authState();
     return identity&&DRIVE_ACCOUNTS[identity.loginId]&&wdhqLocalAuthUser()===identity.uid?identity:null;
@@ -6434,22 +6055,6 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     companyDriveButton.textContent=busy?'Drive 확인 중':connected?'Drive 연결됨':'Drive 연결';
     companyDriveButton.title='WD 업무센터 회사 자료에 사용하는 Drive 연결';
   }
-  function driveApi(url,opts){
-    const {token,uid}=drive;
-    opts=opts||{};opts.headers=Object.assign({Authorization:'Bearer '+token},opts.headers||{});opts.cache='no-store';
-    return fetch(url,opts).then(async res=>{
-      if(res.status===401){
-        try{
-          const key=driveSessionKey(uid);
-          if(JSON.parse(sessionStorage.getItem(key)||'null')?.token===token)sessionStorage.removeItem(key);
-        }catch{}
-        paintCompanyDrive();
-        throw new Error('Google Drive 연결이 만료되었습니다. 다시 시도해 주세요.');
-      }
-      if(!res.ok){const t=await res.text().catch(()=>'');throw new Error('Drive '+res.status+' '+t.slice(0,100))}
-      return res;
-    });
-  }
   function driveConnect(insuranceHome=false){ // 반드시 사용자 클릭 안에서 호출
     const identity=driveIdentity();
     if(!identity)return Promise.reject(new Error('Drive에 연결할 본진 계정을 확인해 주세요.'));
@@ -6529,159 +6134,11 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     void driveConnect().catch(error=>toast(error.message||'Drive 연결을 확인해 주세요.'));
   };
 
-  // ── 업로드 (업무센터와 같은 방식: 5MB 이하 multipart / 초과 resumable) ──
-  function xhrSend(method,url,headers,body,onProgress){
-    return new Promise((resolve,reject)=>{
-      const x=new XMLHttpRequest();x.open(method,url);
-      Object.keys(headers).forEach(k=>x.setRequestHeader(k,headers[k]));
-      x.upload.onprogress=e=>{if(e.lengthComputable&&onProgress)onProgress(e.loaded/e.total)};
-      x.onload=()=>{if(x.status>=200&&x.status<300){try{resolve(JSON.parse(x.responseText||'{}'))}catch(e){reject(new Error('Drive 응답을 읽지 못했습니다.'))}}else reject(new Error('Drive '+x.status+' '+String(x.responseText||'').slice(0,100)))};
-      x.onerror=()=>reject(new Error('네트워크 오류로 업로드하지 못했습니다.'));
-      x.send(body);
-    });
-  }
-  const UPLOAD_FIELDS='id,name,mimeType,size,parents';
-  async function uploadToDrive(file,onProgress){
-    const meta={name:file.name,parents:[DRIVE_FOLDER_ID],appProperties:{wdSource:'wd-talk',wdSender:String(me?.loginId||'')}};
-    const type=file.type||'application/octet-stream';
-    let created;
-    if(file.size<=MULTIPART_MAX){
-      const boundary='wdtalk_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-      const head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: '+type+'\r\n\r\n';
-      const body=new Blob([head,file,'\r\n--'+boundary+'--'],{type:'multipart/related; boundary='+boundary});
-      created=await xhrSend('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields='+encodeURIComponent(UPLOAD_FIELDS),
-        {Authorization:'Bearer '+drive.token,'Content-Type':'multipart/related; boundary='+boundary},body,onProgress);
-    }else{
-      const init=await driveApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields='+encodeURIComponent(UPLOAD_FIELDS),
-        {method:'POST',headers:{'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':type,'X-Upload-Content-Length':String(file.size)},body:JSON.stringify(meta)});
-      const loc=init.headers.get('Location');if(!loc)throw new Error('업로드 주소를 받지 못했습니다.');
-      created=await xhrSend('PUT',loc,{'Content-Type':type},file,onProgress);
-    }
-    if(!created||!FILE_ID_RE.test(String(created.id||'')))throw new Error('Drive 파일 ID를 확인하지 못했습니다.');
-    if(Array.isArray(created.parents)&&created.parents.indexOf(DRIVE_FOLDER_ID)<0)throw new Error('업로드 위치가 03_업무공유파일이 아닙니다.');
-    return {id:created.id,name:String(created.name||file.name),size:Number(created.size||file.size),mime:String(created.mimeType||type)};
-  }
-  function buildFileBody(f){
-    let name=f.name;
-    let body=FILE_PREFIX+JSON.stringify({v:1,id:f.id,name,size:f.size,mime:f.mime});
-    while(body.length>2000&&name.length>20){name=name.slice(0,name.length-20);body=FILE_PREFIX+JSON.stringify({v:1,id:f.id,name,size:f.size,mime:f.mime})}
-    return body;
-  }
-  async function postBody(body){ // 기존 send()와 같은 INSERT (body만)
-    const a=authState();if(!a)throw new Error('로그인 상태를 확인해 주세요.');
-    const {data,error}=await a.client.from(TABLE).insert({body}).select('id,sender_id,body,created_at').single();
-    if(error)throw error;
-    add(data,false);scrollBottom();
-    return data;
-  }
-
-  // ── 첨부 바 UI ──
-  function barShow(state){
-    // state: {text, tone, progress, actions:[{label,fn,primary}]}
-    bar.replaceChildren();
-    if(!state){bar.classList.remove('show');return}
-    const t=document.createElement('div');t.className='wdhq-talk-filebar-text'+(state.tone?' '+state.tone:'');t.textContent=state.text;
-    bar.appendChild(t);
-    if(typeof state.progress==='number'){
-      const pg=document.createElement('div');pg.className='wdhq-talk-progress';
-      const fill=document.createElement('i');fill.style.width=Math.round(state.progress*100)+'%';pg.appendChild(fill);bar.appendChild(pg);
-    }
-    if(state.actions&&state.actions.length){
-      const row=document.createElement('div');row.className='wdhq-talk-filebar-acts';
-      state.actions.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent=x.label;if(x.primary)b.className='primary';b.addEventListener('click',x.fn);row.appendChild(b)});
-      bar.appendChild(row);
-    }
-    bar.classList.add('show');
-  }
-  function showPicked(){
-    if(!pickedFile)return barShow(null);
-    barShow({text:'📎 '+pickedFile.name+' · '+fmtSize(pickedFile.size),
-      actions:[{label:'취소',fn:()=>{pickedFile=null;barShow(null)}},
-               {label:driveValid()?'보내기':'Google 연결 후 보내기',primary:true,fn:startUpload}]});
-  }
-  function showUploadedFail(msg){
-    barShow({text:'파일은 Drive에 올라갔지만 TALK 전달 실패 · '+uploaded.name,tone:'err',
-      actions:[{label:'닫기',fn:()=>{uploaded=null;barShow(null)}},{label:'다시 보내기',primary:true,fn:resendUploaded}]});
-    if(msg&&typeof toast==='function')toast('TALK 전달 실패: '+msg);
-  }
-  async function resendUploaded(){
-    if(!uploaded)return;
-    barShow({text:'TALK로 다시 보내는 중… · '+uploaded.name});
-    try{await postBody(buildFileBody(uploaded));uploaded=null;barShow(null)}
-    catch(e){showUploadedFail(String(e.message||e))}
-  }
-  async function startUpload(){
-    if(uploading||!pickedFile||!me)return;
-    const file=pickedFile;
-    if(file.size>MAX_FILE){barShow({text:'100MB를 넘는 파일은 보낼 수 없습니다. ('+fmtSize(file.size)+')',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
-    if(!file.size){barShow({text:'빈 파일은 보낼 수 없습니다.',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
-    uploading=true;attachBtn.disabled=true;
-    try{
-      if(!driveValid()){barShow({text:'Google Drive 연결 창을 확인해 주세요.'});await driveConnect()}
-      barShow({text:'업로드 중 0% · '+file.name,progress:0});
-      const f=await uploadToDrive(file,p=>barShow({text:'업로드 중 '+Math.round(p*100)+'% · '+file.name,progress:p}));
-      pickedFile=null;
-      // Drive 업로드가 끝난 뒤에만 TALK 메시지 저장
-      uploaded=f;
-      barShow({text:'TALK로 전달하는 중… · '+f.name,progress:1});
-      try{await postBody(buildFileBody(f));uploaded=null;barShow(null)}
-      catch(e){showUploadedFail(String(e.message||e))}
-    }catch(e){
-      // Drive 업로드 실패 → TALK 메시지 만들지 않음
-      barShow({text:'업로드 실패 · '+String(e.message||e).slice(0,120),tone:'err',
-        actions:[{label:'취소',fn:()=>{pickedFile=null;barShow(null)}},{label:'다시 시도',primary:true,fn:startUpload}]});
-    }finally{uploading=false;attachBtn.disabled=false}
-  }
-  attachBtn.addEventListener('click',()=>{
-    if(uploading)return;
-    if(uploaded){showUploadedFail();return}
-    fileInput.value='';fileInput.click();
-  });
-  fileInput.addEventListener('change',()=>{
-    const f=fileInput.files&&fileInput.files[0];if(!f)return;
-    pickedFile=f;
-    if(f.size>MAX_FILE){barShow({text:'100MB를 넘는 파일은 보낼 수 없습니다. ('+fmtSize(f.size)+')',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
-    showPicked();
-  });
-
-  // ── 다운로드: 받는 사람 본인의 Google Drive 인증 ──
-  async function downloadFile(f,btn){
-    const old=btn.textContent;btn.disabled=true;btn.textContent='준비 중…';
-    try{
-      if(!driveValid())await driveConnect();
-      const exports={
-        'application/vnd.google-apps.document':['application/pdf','.pdf'],
-        'application/vnd.google-apps.spreadsheet':['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','.xlsx'],
-        'application/vnd.google-apps.presentation':['application/vnd.openxmlformats-officedocument.presentationml.presentation','.pptx']
-      };
-      let url,name=f.name;
-      if(exports[f.mime]){url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'/export?mimeType='+encodeURIComponent(exports[f.mime][0]);if(!name.toLowerCase().endsWith(exports[f.mime][1]))name+=exports[f.mime][1]}
-      else url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'?alt=media';
-      const blob=await (await driveApi(url,{method:'GET'})).blob();
-      const obj=URL.createObjectURL(blob),a=document.createElement('a');a.href=obj;a.download=name;document.body.appendChild(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(obj),1500);
-    }catch(e){
-      if(typeof toast==='function')toast('다운로드하지 못했습니다. [열기]로 Drive에서 확인해 주세요. '+String(e.message||'').slice(0,60));
-    }finally{btn.disabled=false;btn.textContent=old}
-  }
-
-
-  // 기존 본진 로그인 흐름은 건드리지 않고, 로그인 상태 변화만 관찰
-  function tick(){
-    const a=authState();
-    if(a&&(!me||me.uid!==a.uid)){if(me)stop();start(a)}
-    else if(!a&&me)stop();
-    paintCompanyDrive();
-  }
-  setInterval(tick,1000);
-  window.addEventListener('pageshow',()=>setTimeout(()=>{tick();void loadHistory()},300));
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();void loadHistory()}});
-  tick();
-
-  window.WDHQTalk=Object.freeze({open,close});
+  setInterval(paintCompanyDrive,1000);
+  paintCompanyDrive();
 })();
 </script>
-
+<script src="./wd-hq-talk.js?v=1"></script>
 <script id="wdhq-sticky-script">
 (function(){
   const trigger=()=>document.getElementById('wdhq-sticky-open');
@@ -6722,7 +6179,8 @@ body:not([data-wdhq-login-id="kfcyk50"]):not([data-wdhq-login-id="kfcyk30"]) #wd
   color:var(--wdhq-icon-color,#fff);box-shadow:0 5px 15px #11253929;
   cursor:pointer;transition:filter .16s ease,transform .16s ease;
 }
-#wdhq-quick-dock #wdhq-talk-open{--wdhq-tool-color:#08745d;display:grid}
+#wdhq-quick-dock #wdhq-talk-open{--wdhq-tool-color:#f4ecff;--wdhq-icon-color:#4d2683;display:flex;align-items:center;justify-content:center;gap:5px;width:auto;min-width:76px;height:44px;min-height:44px;padding:0 10px;border:1px solid #d8c8ee;border-radius:12px;font:750 14px/1 system-ui,sans-serif}
+#wdhq-quick-dock #wdhq-talk-open-sub[hidden]{display:none}
 #wdhq-quick-dock #wdhq-sticky-open{--wdhq-tool-color:#ffd34f;--wdhq-icon-color:#392800}
 #wdhq-quick-dock #wdhq-account-info-open{--wdhq-tool-color:#be3048}
 #wdhq-quick-dock button:hover{background:var(--wdhq-tool-color);filter:brightness(1.08);transform:translateX(-2px)}
@@ -6781,6 +6239,11 @@ body:has(#wdhq-talk-panel.open,#wd-shared-sticky-dock,#wdhq-account-info[open]) 
   #wdhq-quick-dock button,#wdhq-talk-panel{transition:none}
   #wdhq-account-info[open]{animation:none}
 }
+</style>
+<style>
+#wdhq-talk-panel{inset:12px 16px 12px auto;width:min(500px,calc(100vw - 32px));height:auto;border:1px solid #e4d9f1;border-radius:16px;background:#fff;box-shadow:0 12px 44px #35224a26}
+#wdhq-talk-panel iframe{width:100%;height:100%;display:block;border:0}
+@media(max-width:600px){#wdhq-talk-panel{inset:0;width:100%;height:100dvh;border:0;border-radius:0}}
 </style>
 <script id="wdhq-account-info-script">
 (function(){

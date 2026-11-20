@@ -1280,6 +1280,12 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .workGoogleCard [data-work-google-retry][hidden]{display:none}
 .workGoogleHelp{display:none;margin:14px auto 0;width:max-content}
 .workGoogleCard[data-needs-hq] .workGoogleHelp{display:block}
+</style><style>
+#workspaceTalk .wd-talk-file-download{margin-left:.65em;font-size:.9em}
+html.embedded-talk,html.embedded-talk body{margin:0;padding:0;background:white;overflow:hidden}
+html.embedded-talk #workspaceTalk.wd-talk-surface{inset:0;width:100%;height:100dvh;border:0;border-radius:0;box-shadow:none}
+html.embedded-talk #root{padding:12px;color:#4c4157}
+html.embedded-talk #root>button:not([hidden]){min-width:42px;min-height:42px;margin-right:8px}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -1445,11 +1451,15 @@ async function signOutWorkSession(){
   finally{if(button?.isConnected)button.disabled=false;}
 }
 window.addEventListener('pageshow',event=>{
-  if(!event.persisted||embeddedAccountInfo)return;
+  if(!event.persisted||embeddedAccountInfo||embeddedTalk)return;
   const expected=managerWorkIdentity?.user_id||workStickyUserId;
   if(expected&&expected!==readHqSession()?.user?.id)logout();
 });
 window.addEventListener('storage',event=>{
+  if(embeddedTalk){
+    if(embeddedTalkOwner && readHqSession()?.user?.id!==embeddedTalkOwner){closeWorkspaceTalk(true);stopWorkspaceTalk();}
+    return;
+  }
   if(event.key===KEY&&event.newValue!==storageVersion){location.reload();return;}
   const owner=currentUser==='manager';
   const previousId=owner?managerWorkIdentity?.user_id:workStickyUserId;
@@ -2891,6 +2901,7 @@ function retainCompanyDriveSession(session){
 }
 
 function talkAvailable(){
+  if(embeddedTalk && (!embeddedTalkOwner || talkHost()?.current(window)!==embeddedTalkOwner))return false;
   return !pinOnlyWorkspace&&!!readHqToken()&&(currentUser==='manager'||currentUser==='employee'&&!!hqStaffLoginId&&(hqStaffLoginId===legacyStaffHqLogin||staffCloudGrant?.enabled===true));
 }
 async function talkRequest(token,body,search='',backupPage=null){
@@ -2925,7 +2936,16 @@ function talkFile(body){
 }
 function talkBody(body){
   const file=talkFile(body);
-  return file?`<a href="${driveFileUrl(file.id)}" target="_blank" rel="noopener noreferrer">${esc(file.name||'Drive 첨부파일')}</a>`:esc(body);
+  if(!file)return esc(body);
+  const name=esc(file.name||'Drive 첨부파일'),id=encodeURIComponent(file.id);
+  const exports={
+    'application/vnd.google-apps.document':'https://docs.google.com/document/d/'+id+'/export?format=pdf',
+    'application/vnd.google-apps.spreadsheet':'https://docs.google.com/spreadsheets/d/'+id+'/export?format=xlsx',
+    'application/vnd.google-apps.presentation':'https://docs.google.com/presentation/d/'+id+'/export/pptx'
+  };
+  const download=(Object.hasOwn(exports,file.mime)?exports[file.mime]:'')||'https://drive.google.com/uc?export=download&amp;id='+id;
+  return `<a href="${driveFileUrl(file.id)}" target="_blank" rel="noopener noreferrer">${name}</a>
+    <a class="wd-talk-file-download" href="${download}" target="_blank" rel="noopener noreferrer">다운로드</a>`;
 }
 function talkCopyText(body){
   const file=talkFile(body);
@@ -2992,6 +3012,9 @@ window.addEventListener('storage',event=>{
   const state=workspaceTalkState;
   if(!state?.uid)return;
   if(!talkAccountCurrent(state)){closeWorkspaceTalk(true);stopWorkspaceTalk();return;}
+  if(event.key==='wd_work_talk_'+state.uid+'_sound'){
+    state.sound=talkPreference(state,'sound')!=='off';$('workspaceTalk')?.paintTalk();
+  }
   if(!window.WDTalkRead.observe(event,state.uid))return;
   state.legacyRead=window.WDTalkRead.read(state.uid)??state.legacyRead;
   $('workspaceTalk')?.paintTalk();paintWorkspaceTalkBadge(state);
@@ -3042,6 +3065,7 @@ function paintWorkspaceTalkBadge(state){
   const button=$('openWorkspaceTalk'),badge=$('workspaceTalkBadge');
   if(!button||!badge)return;
   const count=state.rooms.reduce((total,room)=>total+workTalkRooms.unreadCount(state,room),0);
+  if(embeddedTalk)talkHost()?.badge(window,embeddedTalkOwner,count);
   badge.hidden=!count;badge.textContent=count>=100?'99+':String(count);
   button.setAttribute('aria-label',count?'WD TALK 열기 · 안 읽은 메시지 '+count+'건':'WD TALK 열기');
 }
@@ -3082,6 +3106,11 @@ async function refreshWorkspaceTalk(state,force=false){
     state.rows=room?(room.legacy?legacyRows:privateRows):[];
     const counts=new Map(rooms.map(r=>[r.peer_id,workTalkRooms.unreadCount(state,r)]));
     if(state.counts&&state.sound&&rooms.some(r=>counts.get(r.peer_id)>(state.counts.get(r.peer_id)||0)))chimeWorkspaceTalk();
+    if(embeddedTalk && state.counts){
+      const peer=rooms.find(r=>counts.get(r.peer_id)>(state.counts.get(r.peer_id)||0));
+      if(peer)talkHost()?.incoming(window,embeddedTalkOwner,peer.peer_name,
+        peer.legacy ? talkCopyText(legacyRows.find(r=>r.sender_id!==uid)?.body||'새 메시지').split('\n')[0] : '새 메시지가 도착했어요.');
+    }
     state.counts=counts;
     $('workspaceTalk')?.paintTalk();paintWorkspaceTalkBadge(state);
   }catch(error){
@@ -3364,6 +3393,11 @@ function selectWorkTalkRoom(state,room){
     $('workspaceTalkFileName').textContent=file.name;send.textContent='보내기';controls();status.textContent='파일은 보내기를 누르면 공유됩니다.';
   };
   input.oninput=controls;
+  if(embeddedTalk)input.addEventListener('keydown',event=>{
+    if(event.key==='Enter' && !event.shiftKey && !event.isComposing && event.keyCode!==229){
+      event.preventDefault();if(!send.disabled)form.requestSubmit();
+    }
+  });
   form.onsubmit=async event=>{
     event.preventDefault();
     const text=input.value.trim(),file=picked;
@@ -6619,6 +6653,73 @@ function bindAccounts(readOnly=false){
     panel.setAttribute('aria-labelledby',tabs[index].id);search.value='';void refresh();
   });
   search.oninput=paint;$('refreshAccounts').onclick=refresh;void refresh();
+}
+
+const embeddedTalk = new URLSearchParams(location.search).get('view') === 'talk';
+let embeddedTalkOwner = '';
+
+function talkHost() {
+  if (!embeddedTalk || window.parent === window) return null;
+  try {
+    return window.parent.location.origin === location.origin &&
+      window.frameElement?.parentElement?.id === 'wdhq-talk-panel' ? window.parent.WDHQTalk : null;
+  } catch { return null; }
+}
+
+async function mountEmbeddedTalk() {
+  const root = $('root'), host = talkHost(), uid = host?.current(window);
+  const current = () => !!uid && host.current(window) === uid && readHqSession()?.user?.id === uid;
+  document.documentElement.classList.add('embedded-talk');
+  function notice(message, retry = false) {
+    const text = document.createElement('p'), close = document.createElement('button');
+    text.textContent = message; close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label','닫기');
+    close.onclick = () => host?.closed(window,uid);
+    root.replaceChildren(text,close);
+    if (retry) {
+      const button = document.createElement('button'); button.textContent = '다시 시도'; button.type = 'button';
+      button.onclick = () => { button.disabled = true; void mountEmbeddedTalk(); }; root.append(button);
+    }
+  }
+  notice('대화방을 불러오는 중…');
+  try {
+    if (!current()) throw hqLoginError();
+    const token = await attendanceHqToken(), identity = await readWorkCenterHqIdentity(token);
+    if (!current() || identity.user_id !== uid) throw hqLoginError();
+    if (identity.login_id === managerHqAccount.uid && identity.staff_role === managerHqAccount.role) {
+      managerWorkIdentity = identity; currentUser = 'manager';
+    } else {
+      const grant = await workCenterAccessFor(identity.login_id,token);
+      if (!current()) return;
+      const legacy = identity.login_id === legacyStaffHqLogin && identity.staff_role === 'ops_lead';
+      if (legacy ? grant && !grant.enabled : identity.staff_role !== 'assistant_staff' || !grant?.enabled ||
+          (identity.workGoogleEmail && identity.workGoogleEmail !== grant.google_email?.toLowerCase())) throw hqLoginError();
+      currentUser = 'employee'; hqStaffLoginId = identity.login_id; staffCloudGrant = grant;
+    }
+    embeddedTalkOwner = uid;
+    workStickyUserId = uid;
+    const trigger = document.createElement('button'), badge = document.createElement('span');
+    trigger.id = 'openWorkspaceTalk'; badge.id = 'workspaceTalkBadge'; trigger.hidden = true;
+    trigger.append(badge); root.replaceChildren(trigger);
+    let shown = false;
+    window.WDWorkTalkFrame = Object.freeze({
+      open() { if (current() && !$('workspaceTalk')) { openWorkspaceTalk(); shown = !!$('workspaceTalk'); } },
+      close() { return closeWorkspaceTalk(); },
+      refresh() { if (current() && workspaceTalkState) void refreshWorkspaceTalk(workspaceTalkState); },
+      prime() { if (current()) primeTalkAudio(); }
+    });
+    new MutationObserver(() => {
+      if (shown && !$('workspaceTalk')) { shown = false; host.closed(window,uid); }
+    }).observe(document.body,{childList:true});
+    startWorkspaceTalk();
+    host.ready(window,uid);
+    const drive = await (currentUser === 'manager' ? restoreCompanyDriveSession() : restoreStaffDriveSession());
+    if (current() && drive) {
+      if (currentUser === 'manager') managerDriveSession = drive;
+      else employeeDrive = drive;
+    }
+  } catch {
+    if (document.contains(root) && !window.WDWorkTalkFrame) notice('본진 로그인과 업무센터 대화 권한을 확인해 주세요.',true);
+  }
 }
 
 const embeddedAccountInfo=new URLSearchParams(location.search).get('view')==='account-info';
@@ -9883,6 +9984,7 @@ function bindCompanyDriveSetup(){
   };void load();
 }
 
-if(embeddedAccountInfo)void renderEmbeddedAccountInfo();
+if(embeddedTalk)void mountEmbeddedTalk();
+else if(embeddedAccountInfo)void renderEmbeddedAccountInfo();
 else render();
 </script></body></html>
