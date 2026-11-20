@@ -12589,10 +12589,10 @@ const wdTest09Storage = (() => {
 <div id="content">
 <section class="pg" id="pg-sales" aria-label="영업관리">
  <p id="wd09-sales-entry-status" role="status"></p>
- <nav id="wd-sales-nav" aria-label="영업관리 화면" hidden>
-  <button type="button" data-view="plan" aria-pressed="true">이번 달 영업계획</button>
-  <button type="button" data-view="results" aria-pressed="false">계약·실적</button>
-  <button type="button" data-view="legacy" id="wd-sales-legacy" aria-pressed="false" hidden>이전 영업계획 보기</button>
+ <nav class="itabs" id="wd-sales-nav" aria-label="영업관리 화면" hidden>
+  <button class="itab on" type="button" data-view="plan" aria-pressed="true">이번 달 영업계획</button>
+  <button class="itab" type="button" data-view="results" aria-pressed="false">계약·실적</button>
+  <button class="itab" type="button" data-view="legacy" id="wd-sales-legacy" aria-pressed="false" hidden>이전 영업계획 보기</button>
  </nav>
  <div id="wd-sales-monthly" hidden></div>
  <iframe id="wd09-sales-frame" title="영업관리 · 연락, 영업계획과 계약 실적" hidden></iframe>
@@ -39960,19 +39960,26 @@ async function wd09OpenAddressSearch(button){
 </script>
 
 <style>
- #content:has(>#pg-sales.on){width:100%;max-width:1540px!important;padding:24px 30px 80px!important;box-sizing:border-box}
- #pg-sales{width:100%;max-width:1480px;margin:0 auto;min-width:0}
+ #content:has(>#pg-sales.on){width:100%;max-width:1300px!important;padding:24px 30px 80px!important;box-sizing:border-box}
+ #pg-sales{width:100%;margin:0 auto;min-width:0;container-type:inline-size}
  #pg-sales [hidden],#wd09-sales-entry-status:empty{display:none!important}
- #wd-sales-nav{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:0 0 20px;border-bottom:1px solid var(--s200,#dce1ed)}
- #wd-sales-nav button{font:inherit;font-weight:700;background:transparent;color:var(--s600,#52617a);border:0;border-bottom:3px solid transparent;padding:10px 14px;min-height:44px;cursor:pointer}
- #wd-sales-nav button[aria-pressed=true]{border-color:var(--purple,#504595);color:var(--navy,#172642)}
- #wd-sales-nav button:focus-visible{outline:2px solid #504595;outline-offset:-3px}
- #wd-sales-legacy{margin-left:auto}
+ #wd-sales-nav{
+   display:grid;grid-template-columns:1fr auto auto 1fr;align-items:center;
+   gap:8px;padding:8px;margin:0 0 16px;
+ }
+ #wd-sales-nav [data-view="plan"]{grid-column:2}
+ #wd-sales-nav .itab{min-height:46px;padding:10px 22px;font-size:var(--wd09-ui-menu-font,16px)}
+ #wd-sales-nav .itab:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+ #wd-sales-nav #wd-sales-legacy{justify-self:end;font-size:13px}
+ @container (max-width:600px){
+   #wd-sales-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+   #wd-sales-nav [data-view="plan"]{grid-column:1}
+   #wd-sales-nav .itab{min-height:44px;padding:8px 6px;font-size:14px}
+   #wd-sales-legacy{grid-column:1/-1}
+ }
  #wd09-sales-frame{display:block;width:100%;height:calc(100dvh - 170px);min-height:260px;border:0;background:transparent}
  @media(max-width:768px){
    #content:has(>#pg-sales.on){padding:14px 12px 82px!important}
-   #wd-sales-nav{gap:0;margin-bottom:16px}
-   #wd-sales-nav button{padding-inline:8px;font-size:14px}
  }
  .wd09-sales-home-actions{display:flex;justify-content:flex-end}
  #drawer button[data-wdpage="sales"]{width:calc(100% - 26px);text-align:left;font-family:inherit;border:0;background:transparent} #drawer button[data-wdpage="sales"].on{background:rgba(255,255,255,.15)}
@@ -40495,7 +40502,9 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
     frame.hidden=view==='plan'||!legacyView;
     feedback.textContent=view!=='plan'&&!legacyView?'영업기록을 불러오는 중이에요.':'';
     for(const button of salesNav.querySelectorAll('[data-view]')){
-      button.setAttribute('aria-pressed',String(button.dataset.view===view));
+      const selected=button.dataset.view===view;
+      button.classList.toggle('on',selected);
+      button.setAttribute('aria-pressed',String(selected));
     }
     if(view!=='plan'&&legacyView)legacyView.show(view,monthlyView.month());
   }
