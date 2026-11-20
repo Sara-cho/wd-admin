@@ -37341,14 +37341,15 @@ function openDesignProgressModal(){
     } else window.location.reload();
   }
 
+  let hqLoginNotice='';
   function readHeadquartersSession() {
     try {
       const session=JSON.parse(localStorage.getItem('wd-admin-auth-v1'));
-      if(!session?.access_token||!session.user?.id||!(session.expires_at*1000>Date.now()+5000))return null;
+      if(!session?.access_token)return null;
       const encoded=session.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
       const claims=JSON.parse(atob(encoded));
-      if(!claims.session_id||claims.sub!==session.user.id||!claims.amr?.some(item=>item.method==='oauth'))return null;
-      return {token:session.access_token,id:session.user.id,sessionId:claims.session_id};
+      if(!claims.session_id||!claims.sub||(session.user?.id&&claims.sub!==session.user.id))return null;
+      return {token:session.access_token,id:claims.sub,sessionId:claims.session_id};
     } catch {return null;}
   }
 
@@ -37365,23 +37366,38 @@ function openDesignProgressModal(){
   async function tryHeadquartersTestLogin() {
     if(!supportedOrigin||history.state?.wd09SignedOut||!window.supabase?.createClient)return false;
     const hq=readHeadquartersSession();
-    if(!hq)return false;
+    if(!hq){
+      if(new URLSearchParams(location.search).get('from')==='wdhq-test-workroom')
+        hqLoginNotice='본진에서 사용 중인 로그인 정보를 이 탭에서 읽을 수 없어요. (H1)';
+      return false;
+    }
     const current=()=>{
       const next=readHeadquartersSession();
       return next?.id===hq.id&&next.sessionId===hq.sessionId;
     };
     const uid='WD23000',config=SUPABASE_CONFIG_BY_UID[uid];
-    const attempt=createAttempt(config,uid);
+    let attempt;
+    let notice='허브가 본진 로그인 연결을 시작하지 못했어요. (H2)';
     authHandoff=true;
     screen.hidden=true;
     byId('wd09-handoff-loading').hidden=false;
     try {
+      attempt=createAttempt(config,uid);
+      notice='본진 인증 서버에 연결하지 못했어요. (H3)';
       const response=await fetch(config.url+'/functions/v1/wd09-hq-owner-test',{
         method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
         body:JSON.stringify({hq_access_token:hq.token}),credentials:'omit',cache:'no-store',
         redirect:'error',signal:AbortSignal.timeout(20000)
       });
-      if(!response.ok||!current())throw Error();
+      if(!response.ok){
+        notice=response.status===401?'본진 로그인 유효시간이 끝났거나 세션을 확인할 수 없어요. (H4)':
+          response.status===403?'현재 본진 세션에서 대표 Google 계정 또는 지점장 권한을 확인하지 못했어요. (H5)':
+          '지점장 로그인 발급 요청을 완료하지 못했어요. (H6)';
+        throw Error();
+      }
+      notice='본진 계정이 이동 중 바뀌었어요. (H7)';
+      if(!current())throw Error();
+      notice='허브에서 지점장 로그인 결과를 확인하지 못했어요. (H8)';
       const {access_token,refresh_token}=await response.json();
       if(!access_token||!refresh_token)throw Error();
       const login=await attempt.client.auth.setSession({access_token,refresh_token});
@@ -37398,8 +37414,9 @@ function openDesignProgressModal(){
       void window.wd09ConnectLoginDrive?.(headquartersDriveGrant(hq.id));
       return true;
     } catch {
-      if(active===attempt)leave();
-      else await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
+      hqLoginNotice=notice;
+      if(attempt&&active===attempt)leave();
+      else if(attempt)await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
       screen.hidden=false;
       return false;
     } finally {
@@ -37610,9 +37627,13 @@ function openDesignProgressModal(){
     }
   });
 
-  setTimeout(async ()=>{
-    if(!startHqHandoff()&&!await tryHeadquartersTestLogin())renderGoogle();
-  },0);
+  function startLogin(){
+    if(!startHqHandoff())void tryHeadquartersTestLogin().then(connected=>{
+      if(!connected)renderGoogle(hqLoginNotice);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startLogin,{once:true});
+  else startLogin();
   byId('wd09-auth-signout').addEventListener('click',()=>{
     history.replaceState({...history.state,wd09SignedOut:true},'');
     leave();
