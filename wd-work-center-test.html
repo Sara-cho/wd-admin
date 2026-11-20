@@ -1199,7 +1199,7 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 </style>
 <link rel="stylesheet" href="./wd-talk-panel.css">
 <script src="./wd-talk-read.js"></script>
-<script src="./wd-talk-backup.js"></script>
+<script src="./wd-talk-backup.js?v=txt1"></script>
 <link rel="stylesheet" href="./wd-talk-rooms-test.css">
 <script src="./wd-talk-rooms-test.js"></script>
 <link rel="stylesheet" href="./wd-sticky-notes.css">
@@ -3075,7 +3075,7 @@ async function workspaceTalkIdentity(){
   const token=await attendanceHqToken(),identity=await readWorkCenterHqIdentity(token);
   const role=currentUser==='manager'?managerHqAccount.role:hqStaffLoginId===legacyStaffHqLogin?'ops_lead':'assistant_staff';
   if(identity.user_id!==readHqSession()?.user?.id||!talkAvailable()||identity.login_id!==talkRole()||identity.staff_role!==role)throw new Error('이 계정의 WD TALK 권한을 확인해 주세요.');
-  return {token,uid:identity.user_id};
+  return {token,uid:identity.user_id,displayName:identity.display_name};
 }
 function stopWorkspaceTalk(){
   if(!workspaceTalkState)return;
@@ -3252,7 +3252,7 @@ function selectWorkTalkRoom(state,room){
   panel.setAttribute('aria-labelledby','workspaceTalkTitle');
   panel.innerHTML=`<header class="talk-heading"><div class="talk-room-title"><button type="button" id="workspaceTalkBack" aria-label="대화방 목록으로">‹ 목록</button><div><h2 id="workspaceTalkTitle">${esc(room.peer_name)}</h2><span class="talk-peer">1:1 대화</span></div></div>
     <div class="wd110-talk-controls talk-tools"><button type="button" class="small" id="workspaceTalkSound"></button><details class="talk-manage"><summary>대화 관리</summary><div class="talk-menu">
-      <button type="button" data-talk-backup>백업 다운로드</button>
+      <button type="button" data-talk-backup>TXT 백업 다운로드</button>
       <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
     </div></details>
     <button type="button" class="small" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button></div></header>
@@ -3305,6 +3305,7 @@ function selectWorkTalkRoom(state,room){
   };
   const backup=window.WDTalkBackup?.bind({
     root:panel,getIdentity:workspaceTalkIdentity,active,canDelete:()=>currentUser==='manager',
+    transcript:{peerName:room.peer_name,formatBody:talkCopyText},
     readPage:({token},after)=>readRows(token,'',after,true),
     deleteMessages:({token},ids)=>room.legacy?deleteTalkBackedUp(token,ids):workTalkRooms.api(token,'delete_backed_up',{p_peer:room.peer_id,p_ids:ids}),
     onDeleted:ids=>{
