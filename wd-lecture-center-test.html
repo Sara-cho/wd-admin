@@ -103,7 +103,7 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 .dialog-head p {font-size:13px;color:var(--muted);margin-top:4px}
 .close {border:1px solid var(--line);background:white;border-radius:8px;width:42px;height:42px;flex:none;font:23px/1 system-ui}
 .dialog-body {padding:20px 21px}
-.flow {display:grid;grid-template-columns:repeat(5,1fr);list-style:none;padding:0;margin:0 0 18px;gap:3px;text-align:center}
+.flow {display:grid;grid-template-columns:repeat(3,1fr);list-style:none;padding:0;margin:0 0 18px;gap:3px;text-align:center}
 .flow li {min-width:0;padding:7px 0;border-radius:6px;background:#f5f3f6;color:var(--muted);font-size:12px}
 .flow li[data-step="done"] {background:#eee6f6;color:#564268}
 .flow li[aria-current="step"] {background:var(--purple);color:#fff;font-weight:760}
@@ -215,6 +215,15 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
   .active-list .head h2 {font-size:17px}
   .active-list .head .btn {font-size:12px}
 }
+.case-list th:nth-child(1) {width:54%}
+.case-list th:nth-child(2) {width:46%}
+.case-progress {font-weight:690;color:#553979;font-size:14px;line-height:1.35}
+.case-progress.closed {color:#2a604e}
+.case-progress.proposal {color:#79521e}
+@media(max-width:650px) {
+  .case-list tbody tr {grid-template-columns:1fr;gap:4px}
+  .case-list td:nth-child(2) {text-align:left}
+}
 </style>
 </head>
 <body>
@@ -306,10 +315,17 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
         <div class="title-row"><h1>강의건 관리</h1><button class="btn primary" type="button" data-add>+ 강의건 추가</button></div>
         <div class="panel">
           <div class="filter-row">
-            <div class="filters" aria-label="강의 상태"><button type="button" data-filter="all" aria-pressed="true">전체</button><button type="button" data-filter="proposal" aria-pressed="false">제안</button><button type="button" data-filter="prep" aria-pressed="false">준비</button><button type="button" data-filter="delivery" aria-pressed="false">회차 진행</button><button type="button" data-filter="followup" aria-pressed="false">후속</button><button type="button" data-filter="closed" aria-pressed="false">완료</button></div>
+            <div class="filters" aria-label="강의 상태">
+              <button type="button" data-filter="proposal" aria-pressed="false">제안</button>
+              <button type="button" data-filter="delivery" aria-pressed="true">강의 진행 중</button>
+              <button type="button" data-filter="closed" aria-pressed="false">강의 완료</button>
+            </div>
             <input class="search" type="search" id="search" aria-label="강의명·기관 검색" placeholder="강의명·기관 검색">
           </div>
-          <table class="list"><thead><tr><th scope="col">강의명 · 기관</th><th scope="col">상태</th><th scope="col">다음 행동</th><th scope="col">예정일</th></tr></thead><tbody id="all-rows"></tbody></table>
+          <table class="list case-list">
+            <thead><tr><th scope="col">강의명 · 기관</th><th scope="col">강의 진행</th></tr></thead>
+            <tbody id="all-rows"></tbody>
+          </table>
         </div>
       </section>
       <section data-view="courses" hidden>
@@ -348,11 +364,11 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 </dialog>
 <script>
 const lectures = [
-  {id:"smartphone",title:"스마트폰 AI 활용 입문",org:"지역 평생학습관",status:"prep",next:"실습자료 최종 확인",due:"2026-11-20",schedule:"11월 27일 금요일 · 10:30–11:50",prepDone:2,totalSessions:4,completedSessions:0,sections:[["준비 자료",["1회차 실습지","강의 슬라이드","화면 공유 점검표"]],["강의 장소","지역 평생학습관 2층 강의실"]]},
-  {id:"insurance",title:"보험설계사 AI 실무",org:"보험 교육기관",status:"proposal",next:"기관 담당자에게 일정 확인",due:"2026-11-20",schedule:"기관 협의 중",sections:[["제안 내용","보험 상담과 업무 정리에 바로 쓰는 AI 실습"],["다음 연락","기관과 교육 날짜 및 대상 인원 확인"]]},
-  {id:"branding",title:"1인 사업자 퍼스널브랜딩",org:"창업지원센터",status:"delivery",next:"5회차 포트폴리오 실습 준비",due:"2026-11-24",schedule:"11월 24일 · 5회차",totalSessions:5,completedSessions:4,sections:[["다음 회차","포트폴리오 실습"]]},
-  {id:"ai-office",title:"AI로 업무 정리하기",org:"보험 교육기관",status:"delivery",next:"2회차 실습지 확인",due:"2026-11-25",schedule:"11월 25일 · 2회차",totalSessions:4,completedSessions:1,sections:[["다음 회차","AI로 업무 체크리스트 만들기"]]},
-  {id:"digital",title:"생활 속 디지털 활용",org:"지역 주민센터",status:"closed",next:"",due:"",schedule:"11월 13일 · 10회차 마침",totalSessions:10,completedSessions:10,sections:[["수강생 후기","직접 따라 하는 시간이 충분해서 좋았어요."],["다음 강의 개선","수업을 시작하기 전에 스마트폰 글자 크기부터 맞춥니다."]]}
+  {id:"smartphone",registeredAt:"2026-11-19T09:00:00+09:00",title:"스마트폰 AI 활용 입문",org:"지역 평생학습관",status:"prep",next:"실습자료 최종 확인",due:"2026-11-20",schedule:"11월 27일 금요일 · 10:30–11:50",prepDone:2,totalSessions:4,completedSessions:0,sections:[["준비 자료",["1회차 실습지","강의 슬라이드","화면 공유 점검표"]],["강의 장소","지역 평생학습관 2층 강의실"]]},
+  {id:"insurance",registeredAt:"2026-11-20T09:00:00+09:00",title:"보험설계사 AI 실무",org:"보험 교육기관",status:"proposal",next:"기관 담당자에게 일정 확인",due:"2026-11-20",schedule:"기관 협의 중",sections:[["제안 내용","보험 상담과 업무 정리에 바로 쓰는 AI 실습"],["다음 연락","기관과 교육 날짜 및 대상 인원 확인"]]},
+  {id:"branding",registeredAt:"2026-11-17T09:00:00+09:00",title:"1인 사업자 퍼스널브랜딩",org:"창업지원센터",status:"delivery",next:"5회차 포트폴리오 실습 준비",due:"2026-11-24",schedule:"11월 24일 · 5회차",totalSessions:5,completedSessions:4,sections:[["다음 회차","포트폴리오 실습"]]},
+  {id:"ai-office",registeredAt:"2026-11-18T09:00:00+09:00",title:"AI로 업무 정리하기",org:"보험 교육기관",status:"delivery",next:"2회차 실습지 확인",due:"2026-11-25",schedule:"11월 25일 · 2회차",totalSessions:4,completedSessions:1,sections:[["다음 회차","AI로 업무 체크리스트 만들기"]]},
+  {id:"digital",registeredAt:"2026-11-12T09:00:00+09:00",title:"생활 속 디지털 활용",org:"지역 주민센터",status:"closed",next:"",due:"",schedule:"11월 13일 · 10회차 마침",totalSessions:10,completedSessions:10,sections:[["수강생 후기","직접 따라 하는 시간이 충분해서 좋았어요."],["다음 강의 개선","수업을 시작하기 전에 스마트폰 글자 크기부터 맞춥니다."]]}
 ];
 const collections = {
   courses:[
@@ -366,26 +382,39 @@ const collections = {
     {title:"강사 자료",summary:"강사 소개와 출강 증빙",entries:["강사 프로필","출강 이력","포트폴리오"]}
   ]
 };
-const stages = [["inquiry","문의"],["proposal","제안"],["prep","준비"],["delivery","출강"],["followup","후속"]];
+const caseStages = [["proposal","제안"],["delivery","강의 진행 중"],["closed","강의 완료"]];
 const courseStages = [
   {key:"prep",label:"준비 중",color:"#edbd7e"},
   {key:"delivery",label:"진행 중",color:"#d7b3fb"},
   {key:"closed",label:"완료",color:"#9fd9cc"}
 ];
-const statusLabels = {prep:"준비 중",delivery:"회차 진행 중",proposal:"제안 중",followup:"후속 처리",closed:"완료"};
 const $ = selector => document.querySelector(selector);
 const nodes = selector => [...document.querySelectorAll(selector)];
 const escapeText = value => String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const drawer = $("#details-drawer");
 const addDialog = $("#add-dialog");
-let filter = "all";
+let filter = "delivery";
 
-function dueDate(due) {
-  return due ? '<time datetime="'+escapeText(due)+'">'+escapeText(due.slice(5).replace("-","."))+'</time>' : "—";
+function caseStage(item) {
+  if(item.status==="closed" || item.status==="followup" || (item.totalSessions>0 && item.completedSessions>=item.totalSessions)) return "closed";
+  if(item.status==="proposal" || item.status==="inquiry") return "proposal";
+  return "delivery";
 }
 
-function statusChip(status) {
-  return '<span class="status '+status+'">'+statusLabels[status]+'</span>';
+function caseProgress(item,stage) {
+  if(stage==="proposal") return "제안 중";
+  if(stage==="closed") return item.totalSessions>0 ? "전체 "+item.totalSessions+"회차 완료" : "강의 완료";
+  if(!(item.totalSessions>0)) return "회차 미정";
+
+  const completed=item.completedSessions||0;
+  const current=completed+1;
+  const action=item.status==="prep" && completed===0 ? "준비 중" : "진행 중";
+  return "전체 "+item.totalSessions+"회차 중 "+current+"회차 "+action;
+}
+
+function setCaseFilter(stage) {
+  filter=stage;
+  nodes("[data-filter]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.filter===stage)));
 }
 
 function lectureStage(item) {
@@ -408,10 +437,14 @@ function renderSummary(courses) {
 
 function renderRows() {
   const query = $("#search").value.trim().toLowerCase();
-  const filtered = lectures.filter(item => (filter === "all" || item.status === filter) && (item.title+" "+item.org).toLowerCase().includes(query));
-  const rows = items => items.length ? items.map(item => {
-    return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td><td>'+statusChip(item.status)+'</td><td>'+escapeText(item.next||"—")+'</td><td class="due">'+dueDate(item.due)+'</td></tr>';
-  }).join("") : '<tr><td colspan="4" class="empty">해당하는 강의건이 없습니다.</td></tr>';
+  const filtered=lectures
+    .filter(item=>caseStage(item)===filter && (item.title+" "+item.org).toLowerCase().includes(query))
+    .sort((a,b)=>(Date.parse(b.registeredAt)||0)-(Date.parse(a.registeredAt)||0));
+  const caseRows=filtered.map(item=>{
+    const stage=caseStage(item);
+    return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td>'+
+      '<td class="case-progress '+stage+'">'+escapeText(caseProgress(item,stage))+'</td></tr>';
+  });
   const courses=lectures.filter(item=>item.totalSessions>0);
   renderSummary(courses);
   $("#active-rows").innerHTML=courses.length ? courses.map(item=>{
@@ -425,7 +458,7 @@ function renderRows() {
     }).join("");
     return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td>'+stagesHtml+'</tr>';
   }).join("") : '<tr><td colspan="4" class="empty">등록된 강의 과정이 없습니다.</td></tr>';
-  $("#all-rows").innerHTML = rows(filtered);
+  $("#all-rows").innerHTML=caseRows.join("") || '<tr><td colspan="2" class="empty">해당하는 강의건이 없습니다.</td></tr>';
 }
 
 function show(page) {
@@ -442,8 +475,8 @@ function detail(title,subtitle,parts,stage) {
   $("#drawer-subtitle").textContent = subtitle;
   let stepFlow = "";
   if(stage) {
-    const index = stage==="closed" ? stages.length : stages.findIndex(([key])=>key===stage);
-    stepFlow = '<ol class="flow" aria-label="강의 진행 단계">'+stages.map(([,name],i)=>'<li '+(i===index?'aria-current="step"':i<index?'data-step="done"':'')+'>'+name+'</li>').join("")+'</ol>';
+    const index=caseStages.findIndex(([key])=>key===stage);
+    stepFlow = '<ol class="flow" aria-label="강의 진행 단계">'+caseStages.map(([,name],i)=>'<li '+(i===index?'aria-current="step"':i<index?'data-step="done"':'')+'>'+name+'</li>').join("")+'</ol>';
   }
   $("#drawer-body").innerHTML = stepFlow+'<dl class="details">'+parts.map(([name,value])=>{
     const answer = Array.isArray(value) ? '<ul>'+value.map(entry=>'<li>'+escapeText(entry)+'</li>').join("")+'</ul>' : escapeText(value);
@@ -480,17 +513,20 @@ document.addEventListener("click",event=>{
   if(button.hasAttribute("data-close")) button.closest("dialog").close();
   if(button.hasAttribute("data-add")) addDialog.showModal();
   if(button.hasAttribute("data-filter")){
-    filter=button.dataset.filter;
-    nodes("[data-filter]").forEach(item=>item.setAttribute("aria-pressed",String(item===button)));
+    setCaseFilter(button.dataset.filter);
     renderRows();
   }
   if(lecture){
     const item=lectures.find(item=>item.id===lecture);
-    const parts=[["강의 일정",item.schedule],...item.sections];
+    const stage=caseStage(item);
+    const stageLabel=caseStages.find(([key])=>key===stage)[1];
+    const parts=[["강의 일정",item.schedule]];
+    if(item.next) parts.push(["다음 행동",item.next]);
+    if(item.due) parts.push(["예정일",item.due]);
+    parts.push(...item.sections);
     if(item.totalSessions>0) parts.splice(1,0,["출강 회차","전체 "+item.totalSessions+"회 중 "+item.completedSessions+"회 완료"]);
     if(item.prepDone!==undefined) parts.splice(1,0,["강의 준비",item.prepDone+" / 4 완료"]);
-    if(item.next) parts.splice(1,0,["다음 행동",item.next]);
-    detail(item.title,item.org+" · "+statusLabels[item.status],parts,item.status);
+    detail(item.title,item.org+" · "+stageLabel,parts,stage);
   }
   if(collection){
     const item=collections[collection][Number(index)];
@@ -507,12 +543,11 @@ $("#new-lecture").addEventListener("submit",event=>{
   const org=fields.get("org").trim();
   const next=fields.get("next").trim();
   if(!title||!org||!next) return;
-  lectures.unshift({id:"sample-"+(lectures.length+1),title,org,next,due:fields.get("due"),status:"proposal",schedule:"일정 협의 중",sections:[]});
+  lectures.unshift({id:"sample-"+(lectures.length+1),registeredAt:new Date().toISOString(),title,org,next,due:fields.get("due"),status:"proposal",schedule:"일정 협의 중",sections:[]});
   form.reset();
   addDialog.close();
-  filter="all";
+  setCaseFilter("proposal");
   $("#search").value="";
-  nodes("[data-filter]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.filter==="all")));
   renderRows();
   show("cases");
 });
