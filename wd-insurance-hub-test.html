@@ -19720,10 +19720,10 @@ function validateAttachFile(file){
   }
   return {ok:true};
 }
-async function uploadMatAttachment(customer,file,name,mimeType){
+async function uploadMatAttachment(customer,file,name,mimeType,kind='materials'){
   const drive=window.wd09CustomerFiles;
   if(!drive)throw Error('고객자료를 올리려면 먼저 Drive를 연결해 주세요.');
-  return drive.upload(customer,file,name,'materials',mimeType);
+  return drive.upload(customer,file,name,kind,mimeType);
 }
 async function getAttachmentSignedUrl(filePath){
   var sb=getSbClient();
@@ -22227,7 +22227,7 @@ async function saveAutoRecord(){
       const name=wd09AutoPdfName(c,label,pdfDate);
       const previous=renewal?.uploaded.get(field);
       if(previous?.file===file&&previous.attachment.name===name){rec[field]=previous.attachment;continue;}
-      const path=await uploadMatAttachment(c,file,name,'application/pdf');
+      const path=await uploadMatAttachment(c,file,name,'application/pdf','insurance');
       rec[field]={path,name,original_name:file.name,uploadedAt:new Date().toISOString()};
       renewal?.uploaded.set(field,{file,attachment:rec[field]});
     }
@@ -26919,7 +26919,7 @@ function customerPolicyMeta(record,source,uid,custId,kind='policy'){
   var pdf=kind==='terms'?record?.termsPdf:kind==='policy'?record?.policyPdf:null;
   if(!pdf||typeof pdf.path!=='string'||!uid||custId==null)return null;
   var parts=pdf.path.split('/');
-  if(parts.length===6&&parts[0]===String(uid)&&parts[1]===String(custId)&&parts[2]==='materials'
+  if(parts.length===6&&parts[0]===String(uid)&&parts[1]===String(custId)&&['materials','insurance'].includes(parts[2])
       &&parts[3]==='drive'&&/^[\w-]+$/.test(parts[4])&&parts[5]==='file.pdf')return pdf;
   if(kind!=='policy')return null;
   if(parts.length!==5||parts[0]!==String(uid)||parts[1]!==String(custId)||parts[2]!==source
@@ -27676,7 +27676,7 @@ async function wd09SaveInsuranceDrafts(){
         const name=auto?wd09AutoPdfName(customer,label,pdfDate):contractPdfName(customer,record.product,label);
         const previous=row.uploaded[field];
         if(previous?.file!==file||previous.attachment.name!==name){
-          const path=await uploadMatAttachment(customer,file,name,'application/pdf');
+          const path=await uploadMatAttachment(customer,file,name,'application/pdf','insurance');
           row.uploaded[field]={file,attachment:{path,name,original_name:file.name,uploadedAt:new Date().toISOString()}};
         }
         if(!ready())return;
@@ -27955,7 +27955,7 @@ async function saveContractModal(){
       if(!sameCustomer())return;
       save.textContent=label+' 올리는 중…';
       const name=contractPdfName(customer,product,label);
-      const path=await uploadMatAttachment(customer,file,name,'application/pdf');
+      const path=await uploadMatAttachment(customer,file,name,'application/pdf','insurance');
       rec[field]={path,name,original_name:file.name,uploadedAt:new Date().toISOString()};
     }
     if(!sameCustomer())return;
@@ -39510,7 +39510,7 @@ function wd09ArchivePreviewMime(name){
         const uploads=new WeakMap();
         window.wd09CustomerFiles={
           async upload(customer,file,name,kind='materials',mimeType){
-            const folder=kind==='claims'?folders.children.claimFiles:folders.children.materials;
+            const folder=kind==='claims'?folders.children.claimFiles:kind==='insurance'?folders.children.insurance:folders.children.materials;
             const key=JSON.stringify([customer.id,kind,name]);
             let completed=uploads.get(file);
             if(!completed){completed=new Map();uploads.set(file,completed);}
@@ -39525,7 +39525,7 @@ function wd09ArchivePreviewMime(name){
           },
           download(customer,path){
             const [owner,customerId,kind,storage,id,file,...rest]=path.split('/');
-            if(!customer||owner!==uid||customerId!==String(customer.id)||!['materials','claims'].includes(kind)
+            if(!customer||owner!==uid||customerId!==String(customer.id)||!['materials','claims','insurance'].includes(kind)
               ||storage!=='drive'||!id||!/^[\w-]+$/.test(id)||!/^file\.[a-z0-9]+$/.test(file)||rest.length){
               throw Error('첨부파일 정보를 확인할 수 없어요.');
             }
@@ -40542,12 +40542,12 @@ async function wd09OpenAddressSearch(button){
 .wds2 .registration-file span{font-size:14px}
 .wds2 .registration-section details{display:block;border:0;border-top:1px solid #e5dfe9;border-radius:0;padding:10px 0 0}
 .wds2 .registration-section summary{cursor:pointer;color:#604972}
-.wds2 .registration-files{display:flex;flex-direction:column;gap:6px}
-.wds2 .registration-files .registration-file{display:grid;grid-template-columns:minmax(100px,1fr) minmax(150px,2fr) minmax(135px,1.15fr) auto;align-items:center;gap:8px;padding:10px 12px}
-.wds2 .registration-file>.single-pdf-preview{grid-column:4;grid-row:1;justify-self:end}
+.wds2 .registration-section>.registration-files{display:grid;grid-template-columns:repeat(3,minmax(178px,1fr));overflow-x:auto;gap:8px}
+.wds2 .registration-files .registration-file{display:grid;grid-template-rows:auto minmax(42px,auto) minmax(42px,auto) auto;align-items:start;padding:12px;gap:6px}
+.wds2 .registration-file>.single-pdf-preview{grid-row:4;justify-self:start}
 .wds2 .registration-file>ul{margin:0;padding:0}.wds2 .registration-file>ul[hidden]{display:block}.wds2 .registration-file>ul:empty:after{content:'첨부된 자료 없음'}
-.wds2 .registration-file>.wds2-pdf-field{display:none}.wds2 .registration-file>[role=status]{grid-column:2/-1;margin:0}.wds2 .registration-file>[role=status]:empty{display:none}
-@media(max-width:850px){.wds2 .registration-files .registration-file{grid-template-columns:minmax(0,1fr) auto}.wds2 .registration-file>h4{grid-column:1}.wds2 .registration-file>.single-pdf-preview{grid-column:2}.wds2 .registration-file>:is(span,ul,select,button:not(.single-pdf-preview),[role=status]){grid-column:1/-1}}
+.wds2 .registration-file>.wds2-pdf-field,.wds2 .registration-file>[role=status]:empty{display:none}
+.wds2 .decision-track{display:flex;list-style:none;padding:0;margin:0;overflow-x:auto}.wds2 .decision-track li{position:relative;flex:1;min-width:85px;text-align:center;padding:0 2px 8px;font-weight:700}.wds2 .decision-track li:before{content:'';display:block;margin:5px auto;width:9px;height:9px;background:var(--dot,#764f92);border-radius:50%}.wds2 .decision-track li+li:after{content:'';position:absolute;top:9px;right:calc(50% + 5px);width:calc(100% - 10px);height:1px;background:#cdbbd7}.wds2 .decision-track [data-state=waiting],.wds2 .decision-track [data-state=skipped]{--dot:#ccc;color:#746c78}.wds2 .decision-track small{display:block;font-weight:400}
 .wds2 .registration-heading{padding:7px 2px 0}
 .wds2 .wd09-bulk-card-group{grid-template-columns:repeat(4,minmax(0,1fr))}
 .wds2 .wd09-bulk-card-basic{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,.8fr) minmax(0,2fr)}
@@ -42670,7 +42670,11 @@ function decisionPane(client){
   const reportActions=report.wrap.querySelector('.pdf-inline-actions');
   reportBox.append(make('h4','최종 확정가입보험 보고서'),report.wrap.querySelector('ul'),...Array.from(reportActions.children),report.wrap.querySelector('[role=status]'),report.wrap);
   files.append(beforeBox,adoptedBox,reportBox);
-  documents.append(make('h3','컨설팅 자료'),files);
+  const track=make('ol','','decision-track');
+  track.setAttribute('aria-label','고객별 영업 진행');
+  steps.forEach((step,i)=>{const state=stageState(client,i),item=make('li',step.name);item.dataset.state=state;item.append(make('small',stateLabels[state]));track.append(item);});
+  const beforeEdit=make('button','보장분석 PDF 선택');beforeEdit.type='button';beforeEdit.onclick=()=>{showTab(1,true);$('stage-1').querySelector('input[name=currentPdfs]')?.closest('.wds2-pdf-field')?.querySelector('.sales-drive-trigger')?.click();};beforeBox.insertBefore(beforeEdit,previewBefore);
+  documents.append(make('h3','영업 진행 및 컨설팅 자료'),track,files);
   let picked=client.adoptedKey || '',choices=new Map();
   function showFiles(){
     const entry=choices.get(picked);
@@ -45323,20 +45327,22 @@ void start().catch(error=>{if(root.host.isConnected)$('storageStatus').textConte
       _vid=c.id;
       const ensure=()=>ensureCurrent(uid,c.id);
       const files=new WeakMap(),urls=new Map();
-      async function walk(value,saving){
+      async function walk(value,saving,kind='materials'){
         if(!value||typeof value!=='object')return value;
         if(value.salesPdfPath||value.salesArchiveId)return value;
         if(typeof value.arrayBuffer==='function'&&typeof value.name==='string'){
           if(!saving)return value;
-          if(!files.has(value))files.set(value,(async()=>{
-            ensure();const path=await uploadMatAttachment(c,value,value.name,'application/pdf');ensure();
+          if(!files.has(value))files.set(value,new Map());
+          const destinations=files.get(value);
+          if(!destinations.has(kind))destinations.set(kind,(async()=>{
+            ensure();const path=await uploadMatAttachment(c,value,value.name,'application/pdf',kind);ensure();
             return {salesPdfPath:path,name:value.name,lastModified:value.lastModified};
-          })().catch(e=>{files.delete(value);throw e;}));
-          return files.get(value);
+          })().catch(e=>{destinations.delete(kind);throw e;}));
+          return destinations.get(kind);
         }
-        if(Array.isArray(value))return Promise.all(value.map(v=>walk(v,saving)));
+        if(Array.isArray(value))return Promise.all(value.map(v=>walk(v,saving,kind)));
         const obj={};
-        for(const [key,v] of Object.entries(value))obj[key]=await walk(v,saving);
+        for(const [key,v] of Object.entries(value))obj[key]=await walk(v,saving,['policy','terms','policyPdf','termsPdf'].includes(key)?'insurance':kind);
         if(!saving&&obj.archived?.id&&!obj.file){
           obj.file={salesArchiveId:obj.archived.id,name:obj.name||obj.archived.name};
 
@@ -45404,6 +45410,22 @@ void start().catch(error=>{if(root.host.isConnected)$('storageStatus').textConte
                 }
               }
               ensure();await api.save({...input,salesDetails:details});ensure();
+            }
+            const customer=profile(c.id),logs=cstMatLogs(customer).slice();
+            const paths=new Set(logs.map(item=>item.file_path));
+            const docs=[[packed.beforeAtSigning,'보장분석표'],[packed.confirmedPdf,'가입제안서'],[packed.finalReport?.[0],'확정가입보험 보고서']];
+            const added=[];
+            for(const [doc,category] of docs){
+              const path=doc?.file?.salesPdfPath;
+              if(!path||paths.has(path))continue;
+              paths.add(path);
+              added.push({id:await stableId(c.id,month,path),file_category:category,file_path:path,file_name:doc.name,content:doc.name,date:packed.decisionDate,uploaded_at:new Date().toISOString(),file_type:'application/pdf'});
+            }
+            if(added.length){
+              ensure();const latest=profile(c.id),current=cstMatLogs(latest);
+              const missing=added.filter(x=>!current.some(y=>y.file_path===x.file_path));
+              if(missing.length&&!(await _matSaveLogs(latest,current.concat(missing)))?.ok)throw Error('확정 자료를 고객자료실에 연결하지 못했어요. 다시 저장해 주세요.');
+              ensure();
             }
         }};
     }
