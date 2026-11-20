@@ -40542,6 +40542,12 @@ async function wd09OpenAddressSearch(button){
 .wds2 .registration-file span{font-size:14px}
 .wds2 .registration-section details{display:block;border:0;border-top:1px solid #e5dfe9;border-radius:0;padding:10px 0 0}
 .wds2 .registration-section summary{cursor:pointer;color:#604972}
+.wds2 .registration-files{display:flex;flex-direction:column;gap:6px}
+.wds2 .registration-files .registration-file{display:grid;grid-template-columns:minmax(100px,1fr) minmax(150px,2fr) minmax(135px,1.15fr) auto;align-items:center;gap:8px;padding:10px 12px}
+.wds2 .registration-file>.single-pdf-preview{grid-column:4;grid-row:1;justify-self:end}
+.wds2 .registration-file>ul{margin:0;padding:0}.wds2 .registration-file>ul[hidden]{display:block}.wds2 .registration-file>ul:empty:after{content:'첨부된 자료 없음'}
+.wds2 .registration-file>.wds2-pdf-field{display:none}.wds2 .registration-file>[role=status]{grid-column:2/-1;margin:0}.wds2 .registration-file>[role=status]:empty{display:none}
+@media(max-width:850px){.wds2 .registration-files .registration-file{grid-template-columns:minmax(0,1fr) auto}.wds2 .registration-file>h4{grid-column:1}.wds2 .registration-file>.single-pdf-preview{grid-column:2}.wds2 .registration-file>:is(span,ul,select,button:not(.single-pdf-preview),[role=status]){grid-column:1/-1}}
 .wds2 .registration-heading{padding:7px 2px 0}
 .wds2 .wd09-bulk-card-group{grid-template-columns:repeat(4,minmax(0,1fr))}
 .wds2 .wd09-bulk-card-basic{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,.8fr) minmax(0,2fr)}
@@ -41355,7 +41361,7 @@ function salesWorkSummary(c){
  const steps=[
   [stages[0],c.contactHistory?.length?[c.reason,...c.contactHistory]:[join(c.contactDate || c.contactPlannedDate,c.reason),c.contact,join(c.contactNextAction,c.contactNextDate)]],
   [stages[1],[join(c.proposalDate,c.proposal),c.proposalPdfs?.[0]?.name,...(c.comparisonHistory||[join(proposalActions[c.proposalStatus],c.comparisonNextDate)]),c.newPremium!=null?'제안 월보험료 '+fmt(c.newPremium)+'원':'']],
-  [stages[2],[...(c.coordinationRounds||[]).map((r,i)=>join((i+1)+'차',r.date,r.request&&'고객 요청 '+r.request,r.adjustment&&'조정 '+r.adjustment,r.files?.[0]?.name)),...(c.coordinationHistory||[])]],
+  [stages[2],[...(c.coordinationRounds||[]).map((r,i)=>join((i+1)+'차',r.date,r.request&&'고객 요청 '+r.request,r.adjustment&&'조정 '+r.adjustment,r.files?.[0]?.name)),...(c.coordinationHistory?.length?c.coordinationHistory:[c.coordinationNextDate&&'다음 연락 '+c.coordinationNextDate])]],
   [stages[3],[c.completed===3?join(c.decisionDate,c.result):'',c.confirmedSource,...(c.policies||[]).map(p=>join(p.insurer,p.product||p.plate,fmt(Number(p.premium)||0)+'원')),c.decisionNote]]
  ].map(([title,lines])=>({title,lines:lines.filter(Boolean)}));
  if(c.endReason)steps[c.endStage??c.completed].lines.push('종료 사유 · '+c.endReason);
@@ -41862,7 +41868,7 @@ async function saveClient(client,values){
  const next={...client,...values};
  if(values.contactDate){
    const entry=[next.contactDate,next.contact,next.contactNextAction,next.contactNextDate,next.contactOutcome==='end'?next.endReason:''].filter(Boolean).join(' · ');
-   const history=[...(client.contactHistory || [])];
+   const history=[...(client.contactHistory?.length?client.contactHistory:client.contactNextDate?[[client.contactDate,client.contact,client.contactNextAction,client.contactNextDate].filter(Boolean).join(' · ')]:[])];
    if(entry && history.at(-1)!==entry)history.push(entry);
    next.contactHistory=history;
  }
@@ -41871,8 +41877,10 @@ async function saveClient(client,values){
    const field=comparison?'comparisonHistory':'coordinationHistory';
    const route=comparison?proposalActions[next.proposalStatus]:({review:'고객확인대기',confirm:'계약확정',end:'영업종료'})[next.coordinationStatus];
    const day=comparison?next.comparisonNextDate:next.coordinationNextDate;
-   const entry=[route,day && '다음 연락 '+day].filter(Boolean).join(' · ');
-   const history=[...(client[field]||[])];
+   const context=comparison?next.proposalDate:next.coordinationRounds?.length?next.coordinationRounds.length+'차 조율':'';
+   const entry=[context,route,day && '다음 연락 '+day].filter(Boolean).join(' · ');
+   const previousDay=comparison?client.comparisonNextDate:client.coordinationNextDate;
+   const history=[...(client[field]?.length?client[field]:previousDay?['다음 연락 '+previousDay]:[])];
    if(entry && history.at(-1)!==entry)history.push(entry);
    next[field]=history;
  }
@@ -42526,16 +42534,39 @@ function policyCard(client,record,removeCard){
   const syncKind=()=>wd09SyncIndemnityPanel(indemnity,{contract_date:fields.contractDate.value,insurer:fields.insurer.value,product:fields.product.value});
   const syncCarrier=()=>{
     const inferred=wd09InferInsurerType(fields.insurer.value);
-    fields.insType.value=inferred || record.insType || '';
+    fields.insType.value=inferred || (fields.insurer.value===record.insurer?record.insType:'') || '';
     fields.insType.disabled=!!inferred;
     if(fields.purpose.value==='indemnity')syncKind();
+  };
+  const insurerSelect=make('select');
+  insurerSelect.setAttribute('aria-label','보험사 선택');
+  const insurerText=fields.insurer;
+  insurerText.removeAttribute('list');
+  insurerText.before(insurerSelect);
+  insurerText.setAttribute('aria-label','보험사 이름 직접 입력');
+  let insurerMode;
+  function refreshInsurers(auto){
+    if(insurerMode===auto)return;
+    insurerMode=auto;
+    const names=new Set(auto?AUTO_INSURERS:[...INSURERS_NONLIFE,...INSURERS_LIFE]);
+    const value=insurerText.value.trim();
+    insurerSelect.replaceChildren(new Option('보험사 선택',''),...Array.from(names,n=>new Option(n,n)),new Option('직접 입력','__custom__'));
+    insurerSelect.value=value&&!names.has(value)?'__custom__':value;
+    insurerText.style.display=insurerSelect.value==='__custom__'?'':'none';
+  }
+  insurerSelect.onchange=()=>{
+    const custom=insurerSelect.value==='__custom__';
+    insurerText.value=custom?'':insurerSelect.value;
+    insurerText.style.display=custom?'':'none';
+    if(custom)insurerText.focus();
+    syncCarrier();
   };
   function refresh(){
     const purpose=fields.purpose.value,auto=purpose==='auto';
     const groups=[purpose,auto?'auto':'policy'];
     if(!auto && purpose!=='savings')groups.push('renewal');
     for(const el of card.querySelectorAll('[data-for]'))el.hidden=!groups.includes(el.dataset.for);
-    fields.insurer.setAttribute('list',auto?'wd09-bulk-auto-insurers':'wd09-bulk-insurers');
+    refreshInsurers(auto);
     card.querySelector('.wd09-bulk-premium-label').textContent=auto?'연 보험료 (원)':'월 보험료 (원)';
     card.querySelector('[data-indemnity-date-label]').textContent=purpose==='indemnity'?'가입일':'계약일';
     fields.lineCustom.hidden=fields.line.value!=='__custom__';
@@ -42624,7 +42655,7 @@ function decisionPane(client){
 
   const documents=make('section','','registration-section');
   const select=make('select');select.name='adoptedVersion';
-  const selectLabel=make('label','채택한 가입제안서');selectLabel.append(select);
+  select.setAttribute('aria-label','채택할 가입제안서 회차');
   const files=make('div','','registration-files');
   const beforeBox=make('div','','registration-file');
   const beforeName=make('span');
@@ -42633,10 +42664,11 @@ function decisionPane(client){
   const adoptedBox=make('div','','registration-file');
   const adoptedName=make('span');
   const previewAdopted=onePdf('adopted');
-  adoptedBox.append(selectLabel,adoptedName,previewAdopted);
+  adoptedBox.append(make('h4','채택한 가입제안서'),adoptedName,select,previewAdopted);
   const reportBox=make('div','','registration-file');
   const report=pdfField('finalReport','확정가입보험 PDF',client.finalReport,client);
-  reportBox.append(make('h4','최종 확정가입보험 보고서'),report.wrap);
+  const reportActions=report.wrap.querySelector('.pdf-inline-actions');
+  reportBox.append(make('h4','최종 확정가입보험 보고서'),report.wrap.querySelector('ul'),...Array.from(reportActions.children),report.wrap.querySelector('[role=status]'),report.wrap);
   files.append(beforeBox,adoptedBox,reportBox);
   documents.append(make('h3','컨설팅 자료'),files);
   let picked=client.adoptedKey || '',choices=new Map();
@@ -42649,7 +42681,7 @@ function decisionPane(client){
     if(before)previewFiles.set('signingBefore',before);else previewFiles.delete('signingBefore');
     previewBefore.disabled=!before?.file;previewAdopted.disabled=!entry?.file;
     beforeName.textContent=before?.name || '첨부된 자료 없음';
-    adoptedName.textContent=entry?.name || '';
+    adoptedName.textContent=entry?.name || '제안서를 선택해 주세요';
     refreshPreviewButton();
   }
   function refreshChoices(){
@@ -42675,13 +42707,13 @@ function decisionPane(client){
   const list=make('ol','','journey');journey.append(summary,list);
   function showJourney(){
     const lines=[];
-    const line=(label,values)=>{
-      const text=values.filter(Boolean).join(' · ');
-      if(text)lines.push(make('li',label+'  '+text));
-    };
-    line('연락',[client.contactDate,client.contact,client.contactNextAction]);
-    line('최초 제안',[client.proposalDate,client.proposal,client.proposalPdfs?.[0]?.name]);
-    (client.coordinationRounds || []).forEach((r,i)=>line((i+1)+'차 조율',[r.date,r.request&&'고객 요청 '+r.request,r.adjustment&&'조정 '+r.adjustment,r.files?.[0]?.name]));
+    for(const stage of salesWorkSummary(client).steps.slice(0,3)){
+      if(!stage.lines.length)continue;
+      const row=make('li');
+      row.append(make('strong',stage.title));
+      for(const entry of stage.lines)row.append(make('div',entry));
+      lines.push(row);
+    }
     if(!lines.length)lines.push(make('li','기록된 상담·제안·조율 내용이 없어요.'));
     list.replaceChildren(...lines);
   }
