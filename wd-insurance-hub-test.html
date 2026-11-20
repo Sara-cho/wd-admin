@@ -38410,7 +38410,8 @@ const WD09_DRIVE_FOLDERS=[
   ['claimFiles','4.고객청구파일'],
   ['materials','5.고객자료실','4.고객자료실'],
   ['resources','6.보험자료','5.보험자료'],
-  ['monthly','7.월간영업자료','6.월간영업자료']
+  ['monthly','7.월간영업자료','6.월간영업자료'],
+  ['sales-work','8.영업관리_임시작업']
 ];
 function wd09DriveFolderService(api,adviserId,adviserName){
   const adviserFolderName='WD '+adviserName+' 보험폴더';
@@ -39429,7 +39430,7 @@ function wd09ArchivePreviewMime(name){
         const importFolder=()=>uid==='WD23000'?'1znUWf8YOwlWIU-atYvBys-02RCIbYDe1':salesFolderId(false);
         window.wd17SalesDrive={uid,async findPdfs(term,pageToken){
           const parent=await importFolder();
-          const params=new URLSearchParams({q:"trashed = false and '"+queryValue(parent)+"' in parents and mimeType = 'application/pdf'"+(term?" and name contains '"+queryValue(term)+"'":""),orderBy:'modifiedTime desc',fields:'nextPageToken,files(id,name,modifiedTime)',pageSize:'30',spaces:'drive'});
+          const params=new URLSearchParams({q:"trashed = false and '"+queryValue(parent)+"' in parents and mimeType = 'application/pdf'"+(term?" and name contains '"+queryValue(term)+"'":""),orderBy:'createdTime desc,name',fields:'nextPageToken,files(id,name,createdTime)',pageSize:'30',spaces:'drive'});
           if(pageToken)params.set('pageToken',pageToken);
           return request(base+'/files?'+params);
         },async importPdf(id){
@@ -40564,7 +40565,7 @@ async function wd09OpenAddressSearch(button){
 #panel:has(#pickSearch) h2{font-size:22px;margin-bottom:18px}#panel:has(#pickSearch) label,#panel legend{color:#382746;font-size:15px;font-weight:700}#panel:has(#pickSearch) :is(input,select){font-size:16px;min-height:44px;border:1px solid #ab9db8;background:white;color:#272031}
 #panel #pick{height:auto;width:100%;padding:4px}#panel #pick option{padding:6px 9px}#panel #pick option:checked{background:#51356c;color:white}#panel fieldset{margin:14px 0;padding:0;border:0;min-width:0}#panel legend{margin-bottom:7px}#panel .quick-choices{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}#panel .quick-choices button,.sales-drive-dialog button{font:inherit;font-weight:650;border:1px solid #b1a0c2;padding:8px 12px;min-height:42px;border-radius:8px;background:#faf8fc;color:#3f2954}#panel .quick-choices button[aria-pressed=true]{background:#50316d;color:white;border-color:#50316d}
 .sales-drive-trigger{display:inline-flex;justify-content:center;align-items:center;width:100%;min-height:44px;padding:8px;border:1px solid #ad95c2;border-radius:8px;background:#f4edf9;color:#4b305f;font:inherit;font-weight:700;cursor:pointer}.wds2 .wds2-pdf-drop[hidden]{display:none!important}
-.sales-drive-dialog{width:min(500px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:22px;border:1px solid #b7a8c9;border-radius:16px;background:white;color:#32223d}.sales-drive-dialog input{width:100%;margin:10px 0;padding:10px;font:inherit}.sales-drive-dialog .drive-results{display:grid;gap:5px;margin:10px 0}.sales-drive-dialog .drive-results button{text-align:left;overflow-wrap:anywhere}
+.sales-drive-dialog{width:min(500px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:22px;border:1px solid #b7a8c9;border-radius:16px;background:white;color:#32223d}.sales-drive-dialog input{width:100%;margin:10px 0;padding:10px;font:inherit}.sales-drive-dialog .drive-results{display:grid;gap:5px;margin:10px 0}.sales-drive-dialog[open]{display:flex;flex-direction:column;width:min(760px,calc(100% - 24px));box-sizing:border-box;overflow:hidden}.drive-head,.drive-head-actions{display:flex;align-items:center;gap:8px}.drive-head h3{font-size:18px;margin:0;overflow-wrap:anywhere}.drive-head-actions{margin-left:auto;flex-shrink:0}.drive-head-actions button:last-child{font-size:23px;padding:0;width:40px}.drive-scroll{min-height:0;overflow:auto}.drive-scroll table{border-collapse:separate;border-spacing:0;width:100%;font-size:15px}.drive-scroll th{position:sticky;top:0;text-align:left;background:#eee8f4;color:#482e5e;padding:9px}.drive-scroll td{border-bottom:1px solid #e1d9e8;padding:8px;cursor:pointer}.drive-scroll td:last-child{color:#51475c;font-size:13px;width:145px}.drive-scroll tr:hover td,.drive-scroll tr:focus-within td{background:#f6f1fa}.drive-scroll td button{border:0;background:transparent;color:#30213f;text-align:left;overflow-wrap:anywhere;padding:3px;min-height:36px;width:100%}@media(max-width:540px){.sales-drive-dialog[open]{padding:14px}.drive-head{flex-wrap:wrap}.drive-head h3{font-size:15px}.drive-head-actions button{padding:5px}.drive-scroll td:last-child{width:85px}}
 :host{display:block;min-width:0}.sales-surface{background:transparent}.sales-surface>main{width:100%;max-width:none;margin:0;padding:0}.sales-surface>p:empty{display:none}.sales-surface:has(dialog[open]){overscroll-behavior:contain}</style><div class="sales-surface">
 <main hidden><nav hidden class="tabs" aria-label="영업관리 화면"><button id="planTab" aria-pressed="true">이번 달 영업계획</button><button id="resultsTab" aria-pressed="false">계약·실적</button></nav>
 <div class="heading"><h1 id="title">2026년 11월 영업계획</h1><div class="titleactions"><select id="month" aria-label="조회할 월"><option value="2026-11">2026년 11월</option><option value="2026-10">2026년 10월</option></select><button class="soft" id="goalEdit">계획 수정</button><button class="solid" id="goalNew">＋ 영업계획 추가</button></div></div>
@@ -41984,25 +41985,31 @@ $('detail').addEventListener('close',()=>closePreview());
 function driveButton(input,label='Drive에서 가져오기'){
   const trigger=make('button',label,'sales-drive-trigger');trigger.type='button';
   trigger.onclick=()=>{
-    const dialog=make('dialog','','sales-drive-dialog'), heading=make('h3','Google Drive · 8.영업관리_임시작업');
+    const dialog=make('dialog','','sales-drive-dialog'), heading=make('h3','8.영업관리_임시작업');
     dialog.setAttribute('aria-label',heading.textContent);
     const search=make('input');search.type='search';search.placeholder='PDF 파일명 검색';search.setAttribute('aria-label','PDF 파일명 검색');
-    const list=make('div','','drive-results'),info=make('p'),more=make('button','더 보기'),close=make('button','닫기');
+    const table=make('table'),thead=make('thead'),headers=make('tr'),list=make('tbody'),info=make('p'),more=make('button','더 보기'),close=make('button','×');
+    close.setAttribute('aria-label','닫기');close.title='닫기';
+    for(const text of ['파일명','올린 날짜']){const th=make('th',text);th.scope='col';headers.append(th);}
+    thead.append(headers);table.append(thead,list);table.setAttribute('aria-label','최신 업로드순 PDF 파일');
+    const formatter=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     info.setAttribute('role','status');more.type=close.type='button';more.hidden=true;
-    const local=make('button','내 기기에서 선택');local.type='button';local.onclick=()=>{dialog.close();input.click();};
-    dialog.append(heading,search,list,info,more,local,close);root.append(dialog);dialog.showModal();
+    const local=make('button','내 컴퓨터');local.type='button';local.onclick=()=>{dialog.close();input.click();};
+    const head=make('div','','drive-head'),logo=make('img'),tools=make('div','','drive-head-actions'),scroll=make('div','','drive-scroll');
+    logo.src='https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png';logo.alt='Google Drive';logo.width=logo.height=28;
+    tools.append(local,close);head.append(logo,heading,tools);scroll.append(table,info,more);dialog.append(head,search,scroll);root.append(dialog);dialog.showModal();
     let serial=0,timer,page='',picking=false;
     const active=n=>dialog.open&&input.isConnected&&serial===n;
     async function load(append){
       const n=++serial;more.hidden=true;if(!append){page='';list.replaceChildren();}info.textContent='PDF를 찾고 있어요.';
       try{const reply=await boardHost.findPdfs(search.value.trim(),append?page:'');if(!active(n))return;
-        for(const f of reply.files||[]){const b=make('button',f.name+' · '+String(f.modifiedTime||'').slice(0,10));b.type='button';b.onclick=async()=>{
+        for(const f of reply.files||[]){const row=make('tr'),name=make('td'),dt=new Date(f.createdTime),date=make('td',Number.isFinite(dt.getTime())?formatter.format(dt):'—'),b=make('button',f.name);b.type='button';name.append(b);row.append(name,date);row.onclick=e=>{if(!b.contains(e.target))b.click();};b.onclick=async()=>{
           if(picking)return;picking=true;search.disabled=true;more.disabled=true;info.textContent='PDF를 가져오는 중이에요.';
           try{const file=await boardHost.importPdf(f.id);
             if(!input.isConnected||!dialog.open)return;
             const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();
           }catch(e){info.textContent=e.message;}finally{picking=false;search.disabled=false;more.disabled=false;}
-        };list.append(b);}
+        };list.append(row);}
         page=reply.nextPageToken||'';more.hidden=!page;info.textContent=list.childElementCount?'':'이 폴더에 검색 조건과 일치하는 PDF가 없어요.';
       }catch(e){if(active(n))info.textContent=e.message;}
     }
