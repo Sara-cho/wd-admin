@@ -223,18 +223,20 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
   .case-list tbody tr {grid-template-columns:1fr;gap:4px}
   .case-list td:nth-child(2) {text-align:left}
 }
-.detail-return {margin-bottom:7px}
+.wrap:has(>[data-view="lecture"]:not([hidden])) {padding-top:18px}
 .detail-banner {
-  display:flex;align-items:center;justify-content:space-between;gap:15px;
-  padding:8px 0 18px;border-bottom:1px solid #dfe2e9;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 0 11px;border-bottom:1px solid #dfe2e9;margin-bottom:13px;
 }
-.detail-banner h1 {font-size:clamp(24px,3vw,35px);line-height:1.25}
-.detail-banner .sub {margin-top:6px}
-.detail-org {color:#655674;font-size:13px;margin-bottom:5px}
+.detail-banner h1 {font-size:clamp(22px,2.2vw,30px);line-height:1.25;overflow-wrap:anywhere}
+.detail-meta {display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:3px;font-size:13px;color:#655674}
+.detail-meta #lecture-progress::before {content:"·";display:inline-block;margin-right:8px;color:#93869d}
+.detail-banner #lecture-back {flex:none;padding-inline:10px}
 .lecture-layout {
-  display:grid;grid-template-columns:minmax(270px,320px) minmax(0,1fr);gap:18px;align-items:start;
+  display:grid;grid-template-columns:minmax(270px,320px) minmax(0,1fr);gap:18px;align-items:stretch;
 }
-.lecture-profile {position:sticky;top:16px}
+.lecture-profile {overflow:visible}
+.profile-content {position:sticky;top:16px}
 .lecture-profile,.lecture-workspace {border-color:#e0e3e9;border-radius:13px;box-shadow:0 2px 10px #202b4007}
 .lecture-profile .head {padding-bottom:12px;border-bottom:1px solid #e9eaf0}
 .profile-fields {margin:0}
@@ -296,11 +298,15 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 @media(max-width:1080px) {.detail-columns {grid-template-columns:1fr}}
 @media(max-width:900px) {
   .lecture-layout {grid-template-columns:1fr;gap:13px}
-  .lecture-profile {position:static}
+  .profile-content {position:static}
   .profile-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px}
   .profile-fields div {padding:9px 0;border-bottom:0}
 }
 @media(max-width:650px) {
+  .wrap:has(>[data-view="lecture"]:not([hidden])) {padding-top:12px}
+  .detail-banner {align-items:start;gap:6px}
+  .detail-banner #lecture-back {font-size:12px;padding-inline:7px}
+  .detail-meta {font-size:12px}
   .detail-card,.lecture-pane {padding:13px}
   .detail-fields,.asset-categories {grid-template-columns:1fr}
   .detail-tabs {gap:11px;padding-inline:12px}
@@ -413,27 +419,32 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
         </div>
       </section>
       <section data-view="lecture" hidden aria-labelledby="lecture-title">
-        <div class="detail-return"><button class="btn text" type="button" id="lecture-back">← 강의건 목록</button></div>
         <header class="detail-banner">
-          <div><p class="detail-org" id="lecture-org"></p><h1 id="lecture-title" tabindex="-1"></h1><p class="sub" id="lecture-progress"></p></div>
+          <div>
+            <h1 id="lecture-title" tabindex="-1"></h1>
+            <p class="detail-meta"><span id="lecture-org"></span><span id="lecture-progress"></span></p>
+          </div>
+          <button class="btn" type="button" id="lecture-back">← 강의건 목록</button>
         </header>
         <div class="lecture-layout">
           <aside class="panel detail-card lecture-profile" aria-labelledby="lecture-info-title">
-            <div class="head"><h2 id="lecture-info-title">강의 기본정보</h2><button class="btn" type="button" id="lecture-edit" aria-controls="lecture-info-form" aria-expanded="false">수정</button></div>
-            <dl class="profile-fields" id="lecture-info-summary"></dl>
-            <form id="lecture-info-form" hidden>
-              <div class="detail-fields">
-                <label>강의명<input name="title" maxlength="70" required></label>
-                <label>기관명<input name="org" maxlength="70" required></label>
-                <label>강의 일정<input name="schedule" maxlength="140"></label>
-                <label>강의 장소<input name="location" maxlength="140"></label>
-                <label>전체 회차<input type="number" name="totalSessions" min="1" max="200" step="1"></label>
-              </div>
-              <div class="detail-form-actions">
-                <button class="btn" type="button" id="lecture-edit-cancel">취소</button>
-                <button class="btn primary" type="submit">저장</button>
-              </div>
-            </form>
+            <div class="profile-content">
+              <div class="head"><h2 id="lecture-info-title">강의 기본정보</h2><button class="btn" type="button" id="lecture-edit" aria-controls="lecture-info-form" aria-expanded="false">수정</button></div>
+              <dl class="profile-fields" id="lecture-info-summary"></dl>
+              <form id="lecture-info-form" hidden>
+                <div class="detail-fields">
+                  <label>강의명<input name="title" maxlength="70" required></label>
+                  <label>기관명<input name="org" maxlength="70" required></label>
+                  <label>강의 일정<input name="schedule" maxlength="140"></label>
+                  <label>강의 장소<input name="location" maxlength="140"></label>
+                  <label>전체 회차<input type="number" name="totalSessions" min="1" max="200" step="1"></label>
+                </div>
+                <div class="detail-form-actions">
+                  <button class="btn" type="button" id="lecture-edit-cancel">취소</button>
+                  <button class="btn primary" type="submit">저장</button>
+                </div>
+              </form>
+            </div>
           </aside>
           <div class="panel lecture-workspace">
             <div class="detail-tabs" role="tablist" aria-label="강의 상세 메뉴">
