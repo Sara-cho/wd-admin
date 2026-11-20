@@ -37361,8 +37361,21 @@ function openDesignProgressModal(){
       const lifetime=(saved?.expiresAt-Date.now())/1000;
       if(sessionId&&saved?.sessionId===sessionId&&typeof saved.token==='string'&&saved.token&&
          Number.isFinite(lifetime)&&lifetime>30&&Array.isArray(saved.scopes)&&saved.scopes.includes(driveScope)){
-        return {access_token:saved.token,scope:allowed.filter(scope=>saved.scopes.includes(scope)).join(' '),
-          expires_in:Math.min(lifetime,3600)};
+        const homeValid=saved.homeClient===WD09_GOOGLE_CLIENT_ID&&typeof saved.homeToken==='string'&&
+          !!saved.homeToken&&Number.isFinite(saved.homeExpiresAt)&&saved.homeExpiresAt>Date.now()+30000;
+        return {access_token:saved.token,scope:homeValid?allowed.filter(scope=>saved.scopes.includes(scope)).join(' '):driveScope,
+          expires_in:Math.min(lifetime,3600),homeToken:homeValid?saved.homeToken:null,
+          invalidateHome(){
+            try {
+              const key='wd-hq-insurance-home-v1:'+userId;
+              const current=JSON.parse(sessionStorage.getItem(key));
+              if(current?.sessionId===sessionId&&current.homeToken===saved.homeToken){
+                delete current.homeToken;
+                current.scopes=[driveScope];
+                sessionStorage.setItem(key,JSON.stringify(current));
+              }
+            } catch {}
+          }};
       }
     } catch {}
     try {
@@ -37713,9 +37726,23 @@ const wd09GoogleHome = (function initSimpleHome(){
     renderTasks();
   }
 
-  function requestError(status) {
-    const error = new Error(status===403 ? 'Google 권한을 확인해 주세요.' : 'Google 응답을 확인하지 못했어요.');
-    error.status = status;
+  async function requestError(response,service) {
+    const status=response.status;
+    const data=await response.json().catch(()=>null);
+    const reasons=[...(data?.error?.errors||[]),...(data?.error?.details||[])].map(item=>item?.reason);
+    let message=service+' 요청을 완료하지 못했어요. (HTTP '+status+')';
+    if(reasons.includes('SERVICE_DISABLED')||reasons.includes('accessNotConfigured')){
+      message=service+' API가 이 앱의 Google 프로젝트에서 꺼져 있어요. (API 사용 설정 필요)';
+    }else if(reasons.some(r=>['rateLimitExceeded','userRateLimitExceeded','RATE_LIMIT_EXCEEDED','quotaExceeded'].includes(r))||status===429){
+      message=service+' 사용량 한도에 도달했어요. 잠시 뒤 다시 확인해 주세요.';
+    }else if(reasons.includes('ACCESS_TOKEN_SCOPE_INSUFFICIENT')||reasons.includes('insufficientPermissions')){
+      message=service+' 접근 권한이 부족해요. 본진 TEST작업실에서 권한을 확인해 주세요.';
+    }else if(status===401){
+      message=service+' 연결 시간이 지났어요. 본진 TEST작업실에서 다시 열어 주세요.';
+    }
+    const error=new Error(message);
+    error.status=status;
+    error.needsGrant=status===401||reasons.some(r=>['ACCESS_TOKEN_SCOPE_INSUFFICIENT','insufficientPermissions'].includes(r));
     return error;
   }
 
@@ -37724,8 +37751,10 @@ const wd09GoogleHome = (function initSimpleHome(){
     if (options.body) headers['Content-Type']='application/json';
     const response = await fetch(url, {...options,headers,cache:'no-store',credentials:'omit',redirect:'error'});
     if (!response.ok) {
-      if (response.status===401 && connection===session) window.wd09DriveReset('Google 연결이 만료됐어요. 다시 연결해 주세요.');
-      throw requestError(response.status);
+      if (response.status===401 && connection===session && !session.separateToken) window.wd09DriveReset('Google 연결이 만료됐어요. 다시 연결해 주세요.');
+      const error=await requestError(response,url.startsWith(calendarApi+'/')?'캘린더':'Google 할 일');
+      if(error.needsGrant)session.invalidateHome?.();
+      throw error;
     }
     return options.method==='DELETE'?null:response.json();
   }
@@ -39142,7 +39171,7 @@ function wd09ArchivePreviewMime(name){
     const hasCalendar=canUse(homeScopes[0]);
     const hasTasks=canUse(homeScopes[1]);
     const homeSession=hasCalendar||hasTasks
-      ?{token:grant.access_token,hasCalendar,hasTasks,pendingTasks:new Set()}:null;
+      ?{token:grant.homeToken||grant.access_token,separateToken:!!grant.homeToken&&grant.homeToken!==grant.access_token,invalidateHome:grant.invalidateHome,hasCalendar,hasTasks,pendingTasks:new Set()}:null;
     async function request(url,{method='GET',body,contentType,binary=false,raw=false,uploadHeaders={}}={}){
       if(uid!==_UID||!getSbClient()||Date.now()>=expiresAt){
         throw Object.assign(new Error('Google 계정에 다시 연결해 주세요.'),{reconnect:true});
