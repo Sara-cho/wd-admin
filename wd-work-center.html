@@ -1200,19 +1200,8 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 <link rel="stylesheet" href="./wd-talk-panel.css">
 <script src="./wd-talk-read.js"></script>
 <script src="./wd-talk-backup.js?v=txt1"></script>
-<style>
-#workspaceTalk .talk-tools{flex:none;flex-wrap:nowrap}
-#workspaceTalk .talk-manage summary::after{content:none}
-#workspaceTalk .talk-tools .talk-icon{width:38px;height:38px;padding:0;flex:none}
-#workspaceTalk .talk-tools .talk-close{font:400 24px/1 system-ui,sans-serif}
-#workspaceTalk #workspaceTalkSound{background:white;color:#6d6873;border-color:var(--talk-line)}
-#workspaceTalk #workspaceTalkSound[aria-pressed="true"]{color:#6231ba;background:#f1eafa;border-color:#d8c5f0}
-#workspaceTalkSound svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#workspaceTalkSound[aria-pressed="true"] .talk-muted-slash,#workspaceTalkSound[aria-pressed="false"] .talk-waves{display:none}
-@media(max-width:600px){
-  #workspaceTalk .talk-tools .talk-icon{width:44px;height:44px}
-}
-</style>
+<link rel="stylesheet" href="./wd-talk-rooms.css?v=tools2">
+<script src="./wd-talk-rooms.js?v=tools2"></script>
 <link rel="stylesheet" href="./wd-sticky-notes.css">
 <script src="./wd-sticky-notes.js?v=20261113-private"></script>
 <style id="office-ledger-forms-style">
@@ -2902,7 +2891,7 @@ function retainCompanyDriveSession(session){
 }
 
 function talkAvailable(){
-  return !!readHqToken()&&(currentUser==='manager'||currentUser==='employee'&&hqStaffLoginId===legacyStaffHqLogin);
+  return !pinOnlyWorkspace&&!!readHqToken()&&(currentUser==='manager'||currentUser==='employee'&&!!hqStaffLoginId&&(hqStaffLoginId===legacyStaffHqLogin||staffCloudGrant?.enabled===true));
 }
 async function talkRequest(token,body,search='',backupPage=null){
   const query=new URLSearchParams({select:'id,sender_id,body,created_at',...(!body?{order:'created_at.desc,id.desc',limit:'300'}:{})});
@@ -2951,7 +2940,7 @@ function talkBubble(row,mine,unread){
       <span class="wd111-talk-expand">전체 보기</span><span class="wd111-talk-collapse">접기</span></summary><p>${esc(body)}</p></details>`:
     `<p>${talkBody(body)}</p>`;
   return `<article class="${mine?'mine':''}"><div class="wd111-talk-message-head">
-    <small>${mine?'나':talkSender()} · ${esc(new Date(row.created_at).toLocaleString('ko-KR'))}${unread?' · 안 읽음':''}</small>
+    <small>${mine?'나':esc(talkSender())} · ${esc(new Date(row.created_at).toLocaleString('ko-KR'))}${unread?' · 안 읽음':''}</small>
     <button type="button" class="small wd111-talk-copy" data-talk-copy="${esc(row.id)}">복사</button></div>${content}</article>`;
 }
 let workspaceTalkState=null,talkAudio=null;
@@ -2959,18 +2948,16 @@ document.addEventListener('visibilitychange',()=>{
   if(!document.hidden&&workspaceTalkState)void refreshWorkspaceTalk(workspaceTalkState);
 });
 function talkRole(){
-  return currentUser==='manager'?managerHqAccount.uid:legacyStaffHqLogin;
+  return currentUser==='manager'?managerHqAccount.uid:hqStaffLoginId;
 }
 function talkSender(){
-  return currentUser==='manager'?'박수진':'지점장';
+  return workspaceTalkState?.selected?.peer_name||'';
 }
 function talkReadPoint(row){return window.WDTalkRead.point(row);}
 function talkLatestIncoming(state){
   return state.rows.filter(row=>row.sender_id!==state.uid).map(talkReadPoint).sort().at(-1)||'';
 }
-function talkUnreadRows(state){
-  return state.rows.filter(row=>row.sender_id!==state.uid&&talkReadPoint(row)>state.readPoint);
-}
+
 function talkPreference(state,key,value){
   const storageKey='wd_work_talk_'+state.uid+'_'+key;
   try{
@@ -2979,16 +2966,37 @@ function talkPreference(state,key,value){
   }catch{}
   return null;
 }
+function talkAccountCurrent(state){
+  return workspaceTalkState===state && state.generation===driveConnectGeneration && state.role===talkRole()
+    && talkAvailable() && (!state.uid || readHqSession()?.user?.id===state.uid);
+}
 function markTalkRead(state){
-  const point=talkLatestIncoming(state);
-  if(point>state.readPoint){state.readPoint=point;window.WDTalkRead.write(state.uid,point);}
+  const room=state.selected;
+  if(!room||!talkAccountCurrent(state))return;
+  if(room.legacy){
+    const point=talkLatestIncoming(state);
+    if(point>state.legacyRead){state.legacyRead=point;window.WDTalkRead.write(state.uid,point);}
+    return;
+  }
+  const latest=state.rows.find(row=>row.sender_id!==state.uid && row.is_unread);
+  if(!latest || state.readPending.has(room.peer_id) || latest.seq<=(state.ack.get(room.peer_id)||0))return;
+  state.readPending.add(room.peer_id);
+  const token=readHqToken();
+  void workTalkRooms.api(token,'read',{p_peer:room.peer_id,p_message:latest.id}).then(()=>{
+    if(!talkAccountCurrent(state))return;
+    state.ack.set(room.peer_id,latest.seq);
+    return refreshWorkspaceTalk(state,true);
+  }).catch(()=>{}).finally(()=>state.readPending.delete(room.peer_id));
 }
 window.addEventListener('storage',event=>{
   const state=workspaceTalkState;
-  if(!state?.uid||!window.WDTalkRead.observe(event,state.uid))return;
-  state.readPoint=window.WDTalkRead.read(state.uid)??state.readPoint;
+  if(!state?.uid)return;
+  if(!talkAccountCurrent(state)){closeWorkspaceTalk(true);stopWorkspaceTalk();return;}
+  if(!window.WDTalkRead.observe(event,state.uid))return;
+  state.legacyRead=window.WDTalkRead.read(state.uid)??state.legacyRead;
   $('workspaceTalk')?.paintTalk();paintWorkspaceTalkBadge(state);
 });
+
 function primeTalkAudio(){
   if(!talkAvailable()||workspaceTalkState?.sound===false)return;
   try{
@@ -3009,9 +3017,9 @@ function chimeWorkspaceTalk(){
 }
 async function workspaceTalkIdentity(){
   const token=await attendanceHqToken(),identity=await readWorkCenterHqIdentity(token);
-  const role=currentUser==='manager'?managerHqAccount.role:'ops_lead';
-  if(!talkAvailable()||identity.login_id!==talkRole()||identity.staff_role!==role)throw new Error('이 계정의 WD TALK 권한을 확인해 주세요.');
-  return {token,uid:identity.user_id};
+  const role=currentUser==='manager'?managerHqAccount.role:hqStaffLoginId===legacyStaffHqLogin?'ops_lead':'assistant_staff';
+  if(identity.user_id!==readHqSession()?.user?.id||!talkAvailable()||identity.login_id!==talkRole()||identity.staff_role!==role)throw new Error('이 계정의 WD TALK 권한을 확인해 주세요.');
+  return {token,uid:identity.user_id,displayName:identity.display_name};
 }
 function stopWorkspaceTalk(){
   if(!workspaceTalkState)return;
@@ -3020,9 +3028,9 @@ function stopWorkspaceTalk(){
 }
 function startWorkspaceTalk(){
   if(!talkAvailable()){closeWorkspaceTalk(true);stopWorkspaceTalk();return null;}
-  if(workspaceTalkState?.generation!==driveConnectGeneration||workspaceTalkState?.role!==talkRole()){
+  if(workspaceTalkState?.generation!==driveConnectGeneration||workspaceTalkState?.role!==talkRole()||(workspaceTalkState?.uid&&workspaceTalkState.uid!==readHqSession()?.user?.id)){
     closeWorkspaceTalk(true);stopWorkspaceTalk();
-    const state={generation:driveConnectGeneration,role:talkRole(),uid:'',rows:[],readPoint:'',latest:'',sound:true,loading:false};
+    const state={generation:driveConnectGeneration,role:talkRole(),uid:'',rows:[],rooms:[],selected:null,legacyRows:[],legacyRead:'',sound:talkPreference({uid:readHqSession()?.user?.id},'sound')!=='off',loading:false,ready:false,error:'',version:0,readPending:new Set(),ack:new Map()};
     workspaceTalkState=state;
     state.timer=setInterval(()=>void refreshWorkspaceTalk(state),12000);
     void refreshWorkspaceTalk(state);
@@ -3033,39 +3041,65 @@ function startWorkspaceTalk(){
 function paintWorkspaceTalkBadge(state){
   const button=$('openWorkspaceTalk'),badge=$('workspaceTalkBadge');
   if(!button||!badge)return;
-  const count=talkUnreadRows(state).length;
+  const count=state.rooms.reduce((total,room)=>total+workTalkRooms.unreadCount(state,room),0);
   badge.hidden=!count;badge.textContent=count>=100?'99+':String(count);
   button.setAttribute('aria-label',count?'WD TALK 열기 · 안 읽은 메시지 '+count+'건':'WD TALK 열기');
 }
-async function refreshWorkspaceTalk(state){
-  if(workspaceTalkState!==state||!talkAvailable()||state.loading)return;
+async function refreshWorkspaceTalk(state,force=false){
+  if(!talkAccountCurrent(state)||(!force&&state.loading))return;
+  const version=++state.version,room=state.selected;
+  const current=()=>talkAccountCurrent(state)&&state.version===version&&state.selected===room;
   state.loading=true;
   try{
-    const {token,uid}=await workspaceTalkIdentity(),rows=await talkRequest(token);
-    if(workspaceTalkState!==state||!talkAvailable()||state.generation!==driveConnectGeneration)return;
-    const initial=state.uid!==uid;
+    const {token,uid}=await workspaceTalkIdentity();
+    if(!current())return;
     state.uid=uid;
-    state.rows=state.ignoreCleared?rows.filter(row=>!state.ignoreCleared.has(row.id)):rows;
-    state.ignoreCleared=null;
-    const latest=talkLatestIncoming(state);
-    const saved=window.WDTalkRead.read(uid);
-    state.readPoint=saved??(initial?latest:state.readPoint);
-    if(initial){
-      if(saved==null)window.WDTalkRead.write(uid,state.readPoint);
-      state.sound=talkPreference(state,'sound')!=='off';
-    }else if(latest>state.latest&&latest>state.readPoint&&state.sound)chimeWorkspaceTalk();
-    state.latest=latest;
-    $('workspaceTalk')?.paintTalk();
-    paintWorkspaceTalkBadge(state);
+    const rooms=await workTalkRooms.api(token,'directory');
+    if(!current())return;
+    if(!Array.isArray(rooms))throw new Error('대화방 목록을 확인하지 못했어요.');
+    state.rooms=rooms;state.ready=true;state.error='';
+    if(room&&!rooms.some(r=>r.peer_id===room.peer_id)){
+      closeWorkspaceTalk(true);state.selected=null;state.rows=[];state.legacyRows=[];
+      workTalkRooms.roomList(state);paintWorkspaceTalkBadge(state);
+      void refreshWorkspaceTalk(state,true);return;
+    }
+    const legacy=rooms.find(r=>r.legacy);
+    if(!room)$('workspaceTalk')?.paintTalk();
+    const [legacyResult,privateResult]=await Promise.allSettled([
+      legacy?talkRequest(token):[],room&&!room.legacy?workTalkRooms.api(token,'history',{p_peer:room.peer_id}):[]
+    ]);
+    if(!current())return;
+    if(privateResult.status==='rejected')throw privateResult.reason;
+    if(room?.legacy&&legacyResult.status==='rejected')throw legacyResult.reason;
+    if(legacyResult.status==='fulfilled')state.legacyRows=legacyResult.value;
+    const legacyRows=state.legacyRows,privateRows=privateResult.value;
+    const latest=legacyRows.filter(row=>row.sender_id!==uid).map(talkReadPoint).sort().at(-1)||'';
+    if(legacy&&legacyResult.status==='fulfilled'){
+      const stored=window.WDTalkRead.read(uid);
+      state.legacyRead=stored??latest;
+      if(stored==null)window.WDTalkRead.write(uid,state.legacyRead);
+    }
+    state.rows=room?(room.legacy?legacyRows:privateRows):[];
+    const counts=new Map(rooms.map(r=>[r.peer_id,workTalkRooms.unreadCount(state,r)]));
+    if(state.counts&&state.sound&&rooms.some(r=>counts.get(r.peer_id)>(state.counts.get(r.peer_id)||0)))chimeWorkspaceTalk();
+    state.counts=counts;
+    $('workspaceTalk')?.paintTalk();paintWorkspaceTalkBadge(state);
   }catch(error){
-    if(workspaceTalkState!==state)return;
-    if($('workspaceTalkStatus'))$('workspaceTalkStatus').textContent=error.message;
-  }finally{state.loading=false;}
+    if(!current())return;
+    state.error=error.message||'대화방을 불러오지 못했어요.';
+    if(error.status===401||error.status===403){
+      const opened=!!$('workspaceTalk');closeWorkspaceTalk(true);state.rows=[];state.legacyRows=[];state.rooms=[];state.selected=null;state.ready=false;
+      if(opened)workTalkRooms.roomList(state);
+    }
+    const status=$('workspaceTalkStatus')||$('workspaceRoomNotice');if(status)status.textContent=state.error;
+    paintWorkspaceTalkBadge(state);
+  }finally{if(state.version===version)state.loading=false;}
 }
 
-function connectWorkspaceTalkDrive(state){
+function connectWorkspaceTalkDrive(state,privateFile=false){
+  const scope=privateFile?"https://www.googleapis.com/auth/drive.file":driveWriteScope;
   const saved=state.drive||(currentUser==='manager'?managerDriveSession:employeeDrive);
-  if(saved?.scope===driveWriteScope&&saved.expires>Date.now()+30000)return Promise.resolve(saved);
+  if(saved&&(saved.scope===driveWriteScope||saved.scope===scope)&&saved.expires>Date.now()+30000)return Promise.resolve(saved);
   const oauth=window.google?.accounts?.oauth2,expected=currentUser==='manager'?managerDriveAccount:workspaceDriveAccount();
   if(!expected)return Promise.reject(new Error('이 계정에 연결된 Google 계정을 확인해 주세요.'));
   if(!oauth){
@@ -3077,15 +3111,15 @@ function connectWorkspaceTalkDrive(state){
     const fail=error=>{clearTimeout(timer);reject(error);};
     try{
       const client=oauth.initTokenClient({client_id:'525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com',
-        scope:driveWriteScope,include_granted_scopes:false,login_hint:expected,
+        scope,include_granted_scopes:false,login_hint:expected,
         callback:async response=>{
           try{
-            if(!response?.access_token||!oauth.hasGrantedAllScopes(response,driveWriteScope))
+            if(!response?.access_token||!oauth.hasGrantedAllScopes(response,scope))
               throw new Error('첨부파일을 보내려면 Google Drive 접근을 허용해 주세요.');
             const {user}=await (await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',response.access_token)).json();
             if(workspaceTalkState!==state||user?.emailAddress?.toLowerCase()!==expected)
               throw new Error('업무센터에 등록된 Google 계정을 선택해 주세요.');
-            state.drive={token:response.access_token,scope:driveWriteScope,expires:Date.now()+Number(response.expires_in||0)*1000};
+            state.drive={token:response.access_token,scope,expires:Date.now()+Number(response.expires_in||0)*1000};
             clearTimeout(timer);resolve(state.drive);
           }catch(error){fail(error);}
         },error_callback:()=>fail(new Error('Google Drive 연결을 완료하지 못했어요.'))});
@@ -3127,12 +3161,13 @@ async function uploadTalkChunks(location,file,type,current,onProgress){
   }
   throw new Error('대화 상대를 다시 확인해 주세요.');
 }
-async function uploadWorkspaceTalkFile(file,token,requestId,role,current,onProgress){
-  const folder=employeeDriveFolders.shared;
-  const lookup=new URLSearchParams({q:"'"+folder+"' in parents and trashed = false and appProperties has { key='wdTalkRequest' and value='"+requestId+"' }",
+async function uploadWorkspaceTalkFile(file,token,requestId,role,privatePeer='',current=()=>true,onProgress=()=>{}){
+  const folder=privatePeer?'root':employeeDriveFolders.shared;
+  const locationQuery=privatePeer?"'me' in owners":"'"+folder+"' in parents";
+  const lookup=new URLSearchParams({q:locationQuery+" and trashed = false and appProperties has { key='wdTalkRequest' and value='"+requestId+"' }",
     fields:'files(id)',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
   const previous=await (await employeeDriveRequest(driveFileApi+'?'+lookup,token)).json();
-  if(!current())throw new Error('로그인 계정을 다시 확인해 주세요.');
+  if(!current())throw new Error('대화 상대를 다시 확인해 주세요.');
   const type=file.type||'application/octet-stream';
   let id=previous.files?.find(row=>safeDriveId(row.id))?.id;
   if(!id){
@@ -3156,8 +3191,24 @@ async function uploadWorkspaceTalkFile(file,token,requestId,role,current,onProgr
       response=await uploadTalkChunks(location.href,file,type,current,onProgress);
     }
     const row=await response.json().catch(()=>null);
-    if(!response.ok||!safeDriveId(row?.id)||!row.parents?.includes(folder))throw new Error('업무공유폴더에 파일을 저장하지 못했어요.');
+    if(!response.ok||!safeDriveId(row?.id)||(!privatePeer&&!row.parents?.includes(folder)))throw new Error('업무공유폴더에 파일을 저장하지 못했어요.');
     id=row.id;
+  }
+  if(privatePeer){
+    if(!current())throw new Error('대화 상대를 다시 확인해 주세요.');
+    const perms=driveFileApi+'/'+encodeURIComponent(id)+'/permissions';
+    const result=await (await employeeDriveRequest(perms+'?fields=permissions(type,role,emailAddress),nextPageToken',token)).json();
+    if(!current())throw new Error('대화 상대를 다시 확인해 주세요.');
+    const rows=result.permissions;
+    if(!Array.isArray(rows)||result.nextPageToken||!rows.some(p=>p.role==='owner')||rows.some(p=>
+      p.type!=='user'||(p.role!=='owner'&&(p.role!=='reader'||(p.emailAddress||'').toLowerCase()!==privatePeer))))
+      throw new Error('파일의 공유 범위를 확인하지 못했어요.');
+    if(!rows.some(p=>(p.emailAddress||'').toLowerCase()===privatePeer)){
+      const share=await fetch(perms+'?sendNotificationEmail=false',{method:'POST',
+        headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+        body:JSON.stringify({type:'user',role:'reader',emailAddress:privatePeer}),signal:AbortSignal.timeout(20000)});
+      if(!share.ok)throw new Error('대화 상대에게 첨부파일 열람 권한을 줄 수 없어요.');
+    }
   }
   return '[WDFILE]'+JSON.stringify({v:1,id,name:file.name.slice(0,200),size:file.size,mime:type.slice(0,120)});
 }
@@ -3169,11 +3220,16 @@ function openWorkspaceTalk(){
   if($('workspaceTalk')){if(closeWorkspaceTalk())$('openWorkspaceTalk')?.focus();return;}
   const state=startWorkspaceTalk();
   if(!state)return;
-  closeNoteDock();primeTalkAudio();void loadEmployeeDriveClient().catch(()=>{});
+  closeNoteDock();primeTalkAudio();state.selected=null;state.rows=[];
+  workTalkRooms.roomList(state);void refreshWorkspaceTalk(state,true);
+}
+function selectWorkTalkRoom(state,room){
+  state.selected=room;state.rows=room.legacy?state.legacyRows:[];
+  void loadEmployeeDriveClient().catch(()=>{});
   const panel=document.createElement('aside');
   panel.id='workspaceTalk';panel.className='wd109-talk-dock wd-talk-surface';
   panel.setAttribute('aria-labelledby','workspaceTalkTitle');
-  panel.innerHTML=`<header class="talk-heading"><div><h2 id="workspaceTalkTitle">WD TALK</h2><span class="talk-peer">${talkSender()}님과 대화</span></div>
+  panel.innerHTML=`<header class="talk-heading"><div class="talk-room-title"><button type="button" id="workspaceTalkBack" aria-label="대화방 목록으로">‹ 목록</button><div><h2 id="workspaceTalkTitle">${esc(room.peer_name)}</h2><span class="talk-peer">1:1 대화</span></div></div>
     <div class="wd110-talk-controls talk-tools"><details class="talk-manage"><summary>대화 관리</summary><div class="talk-menu">
       <button type="button" data-talk-backup>TXT 백업 다운로드</button>
       <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
@@ -3199,9 +3255,12 @@ function openWorkspaceTalk(){
   $('openWorkspaceTalk')?.setAttribute('aria-expanded','true');
   const log=$('workspaceTalkLog'),status=$('workspaceTalkStatus'),form=$('workspaceTalkForm'),input=$('workspaceTalkText'),send=$('workspaceTalkSend');
   const sound=$('workspaceTalkSound'),fileInput=$('workspaceTalkFile'),attach=$('workspaceTalkAttach'),remove=$('workspaceTalkRemoveFile');
-  const active=()=>panel.isConnected&&workspaceTalkState===state&&talkAvailable();
+  const active=()=>panel.isConnected&&state.selected===room&&talkAccountCurrent(state);
+  const readRows=(token,term='',after=null,backup=false)=>room.legacy?
+    talkRequest(token,null,term,backup?{after,limit:200}:null):
+    workTalkRooms.api(token,'history',{p_peer:room.peer_id,p_search:term,p_after:after||null,p_backup:backup});
   const searchForm=$('workspaceTalkSearchForm'),searchInput=$('workspaceTalkSearch'),searchStatus=$('workspaceTalkSearchStatus'),clearSearch=$('clearWorkspaceTalkSearch');
-  let ids='',sending=false,picked=null,uploaded='',requestId='',searchTerm='',searchRows=[],searchVersion=0;
+  let ids='',sending=false,picked=null,uploaded='',requestId='',searchTerm='',searchRows=[],searchVersion=0,textRequest=null;
   const atBottom=()=>log.scrollHeight-log.scrollTop-log.clientHeight<60;
   const controls=()=>{send.disabled=!state.uid||sending||(!input.value.trim()&&!picked&&!uploaded);attach.disabled=remove.disabled=sending;};
   panel.paintTalk=()=>{
@@ -3209,7 +3268,7 @@ function openWorkspaceTalk(){
     const rows=searchTerm?searchRows:state.rows;
     const previous=log.scrollTop,stick=!searchTerm&&(!ids||atBottom());
     if(stick&&document.visibilityState!=='hidden')markTalkRead(state);
-    const unread=row=>row.sender_id!==state.uid&&talkReadPoint(row)>state.readPoint;
+    const unread=row=>row.sender_id!==state.uid&&(room.legacy?talkReadPoint(row)>state.legacyRead:row.is_unread&&row.seq>(state.ack.get(room.peer_id)||0));
     const next=searchTerm+'|'+rows.map(row=>row.id+(unread(row)?'u':'r')).join(',');
     if(ids!==next||!log.childNodes.length){
       const expanded=new Set([...log.querySelectorAll('details[open]')].map(item=>item.dataset.talkExpand));
@@ -3229,12 +3288,13 @@ function openWorkspaceTalk(){
   };
   const backup=window.WDTalkBackup?.bind({
     root:panel,getIdentity:workspaceTalkIdentity,active,canDelete:()=>currentUser==='manager',
-    transcript:{peerName:talkSender(),formatBody:talkCopyText},
-    readPage:({token},after,limit)=>talkRequest(token,null,'',{after,limit}),
-    deleteMessages:({token},ids)=>deleteTalkBackedUp(token,ids),
+    transcript:{peerName:room.peer_name,formatBody:talkCopyText},
+    readPage:({token},after)=>readRows(token,'',after,true),
+    deleteMessages:({token},ids)=>room.legacy?deleteTalkBackedUp(token,ids):workTalkRooms.api(token,'delete_backed_up',{p_peer:room.peer_id,p_ids:ids}),
     onDeleted:ids=>{
       const removed=new Set(ids);
-      if(state.loading)state.ignoreCleared=removed;
+      state.version++;state.loading=false;
+      if(room.legacy)state.legacyRows=state.legacyRows.filter(row=>!removed.has(row.id));
       state.rows=state.rows.filter(row=>!removed.has(row.id));
       resetSearch();paintWorkspaceTalkBadge(state);void refreshWorkspaceTalk(state);
     }
@@ -3256,7 +3316,7 @@ function openWorkspaceTalk(){
       const {token,uid}=await workspaceTalkIdentity();
       if(!current())return;
       if(state.uid&&uid!==state.uid)throw new Error('계정이 바뀌었어요. TALK를 다시 열어 주세요.');
-      const rows=await talkRequest(token,null,term);
+      const rows=await readRows(token,term);
       if(!current())return;
       const needle=term.toLocaleLowerCase('ko-KR');
       searchRows=rows.filter(row=>talkCopyText(row.body||'').toLocaleLowerCase('ko-KR').includes(needle));
@@ -3296,6 +3356,7 @@ function openWorkspaceTalk(){
   };
   remove.onclick=()=>{clearFile();status.textContent='';};
   fileInput.onchange=()=>{
+    if(!active())return;
     const file=fileInput.files?.[0];
     if(!file)return;
     if(!file.size){clearFile();status.textContent='내용이 있는 파일을 선택해 주세요.';return;}
@@ -3312,19 +3373,34 @@ function openWorkspaceTalk(){
     try{
       if(file&&!uploaded){
         status.textContent='Drive에 파일을 저장하고 있어요.';
-        const drive=await connectWorkspaceTalkDrive(state);
+        const drive=await connectWorkspaceTalkDrive(state,!room.legacy);
         if(!active())return;
-        uploaded=await uploadWorkspaceTalkFile(file,drive.token,requestId,state.role,active,bytes=>{
-          if(active())status.textContent='파일을 올리는 중… '+Math.floor(100*bytes/file.size)+'%';
+        let recipient='';
+        if(!room.legacy){
+          const {token,uid}=await workspaceTalkIdentity();
+          if(!active()||state.uid!==uid)return;
+          const email=await workTalkRooms.api(token,'peer_email',{p_peer:room.peer_id});
+          if(!active())return;
+          recipient=String(email||(room.peer_owner?managerDriveAccount:'')).trim().toLowerCase();
+          if(!recipient)throw new Error('대화 상대의 Google 계정 등록을 확인해 주세요.');
+        }
+        uploaded=await uploadWorkspaceTalkFile(file,drive.token,requestId,state.role,recipient,active,bytes=>{
+          status.textContent='Drive에 파일을 저장하고 있어요. '+Math.floor(100*bytes/file.size)+'%';
         });
         if(!active())return;
       }
       const {token,uid}=await workspaceTalkIdentity();
       if(!active()||uid!==state.uid)return;
       const body=uploaded||text;
-      const existing=uploaded&&(await talkRequest(token)).some(row=>row.sender_id===uid&&row.body===body);
-      if(!active())return;
-      if(!existing)await talkRequest(token,{body});
+      if(room.legacy){
+        const existing=uploaded&&(await talkRequest(token)).some(row=>row.sender_id===uid&&row.body===body);
+        if(!active())return;
+        if(!existing)await talkRequest(token,{body});
+      }else{
+        if(!uploaded&&textRequest?.body!==body)textRequest={body,id:crypto.randomUUID()};
+        await workTalkRooms.api(token,'send',{p_peer:room.peer_id,p_id:uploaded?requestId:textRequest.id,p_body:body});
+        if(!uploaded)textRequest=null;
+      }
       if(!active())return;
       if(uploaded)clearFile();else if(input.value.trim()===text)input.value='';
       status.textContent='보냈어요.';
@@ -3339,12 +3415,13 @@ function openWorkspaceTalk(){
   };
   panel.closeDock=force=>{
     if(sending&&!force){status.textContent='메시지 전송이 끝난 뒤 닫아 주세요.';return false;}
-    document.removeEventListener('visibilitychange',markVisible);backup?.reset();panel.remove();$('openWorkspaceTalk')?.setAttribute('aria-expanded','false');return true;
+    document.removeEventListener('visibilitychange',markVisible);backup?.reset();panel.remove();state.selected=null;state.rows=[];state.version++;state.loading=false;$('openWorkspaceTalk')?.setAttribute('aria-expanded','false');return true;
   };
   const close=()=>{if(closeWorkspaceTalk())$('openWorkspaceTalk')?.focus();};
   $('closeWorkspaceTalk').onclick=close;
+  $('workspaceTalkBack').onclick=()=>{if(active()&&closeWorkspaceTalk()){workTalkRooms.roomList(state);void refreshWorkspaceTalk(state,true);}};
   panel.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();close();}};
-  panel.paintTalk();paintWorkspaceTalkBadge(state);$('closeWorkspaceTalk').focus();
+  panel.paintTalk();paintWorkspaceTalkBadge(state);$('workspaceTalkBack').focus();void refreshWorkspaceTalk(state,true);
 }
 
 
