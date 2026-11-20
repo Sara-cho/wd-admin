@@ -506,6 +506,13 @@ strong.wd88-person{display:inline-block;padding:2px 7px;border-radius:5px}
 .wd96-drive-list:has(.wd98-drive-table){padding:0;max-height:70vh;overflow:auto}
 .wd98-drive-table{width:100%;border-collapse:collapse;text-align:left;font-size:15px}
 .wd98-drive-table th,.wd98-drive-table td{padding:10px 14px;border-bottom:1px solid var(--library-line)}
+.work-archive-browser{display:grid;grid-template-columns:minmax(104px,132px) minmax(0,1fr);gap:16px;align-items:start}
+#archiveKinds{display:grid;gap:4px;padding:4px 10px 4px 0;border-right:1px solid var(--library-line)}
+#archiveKinds button[hidden]{display:none}#archiveKinds:empty{visibility:hidden}
+#archiveKinds button{display:flex;justify-content:space-between;align-items:center;gap:8px;border:0;border-radius:5px;background:transparent;padding:10px;color:var(--library-muted);font-size:14px;font-weight:600}
+#archiveKinds button[aria-pressed="true"]{background:#eee9f7;color:#543487;box-shadow:inset 3px 0 #7954ab}
+#archiveKinds button span{font-size:12px;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.work-archive-browser{grid-template-columns:minmax(0,1fr);gap:8px}#archiveKinds{display:flex;flex-wrap:wrap;border:0;padding:0}#archiveKinds button{padding:6px 9px}}
 .wd-archive-entry{display:grid;grid-template-columns:4.8em minmax(0,1fr);gap:10px;align-items:baseline}.wd-archive-kind{display:inline-block;justify-self:start;font-size:.85em;font-weight:650;color:#634b24;background:#f6f1e8;padding:3px 7px;border-radius:5px}.wd-archive-origin{display:block;color:var(--library-muted);font-size:.83em;font-weight:500;margin-top:3px}
 .wd98-drive-table tbody tr:last-child td{border-bottom:0}
 .wd98-drive-table th{position:sticky;top:0;z-index:1;background:#f5f1e9;color:var(--library-muted);font-size:14px}
@@ -3227,8 +3234,9 @@ function nativeDrivePage(){
       <p id="nativeDriveStatus" class="smallText" role="status">불러오는 중…</p>
       <div class="wd96-drive-tools"><div id="nativeDriveCategories" class="wd96-drive-tabs" aria-label="분류"></div>
         <input id="nativeDriveSearch" type="search" aria-label="${manual?title+' 제목 또는 파일명 검색':'작업결과 전체 분류 검색'}" placeholder="${manual?'제목 또는 파일명 검색':'전체 분류에서 검색'}" disabled></div>
+      ${manual?'':'<div class="work-archive-browser"><nav id="archiveKinds" aria-label="자료 소분류"></nav>'}
       <div class="wd96-drive-columns"><section class="card wd96-drive-list" id="nativeDriveList" aria-label="자료 목록"></section>
-        <section class="card wd96-drive-reader" id="nativeDriveReader" aria-label="자료 본문" hidden></section></div>
+        <section class="card wd96-drive-reader" id="nativeDriveReader" aria-label="자료 본문" hidden></section></div>${manual?'':'</div>'}
     </section>`;
 }
 
@@ -3503,10 +3511,12 @@ async function updateArchiveLedger(row,token,update){
   const changed=await response.json().catch(()=>null);
   if(!response.ok||changed?.[0]?.id!==row.id)throw new Error('변경을 확인하지 못했어요. 새로고침 후 다시 시도해 주세요.');
 }
-function openArchiveAction(action,row,file,perform){
+function openArchiveAction(action,row,file,perform,archive=false){
   const label=archiveActionLabels[action],driveOnly=!!row.driveId;
+  const parts=archive&&action==='edit'?archiveDisplay(row):null;
+  const kindField=parts?`<label for="archiveEditKind">소분류</label><select id="archiveEditKind">${[...archiveSubcategories,...(parts.kind==='미분류'?['미분류']:[])].map(kind=>`<option ${kind===parts.kind?'selected':''}>${kind}</option>`).join('')}</select>`:'';
   let fields;
-  if(action==='edit')fields=`<label for="archiveActionTitle">제목</label><input id="archiveActionTitle" value="${esc(driveOnly?(row.name||row.title):row.title)}" required maxlength="240">
+  if(action==='edit')fields=`${kindField}<label for="archiveActionTitle">제목</label><input id="archiveActionTitle" value="${esc(parts?parts.title:(driveOnly?(row.name||row.title):row.title))}" required maxlength="240">
     ${driveOnly?'':`<label for="archiveActionBody">본문</label><textarea id="archiveActionBody" rows="8" maxlength="80000">${esc(row.content||'')}</textarea>`}`;
   else if(action==='replace')fields=`<p class="smallText">${esc(file.title)}의 파일 내용만 교체합니다. 기존 이름과 링크는 유지됩니다.</p><label for="archiveActionFile">새 파일</label><input id="archiveActionFile" type="file" required>`;
   else fields=`<p><strong>${esc(row.title)}</strong></p><p>삭제하시겠습니까?</p><p>${driveOnly?'이 파일을 Google Drive 휴지통으로 이동합니다.':'이 항목을 작업결과 보관에서 삭제합니다. 연결된 Drive 파일은 보관됩니다.'}</p>`;
@@ -3520,7 +3530,14 @@ function openArchiveAction(action,row,file,perform){
     if(action==='edit'){
       const title=$('archiveActionTitle').value.trim();
       if(!title){status.textContent='제목을 입력해 주세요.';return;}
-      update=driveOnly?{name:title}:{title,content:$('archiveActionBody').value.trim()};
+      let name=title;
+      if(parts){
+        const kind=$('archiveEditKind').value;
+        if(kind!==parts.kind&&!archiveSubcategories.includes(kind))return;
+        name=archiveEditedName(row,parts,kind,title);
+        if(!name||name.length>240){status.textContent='제목과 저장 이름 길이(240자 이내)를 확인해 주세요.';return;}
+      }
+      update=driveOnly?{name}:{title:name,content:$('archiveActionBody').value.trim()};
     }else if(action==='replace'){
       update=$('archiveActionFile').files?.[0];
       if(!update)return;
@@ -3538,13 +3555,57 @@ function openArchiveAction(action,row,file,perform){
 
 function archiveDisplay(row){
   const original=String(row.title||row.name||'');
-  const prefix=original.match(/^\s*\[(?:회사운영|회사|보험업무|보험|퍼스널브랜딩|브랜딩|AI강의|강의)_(파일|디자인|고객자료)\]\s*/);
+  const prefix=original.match(/^\s*\[[^\[\]]{1,40}?\s*[_\-－–]\s*(파일|디자인|고객자료)\s*\]\s*/);
   const kind=prefix?.[1]||String(row.data_type||'').split('|').map(s=>s.trim()).find(s=>archiveSubcategories.includes(s))||'미분류';
-  let title=original.slice(prefix?.[0].length||0).trim();
-  if(row.driveId||prefix)title=title.replace(/(?:\.(?:pdf|docx?|xlsx?|pptx?|hwpx?|html?|txt|md|csv|jpe?g|png|gif|svg|webp|heic|tiff?|zip|7z|mp[34]|m4a|mov|webm|wav|ai|psd))+$/i,'');
-  const stamp=title.match(/_(\d\d)(\d\d)(\d\d)(?:\.[^.\s]+)?$/);
-  if(stamp&&validAttendanceDay('20'+stamp[1]+'-'+stamp[2]+'-'+stamp[3]))title=title.slice(0,stamp.index);
-  return {kind,title:title||original};
+  const rest=original.slice(prefix?.[0].length||0);
+  const known=rest.match(/(?:\.(?:pdf|docx?|xlsx?|xlsm|pptx?|hwpx?|html?|txt|md|csv|jpe?g|png|gif|svg|webp|heic|tiff?|zip|7z|mp[34]|m4a|mov|webm|wav|ai|psd))+$/i);
+  const ext=(row.driveId||prefix)?(known?.[0]||rest.match(/\.[a-z][a-z0-9]{0,12}$/i)?.[0]||''):'';
+  const stem=ext?rest.slice(0,-ext.length):rest;
+  const date=stem.match(/_(\d\d)(\d\d)(\d\d)$/);
+  const suffix=date&&validAttendanceDay('20'+date[1]+'-'+date[2]+'-'+date[3])?date[0]:'';
+  const title=suffix?stem.slice(0,-suffix.length):stem;
+  return {kind,title:title.trim(),prefix:prefix?.[0]||'',suffix,ext};
+
+}
+
+function archiveEditedName(row,parts,kind,title){
+  if(title===parts.title&&kind===parts.kind)return row.title||row.name;
+  let prefix=parts.prefix;
+  if(kind!==parts.kind){
+    prefix=prefix?prefix.replace(/(파일|디자인|고객자료)(?=\s*\])/,kind):'['+(row.category==='보험업무'?'보험':row.category)+'_'+kind+']';
+  }
+  let stem=title.trim();
+  if(parts.prefix&&stem.startsWith(parts.prefix))stem=stem.slice(parts.prefix.length).trim();
+  if(parts.ext&&stem.toLowerCase().endsWith(parts.ext.toLowerCase()))stem=stem.slice(0,-parts.ext.length).trim();
+  if(parts.suffix&&stem.endsWith(parts.suffix))stem=stem.slice(0,-parts.suffix.length).trim();
+  return stem?prefix+stem+parts.suffix+parts.ext:'';
+}
+
+function bindArchiveKinds(menu,repaint){
+  const nav=menu==='archive'&&$('archiveKinds');
+  if(!nav)return null;
+  let selected='전체';
+  const buttons=new Map();
+  for(const kind of ['전체',...archiveSubcategories,'미분류']){
+    const button=document.createElement('button'),count=document.createElement('span');
+    button.type='button';button.append(kind,count);nav.append(button);
+    button.onclick=()=>{selected=kind;repaint();};
+    buttons.set(kind,{button,count});
+  }
+  return {
+    reset(){selected='전체';},
+    filter(entries){
+      const totals=new Map();
+      for(const entry of entries)totals.set(entry.kind,(totals.get(entry.kind)||0)+1);
+      for(const [kind,{button,count}] of buttons){
+        const total=kind==='전체'?entries.length:totals.get(kind)||0;
+        button.hidden=kind==='미분류'&&!total&&selected!==kind;
+        button.setAttribute('aria-pressed',String(kind===selected));count.textContent=total;
+      }
+      const order=[...archiveSubcategories,'미분류'];
+      return selected==='전체'?entries.sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind)):entries.filter(e=>e.kind===selected);
+    }
+  };
 }
 
 async function loadLibraryGroups(groups,read){
@@ -3558,13 +3619,14 @@ async function loadLibraryGroups(groups,read){
   return {rows,missing};
 }
 
-function paintLibraryTable(list,rows,search,manual,selected,clearReader,choose){
+function paintLibraryTable(list,rows,search,manual,selected,clearReader,choose,kinds){
   const words=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const globalSearch=!manual&&words.length>0;
-  const filtered=rows.map(row=>({row,...(manual?{title:row.title,kind:''}:archiveDisplay(row))})).filter(({row,title,kind})=>{
+  const matches=rows.map(row=>({row,...(manual?{title:row.title,kind:''}:archiveDisplay(row))})).filter(({row,title,kind})=>{
     const searchable=[title,kind,row.category,row.title,row.name,...(row.attachments||[]).map(file=>file.title||file.name)].join(' ').toLowerCase();
     return words.every(word=>searchable.includes(word));
   });
+  const filtered=kinds?kinds.filter(matches):matches;
   if(selected&&!filtered.some(({row})=>row.id===selected))clearReader();
   const sourceCol=manual?'<th scope="col" class="wd101-secondary-col">분류</th>':'';
   list.innerHTML=filtered.length?`<table class="wd98-drive-table"><thead><tr><th scope="col">${manual?'매뉴얼명':globalSearch?'전체 검색 결과':'자료명'} <span>${filtered.length}건</span></th>
@@ -3587,12 +3649,12 @@ function markLibrarySelection(list,selected){
         button.closest('tr').classList.toggle('wd98-selected',current);
       });
 }
-function openLibraryReader(reader,list,row,onClose){
+function openLibraryReader(reader,list,row,onClose,archive=false){
   reader.hidden=false;
     reader.innerHTML=`<header class="wd101-reader-header"><div class="wd101-reader-top">
       <span class="wd101-reader-tag">${esc(row.category)}</span><div class="wd101-reader-actions">
       <span class="wd101-archive-actions"></span><button class="small wd101-reader-close" type="button" aria-label="상세 닫기">닫기</button>
-      </div></div><h2>${esc(row.title)}</h2><p class="wd101-reader-meta">${esc(nativeDriveFileKind(row))} · ${esc(String(row.modifiedTime||'').slice(0,10)||'수정일 미등록')}</p></header>
+      </div></div><h2>${esc(archive?archiveDisplay(row).title:row.title)}</h2><p class="wd101-reader-meta">${esc(nativeDriveFileKind(row))} · ${esc(String(row.modifiedTime||'').slice(0,10)||'수정일 미등록')}</p></header>
       <div class="wd96-drive-links" hidden></div><div class="wd96-drive-text" aria-label="자료 미리보기" role="region" tabindex="0"></div>`;
     reader.querySelector('.wd101-reader-close').onclick=()=>{
       onClose();
@@ -3639,7 +3701,7 @@ function bindNativeDrivePage(){
     selected=row.id;
     const markSelection=()=>markLibrarySelection(list,selected);
     markSelection();
-    openLibraryReader(reader,list,row,()=>{clearReader();markSelection();});
+    openLibraryReader(reader,list,row,()=>{clearReader();markSelection();},!manual);
     const body=reader.querySelector('.wd96-drive-text'),attachments=reader.querySelector('.wd96-drive-links');
     try{await refreshWorkCenterGrant(menu,undefined,row.category);}
     catch(error){if(active()&&request===readId)body.textContent=error.message;return;}
@@ -3677,7 +3739,7 @@ function bindNativeDrivePage(){
             await updateArchiveLedger(row,token,update);
           }
           if(stillSelected()){clearReader();rows=[];void load();notify(archiveActionLabels[action]+' 완료');}
-        });
+        },!manual);
       });
     };
     paintActions();
@@ -3708,13 +3770,14 @@ function bindNativeDrivePage(){
     }
     paintActions();
   };
-  const paintTable=()=>paintLibraryTable(list,rows,search,manual,selected,clearReader,choose);
+  const kinds=bindArchiveKinds(menu,()=>{if(!loading)paintTable();});
+  const paintTable=()=>paintLibraryTable(list,rows,search,manual,selected,clearReader,choose,kinds);
   const paintTabs=()=>{
     tabs.innerHTML=groups.map(group=>`<button class="small" type="button" data-native-category="${esc(group)}" aria-pressed="${category===group}">${esc(group)}</button>`).join('');
     tabs.querySelectorAll('[data-native-category]').forEach(button=>button.onclick=()=>{
       const next=button.dataset.nativeCategory;
       if(next===category&&!globalSearch)return;
-      category=next;rows=[];search.value='';search.disabled=true;
+      kinds?.reset();category=next;rows=[];search.value='';search.disabled=true;
       clearReader();paintTabs();tabs.querySelector('[aria-pressed="true"]')?.focus();void load();
     });
   };
@@ -3769,12 +3832,12 @@ function bindNativeDrivePage(){
     }
   };
   refresh.onclick=load;search.oninput=()=>{
-    if(!manual&&globalSearch!==!!search.value.trim()){void load();return;}
+    if(!manual&&globalSearch!==!!search.value.trim()){kinds?.reset();void load();return;}
     if(!loading)paintTable();
   };
   add.onclick=()=>{
     if(add.hidden||!libraryCan(menu,'upload'))return;
-    openNativeDriveAdd(menu,session(),active,async group=>{category=group;rows=[];search.value='';clearReader();paintTabs();await load();},category);
+    openNativeDriveAdd(menu,session(),active,async group=>{kinds?.reset();category=group;rows=[];search.value='';clearReader();paintTabs();await load();},category);
   };
   paintTabs();clearReader();paintTable();void load();
 }
@@ -9520,11 +9583,17 @@ function bindEnrolledLibrary(){
   const open=async(row)=>{
     const n=++read,params={menu,category:row.category,id:row.id},same=()=>active()&&n===read;
     releaseNativeDrivePreview();selected=row.id;markLibrarySelection(list,selected);line.textContent='';
-    openLibraryReader(reader,list,row,()=>{clearReader();markLibrarySelection(list,selected);});
+    openLibraryReader(reader,list,row,()=>{clearReader();markLibrarySelection(list,selected);},!manual);
     const actions=reader.querySelector('.wd101-archive-actions'),body=reader.querySelector('.wd96-drive-text');
     const actionButton=(action,label,run)=>{const b=button(actions,label,run);b.dataset.archiveAction=action;};
     if(libraryCan(menu,'download'))actionButton('download','다운로드',async()=>{const blob=await staffDriveCall('download',params,'blob');if(same())downloadCompanyBlob(blob,row.name);});
-    if(row.category!=='정리이전자료'&&libraryCan(menu,'edit'))actionButton('edit','수정',async()=>{const title=prompt('자료 제목',menu==='manual'?cleanManualTitle(row.name):row.name);if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}});
+    if(row.category!=='정리이전자료'&&libraryCan(menu,'edit'))actionButton('edit','수정',async()=>{if(!manual){
+      openArchiveAction('edit',row,row,async(update,dialogOpen)=>{
+        if(!same()||!dialogOpen()||!libraryCan(menu,'edit'))throw new Error('자료를 다시 선택해 주세요.');
+        await staffDriveCall('rename',{...params,title:update.name});if(same())await refresh();
+      },true);return;
+    }
+    const title=prompt('자료 제목',cleanManualTitle(row.name));if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}});
     if(row.category!=='정리이전자료'&&libraryCan(menu,'replace'))actionButton('replace','교체',()=>pick('replace',row.id,row.category));
     if(row.category!=='정리이전자료'&&libraryCan(menu,'delete'))actionButton('delete','삭제',async()=>{if(confirmWorkCenterDelete(row.name)){await staffDriveCall('remove',params);if(same())await refresh();}});
     body.textContent='미리보기를 불러오는 중…';
@@ -9538,14 +9607,15 @@ function bindEnrolledLibrary(){
       node.className='wd98-native-preview';node.title=row.name;nativeDrivePreviewUrl=URL.createObjectURL(blob);node.src=nativeDrivePreviewUrl;body.append(node);
     }catch(e){if(same())body.textContent=e.message;}
   };
-  const paint=()=>paintLibraryTable(list,rows,search,manual,selected,clearReader,open);
+  const kinds=bindArchiveKinds(menu,()=>{if(!loading)paint();});
+  const paint=()=>paintLibraryTable(list,rows,search,manual,selected,clearReader,open,kinds);
   const refresh=async()=>{
     const n=++request;globalSearch=!manual&&!!search.value.trim();loading=true;clearReader();list.replaceChildren();rows=[];search.disabled=manual;
     add.hidden=!category||category==='정리이전자료'||!libraryCan(menu,'upload');
     if(!category){line.textContent='허용된 자료 분류가 없어요.';return;}
     line.textContent='회사 Drive 자료를 불러오는 중…';
     tabs.replaceChildren();
-    for(const group of groups){const b=button(tabs,group,async()=>{if(category===group&&!globalSearch)return;category=group;search.value='';await refresh();});b.setAttribute('aria-pressed',String(group===category));}
+    for(const group of groups){const b=button(tabs,group,async()=>{if(category===group&&!globalSearch)return;kinds?.reset();category=group;search.value='';await refresh();});b.setAttribute('aria-pressed',String(group===category));}
     try{
       const permitted=availableLibraryCategories(menu);
       const result=await loadLibraryGroups(globalSearch?permitted:[category],async group=>{
@@ -9562,11 +9632,11 @@ function bindEnrolledLibrary(){
   };
   add.onclick=()=>{
     if(add.hidden||!active()||!libraryCan(menu,'upload'))return;
-    openNativeDriveAdd(menu,null,active,async group=>{category=group;search.value='';await refresh();},category,
+    openNativeDriveAdd(menu,null,active,async group=>{kinds?.reset();category=group;search.value='';await refresh();},category,
       (file,name,group)=>upload(file,'upload',null,group,name));
   };
   search.oninput=()=>{
-    if(!manual&&globalSearch!==!!search.value.trim()){void refresh();return;}
+    if(!manual&&globalSearch!==!!search.value.trim()){kinds?.reset();void refresh();return;}
     if(!loading)paint();
   };
   $('nativeDriveRefresh').onclick=refresh;void refresh();
