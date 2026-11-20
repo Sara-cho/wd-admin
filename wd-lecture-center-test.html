@@ -6,7 +6,7 @@
 <title>WD WAVE 강의센터 TEST</title>
 <style>
 :root {
-  color-scheme:light; --bg:#f7f6f3; --paper:#fff; --ink:#272138; --muted:#6b6376;
+  color-scheme:light; --bg:#f3f4f6; --paper:#fff; --ink:#272138; --muted:#6b6376;
   --line:#eae5ec; --purple:#644590; --deep:#302240; --soft:#f0e9fa; --nav:#16172b;
 }
 * {box-sizing:border-box}
@@ -223,27 +223,44 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
   .case-list tbody tr {grid-template-columns:1fr;gap:4px}
   .case-list td:nth-child(2) {text-align:left}
 }
-.detail-return {margin-bottom:11px}
+.detail-return {margin-bottom:7px}
 .detail-banner {
   display:flex;align-items:center;justify-content:space-between;gap:15px;
-  padding:22px 25px;background:linear-gradient(120deg,#fff 23%,#f3ebfa);border-color:#e8deed;
+  padding:8px 0 18px;border-bottom:1px solid #dfe2e9;margin-bottom:18px;
 }
 .detail-banner h1 {font-size:clamp(24px,3vw,35px);line-height:1.25}
 .detail-banner .sub {margin-top:6px}
-.detail-org {color:#665376;font-size:13px;margin-bottom:5px}
-.detail-tabs {
-  display:flex;gap:3px;overflow:auto;margin:16px 0 13px;padding:4px;
-  border:1px solid var(--line);border-radius:11px;background:white;
+.detail-org {color:#655674;font-size:13px;margin-bottom:5px}
+.lecture-layout {
+  display:grid;grid-template-columns:minmax(270px,320px) minmax(0,1fr);gap:18px;align-items:start;
 }
+.lecture-profile {position:sticky;top:16px}
+.lecture-profile,.lecture-workspace {border-color:#e0e3e9;border-radius:13px;box-shadow:0 2px 10px #202b4007}
+.lecture-profile .head {padding-bottom:12px;border-bottom:1px solid #e9eaf0}
+.profile-fields {margin:0}
+.profile-fields div {padding:11px 0;border-bottom:1px solid #edeef2}
+.profile-fields div:last-child {padding-bottom:1px;border-bottom:0}
+.profile-fields dt {margin-bottom:3px;color:#626674;font-size:12px}
+.profile-fields dd {margin:0;color:#292a38;font-size:14px;font-weight:680;overflow-wrap:anywhere}
+.lecture-profile .detail-fields {grid-template-columns:minmax(0,1fr);gap:9px}
+.lecture-profile .detail-form-actions {gap:7px}
+.detail-tabs {display:flex;gap:18px;overflow:auto;padding-inline:21px;border-bottom:1px solid #e5e7ec;background:#fff}
 .detail-tabs button {
-  flex:0 0 auto;min-height:42px;padding:8px 16px;border:0;
-  border-radius:8px;background:transparent;font-weight:700;white-space:nowrap;
+  position:relative;flex:0 0 auto;min-height:55px;padding:11px 5px;
+  border:0;background:transparent;color:#626676;font-weight:730;white-space:nowrap;
 }
-.detail-tabs button[aria-pressed="true"] {background:#efe6f8;color:#58367e}
-.detail-card {padding:18px 22px}
+.detail-tabs button[aria-selected="true"] {color:#54367b}
+.detail-tabs button[aria-selected="true"]::after {
+  content:"";position:absolute;inset:auto 0 0;height:3px;border-radius:2px 2px 0 0;background:#694994;
+}
+.detail-tabs button:focus-visible {outline-offset:-5px;border-radius:7px}
+.lecture-pane {min-width:0;padding:19px 21px 21px}
+.lecture-pane>.head {margin-bottom:12px}
+.detail-card {padding:17px 18px}
+.lecture-pane .detail-card {border-color:#e7e8ef;border-radius:11px;box-shadow:none}
 .detail-card h2 {font-size:20px}
 .detail-card h3 {font-size:16px}
-.detail-columns {display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:15px;align-items:start}
+.detail-columns {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:start}
 .detail-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:14px}
 .detail-fields label,.file-form label {display:grid;gap:5px;font-size:13px;font-weight:700}
 .detail-fields .wide {grid-column:1/-1}
@@ -276,11 +293,18 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 .file-form button {justify-self:end}
 .media-preview {max-width:100%;max-height:64dvh;display:block;margin:auto}
 #media-dialog {width:min(780px,calc(100% - 26px))}
-@media(max-width:880px) {.detail-columns {grid-template-columns:1fr}}
+@media(max-width:1080px) {.detail-columns {grid-template-columns:1fr}}
+@media(max-width:900px) {
+  .lecture-layout {grid-template-columns:1fr;gap:13px}
+  .lecture-profile {position:static}
+  .profile-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px}
+  .profile-fields div {padding:9px 0;border-bottom:0}
+}
 @media(max-width:650px) {
-  .detail-banner,.detail-card {padding:14px}
+  .detail-card,.lecture-pane {padding:13px}
   .detail-fields,.asset-categories {grid-template-columns:1fr}
-  .detail-tabs button {font-size:13px;padding-inline:10px}
+  .detail-tabs {gap:11px;padding-inline:12px}
+  .detail-tabs button {font-size:13px;min-height:48px}
   .session-select {flex-wrap:wrap}
   .asset-list li .asset-row {grid-template-columns:1fr}
 }
@@ -390,18 +414,14 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
       </section>
       <section data-view="lecture" hidden aria-labelledby="lecture-title">
         <div class="detail-return"><button class="btn text" type="button" id="lecture-back">← 강의건 목록</button></div>
-        <header class="panel detail-banner">
+        <header class="detail-banner">
           <div><p class="detail-org" id="lecture-org"></p><h1 id="lecture-title" tabindex="-1"></h1><p class="sub" id="lecture-progress"></p></div>
         </header>
-        <nav class="detail-tabs" aria-label="강의 상세 메뉴">
-          <button type="button" data-detail-tab="basic" aria-pressed="true">강의 기본정보</button>
-          <button type="button" data-detail-tab="sessions" aria-pressed="false">회차별 준비</button>
-          <button type="button" data-detail-tab="materials" aria-pressed="false">강의자료실</button>
-        </nav>
-        <div class="detail-columns" data-detail-pane="basic">
-          <section class="panel detail-card" aria-labelledby="lecture-info-title">
-            <h2 id="lecture-info-title">강의 기본정보</h2>
-            <form id="lecture-info-form">
+        <div class="lecture-layout">
+          <aside class="panel detail-card lecture-profile" aria-labelledby="lecture-info-title">
+            <div class="head"><h2 id="lecture-info-title">강의 기본정보</h2><button class="btn" type="button" id="lecture-edit" aria-controls="lecture-info-form" aria-expanded="false">수정</button></div>
+            <dl class="profile-fields" id="lecture-info-summary"></dl>
+            <form id="lecture-info-form" hidden>
               <div class="detail-fields">
                 <label>강의명<input name="title" maxlength="70" required></label>
                 <label>기관명<input name="org" maxlength="70" required></label>
@@ -409,40 +429,49 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
                 <label>강의 장소<input name="location" maxlength="140"></label>
                 <label>전체 회차<input type="number" name="totalSessions" min="1" max="200" step="1"></label>
               </div>
-              <div class="detail-form-actions"><button class="btn primary" type="submit">기본정보 저장</button></div>
+              <div class="detail-form-actions">
+                <button class="btn" type="button" id="lecture-edit-cancel">취소</button>
+                <button class="btn primary" type="submit">저장</button>
+              </div>
             </form>
-          </section>
-          <section class="panel detail-card" aria-labelledby="lecture-notes-title">
-            <h2 id="lecture-notes-title">강의 기록</h2>
-            <dl class="details" id="lecture-summary-list"></dl>
-          </section>
-        </div>
-        <div data-detail-pane="sessions" hidden>
-          <div class="head" style="margin-bottom:12px">
-            <label class="session-select">강의 회차 <select id="lecture-session" aria-label="강의 회차"></select></label>
-            <button class="btn primary" type="button" data-add-file="lesson" data-current-session>+ 회차 자료 추가</button>
-          </div>
-          <div class="detail-columns">
-            <section class="panel detail-card" aria-labelledby="session-note-title">
-              <h2 id="session-note-title">회차별 준비</h2>
-              <form id="lecture-session-form">
-                <div class="detail-fields">
-                  <label>회차 주제<input name="topic" maxlength="140"></label>
-                  <label>강의 날짜<input type="date" name="date"></label>
-                  <label class="wide">준비 메모<textarea name="notes" maxlength="8000"></textarea></label>
-                </div>
-                <div class="detail-form-actions"><button class="btn primary" type="submit">회차 준비 저장</button></div>
-              </form>
+          </aside>
+          <div class="panel lecture-workspace">
+            <div class="detail-tabs" role="tablist" aria-label="강의 상세 메뉴">
+              <button type="button" role="tab" id="lecture-tab-records" data-detail-tab="basic" aria-controls="lecture-pane-records" aria-selected="true">강의 기록</button>
+              <button type="button" role="tab" id="lecture-tab-sessions" data-detail-tab="sessions" aria-controls="lecture-pane-sessions" aria-selected="false" tabindex="-1">회차별 준비</button>
+              <button type="button" role="tab" id="lecture-tab-materials" data-detail-tab="materials" aria-controls="lecture-pane-materials" aria-selected="false" tabindex="-1">강의자료실</button>
+            </div>
+            <section class="lecture-pane" id="lecture-pane-records" role="tabpanel" aria-labelledby="lecture-tab-records" data-detail-pane="basic">
+              <dl class="details" id="lecture-summary-list"></dl>
             </section>
-            <section class="panel detail-card" aria-labelledby="session-files-title">
-              <h2 id="session-files-title">이 회차에 첨부한 자료</h2>
-              <div id="lecture-session-assets"></div>
+            <section class="lecture-pane" id="lecture-pane-sessions" role="tabpanel" aria-labelledby="lecture-tab-sessions" data-detail-pane="sessions" hidden>
+              <div class="head">
+                <label class="session-select">강의 회차 <select id="lecture-session" aria-label="강의 회차"></select></label>
+                <button class="btn primary" type="button" data-add-file="lesson" data-current-session>+ 회차 자료 추가</button>
+              </div>
+              <div class="detail-columns">
+                <section class="panel detail-card" aria-labelledby="session-note-title">
+                  <h3 id="session-note-title">준비 내용</h3>
+                  <form id="lecture-session-form">
+                    <div class="detail-fields">
+                      <label>회차 주제<input name="topic" maxlength="140"></label>
+                      <label>강의 날짜<input type="date" name="date"></label>
+                      <label class="wide">준비 메모<textarea name="notes" maxlength="8000"></textarea></label>
+                    </div>
+                    <div class="detail-form-actions"><button class="btn primary" type="submit">회차 준비 저장</button></div>
+                  </form>
+                </section>
+                <section class="panel detail-card" aria-labelledby="session-files-title">
+                  <h3 id="session-files-title">이 회차에 첨부한 자료</h3>
+                  <div id="lecture-session-assets"></div>
+                </section>
+              </div>
+            </section>
+            <section class="lecture-pane" id="lecture-pane-materials" role="tabpanel" aria-labelledby="lecture-tab-materials" data-detail-pane="materials" hidden>
+              <div class="head"><h2>강의자료실</h2><button class="btn primary" type="button" data-add-file="lesson">+ 자료 추가</button></div>
+              <div class="asset-categories" id="lecture-assets"></div>
             </section>
           </div>
-        </div>
-        <div data-detail-pane="materials" hidden>
-          <div class="head"><h2>강의자료실</h2><button class="btn primary" type="button" data-add-file="lesson">+ 자료 추가</button></div>
-          <div class="asset-categories" id="lecture-assets"></div>
         </div>
         <p id="lecture-save-status" class="save-status" role="status"></p>
         <p class="storage-note">TEST에서 추가한 메모와 파일은 이 브라우저에 저장됩니다. 다른 기기와는 공유되지 않습니다.</p>
@@ -699,8 +728,19 @@ function setStatus(selector,text,error=false) {
 }
 
 function showLectureTab(key) {
-  nodes("[data-detail-tab]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.detailTab===key)));
+  nodes("[data-detail-tab]").forEach(button=>{
+    const selected=button.dataset.detailTab===key;
+    button.setAttribute("aria-selected",String(selected));
+    button.tabIndex=selected?0:-1;
+  });
   nodes("[data-detail-pane]").forEach(pane=>{pane.hidden=pane.dataset.detailPane!==key;});
+}
+
+function setLectureEditing(editing) {
+  $("#lecture-info-form").hidden=!editing;
+  $("#lecture-info-summary").hidden=editing;
+  $("#lecture-edit").hidden=editing;
+  $("#lecture-edit").setAttribute("aria-expanded",String(editing));
 }
 
 function renderLectureSummary(item) {
@@ -709,9 +749,15 @@ function renderLectureSummary(item) {
   $("#lecture-progress").textContent=caseProgress(item,caseStage(item));
   const form=$("#lecture-info-form");
   const defaultLocation=item.sections.find(([key])=>key==="강의 장소")?.[1]||"";
-  Object.entries({title:item.title,org:item.org,schedule:item.schedule,location:item.location??defaultLocation,totalSessions:item.totalSessions||""}).forEach(([name,value])=>{
+  const location=item.location??defaultLocation;
+  Object.entries({title:item.title,org:item.org,schedule:item.schedule,location,totalSessions:item.totalSessions||""}).forEach(([name,value])=>{
     form.elements[name].value=value??"";
   });
+
+  $("#lecture-info-summary").innerHTML=detailRows([
+    ["기관",item.org],["강의 일정",item.schedule||"미정"],["강의 장소",location||"미정"],
+    ["전체 회차",item.totalSessions ? item.totalSessions+"회" : "미정"]
+  ]);
 
   const parts=[];
   if(item.prepDone!==undefined) parts.push(["강의 준비",item.prepDone+" / 4 완료"]);
@@ -786,6 +832,7 @@ async function openLecture(id,fromOverview=false) {
   lectureFiles=[];
   setStatus("#lecture-save-status","");
   renderLectureSummary(item);
+  setLectureEditing(false);
   renderAttachments(item);
   showLectureTab("basic");
   show("lecture");
@@ -862,6 +909,27 @@ function accessFile(id,preview) {
 }
 
 function bindLectureForms() {
+  $(".detail-tabs").addEventListener("keydown",event=>{
+    const tabs=nodes("[data-detail-tab]");
+    const current=tabs.indexOf(event.target);
+    if(current<0) return;
+    const nextByKey={ArrowLeft:(current+tabs.length-1)%tabs.length,ArrowRight:(current+1)%tabs.length,Home:0,End:tabs.length-1};
+    const next=nextByKey[event.key];
+    if(next===undefined) return;
+    event.preventDefault();
+    showLectureTab(tabs[next].dataset.detailTab);
+    tabs[next].focus();
+  });
+  $("#lecture-edit").addEventListener("click",()=>{
+    setLectureEditing(true);
+    $("#lecture-info-form").elements.title.focus();
+  });
+  $("#lecture-edit-cancel").addEventListener("click",()=>{
+    const item=lectures.find(lecture=>lecture.id===selectedLectureId);
+    renderLectureSummary(item);
+    setLectureEditing(false);
+    $("#lecture-edit").focus();
+  });
   $("#lecture-back").addEventListener("click",()=>{
     const id=selectedLectureId;
     show("cases");
@@ -909,7 +977,9 @@ function bindLectureForms() {
       if(selectedLectureId!==item.id) return;
       selectedSession=Math.min(selectedSession,totalSessions||1);
       renderLectureSummary(item);
+      setLectureEditing(false);
       renderAttachments(item);
+      $("#lecture-edit").focus();
       setStatus("#lecture-save-status","강의 기본정보를 저장했어요.");
     }catch(error){
       if(selectedLectureId===item.id) setStatus("#lecture-save-status","기본정보를 저장하지 못했어요. 저장공간을 확인해 주세요.",true);
