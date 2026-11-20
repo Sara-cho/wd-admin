@@ -14377,7 +14377,18 @@ const wdTest09Storage = (() => {
 @media(prefers-reduced-motion:no-preference){#pg-wkit #wd09-skill-dialog[open]{animation:wd-skill-enter .22s ease-out}@keyframes wd-skill-enter{from{transform:translateX(100%)}to{transform:translateX(0)}}}
 @media(max-width:560px){#pg-wkit>.wk-main-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#pg-wkit #wd09-skill-dialog{border-radius:0}}
 </style>
-<div class="pg" id="pg-wkit">
+<style>
+#wd09-skill-detail .skill-metadata{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:18px;background:#f6f3f9;border:1px solid #ded7e6;border-radius:12px;margin:0}
+.skill-metadata dt{color:#64586f;font-size:13px}.skill-metadata dd{margin:4px 0 0;font-weight:650;overflow-wrap:anywhere}
+#wd09-skill-detail h3{font-size:16px;border-top:1px solid #e4dfea;padding-top:18px;margin:22px 0 8px}
+#pg-wkit #wd09-skill-preview[open]{position:fixed;inset:0 auto 0 0;margin:0;width:calc(100vw - min(825px,52vw));max-width:100vw;height:100dvh;max-height:100dvh;box-sizing:border-box;border:1px solid #d9d1e2;border-radius:0;padding:0;background:white;display:flex;flex-direction:column}
+#wd09-skill-preview::backdrop{background:transparent}
+#wd09-skill-preview header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px;background:#473254;color:white;overflow-wrap:anywhere}
+#wd09-skill-preview-body{flex:1;overflow:auto;min-height:0;padding:12px}
+#wd09-skill-preview-body iframe{width:100%;height:100%;border:0}#wd09-skill-preview-body img{max-width:100%;height:auto}#wd09-skill-preview-body pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(min-width:761px){#pg-wkit #wd09-skill-dialog:has(#wd09-skill-preview[open]){width:min(825px,52vw)}}
+@media(max-width:760px){#pg-wkit #wd09-skill-preview[open]{width:100vw}}
+</style><div class="pg" id="pg-wkit">
 <div class="sec-hd"><div class="sec-title">워크키트</div><div class="sec-sub">고객 전달 문장 · 공유 자료 · 월별 영업자료</div></div>
 
 
@@ -14570,9 +14581,10 @@ const wdTest09Storage = (() => {
     </header>
     <div class="wd09-entry-body">
       <div id="wd09-skill-detail" hidden>
-        <p id="wd09-skill-meta"></p>
+        <dl class="skill-metadata"><div><dt>업로드일</dt><dd id="wd09-skill-date"></dd></div><div><dt>업로드한 사람</dt><dd id="wd09-skill-author"></dd></div><div><dt>자료 구분</dt><dd id="wd09-skill-type"></dd></div><div><dt>자료명</dt><dd id="wd09-skill-title-value"></dd></div></dl><h3>자료 설명</h3>
         <p id="wd09-skill-content"></p>
-        <button type="button" class="btn-sm p" id="wd09-skill-download" hidden>첨부파일 다운로드</button>
+        <h3>첨부파일</h3><p id="wd09-skill-attachment-name"></p><button type="button" class="btn-sm p" id="wd09-skill-preview-open" hidden>미리보기</button>
+        <button type="button" class="btn-sm" id="wd09-skill-download" hidden>첨부파일 다운로드</button>
         <div class="wd09-skill-actions wd09-skill-detail-actions">
           <button type="button" class="btn-sm" id="wd09-skill-edit" hidden>수정</button>
           <button type="button" class="btn-sm d wd09-table-trash" id="wd09-skill-delete" title="자료 삭제" aria-label="자료 삭제" hidden>🗑️</button>
@@ -14591,6 +14603,7 @@ const wdTest09Storage = (() => {
         <footer class="wd09-skill-actions"><button type="button" class="btn-s" id="wd09-skill-cancel">취소</button><button type="submit" class="btn-p">저장</button></footer>
       </form>
       <p id="wd09-skill-feedback" role="status"></p>
+      <dialog id="wd09-skill-preview" aria-labelledby="wd09-skill-preview-title"><header><strong id="wd09-skill-preview-title"></strong><button type="button" class="btn-sm" id="wd09-skill-preview-close" aria-label="미리보기 닫기">×</button></header><div id="wd09-skill-preview-body"></div></dialog>
     </div>
   </dialog>
 </section>
@@ -40245,13 +40258,15 @@ function wd09SkillSharedService(client,uid,request=fetch){
     if(busy)return;
     selected=post;
     el('dialog-title').textContent=post.title;
-    el('meta').textContent=[post.kind,post.date,post.author].filter(Boolean).join(' · ');
+    for(const [id,value] of [['date',post.date],['author',post.author],['type',post.kind],['title-value',post.title]])el(id).textContent=value||'미등록';
+    el('attachment-name').textContent=post.attachment?.originalName||'첨부파일 없음';
+    el('preview-open').hidden=!post.attachment;
     el('content').textContent=post.content;
     el('feedback').textContent='';
     form.hidden=true;
     el('detail').hidden=false;
     el('download').hidden=!post.attachment;
-    el('download').textContent=post.attachment?'📄 '+post.attachment.originalName+' 다운로드':'첨부파일 다운로드';
+    el('download').textContent='다운로드';
     el('edit').hidden=post.authorId!==_UID;
     el('delete').hidden=post.authorId!==_UID;
     if(!dialog.open)dialog.showModal();
@@ -40342,6 +40357,47 @@ function wd09SkillSharedService(client,uid,request=fetch){
     document.getElementById('wd09-drive-open').click();
   }
   el('connect').onclick=openDrive;
+  const preview=el('preview'),previewBody=el('preview-body');
+  let previewUrl='',previewVersion=0;
+  function clearPreview(){
+    previewVersion++;
+    previewBody.replaceChildren();
+    if(previewUrl)URL.revokeObjectURL(previewUrl);
+    previewUrl='';
+  }
+  preview.onclose=clearPreview;
+  el('preview-close').onclick=()=>preview.close();
+  dialog.addEventListener('close',()=>{if(preview.open)preview.close();});
+  el('preview-open').onclick=async()=>{
+    const post=selected,drive=window.wd09SkillDrive;
+    if(!post?.attachment)return;
+    if(!drive){openDrive();return;}
+    clearPreview();
+    const version=previewVersion;
+    const name=post.attachment.originalName||post.attachment.name||'첨부파일';
+    el('preview-title').textContent=name;
+    previewBody.textContent='첨부파일을 불러오는 중이에요.';
+    preview.showModal();
+    try{
+      const blob=await drive.download(post.attachment);
+      const active=()=>preview.open&&version===previewVersion&&selected===post&&drive===window.wd09SkillDrive;
+      if(!active())return;
+      const ext=name.split('.').pop().toLowerCase();
+      let view;
+      if(['html','htm'].includes(ext)){
+        const html=await blob.text();if(!active())return;
+        view=document.createElement('iframe');view.title=name;view.setAttribute('sandbox','');view.referrerPolicy='no-referrer';
+        view.srcdoc='<meta http-equiv="Content-Security-Policy" content="default-src &apos;none&apos;; style-src &apos;unsafe-inline&apos;; img-src data:; font-src data:; form-action &apos;none&apos;">'+html;
+      }else if(ext==='pdf'||['jpg','jpeg','png','webp','gif'].includes(ext)){
+        const type=ext==='pdf'?'application/pdf':'image/'+(ext==='jpg'?'jpeg':ext);
+        previewUrl=URL.createObjectURL(blob.slice(0,blob.size,type));
+        view=document.createElement(ext==='pdf'?'iframe':'img');view.title=name;view.alt=name;view.src=previewUrl;
+      }else if(['txt','md','csv'].includes(ext)){
+        const value=await blob.text();if(!active())return;view=document.createElement('pre');view.textContent=value;
+      }else{previewBody.textContent='이 형식은 다운로드해서 열어 주세요.';return;}
+      previewBody.replaceChildren(view);
+    }catch(error){if(version===previewVersion)previewBody.textContent=error.message||'미리보기를 열 수 없어요.';}
+  };
   el('download').onclick=async()=>{
     const post=selected,service=window.wd09SkillDrive;
     if(!post?.attachment||el('download').disabled)return;
