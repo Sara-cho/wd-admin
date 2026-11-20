@@ -24,7 +24,7 @@ svg {width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.65;stro
 .defs {position:absolute;width:0;height:0;overflow:hidden}
 .layout {display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
 .sidebar {height:100dvh;position:sticky;top:0;display:flex;flex-direction:column;padding:27px 16px 18px;background:var(--nav);color:#f9f6ff}
-.brand {display:flex;align-items:center;gap:11px;margin:0 6px 26px}
+.brand {display:flex;align-items:center;gap:11px;margin:0 6px 15px}
 .mark {display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:#dfc8f1;color:#2c1e40;font-weight:900;letter-spacing:-.055em}
 .brand strong {display:block;font-size:16px;letter-spacing:.02em}
 .brand small {display:block;color:#c8bdd7;line-height:1.4}
@@ -160,9 +160,14 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 .summary-totals dt {font-size:12px;color:#e8d9f2}
 .summary-totals dd {margin:0;font-size:13px}
 .summary-totals dd strong {font-size:25px;margin-right:3px}
-.return-home {margin-top:auto;padding:10px 8px;color:#f9f6ff;text-decoration:none;font-size:14px;font-weight:700}
-.return-home:hover {text-decoration:underline}
-.sidebar-footer {margin-top:8px}
+.return-home {
+  display:flex;align-items:center;gap:8px;min-height:42px;margin:0 0 12px;
+  padding:9px 11px;border:1px solid #e5c57d;border-radius:9px;
+  background:#f0d593;color:#35270f;text-decoration:none;font-size:14px;font-weight:780;
+}
+.return-home svg {width:17px;height:17px}
+.return-home:hover {background:#f6e0a8}
+.return-home:focus-visible {outline:2px solid #fff;outline-offset:3px}
 .weekly,.active-list {padding:12px 16px}
 .weekly .head,.active-list .head {height:44px;min-height:44px;margin-bottom:5px}
 .weekly .head h2,.active-list .head h2 {font-size:21px;line-height:1.3}
@@ -180,9 +185,9 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 .session-table td {height:54px;border-bottom:1px solid var(--line);padding:6px 5px;vertical-align:middle}
 .session-table td:first-child {padding-left:8px}
 .session-table .lecture-name {font-size:15px}
-.session-table tr[data-course-row] {cursor:pointer}
-.session-table tr[data-course-row]:is(:hover,:focus-within) {background:#f8f3fc}
-.session-table tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);text-decoration:underline}
+tr[data-course-row] {cursor:pointer}
+:is(.session-table,.case-list) tr[data-course-row]:is(:hover,:focus-within) {background:#f8f3fc}
+tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);text-decoration:underline}
 .session-table .lecture-name small {margin-top:2px;font-size:12px}
 .stage-track {position:relative;min-height:37px;padding-top:15px;text-align:center;font-size:11px;line-height:1.3;color:var(--muted)}
 .stage-track::before,.stage-track::after {content:"";position:absolute;top:7px;height:2px;background:#e8e0ec;width:calc(50% + 6px)}
@@ -199,7 +204,7 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 .stage-track .session-count {display:block;color:#51366d;font-size:14px;font-weight:780;font-variant-numeric:tabular-nums}
 .stage-track .session-count small {font-size:11px;font-weight:600;margin-left:2px;color:#66586f}
 @media(max-width:650px) {
-  .return-home {display:block;font-size:12px;padding:8px 4px 0}
+  .return-home {display:inline-flex;font-size:12px;min-height:36px;margin-bottom:5px;padding:6px 9px}
   .session-table th {font-size:11px}
   .stage-track .session-count {font-size:12px}
   .stage-track .session-count small {display:block}
@@ -328,6 +333,7 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
 <div class="layout">
   <aside class="sidebar" aria-label="강의센터 메뉴">
     <div class="brand"><div class="mark">WD</div><div><strong>WD WAVE</strong><small>강의센터</small></div></div>
+    <a class="return-home" href="./"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m14 7-5 5 5 5M9 12h11"/></svg>본진으로</a>
     <nav class="nav">
       <div class="nav-heading">강의 운영</div>
       <button type="button" data-page="home" aria-current="page"><svg aria-hidden="true"><use href="#home-icon"/></svg>홈</button>
@@ -337,7 +343,7 @@ dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);ma
       <button type="button" data-page="assets"><svg aria-hidden="true"><use href="#folder-icon"/></svg>기관·제안 자료</button>
       <button type="button" data-page="results"><svg aria-hidden="true"><use href="#chart-icon"/></svg>성과·후기</button>
     </nav>
-    <a class="return-home" href="./">← 본진으로</a><div class="sidebar-footer">2026.11.20 · 강의센터 TEST</div>
+    <div class="sidebar-footer">2026.11.20 · 강의센터 TEST</div>
   </aside>
   <div>
     <header class="top"><div class="top-inner"><span>WD WAVE 강의센터</span><span class="demo">TEST · 예시 데이터</span></div></header>
@@ -616,7 +622,7 @@ function renderRows() {
     .sort((a,b)=>(Date.parse(b.registeredAt)||0)-(Date.parse(a.registeredAt)||0));
   const caseRows=filtered.map(item=>{
     const stage=caseStage(item);
-    return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td>'+
+    return '<tr data-course-row="'+escapeText(item.id)+'"><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td>'+
       '<td class="case-progress '+stage+'">'+escapeText(caseProgress(item,stage))+'</td></tr>';
   });
   const courses=lectures.filter(item=>item.totalSessions>0 && caseStage(item)!=="proposal");
@@ -1074,7 +1080,7 @@ async function loadSavedLectures() {
 document.addEventListener("click",event=>{
   const row=event.target.closest("tr[data-course-row]");
   if(row){
-    openLecture(row.dataset.courseRow,true);
+    openLecture(row.dataset.courseRow,row.parentElement.id==="active-rows");
     return;
   }
   const button=event.target.closest("button");
