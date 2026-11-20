@@ -14380,22 +14380,18 @@ const wdTest09Storage = (() => {
 <button class="itab" id="wk-monthly-btn" data-reader-mode="news" onclick="swTab(this,'wk-monthly')" type="button">월별소식지</button>
 <button class="itab" id="wk-incentives-btn" data-reader-mode="incentives" onclick="swTab(this,'wk-monthly')" type="button">월별시책</button>
 </div>
-<div class="wk-main-panel" id="wk-copy">
+<style>#wk-client{display:grid;grid-template-columns:minmax(190px,.8fr) minmax(290px,1.4fr) minmax(240px,1fr);gap:16px;align-items:start}#wk-client .copy-list{max-height:525px;overflow:auto;background:white;border:1px solid #ddd7e7;border-radius:12px}#wk-client table{width:100%;border-collapse:collapse;font-size:13px}#wk-client th,#wk-client td{text-align:left;padding:10px 8px;border-bottom:1px solid #ece8f0}#wk-client th{position:sticky;top:0;background:#f4f1f7}#wk-client td button{border:0;background:transparent;color:inherit;cursor:pointer;text-align:left;font:inherit}#wk-client td small{display:block;color:#645a70;margin-top:3px}#wk-client tr[aria-selected=true]{background:#f0e9f7}#wk-client .copy-modes{display:flex;gap:6px}#wk-client .copy-modes button{padding:7px 12px;border:1px solid #cec2db;background:white;border-radius:8px}#wk-client .copy-modes [aria-pressed=true]{background:#51376d;color:white}@media(max-width:960px){#wk-client{grid-template-columns:1fr}.copy-list{max-height:280px!important}}</style><div class="wk-main-panel" id="wk-copy">
   <section class="wd09-copy-drawer" id="wk-client" aria-labelledby="wd09-copy-title">
     <div class="wd09-copy-controls">
-      <h2 id="wd09-copy-title">고객 전달 문장</h2>
+      <h2 id="wd09-copy-title">업무 문구</h2><div class="copy-modes"><button type="button" data-mode="preset">기본 문구</button><button type="button" data-mode="mine">내 문장</button></div>
+      <div class="wd09-copy-field"><label for="wd09-copy-audience">받는 사람</label>
+        <select id="wd09-copy-audience"><option value="">전체</option><option value="customer">고객</option><option value="designer">설계매니저</option><option value="agency">대리점 총무</option><option value="carrier">보험사 총무</option></select>
+      </div>
       <div class="wd09-copy-field">
         <label for="wd09-copy-category">업무 종류</label>
         <select id="wd09-copy-category"></select>
       </div>
-      <div class="wd09-copy-field">
-        <label for="wd09-copy-situation">보낼 상황</label>
-        <select id="wd09-copy-situation"></select>
-      </div>
-      <div class="wd09-copy-field">
-        <label for="wd09-copy-tone">말투</label>
-        <select id="wd09-copy-tone"></select>
-      </div>
+      <div class="wd09-copy-field"><label for="wd09-copy-situation">보낼 상황</label><select id="wd09-copy-situation"></select></div>
       <div class="wd09-copy-field">
         <label for="wd09-copy-contact">마지막에 넣을 연락처 (선택)</label>
         <input id="wd09-copy-contact" type="tel" maxlength="35" placeholder="예: 010-1234-5678" autocomplete="off">
@@ -14407,10 +14403,11 @@ const wdTest09Storage = (() => {
         <span role="status"></span>
       </div>
     </div>
+    <div class="copy-list"><table><thead><tr><th>받는 사람</th><th>업무 종류</th><th>보낼 상황 · 문장</th></tr></thead><tbody></tbody></table></div>
     <div class="wd09-copy-phone" aria-label="카톡 미리보기">
       <header><strong>카톡 미리보기</strong><small id="wd09-copy-preview-title"></small></header>
-      <div class="wd09-copy-chat"><p id="wd09-copy-message" class="wd09-copy-bubble" aria-live="polite"></p></div>
-      <footer><button class="btn-p" data-wd09-copy type="button" onclick="copyEl('wd09-copy-message')">문장 복사</button></footer>
+      <div class="wd09-copy-chat"><p id="wd09-copy-message" class="wd09-copy-bubble" aria-live="polite"></p><textarea id="wd09-copy-draft" aria-label="복사할 업무 문구" rows="7" style="width:100%;padding:12px;line-height:1.55" hidden></textarea></div>
+      <footer><button class="btn-s" type="button" id="wd09-copy-adjust" aria-expanded="false">이번 문구 수정</button> <button class="btn-p" data-wd09-copy type="button">문장 복사</button></footer>
     </div>
   </section>
   <dialog class="wd09-copy-editor" id="wd09-copy-editor" aria-labelledby="wd09-copy-editor-title">
@@ -14421,10 +14418,9 @@ const wdTest09Storage = (() => {
       </header>
       <div class="wd09-entry-body">
         <div class="wd09-copy-editor-grid">
-          <label>업무 종류 <select name="category" required></select></label>
-          <label>보낼 상황 <select name="situation" required></select></label>
-          <label>말투 <select name="tone" required></select></label>
-          <label>제목 <input name="title" maxlength="60" placeholder="비우면 보낼 상황을 제목으로 사용"></label>
+          <label>받는 사람 <select name="audience"><option value="">분류 없이 저장</option><option value="customer">고객</option><option value="designer">설계매니저</option><option value="agency">대리점 총무</option><option value="carrier">보험사 총무</option></select></label>
+          <label>업무 종류 <select name="category"></select></label><label>보낼 상황 <select name="situation"></select></label>
+          <label>제목 <input name="title" maxlength="60" placeholder="선택 · 비우면 문장 첫 줄 사용"></label>
         </div>
         <label>문장 <textarea name="message" rows="6" required maxlength="1500" placeholder="카톡에서 보일 줄바꿈 그대로 입력해 주세요."></textarea></label>
         <label>마지막에 넣을 연락처 (선택) <input name="contact" type="tel" maxlength="35" placeholder="예: 010-1234-5678"></label>
@@ -18787,59 +18783,94 @@ const wd09CopyCategories=[
   ['자동차보험',[
     ['만기 전 안내','자동차보험 만기가 [만기일]로 다가와 안내드려요.\n갱신 조건을 확인해 드릴 수 있으니, 통화 편하신 시간을 알려 주세요.','자동차보험이 [만기일]에 만기예요.\n갱신 조건 같이 보려면 언제 통화가 편하세요?'],
     ['갱신 제안서 전달','자동차보험 갱신 제안서를 보내드려요.\n보험료와 보장 조건을 보시고 궁금한 부분은 편하게 답장 주세요.','자동차보험 갱신 제안서 보내드려요!\n보험료랑 보장 보시고 궁금한 점 있으면 편하게 답장 주세요.']
+  ]],
+  ['설계의뢰',[
+    ['설계의뢰 전달','매니저님, 안녕하세요. [고객명]님 설계 부탁드립니다. [갱신조건]으로, [요청담보] 중심으로 봐 주세요.','매니저님, [고객명]님 설계 부탁드려요. [요청담보] 위주로 봐주시면 돼요.'],
+    ['설계안 수정','매니저님, 보내주신 설계안 잘 받았습니다. [수정할 담보·조건]만 반영해서 다시 부탁드려요.','매니저님, 설계안 잘 받았어요. [수정할 담보·조건]만 바꿔서 다시 부탁드려요.']
+  ]],
+  ['대리점 업무',[
+    ['계약 서류 전달','총무님, [보험사] [업무명] 서류 보냅니다. 보완할 부분 있으면 알려주세요.','총무님, [업무명] 서류 보내드려요. 빠진 게 있으면 말씀해 주세요.'],
+    ['처리 여부 확인','총무님, [업무명] 건 접수됐는지 확인 부탁드립니다.','총무님, [업무명] 건 접수됐는지 한번 봐주실래요?']
+  ]],
+  ['보험사 업무',[
+    ['접수 상태 확인','담당자님, [접수일]에 요청드린 [업무명] 건의 진행 단계와 필요한 서류를 확인 부탁드립니다.','담당자님, [업무명] 건 지금 어디까지 진행됐는지 확인 부탁드려요.'],
+    ['보완 서류 전달','담당자님, 요청하신 [서류명] 전달드립니다. 추가로 필요한 내용이 있으면 알려주세요.','담당자님, 요청하신 [서류명] 보내드립니다. 더 필요한 게 있으면 말씀해 주세요.']
   ]]
 ];
 (function mountCopyDrawer(){
   const drawer=document.getElementById('wk-client');
+  const audience=document.getElementById('wd09-copy-audience');
+  const groupAudiences=['customer','customer','customer','customer','customer','customer','customer','designer','agency','carrier'];
   const category=document.getElementById('wd09-copy-category');
   const situation=document.getElementById('wd09-copy-situation');
-  const tone=document.getElementById('wd09-copy-tone');
   const contact=document.getElementById('wd09-copy-contact');
   const previewTitle=document.getElementById('wd09-copy-preview-title');
   const preview=document.getElementById('wd09-copy-message');
   const copy=drawer.querySelector('[data-wd09-copy]');
+  const draft=document.getElementById('wd09-copy-draft');
+  const adjust=document.getElementById('wd09-copy-adjust');
+  adjust.onclick=()=>{
+    if(!draft.hidden){preview.textContent=draft.value;draft.hidden=true;preview.hidden=false;}
+    else {draft.value=preview.textContent;draft.hidden=false;preview.hidden=true;draft.focus();}
+    adjust.setAttribute('aria-expanded',String(!draft.hidden));
+    adjust.textContent=draft.hidden?'이번 문구 수정':'수정 완료';
+  };
+  copy.onclick=()=>{
+    const text=(draft.hidden?preview.textContent:draft.value).trim();
+    if(!text)return;
+    if(navigator.clipboard&&isSecureContext)navigator.clipboard.writeText(text).then(()=>toast('문장을 복사했어요.')).catch(()=>fc(text));
+    else fc(text);
+  };
   const editor=document.getElementById('wd09-copy-editor');
   const form=editor.querySelector('form');
   const fields=form.elements;
   const edit=drawer.querySelector('[data-wd09-edit]');
   const remove=drawer.querySelector('[data-wd09-remove]');
   const status=drawer.querySelector('[role="status"]');
-  const savedCategory='saved', customSituation='custom';
-  const tones=[['공식·업무용','official'],['지인·편한 말투','friendly']];
-  let owner=null, saved=[], editingId=null, editorOwner=null, loaded=false, loading=null, saving=false;
-
+  let mode='preset', selected='', visible=[];
+  let owner=null,saved=[],editingId=null,editorOwner=null,loaded=false,loading=null,saving=false;
+  const audienceNames={customer:'고객',designer:'설계매니저',agency:'대리점 총무',carrier:'보험사 총무'};
+  const options=(select,pairs,empty,value='')=>{
+    select.replaceChildren(new Option(empty,''),...pairs.map(([v,label])=>new Option(label,v)));
+    select.value=pairs.some(([v])=>v===value)?value:'';
+  };
+  const groups=a=>wd09CopyCategories.flatMap(([label],i)=>!a||groupAudiences[i]===a?[[String(i),label]]:[]);
+  const occasions=g=>g!==''&&wd09CopyCategories[g]?wd09CopyCategories[g][1].map(([name],i)=>[String(i),name]):[];
+  const presets=wd09CopyCategories.flatMap(([label,items],g)=>items.flatMap(([title,...versions],n)=>[...new Set(versions.filter(Boolean))].map((body,v)=>({
+    id:'preset-'+g+'-'+n+'-'+v,audience:groupAudiences[g],category:String(g),situation:String(n),title,body:(groupAudiences[g]==='customer'?(v===0?'안녕하세요, 고객님.':'안녕하세요!')+'\n\n':'')+body
+  }))));
   function storageKey(){return 'wd09-copy-templates:'+owner;}
   function contactKey(){return 'wd09-copy-contact:'+owner;}
-  function findSaved(){return saved.find(row=>row.id===situation.value);}
-  function appendContact(body,number){
-    return number?body+'\n\n☎ 연락처 '+number:body;
+  function findSaved(){return mode==='mine'&&saved.find(row=>row.id===selected);}
+  function updateFilters(g='',n=''){
+    options(category,groups(audience.value),'전체',g);
+    options(situation,occasions(category.value),'전체',n);
+    situation.disabled=!category.value;
   }
   function showMessage(){
-    const item=findSaved();
-    const preset=wd09CopyCategories[Number(category.value)]?.[1][Number(situation.value)];
-    const user=USERS[_UID];
-    const sender=user?user.name+(_ROLE==='branch_manager'?' 지점장':' 설계사'):'[설계사 이름]';
-    const official=tone.value==='official';
-    const intro=official?'안녕하세요, 고객님.':'안녕하세요!';
-    previewTitle.textContent=item?.title||preset?.[0]||'내 문장';
-    preview.textContent=item?appendContact(item.body,item.contact)
-      :preset?appendContact(intro+'\n우리동네보험지킴이 '+sender+'입니다.\n\n'+preset[official?1:2],contact.value.trim())
-      :'이 말투로 저장한 문장이 없어요.';
-    edit.hidden=remove.hidden=!item;
-    copy.disabled=!item&&!preset;
+    const row=visible.find(r=>r.id===selected);
+    const number=mode==='mine'?row?.contact:contact.value.trim();
+    previewTitle.textContent=row?.title||'';
+    preview.textContent=row?row.body+(number?'\n\n☎ 연락처 '+number:''):'표시할 문장이 없어요.';
+    edit.hidden=remove.hidden=!findSaved();copy.disabled=adjust.disabled=!row;
+    draft.hidden=true;preview.hidden=false;adjust.setAttribute('aria-expanded','false');adjust.textContent='이번 문구 수정';
   }
-  function fillSituations(selected){
-    const options=category.value===savedCategory?[]
-      :wd09CopyCategories[Number(category.value)][1].map(([name],index)=>new Option(name,String(index)));
-    for(const row of saved){
-      if((category.value===savedCategory||row.category===category.value)&&(!row.tone||row.tone===tone.value)){
-        const context=category.value===savedCategory?wd09CopyCategories[Number(row.category)]?.[0]:'';
-        options.push(new Option((context?context+' · ':'')+row.title+' (내 문장)',row.id));
-      }
+  function fillSituations(prefer=selected){
+    visible=(mode==='mine'?saved:presets).filter(row=>(!audience.value||(row.audience??groupAudiences[row.category])===audience.value)&&(!category.value||row.category===category.value)&&(!situation.value||row.situation===situation.value));
+    selected=visible.some(r=>r.id===prefer)?prefer:visible[0]?.id||'';
+    const table=drawer.querySelector('tbody');table.replaceChildren();
+    for(const row of visible){
+      const tr=table.insertRow();tr.setAttribute('aria-selected',String(row.id===selected));
+      tr.insertCell().textContent=audienceNames[row.audience??groupAudiences[row.category]]||'—';
+      tr.insertCell().textContent=wd09CopyCategories[row.category]?.[0]||'—';
+      const button=document.createElement('button');button.type='button';const occasionLabel=wd09CopyCategories[row.category]?.[1]?.[row.situation]?.[0];
+      button.textContent=occasionLabel&&occasionLabel!==row.title?occasionLabel+' · '+row.title:row.title;
+      const snippet=document.createElement('small');snippet.textContent=row.body.split('\n').filter(Boolean).at(-1)?.slice(0,45)||'';
+      button.append(snippet);tr.insertCell().append(button);
+      tr.onclick=()=>{selected=row.id;for(const other of table.rows)other.setAttribute('aria-selected',String(tr===other));showMessage();};
     }
-    situation.replaceChildren(...options);
-    situation.disabled=!options.length;
-    if(options.some(option=>option.value===selected))situation.value=selected;
+    if(!visible.length){const cell=table.insertRow().insertCell();cell.colSpan=3;cell.textContent=mode==='mine'?'등록한 문장이 없어요.':'해당 문구가 없어요.';}
+    for(const b of drawer.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
     showMessage();
   }
   async function syncOwner(){
@@ -18848,8 +18879,7 @@ const wd09CopyCategories=[
       owner=_UID;
       saved=[];
       contact.value='';
-      category.value='0';
-      tone.value='official';
+      mode='preset';audience.value='';updateFilters();
       loaded=false;
       loading=null;
       fillSituations();
@@ -18890,38 +18920,27 @@ const wd09CopyCategories=[
       return false;
     }finally{saving=false;}
   }
-  function fillEditorSituations(selected){
-    const options=wd09CopyCategories[Number(fields.category.value)][1]
-      .map(([name],index)=>new Option(name,String(index)));
-    options.push(new Option('직접 작성',customSituation));
-    fields.situation.replaceChildren(...options);
-    if(options.some(option=>option.value===selected))fields.situation.value=selected;
+  function editorFilters(g='',n=''){
+    options(fields.category,fields.audience.value?groups(fields.audience.value):[],'선택 안 함',g);
+    fields.category.disabled=!fields.audience.value;
+    options(fields.situation,occasions(fields.category.value),'선택 안 함',n);fields.situation.disabled=!fields.category.value;
   }
   async function openEditor(row){
-    if(!await syncOwner()||!owner||owner!==_UID)return;
-    editorOwner=owner;
-    editingId=row?.id||null;
+    if(!await syncOwner()||owner!==_UID)return;
+    editorOwner=owner;editingId=row?.id||null;
     editor.querySelector('h2').textContent=row?'내 문장 수정':'내 문장 등록';
-    const currentCategory=category.value===savedCategory?'0':category.value;
-    fields.category.value=wd09CopyCategories[row?.category]?row.category:currentCategory;
-    fillEditorSituations(row?.situation??(row||category.value===savedCategory?customSituation:situation.value));
-    fields.tone.value=row?.tone||tone.value;
-    fields.title.value=row?.title||'';
-    fields.message.value=row?.body||'';
-    fields.contact.value=row?.contact??contact.value;
-    editor.querySelector('[role="status"]').textContent='';
-    editor.showModal();
+    fields.audience.value=row?(row.audience??groupAudiences[row.category]??''):audience.value;
+    editorFilters(row?.category??category.value,row?.situation??situation.value);
+    fields.title.value=row?.title||'';fields.message.value=row?.body||'';fields.contact.value=row?.contact??contact.value;
+    editor.querySelector('[role=status]').textContent='';editor.showModal();fields.message.focus();
   }
-  const categoryOptions=()=>wd09CopyCategories.map(([name],index)=>new Option(name,String(index)));
-  const toneOptions=()=>tones.map(([label,value])=>new Option(label,value));
-  category.replaceChildren(...categoryOptions(),new Option('내 문장',savedCategory));
-  tone.replaceChildren(...toneOptions());
-  fields.category.replaceChildren(...categoryOptions());
-  fields.tone.replaceChildren(...toneOptions());
-  fields.category.onchange=()=>fillEditorSituations();
-  category.onchange=()=>{status.textContent='';fillSituations();};
-  situation.onchange=()=>{status.textContent='';showMessage();};
-  tone.onchange=()=>{status.textContent='';fillSituations(situation.value);};
+  fields.audience.onchange=()=>editorFilters();
+  fields.category.onchange=()=>editorFilters(fields.category.value);
+  audience.onchange=()=>{updateFilters();fillSituations();};
+  category.onchange=()=>{updateFilters(category.value);fillSituations();};
+  situation.onchange=()=>fillSituations();
+  for(const b of drawer.querySelectorAll('[data-mode]'))b.onclick=()=>{mode=b.dataset.mode;audience.value='';updateFilters();fillSituations();};
+  updateFilters();
   contact.oninput=showMessage;
   contact.onchange=async()=>{
     if(!loaded||!owner||owner!==_UID)return;
@@ -18948,8 +18967,8 @@ const wd09CopyCategories=[
       return;
     }
     const group=fields.category.value, occasion=fields.situation.value;
-    const title=fields.title.value.trim()||wd09CopyCategories[Number(group)]?.[1][Number(occasion)]?.[0]||'내 문장';
-    const row={id:editingId||crypto.randomUUID(),title,body,category:group,situation:occasion,tone:fields.tone.value,contact:fields.contact.value.trim()};
+    const title=fields.title.value.trim()||body.split('\n')[0].slice(0,60);
+    const row={id:editingId||crypto.randomUUID(),title,body,category:group,situation:occasion,audience:fields.audience.value,contact:fields.contact.value.trim()};
     const id=editingId;
     if(!await persist(rows=>{
       const exists=rows.some(item=>item.id===row.id);
@@ -18961,8 +18980,7 @@ const wd09CopyCategories=[
       return;
     }
     editor.close();
-    category.value=group;
-    tone.value=row.tone;
+    mode='mine';audience.value=row.audience;updateFilters(group,occasion);
     fillSituations(row.id);
     status.textContent='계정에 내 문장을 저장했어요.';
   };
