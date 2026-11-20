@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WD WAVE 강의센터 TEST</title>
+<style>
+:root {
+  color-scheme:light; --bg:#f7f6f3; --paper:#fff; --ink:#272138; --muted:#6b6376;
+  --line:#eae5ec; --purple:#644590; --deep:#302240; --soft:#f0e9fa; --nav:#16172b;
+}
+* {box-sizing:border-box}
+[hidden] {display:none!important}
+body {margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;word-break:keep-all}
+button,input {font:inherit;color:inherit}
+button {cursor:pointer}
+button:focus-visible,input:focus-visible,summary:focus-visible {outline:3px solid #9e75d0;outline-offset:3px}
+button:hover {filter:brightness(.96)}
+h1,h2,h3,p {margin:0}
+h1,h2,h3,strong {letter-spacing:-.035em}
+h2 {font-size:19px}
+h3 {font-size:16px}
+svg {width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.defs {position:absolute;width:0;height:0;overflow:hidden}
+.layout {display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
+.sidebar {height:100dvh;position:sticky;top:0;display:flex;flex-direction:column;padding:27px 16px 18px;background:var(--nav);color:#f9f6ff}
+.brand {display:flex;align-items:center;gap:11px;margin:0 6px 26px}
+.mark {display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:#dfc8f1;color:#2c1e40;font-weight:900;letter-spacing:-.055em}
+.brand strong {display:block;font-size:16px;letter-spacing:.02em}
+.brand small {display:block;color:#c8bdd7;line-height:1.4}
+.nav-heading {margin:11px 10px 5px;color:#b2a6c4;font-size:12px;font-weight:650}
+.nav {display:grid;gap:5px}
+.nav button {display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;min-height:46px;border:0;border-radius:9px;text-align:left;color:#e3dced;background:none;font-size:14px;font-weight:620}
+.nav button[aria-current="page"] {background:#3b2c54;color:#fff;box-shadow:inset 2px 0 #c7a4ee}
+.nav button:hover {background:#352947}
+.nav svg {color:#c9b3e3}
+.sidebar-footer {margin:auto 7px 0;padding-top:13px;border-top:1px solid #ffffff25;color:#c8bdd7;font-size:12px}
+.top {height:64px;background:#fff;border-bottom:1px solid var(--line)}
+.top-inner,.wrap {width:min(1180px,calc(100% - 68px));margin:0 auto}
+.top-inner {height:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:760}
+.demo {border:1px solid #e7dff0;background:#f8f4fc;color:#644881;border-radius:7px;padding:4px 8px;font-size:12px;white-space:nowrap}
+.wrap {padding:32px 0 40px}
+.title-row,.head {display:flex;align-items:center;justify-content:space-between;gap:12px}
+.title-row {margin-bottom:22px}
+.title-row h1 {font-size:clamp(26px,3vw,37px);font-weight:830;line-height:1.25}
+.sub {margin-top:5px;color:var(--muted);font-size:14px}
+.btn {border:1px solid var(--line);border-radius:10px;min-height:42px;background:#fff;padding:8px 13px;font-weight:680;font-size:14px;white-space:nowrap}
+.btn.primary {background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.text {border:0;background:none;color:var(--purple);padding-inline:5px}
+.btn svg {width:15px;height:15px;vertical-align:-2px;margin-right:4px}
+.panel {min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 4px 15px #26173306}
+.panel-pad {padding:20px 22px}
+.status {display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:720;border-radius:20px;padding:4px 8px;color:#5e4085;background:#ede4f7;white-space:nowrap}
+.status::before {content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.status.proposal {background:#f8edd9;color:#79521e}
+.status.closed {background:#e3f0e9;color:#2a604e}
+.status.followup {background:#f0edf1;color:#655b6b}
+.head {gap:8px}
+.count {color:var(--muted);font-size:13px}
+.task-list {list-style:none;padding:0;margin:8px 0 0}
+.task-list li+li {border-top:1px solid var(--line)}
+.task-row {display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:65px;padding:8px 0}
+.task-row input {width:18px;height:18px;margin:0;accent-color:var(--purple);cursor:pointer}
+.task-row b,.task-row small {display:block}
+.task-row b {font-weight:700}
+.task-row small {margin-top:2px;font-size:12px;color:var(--muted)}
+.task-row time {font-size:12px;color:#694786;background:#f5effa;border-radius:5px;padding:3px 6px;white-space:nowrap}
+.task-row:has(input:checked) b {color:var(--muted);text-decoration:line-through}
+.board {margin-top:19px}
+.board-head {padding:14px 21px;min-height:66px}
+.list {width:100%;border-collapse:collapse;text-align:left;table-layout:fixed}
+.list thead {background:#f9f7fb;color:#63566f;font-size:12px}
+.list th,.list td {padding:12px 10px;vertical-align:middle;border-top:1px solid var(--line)}
+.list th:first-child,.list td:first-child {padding-left:21px}
+.list th:last-child,.list td:last-child {padding-right:19px}
+.list th:nth-child(1) {width:32%}
+.list th:nth-child(2) {width:14%}
+.list th:nth-child(3) {width:39%}
+.list td {font-size:14px}
+.list tbody tr:hover {background:#fcf9ff}
+.lecture-name {display:block;text-align:left;font-size:15px;font-weight:740;border:0;background:none;padding:0;line-height:1.35;overflow-wrap:anywhere}
+.lecture-name:hover {color:var(--purple);text-decoration:underline}
+.lecture-name small {display:block;font-size:12px;color:var(--muted);margin-top:3px;font-weight:520}
+.due {white-space:nowrap;color:var(--muted);font-size:13px}
+.filter-row {display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;padding:16px 20px}
+.filters {display:flex;gap:5px;flex-wrap:wrap}
+.filters button {border:0;border-radius:8px;background:#f6f2f9;min-height:40px;padding:6px 10px;color:#5d486f;font-size:13px}
+.filters button[aria-pressed="true"] {background:#624485;color:white;font-weight:750}
+.search {border:1px solid var(--line);border-radius:8px;padding:7px 11px;min-height:40px;max-width:100%;background:#fff}
+.asset-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:15px}
+.asset-grid article {padding:20px}
+.asset-grid p {margin-top:4px;color:var(--muted);font-size:14px}
+.asset-grid .btn {margin-top:13px}
+.report-nums {display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.report-nums article {padding:19px 20px}
+.report-nums strong {display:block;font-size:31px;color:var(--purple)}
+.empty {text-align:center;padding:22px!important;color:var(--muted)}
+dialog {padding:0;border:1px solid var(--line);color:var(--ink);border-radius:17px;width:min(480px,calc(100% - 28px));max-height:90dvh;box-shadow:0 16px 60px #20112e2d}
+dialog::backdrop {background:#21183169}
+dialog.drawer {position:fixed;inset:0 0 0 auto;margin:0;width:min(485px,100%);max-width:100%;height:100dvh;max-height:none;border-radius:17px 0 0 17px}
+.dialog-head {display:flex;justify-content:space-between;align-items:start;gap:10px;padding:21px;background:#f4edf9;border-bottom:1px solid var(--line)}
+.dialog-head h2 {font-size:22px}
+.dialog-head p {font-size:13px;color:var(--muted);margin-top:4px}
+.close {border:1px solid var(--line);background:white;border-radius:8px;width:42px;height:42px;flex:none;font:23px/1 system-ui}
+.dialog-body {padding:20px 21px}
+.flow {display:grid;grid-template-columns:repeat(5,1fr);list-style:none;padding:0;margin:0 0 18px;gap:3px;text-align:center}
+.flow li {min-width:0;padding:7px 0;border-radius:6px;background:#f5f3f6;color:var(--muted);font-size:12px}
+.flow li[data-step="done"] {background:#eee6f6;color:#564268}
+.flow li[aria-current="step"] {background:var(--purple);color:#fff;font-weight:760}
+.details {display:grid;gap:13px;margin:0}
+.details div {padding-bottom:10px;border-bottom:1px solid var(--line)}
+.details dt {font-size:12px;color:var(--muted);margin-bottom:3px}
+.details dd {margin:0;font-weight:645}
+.details dd ul {margin:0;padding-left:19px}
+.form label {display:grid;gap:5px;font-weight:675;font-size:14px;margin-bottom:12px}
+.form input {width:100%}
+.form footer {display:flex;justify-content:flex-end;gap:7px;margin-top:17px}
+@media(max-width:1060px) {.layout{grid-template-columns:182px minmax(0,1fr)}.sidebar{padding-inline:11px}.wrap,.top-inner{width:calc(100% - 40px)}.panel-pad{padding:17px}}
+@media(max-width:880px) {.wrap{padding-top:24px}}
+@media(max-width:650px) {
+  .layout{display:block}.sidebar{position:static;height:auto;padding:12px;background:var(--nav)}
+  .brand,.nav-heading,.sidebar-footer{display:none}.nav{display:flex;gap:4px;overflow:auto;scrollbar-width:thin}
+  .nav button{min-height:42px;flex:0 0 auto;width:auto;padding:7px 8px;font-size:12px;gap:5px}
+  .nav svg{width:14px;height:14px}.top{height:49px}.wrap,.top-inner{width:calc(100% - 26px)}
+  .title-row{margin-bottom:15px}.title-row .btn{font-size:12px;padding-inline:8px}
+  .list,.list tbody{display:block}.list thead{display:none}
+  .list tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;padding:9px 13px;border-top:1px solid var(--line)}
+  .list td,.list td:first-child,.list td:last-child{display:block;border:0;padding:4px 0}
+  .list td:nth-child(2),.list td:nth-child(4){text-align:right}
+  .list td[colspan]{grid-column:1/-1}.board-head{padding-inline:13px}
+  .report-nums{gap:6px}.report-nums article{padding:11px}
+}
+.trend {padding:20px 20px 14px;background:linear-gradient(150deg,#fff 52%,#f8f3fc)}
+.trend .sub {margin-top:2px}
+.trend-unit {color:#655873;white-space:nowrap;font-size:12px}
+.trend .trend-chart {display:block;max-height:186px;width:100%;height:auto;margin:6px auto 0;overflow:visible}
+.trend-chart .grid-line {stroke:#e7dfed;stroke-width:1}
+.trend-chart text {fill:#655770;stroke:none;font:12px Pretendard,"Malgun Gothic",system-ui,sans-serif}
+.trend-chart .trend-dot {fill:#fff;stroke:#8b61b1;stroke-width:2}
+.trend-chart .trend-dot.last {fill:#65408f;stroke:#fff;stroke-width:2}
+[data-view="home"] .title-row {margin-bottom:17px}
+.home-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
+.work-list {margin-top:16px;grid-template-columns:minmax(0,7fr) minmax(0,3fr)}
+.stage-summary {padding:18px 21px 13px;color:#fff;background:radial-gradient(ellipse at 94% 0%,#9a78ba67,transparent 68%),linear-gradient(119deg,#30213e,#553b70 74%,#654985);border-color:transparent;box-shadow:0 7px 18px #49316020}
+.stage-summary .sub {color:#e5d7ee;margin-top:2px}
+.summary-icon {width:22px;height:22px;color:#dfc8f0}
+.stage-content {display:grid;grid-template-columns:118px minmax(0,1fr);align-items:center;gap:22px;margin:10px 0 12px}
+.stage-ring {height:118px;aspect-ratio:1;padding:11px;border-radius:50%;background:conic-gradient(#edbd7e 0% 25%,#d7b3fb 25% 75%,#9fd9cc 75% 100%);font-variant-numeric:tabular-nums}
+.ring-center {display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:#3e2b50;font-size:13px;line-height:1.1}
+.ring-center strong {font-size:43px;margin-right:3px}
+.ring-center small {margin-top:3px;color:#ebddf1}
+.stage-legend {margin:0}
+.stage-legend div {display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0}
+.stage-legend div+div {border-top:1px solid #ffffff26}
+.stage-legend dt {font-size:14px;color:#f9f2ff}
+.stage-legend dt::before {content:"";display:inline-block;vertical-align:1px;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--segment)}
+.stage-legend .prep {--segment:#edbd7e}
+.stage-legend .delivery {--segment:#d7b3fb}
+.stage-legend .closed {--segment:#9fd9cc}
+.stage-legend dd {margin:0;font-weight:750;font-size:18px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.summary-totals {display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:9px 0 0;border-top:1px solid #ffffff32}
+.summary-totals div {text-align:center}
+.summary-totals div+div {border-left:1px solid #ffffff26}
+.summary-totals dt {font-size:12px;color:#e8d9f2}
+.summary-totals dd {margin:0;font-size:13px}
+.summary-totals dd strong {font-size:25px;margin-right:3px}
+.return-home {margin-top:auto;padding:10px 8px;color:#f9f6ff;text-decoration:none;font-size:14px;font-weight:700}
+.return-home:hover {text-decoration:underline}
+.sidebar-footer {margin-top:8px}
+.weekly,.active-list {padding:12px 16px}
+.weekly .head,.active-list .head {height:44px;min-height:44px;margin-bottom:5px}
+.weekly .head h2,.active-list .head h2 {font-size:19px;line-height:1.3}
+.weekly .task-list {margin:0}
+.weekly .task-row {min-height:60px}
+.weekly .task-row b {font-size:14px}
+.session-table {width:100%;table-layout:fixed;border-collapse:collapse;text-align:left}
+.session-table thead {background:#f3edf8;color:#584268}
+.session-table th {padding:7px 5px;font-size:13px}
+.session-table th:first-child {width:36%;padding-left:8px}
+.session-table th:nth-child(2) {width:17%}
+.session-table th:nth-child(3) {width:30%}
+.session-table th:nth-child(4) {width:17%}
+.session-table :is(th,td):not(:first-child) {text-align:center}
+.session-table td {height:51px;border-bottom:1px solid var(--line);padding:6px 5px;vertical-align:middle}
+.session-table td:first-child {padding-left:8px}
+.session-table .lecture-name {font-size:14px}
+.session-table .lecture-name small {margin-top:2px;font-size:12px}
+.stage-track {position:relative;min-height:37px;padding-top:15px;text-align:center;font-size:11px;line-height:1.3;color:var(--muted)}
+.stage-track::before,.stage-track::after {content:"";position:absolute;top:7px;height:2px;background:#e8e0ec;width:calc(50% + 6px)}
+.stage-track::before {left:-6px}
+.stage-track::after {right:-6px}
+.stage-cell:nth-child(2) .stage-track::before,.stage-cell:last-child .stage-track::after {display:none}
+.stage-dot {position:absolute;top:4px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;background:white;border:1px solid #d1c2dd;z-index:1}
+.stage-track.done::before,.stage-track.done::after,.stage-track.current::before {background:#cab5dc}
+.stage-track.done .stage-dot {background:#d4c1e5;border-color:#c4addd}
+.stage-track.current .stage-dot {background:var(--purple);outline:1px solid #9570b2;box-shadow:0 0 0 1.5px white;top:3px}
+.stage-track.current {color:#5b3680;font-weight:770}
+.stage-track.current.closed .stage-dot {background:#307057;outline-color:#63a585}
+.stage-track.current.closed {color:#29634e}
+.stage-track .session-count {display:block;color:#51366d;font-size:13px;font-weight:780;font-variant-numeric:tabular-nums}
+.stage-track .session-count small {font-size:11px;font-weight:600;margin-left:2px;color:#66586f}
+@media(max-width:650px) {
+  .return-home {display:block;font-size:12px;padding:8px 4px 0}
+  .session-table th {font-size:11px}
+  .stage-track .session-count {font-size:12px}
+  .stage-track .session-count small {display:block}
+}
+@media(max-width:880px) {
+  .home-grid,.work-list {grid-template-columns:1fr;gap:12px}
+  .work-list {margin-top:12px}
+}
+@media(max-width:650px) {
+  .stage-summary,.trend,.weekly,.active-list {padding:12px 14px}
+  .stage-content {gap:16px}
+  .active-list .head h2 {font-size:17px}
+  .active-list .head .btn {font-size:12px}
+}
+</style>
+</head>
+<body>
+<svg class="defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="home-icon" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10h-6v-6H9v6H3z"/></symbol>
+  <symbol id="brief-icon" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M9 7V4h6v3M3 13h18m-11 0v2h4v-2"/></symbol>
+  <symbol id="book-icon" viewBox="0 0 24 24"><path d="M12 6C9 4 6 4 3 5v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1v14Z"/></symbol>
+  <symbol id="folder-icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+  <symbol id="chart-icon" viewBox="0 0 24 24"><path d="M4 4v16h16M8 16v-4m5 4V8m5 8V5"/></symbol>
+  <symbol id="plus-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+<div class="layout">
+  <aside class="sidebar" aria-label="강의센터 메뉴">
+    <div class="brand"><div class="mark">WD</div><div><strong>WD WAVE</strong><small>강의센터</small></div></div>
+    <nav class="nav">
+      <div class="nav-heading">강의 운영</div>
+      <button type="button" data-page="home" aria-current="page"><svg aria-hidden="true"><use href="#home-icon"/></svg>홈</button>
+      <button type="button" data-page="cases"><svg aria-hidden="true"><use href="#brief-icon"/></svg>강의건 관리</button>
+      <div class="nav-heading">자료·성과</div>
+      <button type="button" data-page="courses"><svg aria-hidden="true"><use href="#book-icon"/></svg>교육과정·자료</button>
+      <button type="button" data-page="assets"><svg aria-hidden="true"><use href="#folder-icon"/></svg>기관·제안 자료</button>
+      <button type="button" data-page="results"><svg aria-hidden="true"><use href="#chart-icon"/></svg>성과·후기</button>
+    </nav>
+    <a class="return-home" href="./">← 본진으로</a><div class="sidebar-footer">2026.11.20 · 강의센터 TEST</div>
+  </aside>
+  <div>
+    <header class="top"><div class="top-inner"><span>WD WAVE 강의센터</span><span class="demo">TEST · 예시 데이터</span></div></header>
+    <main class="wrap">
+      <section data-view="home">
+        <div class="title-row"><div><h1>강의 운영 홈</h1><p class="sub">2026년 11월 20일 금요일</p></div><button class="btn primary" type="button" data-add><svg aria-hidden="true"><use href="#plus-icon"/></svg>강의건 추가</button></div>
+        <div class="home-grid dashboard">
+          <section class="panel stage-summary" aria-labelledby="stage-heading">
+            <div class="head"><div><h2 id="stage-heading">강의 운영 현황</h2><p class="sub">과정별 준비·출강·완료</p></div><svg class="summary-icon" aria-hidden="true"><use href="#brief-icon"/></svg></div>
+            <div class="stage-content">
+              <div class="stage-ring">
+                <div class="ring-center"><span><strong id="open-count">4</strong>건</span><small>강의 과정</small></div>
+              </div>
+              <dl class="stage-legend">
+                <div><dt class="prep">강의 준비</dt><dd id="prep-count">1건</dd></div>
+                <div><dt class="delivery">회차 진행 중</dt><dd id="delivery-count">2건</dd></div>
+                <div><dt class="closed">완료</dt><dd id="closed-count">1건</dd></div>
+              </dl>
+            </div>
+            <dl class="summary-totals">
+              <div><dt>이번 달 출강</dt><dd><strong>7</strong>회</dd></div>
+              <div><dt>올해 누적 출강</dt><dd><strong>15</strong>회</dd></div>
+              <div><dt>출강 기관</dt><dd><strong>3</strong>곳</dd></div>
+            </dl>
+          </section>
+          <section class="panel trend" aria-labelledby="trend-heading">
+            <div class="head"><div><h2 id="trend-heading">월별 출강 추이</h2><p class="sub">최근 6개월 · 출강 완료 회차</p></div><span class="trend-unit">단위 · 회</span></div>
+            <svg id="lecture-trend" class="trend-chart" viewBox="0 0 430 155" role="img" aria-labelledby="trend-svg-title">
+              <title id="trend-svg-title">월별 출강 회차. 6월 0회, 7월 1회, 8월 2회, 9월 2회, 10월 3회, 11월 7회</title>
+              <defs>
+                <linearGradient id="trend-fill" x2="0" y2="1">
+                  <stop offset="0" stop-color="#ac86d4" stop-opacity=".35"/>
+                  <stop offset="1" stop-color="#ac86d4" stop-opacity=".03"/>
+                </linearGradient>
+                <linearGradient id="trend-stroke">
+                  <stop offset="0" stop-color="#a174c9"/><stop offset="1" stop-color="#583685"/>
+                </linearGradient>
+              </defs>
+              <path class="grid-line" d="M38 124H398"/><text x="30" y="128" text-anchor="end">0</text><path class="grid-line" d="M38 97H398"/><text x="30" y="101" text-anchor="end">2</text><path class="grid-line" d="M38 70H398"/><text x="30" y="74" text-anchor="end">4</text><path class="grid-line" d="M38 43H398"/><text x="30" y="47" text-anchor="end">6</text><path class="grid-line" d="M38 16H398"/><text x="30" y="20" text-anchor="end">8</text>
+              <polygon points="38,124 110,110.5 182,97 254,97 326,83.5 398,29.5 398,124 38,124" fill="url(#trend-fill)" stroke="none"/>
+              <polyline points="38,124 110,110.5 182,97 254,97 326,83.5 398,29.5" fill="none" stroke="url(#trend-stroke)" stroke-width="3"/>
+              <circle class="trend-dot" cx="38" cy="124" r="4"><title>6월 0회</title></circle><text x="38" y="145" text-anchor="middle">6월</text><circle class="trend-dot" cx="110" cy="110.5" r="4"><title>7월 1회</title></circle><text x="110" y="145" text-anchor="middle">7월</text><circle class="trend-dot" cx="182" cy="97" r="4"><title>8월 2회</title></circle><text x="182" y="145" text-anchor="middle">8월</text><circle class="trend-dot" cx="254" cy="97" r="4"><title>9월 2회</title></circle><text x="254" y="145" text-anchor="middle">9월</text><circle class="trend-dot" cx="326" cy="83.5" r="4"><title>10월 3회</title></circle><text x="326" y="145" text-anchor="middle">10월</text><circle class="trend-dot last" cx="398" cy="29.5" r="5"><title>11월 7회</title></circle><text x="398" y="145" text-anchor="middle">11월</text>
+            </svg>
+          </section>
+        </div>
+        <div class="home-grid work-list">
+          <section class="panel active-list" aria-labelledby="active-heading">
+            <div class="head"><h2 id="active-heading">강의 진행 현황</h2><button class="btn text" type="button" data-page="cases">전체 강의건 →</button></div>
+            <table class="session-table">
+              <thead><tr><th scope="col">강의 과정</th><th scope="col">강의 준비</th><th scope="col">회차 진행</th><th scope="col">완료</th></tr></thead>
+              <tbody id="active-rows"></tbody>
+            </table>
+          </section>
+          <section class="panel panel-pad weekly" aria-labelledby="tasks-heading">
+            <div class="head"><h2 id="tasks-heading">오늘 할 일</h2><span class="count" id="task-count" aria-live="polite">남은 일 3개</span></div>
+            <ul class="task-list">
+              <li><label class="task-row"><input type="checkbox" data-prep><span><b>실습자료 최종 확인</b><small>스마트폰 AI 활용 입문</small></span><time datetime="2026-11-20">11.20</time></label></li>
+              <li><label class="task-row"><input type="checkbox" data-prep><span><b>현장 화면 공유 테스트</b><small>스마트폰 AI 활용 입문</small></span><time datetime="2026-11-20">11.20</time></label></li>
+              <li><label class="task-row"><input type="checkbox"><span><b>기관 담당자에게 일정 확인</b><small>보험설계사 AI 실무</small></span><time datetime="2026-11-20">11.20</time></label></li>
+            </ul>
+        </section>
+        </div>
+      </section>
+      <section data-view="cases" hidden>
+        <div class="title-row"><h1>강의건 관리</h1><button class="btn primary" type="button" data-add>+ 강의건 추가</button></div>
+        <div class="panel">
+          <div class="filter-row">
+            <div class="filters" aria-label="강의 상태"><button type="button" data-filter="all" aria-pressed="true">전체</button><button type="button" data-filter="proposal" aria-pressed="false">제안</button><button type="button" data-filter="prep" aria-pressed="false">준비</button><button type="button" data-filter="delivery" aria-pressed="false">회차 진행</button><button type="button" data-filter="followup" aria-pressed="false">후속</button><button type="button" data-filter="closed" aria-pressed="false">완료</button></div>
+            <input class="search" type="search" id="search" aria-label="강의명·기관 검색" placeholder="강의명·기관 검색">
+          </div>
+          <table class="list"><thead><tr><th scope="col">강의명 · 기관</th><th scope="col">상태</th><th scope="col">다음 행동</th><th scope="col">예정일</th></tr></thead><tbody id="all-rows"></tbody></table>
+        </div>
+      </section>
+      <section data-view="courses" hidden>
+        <div class="title-row"><h1>교육과정·자료</h1></div>
+        <div class="asset-grid" id="course-cards"></div>
+      </section>
+      <section data-view="assets" hidden>
+        <div class="title-row"><h1>기관·제안 자료</h1></div>
+        <div class="asset-grid" id="asset-cards"></div>
+      </section>
+      <section data-view="results" hidden>
+        <div class="title-row"><div><h1>성과·후기</h1><p class="sub">2026년 출강 기록</p></div></div>
+        <div class="report-nums">
+          <article class="panel">출강 기관<strong>3곳</strong></article>
+          <article class="panel">강의 회차<strong>15회</strong></article>
+          <article class="panel">수강생<strong>42명</strong></article>
+        </div>
+        <section class="panel board panel-pad"><div class="head"><h2>후기·개선노트</h2><button type="button" class="btn" data-lecture="digital">기록 열기 →</button></div><p class="sub">생활 속 디지털 활용 · 지역 주민센터</p></section>
+      </section>
+    </main>
+  </div>
+</div>
+<dialog class="drawer" id="details-drawer" aria-labelledby="drawer-title">
+  <div class="dialog-head"><div><h2 id="drawer-title"></h2><p id="drawer-subtitle"></p></div><button class="close" type="button" data-close aria-label="닫기">×</button></div>
+  <div class="dialog-body" id="drawer-body"></div>
+</dialog>
+<dialog id="add-dialog" aria-labelledby="add-heading">
+  <div class="dialog-head"><div><h2 id="add-heading">강의건 추가</h2><p>시안에서만 임시로 추가됩니다.</p></div><button class="close" type="button" data-close aria-label="닫기">×</button></div>
+  <form id="new-lecture" class="dialog-body form">
+    <label>강의명<input class="search" name="title" required maxlength="70"></label>
+    <label>기관명<input class="search" name="org" required maxlength="70"></label>
+    <label>다음 행동<input class="search" name="next" required maxlength="100"></label>
+    <label>예정일<input class="search" name="due" type="date"></label>
+    <footer><button class="btn" type="button" data-close>취소</button><button class="btn primary">추가</button></footer>
+  </form>
+</dialog>
+<script>
+const lectures = [
+  {id:"smartphone",title:"스마트폰 AI 활용 입문",org:"지역 평생학습관",status:"prep",next:"실습자료 최종 확인",due:"2026-11-20",schedule:"11월 27일 금요일 · 10:30–11:50",prepDone:2,totalSessions:4,completedSessions:0,sections:[["준비 자료",["1회차 실습지","강의 슬라이드","화면 공유 점검표"]],["강의 장소","지역 평생학습관 2층 강의실"]]},
+  {id:"insurance",title:"보험설계사 AI 실무",org:"보험 교육기관",status:"proposal",next:"기관 담당자에게 일정 확인",due:"2026-11-20",schedule:"기관 협의 중",sections:[["제안 내용","보험 상담과 업무 정리에 바로 쓰는 AI 실습"],["다음 연락","기관과 교육 날짜 및 대상 인원 확인"]]},
+  {id:"branding",title:"1인 사업자 퍼스널브랜딩",org:"창업지원센터",status:"delivery",next:"5회차 포트폴리오 실습 준비",due:"2026-11-24",schedule:"11월 24일 · 5회차",totalSessions:5,completedSessions:4,sections:[["다음 회차","포트폴리오 실습"]]},
+  {id:"ai-office",title:"AI로 업무 정리하기",org:"보험 교육기관",status:"delivery",next:"2회차 실습지 확인",due:"2026-11-25",schedule:"11월 25일 · 2회차",totalSessions:4,completedSessions:1,sections:[["다음 회차","AI로 업무 체크리스트 만들기"]]},
+  {id:"digital",title:"생활 속 디지털 활용",org:"지역 주민센터",status:"closed",next:"",due:"",schedule:"11월 13일 · 10회차 마침",totalSessions:10,completedSessions:10,sections:[["수강생 후기","직접 따라 하는 시간이 충분해서 좋았어요."],["다음 강의 개선","수업을 시작하기 전에 스마트폰 글자 크기부터 맞춥니다."]]}
+];
+const collections = {
+  courses:[
+    {title:"스마트폰 AI 활용 입문",summary:"AI 초보자 · 입문 2회",entries:["차시별 수업 구성","1회차 실습지","강의 슬라이드"]},
+    {title:"보험설계사 AI 실무",summary:"보험설계사 · 실습 2회",entries:["상담 요약 실습","업무 도구 만들기 실습"]},
+    {title:"퍼스널브랜딩 시작하기",summary:"1인 사업자 · 실습 1회",entries:["자기소개 문장 실습","프로필 구성 워크시트"]}
+  ],
+  assets:[
+    {title:"기관 목록",summary:"출강 기관과 다음 연락 기록",entries:["지역 평생학습관","보험 교육기관","창업지원센터","지역 주민센터"]},
+    {title:"기관용 강의 제안서",summary:"과정 소개와 기관 제안에 쓰는 자료",entries:["스마트폰 AI 활용 과정 제안서","보험설계사 AI 실무 소개"]},
+    {title:"강사 자료",summary:"강사 소개와 출강 증빙",entries:["강사 프로필","출강 이력","포트폴리오"]}
+  ]
+};
+const stages = [["inquiry","문의"],["proposal","제안"],["prep","준비"],["delivery","출강"],["followup","후속"]];
+const courseStages = [
+  {key:"prep",label:"준비 중",color:"#edbd7e"},
+  {key:"delivery",label:"진행 중",color:"#d7b3fb"},
+  {key:"closed",label:"완료",color:"#9fd9cc"}
+];
+const statusLabels = {prep:"준비 중",delivery:"회차 진행 중",proposal:"제안 중",followup:"후속 처리",closed:"완료"};
+const $ = selector => document.querySelector(selector);
+const nodes = selector => [...document.querySelectorAll(selector)];
+const escapeText = value => String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const drawer = $("#details-drawer");
+const addDialog = $("#add-dialog");
+let filter = "all";
+
+function dueDate(due) {
+  return due ? '<time datetime="'+escapeText(due)+'">'+escapeText(due.slice(5).replace("-","."))+'</time>' : "—";
+}
+
+function statusChip(status) {
+  return '<span class="status '+status+'">'+statusLabels[status]+'</span>';
+}
+
+function lectureStage(item) {
+  if(item.completedSessions===item.totalSessions) return "closed";
+  return item.completedSessions>0 ? "delivery" : "prep";
+}
+
+function renderSummary(courses) {
+  $("#open-count").textContent=courses.length;
+  let offset=0;
+  const segments=courseStages.map(({key,color})=>{
+    const count=courses.filter(item=>lectureStage(item)===key).length;
+    $("#"+key+"-count").textContent=count+"건";
+    const start=offset;
+    offset+=courses.length ? count/courses.length*100 : 0;
+    return color+" "+start+"% "+offset+"%";
+  });
+  $(".stage-ring").style.background=courses.length ? "conic-gradient("+segments.join(", ")+")" : "#765b8c";
+}
+
+function renderRows() {
+  const query = $("#search").value.trim().toLowerCase();
+  const filtered = lectures.filter(item => (filter === "all" || item.status === filter) && (item.title+" "+item.org).toLowerCase().includes(query));
+  const rows = items => items.length ? items.map(item => {
+    return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td><td>'+statusChip(item.status)+'</td><td>'+escapeText(item.next||"—")+'</td><td class="due">'+dueDate(item.due)+'</td></tr>';
+  }).join("") : '<tr><td colspan="4" class="empty">해당하는 강의건이 없습니다.</td></tr>';
+  const courses=lectures.filter(item=>item.totalSessions>0);
+  renderSummary(courses);
+  $("#active-rows").innerHTML=courses.length ? courses.map(item=>{
+    const current=courseStages.findIndex(stage=>stage.key===lectureStage(item));
+    const stagesHtml=courseStages.map(({key,label},index)=>{
+      const state=index===current ? "current" : index<current ? "done" : "";
+      const progress=key==="delivery"
+        ? '<span class="session-count">'+item.completedSessions+' / '+item.totalSessions+'회 <small>완료</small></span>'
+        : index===current ? label : "";
+      return '<td class="stage-cell"><div class="stage-track '+state+' '+key+'"'+(index===current?' aria-current="step"':'')+'><span class="stage-dot" aria-hidden="true"></span>'+progress+'</div></td>';
+    }).join("");
+    return '<tr><td><button type="button" class="lecture-name" data-lecture="'+escapeText(item.id)+'">'+escapeText(item.title)+'<small>'+escapeText(item.org)+'</small></button></td>'+stagesHtml+'</tr>';
+  }).join("") : '<tr><td colspan="4" class="empty">등록된 강의 과정이 없습니다.</td></tr>';
+  $("#all-rows").innerHTML = rows(filtered);
+}
+
+function show(page) {
+  nodes("[data-view]").forEach(el => {el.hidden = el.dataset.view !== page;});
+  nodes(".nav [data-page]").forEach(button => {
+    if(button.dataset.page===page) button.setAttribute("aria-current","page");
+    else button.removeAttribute("aria-current");
+  });
+  window.scrollTo(0,0);
+}
+
+function detail(title,subtitle,parts,stage) {
+  $("#drawer-title").textContent = title;
+  $("#drawer-subtitle").textContent = subtitle;
+  let stepFlow = "";
+  if(stage) {
+    const index = stage==="closed" ? stages.length : stages.findIndex(([key])=>key===stage);
+    stepFlow = '<ol class="flow" aria-label="강의 진행 단계">'+stages.map(([,name],i)=>'<li '+(i===index?'aria-current="step"':i<index?'data-step="done"':'')+'>'+name+'</li>').join("")+'</ol>';
+  }
+  $("#drawer-body").innerHTML = stepFlow+'<dl class="details">'+parts.map(([name,value])=>{
+    const answer = Array.isArray(value) ? '<ul>'+value.map(entry=>'<li>'+escapeText(entry)+'</li>').join("")+'</ul>' : escapeText(value);
+    return '<div><dt>'+escapeText(name)+'</dt><dd>'+answer+'</dd></div>';
+  }).join("")+'</dl>';
+  drawer.showModal();
+}
+
+function updateTasks() {
+  const taskChecks = nodes(".task-list input");
+  $("#task-count").textContent = "남은 일 "+taskChecks.filter(input=>!input.checked).length+"개";
+  const done = 2+taskChecks.filter(input=>input.hasAttribute("data-prep") && input.checked).length;
+  const upcoming = lectures.find(item=>item.id==="smartphone");
+  upcoming.prepDone=done;
+  if(done===4) {
+    upcoming.next="11월 27일 출강";
+    upcoming.due="2026-11-27";
+  } else {
+    const nextCheck=taskChecks.find(input=>input.hasAttribute("data-prep")&&!input.checked).closest("label");
+    upcoming.next=nextCheck.querySelector("b").textContent;
+    upcoming.due=nextCheck.querySelector("time").dateTime;
+  }
+  renderRows();
+}
+
+for(const [group,entries] of Object.entries(collections)){
+  $("#"+(group==="courses"?"course":"asset")+"-cards").innerHTML=entries.map((item,i)=>'<article class="panel"><h2>'+escapeText(item.title)+'</h2><p>'+escapeText(item.summary)+'</p><button class="btn" type="button" data-collection="'+group+'" data-index="'+i+'">목록 보기 →</button></article>').join("");
+}
+document.addEventListener("click",event=>{
+  const button=event.target.closest("button");
+  if(!button) return;
+  const {page,lecture,collection,index}=button.dataset;
+  if(page) show(page);
+  if(button.hasAttribute("data-close")) button.closest("dialog").close();
+  if(button.hasAttribute("data-add")) addDialog.showModal();
+  if(button.hasAttribute("data-filter")){
+    filter=button.dataset.filter;
+    nodes("[data-filter]").forEach(item=>item.setAttribute("aria-pressed",String(item===button)));
+    renderRows();
+  }
+  if(lecture){
+    const item=lectures.find(item=>item.id===lecture);
+    const parts=[["강의 일정",item.schedule],...item.sections];
+    if(item.totalSessions>0) parts.splice(1,0,["출강 회차","전체 "+item.totalSessions+"회 중 "+item.completedSessions+"회 완료"]);
+    if(item.prepDone!==undefined) parts.splice(1,0,["강의 준비",item.prepDone+" / 4 완료"]);
+    if(item.next) parts.splice(1,0,["다음 행동",item.next]);
+    detail(item.title,item.org+" · "+statusLabels[item.status],parts,item.status);
+  }
+  if(collection){
+    const item=collections[collection][Number(index)];
+    detail(item.title,item.summary,[["예시 목록",item.entries]]);
+  }
+});
+$("#search").addEventListener("input",renderRows);
+$(".task-list").addEventListener("change",updateTasks);
+$("#new-lecture").addEventListener("submit",event=>{
+  event.preventDefault();
+  const form=event.currentTarget;
+  const fields=new FormData(form);
+  const title=fields.get("title").trim();
+  const org=fields.get("org").trim();
+  const next=fields.get("next").trim();
+  if(!title||!org||!next) return;
+  lectures.unshift({id:"sample-"+(lectures.length+1),title,org,next,due:fields.get("due"),status:"proposal",schedule:"일정 협의 중",sections:[]});
+  form.reset();
+  addDialog.close();
+  filter="all";
+  $("#search").value="";
+  nodes("[data-filter]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.filter==="all")));
+  renderRows();
+  show("cases");
+});
+renderRows();
+</script>
+</body>
+</html>
