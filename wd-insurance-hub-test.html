@@ -40451,7 +40451,8 @@ async function wd09OpenAddressSearch(button){
 .wds2 dialog.wds2-detail[data-preview=true]{overflow:visible}
 .wds2 #wds2-pdf-dock{position:absolute;right:100%;top:0;bottom:0;width:min(calc(100vw - var(--editor-width)),1280px);background:#f8f6fa;color:#30283a;border-right:1px solid #dcd3e2;box-shadow:-7px 0 26px #23162f23;overflow:auto;z-index:5;animation:dock-enter .18s ease-out}
 @keyframes dock-enter{from{opacity:.55;transform:translateX(18px)}to{opacity:1;transform:none}}
-.wds2 .dock-head,.wds2 .dock-tools{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wds2 .dock-head,.wds2 .comparison-switch{display:flex;gap:6px}.wds2 .comparison-switch button{border:1px solid #b5a4c4;border-radius:8px;padding:9px 18px;font-weight:700;color:#493356;background:white}.wds2 .comparison-switch button[aria-pressed=true]{background:#52356e;border-color:#52356e;color:white}.wds2 .pdf-actions{display:flex;align-items:center;gap:14px}.wds2 .dock-document[hidden],.wds2 .pdf-actions a[hidden]{display:none!important}
+.wds2 .dock-tools{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .wds2 .dock-head{padding:14px 16px;background:#483355;color:white}
 .wds2 .dock-head h2{font-size:19px}
 .wds2 #wds2-pdf-panes{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:10px;padding:12px}
@@ -41922,30 +41923,54 @@ function openPreview(trigger,key){
   if(!shown.length || (activeTab===1 && shown.length<2))return;
   previewTrigger=trigger;
   const area=$('pdf-panes');
-  area.dataset.count=String(shown.length);
+  const compare=activeTab===1&&!key;
+  area.dataset.count=compare?'1':String(shown.length);
+  const choices=[],tabs=make('div','','comparison-switch');
+  if(compare){tabs.setAttribute('role','group');tabs.setAttribute('aria-label','비교할 자료');area.append(tabs);}
+  function select(id){
+    for(const choice of choices){
+      const active=choice.id===id;
+      choice.section.hidden=!active;
+      choice.button.setAttribute('aria-pressed',String(active));
+      if(active)void choice.load();
+    }
+  }
   for(const id of shown){
     const section=make('section','','dock-document');
     const heading=make('strong',previewFiles.get(id).title);
     const original=make('a','원본 열기');
     original.target='_blank';original.rel='noopener noreferrer';
-    const toolbar=make('div','','dock-tools');toolbar.append(heading,original);
+    const download=make('a','다운로드'),links=make('div','','pdf-actions');
+    original.hidden=download.hidden=true;
+    links.append(original,download);
+    const toolbar=make('div','','dock-tools');toolbar.append(heading,links);
     const reader=documentPreview(previewFiles.get(id).title);
     const view={reader,url:'',key:id};visibleReaders.push(view);
+    let loading=false;
     async function display(){
+      if(view.url||loading)return;
+      loading=true;
       const item=previewFiles.get(id);
       if(!item)return;
       reader.close();
-      if(view.url)URL.revokeObjectURL(view.url);
+
       let blob;
       try{blob=(item.file.salesPdfPath||item.file.salesArchiveId)?await caseHost.readFile(item.file):item.file;}
-      catch(e){if(visibleReaders.includes(view)){reader.panel.hidden=false;reader.panel.textContent=e.message;}return;}
+      catch(e){loading=false;if(visibleReaders.includes(view)){reader.panel.hidden=false;reader.panel.textContent=e.message;}return;}
       if(!visibleReaders.includes(view))return;
       view.url=URL.createObjectURL(blob);view.key=id;
-      original.href=view.url;
+      original.href=download.href=view.url;download.download=item.name||item.file.name||heading.textContent+'.pdf';
+      original.hidden=download.hidden=false;
       reader.open(item.file,original.href);
     }
-    section.append(toolbar,reader.panel);area.append(section);display();
+    section.append(toolbar,reader.panel);area.append(section);
+    if(compare){
+      section.hidden=true;
+      const button=make('button',id==='currentPdfs'?'컨설팅 전':'컨설팅 후');button.type='button';
+      button.onclick=()=>select(id);tabs.append(button);choices.push({id,button,section,load:display});
+    }else void display();
   }
+  if(compare)select(shown[0]);
   $('pdf-dock').hidden=false;$('detail').dataset.preview='true';refreshPreviewButton();$('pdf-close').focus();
 }
 $('pdf-close').onclick=()=>closePreview(true);
