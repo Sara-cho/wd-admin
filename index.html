@@ -2122,17 +2122,20 @@ async function wdhqOpenRepresentativeTest(button){
   const signal=wdhqTestWorkroomController?.signal;
   if(!signal||button.disabled)return;
   const insurance=button.dataset.wdhqTest==='insurance';
-  const identity=insurance?wdhqReadSession():null;
-  const bridge=insurance?window.WDHQCompanyDrive:null;
+  const workCenter=button.dataset.wdhqTest==='workCenter';
+  const expectedUrl=workCenter?'https://admin.wdwave.kr/wd-work-center-test.html':
+    insurance?'https://admin.wdwave.kr/wd-insurance-hub-test.html':'';
+  const identity=expectedUrl?wdhqReadSession():null;
+  const bridge=expectedUrl?window.WDHQCompanyDrive:null;
   const sameOwner=()=>{
     const current=wdhqReadSession();
     return !!identity?.userId&&current?.uid===WDHQ_OWNER_LOGIN_ID&&current.role==='owner'&&
       current.userId===identity.userId&&wdhqLocalAuthUser()===identity.userId;
   };
-  if(insurance){
+  if(expectedUrl){
     const dest=new URL(button.dataset.wdhqTestFile,location.href);
-    if(dest.href!=='https://admin.wdwave.kr/wd-insurance-hub-test.html'||!sameOwner()){
-      toast('대표 계정과 설계사허브 TEST 주소를 확인해 주세요.');return;
+    if(dest.href!==expectedUrl||!sameOwner()){
+      toast('대표 계정과 TEST 주소를 확인해 주세요.');return;
     }
     button.disabled=true;
     const status=button.querySelector('[data-wdhq-test-status]');
@@ -2140,10 +2143,11 @@ async function wdhqOpenRepresentativeTest(button){
     try{
       // Start on the original click so an expired Google grant can be renewed.
       if(!bridge)throw new Error('본진 Drive 연결을 준비 중이에요. 다시 눌러 주세요.');
-      await bridge.connectInsuranceHome();
+      if(workCenter)await bridge.connectWorkTest();
+      else await bridge.connectInsuranceHome();
     }catch(error){
       if(signal.aborted)return;
-      if(!sameOwner()||!(bridge?.ready()||bridge?.insuranceHomeReady())){
+      if(workCenter||!sameOwner()||!(bridge?.ready()||bridge?.insuranceHomeReady())){
         button.disabled=false;status.textContent='다시 열기';toast(error.message||'Drive 연결을 확인해 주세요.');return;
       }
       toast('기존 Drive 연결로 허브를 엽니다. 캘린더·할 일 권한은 확인이 필요해요.');
@@ -2152,7 +2156,7 @@ async function wdhqOpenRepresentativeTest(button){
   }
   const url=await wdhqCheckRepresentativeTest(button,signal);
   if(!url||signal.aborted)return;
-  if(insurance&&(!sameOwner()||!(bridge.insuranceHomeReady()||bridge.ready())||url.href!=='https://admin.wdwave.kr/wd-insurance-hub-test.html')){
+  if(expectedUrl&&(!sameOwner()||url.href!==expectedUrl||!(bridge.ready()||insurance&&bridge.insuranceHomeReady()))){
     toast('현재 본진 계정과 Drive 연결을 확인한 뒤 다시 열어 주세요.');return;
   }
   const home=location.href.split('#')[0];
@@ -6465,8 +6469,17 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     return request.promise;
   }
 
+  function connectWorkTest(){
+    if(!driveValid()&&insuranceHomeReady()){
+      const key=driveSessionKey(driveIdentity().uid);
+      const {token,expiresAt}=JSON.parse(sessionStorage.getItem('wd-hq-insurance-home-v1:'+driveIdentity().uid));
+      sessionStorage.setItem(key,JSON.stringify({token,expiresAt,scope:DRIVE_SCOPE}));
+    }
+    return driveConnect();
+  }
+
   // Only expose actions and readiness, never the raw Google token.
-  window.WDHQCompanyDrive=Object.freeze({connect:()=>driveConnect(),ready:driveValid,connectInsuranceHome:()=>driveConnect(true),insuranceHomeReady});
+  window.WDHQCompanyDrive=Object.freeze({connect:()=>driveConnect(),connectWorkTest,ready:driveValid,connectInsuranceHome:()=>driveConnect(true),insuranceHomeReady});
 
   companyDriveButton.onclick=()=>{
     void driveConnect().catch(error=>toast(error.message||'Drive 연결을 확인해 주세요.'));
