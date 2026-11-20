@@ -14427,7 +14427,7 @@ const wdTest09Storage = (() => {
         <label for="wd09-copy-category">업무 종류</label>
         <select id="wd09-copy-category"></select>
       </div>
-      <div class="wd09-copy-field"><label for="wd09-copy-situation">보낼 상황</label><select id="wd09-copy-situation"></select></div>
+      <div class="wd09-copy-field"><label for="wd09-copy-situation">보낼 상황</label><input id="wd09-copy-situation" list="wd09-filter-suggestions" placeholder="전체 · 선택 또는 입력" autocomplete="off"><datalist id="wd09-filter-suggestions"></datalist></div>
       <div class="wd09-copy-field">
         <label for="wd09-copy-contact">마지막에 넣을 연락처 (선택)</label>
         <input id="wd09-copy-contact" type="tel" maxlength="35" placeholder="예: 010-1234-5678" autocomplete="off">
@@ -14453,7 +14453,7 @@ const wdTest09Storage = (() => {
       <div class="wd09-entry-body">
         <div class="wd09-copy-editor-grid">
           <label>받는 사람 <select name="audience"><option value="">분류 없이 저장</option><option value="customer">고객</option><option value="designer">설계매니저</option><option value="agency">대리점 총무</option><option value="carrier">보험사 총무</option></select></label>
-          <label>업무 종류 <select name="category"></select></label><label>보낼 상황 <select name="situation"></select></label>
+          <label>업무 종류 <select name="category"></select></label><label>보낼 상황 <input name="situation" list="wd09-editor-suggestions" placeholder="목록 선택 또는 직접 입력" autocomplete="off"><datalist id="wd09-editor-suggestions"></datalist></label>
           <label>제목 <input name="title" maxlength="60" placeholder="선택 · 비우면 문장 첫 줄 사용"></label>
         </div>
         <label>문장 <textarea name="message" rows="6" required maxlength="1500" placeholder="카톡에서 보일 줄바꿈 그대로 입력해 주세요."></textarea></label>
@@ -17134,17 +17134,7 @@ body:has(#pg-links.on) #hdr .hdr-chevron {color:#51495b}
   </header>
   <p id="hub-tool-status" class="hub-tool-status" role="status"></p>
   <div id="hub-tool-list" class="hub-resource-grid" onclick="wd09HubLinkAction(event,'tool')"></div>
-<details class="wd09-work-links" aria-labelledby="wd09-work-links-heading">
-  <summary id="wd09-work-links-heading">기존 업무 바로가기</summary>
-  <div class="wd09-work-links-grid">
-    <a href="https://mega.ohmymanager.com/index_real.html" target="_blank" rel="noopener noreferrer"><svg class="wd09-work-link-icon wd09-work-link-icon-mega-cut" viewBox="5.3 3.2 21.4 19.6" aria-hidden="true" focusable="false"><image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAbCAYAAACEP1QvAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAUNSURBVEhLtVZtaFtVGH7uzW3SJk2apl0/Zj/otpZKt67TtoG5ap04HCr+0L9uQ0UQ/KM/VPwxf0xE/FHQfSB+C0NBmLAh4kZZ0VldodZpmXQ0dl3X2timH0ma7+TG9z25p73JujFofeDknHve877P+3XujdL14P4sTMhms1BVFZlMRsz8rChK3szgta7rsFgsYk/KGbwvUSg36yidPQ8La9JwLBKBx+WAs7SUdlnEBuXMyPPVEBXK6JkJeWXIpmf9UK02ItbEnhj37+vNcoTsEc92TcXpLz9HXV2dUNosDA0N4fALL8LlqVzNAvGpciFmZ6lj04kZXq8Xejq1GqTgZC8YPMuxYWQzQCqSm80g07LeDFXsbRYpQ08hde0LxAeOIO37WjxL6HpGRL5KzgvubE4Dr3neCPTgOJIjx5Ce+BbJ0ePIJoOGRAS+ysNDFbk3aiAFG0E2PAnEFqBo1Nm1PTQ7DAnJjKiZT8y8afbmTrgbt5SyFmgtz8LqfQdFu18DtBJDQvXWNMEhA1UthheMO5FH0lmc/juON4bDeHUwgK/Ggkjp+ecjkSQ+PTOL9y4dQN/5FvT/GkA6vdZ03Gx5DZehVDCkR+uBj3LKOj0q+n2LODU4hc+GphBNrhlm/YEfx/D+yYv48JNfsLQcR+eeRkEmURikSkUXDxod4vV6CMfT1KVZTMyvYK9bx25bHL7xacwFY8YJ4LeRKfR90I9oNAGbTcNjB9rg8TgoIOOAAdncDFFzJpWXvxCxtI4oDRu9+QZ983i6uQxt1ENzk374ZhbFmXHfHI4eO4stlaVwOGxwu+3Ysa1KyArBxMzFyEs7D7OjGcpOMJGBp6QIfooyEY6go9aJtnIbMv8E8NfVGdyYWcK7feexncgeP7gL8XgKLTuqUVXlNKzkQ0bNXKokk+2fq0YOkZRO5VBRZFFwhaJr9ZTAbrOgvdqF3monKuw2vH7iIqobKnD0zScwcT2AJPWBt7sJVqtmWMkHc0iIe84wb0rMxXUUEzmfuDQ8ibZaFzmior2lBkcO7cPHP/uQIP2Xn++Bu6wEf45Oo7hYw56OhpyB20CjK8e8Iu3SAYZcxamR/bEsQsEIzvwwipGfriHkDyIcTWJ0IYqPhqewvbECx195lPSBCwNjmP03CE+5A+FQDAsLK4alfMia81C6TN9z3qgud+G7c2cxHsrgj6UU9pYkMTu7jBSl82ZMx8BcHFcmA3iu+x4809kAF/XDTX8IgfkQ0ok0pRCwUrdvrS1DdZVLEEq0tu2Eu6pW8Iiaix/Ti0YiTPX+fjqJlN0Bd1MtLltceOvqCn4PxPH2Uztx+IFtcNut4qY0ENF9u+rh7WoS9e5or7+FmMEcq51OnKLmIgU0m9Pf5NQwE9VxsH8ZT15YxDcTEbzUvRXnDrVjf3OFqL0Ea5lU89ZmMLnkE/e90/gnIzer3E6RdsaNSAbXwxk4NAX1dhVbSuj1eBvDd4Pm1ntF2mWmac5FUJh2RqPDgt4aK7oqi1Bj3xgxwxykIOcfwwshkM78H5C2mUdwyYV8587Qv8zL9Gdvs3Hi5CmomjUvw4r3oUfoeW0jmUwgFYtCJ2f43rBDEuwgtxd9jXIbBlibQjBWJrAu2VYo4qxiQbGjVHzlpE3RcPKzx05IgbwSDLkvSGiWt6MQUibXQod05Tdc6slzt7xeec5FmINU5nrxHw+htE5fSH1pnMF7fJbt8ZoH6+ecUPAfpCSjnIOUVt8AAAAASUVORK5CYII=" width="31" height="27"/></svg><b>메가영업지원</b><span aria-hidden="true">↗</span></a>
-    <a href="https://megasign.co.kr/" target="_blank" rel="noopener noreferrer"><svg class="wd09-work-link-icon wd09-work-link-icon-mega-cut" viewBox="5.3 3.2 21.4 19.6" aria-hidden="true" focusable="false"><image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAbCAYAAACEP1QvAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAUNSURBVEhLtVZtaFtVGH7uzW3SJk2apl0/Zj/otpZKt67TtoG5ap04HCr+0L9uQ0UQ/KM/VPwxf0xE/FHQfSB+C0NBmLAh4kZZ0VldodZpmXQ0dl3X2timH0ma7+TG9z25p73JujFofeDknHve877P+3XujdL14P4sTMhms1BVFZlMRsz8rChK3szgta7rsFgsYk/KGbwvUSg36yidPQ8La9JwLBKBx+WAs7SUdlnEBuXMyPPVEBXK6JkJeWXIpmf9UK02ItbEnhj37+vNcoTsEc92TcXpLz9HXV2dUNosDA0N4fALL8LlqVzNAvGpciFmZ6lj04kZXq8Xejq1GqTgZC8YPMuxYWQzQCqSm80g07LeDFXsbRYpQ08hde0LxAeOIO37WjxL6HpGRL5KzgvubE4Dr3neCPTgOJIjx5Ce+BbJ0ePIJoOGRAS+ysNDFbk3aiAFG0E2PAnEFqBo1Nm1PTQ7DAnJjKiZT8y8afbmTrgbt5SyFmgtz8LqfQdFu18DtBJDQvXWNMEhA1UthheMO5FH0lmc/juON4bDeHUwgK/Ggkjp+ecjkSQ+PTOL9y4dQN/5FvT/GkA6vdZ03Gx5DZehVDCkR+uBj3LKOj0q+n2LODU4hc+GphBNrhlm/YEfx/D+yYv48JNfsLQcR+eeRkEmURikSkUXDxod4vV6CMfT1KVZTMyvYK9bx25bHL7xacwFY8YJ4LeRKfR90I9oNAGbTcNjB9rg8TgoIOOAAdncDFFzJpWXvxCxtI4oDRu9+QZ983i6uQxt1ENzk374ZhbFmXHfHI4eO4stlaVwOGxwu+3Ysa1KyArBxMzFyEs7D7OjGcpOMJGBp6QIfooyEY6go9aJtnIbMv8E8NfVGdyYWcK7feexncgeP7gL8XgKLTuqUVXlNKzkQ0bNXKokk+2fq0YOkZRO5VBRZFFwhaJr9ZTAbrOgvdqF3monKuw2vH7iIqobKnD0zScwcT2AJPWBt7sJVqtmWMkHc0iIe84wb0rMxXUUEzmfuDQ8ibZaFzmior2lBkcO7cPHP/uQIP2Xn++Bu6wEf45Oo7hYw56OhpyB20CjK8e8Iu3SAYZcxamR/bEsQsEIzvwwipGfriHkDyIcTWJ0IYqPhqewvbECx195lPSBCwNjmP03CE+5A+FQDAsLK4alfMia81C6TN9z3qgud+G7c2cxHsrgj6UU9pYkMTu7jBSl82ZMx8BcHFcmA3iu+x4809kAF/XDTX8IgfkQ0ok0pRCwUrdvrS1DdZVLEEq0tu2Eu6pW8Iiaix/Ti0YiTPX+fjqJlN0Bd1MtLltceOvqCn4PxPH2Uztx+IFtcNut4qY0ENF9u+rh7WoS9e5or7+FmMEcq51OnKLmIgU0m9Pf5NQwE9VxsH8ZT15YxDcTEbzUvRXnDrVjf3OFqL0Ea5lU89ZmMLnkE/e90/gnIzer3E6RdsaNSAbXwxk4NAX1dhVbSuj1eBvDd4Pm1ntF2mWmac5FUJh2RqPDgt4aK7oqi1Bj3xgxwxykIOcfwwshkM78H5C2mUdwyYV8587Qv8zL9Gdvs3Hi5CmomjUvw4r3oUfoeW0jmUwgFYtCJ2f43rBDEuwgtxd9jXIbBlibQjBWJrAu2VYo4qxiQbGjVHzlpE3RcPKzx05IgbwSDLkvSGiWt6MQUibXQod05Tdc6slzt7xeec5FmINU5nrxHw+htE5fSH1pnMF7fJbt8ZoH6+ecUPAfpCSjnIOUVt8AAAAASUVORK5CYII=" width="31" height="27"/></svg><b>메가전자서명</b><span aria-hidden="true">↗</span></a>
-    <a href="https://sales.meritzfire.com/" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-meritz" src="https://upload.wikimedia.org/wikipedia/commons/4/44/Meritz_Logo.svg" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>메리츠보장분석</b><span aria-hidden="true">↗</span></a>
-    <a href="https://www.bocare.co.kr/v2/views/crm/login/" target="_blank" rel="noopener noreferrer"><span class="wd09-work-link-icon wd09-work-link-icon-bocare" aria-hidden="true">B</span><b>보케어</b><span aria-hidden="true">↗</span></a>
-    <a id="wd09-personal-notebook-link" href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-notebook" src="data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+Tm90ZWJvb2tMTTwvdGl0bGU+PHBhdGggZD0iTTExLjk5OSAzLjIwMUM1LjM3MiAzLjIwMSAwIDguNTI4IDAgMTUuMTAxVjIwLjhoMi4yMTJ2LS41NjhjMC0yLjY2NiAyLjE3OC00LjgyNyA0Ljg2Ni00LjgyNyAyLjY4OCAwIDQuODY2IDIuMTYgNC44NjYgNC44Mjd2LjU2OGgyLjIxMnYtLjU2OGMwLTMuODc3LTMuMTctNy4wMTktNy4wNzgtNy4wMTlBNy4wNzUgNy4wNzUgMCAwIDAgMi45OTIgMTQuNWE3LjM1NSA3LjM1NSAwIDAgMSA2LjU2OC00LjAxNmM0LjA1NyAwIDcuMzQ3IDMuMjY0IDcuMzQ3IDcuMjg3VjIwLjhoMi4yMTJWMTcuNzdjMC01LjIzNS00LjI4LTkuNDgxLTkuNTYtOS40ODFhOS41NjMgOS41NjMgMCAwIDAtNi4yMTcgMi4yOEE5Ljc5NSA5Ljc5NSAwIDAgMSAxMiA1LjM5M2M1LjQwNiAwIDkuNzg4IDQuMzQ2IDkuNzg4IDkuNzA3VjIwLjhIMjRWMTUuMWMtLjAwMS02LjU3My01LjM3My0xMS45LTEyLjAwMS0xMS45WiIvPjwvc3ZnPg==" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>노트북LM</b><span aria-hidden="true">↗</span></a>
-    <a id="wd09-personal-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer"><img class="wd09-work-link-icon wd09-work-link-icon-drive" src="https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png" alt="" width="34" height="34" referrerpolicy="no-referrer"><b>구글드라이브</b><span aria-hidden="true">↗</span></a>
-  </div>
-</details>
+
 
 </section>
 <dialog id="hub-tool-editor" aria-labelledby="hub-tool-editor-title">
@@ -19533,10 +19523,19 @@ const wd09CopyCategories=[
     for(const row of rows){if(row.deleted)merged.delete(row.id);else merged.set(row.id,row);}
     return [...merged.values()];
   }
+  function situationLabel(row){
+    return row.situationText || wd09CopyCategories[row.category]?.[1]?.[row.situation]?.[0] || '';
+  }
+  function suggestions(input,a,g){
+    const labels=new Set(groups(a).filter(([id])=>!g||g===id).flatMap(([id])=>occasions(id).map(([,name])=>name)));
+    for(const row of combinedRows(saved)){
+      if((!a||a===(row.audience??groupAudiences[row.category]))&&(!g||g===row.category)&&situationLabel(row))labels.add(situationLabel(row));
+    }
+    input.list.replaceChildren(...Array.from(labels,name=>new Option(name,name)));
+  }
   function updateFilters(g='',n=''){
     options(category,groups(audience.value),'전체',g);
-    options(situation,occasions(category.value),'전체',n);
-    situation.disabled=!category.value;
+    situation.value=n;
   }
   function showMessage(){
     const row=visible.find(r=>r.id===selected);
@@ -19547,14 +19546,15 @@ const wd09CopyCategories=[
     draft.hidden=true;preview.hidden=false;adjust.setAttribute('aria-expanded','false');adjust.textContent='이번 문구 수정';
   }
   function fillSituations(prefer=selected){
-    visible=combinedRows(saved).filter(row=>(!audience.value||(row.audience??groupAudiences[row.category])===audience.value)&&(!category.value||row.category===category.value)&&(!situation.value||row.situation===situation.value));
+    suggestions(situation,audience.value,category.value);
+    visible=combinedRows(saved).filter(row=>(!audience.value||(row.audience??groupAudiences[row.category])===audience.value)&&(!category.value||row.category===category.value)&&(!situation.value||situationLabel(row).includes(situation.value.trim())));
     selected=visible.some(r=>r.id===prefer)?prefer:visible[0]?.id||'';
     const table=drawer.querySelector('tbody');table.replaceChildren();
     for(const row of visible){
       const tr=table.insertRow();tr.setAttribute('aria-selected',String(row.id===selected));
       tr.insertCell().textContent=audienceNames[row.audience??groupAudiences[row.category]]||'—';
       tr.insertCell().textContent=wd09CopyCategories[row.category]?.[0]||'—';
-      const button=document.createElement('button');button.type='button';const occasionLabel=wd09CopyCategories[row.category]?.[1]?.[row.situation]?.[0];
+      const button=document.createElement('button');button.type='button';const occasionLabel=situationLabel(row);
       tr.insertCell().textContent=occasionLabel||row.title;
       button.textContent=row.body;tr.insertCell().append(button);
       const actions=tr.insertCell();
@@ -19617,14 +19617,14 @@ const wd09CopyCategories=[
   function editorFilters(g='',n=''){
     options(fields.category,fields.audience.value?groups(fields.audience.value):[],'선택 안 함',g);
     fields.category.disabled=!fields.audience.value;
-    options(fields.situation,occasions(fields.category.value),'선택 안 함',n);fields.situation.disabled=!fields.category.value;
+    suggestions(fields.situation,fields.audience.value,fields.category.value);fields.situation.value=n;
   }
   async function openEditor(row){
     if(!await syncOwner()||owner!==_UID)return;
     editorOwner=owner;editingId=row?.id||null;
     editor.querySelector('h2').textContent=row?'문구 수정':'문구 추가';
     fields.audience.value=row?(row.audience??groupAudiences[row.category]??''):audience.value;
-    editorFilters(row?.category??category.value,row?.situation??situation.value);
+    editorFilters(row?.category??category.value,row?situationLabel(row):situation.value);
     fields.title.value=row?.title||'';fields.message.value=row?.body||'';fields.contact.value=row?.contact??contact.value;
     editor.querySelector('[role=status]').textContent='';editor.showModal();fields.message.focus();
   }
@@ -19632,7 +19632,7 @@ const wd09CopyCategories=[
   fields.category.onchange=()=>editorFilters(fields.category.value);
   audience.onchange=()=>{updateFilters();fillSituations();};
   category.onchange=()=>{updateFilters(category.value);fillSituations();};
-  situation.onchange=()=>fillSituations();
+  situation.oninput=()=>fillSituations();
   updateFilters();
   contact.oninput=showMessage;
   contact.onchange=async()=>{
@@ -19658,9 +19658,10 @@ const wd09CopyCategories=[
       editor.querySelector('[role="status"]').textContent='보낼 문장을 입력해 주세요.';
       return;
     }
-    const group=fields.category.value, occasion=fields.situation.value;
+    const group=fields.category.value, occasion=fields.situation.value.trim();
+    const preset=occasions(group).find(([,label])=>label===occasion);
     const title=fields.title.value.trim()||body.split('\n')[0].slice(0,60);
-    const row={id:editingId||crypto.randomUUID(),title,body,category:group,situation:occasion,audience:fields.audience.value,contact:fields.contact.value.trim()};
+    const row={id:editingId||crypto.randomUUID(),title,body,category:group,situation:preset?.[0]??'',situationText:preset?'':occasion,audience:fields.audience.value,contact:fields.contact.value.trim()};
     const id=editingId;
     if(!await persist(rows=>{
       const exists=rows.some(item=>item.id===row.id);
