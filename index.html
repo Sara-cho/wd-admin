@@ -1148,6 +1148,8 @@ body.wdhq-auth-checking #wdhq-noah-backdrop{display:none!important}
 }
 </style>
 
+<link rel="stylesheet" href="./wd-talk-panel.css">
+<script src="./wd-talk-read.js"></script>
 <script src="./wd-talk-backup.js"></script>
 <link rel="stylesheet" href="./wd-sticky-notes.css">
 <script src="./wd-sticky-notes.js"></script>
@@ -5947,31 +5949,32 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
 </style>
 
 <button id="wdhq-talk-preview" type="button" aria-live="polite" aria-label="새 TALK 메시지 열기"><b id="wdhq-talk-preview-name"></b><span id="wdhq-talk-preview-text"></span></button>
-<section id="wdhq-talk-panel" role="dialog" aria-label="WD TALK" aria-hidden="true">
-  <header class="wdhq-talk-head">
-    <div class="wdhq-talk-head-copy">
-      <span class="wdhq-talk-brand">WD TALK</span>
-      <h2 id="wdhq-talk-partner">상대방</h2>
-      <p id="wdhq-talk-last">마지막 메시지 없음</p>
-    </div>
-    <button id="wdhq-talk-sound" type="button" aria-pressed="true" title="새 메시지 알림음">🔔 소리 켜짐</button>
-    <button id="wdhq-talk-close" type="button" aria-label="TALK 닫기">×</button>
-  </header>
-  <div id="wdhq-talk-list" aria-live="polite"></div>
-  <div class="wdhq-talk-composer">
-    <div class="wdhq-talk-backup-tools">
+<section id="wdhq-talk-panel" class="wd-talk-surface" role="dialog" aria-label="WD TALK" aria-hidden="true">
+  <header class="wdhq-talk-head talk-heading">
+    <div><h2>WD TALK</h2><span class="talk-peer" id="wdhq-talk-partner">상대방</span></div>
+    <div class="talk-tools">
+      <button id="wdhq-talk-sound" type="button" aria-pressed="true" title="새 메시지 알림음">소리 켜짐</button>
+      <details class="talk-manage"><summary>대화 관리</summary><div class="talk-menu">
       <button type="button" data-talk-backup>백업 다운로드</button>
       <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
+    </div></details>
+      <button id="wdhq-talk-close" type="button" aria-label="TALK 닫기">×</button>
     </div>
-    <p class="wdhq-talk-backup-status" data-talk-backup-status role="status"></p>
-    <div id="wdhq-talk-filebar" aria-live="polite"></div>
-    <input id="wdhq-talk-file-input" type="file" hidden>
-    <div class="wdhq-talk-input-wrap">
-      <button id="wdhq-talk-attach" type="button" aria-label="파일추가" title="📎 파일추가 (최대 100MB)">📎</button>
-      <textarea id="wdhq-talk-input" rows="1" maxlength="2000" placeholder="메시지를 입력하세요"></textarea>
-      <button id="wdhq-talk-send" type="button">보내기</button>
+  </header>
+  <form id="wdhq-talk-search" class="talk-search" role="search" aria-label="TALK 대화 검색">
+    <input id="wdhq-talk-query" type="search" maxlength="100" aria-label="대화 내용 검색" placeholder="이전 대화에서 검색">
+    <button type="submit">검색</button><button id="wdhq-talk-search-clear" type="button" hidden>검색 닫기</button>
+  </form>
+  <p class="talk-info" data-talk-backup-status role="status"></p>
+  <p class="talk-info" id="wdhq-talk-search-status" role="status" hidden></p>
+  <div id="wdhq-talk-list" tabindex="0" aria-label="대화 내역" aria-live="polite"></div>
+  <div class="wdhq-talk-composer talk-composer">
+    <textarea id="wdhq-talk-input" aria-label="메시지" rows="2" maxlength="2000" placeholder="메시지를 입력하세요"></textarea>
+    <div id="wdhq-talk-filebar" aria-live="polite"></div><input id="wdhq-talk-file-input" type="file" hidden>
+    <div class="talk-actions">
+      <button id="wdhq-talk-attach" type="button" title="파일 첨부 (최대 100MB)">파일 첨부</button>
+      <button id="wdhq-talk-send" class="talk-send" type="button" disabled>보내기</button>
     </div>
-    <div class="wdhq-talk-foot">Enter 전송 · Shift+Enter 줄바꿈</div>
   </div>
 </section>
 
@@ -5994,7 +5997,9 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   let historyReady=false;
   let messages=[];        // 시간순
   const seen=new Set();   // id 중복 방지
-  let unread=0;           // 메모리 전용
+  let readPoint='';
+  let searchTerm='',searchRows=[],searchVersion=0;
+  const queryInput=$('wdhq-talk-query'),clearSearch=$('wdhq-talk-search-clear'),searchStatus=$('wdhq-talk-search-status');
   let isOpen=false;
   let sending=false;
   let starting=false;
@@ -6031,46 +6036,58 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   }
   function dayKey(iso){const d=new Date(iso);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()}
+  const cursor=window.WDTalkRead;
+  const incoming=()=>messages.filter(row=>row.sender_id!==me?.uid);
   function setBadge(){
+    const unread=me?incoming().filter(row=>cursor.point(row)>readPoint).length:0;
+    if(!unread)hidePreview();
     badge.textContent=unread>99?'99+':String(unread);
     badge.classList.toggle('show',unread>0);
     openBtn.setAttribute('aria-label',unread>0?('WD TALK 열기 · 새 메시지 '+unread+'개'):'WD TALK 열기');
   }
-  function setLast(){
-    const last=messages[messages.length-1];
-    $('wdhq-talk-last').textContent=last?('마지막 메시지 · '+fmtDay(last.created_at)+' '+fmtTime(last.created_at)):'마지막 메시지 없음';
+  function acceptVisible(){
+    if(!me||!historyReady||!isOpen||document.hidden||searchTerm||!nearBottom())return;
+    const last=incoming().map(cursor.point).sort().at(-1);
+    if(last&&last>readPoint){readPoint=last;cursor.write(me.uid,last);setBadge();}
   }
+  function syncRead(){
+    if(!me)return;
+    readPoint=cursor.read(me.uid)??readPoint;
+    setBadge();
+  }
+  window.addEventListener('storage',event=>{if(me&&cursor.observe(event,me.uid))syncRead();});
+  list.addEventListener('scroll',acceptVisible);
   function state(text,isErr){
     list.replaceChildren();
     const p=document.createElement('p');p.className='wdhq-talk-state'+(isErr?' err':'');p.textContent=text;list.appendChild(p);
   }
   function nearBottom(){return list.scrollHeight-list.scrollTop-list.clientHeight<80}
   function scrollBottom(){list.scrollTop=list.scrollHeight}
-  function render(){
-    const stick=nearBottom();
+  function render(forceBottom=false){
+    const stick=forceBottom||nearBottom(),previous=list.scrollTop,rows=searchTerm?searchRows:messages;
+    const expanded=new Set(Array.from(list.querySelectorAll('details[open][data-message]'),el=>el.dataset.message));
     list.replaceChildren();
-    if(!messages.length){
-      const p=document.createElement('p');p.className='wdhq-talk-empty';p.textContent='아직 대화가 없습니다. 첫 메시지를 보내 보세요.';list.appendChild(p);
-      setLast();return;
+    if(!rows.length){
+      if(!searchTerm){const p=document.createElement('p');p.className='wdhq-talk-empty';p.textContent='아직 대화가 없어요.';list.appendChild(p);}
+      return;
     }
     let prevDay='';
     const frag=document.createDocumentFragment();
-    messages.forEach(m=>{
+    rows.forEach(m=>{
       const k=dayKey(m.created_at);
       if(k!==prevDay){prevDay=k;const d=document.createElement('div');d.className='wdhq-talk-day';d.textContent=fmtDay(m.created_at);frag.appendChild(d)}
       const row=document.createElement('div');row.className='wdhq-talk-row '+(m.sender_id===me?.uid?'mine':'theirs');
-      const bubble=document.createElement('div');bubble.className='wdhq-talk-bubble';fillBubble(bubble,m);
+      const bubble=document.createElement('div');bubble.className='wdhq-talk-bubble';fillBubble(bubble,m,expanded.has(String(m.id)));
       const time=document.createElement('span');time.className='wdhq-talk-time';time.textContent=fmtTime(m.created_at);
       row.append(bubble,time);frag.appendChild(row);
     });
     list.appendChild(frag);
-    setLast();
-    if(stick||isOpen)scrollBottom();
+    if(stick)scrollBottom();else list.scrollTop=previous;
+    acceptVisible();
   }
-  const messageOrder=(a,b)=>String(a.created_at).localeCompare(String(b.created_at))||String(a.id).localeCompare(String(b.id));
+  const messageOrder=(a,b)=>cursor.point(a).localeCompare(cursor.point(b));
   function newIncoming(m){
-    if(m.sender_id===me?.uid)return;
-    if(!isOpen){unread++;setBadge()}
+    if(m.sender_id===me?.uid||cursor.point(m)<=readPoint)return;
     try{notify(m)}catch(e){}
   }
   function add(m,fromRealtime){
@@ -6079,7 +6096,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     historyRequest?.arrivals.push(m);
     messages.sort(messageOrder);
     if(messages.length>HISTORY_LIMIT)messages.splice(0,messages.length-HISTORY_LIMIT);
-    if(fromRealtime)newIncoming(m);
+    syncRead();if(fromRealtime)newIncoming(m);
     render();
   }
   function loadHistory(){
@@ -6098,11 +6115,18 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
         for(const row of [...(data||[]),...request.arrivals])if(!request.cleared.has(row.id))merged.set(row.id,row);
         const next=[...merged.values()].sort(messageOrder).slice(-HISTORY_LIMIT);
         const changed=!historyReady||next.length!==messages.length||next.some((row,i)=>row.id!==messages[i]?.id);
+        const saved=cursor.read(account.uid);
+        if(saved!=null)readPoint=saved;
+        else if(!historyReady){
+          readPoint=next.filter(row=>row.sender_id!==account.uid).map(cursor.point).sort().at(-1)||'';
+          cursor.write(account.uid,readPoint);
+        }
         if(historyReady)for(const row of next)if(!seen.has(row.id))newIncoming(row);
         messages=next;seen.clear();
         for(const row of next)seen.add(row.id);
         historyReady=true;
         if(changed)render();
+        setBadge();
       }catch(e){
         if(me===account&&!historyReady)state('대화 내용을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.',true);
       }finally{
@@ -6132,8 +6156,8 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     if(starting)return;starting=true;
     const account={uid:a.uid,loginId:a.loginId};
     try{
-      me=account;historyReady=false;talkBackup?.reset();
-      $('wdhq-talk-partner').textContent=partnerLabel();
+      me=account;readPoint=cursor.read(account.uid)??'';historyReady=false;talkBackup?.reset();
+      $('wdhq-talk-partner').textContent=partnerLabel()+'님과 대화';
       $('wdhq-talk-open-sub').textContent=partnerLabel()+'님과 대화';
       document.body.classList.add('wdhq-talk-ready');
       state('대화 내용을 불러오는 중입니다.');
@@ -6145,10 +6169,10 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   function stop(){
     clearInterval(historyTimer);historyTimer=null;historyRequest=null;historyReady=false;
     try{if(channel)(authState()?.client||WDHQ_SUPABASE)?.removeChannel(channel)}catch(e){}
-    channel=null;me=null;messages=[];seen.clear();unread=0;setBadge();
+    channel=null;me=null;messages=[];seen.clear();readPoint='';setBadge();
     document.body.classList.remove('wdhq-talk-ready');
     hidePreview();close();list.replaceChildren();
-    try{drive.token='';drive.uid='';pickedFile=null;uploaded=null;barShow(null)}catch(e){}
+    try{drive.token='';drive.uid='';pickedFile=null;uploaded=null;input.value='';barShow(null);syncComposer()}catch(e){}
   }
   // ── 알림음: Web Audio API · 실패해도 수신에는 영향 없음 ──
   function ensureAudio(){
@@ -6177,7 +6201,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   }
   function setSoundBtn(){
     const b=$('wdhq-talk-sound');b.setAttribute('aria-pressed',String(soundOn));
-    b.textContent=soundOn?'🔔 소리 켜짐':'🔕 소리 끔';
+    b.textContent=soundOn?'소리 켜짐':'소리 꺼짐';
   }
   function hidePreview(){clearTimeout(previewTimer);previewTimer=null;preview.classList.remove('show')}
   function showPreview(m){
@@ -6199,20 +6223,22 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     window.WDHQStickyNote?.close();
     hidePreview();
     try{if(window.WDHQNoah&&document.getElementById('wdhq-noah-panel')?.classList.contains('open'))window.WDHQNoah.close()}catch(e){}
-    isOpen=true;unread=0;setBadge();
+    isOpen=true;syncRead();
     panel.classList.add('open');panel.setAttribute('aria-hidden','false');
     openBtn.setAttribute('aria-expanded','true');
-    if(historyReady){render();scrollBottom();}
+    if(historyReady)render(true);
     void loadHistory();
     setTimeout(()=>input.focus(),60);
   }
   function close(){
-    isOpen=false;talkBackup?.reset();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
+    isOpen=false;resetSearch(false);panel.querySelector('.talk-manage').open=false;talkBackup?.reset();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
     openBtn.setAttribute('aria-expanded','false');
   }
   function autoSize(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px'}
   async function send(){
-    if(sending)return;
+    if(sending||uploading||!me||authState()?.uid!==me.uid)return;
+    if(uploaded){await resendUploaded();return;}
+    if(pickedFile){await startUpload();return;}
     const a=authState();if(!a){if(typeof toast==='function')toast('로그인 상태를 확인해 주세요.');return}
     const body=input.value.replace(/\s+$/,'');
     if(!body.trim())return;
@@ -6221,12 +6247,13 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     try{
       const {data,error}=await a.client.from(TABLE).insert({body}).select('id,sender_id,body,created_at').single();
       if(error)throw error;
-      input.value='';autoSize();
+      if(authState()?.uid!==a.uid||me?.uid!==a.uid)return;
+      if(input.value.replace(/\s+$/,'')===body)input.value='';autoSize();
       add(data,false);scrollBottom();
     }catch(e){
       if(typeof toast==='function')toast('메시지를 보내지 못했습니다. 다시 시도해 주세요.');
     }finally{
-      sending=false;sendBtn.disabled=false;input.focus();
+      sending=false;syncComposer();if(isOpen)input.focus();
     }
   }
 
@@ -6254,10 +6281,39 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       if(historyRequest)for(const id of ids)historyRequest.cleared.add(id);
       messages=messages.filter(row=>!removed.has(row.id));
       for(const id of ids)seen.delete(id);
-      unread=0;setBadge();render();void loadHistory();
+      searchRows=searchRows.filter(row=>!removed.has(row.id));
+      if(searchTerm)resetSearch();else render();
+      setBadge();void loadHistory();
     }
   });
-  if(!talkBackup)panel.querySelector('.wdhq-talk-backup-tools').hidden=true;
+  if(!talkBackup)panel.querySelector('.talk-manage').hidden=true;
+  function resetSearch(paint=true){
+    searchVersion++;searchTerm='';searchRows=[];queryInput.value='';
+    clearSearch.hidden=searchStatus.hidden=true;searchStatus.textContent='';
+    if(paint&&isOpen)render(true);
+  }
+  clearSearch.addEventListener('click',()=>{resetSearch();queryInput.focus();});
+  queryInput.addEventListener('input',()=>{if(!queryInput.value.trim()&&searchTerm)resetSearch();});
+  $('wdhq-talk-search').addEventListener('submit',async event=>{
+    event.preventDefault();
+    const a=authState(),account=me,term=queryInput.value.trim();
+    if(!term){resetSearch();return;}
+    if(!isOpen||!a||a.uid!==account?.uid)return;
+    const version=++searchVersion,current=()=>isOpen&&me===account&&authState()?.uid===a.uid&&version===searchVersion;
+    searchTerm=term;searchRows=[];clearSearch.hidden=searchStatus.hidden=false;
+    searchStatus.textContent='이전 대화를 검색하고 있어요.';render();
+    try{
+      const escaped=term.replace(/[\\%_]/g,'\\$&');
+      const {data,error}=await a.client.from(TABLE).select('id,sender_id,body,created_at').ilike('body','%'+escaped+'%')
+        .order('created_at',{ascending:false}).order('id',{ascending:false}).limit(HISTORY_LIMIT);
+      if(!current())return;
+      if(error)throw error;
+      const needle=term.toLocaleLowerCase('ko-KR');
+      searchRows=(data||[]).filter(row=>previewText(row).toLocaleLowerCase('ko-KR').includes(needle)).sort(messageOrder);
+      searchStatus.textContent=searchRows.length?'일치하는 대화 '+searchRows.length+'건':'일치하는 대화가 없어요.';
+      render(true);
+    }catch{if(current())searchStatus.textContent='대화 검색에 실패했어요. 잠시 뒤 다시 검색해 주세요.';}
+  });
 
   openBtn.addEventListener('click',()=>isOpen?close():open());
   const dismiss=()=>{close();openBtn.focus();};
@@ -6269,7 +6325,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   document.addEventListener('pointerdown',unlock,true);
   document.addEventListener('keydown',unlock,true);
   sendBtn.addEventListener('click',send);
-  input.addEventListener('input',autoSize);
+  input.addEventListener('input',()=>{autoSize();syncComposer();});
   input.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();send()}
   });
@@ -6322,9 +6378,18 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     return ['📎',ext&&ext.length<=6?ext:'파일'];
   }
   function driveViewUrl(id){return 'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view'}
-  function fillBubble(bubble,m){
+  function fillBubble(bubble,m,expanded){
     const f=parseFileBody(m.body);
-    if(!f){bubble.textContent=m.body;return}
+    if(!f){
+      const text=m.body||'',lines=text.split('\n');
+      if(lines.length<=5&&text.length<=260){bubble.textContent=text;return;}
+      const details=document.createElement('details'),summary=document.createElement('summary'),excerpt=document.createElement('span'),hint=document.createElement('b'),body=document.createElement('p');
+      details.className='talk-excerpt';details.dataset.message=String(m.id);details.open=!!expanded;
+      excerpt.textContent=Array.from(lines.slice(0,5).join('\n')).slice(0,240).join('')+'…';
+      const label=()=>{hint.textContent=details.open?'접기':'전체 보기';};
+      label();details.addEventListener('toggle',label);summary.append(excerpt,hint);body.textContent=text;
+      details.append(summary,body);bubble.appendChild(details);return;
+    }
     bubble.classList.add('file');
     if(f.invalid){bubble.textContent='📎 파일 정보를 읽을 수 없습니다.';return}
     const [icon,kind]=fileKind(f);
@@ -6567,11 +6632,15 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     while(body.length>2000&&name.length>20){name=name.slice(0,name.length-20);body=FILE_PREFIX+JSON.stringify({v:1,id:f.id,name,size:f.size,mime:f.mime})}
     return body;
   }
-  async function postBody(body){ // 기존 send()와 같은 INSERT (body만)
-    const a=authState();if(!a)throw new Error('로그인 상태를 확인해 주세요.');
+  function activeSender(account){
+    return !!account&&me===account&&authState()?.uid===account.uid;
+  }
+  async function postBody(body,account){
+    const a=authState();
+    if(!activeSender(account))throw new Error('계정이 바뀌었어요. TALK를 다시 열어 주세요.');
     const {data,error}=await a.client.from(TABLE).insert({body}).select('id,sender_id,body,created_at').single();
     if(error)throw error;
-    add(data,false);scrollBottom();
+    if(activeSender(account)){add(data,false);scrollBottom();}
     return data;
   }
 
@@ -6593,44 +6662,57 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     }
     bar.classList.add('show');
   }
+  function syncComposer(){
+    attachBtn.disabled=sending||uploading;
+    sendBtn.disabled=sending||uploading||!(uploaded||pickedFile||input.value.trim());
+    sendBtn.textContent=uploaded?'다시 보내기':'보내기';
+  }
+  function discardFile(){pickedFile=null;uploaded=null;barShow(null);syncComposer();}
   function showPicked(){
     if(!pickedFile)return barShow(null);
     barShow({text:'📎 '+pickedFile.name+' · '+fmtSize(pickedFile.size),
-      actions:[{label:'취소',fn:()=>{pickedFile=null;barShow(null)}},
-               {label:driveValid()?'보내기':'Google 연결 후 보내기',primary:true,fn:startUpload}]});
+      actions:[{label:'첨부 취소',fn:discardFile}]});
   }
   function showUploadedFail(msg){
     barShow({text:'파일은 Drive에 올라갔지만 TALK 전달 실패 · '+uploaded.name,tone:'err',
-      actions:[{label:'닫기',fn:()=>{uploaded=null;barShow(null)}},{label:'다시 보내기',primary:true,fn:resendUploaded}]});
+      actions:[{label:'첨부 취소',fn:discardFile}]});
     if(msg&&typeof toast==='function')toast('TALK 전달 실패: '+msg);
   }
   async function resendUploaded(){
-    if(!uploaded)return;
+    const account=me;
+    if(!uploaded||uploading||!activeSender(account))return;
+    uploading=true;syncComposer();
     barShow({text:'TALK로 다시 보내는 중… · '+uploaded.name});
-    try{await postBody(buildFileBody(uploaded));uploaded=null;barShow(null)}
-    catch(e){showUploadedFail(String(e.message||e))}
+    try{await postBody(buildFileBody(uploaded),account);if(activeSender(account))discardFile();}
+    catch(e){if(activeSender(account))showUploadedFail(String(e.message||e));}
+    finally{uploading=false;syncComposer()}
   }
   async function startUpload(){
-    if(uploading||!pickedFile||!me)return;
-    const file=pickedFile;
+    const account=me,file=pickedFile;
+    if(uploading||!file||!activeSender(account))return;
     if(file.size>MAX_FILE){barShow({text:'100MB를 넘는 파일은 보낼 수 없습니다. ('+fmtSize(file.size)+')',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
     if(!file.size){barShow({text:'빈 파일은 보낼 수 없습니다.',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
-    uploading=true;attachBtn.disabled=true;
+    uploading=true;syncComposer();
     try{
       if(!driveValid()){barShow({text:'Google Drive 연결 창을 확인해 주세요.'});await driveConnect()}
+      if(!activeSender(account))return;
       barShow({text:'업로드 중 0% · '+file.name,progress:0});
-      const f=await uploadToDrive(file,p=>barShow({text:'업로드 중 '+Math.round(p*100)+'% · '+file.name,progress:p}));
+      const f=await uploadToDrive(file,p=>{
+        if(activeSender(account))barShow({text:'업로드 중 '+Math.round(p*100)+'% · '+file.name,progress:p});
+      });
+      if(!activeSender(account))return;
       pickedFile=null;
       // Drive 업로드가 끝난 뒤에만 TALK 메시지 저장
       uploaded=f;
       barShow({text:'TALK로 전달하는 중… · '+f.name,progress:1});
-      try{await postBody(buildFileBody(f));uploaded=null;barShow(null)}
-      catch(e){showUploadedFail(String(e.message||e))}
+      try{await postBody(buildFileBody(f),account);if(activeSender(account))discardFile();}
+      catch(e){if(activeSender(account))showUploadedFail(String(e.message||e));}
     }catch(e){
+      if(!activeSender(account))return;
       // Drive 업로드 실패 → TALK 메시지 만들지 않음
       barShow({text:'업로드 실패 · '+String(e.message||e).slice(0,120),tone:'err',
-        actions:[{label:'취소',fn:()=>{pickedFile=null;barShow(null)}},{label:'다시 시도',primary:true,fn:startUpload}]});
-    }finally{uploading=false;attachBtn.disabled=false}
+        actions:[{label:'첨부 취소',fn:discardFile}]});
+    }finally{uploading=false;syncComposer()}
   }
   attachBtn.addEventListener('click',()=>{
     if(uploading)return;
@@ -6639,9 +6721,8 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   });
   fileInput.addEventListener('change',()=>{
     const f=fileInput.files&&fileInput.files[0];if(!f)return;
-    pickedFile=f;
-    if(f.size>MAX_FILE){barShow({text:'100MB를 넘는 파일은 보낼 수 없습니다. ('+fmtSize(f.size)+')',tone:'err',actions:[{label:'닫기',fn:()=>{pickedFile=null;barShow(null)}}]});return}
-    showPicked();
+    if(!f.size||f.size>MAX_FILE){discardFile();barShow({text:'내용이 있는 100MB 이하 파일을 선택해 주세요.',tone:'err'});return}
+    pickedFile=f;showPicked();syncComposer();
   });
 
   // ── 다운로드: 받는 사람 본인의 Google Drive 인증 ──
@@ -6675,7 +6756,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   }
   setInterval(tick,1000);
   window.addEventListener('pageshow',()=>setTimeout(()=>{tick();void loadHistory()},300));
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();void loadHistory()}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();syncRead();acceptVisible();void loadHistory()}});
   tick();
 
   window.WDHQTalk=Object.freeze({open,close});
