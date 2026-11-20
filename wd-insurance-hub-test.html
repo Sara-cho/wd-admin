@@ -37353,7 +37353,18 @@ function openDesignProgressModal(){
     } catch {return null;}
   }
 
-  function headquartersDriveGrant(userId) {
+  function headquartersDriveGrant(userId,sessionId) {
+    const driveScope='https://www.googleapis.com/auth/drive';
+    const allowed=[driveScope,'https://www.googleapis.com/auth/calendar.readonly','https://www.googleapis.com/auth/tasks'];
+    try {
+      const saved=JSON.parse(sessionStorage.getItem('wd-hq-insurance-home-v1:'+userId));
+      const lifetime=(saved?.expiresAt-Date.now())/1000;
+      if(sessionId&&saved?.sessionId===sessionId&&typeof saved.token==='string'&&saved.token&&
+         Number.isFinite(lifetime)&&lifetime>30&&Array.isArray(saved.scopes)&&saved.scopes.includes(driveScope)){
+        return {access_token:saved.token,scope:allowed.filter(scope=>saved.scopes.includes(scope)).join(' '),
+          expires_in:Math.min(lifetime,3600)};
+      }
+    } catch {}
     try {
       const saved=JSON.parse(sessionStorage.getItem('wd-company-drive-user-v1:'+userId));
       const lifetime=(saved?.expiresAt-Date.now())/1000;
@@ -37411,7 +37422,7 @@ function openDesignProgressModal(){
       });
       window.addEventListener('focus',checkSession);
       activate(attempt,user,uid);
-      void window.wd09ConnectLoginDrive?.(headquartersDriveGrant(hq.id));
+      void window.wd09ConnectLoginDrive?.(headquartersDriveGrant(hq.id,hq.sessionId));
       return true;
     } catch {
       hqLoginNotice=notice;

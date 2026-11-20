@@ -2139,16 +2139,19 @@ async function wdhqOpenRepresentativeTest(button){
     try{
       // Start on the original click so an expired Google grant can be renewed.
       if(!bridge)throw new Error('본진 Drive 연결을 준비 중이에요. 다시 눌러 주세요.');
-      await bridge.connect();
+      await bridge.connectInsuranceHome();
     }catch(error){
-      if(!signal.aborted){button.disabled=false;status.textContent='다시 열기';toast(error.message||'Drive 연결을 확인해 주세요.');}
-      return;
+      if(signal.aborted)return;
+      if(!sameOwner()||!bridge?.ready()){
+        button.disabled=false;status.textContent='다시 열기';toast(error.message||'Drive 연결을 확인해 주세요.');return;
+      }
+      toast('기존 Drive 연결로 허브를 엽니다. 캘린더·할 일 권한은 확인이 필요해요.');
     }
     if(signal.aborted)return;
   }
   const url=await wdhqCheckRepresentativeTest(button,signal);
   if(!url||signal.aborted)return;
-  if(insurance&&(!sameOwner()||!bridge.ready()||url.href!=='https://admin.wdwave.kr/wd-insurance-hub-test.html')){
+  if(insurance&&(!sameOwner()||!(bridge.insuranceHomeReady()||bridge.ready())||url.href!=='https://admin.wdwave.kr/wd-insurance-hub-test.html')){
     toast('현재 본진 계정과 Drive 연결을 확인한 뒤 다시 열어 주세요.');return;
   }
   const home=location.href.split('#')[0];
@@ -2715,7 +2718,10 @@ function wdhqClearDisplayState(){
 }
 function wdhqForgetWorkspaceDrive(userId,loginId){
   try{
-    if(userId)sessionStorage.removeItem('wd-company-drive-user-v1:'+userId);
+    if(userId){
+      sessionStorage.removeItem('wd-company-drive-user-v1:'+userId);
+      sessionStorage.removeItem('wd-hq-insurance-home-v1:'+userId);
+    }
     if(loginId==='kfcyk50')sessionStorage.removeItem('wd_work_company_drive_access_v2');
     if(loginId==='kfcyk30')sessionStorage.removeItem('wd_work_company_drive_access_v2_staff_'+loginId);
   }catch{}
@@ -6329,6 +6335,27 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
     return identity&&DRIVE_ACCOUNTS[identity.loginId]&&wdhqLocalAuthUser()===identity.uid?identity:null;
   }
   function driveSessionKey(uid){return 'wd-company-drive-user-v1:'+uid;}
+  const homeScopes=['https://www.googleapis.com/auth/calendar.readonly','https://www.googleapis.com/auth/tasks'];
+  function insuranceSession(identity){
+    if(identity?.loginId!==WDHQ_OWNER_LOGIN_ID||wdhqReadSession()?.role!=='owner')return '';
+    try{
+      const auth=JSON.parse(localStorage.getItem(WDHQ_AUTH_STORAGE_KEY));
+      const payload=auth.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+      const claims=JSON.parse(atob(payload));
+      return claims.sub===identity.uid&&typeof claims.session_id==='string'?claims.session_id:'';
+    }catch{return '';}
+  }
+  function insuranceHomeReady(requireHome=false){
+    const identity=driveIdentity(),sessionId=insuranceSession(identity);
+    if(!sessionId)return false;
+    try{
+      const saved=JSON.parse(sessionStorage.getItem('wd-hq-insurance-home-v1:'+identity.uid));
+      return saved?.sessionId===sessionId&&typeof saved.token==='string'&&!!saved.token&&
+        Number.isFinite(saved.expiresAt)&&saved.expiresAt>Date.now()+30000&&
+        Array.isArray(saved.scopes)&&saved.scopes.includes(DRIVE_SCOPE)&&
+        (!requireHome||homeScopes.every(scope=>saved.scopes.includes(scope)));
+    }catch{return false;}
+  }
   function driveValid(){
     const identity=driveIdentity();
     if(!identity)return false;
@@ -6364,21 +6391,28 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       return res;
     });
   }
-  function driveConnect(){ // 반드시 사용자 클릭 안에서 호출
+  function driveConnect(insuranceHome=false){ // 반드시 사용자 클릭 안에서 호출
     const identity=driveIdentity();
     if(!identity)return Promise.reject(new Error('Drive에 연결할 본진 계정을 확인해 주세요.'));
-    if(driveValid())return Promise.resolve();
-    if(drive.pending?.uid===identity.uid)return drive.pending.promise;
+    const sessionId=insuranceHome?insuranceSession(identity):'';
+    if(insuranceHome&&!sessionId)return Promise.reject(new Error('대표 로그인 상태를 확인해 주세요.'));
+    if(insuranceHome?insuranceHomeReady(true):driveValid())return Promise.resolve();
+    if(drive.pending){
+      if(drive.pending.uid===identity.uid&&drive.pending.insuranceHome===insuranceHome)return drive.pending.promise;
+      return Promise.reject(new Error('진행 중인 Google 연결을 마친 뒤 다시 열어 주세요.'));
+    }
     const oauth=window.google?.accounts?.oauth2;
     if(!oauth)return Promise.reject(new Error('Google 로그인 모듈을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.'));
     const expected=DRIVE_ACCOUNTS[identity.loginId];
-    const request={uid:identity.uid};
+    const request={uid:identity.uid,insuranceHome};
     let timeout;
-    const stillCurrent=()=>drive.pending===request&&driveIdentity()?.uid===identity.uid;
+    const stillCurrent=()=>drive.pending===request&&driveIdentity()?.uid===identity.uid&&
+      (!insuranceHome||insuranceSession(driveIdentity())===sessionId);
     request.promise=new Promise((resolve,reject)=>{
       timeout=setTimeout(()=>reject(new Error('Google Drive 연결 시간이 지났어요. 업무센터를 다시 눌러 주세요.')),120000);
       const client=oauth.initTokenClient({
-        client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,hint:expected,
+        client_id:DRIVE_CLIENT_ID,scope:insuranceHome?[DRIVE_SCOPE,...homeScopes].join(' '):DRIVE_SCOPE,hint:expected,
+        ...(insuranceHome?{include_granted_scopes:false}:{}),
         callback:async resp=>{
           try{
             if(!stillCurrent())throw new Error('현재 본진 계정을 다시 확인해 주세요.');
@@ -6388,14 +6422,21 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
             });
             if(!response.ok)throw new Error('Google Drive 계정을 확인하지 못했어요.');
             const {user}=await response.json();
-            if(drive.pending!==request||driveIdentity()?.uid!==identity.uid||user?.emailAddress?.toLowerCase()!==expected){
+            if(!stillCurrent()||user?.emailAddress?.toLowerCase()!==expected){
               throw new Error('현재 본진에 등록된 Google 계정을 확인해 주세요.');
             }
             const lifetime=Number(resp.expires_in);
             if(!Number.isFinite(lifetime)||lifetime<=30)throw new Error('유효한 Drive 연결을 받지 못했어요. 다시 시도해 주세요.');
             const expiresAt=Date.now()+lifetime*1000;
-            sessionStorage.setItem(driveSessionKey(identity.uid),JSON.stringify({token:resp.access_token,expiresAt,scope:DRIVE_SCOPE}));
-            if(!driveValid())throw new Error('Drive 연결을 저장하지 못했어요.');
+            if(insuranceHome){
+              const scopes=[DRIVE_SCOPE,...homeScopes.filter(scope=>oauth.hasGrantedAllScopes(resp,scope))];
+              sessionStorage.setItem('wd-hq-insurance-home-v1:'+identity.uid,
+                JSON.stringify({token:resp.access_token,expiresAt,scopes,sessionId}));
+              if(!insuranceHomeReady())throw new Error('허브 Google 연결을 확인해 주세요.');
+            }else{
+              sessionStorage.setItem(driveSessionKey(identity.uid),JSON.stringify({token:resp.access_token,expiresAt,scope:DRIVE_SCOPE}));
+              if(!driveValid())throw new Error('Drive 연결을 저장하지 못했어요.');
+            }
             resolve();
           }catch(error){reject(error);}
         },
@@ -6413,7 +6454,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   }
 
   // Only expose actions and readiness, never the raw Google token.
-  window.WDHQCompanyDrive=Object.freeze({connect:driveConnect,ready:driveValid});
+  window.WDHQCompanyDrive=Object.freeze({connect:()=>driveConnect(),ready:driveValid,connectInsuranceHome:()=>driveConnect(true),insuranceHomeReady});
 
   companyDriveButton.onclick=()=>{
     void driveConnect().catch(error=>toast(error.message||'Drive 연결을 확인해 주세요.'));
