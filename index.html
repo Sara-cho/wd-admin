@@ -2120,8 +2120,37 @@ async function wdhqCheckRepresentativeTest(button,signal){
 async function wdhqOpenRepresentativeTest(button){
   const signal=wdhqTestWorkroomController?.signal;
   if(!signal||button.disabled)return;
+  const insurance=button.dataset.wdhqTest==='insurance';
+  const identity=insurance?wdhqReadSession():null;
+  const bridge=insurance?window.WDHQCompanyDrive:null;
+  const sameOwner=()=>{
+    const current=wdhqReadSession();
+    return !!identity?.userId&&current?.uid===WDHQ_OWNER_LOGIN_ID&&current.role==='owner'&&
+      current.userId===identity.userId&&wdhqLocalAuthUser()===identity.userId;
+  };
+  if(insurance){
+    const dest=new URL(button.dataset.wdhqTestFile,location.href);
+    if(dest.href!=='https://admin.wdwave.kr/wd-insurance-hub-test.html'||!sameOwner()){
+      toast('대표 계정과 설계사허브 TEST 주소를 확인해 주세요.');return;
+    }
+    button.disabled=true;
+    const status=button.querySelector('[data-wdhq-test-status]');
+    status.textContent='Drive 확인 중…';
+    try{
+      // Start on the original click so an expired Google grant can be renewed.
+      if(!bridge)throw new Error('본진 Drive 연결을 준비 중이에요. 다시 눌러 주세요.');
+      await bridge.connect();
+    }catch(error){
+      if(!signal.aborted){button.disabled=false;status.textContent='다시 열기';toast(error.message||'Drive 연결을 확인해 주세요.');}
+      return;
+    }
+    if(signal.aborted)return;
+  }
   const url=await wdhqCheckRepresentativeTest(button,signal);
   if(!url||signal.aborted)return;
+  if(insurance&&(!sameOwner()||!bridge.ready()||url.href!=='https://admin.wdwave.kr/wd-insurance-hub-test.html')){
+    toast('현재 본진 계정과 Drive 연결을 확인한 뒤 다시 열어 주세요.');return;
+  }
   const home=location.href.split('#')[0];
   url.searchParams.set('home',home);
   url.searchParams.set('wdhqReturn',home);
