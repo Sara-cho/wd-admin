@@ -14380,10 +14380,29 @@ const wdTest09Storage = (() => {
 <button class="itab" id="wk-monthly-btn" data-reader-mode="news" onclick="swTab(this,'wk-monthly')" type="button">월별소식지</button>
 <button class="itab" id="wk-incentives-btn" data-reader-mode="incentives" onclick="swTab(this,'wk-monthly')" type="button">월별시책</button>
 </div>
-<style>#wk-client{display:grid;grid-template-columns:minmax(190px,.8fr) minmax(290px,1.4fr) minmax(240px,1fr);gap:16px;align-items:start}#wk-client .copy-list{max-height:525px;overflow:auto;background:white;border:1px solid #ddd7e7;border-radius:12px}#wk-client table{width:100%;border-collapse:collapse;font-size:13px}#wk-client th,#wk-client td{text-align:left;padding:10px 8px;border-bottom:1px solid #ece8f0}#wk-client th{position:sticky;top:0;background:#f4f1f7}#wk-client td button{border:0;background:transparent;color:inherit;cursor:pointer;text-align:left;font:inherit}#wk-client td small{display:block;color:#645a70;margin-top:3px}#wk-client tr[aria-selected=true]{background:#f0e9f7}#wk-client .copy-modes{display:flex;gap:6px}#wk-client .copy-modes button{padding:7px 12px;border:1px solid #cec2db;background:white;border-radius:8px}#wk-client .copy-modes [aria-pressed=true]{background:#51376d;color:white}@media(max-width:960px){#wk-client{grid-template-columns:1fr}.copy-list{max-height:280px!important}}</style><div class="wk-main-panel" id="wk-copy">
+<style>
+#content:has(#pg-wkit.on #wk-copy-btn.on){max-width:1544px;width:100%;box-sizing:border-box}
+#pg-wkit:has(#wk-copy:not([style*="display:none"]):not([style*="display: none"])){max-width:1480px;width:100%;margin-inline:auto}
+#pg-wkit #wk-copy{max-width: none;width:100%}
+#pg-wkit #wk-client.wd09-copy-drawer{width:100%;max-width:1480px;box-sizing:border-box;margin-inline:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(255px,26%);align-items:start;gap:16px 24px}
+#pg-wkit #wk-client .wd09-copy-controls{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:end;gap:12px}
+#wk-client .wd09-copy-controls h2{flex-basis:100%;margin:0;font-size:22px}
+#wk-client .wd09-copy-field{flex:1 1 140px}
+#wk-client .wd09-copy-actions{align-self:end}
+#wk-client .copy-list{min-width:0;max-height:65vh;overflow:auto;border:1px solid #ddd7e7;border-radius:10px}
+#wk-client table{width:100%;border-collapse:collapse;font-size:14px}
+#wk-client th,#wk-client td{padding:10px;text-align:left;border-bottom:1px solid #ece8f0;vertical-align:middle}
+#wk-client th{position:sticky;top:0;background:#f4f1f7;white-space:nowrap}
+#wk-client td{word-break:keep-all;overflow-wrap:anywhere}
+#wk-client td:last-child{white-space:nowrap}
+#wk-client td button{padding:5px;border:0;background:transparent;color:inherit;cursor:pointer;text-align:left;font:inherit}
+#wk-client tr[aria-selected=true]{background:#f0e9f7}
+#pg-wkit #wk-client .wd09-copy-phone{grid-column:2;grid-row:2;width:100%;max-width:none}
+@media(max-width:820px){#pg-wkit #wk-client.wd09-copy-drawer{grid-template-columns:minmax(0,1fr)}#pg-wkit #wk-client .wd09-copy-phone{grid-column:1;grid-row:auto}#wk-client table{min-width:620px}}
+</style><div class="wk-main-panel" id="wk-copy">
   <section class="wd09-copy-drawer" id="wk-client" aria-labelledby="wd09-copy-title">
     <div class="wd09-copy-controls">
-      <h2 id="wd09-copy-title">업무 문구</h2><div class="copy-modes"><button type="button" data-mode="preset">기본 문구</button><button type="button" data-mode="mine">내 문장</button></div>
+      <h2 id="wd09-copy-title">업무 문구</h2>
       <div class="wd09-copy-field"><label for="wd09-copy-audience">받는 사람</label>
         <select id="wd09-copy-audience"><option value="">전체</option><option value="customer">고객</option><option value="designer">설계매니저</option><option value="agency">대리점 총무</option><option value="carrier">보험사 총무</option></select>
       </div>
@@ -14397,13 +14416,11 @@ const wdTest09Storage = (() => {
         <input id="wd09-copy-contact" type="tel" maxlength="35" placeholder="예: 010-1234-5678" autocomplete="off">
       </div>
       <div class="wd09-copy-actions">
-        <button class="btn-sm p" type="button" data-wd09-add>+ 내 문장 등록</button>
-        <button class="btn-sm g" type="button" data-wd09-edit hidden>수정</button>
-        <button class="btn-sm g" type="button" data-wd09-remove hidden>삭제</button>
+        <button class="btn-sm p" type="button" data-wd09-add>＋ 문구 추가</button>
         <span role="status"></span>
       </div>
     </div>
-    <div class="copy-list"><table><thead><tr><th>받는 사람</th><th>업무 종류</th><th>보낼 상황 · 문장</th></tr></thead><tbody></tbody></table></div>
+    <div class="copy-list"><table><thead><tr><th>받는 사람</th><th>업무 종류</th><th>보낼 상황</th><th>문장</th><th>관리</th></tr></thead><tbody></tbody></table></div>
     <div class="wd09-copy-phone" aria-label="카톡 미리보기">
       <header><strong>카톡 미리보기</strong><small id="wd09-copy-preview-title"></small></header>
       <div class="wd09-copy-chat"><p id="wd09-copy-message" class="wd09-copy-bubble" aria-live="polite"></p><textarea id="wd09-copy-draft" aria-label="복사할 업무 문구" rows="7" style="width:100%;padding:12px;line-height:1.55" hidden></textarea></div>
@@ -18824,10 +18841,8 @@ const wd09CopyCategories=[
   const editor=document.getElementById('wd09-copy-editor');
   const form=editor.querySelector('form');
   const fields=form.elements;
-  const edit=drawer.querySelector('[data-wd09-edit]');
-  const remove=drawer.querySelector('[data-wd09-remove]');
   const status=drawer.querySelector('[role="status"]');
-  let mode='preset', selected='', visible=[];
+  let selected='', visible=[];
   let owner=null,saved=[],editingId=null,editorOwner=null,loaded=false,loading=null,saving=false;
   const audienceNames={customer:'고객',designer:'설계매니저',agency:'대리점 총무',carrier:'보험사 총무'};
   const options=(select,pairs,empty,value='')=>{
@@ -18841,7 +18856,11 @@ const wd09CopyCategories=[
   }))));
   function storageKey(){return 'wd09-copy-templates:'+owner;}
   function contactKey(){return 'wd09-copy-contact:'+owner;}
-  function findSaved(){return mode==='mine'&&saved.find(row=>row.id===selected);}
+  function combinedRows(rows){
+    const merged=new Map(presets.map(r=>[r.id,r]));
+    for(const row of rows){if(row.deleted)merged.delete(row.id);else merged.set(row.id,row);}
+    return [...merged.values()];
+  }
   function updateFilters(g='',n=''){
     options(category,groups(audience.value),'전체',g);
     options(situation,occasions(category.value),'전체',n);
@@ -18849,14 +18868,14 @@ const wd09CopyCategories=[
   }
   function showMessage(){
     const row=visible.find(r=>r.id===selected);
-    const number=mode==='mine'?row?.contact:contact.value.trim();
+    const number=row?.contact??contact.value.trim();
     previewTitle.textContent=row?.title||'';
     preview.textContent=row?row.body+(number?'\n\n☎ 연락처 '+number:''):'표시할 문장이 없어요.';
-    edit.hidden=remove.hidden=!findSaved();copy.disabled=adjust.disabled=!row;
+    copy.disabled=adjust.disabled=!row;
     draft.hidden=true;preview.hidden=false;adjust.setAttribute('aria-expanded','false');adjust.textContent='이번 문구 수정';
   }
   function fillSituations(prefer=selected){
-    visible=(mode==='mine'?saved:presets).filter(row=>(!audience.value||(row.audience??groupAudiences[row.category])===audience.value)&&(!category.value||row.category===category.value)&&(!situation.value||row.situation===situation.value));
+    visible=combinedRows(saved).filter(row=>(!audience.value||(row.audience??groupAudiences[row.category])===audience.value)&&(!category.value||row.category===category.value)&&(!situation.value||row.situation===situation.value));
     selected=visible.some(r=>r.id===prefer)?prefer:visible[0]?.id||'';
     const table=drawer.querySelector('tbody');table.replaceChildren();
     for(const row of visible){
@@ -18864,13 +18883,16 @@ const wd09CopyCategories=[
       tr.insertCell().textContent=audienceNames[row.audience??groupAudiences[row.category]]||'—';
       tr.insertCell().textContent=wd09CopyCategories[row.category]?.[0]||'—';
       const button=document.createElement('button');button.type='button';const occasionLabel=wd09CopyCategories[row.category]?.[1]?.[row.situation]?.[0];
-      button.textContent=occasionLabel&&occasionLabel!==row.title?occasionLabel+' · '+row.title:row.title;
-      const snippet=document.createElement('small');snippet.textContent=row.body.split('\n').filter(Boolean).at(-1)?.slice(0,45)||'';
-      button.append(snippet);tr.insertCell().append(button);
+      tr.insertCell().textContent=occasionLabel||row.title;
+      button.textContent=row.body;tr.insertCell().append(button);
+      const actions=tr.insertCell();
+      for(const [icon,label,run] of [['✏️','수정',()=>openEditor(row)],['🗑️','삭제',()=>removeRow(row)]]){
+        const action=document.createElement('button');action.type='button';action.textContent=icon;action.setAttribute('aria-label',row.title+' '+label);action.title=label;
+        action.onclick=e=>{e.stopPropagation();run();};actions.append(action);
+      }
       tr.onclick=()=>{selected=row.id;for(const other of table.rows)other.setAttribute('aria-selected',String(tr===other));showMessage();};
     }
-    if(!visible.length){const cell=table.insertRow().insertCell();cell.colSpan=3;cell.textContent=mode==='mine'?'등록한 문장이 없어요.':'해당 문구가 없어요.';}
-    for(const b of drawer.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
+    if(!visible.length){const cell=table.insertRow().insertCell();cell.colSpan=5;cell.textContent='해당 문구가 없어요.';}
     showMessage();
   }
   async function syncOwner(){
@@ -18879,7 +18901,7 @@ const wd09CopyCategories=[
       owner=_UID;
       saved=[];
       contact.value='';
-      mode='preset';audience.value='';updateFilters();
+      audience.value='';updateFilters();
       loaded=false;
       loading=null;
       fillSituations();
@@ -18928,7 +18950,7 @@ const wd09CopyCategories=[
   async function openEditor(row){
     if(!await syncOwner()||owner!==_UID)return;
     editorOwner=owner;editingId=row?.id||null;
-    editor.querySelector('h2').textContent=row?'내 문장 수정':'내 문장 등록';
+    editor.querySelector('h2').textContent=row?'문구 수정':'문구 추가';
     fields.audience.value=row?(row.audience??groupAudiences[row.category]??''):audience.value;
     editorFilters(row?.category??category.value,row?.situation??situation.value);
     fields.title.value=row?.title||'';fields.message.value=row?.body||'';fields.contact.value=row?.contact??contact.value;
@@ -18939,7 +18961,6 @@ const wd09CopyCategories=[
   audience.onchange=()=>{updateFilters();fillSituations();};
   category.onchange=()=>{updateFilters(category.value);fillSituations();};
   situation.onchange=()=>fillSituations();
-  for(const b of drawer.querySelectorAll('[data-mode]'))b.onclick=()=>{mode=b.dataset.mode;audience.value='';updateFilters();fillSituations();};
   updateFilters();
   contact.oninput=showMessage;
   contact.onchange=async()=>{
@@ -18949,15 +18970,14 @@ const wd09CopyCategories=[
     catch(error){if(owner===uid&&_UID===uid)status.textContent=error.message;}
   };
   drawer.querySelector('[data-wd09-add]').onclick=()=>openEditor(null);
-  edit.onclick=()=>openEditor(findSaved());
-  remove.onclick=async()=>{
-    const id=findSaved()?.id;
-    if(!id||!confirm('이 문장을 삭제할까요?'))return;
-    if(await persist(rows=>rows.filter(row=>row.id!==id))){
-      fillSituations();
-      status.textContent='내 문장을 삭제했어요.';
-    }
-  };
+  async function removeRow(row){
+    if(!confirm('이 문장을 삭제할까요?'))return;
+    if(await persist(rows=>{
+      const remaining=rows.filter(r=>r.id!==row.id);
+      if(presets.some(r=>r.id===row.id))remaining.push({id:row.id,deleted:true,title:'',body:''});
+      return remaining;
+    })){fillSituations();status.textContent='문장을 삭제했어요.';}
+  }
   form.onsubmit=async event=>{
     event.preventDefault();
     if(saving||!editorOwner||editorOwner!==_UID)return;
@@ -18972,7 +18992,8 @@ const wd09CopyCategories=[
     const id=editingId;
     if(!await persist(rows=>{
       const exists=rows.some(item=>item.id===row.id);
-      if(id&&!exists)throw Error('다른 화면에서 이 문장을 삭제했어요.');
+      if(id&&!combinedRows(rows).some(r=>r.id===id))throw Error('다른 화면에서 이 문장을 삭제했어요.');
+      if(id&&!exists)return [...rows,row];
       if(!id)return exists?rows:[...rows,row];
       return rows.map(item=>item.id===id?row:item);
     })){
@@ -18980,7 +19001,7 @@ const wd09CopyCategories=[
       return;
     }
     editor.close();
-    mode='mine';audience.value=row.audience;updateFilters(group,occasion);
+    audience.value=row.audience;updateFilters(group,occasion);
     fillSituations(row.id);
     status.textContent='계정에 내 문장을 저장했어요.';
   };
