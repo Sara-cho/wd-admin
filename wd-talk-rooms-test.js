@@ -21,24 +21,20 @@ const workTalkRooms = (() => {
     panel.className = 'wd109-talk-dock wd-talk-surface wd-room-list';
     panel.setAttribute('aria-labelledby', 'workspaceTalkTitle');
     panel.innerHTML = `<header class="talk-heading"><h2 id="workspaceTalkTitle">WD TALK</h2><div class="talk-tools">
-      <button type="button" id="workspaceTalkNew">새 대화</button><button type="button" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button>
+      <button type="button" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button>
       </div></header><div class="wd-room-section"><h3 id="workspaceTalkRoomHeading">대화방</h3></div>
       <p id="workspaceRoomNotice" class="talk-info" role="status"></p><div id="workspaceTalkRoomList" aria-labelledby="workspaceTalkRoomHeading"></div>`;
     document.body.append(panel);
-    const list = $('workspaceTalkRoomList'), notice = $('workspaceRoomNotice'), create = $('workspaceTalkNew');
-    let choosing = false, busy = false, signature = null;
+    const list = $('workspaceTalkRoomList'), notice = $('workspaceRoomNotice');
+    let busy = false, signature = null;
     function paint() {
       if (!panel.isConnected) return;
-      const rows = choosing ? state.rooms : state.rooms.filter(r => r.started);
-      const model = rows.map(r => [r.peer_id, r.peer_name, r.started, unreadCount(state, r)]);
-      const next = JSON.stringify([choosing, busy, state.ready, model]);
+      const rows = state.rooms;
+      const model = rows.map(r => [r.peer_id, r.peer_name, unreadCount(state, r)]);
+      const next = JSON.stringify([busy, state.ready, model]);
       notice.textContent = state.error || '';
       if (signature === next) return;
       signature = next;
-      $('workspaceTalkRoomHeading').textContent = choosing ? '대화할 직원 선택' : '대화방';
-      if (choosing && currentUser !== 'manager') $('workspaceTalkRoomHeading').textContent = '대화 상대 선택';
-      create.textContent = choosing ? '목록으로' : '새 대화';
-      create.disabled = busy || !state.ready;
       const fragment = document.createDocumentFragment();
       for (const room of rows) {
         const button = document.createElement('button'), avatar = document.createElement('span');
@@ -49,7 +45,7 @@ const workTalkRooms = (() => {
         avatar.textContent = Array.from(room.peer_name || '직')[0];
         name.textContent = room.peer_name; button.append(avatar,name);
         const unread = unreadCount(state,room);
-        if (!choosing && unread) {
+        if (unread) {
           count.className='wd-room-count'; count.textContent=unread>99?'99+':String(unread);
           count.setAttribute('aria-label','안 읽은 메시지 '+unread+'건');button.append(count);
         }
@@ -63,7 +59,6 @@ const workTalkRooms = (() => {
             if (!current()) return;
             const latest = state.rooms.find(r=>r.peer_id===room.peer_id);
             if (!latest) throw new Error('대화 상대의 이용 권한을 확인해 주세요.');
-            latest.started = true;
             panel.remove();
             selectWorkTalkRoom(state,latest);
           } catch (error) {if(current())notice.textContent = error.message;}
@@ -73,7 +68,7 @@ const workTalkRooms = (() => {
       }
       if (!rows.length) {
         const p=document.createElement('p');p.className='wd-room-empty';
-        p.textContent=!state.ready?'대화방을 불러오는 중…':choosing?'대화할 수 있는 직원이 없어요.':'아직 대화방이 없어요. 새 대화에서 시작하세요.';
+        p.textContent=state.ready?'대화할 수 있는 다른 직원이 아직 없어요.':'대화방을 불러오는 중…';
         fragment.append(p);
       }
       list.replaceChildren(fragment);
@@ -83,8 +78,7 @@ const workTalkRooms = (() => {
     panel.closeDock=()=>{panel.remove();$('openWorkspaceTalk')?.setAttribute('aria-expanded','false');return true;};
     function close(){panel.closeDock();$('openWorkspaceTalk')?.focus();}
     $('closeWorkspaceTalk').onclick=close;
-    create.onclick=()=>{choosing=!choosing;state.error='';paint();};
-    panel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();if(choosing){choosing=false;paint();create.focus();}else close();}};
+    panel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
     $('openWorkspaceTalk')?.setAttribute('aria-expanded','true');
     paint();$('closeWorkspaceTalk').focus();
   }
