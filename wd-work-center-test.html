@@ -1197,6 +1197,8 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
   .wd-employee-report-columns #employeeReportText{flex:none;height:215px}
 }
 </style>
+<link rel="stylesheet" href="./wd-talk-panel.css">
+<script src="./wd-talk-read.js"></script>
 <script src="./wd-talk-backup.js"></script>
 <link rel="stylesheet" href="./wd-sticky-notes.css">
 <script src="./wd-sticky-notes.js?v=20261113-private"></script>
@@ -3005,10 +3007,7 @@ function talkRole(){
 function talkSender(){
   return currentUser==='manager'?'박수진':'지점장';
 }
-function talkReadPoint(row){
-  const match=String(row.created_at).match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(?:Z|\+00:00)$/);
-  return match?match[1]+'.'+(match[2]||'').padEnd(6,'0')+'|'+row.id:String(row.created_at)+'|'+row.id;
-}
+function talkReadPoint(row){return window.WDTalkRead.point(row);}
 function talkLatestIncoming(state){
   return state.rows.filter(row=>row.sender_id!==state.uid).map(talkReadPoint).sort().at(-1)||'';
 }
@@ -3025,8 +3024,14 @@ function talkPreference(state,key,value){
 }
 function markTalkRead(state){
   const point=talkLatestIncoming(state);
-  if(point>state.readPoint){state.readPoint=point;talkPreference(state,'read',point);}
+  if(point>state.readPoint){state.readPoint=point;window.WDTalkRead.write(state.uid,point);}
 }
+window.addEventListener('storage',event=>{
+  const state=workspaceTalkState;
+  if(!state?.uid||!window.WDTalkRead.observe(event,state.uid))return;
+  state.readPoint=window.WDTalkRead.read(state.uid)??state.readPoint;
+  $('workspaceTalk')?.paintTalk();paintWorkspaceTalkBadge(state);
+});
 function primeTalkAudio(){
   if(!talkAvailable()||workspaceTalkState?.sound===false)return;
   try{
@@ -3086,11 +3091,12 @@ async function refreshWorkspaceTalk(state){
     state.rows=state.ignoreCleared?rows.filter(row=>!state.ignoreCleared.has(row.id)):rows;
     state.ignoreCleared=null;
     const latest=talkLatestIncoming(state);
+    const saved=window.WDTalkRead.read(uid);
+    state.readPoint=saved??(initial?latest:state.readPoint);
     if(initial){
-      state.readPoint=talkPreference(state,'read')??latest;
-      talkPreference(state,'read',state.readPoint);
+      if(saved==null)window.WDTalkRead.write(uid,state.readPoint);
       state.sound=talkPreference(state,'sound')!=='off';
-    }else if(latest>state.latest&&state.sound)chimeWorkspaceTalk();
+    }else if(latest>state.latest&&latest>state.readPoint&&state.sound)chimeWorkspaceTalk();
     state.latest=latest;
     $('workspaceTalk')?.paintTalk();
     paintWorkspaceTalkBadge(state);
@@ -3173,28 +3179,27 @@ function openWorkspaceTalk(){
   if(!state)return;
   closeNoteDock();primeTalkAudio();void loadEmployeeDriveClient().catch(()=>{});
   const panel=document.createElement('aside');
-  panel.id='workspaceTalk';panel.className='wd109-talk-dock';
+  panel.id='workspaceTalk';panel.className='wd109-talk-dock wd-talk-surface';
   panel.setAttribute('aria-labelledby','workspaceTalkTitle');
-  panel.innerHTML=`<header><div><h2 id="workspaceTalkTitle">WD TALK</h2><span class="smallText">${talkSender()} 님과 대화</span></div>
-    <div class="wd110-talk-controls"><button type="button" class="small" id="workspaceTalkSound"></button>
+  panel.innerHTML=`<header class="talk-heading"><div><h2 id="workspaceTalkTitle">WD TALK</h2><span class="talk-peer">${talkSender()}님과 대화</span></div>
+    <div class="wd110-talk-controls talk-tools"><button type="button" class="small" id="workspaceTalkSound"></button><details class="talk-manage"><summary>대화 관리</summary><div class="talk-menu">
+      <button type="button" data-talk-backup>백업 다운로드</button>
+      <button type="button" data-talk-clear hidden disabled>백업한 대화 삭제</button>
+    </div></details>
     <button type="button" class="small" id="closeWorkspaceTalk" aria-label="WD TALK 닫기">닫기 ×</button></div></header>
-    <form id="workspaceTalkSearchForm" class="wd111-talk-search" role="search" aria-label="TALK 대화 검색">
+    <form id="workspaceTalkSearchForm" class="wd111-talk-search talk-search" role="search" aria-label="TALK 대화 검색">
       <input id="workspaceTalkSearch" type="search" maxlength="100" aria-label="대화 내용 검색" placeholder="이전 대화에서 검색">
       <button type="submit" class="small">검색</button><button type="button" class="small" id="clearWorkspaceTalkSearch" hidden>검색 닫기</button>
     </form>
-    <div class="wd110-talk-controls wd-talk-backup-tools">
-      <button type="button" class="small" data-talk-backup>백업 다운로드</button>
-      <button type="button" class="small wd110-instruction-delete" data-talk-clear hidden disabled>백업한 대화 삭제</button>
-    </div>
-    <p class="smallText wd-talk-backup-status" data-talk-backup-status role="status"></p>
-    <p class="smallText" id="workspaceTalkSearchStatus" role="status" hidden></p>
-    <p class="smallText" id="workspaceTalkStatus" role="status">대화 불러오는 중…</p>
+    <p class="talk-info wd-talk-backup-status" data-talk-backup-status role="status"></p>
+    <p class="talk-info" id="workspaceTalkSearchStatus" role="status" hidden></p>
+    <p class="talk-info" id="workspaceTalkStatus" role="status">대화 불러오는 중…</p>
     <div class="wd108-talk-log" id="workspaceTalkLog" tabindex="0" aria-label="대화 내역"></div>
-    <form id="workspaceTalkForm"><label for="workspaceTalkText">메시지</label><textarea id="workspaceTalkText" maxlength="2000" rows="2"></textarea>
+    <form id="workspaceTalkForm" class="talk-composer"><textarea id="workspaceTalkText" aria-label="메시지" placeholder="메시지를 입력하세요" maxlength="2000" rows="2"></textarea>
     <div class="wd110-talk-attachment"><input type="file" id="workspaceTalkFile" hidden><span id="workspaceTalkFileName" class="smallText"></span>
       <button type="button" class="small" id="workspaceTalkRemoveFile" hidden>첨부 취소</button></div>
-    <div class="actions"><button type="button" class="small" id="workspaceTalkRefresh">새로고침</button><button type="button" class="small" id="workspaceTalkAttach">파일 첨부</button>
-    <button type="submit" class="primary small" id="workspaceTalkSend" disabled>보내기</button></div></form>`;
+    <div class="talk-actions"><button type="button" class="small" id="workspaceTalkAttach">파일 첨부</button>
+    <button type="submit" class="primary small talk-send" id="workspaceTalkSend" disabled>보내기</button></div></form>`;
   document.body.append(panel);
   $('openWorkspaceTalk')?.setAttribute('aria-expanded','true');
   const log=$('workspaceTalkLog'),status=$('workspaceTalkStatus'),form=$('workspaceTalkForm'),input=$('workspaceTalkText'),send=$('workspaceTalkSend');
@@ -3203,7 +3208,7 @@ function openWorkspaceTalk(){
   const searchForm=$('workspaceTalkSearchForm'),searchInput=$('workspaceTalkSearch'),searchStatus=$('workspaceTalkSearchStatus'),clearSearch=$('clearWorkspaceTalkSearch');
   let ids='',sending=false,picked=null,uploaded='',requestId='',searchTerm='',searchRows=[],searchVersion=0;
   const atBottom=()=>log.scrollHeight-log.scrollTop-log.clientHeight<60;
-  const controls=()=>{send.disabled=!state.uid||sending;attach.disabled=remove.disabled=sending;};
+  const controls=()=>{send.disabled=!state.uid||sending||(!input.value.trim()&&!picked&&!uploaded);attach.disabled=remove.disabled=sending;};
   panel.paintTalk=()=>{
     if(!active()||!state.uid)return;
     const rows=searchTerm?searchRows:state.rows;
@@ -3237,7 +3242,7 @@ function openWorkspaceTalk(){
       resetSearch();paintWorkspaceTalkBadge(state);void refreshWorkspaceTalk(state);
     }
   });
-  if(!backup)panel.querySelector('.wd-talk-backup-tools').hidden=true;
+  if(!backup)panel.querySelector('.talk-manage').hidden=true;
   clearSearch.onclick=()=>{resetSearch();searchInput.focus();};
   searchInput.oninput=()=>{if(!searchInput.value.trim())resetSearch();};
   searchForm.onsubmit=async event=>{
@@ -3261,7 +3266,7 @@ function openWorkspaceTalk(){
       panel.paintTalk();
       log.scrollTop=log.scrollHeight;
       searchStatus.textContent=searchRows.length?
-        (rows.length===100?'최근 일치 대화 ':'일치하는 대화 ')+searchRows.length+'건':'일치하는 대화가 없어요.';
+        (rows.length===300?'최근 일치 대화 ':'일치하는 대화 ')+searchRows.length+'건':'일치하는 대화가 없어요.';
     }catch(error){if(current())searchStatus.textContent=error.message||'대화 검색에 실패했어요.';}
   };
   log.onclick=async event=>{
@@ -3290,7 +3295,7 @@ function openWorkspaceTalk(){
   sound.onclick=()=>{state.sound=!state.sound;talkPreference(state,'sound',state.sound?'on':'off');if(state.sound)primeTalkAudio();panel.paintTalk();};
   attach.onclick=()=>{if(!uploaded)fileInput.click();else status.textContent='저장된 첨부를 다시 보내거나 첨부를 취소해 주세요.';};
   const clearFile=()=>{
-    picked=null;uploaded='';requestId='';fileInput.value='';remove.hidden=true;$('workspaceTalkFileName').textContent='';send.textContent='보내기';
+    picked=null;uploaded='';requestId='';fileInput.value='';remove.hidden=true;$('workspaceTalkFileName').textContent='';send.textContent='보내기';controls();
   };
   remove.onclick=()=>{clearFile();status.textContent='';};
   fileInput.onchange=()=>{
@@ -3298,8 +3303,9 @@ function openWorkspaceTalk(){
     if(!file)return;
     if(!file.size||file.size>100*1024*1024){clearFile();status.textContent='내용이 있는 100MB 이하 파일을 선택해 주세요.';return;}
     picked=file;requestId=crypto.randomUUID();remove.hidden=false;
-    $('workspaceTalkFileName').textContent=file.name;send.textContent='파일 보내기';status.textContent='파일은 보내기를 누르면 공유됩니다.';
+    $('workspaceTalkFileName').textContent=file.name;send.textContent='보내기';controls();status.textContent='파일은 보내기를 누르면 공유됩니다.';
   };
+  input.oninput=controls;
   form.onsubmit=async event=>{
     event.preventDefault();
     const text=input.value.trim(),file=picked;
@@ -3332,7 +3338,6 @@ function openWorkspaceTalk(){
       }
     }finally{sending=false;activeMaterialUploads--;if(active())controls();}
   };
-  $('workspaceTalkRefresh').onclick=()=>void refreshWorkspaceTalk(state);
   panel.closeDock=force=>{
     if(sending&&!force){status.textContent='메시지 전송이 끝난 뒤 닫아 주세요.';return false;}
     document.removeEventListener('visibilitychange',markVisible);backup?.reset();panel.remove();$('openWorkspaceTalk')?.setAttribute('aria-expanded','false');return true;
