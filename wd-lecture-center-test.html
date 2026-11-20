@@ -244,40 +244,61 @@ tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);
   .case-list tbody tr {grid-template-columns:1fr;gap:4px}
   .case-list td:nth-child(2) {text-align:left}
 }
-.wrap:has(>[data-view="lecture"]:not([hidden])) {padding-top:18px}
-.detail-banner {
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:0 0 11px;border-bottom:1px solid #dfe2e9;margin-bottom:13px;
+body:has([data-view="lecture"]:not([hidden])) {background:#ecedf5}
+.wrap:has(>[data-view="lecture"]:not([hidden])) {width:min(1160px,calc(100% - 64px));padding-top:24px}
+.lecture-toolbar {
+  display:grid;grid-template-columns:minmax(120px,1fr) auto minmax(120px,1fr);align-items:center;gap:12px;
+  margin-bottom:14px;padding:8px;background:#eff2f7;border-radius:13px;
 }
-.detail-banner h1 {font-size:clamp(22px,2.2vw,30px);line-height:1.25;overflow-wrap:anywhere}
-.detail-meta {display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:3px;font-size:13px;color:#655674}
-.detail-meta #lecture-progress::before {content:"·";display:inline-block;margin-right:8px;color:#93869d}
-.detail-banner #lecture-back {flex:none;padding-inline:10px}
+#lecture-back {justify-self:start;min-height:36px;padding:6px 9px;font-size:13px;border-color:#dce1ed}
+.detail-tabs {display:flex;gap:8px;overflow:auto;min-width:0}
+.detail-tabs button {
+  flex:0 0 auto;min-height:48px;padding:10px 18px;border:0;border-radius:9px;
+  background:transparent;color:#536581;font-weight:760;white-space:nowrap;
+}
+.detail-tabs button:hover {background:#e6e9f5}
+.detail-tabs button[aria-selected="true"] {
+  color:#fff;background:linear-gradient(135deg,#111f3a,#473a86);box-shadow:0 2px 8px #24325530;
+}
+.detail-tabs button:focus-visible {outline-offset:-4px}
 .lecture-layout {
-  display:grid;grid-template-columns:minmax(270px,320px) minmax(0,1fr);gap:18px;align-items:stretch;
+  display:grid;grid-template-columns:minmax(240px,.4fr) minmax(0,1fr);gap:14px;align-items:stretch;
+}
+.lecture-profile,.lecture-section {
+  border:1px solid #e1e5f0;border-radius:16px;box-shadow:0 7px 20px #27334e0b;
 }
 .lecture-profile {overflow:visible}
 .profile-content {position:sticky;top:16px}
-.lecture-profile,.lecture-workspace {border-color:#e0e3e9;border-radius:13px;box-shadow:0 2px 10px #202b4007}
-.lecture-profile .head {padding-bottom:12px;border-bottom:1px solid #e9eaf0}
-.profile-fields {margin:0}
-.profile-fields div {padding:11px 0;border-bottom:1px solid #edeef2}
-.profile-fields div:last-child {padding-bottom:1px;border-bottom:0}
+.profile-header {margin-bottom:18px}
+.profile-status {
+  display:inline-block;margin-bottom:6px;padding:3px 8px;border-radius:16px;
+  background:#ede8f8;color:#4e397e;font-size:12px;font-weight:760;
+}
+.profile-title {display:flex;align-items:center;justify-content:space-between;gap:8px}
+.profile-title h1 {min-width:0;font-size:clamp(20px,2vw,25px);line-height:1.25;overflow-wrap:anywhere}
+.profile-title .btn {flex:none;min-height:36px;padding:5px 9px;color:#4f3b7d;background:#ebe7f7;border-color:transparent}
+.profile-progress {margin-top:5px;color:#5c6476;font-size:13px}
+.profile-content h2 {color:#4b3974;font-size:15px;border-bottom:1px solid #ded8ed;padding-bottom:7px}
+.profile-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;margin:0}
+.profile-fields div {padding:10px 0 0}
+.profile-fields div:nth-child(2),.profile-fields div:nth-child(3) {grid-column:1/-1}
 .profile-fields dt {margin-bottom:3px;color:#626674;font-size:12px}
-.profile-fields dd {margin:0;color:#292a38;font-size:14px;font-weight:680;overflow-wrap:anywhere}
+.profile-fields dd {margin:0;font-size:14px;font-weight:680;overflow-wrap:anywhere}
 .lecture-profile .detail-fields {grid-template-columns:minmax(0,1fr);gap:9px}
 .lecture-profile .detail-form-actions {gap:7px}
-.detail-tabs {display:flex;gap:18px;overflow:auto;padding-inline:21px;border-bottom:1px solid #e5e7ec;background:#fff}
-.detail-tabs button {
-  position:relative;flex:0 0 auto;min-height:55px;padding:11px 5px;
-  border:0;background:transparent;color:#626676;font-weight:730;white-space:nowrap;
-}
-.detail-tabs button[aria-selected="true"] {color:#54367b}
-.detail-tabs button[aria-selected="true"]::after {
-  content:"";position:absolute;inset:auto 0 0;height:3px;border-radius:2px 2px 0 0;background:#694994;
-}
-.detail-tabs button:focus-visible {outline-offset:-5px;border-radius:7px}
-.lecture-pane {min-width:0;padding:19px 21px 21px}
+.lecture-workspace {display:flex;min-width:0;flex-direction:column}
+.lecture-overview {display:grid;grid-template-rows:auto 1fr;gap:13px;flex:1}
+.lecture-summary {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.lecture-summary h2 {font-size:17px;margin-bottom:8px}
+.lecture-summary strong {display:block;color:#4b3974;font-size:18px;line-height:1.35}
+.lecture-summary .next-action {font-size:15px;overflow-wrap:anywhere}
+.lecture-summary .sub {font-size:12px}
+.lecture-records {padding:18px 19px}
+.lecture-records section {padding:12px 13px;margin-top:9px;border:1px solid #e9e3f1;border-radius:11px;background:#f7f4fb}
+.lecture-records section h3 {font-size:14px;color:#4b3974;margin-bottom:6px}
+.lecture-records section :is(p,ul) {font-size:14px;line-height:1.55}
+.lecture-records section ul {padding-left:19px;margin:0}
+.lecture-pane {flex:1;min-width:0;padding:19px 21px 21px}
 .lecture-pane>.head {margin-bottom:12px}
 .detail-card {padding:17px 18px}
 .lecture-pane .detail-card {border-color:#e7e8ef;border-radius:11px;box-shadow:none}
@@ -318,22 +339,23 @@ tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);
 #media-dialog {width:min(780px,calc(100% - 26px))}
 @media(max-width:1080px) {.detail-columns {grid-template-columns:1fr}}
 @media(max-width:900px) {
+  .lecture-toolbar {grid-template-columns:auto minmax(0,1fr)}
   .lecture-layout {grid-template-columns:1fr;gap:13px}
   .profile-content {position:static}
-  .profile-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px}
-  .profile-fields div {padding:9px 0;border-bottom:0}
+  .wrap:has(>[data-view="lecture"]:not([hidden])) {width:calc(100% - 38px)}
+  .profile-fields div:nth-child(2),.profile-fields div:nth-child(3) {grid-column:auto}
 }
 @media(max-width:650px) {
-  .wrap:has(>[data-view="lecture"]:not([hidden])) {padding-top:12px}
-  .detail-banner {align-items:start;gap:6px}
-  .detail-banner #lecture-back {font-size:12px;padding-inline:7px}
-  .detail-meta {font-size:12px}
+  .wrap:has(>[data-view="lecture"]:not([hidden])) {width:calc(100% - 26px);padding-top:12px}
+  .lecture-toolbar {grid-template-columns:auto minmax(0,1fr);gap:6px;padding:5px}
+  #lecture-back {font-size:11px;padding-inline:6px}
   .detail-card,.lecture-pane {padding:13px}
   .detail-fields,.asset-categories {grid-template-columns:1fr}
-  .detail-tabs {gap:11px;padding-inline:12px}
-  .detail-tabs button {font-size:13px;min-height:48px}
+  .detail-tabs {gap:2px}
+  .detail-tabs button {font-size:13px;min-height:42px;padding-inline:7px}
   .session-select {flex-wrap:wrap}
   .asset-list li .asset-row {grid-template-columns:1fr}
+  .lecture-summary {grid-template-columns:1fr;gap:8px}
 }
 </style>
 </head>
@@ -441,17 +463,26 @@ tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);
         </div>
       </section>
       <section data-view="lecture" hidden aria-labelledby="lecture-title">
-        <header class="detail-banner">
-          <div>
-            <h1 id="lecture-title" tabindex="-1"></h1>
-            <p class="detail-meta"><span id="lecture-org"></span><span id="lecture-progress"></span></p>
+        <div class="lecture-toolbar">
+          <button class="btn" type="button" id="lecture-back">‹ 강의건 목록</button>
+          <div class="detail-tabs" role="tablist" aria-label="강의 상세 메뉴">
+            <button type="button" role="tab" id="lecture-tab-records" data-detail-tab="basic" aria-controls="lecture-pane-records" aria-selected="true">기본정보</button>
+            <button type="button" role="tab" id="lecture-tab-sessions" data-detail-tab="sessions" aria-controls="lecture-pane-sessions" aria-selected="false" tabindex="-1">회차별 준비</button>
+            <button type="button" role="tab" id="lecture-tab-materials" data-detail-tab="materials" aria-controls="lecture-pane-materials" aria-selected="false" tabindex="-1">강의자료실</button>
           </div>
-          <button class="btn" type="button" id="lecture-back">← 강의건 목록</button>
-        </header>
+        </div>
         <div class="lecture-layout">
           <aside class="panel detail-card lecture-profile" aria-labelledby="lecture-info-title">
             <div class="profile-content">
-              <div class="head"><h2 id="lecture-info-title">강의 기본정보</h2><button class="btn" type="button" id="lecture-edit" aria-controls="lecture-info-form" aria-expanded="false">수정</button></div>
+              <header class="profile-header">
+                <span class="profile-status" id="lecture-stage"></span>
+                <div class="profile-title">
+                  <h1 id="lecture-title" tabindex="-1"></h1>
+                  <button class="btn" type="button" id="lecture-edit" aria-controls="lecture-info-form" aria-expanded="false">수정</button>
+                </div>
+                <p class="profile-progress" id="lecture-progress"></p>
+              </header>
+              <h2 id="lecture-info-title">강의 기본정보</h2>
               <dl class="profile-fields" id="lecture-info-summary"></dl>
               <form id="lecture-info-form" hidden>
                 <div class="detail-fields">
@@ -468,16 +499,19 @@ tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);
               </form>
             </div>
           </aside>
-          <div class="panel lecture-workspace">
-            <div class="detail-tabs" role="tablist" aria-label="강의 상세 메뉴">
-              <button type="button" role="tab" id="lecture-tab-records" data-detail-tab="basic" aria-controls="lecture-pane-records" aria-selected="true">강의 기록</button>
-              <button type="button" role="tab" id="lecture-tab-sessions" data-detail-tab="sessions" aria-controls="lecture-pane-sessions" aria-selected="false" tabindex="-1">회차별 준비</button>
-              <button type="button" role="tab" id="lecture-tab-materials" data-detail-tab="materials" aria-controls="lecture-pane-materials" aria-selected="false" tabindex="-1">강의자료실</button>
-            </div>
-            <section class="lecture-pane" id="lecture-pane-records" role="tabpanel" aria-labelledby="lecture-tab-records" data-detail-pane="basic">
-              <dl class="details" id="lecture-summary-list"></dl>
+          <div class="lecture-workspace">
+            <section class="lecture-overview" id="lecture-pane-records" role="tabpanel" aria-labelledby="lecture-tab-records" data-detail-pane="basic">
+              <div class="lecture-summary">
+                <section class="panel detail-card lecture-section"><h2>강의 준비</h2><strong id="lecture-preparation"></strong></section>
+                <section class="panel detail-card lecture-section"><h2>출강 회차</h2><strong id="lecture-session-progress"></strong></section>
+                <section class="panel detail-card lecture-section"><h2>다음 행동</h2><strong class="next-action" id="lecture-next-action"></strong><p class="sub" id="lecture-next-date"></p></section>
+              </div>
+              <section class="panel lecture-section lecture-records" aria-labelledby="lecture-records-heading">
+                <h2 id="lecture-records-heading">강의 기록</h2>
+                <div id="lecture-summary-list"></div>
+              </section>
             </section>
-            <section class="lecture-pane" id="lecture-pane-sessions" role="tabpanel" aria-labelledby="lecture-tab-sessions" data-detail-pane="sessions" hidden>
+            <section class="panel lecture-section lecture-pane" id="lecture-pane-sessions" role="tabpanel" aria-labelledby="lecture-tab-sessions" data-detail-pane="sessions" hidden>
               <div class="head">
                 <label class="session-select">강의 회차 <select id="lecture-session" aria-label="강의 회차"></select></label>
                 <button class="btn primary" type="button" data-add-file="lesson" data-current-session>+ 회차 자료 추가</button>
@@ -500,7 +534,7 @@ tr[data-course-row]:is(:hover,:focus-within) .lecture-name {color:var(--purple);
                 </section>
               </div>
             </section>
-            <section class="lecture-pane" id="lecture-pane-materials" role="tabpanel" aria-labelledby="lecture-tab-materials" data-detail-pane="materials" hidden>
+            <section class="panel lecture-section lecture-pane" id="lecture-pane-materials" role="tabpanel" aria-labelledby="lecture-tab-materials" data-detail-pane="materials" hidden>
               <div class="head"><h2>강의자료실</h2><button class="btn primary" type="button" data-add-file="lesson">+ 자료 추가</button></div>
               <div class="asset-categories" id="lecture-assets"></div>
             </section>
@@ -778,8 +812,11 @@ function setLectureEditing(editing) {
 
 function renderLectureSummary(item) {
   $("#lecture-title").textContent=item.title;
-  $("#lecture-org").textContent=item.org;
-  $("#lecture-progress").textContent=caseProgress(item,caseStage(item));
+  const stage=caseStage(item);
+  $("#lecture-stage").textContent=caseStages.find(([key])=>key===stage)[1];
+  const progress=caseProgress(item,stage);
+  $("#lecture-progress").textContent=progress;
+  $("#lecture-progress").hidden=progress===$("#lecture-stage").textContent || stage==="proposal";
   const form=$("#lecture-info-form");
   const defaultLocation=item.sections.find(([key])=>key==="강의 장소")?.[1]||"";
   const location=item.location??defaultLocation;
@@ -792,13 +829,18 @@ function renderLectureSummary(item) {
     ["전체 회차",item.totalSessions ? item.totalSessions+"회" : "미정"]
   ]);
 
-  const parts=[];
-  if(item.prepDone!==undefined) parts.push(["강의 준비",item.prepDone+" / 4 완료"]);
-  if(item.totalSessions) parts.push(["출강 회차","전체 "+item.totalSessions+"회 중 "+item.completedSessions+"회 완료"]);
-  if(item.next) parts.push(["다음 행동",item.next]);
-  if(item.due) parts.push(["예정일",item.due]);
-  parts.push(...item.sections.filter(([key])=>key!=="강의 장소"));
-  $("#lecture-summary-list").innerHTML=detailRows(parts.length ? parts : [["강의 기록","등록된 기록이 없습니다."]]);
+  $("#lecture-preparation").textContent=item.prepDone===undefined ? "—" : item.prepDone+" / 4 완료";
+  $("#lecture-session-progress").textContent=item.totalSessions ? item.completedSessions+" / "+item.totalSessions+"회 완료" : "회차 미정";
+  $("#lecture-next-action").textContent=item.next||"—";
+  $("#lecture-next-date").textContent=item.due||"";
+  $("#lecture-next-date").hidden=!item.due;
+  const records=item.sections.filter(([key])=>key!=="강의 장소");
+  $("#lecture-summary-list").innerHTML=records.length ? records.map(([label,value])=>{
+    const content=Array.isArray(value)
+      ? '<ul>'+value.map(line=>'<li>'+escapeText(line)+'</li>').join("")+'</ul>'
+      : '<p>'+escapeText(value)+'</p>';
+    return '<section><h3>'+escapeText(label)+'</h3>'+content+'</section>';
+  }).join("") : '<p class="asset-empty">등록된 기록이 없습니다.</p>';
 }
 
 function sessionOptions(item,includeGeneral=false) {
