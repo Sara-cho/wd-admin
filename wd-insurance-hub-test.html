@@ -40628,11 +40628,12 @@ window.wdSalesPlanFrameHtml="\u003c!DOCTYPE html\u003e\u003chtml lang=\"ko\"\u00
 .wds2-people>div{min-width:0}
 .wds2-people>div+div{border-inline-start:1px solid #ede8f2}
 .wds2-people dt{font-weight:650}
-.wds2-count-ring{--fill:0deg;--segment:360deg;--gap:0deg;display:grid;place-items:center;width:67px;aspect-ratio:1;margin:4px auto 0;padding:6px;border-radius:50%;background:conic-gradient(var(--chart-fill) var(--fill),var(--chart-track) 0)}
-.wds2-count-ring[data-segmented=true]{background:repeating-conic-gradient(#fff 0deg var(--gap),transparent var(--gap) var(--segment)),conic-gradient(var(--chart-fill) var(--fill),var(--chart-track) 0)}
-.wds2-count-value{display:grid;align-content:center;justify-items:center;gap:1px;width:100%;height:100%;border-radius:50%;background:#fff;color:var(--purple);line-height:1.1;font-variant-numeric:tabular-nums}
-.wds2-count-value strong{font-size:18px;letter-spacing:-.04em}
-.wds2-count-value small{font-size:12px;color:var(--muted)}
+.wds2-people dd{margin:1px 0 0;color:var(--purple);font-size:23px;font-weight:750;line-height:1.25;font-variant-numeric:tabular-nums}
+.wds2-people small{color:var(--muted);font-size:12px}
+.wds2-stage-summary{display:grid;gap:5px;margin:12px 0 0;padding-top:9px;border-top:1px solid var(--line);font-size:13px}
+.wds2-stage-summary>div{display:grid;grid-template-columns:7em minmax(0,1fr);gap:8px}
+.wds2-stage-summary dt{font-weight:700}
+.wds2-stage-summary dd{margin:0;color:var(--muted);overflow-wrap:anywhere}
 .wds2-board{background:#fff;border:1px solid var(--line);border-radius:19px;box-shadow:0 4px 14px #2d1c4309;overflow:hidden}
 .wds2-board-head{padding:18px 20px 15px}
 .wds2-board-head h2{font-size:21px}
@@ -40798,7 +40799,6 @@ body.wds2:has(.wds2-detail[open]){overflow:hidden}
 @media(max-width:440px){
  .wds2-money{grid-template-columns:62px minmax(0,1fr);gap:8px}
  .wds2-ring{width:60px;padding:6px}
- .wds2-count-ring{width:62px;padding:5px}
  .wds2-money-totals{gap:4px}
  .wds2-money-totals dt{font-size:11px}
  .wds2-money-totals dd{font-size:13px}
@@ -40916,7 +40916,7 @@ body.wds2:has(.wds2-detail[open]){overflow:hidden}
   </div>
   <section id="wds2-view-plan-panel" role="tabpanel" aria-labelledby="wds2-view-plan">
   <div class="wds2-row">
-    <h1>이번 달 영업계획</h1>
+    <h1 id="wds2-month-title">이번 달 영업계획</h1>
     <div class="wds2-month-tools">
       <input id="wds2-month" type="month" aria-label="영업월">
       <button class="wds2-primary" id="wds2-goal-open" type="button">＋ 영업계획 수립</button>
@@ -40939,11 +40939,15 @@ body.wds2:has(.wds2-detail[open]){overflow:hidden}
       </div>
     </article>
     <article class="wds2-overview-card">
-      <h2>고객 목표와 달성</h2>
+      <h2>월 계획 고객의 영업 현황</h2>
       <dl class="wds2-people">
-        <div><dt>상담 완료</dt><dd id="wds2-metric-consult" class="wds2-count-ring"></dd></div>
-        <div><dt>제안 완료</dt><dd id="wds2-metric-proposal" class="wds2-count-ring"></dd></div>
-        <div><dt>체결</dt><dd id="wds2-metric-signed" class="wds2-count-ring"></dd></div>
+        <div><dt>상담 완료</dt><dd id="wds2-metric-consult">—</dd></div>
+        <div><dt>제안 완료</dt><dd id="wds2-metric-proposal">—</dd></div>
+        <div><dt>체결</dt><dd id="wds2-metric-signed">—</dd><small id="wds2-signed-target"></small></div>
+      </dl>
+      <dl class="wds2-stage-summary">
+        <div><dt>진행 중</dt><dd id="wds2-in-progress">—</dd></div>
+        <div><dt>체결 없이 종료</dt><dd id="wds2-ended">—</dd></div>
       </dl>
     </article>
   </section>
@@ -40996,11 +41000,7 @@ body.wds2:has(.wds2-detail[open]){overflow:hidden}
   <header class="wds2-row wds2-modal-head"><h2 id="wds2-goal-title">영업계획 수립</h2><button type="button" data-close="wds2-goal-dialog">닫기</button></header>
   <form class="wds2-modal-body" id="wds2-goal-form">
     <label>신계약 월보험료 목표 (원)<input id="wds2-goal-value" inputmode="numeric" required placeholder="예 1,000,000"></label>
-    <div class="wds2-fields">
-      <label>상담 목표 (명)<input id="wds2-goal-consult" type="number" min="1" step="1" placeholder="선택"></label>
-      <label>제안 목표 (명)<input id="wds2-goal-proposal" type="number" min="1" step="1" placeholder="선택"></label>
-      <label>체결 목표 (명)<input id="wds2-goal-signed" type="number" min="1" step="1" placeholder="선택"></label>
-    </div>
+    <label>체결 목표 인원 (명)<input id="wds2-goal-signed" type="number" min="1" step="1" placeholder="예 3"></label>
     <p class="wds2-status" id="wds2-goal-status" role="status"></p>
     <div class="wds2-form-actions"><button type="submit" class="wds2-primary">월 목표 저장</button></div>
   </form>
@@ -41094,7 +41094,6 @@ const monthBoard = () => months.get($('month').value);
 const nameOrder = new Intl.Collator('ko-KR',{numeric:true});
 const isSigned = client => client.result==='체결';
 const endStage = client => client.endStage ?? decisionStage;
-const metrics = {consult:client=>client.consulted,proposal:client=>client.proposed,signed:isSigned};
 
 function stageState(client,index) {
   if(client.result) {
@@ -41139,24 +41138,24 @@ function drawOverview(board,clients) {
   $('balance').dataset.status = hasGoal ? (remaining>0 ? 'remaining' : 'met') : '';
   $('rate').textContent = hasGoal ? rate+'%' : '—';
   $('ring').style.setProperty('--sweep',Math.min(100,rate)+'%');
-  for(const [key,match] of Object.entries(metrics)) {
-    const achieved = clients.filter(match).length;
-    const target = board?.targets?.[key];
-    drawCountRing($('metric-'+key),achieved,target);
+  const month=$('month').value;
+  const [year,number]=month.split('-');
+  $('month-title').textContent=month===currentMonth?'이번 달 영업계획':year+'년 '+Number(number)+'월 영업계획';
+  const actual=count=>ready?count+'명':'—';
+  $('metric-consult').textContent=actual(clients.filter(client=>client.consulted).length);
+  $('metric-proposal').textContent=actual(clients.filter(client=>client.proposed).length);
+  $('metric-signed').textContent=actual(clients.filter(isSigned).length);
+  $('signed-target').textContent=board?.targets?.signed>0?'목표 '+board.targets.signed+'명':'';
+  const progress=steps.map(()=>0),ended=steps.map(()=>0);
+  for(const client of clients){
+    if(isSigned(client))continue;
+    const counts=client.result?ended:progress;
+    const stage=client.result?endStage(client):client.completed;
+    if(Number.isInteger(stage) && stage>=0 && stage<steps.length)counts[stage]++;
   }
-}
-
-function drawCountRing(ring,achieved,target) {
-  const segment = target ? 360/target : 360;
-  const gap = Math.min(4,segment*.18);
-  const fill = target ? Math.min(achieved,target)*segment : 0;
-  ring.style.setProperty('--segment',segment+'deg');
-  ring.style.setProperty('--gap',gap+'deg');
-  ring.style.setProperty('--fill',fill+'deg');
-  ring.dataset.segmented = String(target>1);
-  const centre = make('span','','wds2-count-value');
-  centre.append(make('strong',achieved+'명'),make('small',target ? '/ '+target+'명' : '목표 미설정'));
-  ring.replaceChildren(centre);
+  const stageNames=counts=>counts.flatMap((count,index)=>count?[steps[index].name+' '+count+'명']:[]).join(' · ') || '없음';
+  $('in-progress').textContent=ready?stageNames(progress):'—';
+  $('ended').textContent=ready?stageNames(ended):'—';
 }
 
 function draw() {
@@ -41403,7 +41402,9 @@ function contactRecord(client) {
   const outcomeLabel = make('label','연락 후 결정');
   outcomeLabel.hidden = !deciding;
   outcome.required = deciding;
-  outcome.append(new Option('선택',''),new Option('다음 단계로 진행','next'),new Option('여기서 마무리','end'));
+  outcome.append(new Option('선택',''),new Option('단순 연락 · 다시 연락 예정','follow'),
+    new Option('상담 완료 · 다음 단계로','next'),new Option('상담 후 종료','end'),
+    new Option('상담 없이 종료','no-consult-end'));
   outcomeLabel.append(outcome);
   const task = make('div','','wds2-contact-followup');
   task.hidden = Boolean(client.result);
@@ -41411,7 +41412,8 @@ function contactRecord(client) {
   const [taskDateLabel,nextDate] = contactField('다음 연락일','date',client.contactNextDate);
   nextAction.maxLength = 100;
   task.append(taskLabel,taskDateLabel);
-  outcome.onchange = ()=>{task.hidden = Boolean(client.result) || outcome.value==='end';};
+  const endsHere=()=>outcome.value==='end' || outcome.value==='no-consult-end';
+  outcome.onchange = ()=>{task.hidden = Boolean(client.result) || endsHere();};
   const save = make('button','연락 기록 저장','wds2-primary');
   save.type = 'submit';
   form.append(dateLabel,noteLabel,outcomeLabel,task,save);
@@ -41429,8 +41431,8 @@ function contactRecord(client) {
     const draft={...client};
     draft.contactDate = date.value;
     draft.contact = note.value.trim();
-    draft.consulted = true;
-    if(!draft.result && outcome.value!=='end') {
+    if(deciding && (outcome.value==='next' || outcome.value==='end'))draft.consulted=true;
+    if(!draft.result && !endsHere()) {
       const action = nextAction.value.trim();
       const scheduled = nextDate.value;
       if(deciding || action!==(draft.contactNextAction ?? '')) draft.action = action;
@@ -41442,8 +41444,7 @@ function contactRecord(client) {
       if(!draft.contactPlannedDate) draft.contactPlannedDate = draft.date;
       if(outcome.value==='next') {
         draft.completed = 1;
-
-      } else {
+      } else if(endsHere()) {
         draft.result = '연락 종료';
         draft.endStage = 0;
         draft.decisionDate = date.value;
@@ -41869,7 +41870,7 @@ function addStageSave(form,client,index,dateKey,read) {
   const actions = make('div','','wds2-form-actions');
   const save = make('button','저장');
   save.type = 'button';
-  const complete = make('button','저장하고 단계 완료','wds2-primary');
+  const complete = make('button',index===1?'제안 완료 · 다음 단계로':'저장하고 단계 완료','wds2-primary');
   complete.type = 'submit';
   complete.id = 'wds2-stage-complete-'+index;
   actions.append(save,complete);
@@ -42091,7 +42092,7 @@ $('goal-open').onclick = async ()=>{
   if(!await restoreBoard() || $('goal-dialog').open)return;
   const board = monthBoard();
   $('goal-value').value = board?.goal ? board.goal.toLocaleString('ko-KR') : '';
-  for(const key of Object.keys(metrics)) $('goal-'+key).value = board?.targets?.[key] ?? '';
+  $('goal-signed').value = board?.targets?.signed || '';
   $('goal-status').textContent = '';
   $('goal-dialog').showModal();
 };
@@ -42100,9 +42101,9 @@ $('goal-form').onsubmit = async event=>{
   const goal = parseAmount($('goal-value').value.trim());
   if(!goal) { $('goal-status').textContent = '0원보다 큰 금액을 입력해 주세요.'; return; }
   const existing = monthBoard();
-  const targets = Object.fromEntries(Object.keys(metrics).map(key=>[key,parseAmount(String($('goal-'+key).value))]));
+  const targets = {...existing?.targets,signed:parseAmount(String($('goal-signed').value))};
   const month=$('month').value;
-  const board={goal,targets,clients:existing?.clients??[]};
+  const board={...existing,goal,targets,clients:existing?.clients??[]};
   if(!await rememberBoard(month,board))return;
   months.set(month,board);
   $('goal-dialog').close();
