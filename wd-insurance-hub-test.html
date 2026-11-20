@@ -37341,6 +37341,73 @@ function openDesignProgressModal(){
     } else window.location.reload();
   }
 
+  function readHeadquartersSession() {
+    try {
+      const session=JSON.parse(localStorage.getItem('wd-admin-auth-v1'));
+      if(!session?.access_token||!session.user?.id||!(session.expires_at*1000>Date.now()+5000))return null;
+      const encoded=session.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+      const claims=JSON.parse(atob(encoded));
+      if(!claims.session_id||claims.sub!==session.user.id||!claims.amr?.some(item=>item.method==='oauth'))return null;
+      return {token:session.access_token,id:session.user.id,sessionId:claims.session_id};
+    } catch {return null;}
+  }
+
+  function headquartersDriveGrant(userId) {
+    try {
+      const saved=JSON.parse(sessionStorage.getItem('wd-company-drive-user-v1:'+userId));
+      const lifetime=(saved?.expiresAt-Date.now())/1000;
+      if(saved?.scope!=='https://www.googleapis.com/auth/drive'||typeof saved.token!=='string'||
+         !saved.token||!Number.isFinite(lifetime)||lifetime<=30)return null;
+      return {access_token:saved.token,scope:saved.scope,expires_in:Math.min(lifetime,3600)};
+    } catch {return null;}
+  }
+
+  async function tryHeadquartersTestLogin() {
+    if(!supportedOrigin||history.state?.wd09SignedOut||!window.supabase?.createClient)return false;
+    const hq=readHeadquartersSession();
+    if(!hq)return false;
+    const current=()=>{
+      const next=readHeadquartersSession();
+      return next?.id===hq.id&&next.sessionId===hq.sessionId;
+    };
+    const uid='WD23000',config=SUPABASE_CONFIG_BY_UID[uid];
+    const attempt=createAttempt(config,uid);
+    authHandoff=true;
+    screen.hidden=true;
+    byId('wd09-handoff-loading').hidden=false;
+    try {
+      const response=await fetch(config.url+'/functions/v1/wd09-hq-owner-test',{
+        method:'POST',headers:{apikey:config.key,'Content-Type':'application/json'},
+        body:JSON.stringify({hq_access_token:hq.token}),credentials:'omit',cache:'no-store',
+        redirect:'error',signal:AbortSignal.timeout(20000)
+      });
+      if(!response.ok||!current())throw Error();
+      const {access_token,refresh_token}=await response.json();
+      if(!access_token||!refresh_token)throw Error();
+      const login=await attempt.client.auth.setSession({access_token,refresh_token});
+      const verified=await attempt.client.auth.getUser();
+      const user=verified.data?.user;
+      if(login.error||verified.error||login.data?.user?.id!==user?.id||
+         !await sameOwner(user,config)||!current())throw Error();
+      const checkSession=()=>{if(active===attempt&&!current())leave();};
+      window.addEventListener('storage',event=>{
+        if(event.key==='wd-admin-auth-v1'||event.key===null)checkSession();
+      });
+      window.addEventListener('focus',checkSession);
+      activate(attempt,user,uid);
+      void window.wd09ConnectLoginDrive?.(headquartersDriveGrant(hq.id));
+      return true;
+    } catch {
+      if(active===attempt)leave();
+      else await attempt.client.auth.signOut({scope:'local'}).catch(()=>{});
+      screen.hidden=false;
+      return false;
+    } finally {
+      authHandoff=false;
+      byId('wd09-handoff-loading').hidden=true;
+    }
+  }
+
   function startHqHandoff() {
     if(location.origin!=='https://pro.wdwave.kr'||!window.opener||
       new URLSearchParams(location.search).get('from')!=='wdhq-google')return false;
@@ -37543,8 +37610,13 @@ function openDesignProgressModal(){
     }
   });
 
-  setTimeout(()=>{if(!startHqHandoff())renderGoogle();},0);
-  byId('wd09-auth-signout').addEventListener('click',leave);
+  setTimeout(async ()=>{
+    if(!startHqHandoff()&&!await tryHeadquartersTestLogin())renderGoogle();
+  },0);
+  byId('wd09-auth-signout').addEventListener('click',()=>{
+    history.replaceState({...history.state,wd09SignedOut:true},'');
+    leave();
+  });
   window.addEventListener('pagehide',()=>{
     document.body.classList.remove('wd09-signed-in');
     if(active)app.style.display='none';
@@ -39107,7 +39179,7 @@ function wd09ArchivePreviewMime(name){
         appProperties:{[propertiesKey]:propertyPrefix+key}};
     }
     function queryValue(value){return String(value).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
-    const canListExistingFolders=canUse(monthlyScope);
+    const canListExistingFolders=canUse(monthlyScope)||canUse('https://www.googleapis.com/auth/drive');
     const api={
       canListExistingFolders,
       async findFolder(parent,key,name,previousName){
@@ -39236,7 +39308,7 @@ function wd09ArchivePreviewMime(name){
         })};
 
         readerAccount=user.permissionId;
-        readerSession=canUse(monthlyScope)?{uid,token:grant.access_token,expiresAt}:null;
+        readerSession=canListExistingFolders?{uid,token:grant.access_token,expiresAt}:null;
         void window.wd09ShowSkillBoard?.();
         window.wd09ShowMonthlyMaterials();
       },
