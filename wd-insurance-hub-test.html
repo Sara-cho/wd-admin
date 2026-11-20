@@ -39425,7 +39425,19 @@ function wd09ArchivePreviewMime(name){
           salesFolder=folder.id;
           return salesFolder;
         }
-        window.wd17SalesDrive={uid,readArchived:(id,context)=>api.lock(async()=>{
+        window.wd17SalesDrive={uid,async findPdfs(term,pageToken){
+          const params=new URLSearchParams({q:"trashed = false and mimeType = 'application/pdf'"+(term?" and name contains '"+queryValue(term)+"'":""),orderBy:'modifiedTime desc',fields:'nextPageToken,files(id,name,modifiedTime)',pageSize:'30',spaces:'drive'});
+          if(pageToken)params.set('pageToken',pageToken);
+          return request(base+'/files?'+params);
+        },async importPdf(id){
+          if(!/^[-\w]+$/.test(id))throw Error('PDF를 다시 선택해 주세요.');
+          const url=base+'/files/'+encodeURIComponent(id);
+          const meta=await request(url+'?supportsAllDrives=true&fields=id,name,mimeType,trashed');
+          if(meta.trashed||meta.mimeType!=='application/pdf')throw Error('Drive에서 PDF 원본을 확인해 주세요.');
+          const blob=await request(url+'?supportsAllDrives=true&alt=media',{binary:true});
+          if(await blob.slice(0,5).text()!=='%PDF-')throw Error('PDF 원본을 확인해 주세요.');
+          return new File([blob],meta.name,{type:'application/pdf'});
+        },readArchived:(id,context)=>api.lock(async()=>{
           if(!/^[-\w]+$/.test(id)||!context?.customerId||!/^\d{4}-\d{2}$/.test(context.month))throw Error('첨부 정보를 확인해 주세요.');
           const parent=await salesFolderId();
           const sig=JSON.stringify([uid,String(context.customerId),context.month]);
@@ -40543,6 +40555,10 @@ async function wd09OpenAddressSearch(button){
 .sales-surface.case-embedded .wds2 dialog.wds2-detail:not([data-preview=true]){width:100%;max-width:none}
 
 .sales-surface>header[hidden],main[hidden],nav.tabs[hidden]{display:none!important}main{padding-top:12px}#save-error{color:#8c2941}
+#panel:has(#pickSearch){width:min(550px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:clamp(18px,3vw,30px);border:1px solid #b7a8c9;border-radius:18px;color:#23182f;background:white;box-shadow:0 18px 60px #21122f40}
+#panel:has(#pickSearch) h2{font-size:22px;margin-bottom:18px}#panel:has(#pickSearch) label,#panel legend{color:#382746;font-size:15px;font-weight:700}#panel:has(#pickSearch) :is(input,select){font-size:16px;min-height:44px;border:1px solid #ab9db8;background:white;color:#272031}
+#panel #pick{height:auto;width:100%;padding:4px}#panel #pick option{padding:6px 9px}#panel #pick option:checked{background:#51356c;color:white}#panel fieldset{margin:14px 0;padding:0;border:0;min-width:0}#panel legend{margin-bottom:7px}#panel .quick-choices{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}#panel .quick-choices button,.sales-drive-dialog button{font:inherit;font-weight:650;border:1px solid #b1a0c2;padding:8px 12px;min-height:42px;border-radius:8px;background:#faf8fc;color:#3f2954}#panel .quick-choices button[aria-pressed=true]{background:#50316d;color:white;border-color:#50316d}
+.sales-drive-dialog{width:min(500px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:22px;border:1px solid #b7a8c9;border-radius:16px;background:white;color:#32223d}.sales-drive-dialog input{width:100%;margin:10px 0;padding:10px;font:inherit}.sales-drive-dialog .drive-results{display:grid;gap:5px;margin:10px 0}.sales-drive-dialog .drive-results button{text-align:left;overflow-wrap:anywhere}
 :host{display:block;min-width:0}.sales-surface{background:transparent}.sales-surface>main{width:100%;max-width:none;margin:0;padding:0}.sales-surface>p:empty{display:none}.sales-surface:has(dialog[open]){overscroll-behavior:contain}</style><div class="sales-surface">
 <main hidden><nav hidden class="tabs" aria-label="영업관리 화면"><button id="planTab" aria-pressed="true">이번 달 영업계획</button><button id="resultsTab" aria-pressed="false">계약·실적</button></nav>
 <div class="heading"><h1 id="title">2026년 11월 영업계획</h1><div class="titleactions"><select id="month" aria-label="조회할 월"><option value="2026-11">2026년 11월</option><option value="2026-10">2026년 10월</option></select><button class="soft" id="goalEdit">계획 수정</button><button class="solid" id="goalNew">＋ 영업계획 추가</button></div></div>
@@ -41935,6 +41951,36 @@ function openPreview(trigger,key){
 $('pdf-close').onclick=()=>closePreview(true);
 $('detail').addEventListener('cancel',event=>{if(!$('pdf-dock').hidden){event.preventDefault();closePreview(true);}});
 $('detail').addEventListener('close',()=>closePreview());
+function driveButton(input){
+  const trigger=make('button','Drive에서 가져오기','single-pdf-preview');trigger.type='button';
+  trigger.onclick=()=>{
+    const dialog=make('dialog','','sales-drive-dialog'), heading=make('h3','Google Drive에서 PDF 가져오기');
+    dialog.setAttribute('aria-label',heading.textContent);
+    const search=make('input');search.type='search';search.placeholder='PDF 파일명 검색';search.setAttribute('aria-label','PDF 파일명 검색');
+    const list=make('div','','drive-results'),info=make('p'),more=make('button','더 보기'),close=make('button','닫기');
+    info.setAttribute('role','status');more.type=close.type='button';more.hidden=true;
+    dialog.append(heading,search,list,info,more,close);root.append(dialog);dialog.showModal();
+    let serial=0,timer,page='',picking=false;
+    const active=n=>dialog.open&&input.isConnected&&serial===n;
+    async function load(append){
+      const n=++serial;more.hidden=true;if(!append){page='';list.replaceChildren();}info.textContent='PDF를 찾고 있어요.';
+      try{const reply=await boardHost.findPdfs(search.value.trim(),append?page:'');if(!active(n))return;
+        for(const f of reply.files||[]){const b=make('button',f.name+' · '+String(f.modifiedTime||'').slice(0,10));b.type='button';b.onclick=async()=>{
+          if(picking)return;picking=true;search.disabled=true;more.disabled=true;info.textContent='PDF를 가져오는 중이에요.';
+          try{const file=await boardHost.importPdf(f.id);
+            if(!input.isConnected||!dialog.open)return;
+            const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();
+          }catch(e){info.textContent=e.message;}finally{picking=false;search.disabled=false;more.disabled=false;}
+        };list.append(b);}
+        page=reply.nextPageToken||'';more.hidden=!page;info.textContent=list.childElementCount?'':'이 계정에서 열 수 있는 PDF가 없어요.';
+      }catch(e){if(active(n))info.textContent=e.message;}
+    }
+    search.oninput=()=>{serial++;list.replaceChildren();more.hidden=true;clearTimeout(timer);timer=setTimeout(()=>load(false),250);};
+    close.onclick=()=>dialog.close();more.onclick=()=>load(true);
+    dialog.addEventListener('close',()=>{serial++;clearTimeout(timer);dialog.remove();trigger.focus();},{once:true});
+    void load(false);search.focus();
+  };return trigger;
+}
 function pdfField(name,caption,initial=[],client,round=0) {
   const wrap = make('div','','wds2-pdf-field');
   const drop = make('label','＋ '+caption+' 추가','wds2-pdf-drop');
@@ -41996,8 +42042,8 @@ function pdfField(name,caption,initial=[],client,round=0) {
   };
   render();
   if(single){
-    const buttons=make('div','','pdf-inline-actions');buttons.append(drop,single);wrap.append(buttons,list);
-  }else wrap.append(drop,list);
+    const buttons=make('div','','pdf-inline-actions');buttons.append(drop,driveButton(input),single);wrap.append(buttons,list);
+  }else wrap.append(drop,driveButton(input),list);
 
   wrap.append(message);
   return {wrap,read:()=>files.slice()};
@@ -42031,14 +42077,16 @@ function comparisonPane(client) {
   const baseline=caseHost ? caseHost.currentPremium : records.length ? records.reduce((sum,r)=>sum+r.premium,0) : null;
   const [before,beforeInput]=contactField('현재 월보험료 (원)','text',baseline===null?'':fmt(baseline));
   beforeInput.name='currentPremium';
-  beforeInput.readOnly=true;
-  beforeInput.placeholder='등록 내역 없음';
+  beforeInput.readOnly=baseline!=null;
+  beforeInput.inputMode='numeric';
+  if(baseline==null)beforeInput.value=client.manualCurrentPremium!=null?fmt(client.manualCurrentPremium):'';
+  beforeInput.placeholder='현재 월보험료 직접 입력';
   const [after,afterInput]=contactField('제안 월보험료 (원)','text',client.newPremium?.toLocaleString('ko-KR') ?? '');
   afterInput.name='newPremium';
   afterInput.inputMode='numeric';
   afterInput.placeholder='금액 입력';
-  function readPremium() {
-    const raw=afterInput.value.trim();
+  function readPremium(input=afterInput) {
+    const raw=input.value.trim();
     if(!raw) return null;
     const value=Number(raw.replaceAll(',',''));
     return /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(raw) && Number.isSafeInteger(value) ? value : NaN;
@@ -42048,10 +42096,13 @@ function comparisonPane(client) {
   differenceRow.append(make('span','월보험료 차이'),difference);
   afterInput.oninput=()=>{
     const amount=readPremium();
-    const diff=amount-baseline;
-    difference.textContent=baseline===null || !Number.isFinite(amount) ? '—' :
+    const current=baseline??readPremium(beforeInput);
+    const diff=amount-current;
+    difference.textContent=!Number.isFinite(current) || !Number.isFinite(amount) ? '—' :
        diff===0 ? '변동 없음' : asWon(Math.abs(diff))+(diff>0?' 증가':' 감소');
   };
+  beforeInput.oninput=()=>afterInput.oninput();
+  beforeInput.onblur=()=>{const n=readPremium(beforeInput);if(Number.isFinite(n))beforeInput.value=fmt(n);};
   afterInput.onblur=()=>{const n=readPremium();if(Number.isFinite(n))afterInput.value=fmt(n);};
   afterInput.oninput();
   const direction=make('textarea');
@@ -42147,7 +42198,9 @@ function comparisonPane(client) {
       $('detail-message').textContent='다음 연락일을 선택해 주세요.';
       schedule.field.querySelector('button')?.focus();return;
     }
-    const values={newPremium:premium,proposal:direction.value.trim(),comparison:'',
+    const manualCurrentPremium=baseline==null?readPremium(beforeInput):client.manualCurrentPremium??null;
+    if(Number.isNaN(manualCurrentPremium)){$('detail-message').textContent='현재 월보험료를 원 단위로 입력해 주세요.';beforeInput.focus();return;}
+    const values={manualCurrentPremium,newPremium:premium,proposal:direction.value.trim(),comparison:'',
       currentPdfs:currentPdfs.read(),proposalPdfs:proposalPdfs.read(),
       proposalDate:day.value};
     if(!client.result && client.completed<=1){
@@ -42392,6 +42445,7 @@ function policyCard(client,record,removeCard){
   fields.debit.insertAdjacentHTML('beforeend',ctDebitOptions());
   fields.contractDate.value=record.contractDate || today;
   const pdfLabels={policy:'증권',terms:'약관'};
+  for(const key of Object.keys(pdfLabels)){const input=fields[key];const label=input.closest('label'),group=make('div');label.before(group);group.append(label,driveButton(input));}
   const pdfHints={};
   fields.agent.value=plannerName || '';
   for(const [key,input] of Object.entries(fields)){
@@ -42710,7 +42764,7 @@ $('add').onclick=()=>{
  const used=new Set(plan.clients.map(c=>String(c.id)));
  const pool=[...directory.values()].filter(c=>!used.has(String(c.id))).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
  if(!pool.length)return modal('이달의 고객 추가','이번 달에 추가할 고객이 없어요.',null);
- modal('이달의 고객 추가','<label>이름 또는 초성 검색<input id="pickSearch" type="search" placeholder="이름 또는 초성" autocomplete="off"></label><label>고객 목록<select id="pick" required></select></label><label>연락 목적<input id="reason" maxlength="100"></label><label>연락 예정일<input id="planned" type="date"></label><p id="pickStatus" role="status"></p>',async()=>{
+ modal('이달의 고객 추가','<label>이름 또는 초성 검색<input id="pickSearch" type="search" placeholder="이름 또는 초성" autocomplete="off"></label><label>고객 목록<select id="pick" size="4" required></select></label><fieldset><legend>연락 목적</legend><div id="reasonChoices" class="quick-choices"></div><input id="reason" aria-label="연락 목적 직접 입력" maxlength="100" hidden></fieldset><fieldset><legend>연락 예정일</legend><div id="dateChoices" class="quick-choices"></div><input id="planned" aria-label="연락 예정일" type="date"></fieldset><p id="pickStatus" role="status"></p>',async()=>{
    const id=$('pick').value,c=directory.get(id);
    if(!c)throw Error('고객을 선택해 주세요.');
    const current=plans.get(month);
@@ -42723,6 +42777,21 @@ $('add').onclick=()=>{
    $('search').value='';
  });
  const search=$('pickSearch'),pick=$('pick');
+ function choices(container,labels,apply){
+   const buttons=labels.map((label,i)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed','false');
+     b.onclick=()=>{buttons.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));apply(i,label);};container.append(b);return b;});
+   return buttons;
+ }
+ const reason=$('reason'),planned=$('planned');
+ choices($('reasonChoices'),['안부 연락','보장 점검','청구 확인 후 보장 점검','갱신·만기 안내','직접 입력'],(i,label)=>{
+   reason.hidden=i!==4;reason.value=i===4?'':label;if(i===4)reason.focus();
+ });
+ const dateButtons=choices($('dateChoices'),['오늘','내일','3일 후','7일 후','날짜 지정'],i=>{
+   if(i===4){planned.focus();try{planned.showPicker();}catch{}return;}
+   const d=new Date(exampleToday+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+[0,1,3,7][i]);planned.value=d.toISOString().slice(0,10);
+ });
+ planned.onchange=()=>dateButtons.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===4)));
+ 
  function filter(){
   const matches=pool.filter(c=>matchesName(c.name,search.value));
   pick.replaceChildren(new Option(matches.length?'고객 선택':'검색 결과 없음',''),...matches.map(c=>new Option(c.name+(c.phoneLast?' · '+c.phoneLast:''),String(c.id))));
@@ -45258,7 +45327,12 @@ void start().catch(error=>{if(root.host.isConnected)$('storageStatus').textConte
             }
         }};
     }
-    return {...api,today:today(),plannerName,openCase,
+    const driveCall=async(method,...args)=>{
+      check();const drive=window.wd17SalesDrive;
+      if(!drive||drive.uid!==opened.uid)throw Error('허브 상단에서 같은 계정의 Drive 연결을 확인해 주세요.');
+      const result=await drive[method](...args);check();return result;
+    };
+    return {...api,findPdfs:(term,page)=>driveCall('findPdfs',term,page),importPdf:id=>driveCall('importPdf',id),today:today(),plannerName,openCase,
       syncWork:(...args)=>navigator.locks?navigator.locks.request('wd-sales-work:'+opened.uid+':'+args[0]+':'+args[1].id,()=>syncWork(...args)):syncWork(...args),showResults:()=>showView('results'),
       ready:openCustomer=>{sameSession(opened);if(requestedSalesCustomer){const {id,month}=requestedSalesCustomer;requestedSalesCustomer=null;openCustomer(id,month);}}};
   };
