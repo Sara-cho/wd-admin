@@ -1381,6 +1381,7 @@ window.addEventListener('pageshow',event=>{
   if(!event.persisted||embeddedAccountInfo)return;
   const expected=managerWorkIdentity?.user_id||workStickyUserId;
   if(expected&&expected!==readHqSession()?.user?.id)logout();
+  else if(discardStaleOwnerDrive())render();
 });
 window.addEventListener('storage',event=>{
   if(event.key===KEY&&event.newValue!==storageVersion){location.reload();return;}
@@ -1390,6 +1391,7 @@ window.addEventListener('storage',event=>{
   const sessionChanged=event.key===activeWorkAuthKey&&previousId&&readHqSession()?.user?.id!==previousId;
   const sharedLoginChanged=activeWorkAuthKey===hqSessionKey&&event.key==='wd_current_uid'&&loginId&&event.newValue!==loginId;
   if(currentUser&&(sessionChanged||sharedLoginChanged)){logout();return;}
+  if(event.key===activeWorkAuthKey&&discardStaleOwnerDrive()){render();return;}
   if(event.key===activeWorkAuthKey&&event.newValue&&!currentUser&&$('root').querySelector('.workGoogleCard')){
     hqAutoLoginBlocked=false;loginView();return;
   }
@@ -2743,6 +2745,7 @@ function loadCachedDriveSession(key,defaultScope){
   }catch{return null;}
 }
 function saveVerifiedWorkspaceDrive(session){
+  if(session.sessionId)return;
   const userId=managerWorkIdentity?.user_id||workStickyUserId;
   if(!userId||readHqSession()?.user?.id!==userId)return;
   try{sessionStorage.setItem(workspaceDriveSessionKey(userId),JSON.stringify({token:session.token,expiresAt:session.expires,scope:session.scope}));}catch{}
@@ -2755,21 +2758,56 @@ function forgetWorkspaceDrive(userId,loginId){
   }catch{}
 }
 let rejectedCompanyDriveToken='';
+function currentOwnerSessionId(userId){
+  if(!userId||activeWorkAuthKey!==hqSessionKey)return '';
+  try{
+    const auth=readHqSession();
+    const claims=JSON.parse(atob(auth.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    return claims.sub===userId&&auth.user?.id===userId&&typeof claims.session_id==='string'?claims.session_id:'';
+  }catch{return '';}
+}
+function ownerHomeDriveSession(userId){
+  const sessionId=currentOwnerSessionId(userId);
+  if(!sessionId)return null;
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('wd-hq-insurance-home-v1:'+userId));
+    if(saved?.sessionId!==sessionId||!Array.isArray(saved.scopes)||!saved.scopes.includes(driveWriteScope)||
+      typeof saved.token!=='string'||!saved.token||!Number.isFinite(saved.expiresAt)||saved.expiresAt<=Date.now()+30000)return null;
+    return {token:saved.token,expires:saved.expiresAt,scope:driveWriteScope,sessionId,userId};
+  }catch{return null;}
+}
+function discardStaleOwnerDrive(){
+  const saved=managerDriveSession;
+  if(!saved?.sessionId||saved.sessionId===currentOwnerSessionId(saved.userId))return false;
+  managerDriveSession=null;
+  return true;
+}
 async function restoreCompanyDriveSession(){
   if(currentUser!=='manager')return null;
   const userId=readHqSession()?.user?.id;
-  const saved=(userId&&loadCachedDriveSession(workspaceDriveSessionKey(userId)))||loadCachedDriveSession(companyDriveSessionKey,driveWriteScope);
-  if(!saved||saved.token===rejectedCompanyDriveToken||saved.scope!==driveWriteScope)return null;
-  try{
-    await verifyManagerHqSession();
-    const about=await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',saved.token);
-    const {user}=await about.json();
-    if(user?.emailAddress?.toLowerCase()!==managerDriveAccount)return null;
-    return saved;
-  }catch(error){
-    if([401,403].includes(error.status))rejectedCompanyDriveToken=saved.token;
-    return null;
+  if(!userId)return null;
+  const candidates=[loadCachedDriveSession(workspaceDriveSessionKey(userId)),ownerHomeDriveSession(userId),
+    loadCachedDriveSession(companyDriveSessionKey,driveWriteScope)].filter(saved=>saved?.scope===driveWriteScope&&saved.token!==rejectedCompanyDriveToken);
+  if(!candidates.length)return null;
+  try{await verifyManagerHqSession();}catch{return null;}
+  const current=()=>currentUser==='manager'&&readHqSession()?.user?.id===userId;
+  const tried=new Set();
+  for(const saved of candidates){
+    if(!current())return null;
+    if(tried.has(saved.token))continue;
+    tried.add(saved.token);
+    try{
+      const about=await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',saved.token);
+      const {user}=await about.json();
+      if(!current())return null;
+      if(saved.sessionId&&currentOwnerSessionId(userId)!==saved.sessionId)return null;
+      if(saved.expires>Date.now()&&user?.emailAddress?.toLowerCase()===managerDriveAccount)return saved;
+    }catch(error){
+      if(![401,403].includes(error.status))return null;
+      rejectedCompanyDriveToken=saved.token;
+    }
   }
+  return null;
 }
 function resumeWorkspaceDrive(identity){
   const role=currentUser,generation=driveConnectGeneration,staff=activeStaffId;
@@ -2820,6 +2858,7 @@ async function restoreStaffDriveSession(){
   }catch{return null;}
 }
 function retainCompanyDriveSession(session){
+  if(session.sessionId)return;
   try{sessionStorage.setItem(companyDriveSessionKey,JSON.stringify({token:session.token,expiresAt:session.expires}));}catch{}
 }
 
@@ -6641,7 +6680,7 @@ const staffHqConnectionNeeded=()=>pinOnlyWorkspace&&Object.hasOwn(driveAccountBy
 const staffHqConnectionLink=()=>'<a class="small wd146-hq-link" href="./" target="_top">WD 본진 직원 계정 연결</a>';
 const hqSessionKey='wd-admin-auth-v1';
 const workOnlySessionKey='wd-work-google-auth-v1';
-const fromHq=new URLSearchParams(location.search).get('from')==='wdhq'||embeddedAccountInfo;
+const fromHq=['wdhq','wdhq-test-workroom'].includes(new URLSearchParams(location.search).get('from'))||embeddedAccountInfo;
 let activeWorkAuthKey=fromHq||!localStorage.getItem(workOnlySessionKey)?hqSessionKey:workOnlySessionKey;
 function readHqSession(){
   try{return JSON.parse(localStorage.getItem(activeWorkAuthKey)||'null');}
@@ -6752,6 +6791,7 @@ async function refreshLiveAttendance(month){
   }
 }
 function workCenterDriveSession(){
+  discardStaleOwnerDrive();
   return currentUser==='manager'?managerDriveSession:employeeDrive;
 }
 
