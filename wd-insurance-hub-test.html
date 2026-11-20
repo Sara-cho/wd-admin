@@ -39411,7 +39411,7 @@ function wd09ArchivePreviewMime(name){
         window.wd09SkillDrive=wd09SkillDriveService(request,uploadDriveFile,uid);
         let salesFolder;
         const folderName='8.영업관리_임시작업';
-        async function salesFolderId(){
+        async function salesFolderId(create=true){
           if(salesFolder)return salesFolder;
           const folders=await wd09DriveFolderService(api,uid,adviser.name).inspect(false);
           if(!folders.adviser)throw Error('Drive에서 WD '+adviser.name+' 보험폴더를 확인해 주세요.');
@@ -39419,21 +39419,25 @@ function wd09ArchivePreviewMime(name){
           let folder=await api.findFolder(parent,'sales-work',folderName);
           if(!folder){
             if(!api.canListExistingFolders)throw Error('기존 영업관리 폴더를 찾으려면 Drive 읽기 권한을 연결해 주세요.');
+            if(!create)throw Error('내 보험폴더에서 '+folderName+' 폴더를 찾지 못했어요.');
             folder=await api.createFolder(parent,'sales-work',folderName);
           }
           if(!folder?.id||folder.name!==folderName)throw Error('영업관리 저장 폴더를 확인할 수 없어요.');
           salesFolder=folder.id;
           return salesFolder;
         }
+        const importFolder=()=>uid==='WD23000'?'1znUWf8YOwlWIU-atYvBys-02RCIbYDe1':salesFolderId(false);
         window.wd17SalesDrive={uid,async findPdfs(term,pageToken){
-          const params=new URLSearchParams({q:"trashed = false and mimeType = 'application/pdf'"+(term?" and name contains '"+queryValue(term)+"'":""),orderBy:'modifiedTime desc',fields:'nextPageToken,files(id,name,modifiedTime)',pageSize:'30',spaces:'drive'});
+          const parent=await importFolder();
+          const params=new URLSearchParams({q:"trashed = false and '"+queryValue(parent)+"' in parents and mimeType = 'application/pdf'"+(term?" and name contains '"+queryValue(term)+"'":""),orderBy:'modifiedTime desc',fields:'nextPageToken,files(id,name,modifiedTime)',pageSize:'30',spaces:'drive'});
           if(pageToken)params.set('pageToken',pageToken);
           return request(base+'/files?'+params);
         },async importPdf(id){
           if(!/^[-\w]+$/.test(id))throw Error('PDF를 다시 선택해 주세요.');
           const url=base+'/files/'+encodeURIComponent(id);
-          const meta=await request(url+'?supportsAllDrives=true&fields=id,name,mimeType,trashed');
-          if(meta.trashed||meta.mimeType!=='application/pdf')throw Error('Drive에서 PDF 원본을 확인해 주세요.');
+          const parent=await importFolder();
+          const meta=await request(url+'?supportsAllDrives=true&fields=id,name,mimeType,parents,trashed');
+          if(!meta.parents?.includes(parent)||meta.trashed||meta.mimeType!=='application/pdf')throw Error('Drive에서 PDF 원본을 확인해 주세요.');
           const blob=await request(url+'?supportsAllDrives=true&alt=media',{binary:true});
           if(await blob.slice(0,5).text()!=='%PDF-')throw Error('PDF 원본을 확인해 주세요.');
           return new File([blob],meta.name,{type:'application/pdf'});
@@ -40559,6 +40563,7 @@ async function wd09OpenAddressSearch(button){
 #panel:has(#pickSearch){width:min(550px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:clamp(18px,3vw,30px);border:1px solid #b7a8c9;border-radius:18px;color:#23182f;background:white;box-shadow:0 18px 60px #21122f40}
 #panel:has(#pickSearch) h2{font-size:22px;margin-bottom:18px}#panel:has(#pickSearch) label,#panel legend{color:#382746;font-size:15px;font-weight:700}#panel:has(#pickSearch) :is(input,select){font-size:16px;min-height:44px;border:1px solid #ab9db8;background:white;color:#272031}
 #panel #pick{height:auto;width:100%;padding:4px}#panel #pick option{padding:6px 9px}#panel #pick option:checked{background:#51356c;color:white}#panel fieldset{margin:14px 0;padding:0;border:0;min-width:0}#panel legend{margin-bottom:7px}#panel .quick-choices{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}#panel .quick-choices button,.sales-drive-dialog button{font:inherit;font-weight:650;border:1px solid #b1a0c2;padding:8px 12px;min-height:42px;border-radius:8px;background:#faf8fc;color:#3f2954}#panel .quick-choices button[aria-pressed=true]{background:#50316d;color:white;border-color:#50316d}
+.sales-drive-trigger{display:inline-flex;justify-content:center;align-items:center;width:100%;min-height:44px;padding:8px;border:1px solid #ad95c2;border-radius:8px;background:#f4edf9;color:#4b305f;font:inherit;font-weight:700;cursor:pointer}.wds2 .wds2-pdf-drop[hidden]{display:none!important}
 .sales-drive-dialog{width:min(500px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:22px;border:1px solid #b7a8c9;border-radius:16px;background:white;color:#32223d}.sales-drive-dialog input{width:100%;margin:10px 0;padding:10px;font:inherit}.sales-drive-dialog .drive-results{display:grid;gap:5px;margin:10px 0}.sales-drive-dialog .drive-results button{text-align:left;overflow-wrap:anywhere}
 :host{display:block;min-width:0}.sales-surface{background:transparent}.sales-surface>main{width:100%;max-width:none;margin:0;padding:0}.sales-surface>p:empty{display:none}.sales-surface:has(dialog[open]){overscroll-behavior:contain}</style><div class="sales-surface">
 <main hidden><nav hidden class="tabs" aria-label="영업관리 화면"><button id="planTab" aria-pressed="true">이번 달 영업계획</button><button id="resultsTab" aria-pressed="false">계약·실적</button></nav>
@@ -41976,15 +41981,16 @@ function openPreview(trigger,key){
 $('pdf-close').onclick=()=>closePreview(true);
 $('detail').addEventListener('cancel',event=>{if(!$('pdf-dock').hidden){event.preventDefault();closePreview(true);}});
 $('detail').addEventListener('close',()=>closePreview());
-function driveButton(input){
-  const trigger=make('button','Drive에서 가져오기','single-pdf-preview');trigger.type='button';
+function driveButton(input,label='Drive에서 가져오기'){
+  const trigger=make('button',label,'sales-drive-trigger');trigger.type='button';
   trigger.onclick=()=>{
-    const dialog=make('dialog','','sales-drive-dialog'), heading=make('h3','Google Drive에서 PDF 가져오기');
+    const dialog=make('dialog','','sales-drive-dialog'), heading=make('h3','Google Drive · 8.영업관리_임시작업');
     dialog.setAttribute('aria-label',heading.textContent);
     const search=make('input');search.type='search';search.placeholder='PDF 파일명 검색';search.setAttribute('aria-label','PDF 파일명 검색');
     const list=make('div','','drive-results'),info=make('p'),more=make('button','더 보기'),close=make('button','닫기');
     info.setAttribute('role','status');more.type=close.type='button';more.hidden=true;
-    dialog.append(heading,search,list,info,more,close);root.append(dialog);dialog.showModal();
+    const local=make('button','내 기기에서 선택');local.type='button';local.onclick=()=>{dialog.close();input.click();};
+    dialog.append(heading,search,list,info,more,local,close);root.append(dialog);dialog.showModal();
     let serial=0,timer,page='',picking=false;
     const active=n=>dialog.open&&input.isConnected&&serial===n;
     async function load(append){
@@ -41997,7 +42003,7 @@ function driveButton(input){
             const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();
           }catch(e){info.textContent=e.message;}finally{picking=false;search.disabled=false;more.disabled=false;}
         };list.append(b);}
-        page=reply.nextPageToken||'';more.hidden=!page;info.textContent=list.childElementCount?'':'이 계정에서 열 수 있는 PDF가 없어요.';
+        page=reply.nextPageToken||'';more.hidden=!page;info.textContent=list.childElementCount?'':'이 폴더에 검색 조건과 일치하는 PDF가 없어요.';
       }catch(e){if(active(n))info.textContent=e.message;}
     }
     search.oninput=()=>{serial++;list.replaceChildren();more.hidden=true;clearTimeout(timer);timer=setTimeout(()=>load(false),250);};
@@ -42067,8 +42073,9 @@ function pdfField(name,caption,initial=[],client,round=0) {
   };
   render();
   if(single){
-    const buttons=make('div','','pdf-inline-actions');buttons.append(drop,driveButton(input),single);wrap.append(buttons,list);
-  }else wrap.append(drop,driveButton(input),list);
+    const buttons=make('div','','pdf-inline-actions');buttons.append(driveButton(input,'＋ '+caption+' 추가 · Drive'),single);wrap.append(buttons,list);
+  }else wrap.append(driveButton(input,'＋ '+caption+' 추가 · Drive'),list);
+  drop.hidden=true;wrap.append(drop);
 
   wrap.append(message);
   return {wrap,read:()=>files.slice()};
