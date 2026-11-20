@@ -2145,7 +2145,16 @@ async function wdhqOpenRepresentativeTest(button){
       // Start on the original click so an expired Google grant can be renewed.
       if(!bridge)throw new Error('본진 Drive 연결을 준비 중이에요. 다시 눌러 주세요.');
       if(insurance)await bridge.connectInsuranceHome();
-      else if(!driveReady())await bridge.connect();
+      else{
+        // Use the ordinary Work Center connection. A valid session-bound grant
+        // can also be used by TEST without asking Google to issue it again.
+        if(bridge.ready()||!bridge.insuranceHomeReady())await bridge.connect();
+        try{await bridge.checkWorkTestDrive(signal);}
+        catch(error){
+          if(error.code!=='WORK_DRIVE_EXPIRED'||!sameOwner()||signal.aborted||!navigator.userActivation?.isActive)throw error;
+          await bridge.connect();
+        }
+      }
     }catch(error){
       if(signal.aborted)return;
       if(work||!sameOwner()||!driveReady()){
@@ -2163,7 +2172,8 @@ async function wdhqOpenRepresentativeTest(button){
   const home=location.href.split('#')[0];
   url.searchParams.set('home',home);
   url.searchParams.set('wdhqReturn',home);
-  url.searchParams.set('from','wdhq-test-workroom');
+  if(work)wdhqWriteNavSession('work',button.dataset.wdhqTestFile);
+  url.searchParams.set('from',work?'wdhq':'wdhq-test-workroom');
   wdhqCloseRepresentativeTests();
   window.WDHQBridge?.audit('route_open_external','hq',`test:${button.dataset.wdhqTest}`,'R0',{result:'test',route:url.pathname});
   location.assign(url.href);
@@ -6373,6 +6383,48 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
       return true;
     }catch{return false;}
   }
+  async function checkWorkTestDrive(signal){
+    const identity=driveIdentity(),sessionId=insuranceSession(identity);
+    const loginToken=WDHQ_AUTH_SESSION?.access_token;
+    if(identity?.loginId!==WDHQ_OWNER_LOGIN_ID||wdhqReadSession()?.role!=='owner'||!loginToken)throw new Error('본진 대표 계정을 확인해 주세요.');
+    const current=()=>!signal.aborted&&driveIdentity()?.uid===identity.uid&&wdhqReadSession()?.role==='owner'&&
+      (sessionId?insuranceSession(driveIdentity())===sessionId:WDHQ_AUTH_SESSION?.access_token===loginToken);
+    const keys=[driveValid()&&driveSessionKey(identity.uid),
+      insuranceHomeReady()&&'wd-hq-insurance-home-v1:'+identity.uid].filter(Boolean);
+    const rejected=new Set();
+    for(const key of keys){
+      const raw=sessionStorage.getItem(key),grant=JSON.parse(raw||'null');
+      if(!current()||!grant?.token)break;
+      if(!rejected.has(grant.token)){
+        const response=await fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',{
+          headers:{Authorization:'Bearer '+grant.token},cache:'no-store',credentials:'omit',redirect:'error',
+          signal:AbortSignal.any([signal,AbortSignal.timeout(10000)])
+        }).catch(()=>{throw new Error('Google Drive 응답이 지연됐어요. 업무센터 테스트를 다시 눌러 주세요.');});
+        if(!current())throw new Error('본진 로그인 상태가 바뀌었어요. 업무센터 테스트를 다시 열어 주세요.');
+        if(sessionStorage.getItem(key)!==raw)throw new Error('본진의 Drive 연결이 바뀌었어요. 업무센터 테스트를 다시 열어 주세요.');
+        if(response.ok){
+          const {user}=await response.json();
+          if(!current())throw new Error('본진 로그인 상태가 바뀌었어요. 업무센터 테스트를 다시 열어 주세요.');
+          if(sessionStorage.getItem(key)!==raw)throw new Error('본진의 Drive 연결이 바뀌었어요. 업무센터 테스트를 다시 열어 주세요.');
+          if(user?.emailAddress?.toLowerCase()===DRIVE_ACCOUNTS[identity.loginId]&&grant.expiresAt>Date.now()+30000)return;
+        }else if(response.status!==401){
+          throw new Error('Google Drive 계정 조회에 실패했어요 ('+response.status+'). 잠시 뒤 업무센터 테스트를 다시 눌러 주세요.');
+        }
+        rejected.add(grant.token);
+      }
+      // Invalidate only the grant Google rejected, preserving a newer grant
+      // and any separate Calendar and Tasks credentials.
+      if(current()&&sessionStorage.getItem(key)===raw){
+        if(key===driveSessionKey(identity.uid))sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key,JSON.stringify({...grant,expiresAt:0}));
+      }
+    }
+    if(!current())throw new Error('본진 로그인 상태가 바뀌었어요. 업무센터 테스트를 다시 열어 주세요.');
+    paintCompanyDrive();
+    const error=new Error('저장된 Drive 연결을 다시 확인해야 해요. 업무센터 테스트를 한 번 더 눌러 본진에서 갱신해 주세요.');
+    error.code='WORK_DRIVE_EXPIRED';
+    throw error;
+  }
   function paintCompanyDrive(){
     const identity=driveIdentity();
     companyDriveButton.hidden=!identity;
@@ -6471,7 +6523,7 @@ body.wdhq-auth-locked #wdhq-talk-panel,body.wdhq-auth-checking #wdhq-talk-panel{
   }
 
   // Only expose actions and readiness, never the raw Google token.
-  window.WDHQCompanyDrive=Object.freeze({connect:()=>driveConnect(),ready:driveValid,connectInsuranceHome:()=>driveConnect(true),insuranceHomeReady});
+  window.WDHQCompanyDrive=Object.freeze({connect:()=>driveConnect(),ready:driveValid,connectInsuranceHome:()=>driveConnect(true),insuranceHomeReady,checkWorkTestDrive});
 
   companyDriveButton.onclick=()=>{
     void driveConnect().catch(error=>toast(error.message||'Drive 연결을 확인해 주세요.'));

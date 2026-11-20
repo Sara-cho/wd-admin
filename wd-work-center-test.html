@@ -2758,6 +2758,7 @@ function forgetWorkspaceDrive(userId,loginId){
   }catch{}
 }
 let rejectedCompanyDriveToken='';
+let managerDriveNotice=null;
 function currentOwnerSessionId(userId){
   if(!userId||activeWorkAuthKey!==hqSessionKey)return '';
   try{
@@ -2782,16 +2783,22 @@ function discardStaleOwnerDrive(){
   managerDriveSession=null;
   return true;
 }
-async function restoreCompanyDriveSession(){
+async function restoreCompanyDriveSession(report=()=>{}){
   if(currentUser!=='manager')return null;
   const userId=readHqSession()?.user?.id;
   if(!userId)return null;
   const candidates=[loadCachedDriveSession(workspaceDriveSessionKey(userId)),ownerHomeDriveSession(userId),
     loadCachedDriveSession(companyDriveSessionKey,driveWriteScope)].filter(saved=>saved?.scope===driveWriteScope&&saved.token!==rejectedCompanyDriveToken);
-  if(!candidates.length)return null;
-  try{await verifyManagerHqSession();}catch{return null;}
+  if(!candidates.length){
+    report('이 탭에 사용할 수 있는 본진 Drive 연결이 없어요. 본진 TEST작업실에서 업무센터 테스트를 다시 열어 주세요.');
+    return null;
+  }
+  try{await verifyManagerHqSession({reuse:true});}
+  catch(error){report(error.message||'본진 대표 계정을 확인하지 못했어요. 새로고침으로 다시 확인해 주세요.',true);return null;}
   const current=()=>currentUser==='manager'&&readHqSession()?.user?.id===userId;
   const tried=new Set();
+  let problem='Drive 연결이 만료됐어요. 본진에서 업무센터 테스트를 다시 열어 주세요.';
+  let retryable=false;
   for(const saved of candidates){
     if(!current())return null;
     if(tried.has(saved.token))continue;
@@ -2802,21 +2809,30 @@ async function restoreCompanyDriveSession(){
       if(!current())return null;
       if(saved.sessionId&&currentOwnerSessionId(userId)!==saved.sessionId)return null;
       if(saved.expires>Date.now()&&user?.emailAddress?.toLowerCase()===managerDriveAccount)return saved;
+      problem='본진에 등록된 회사 Drive 계정과 일치하지 않아요.';
     }catch(error){
-      if(![401,403].includes(error.status))return null;
-      rejectedCompanyDriveToken=saved.token;
+      if(error.status===401)rejectedCompanyDriveToken=saved.token;
+      else{
+        retryable=true;
+        problem=error.status===403?'Google이 Drive 계정 조회를 허용하지 않았어요 (403). 새로고침으로 다시 확인해 주세요.':
+          'Google Drive가 응답하지 않았어요'+(error.status?' ('+error.status+')':'')+'. 새로고침으로 다시 확인해 주세요.';
+      }
     }
   }
+  report(problem,retryable);
   return null;
 }
 function resumeWorkspaceDrive(identity){
+  if(workDriveStartup)return workDriveStartup;
   const role=currentUser,generation=driveConnectGeneration,staff=activeStaffId;
   const manager=role==='manager';
   const active=()=>currentUser===role&&activeStaffId===staff&&driveConnectGeneration===generation&&
     readHqSession()?.user?.id===identity.user_id;
   const pending=(async()=>{
     try{
-      const saved=await (manager?restoreCompanyDriveSession():restoreStaffDriveSession());
+      let notice=null;
+      const saved=await (manager?restoreCompanyDriveSession((message,retryable=false)=>{notice={message,retryable};}):restoreStaffDriveSession());
+      if(manager&&active())managerDriveNotice=saved?null:notice;
       if(!saved||!active())return;
       if(saved.expires<=Date.now())return;
       if(manager)managerDriveSession=saved;
@@ -2831,6 +2847,7 @@ function resumeWorkspaceDrive(identity){
     workDriveStartup=null;
     if(active())syncWorkCenterDriveButton();
   });
+  return pending;
 }
 function staffDriveSessionKey(){
   return companyDriveSessionKey+'_staff_'+hqStaffLoginId;
@@ -3823,14 +3840,20 @@ function bindNativeDrivePage(){
   const load=async()=>{
     const request=++listRequest;
     globalSearch=!manual&&!!search.value.trim();loading=true;rows=[];clearReader();
+    refresh.disabled=true;
+    status.hidden=false;status.textContent='기존 Drive 연결을 확인하는 중…';
     if(workDriveStartup)await workDriveStartup;
+    if(!active()||request!==listRequest)return;
+    if(currentUser==='manager'&&managerWorkIdentity&&!(session()?.expires>Date.now())){
+      await resumeWorkspaceDrive(managerWorkIdentity);
+    }
     if(!active()||request!==listRequest)return;
     const verified=session();
     if(!verified||verified.expires<=Date.now()){
       syncWorkCenterDriveButton();
-      refresh.disabled=true;add.hidden=true;
-      status.hidden=false;status.textContent='상단에서 Drive 연결을 갱신해 주세요.';
-      list.innerHTML='<p class="empty">Drive 연결 후 회사 자료를 불러옵니다.</p>';
+      loading=false;refresh.disabled=false;add.hidden=true;search.disabled=true;
+      status.hidden=false;status.textContent=currentUser==='manager'&&managerDriveNotice?.message||'상단에서 Drive 연결을 확인해 주세요.';
+      list.innerHTML='<p class="empty">아직 자료 목록을 불러오지 못했어요.</p>';
       return;
     }
     add.hidden=verified.scope!==driveWriteScope||!libraryCan(menu,'upload');
@@ -6800,7 +6823,8 @@ function syncWorkCenterDriveButton(){
   if(!button)return;
   const session=workCenterDriveSession();
   const required=currentUser==='manager'?driveWriteScope:driveSessionScope();
-  button.hidden=enrolledDriveStaff()||S.nav==='ideas'||!workCenterDriveEntered||!!workDriveStartup||(currentUser==='employee'&&!workspaceDriveAccount())||
+  button.hidden=enrolledDriveStaff()||S.nav==='ideas'||!workCenterDriveEntered||!!workDriveStartup||
+    (currentUser==='manager'&&drivePageMenus.has(S.nav)&&managerDriveNotice?.retryable)||(currentUser==='employee'&&!workspaceDriveAccount())||
     !!(session&&session.expires>Date.now()&&(required!==driveWriteScope||session.scope===driveWriteScope));
   button.onclick=workCenterEntry;
 }
