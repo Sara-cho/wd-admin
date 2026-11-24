@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WD WAVE | 스탭 실무업무보고</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WD WAVE 업무센터 TEST</title>
 
 
 
@@ -1280,6 +1280,24 @@ iframe.wd98-native-preview{height:clamp(280px,50vh,550px)}
 .workGoogleCard [data-work-google-retry][hidden]{display:none}
 .workGoogleHelp{display:none;margin:14px auto 0;width:max-content}
 .workGoogleCard[data-needs-hq] .workGoogleHelp{display:block}
+</style>
+<style id="wd-myone-test-css">
+.wd-wc-test-primary,.wd-wc-test-secondary{display:contents}
+.wd-myone-diary-test{margin-bottom:16px}
+.wd-myone-diary-test summary{font-weight:700;color:var(--purple-dark);cursor:pointer;min-height:44px;padding:7px 0}
+.wd-myone-diary-test textarea{width:100%;font-size:16px;resize:vertical}
+.wd-myone-diary-actions{gap:8px;margin-top:8px}
+.wd-myone-diary-test button{min-height:44px}
+.wd-myone-diary-test h3{font-size:15px;margin-bottom:7px}
+.wd-myone-diary-test ul{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+#myoneDiaryTestBody{margin-top:12px;padding:12px;background:var(--purple-soft);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:760px){
+  .wd92-sidebar .wd-wc-test-nav{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;overflow:visible;padding-bottom:5px}
+  .wd-wc-test-primary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .wd92-sidebar .wd-wc-test-primary button{width:100%;min-width:0;padding:6px 8px;font-size:.86rem;white-space:normal}
+  .wd-wc-test-secondary{display:flex;gap:5px;min-width:0;overflow-x:auto;padding:1px 0 6px}
+  .wd-wc-test-secondary button{flex:0 0 auto}
+}
 </style></head><body><div id="root"></div><script>
 'use strict';
 const KEY='wdwave_mina_v05', IDB='wdwave_mina_files_v05';
@@ -1545,7 +1563,10 @@ function sidebarIcon(id){
     <g fill="none" stroke="${line}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">${art.replaceAll('@','fill="url(#'+gradient+')"')}</g></svg>`;
 }
 
-function shell(content){const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const managerHome=currentUser==='manager'&&S.nav==='managerHome';let navContent=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span></button>`).join('');return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 업무지시 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>업무보고 ${S.tasks.reduce((total,task)=>total+dayReportCount(task),0)}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small wd148-drive-renew" id="renewWorkCenterDrive" type="button" hidden>Drive 다시 연결</button><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
+function shell(content){const isTestManager=isWorkCenterTest()&&currentUser==='manager';const nav=workspaceMenus(),labels=Object.fromEntries(nav.map(([id,label])=>[id,label]));const managerHome=currentUser==='manager'&&S.nav==='managerHome';const navItems=nav.map((x,i)=>`${i===0?'<div class="nav-section first">근무 · 업무</div>':sharedMenus.some(([id])=>id===x[0])&&!sharedMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">자료 · 보관</div>':sensitiveMenus.some(([id])=>id===x[0])&&!sensitiveMenus.some(([id])=>id===nav[i-1][0])?'<div class="nav-section">행정 · 정산</div>':''}<button data-nav="${x[0]}" class="${S.nav===x[0]?'active':''}" ${S.nav===x[0]?'aria-current="page"':''}><span class="wd92-nav-art">${sidebarIcon(x[0])}</span><span class="wd92-nav-label">${x[1]}</span></button>`);const navContent=isTestManager?
+    '<div class="wd-wc-test-primary">'+navItems.slice(0,navMgr.length).join('')+'</div>'+
+    '<div class="wd-wc-test-secondary">'+navItems.slice(navMgr.length).join('')+'</div>':navItems.join('');
+    return `<div class="app"><aside class="wd92-sidebar"><div class="brand"><div class="logo"><span class="logoMark">W</span>WD WAVE</div><small>STAFF WORKSPACE</small></div>${currentUser==='manager'||isEmployeeWorkspace()?'<a class="primary nav-action wd94-home-control" href="./" target="_top">WD 본진 홈</a>':`<button class="primary nav-action wd94-home-control" type="button" data-nav="attendance">${esc(staffName())} 업무센터</button>`}<nav class="nav${isTestManager?' wd-wc-test-nav':''}" aria-label="업무센터 메뉴">${navContent}</nav><div class="sideBottom"><strong>${currentUser==='manager'?'지점장 · 업무관리':esc(staffName())+' · 실무업무보고'}</strong>2026년 11월 · 업무지시 ${S.tasks.filter(task=>!task.dailyJournal).length}건<br>업무보고 ${S.tasks.reduce((total,task)=>total+dayReportCount(task),0)}건</div></aside><main class="main"><header class="topbar${managerHome?' wd88-home-topbar':''}">${managerHome?'<h1 class="wd88-work-title">관리자 업무센터</h1>':currentUser==='employee'?`<div class="wd88-work-title">${esc(staffName())}님 업무센터</div>`:`<div class="breadcrumb">워크스페이스 / <strong>${labels[S.nav]||'업무진행판'}</strong></div>`}<div class="row"><span class="badge">${currentUser==='manager'?'지점장 · 관리자':(esc(staffName())+(isEmployeeWorkspace()?' · 직원':' · 스탭'))}</span><button class="small wd148-drive-renew" id="renewWorkCenterDrive" type="button" hidden>Drive 다시 연결</button><button class="small" id="logout">로그아웃</button></div></header><div class="content${currentUser==='employee'&&S.nav==='attendance'?' wd95-attendance-content':''}">${content}</div></main></div>${talkAvailable()?'<button class="wd108-talk-fab" id="openWorkspaceTalk" type="button" aria-controls="workspaceTalk" aria-expanded="false" aria-label="WD TALK 열기">💬 TALK <span id="workspaceTalkBadge" class="wd110-talk-badge" hidden></span></button>':''}${(currentUser==='manager'||profileMenus(staffById(activeStaffId)).includes('ideas'))?'<button class="stickyFab wd35-notefab" id="openSticky" aria-controls="stickyDock" aria-expanded="false" title="스티커메모 열기" aria-label="스티커메모 열기"><svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 4H19L23 8V23H6Z" fill="#FFFBE5" stroke="#9B7627" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 4V9H23M9 11H15M9 15H13M9 19H12" stroke="#C5A350" stroke-width="1.4" stroke-linecap="round"/><path d="M14 21L15 17L23 9L26 12L18 20Z" fill="#D6A747" stroke="#856126" stroke-width="1.3" stroke-linejoin="round"/><path d="M21 11L24 14" stroke="#856126" stroke-width="1.2"/></svg></button>':''}`}
 function dayReportCount(t){return t.reports.length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.reports.length,0)}
 function dayFeedbackCount(t){return t.feedback.filter(f=>!f.reviewedOnly).length+Object.values(t.workUnits||{}).reduce((n,u)=>n+u.feedback.length,0)}
 function taskButton(t,i){return `<button class="taskTile ${S.selected===t.id?'selected':''}" data-task="${t.id}"><small>DAY ${String(i+1).padStart(2,'0')} · ${esc(t.date)}</small><b>${esc(t.title)}</b><span class="pill ${status(t)==='업무 완료'?'green':status(t)==='보완 요청'?'orange':''}">${status(t)}</span><small style="display:block;margin-top:8px">${dayReportCount(t)}회 제출 · ${dayFeedbackCount(t)}건 피드백</small></button>`}
@@ -7795,12 +7816,140 @@ function workDriveTitle(title,folder){
   </div>`;
 }
 
+const isWorkCenterTest=()=>location.pathname.endsWith('/wd-work-center-test.html');
+const myoneDiaryTestAvailable=()=>isWorkCenterTest()&&currentUser==='manager'&&workCenterDriveEntered;
+
+function parseMyoneDiaryTest(raw){
+  const text=raw.replace(/\r\n?/g,'\n').trim();
+  const [header,...lines]=text.split('\n');
+  const dateParts=/^(\d{4})년 (\d{1,2})월 (\d{1,2})일(?: [월화수목금토일]요일)? 업무일지$/.exec(header);
+  const date=dateParts?[dateParts[1],dateParts[2].padStart(2,'0'),dateParts[3].padStart(2,'0')].join('-'):'';
+  const body=lines.join('\n').trim();
+  if(!validAttendanceDay(date)||!/^(오늘 한 일|진행 중인 일|다음 행동)\n\S/m.test(body)||text.length>12500){
+    throw new Error('마이온에서 “초안 복사”를 누른 뒤 업무일지 전체를 붙여넣어 주세요.');
+  }
+  return {date,body};
+}
+
+function myoneDiaryTestKey(){
+  if(!myoneDiaryTestAvailable())throw new Error('업무센터 TEST 관리자 화면에서만 검사할 수 있어요.');
+  return 'wd-work-center.myone-diary-test.v1:'+managerHqAccount.uid;
+}
+
+function loadMyoneDiaryTestRows(){
+  const raw=localStorage.getItem(myoneDiaryTestKey());
+  if(!raw)return [];
+  let rows;
+  try{rows=JSON.parse(raw);}
+  catch{}
+  if(!Array.isArray(rows)||rows.some(row=>!row||typeof row.id!=='string'||typeof row.date!=='string'||
+      !validAttendanceDay(row.date)||typeof row.body!=='string')){
+    throw new Error('이 브라우저의 테스트 일지를 읽을 수 없어요. 기존 데이터는 보존했어요.');
+  }
+  return rows;
+}
+
+async function saveMyoneDiaryTest(raw){
+  const diary=parseMyoneDiaryTest(raw),key=myoneDiaryTestKey();
+  const save=()=>{
+    const rows=loadMyoneDiaryTestRows();
+    const existing=rows.find(row=>row.date===diary.date&&row.body===diary.body);
+    if(existing)return {row:existing,duplicate:true};
+    const row={...diary,id:crypto.randomUUID()};
+    localStorage.setItem(key,JSON.stringify([row,...rows]));
+    const confirmed=loadMyoneDiaryTestRows().find(item=>item.id===row.id);
+    if(!confirmed||confirmed.body!==diary.body||confirmed.date!==diary.date){
+      throw new Error('저장한 일지를 다시 읽지 못했어요.');
+    }
+    return {row:confirmed,duplicate:false};
+  };
+  const lock=globalThis.navigator?.locks;
+  return lock?lock.request(key,save):save();
+}
+
+function myoneDiaryTestMarkup(){
+  if(!myoneDiaryTestAvailable())return '';
+  return `<details class="card wd-myone-diary-test" id="myoneDiaryTestPanel">
+    <summary>마이온 일지 검수</summary>
+    <p class="smallText">마이온에서 가상 일지를 작성한 뒤 ‘초안 복사’를 눌러 여기에 붙여넣으세요. 테스트 일지는 이 브라우저에만 저장돼요.</p>
+    <form id="myoneDiaryTestForm">
+      <label for="myoneDiaryTestSource">마이온 테스트 일지</label>
+      <textarea id="myoneDiaryTestSource" maxlength="12500" rows="5" required></textarea>
+      <div class="actions wd-myone-diary-actions">
+        <button type="button" class="small" id="fillMyoneDiaryTest">가상 예시 넣기</button>
+        <button type="submit" class="primary" id="saveMyoneDiaryTest">테스트 일지 저장</button>
+      </div>
+    </form>
+    <p class="smallText" id="myoneDiaryTestStatus" role="status"></p>
+    <div id="myoneDiaryTestList"></div>
+    <article id="myoneDiaryTestBody" aria-label="마이온 테스트 일지 본문" hidden></article>
+  </details>`;
+}
+
+function bindMyoneDiaryTest(){
+  const panel=$('myoneDiaryTestPanel');
+  if(!panel||!myoneDiaryTestAvailable())return;
+  const source=$('myoneDiaryTestSource'),submit=$('saveMyoneDiaryTest'),form=$('myoneDiaryTestForm');
+  const status=$('myoneDiaryTestStatus'),list=$('myoneDiaryTestList'),preview=$('myoneDiaryTestBody');
+  const active=()=>panel.isConnected&&myoneDiaryTestAvailable()&&S.nav==='review';
+  const message=error=>error?.name==='QuotaExceededError'||error?.name==='SecurityError'?
+    '이 브라우저에서 일지를 저장하거나 읽을 수 없어요.':error.message;
+  const refresh=()=>{
+    const rows=loadMyoneDiaryTestRows();
+    list.innerHTML=rows.length?`<h3>저장한 테스트 일지 ${rows.length}건</h3><ul>${rows.map((row,index)=>
+      `<li><button type="button" class="small" data-myone-test-index="${index}">${esc(attendanceDate(row.date))} 일지 보기</button></li>`
+    ).join('')}</ul>`:'<p class="smallText">아직 저장한 테스트 일지가 없어요.</p>';
+    list.querySelectorAll('[data-myone-test-index]').forEach(button=>{
+      const id=rows[Number(button.dataset.myoneTestIndex)].id;
+      button.onclick=()=>{
+        if(!active())return;
+        try{
+          const row=loadMyoneDiaryTestRows().find(item=>item.id===id);
+          if(!row)throw new Error('해당 일지를 찾지 못했어요.');
+          preview.textContent=attendanceDate(row.date)+' 업무일지\n\n'+row.body;
+          preview.hidden=false;
+          preview.tabIndex=-1;
+          preview.focus();
+        }catch(error){
+          preview.hidden=true;
+          status.textContent=message(error);
+        }
+      };
+    });
+  };
+  $('fillMyoneDiaryTest').onclick=()=>{
+    const [year,month,day]=localDay().split('-');
+    source.value=`${year}년 ${Number(month)}월 ${Number(day)}일 업무일지\n\n오늘 한 일\n가상 강의 문의에 회신\n\n다음 행동\n가상 제안서 준비`;
+    source.focus();
+  };
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(submit.disabled||!active())return;
+    submit.disabled=true;
+    status.textContent='';
+    try{
+      const result=await saveMyoneDiaryTest(source.value);
+      if(!active())return;
+      refresh();
+      preview.hidden=true;
+      status.textContent=result.duplicate?'이미 저장한 일지예요. 목록에서 다시 열 수 있어요.':'저장했어요. 목록에서 일지를 다시 열 수 있어요.';
+    }catch(error){
+      if(active())status.textContent=message(error);
+    }finally{
+      if(active())submit.disabled=false;
+    }
+  };
+  try{refresh();}
+  catch(error){status.textContent=message(error);}
+}
+
 function workReportView(){
   const profiles=reportStaffProfiles();
   const calendar=`<details class="wd123-calendar-pop"><summary id="reportCalendarButton" aria-label="제출 달력" title="제출 달력">
     <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/></svg>
     </summary><div id="driveReportCalendar"></div></details>`;
   return `${workDriveTitle('업무보고',employeeDriveFolders.journal)}
+    ${myoneDiaryTestMarkup()}
     <div class="wd135-work-layout">
       ${staffRosterPanel('driveReportStaff',profiles,driveReportFilters.staff,'report')}
       <section class="card" aria-labelledby="reportListTitle">
@@ -7840,6 +7989,7 @@ async function readDriveReportBody(row,token){
 }
 
 function bindWorkReportView(){
+  bindMyoneDiaryTest();
   const staff=$('driveReportStaff'),picker=$('driveReportDate'),output=$('managerDriveRows');
   const calendar=$('driveReportCalendar'),preview=$('driveReportPreview');
   let remote={rows:[],incomplete:false},staffId=driveReportFilters.staff,month='',selected='',selectedDate='',request=0;
