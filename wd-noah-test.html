@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WAVE ONE · 본진 테스트</title>
+<p id="status">본진 테스트를 여는 중입니다.</p>
+<script>
+const links = "<div class=\"extgrid\">\n<a class=\"ext\" href=\"https://mail.google.com/mail/u/?authuser=kfcyk20%40gmail.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fmail.google.com\" alt=\"\"></span><b>Gmail</b></a>\n<a class=\"ext\" href=\"https://drive.google.com/\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fdrive.google.com\" alt=\"\"></span><b>Drive</b></a>\n<a class=\"ext\" href=\"https://github.com/\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fgithub.com\" alt=\"\"></span><b>GitHub</b></a>\n<a class=\"ext\" href=\"https://supabase.com/dashboard/\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fsupabase.com\" alt=\"\"></span><b>Supabase</b></a>\n<a class=\"ext\" href=\"https://business.kakao.com/space/938799/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fbusiness.kakao.com\" alt=\"\"></span><b>카카오채널</b></a>\n<a class=\"ext\" href=\"https://blog.naver.com/wdwave\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fblog.naver.com\" alt=\"\"></span><b>네이버 블로그</b></a>\n<a class=\"ext\" href=\"https://www.instagram.com/wdwave_official\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fwww.instagram.com\" alt=\"\"></span><b>인스타그램</b></a>\n<a class=\"ext\" href=\"https://www.youtube.com/@%EC%82%AC%EB%9D%BC%EC%9D%98%EC%9E%91%EC%97%85%EC%8B%A4\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fwww.youtube.com\" alt=\"\"></span><b>유튜브</b></a>\n<a class=\"ext\" href=\"https://insurance.wdwave.kr/\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Finsurance.wdwave.kr\" alt=\"\"></span><b>보험 홈페이지</b></a>\n<a class=\"ext\" href=\"https://wdwave.kr/\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"ico wdhq-work-logo\" aria-hidden=\"true\"><img src=\"https://www.google.com/s2/favicons?sz=64&amp;domain_url=https%3A%2F%2Fwdwave.kr\" alt=\"\"></span><b>브랜딩 홈페이지</b></a>\n</div>";
+const layout = "<style id=\"wd-home-links-compact\">\n@media(min-width:1200px){\n body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .extgrid{grid-template-columns:repeat(10,minmax(0,1fr))!important;gap:6px!important}\n body.wdhq-mockup-board #wdhq-mockup-root .wdm-lower>#external .ext{min-width:0;min-height:62px!important;padding:5px 2px!important;gap:4px!important}\n body.wdhq-mockup-board #wdhq-mockup-root .wdm-board{min-height:0!important;height:clamp(280px,calc(100dvh - 360px),565px)!important}\n body.wdhq-mockup-board #wdhq-mockup-root .wdm-column{min-height:0!important}\n body.wdhq-mockup-board #wdhq-mockup-root .wdm-scroll{min-height:0;overflow-y:auto}\n}\n</style>";
+async function openTest() {
+  const response = await fetch('./index.html', {cache:'no-cache'});
+  if (!response.ok) throw Error('home unavailable');
+  const html = await response.text();
+  const home = new DOMParser().parseFromString(html, 'text/html');
+  const grid = home.querySelector('#external .extgrid');
+  if (!grid) throw Error('links unavailable');
+  grid.outerHTML = links;
+  home.body.insertAdjacentHTML('beforeend',layout);
+  document.open();
+  document.write('<!doctype html>\n' + home.documentElement.outerHTML);
+  document.close();
+}
+openTest().catch(() => {
+  document.getElementById('status').textContent = '본진 테스트를 열 수 없습니다. 새로고침해 주세요.';
+});
+</script></html>
