@@ -1349,6 +1349,27 @@ html.embedded-talk #root>button:not([hidden]){min-width:42px;min-height:42px;mar
   .wc-tools .wc-talk-pc {display:none}
   .wc-tools .wc-tool-list svg {width:20px;height:20px}
   .wc-tools .wc-tool-toggle {display:grid!important;place-items:center;width:46px;height:46px;padding:0;color:white;background:#705091;border:0;border-radius:16px;box-shadow:0 4px 14px #34243e24;font-size:23px}
+  #nativeDriveRefresh,#refreshEmployeeOrders,#refreshEmployeeDrive,#refreshTaxPayroll,#officeRefresh,#refreshAccounts,#nativeAdminRefresh,#refreshManagerDrive {display:none!important}
+  .wd-archive-page #nativeDriveCategories {display:flex;flex-wrap:nowrap;gap:0;align-items:stretch;width:100%;border-bottom:1px solid #ded8e6}
+  .wd-archive-page #nativeDriveCategories button {flex:1 1 auto;min-width:0;padding:8px 2px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:#6b6273;font-size:clamp(11px,3.3vw,15px);white-space:nowrap;letter-spacing:-.055em}
+  .wd-archive-page #nativeDriveCategories [aria-pressed=true] {border-bottom-color:#76539b;color:#553474;font-weight:750}
+  .wd-archive-page #nativeDriveCategories [data-native-category="정리이전자료"],.wd-archive-page #archiveKinds button {display:none!important}
+  .wd-archive-page .work-archive-browser {grid-template-columns:minmax(0,1fr)}
+  .wd-archive-page #archiveKinds {display:block;border:0;padding:0;background:transparent}
+  .wd-archive-page #archiveKinds select {display:block!important;min-height:44px;width:auto;min-width:105px;margin:0;padding:6px 12px;border:1px solid #dad3e2;border-radius:10px;color:#533c69;background:white;font-weight:650}
+  .wc-archive-dialog {position:fixed;box-sizing:border-box;width:min(92vw,540px);max-width:calc(100vw - 20px);max-height:84vh;max-height:84dvh;padding:0;border:0;border-radius:18px;overflow:auto;background:#fff;box-shadow:0 12px 48px #24172e30}
+  .wc-archive-dialog::backdrop {background:#251d2d70}
+  .wc-archive-dialog #nativeDriveReader {width:100%;max-height:none;margin:0;border:0}
+  .wc-archive-dialog .wd101-reader-header {position:sticky;top:0;z-index:1}
+  .office-workspace>.wd109-office-tabs {display:flex;flex-wrap:nowrap;align-items:stretch;gap:2px}
+  .office-workspace>.wd109-office-tabs [role=tab] {min-width:0;flex:1 1 auto;min-height:44px;padding:6px 2px;white-space:nowrap;font-size:clamp(12px,3.4vw,15px);letter-spacing:-.05em}
+  .office-workspace>.wd109-office-tabs [data-office-settings] {display:grid;place-items:center;flex:0 0 34px}
+  [data-office-settings] .wc-settings-label {display:none}
+  [data-office-settings] .wc-settings-symbol {display:grid!important}
+  [data-office-settings] svg {width:19px;height:19px}
+  .wc-tools .wc-tool-toggle svg {width:25px;height:25px}
+  .wc-tools #openSticky>svg {display:none}
+  #root .wc-tools .wc-tool-list .wc-tool-symbol svg path {fill:none;stroke:currentColor}
   #workspaceTalk.wd109-talk-dock {right:8px;left:8px;top:8px;width:auto;bottom:calc(122px + env(safe-area-inset-bottom))}
 }
 </style>
@@ -3836,6 +3857,8 @@ function openArchiveAction(action,row,file,perform,archive=false){
   else fields=`<p><strong>${esc(row.title)}</strong></p><p>삭제하시겠습니까?</p><p>${driveOnly?'이 파일을 Google Drive 휴지통으로 이동합니다.':'이 항목을 작업결과 보관에서 삭제합니다. 연결된 Drive 파일은 보관됩니다.'}</p>`;
   showModal(`<form id="archiveActionForm">${fields}<p class="smallText" id="archiveActionStatus" role="status"></p>
     <div class="actions"><button class="${action==='delete'?'danger':'primary'}" id="archiveActionSubmit" type="submit">${label}${action==='edit'?' 저장':''}</button></div></form>`,'자료 '+label);
+  const readerDialog=document.querySelector('dialog.wc-archive-dialog[open]');
+  if(readerDialog)readerDialog.append($('modalLayer'));
   const form=$('archiveActionForm'),submit=$('archiveActionSubmit'),status=$('archiveActionStatus');
   form.onsubmit=async event=>{
     event.preventDefault();
@@ -3900,6 +3923,10 @@ function bindArchiveKinds(menu,repaint){
   if(!nav)return null;
   let selected='전체';
   const buttons=new Map();
+  const select=document.createElement('select');
+  select.className='wc-phone-only';select.setAttribute('aria-label','자료 유형');
+  nav.append(select);
+  select.onchange=()=>{selected=select.value;repaint()};
   for(const kind of ['전체',...archiveSubcategories,'미분류']){
     const button=document.createElement('button'),count=document.createElement('span');
     button.type='button';
@@ -3908,16 +3935,19 @@ function bindArchiveKinds(menu,repaint){
     count.className='wd-archive-count';
     button.append(kind,count);nav.append(button);
     button.onclick=()=>{selected=kind;repaint();};
-    buttons.set(kind,{button,count});
+    const option=new Option(kind,kind);select.add(option);
+    buttons.set(kind,{button,count,option});
   }
   return {
-    reset(){selected='전체';},
+    reset(){selected='전체';select.value=selected;},
     filter(entries){
       const totals=new Map();
       for(const entry of entries)totals.set(entry.kind,(totals.get(entry.kind)||0)+1);
-      for(const [kind,{button,count}] of buttons){
+      select.value=selected;
+      for(const [kind,{button,count,option}] of buttons){
         const total=kind==='전체'?entries.length:totals.get(kind)||0;
         button.hidden=kind==='미분류'&&!total&&selected!==kind;
+        option.hidden=kind==='미분류';
         button.setAttribute('aria-pressed',String(kind===selected));count.textContent=total;
       }
       const order=[...archiveSubcategories,'미분류'];
@@ -3941,6 +3971,7 @@ function paintLibraryTable(list,rows,search,manual,selected,clearReader,choose,k
   const words=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const globalSearch=!manual&&words.length>0;
   const matches=rows.map(row=>({row,...(manual?{title:row.title,kind:''}:archiveDisplay(row))})).filter(({row,title,kind})=>{
+    if(!manual && workPhone.matches && !globalSearch && row.category==='정리이전자료')return false;
     const searchable=[title,kind,row.category,row.title,row.name,...(row.attachments||[]).map(file=>file.title||file.name)].join(' ').toLowerCase();
     return words.every(word=>searchable.includes(word));
   });
@@ -3967,6 +3998,11 @@ function markLibrarySelection(list,selected){
         button.closest('tr').classList.toggle('wd98-selected',current);
       });
 }
+function dismissArchiveDialog(reader){
+  const dialog=reader.closest('.wc-archive-dialog');
+  if(!dialog)return;
+  dialog.close();dialog.replaceWith(reader);
+}
 function openLibraryReader(reader,list,row,onClose,archive=false){
   reader.hidden=false;
     reader.innerHTML=`<header class="wd101-reader-header"><div class="wd101-reader-top">
@@ -3978,7 +4014,23 @@ function openLibraryReader(reader,list,row,onClose,archive=false){
       onClose();
       list.querySelectorAll('[data-native-file]').forEach(button=>{if(button.dataset.nativeFile===row.id)button.focus();});
     };
-    if(typeof matchMedia==='function'&&matchMedia('(max-width:900px)').matches)reader.scrollIntoView({block:'nearest'});
+    if(archive && workPhone.matches){
+      const dialog=document.createElement('dialog');
+      dialog.className='wc-archive-dialog';dialog.setAttribute('aria-label','작업결과 상세');
+      reader.before(dialog);dialog.append(reader);
+      const close=reader.querySelector('.wd101-reader-close');
+      dialog.oncancel=event=>{
+        event.preventDefault();
+        const editor=dialog.querySelector('#closeModal');
+        if(editor)editor.click();else close.click();
+      };
+      dialog.onclick=event=>{
+        if(event.target!==dialog)return;
+        const r=dialog.getBoundingClientRect();
+        if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close.click();
+      };
+      dialog.showModal();close.focus();
+    }else if(matchMedia('(max-width:900px)').matches)reader.scrollIntoView({block:'nearest'});
 }
 function bindNativeDrivePage(){
   const panel=$('nativeDrivePage'),status=$('nativeDriveStatus'),refresh=$('nativeDriveRefresh'),add=$('nativeDriveAdd');
@@ -3989,7 +4041,7 @@ function bindNativeDrivePage(){
   let rows=[],category=groups[0],selected='',readId=0,listRequest=0,globalSearch=false,loading=false;
   const reader=$('nativeDriveReader'),list=$('nativeDriveList'),search=$('nativeDriveSearch'),tabs=$('nativeDriveCategories');
   const clearReader=()=>{
-    ++readId;selected='';releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();
+    ++readId;selected='';dismissArchiveDialog(reader);releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();
   };
   const displayPreview=async(row,body,request)=>{
     releaseNativeDrivePreview();
@@ -5470,7 +5522,7 @@ const officeChartColors=['#6737c4','#9c6ade','#c2a5ef','#248c7d','#e6933b','#748
 function officeLedgerView(){
   return `<div class="titleRow"><h1>사무실 운영</h1></div><section class="card office-workspace">
     <div class="wd109-tabs wd109-office-tabs" role="tablist" aria-label="사무실 운영 분류">
-      ${officeTabs.map((label,i)=>`<button type="button" id="officeTab${i}" role="tab" aria-controls="officePanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join('')}
+      ${officeTabs.map((label,i)=>`<button type="button" id="officeTab${i}" ${label==='관리'?'data-office-settings aria-label="관리" title="관리"':''} role="tab" aria-controls="officePanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label==='관리'?'<span class="wc-settings-label">관리</span><span class="wc-phone-only wc-settings-symbol" aria-hidden="true">'+phoneIcon('M10 3h4l.5 2.4 2 .9 2.1-1.2 2 3.5-1.8 1.6.2 2.3 1.7 1.6-2 3.5-2.3-.8-2 1-.4 2.2h-4L9.5 18l-2-.9-2.1 1.1-2-3.5 1.8-1.6-.1-2.3-1.8-1.6 2-3.5 2.3.9 2-1z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z')+'</span>':label}</button>`).join('')}
     </div><section id="officePanel" role="tabpanel" aria-labelledby="officeTab0">
       <div id="officeManagementNav" hidden>
         <div class="wd109-tabs wd109-office-tabs" role="tablist" aria-label="관리 메뉴">
@@ -9766,7 +9818,7 @@ function phoneIcon(path){
 function setupPhoneTools(app){
   const root=app.parentElement,tools=document.createElement('div');
   tools.className='wc-tools';
-  tools.innerHTML='<div id="wcToolList" class="wc-tool-list"></div><button type="button" class="wc-phone-only wc-tool-toggle" aria-label="업무 도구" aria-expanded="false" aria-controls="wcToolList">▦</button>';
+  tools.innerHTML='<div id="wcToolList" class="wc-tool-list"></div><button type="button" class="wc-phone-only wc-tool-toggle" aria-label="업무 도구" aria-expanded="false" aria-controls="wcToolList">'+phoneIcon('M12 21v-7M12 16C6 16 3 12 3 7c6 0 10 3 9 9z M12 13c0-6 4-10 10-10 0 6-4 10-10 10z')+'</button>';
   const list=tools.firstElementChild,toggle=tools.lastElementChild;
   const talk=root.querySelector('#openWorkspaceTalk'),sticky=root.querySelector('#openSticky');
   if(talk){
@@ -9778,7 +9830,7 @@ function setupPhoneTools(app){
     list.append(talk);
   }
   if(sticky){
-    sticky.insertAdjacentHTML('beforeend','<span class="wc-phone-only wc-tool-label">스티커메모</span>');
+    sticky.insertAdjacentHTML('beforeend','<span class="wc-phone-only wc-tool-symbol">'+phoneIcon('M4 3h16v12l-6 6H4z M14 21v-6h6 M7 8h10M7 11h7')+'</span><span class="wc-phone-only wc-tool-label">스티커메모</span>');
     list.append(sticky);
   }
   const home=document.createElement('a');
@@ -9914,7 +9966,7 @@ function setupWorkPhone(){
 }
 workPhone.addEventListener('change',()=>{
   if(workPhone.matches)setupWorkPhone();
-  else {closePhoneTools();document.querySelector('.wc-phone-menu[open]')?.close()}
+  else {closePhoneTools();document.querySelector('.wc-phone-menu[open]')?.close();document.querySelector('.wc-archive-dialog .wd101-reader-close')?.click();}
 });
 
 function render(){releaseNativeDrivePreview();if(!currentUser){loginView();return}
@@ -10132,7 +10184,7 @@ function bindEnrolledLibrary(){
   const manual=menu==='manual';
   let category=groups[0],rows=[],request=0,read=0,selected='',globalSearch=false,loading=false;
   const clearReader=()=>{
-    ++read;selected='';releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();
+    ++read;selected='';dismissArchiveDialog(reader);releaseNativeDrivePreview();reader.hidden=true;reader.replaceChildren();
   };
   const active=()=>panel.isConnected&&enrolledDriveStaff()&&S.nav===menu;
   const button=(parent,label,run)=>{
@@ -10186,7 +10238,7 @@ function bindEnrolledLibrary(){
     if(!category){line.textContent='허용된 자료 분류가 없어요.';return;}
     line.textContent='회사 Drive 자료를 불러오는 중…';
     tabs.replaceChildren();
-    for(const group of groups){const b=button(tabs,group,async()=>{if(category===group&&!globalSearch)return;kinds?.reset();category=group;search.value='';await refresh();});b.setAttribute('aria-pressed',String(group===category));}
+    for(const group of groups){const b=button(tabs,group,async()=>{if(category===group&&!globalSearch)return;kinds?.reset();category=group;search.value='';await refresh();});b.dataset.nativeCategory=group;b.setAttribute('aria-pressed',String(group===category));}
     try{
       const permitted=availableLibraryCategories(menu);
       const result=await loadLibraryGroups(globalSearch?permitted:[category],async group=>{
