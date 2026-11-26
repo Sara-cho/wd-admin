@@ -1289,6 +1289,7 @@ html.embedded-talk #root>button:not([hidden]){min-width:42px;min-height:42px;mar
 </style><style id="work-center-phone-layout">
 @font-face{font-family:HQMobile;src:local("Pretendard Variable"),url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2");font-weight:100 900;font-display:swap}
 .wc-tools,.wc-tool-list {display:contents}
+.wc-archive-action-icon,.wc-archive-table-kind,.wc-date-short {display:none}
 .wc-phone-only {display:none!important}
 @media screen and (max-width:760px) {
   .app {--wc-plum:#58378b;--wc-line:#e3dbea;--wc-safe:env(safe-area-inset-bottom,0px);display:block}
@@ -1358,6 +1359,20 @@ html.embedded-talk #root>button:not([hidden]){min-width:42px;min-height:42px;mar
   .wd-archive-page #archiveKinds {display:block;border:0;padding:0;background:transparent}
   .wd-archive-page #archiveKinds select {display:block!important;min-height:44px;width:auto;min-width:105px;margin:0;padding:6px 12px;border:1px solid #dad3e2;border-radius:10px;color:#533c69;background:white;font-weight:650}
   .wc-archive-dialog {position:fixed;box-sizing:border-box;width:min(92vw,540px);max-width:calc(100vw - 20px);max-height:84vh;max-height:84dvh;padding:0;border:0;border-radius:18px;overflow:auto;background:#fff;box-shadow:0 12px 48px #24172e30}
+  .wd-archive-page .wd98-drive-table {table-layout:fixed;width:100%;font-size:14px}
+  .wd-archive-page .wd98-drive-table :is(th,td):first-child {width:auto;padding:0 8px}
+  .wd-archive-page .wd98-drive-table .wc-archive-table-kind {display:table-cell;width:4.5em}
+  .wd-archive-page .wd98-drive-table :is(th,td):last-child {width:5.8em}
+  .wd-archive-page .wd98-drive-table :is(td,th):not(:first-child) {padding:8px 3px;text-align:center;font-size:12px}
+  .wd-archive-page .wd98-drive-table .wd-archive-entry {display:block}
+  .wd-archive-page .wd-archive-kind,.wd-archive-page .wc-date-long {display:none}
+  .wd-archive-page .wc-date-short {display:inline;font-variant-numeric:tabular-nums}
+  .wd-archive-page .wd-archive-entry>span:last-child {display:block;white-space:normal;overflow-wrap:anywhere}
+  .wc-archive-dialog .wc-archive-action-icon {display:grid;place-items:center}
+  .wc-archive-dialog .wc-archive-action-icon svg {width:20px;height:20px;stroke-linecap:round}
+  .wc-archive-dialog .wc-archive-action-label {display:none}
+  .wc-archive-dialog :is(.wd101-reader-actions,#modalLayer) button:has(.wc-archive-action-icon) {width:44px;min-height:44px;padding:0}
+  .wc-archive-dialog .wd101-reader-actions {flex-wrap:wrap;gap:3px}
   .wc-archive-dialog::backdrop {background:#251d2d70}
   .wc-archive-dialog #nativeDriveReader {width:100%;max-height:none;margin:0;border:0}
   .wc-archive-dialog .wd101-reader-header {position:sticky;top:0;z-index:1}
@@ -2645,7 +2660,7 @@ function canManageMaterial(item,action){
   if(!['archive','manual'].includes(S.nav))return true;
   return libraryCan(S.nav,action)&&availableLibraryCategories(S.nav).includes(localMaterialCategory(item.category));
 }
-function materialTable(rows){return `<table class="wd51-table"><colgroup><col style="width:55px"><col style="width:125px"><col><col style="width:135px"><col style="width:265px"></colgroup><thead><tr><th>번호</th><th>분류</th><th>자료명</th><th>등록일</th><th>관리</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>`<tr><td class="wd51-no">${i+1}</td><td class="wd51-category">${esc(MATERIAL_CATEGORIES[x.category]||'공통자료')}</td><td class="wd51-title"><b>${esc(x.title)}</b><small>${esc(x.file.name)} · ${Math.max(1,Math.round(x.file.size/1024))}KB</small>${x.note?`<p>${nl(x.note)}</p>`:''}</td><td class="wd51-date">${esc((x.at||'').split('오전')[0].split('오후')[0].trim())}</td><td class="wd51-actions"><div><button class="small" data-material-view="${esc(x.id)}">보기</button>${canManageMaterial(x,'edit')?`<button class="small" data-material-edit="${esc(x.id)}">수정</button>`:''}${!['archive','manual'].includes(S.nav)||libraryCan(S.nav,'download')?`<button class="small" data-download="${esc(x.file.id)}">다운로드</button>`:''}${S.nav==='archive'&&canManageMaterial(x,'replace')?`<button class="small" data-material-replace="${esc(x.id)}">교체</button>`:''}${canManageMaterial(x,'delete')?`<button class="small wd51-delete" data-material-delete="${esc(x.id)}">삭제</button>`:''}</div></td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">등록된 자료가 없습니다.</div></td></tr>'}</tbody></table>${lastDeletedMaterial?'<div class="actions"><button class="small" id="undoMaterialDelete">방금 삭제한 자료 복구</button></div>':''}`}
+function materialTable(rows){return `<table class="wd51-table"><colgroup><col style="width:55px"><col style="width:125px"><col><col style="width:135px"><col style="width:265px"></colgroup><thead><tr><th>번호</th><th>분류</th><th>자료명</th><th>등록일</th><th>관리</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>`<tr><td class="wd51-no">${i+1}</td><td class="wd51-category">${esc(MATERIAL_CATEGORIES[x.category]||'공통자료')}</td><td class="wd51-title"><b>${esc(x.title)}</b><small>${esc(x.file.name)} · ${Math.max(1,Math.round(x.file.size/1024))}KB</small>${x.note?`<p>${nl(x.note)}</p>`:''}</td><td class="wd51-date">${esc((x.at||'').split('오전')[0].split('오후')[0].trim())}</td><td class="wd51-actions"><div><button class="small" data-material-view="${esc(x.id)}">보기</button>${canManageMaterial(x,'edit')?`<button class="small" data-material-edit="${esc(x.id)}">수정</button>`:''}${!['archive','manual'].includes(S.nav)||libraryCan(S.nav,'download')?`<button class="small" data-download="${esc(x.file.id)}">다운로드</button>`:''}${S.nav==='archive'&&!canManageMaterial(x,'edit')&&canManageMaterial(x,'replace')?`<button class="small" data-material-replace="${esc(x.id)}">수정</button>`:''}${canManageMaterial(x,'delete')?`<button class="small wd51-delete" data-material-delete="${esc(x.id)}">삭제</button>`:''}</div></td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">등록된 자료가 없습니다.</div></td></tr>'}</tbody></table>${lastDeletedMaterial?'<div class="actions"><button class="small" id="undoMaterialDelete">방금 삭제한 자료 복구</button></div>':''}`}
 function editMaterial(id){let item=(S.materials||[]).find(x=>x.id===id&&!x.deletedAt);if(!item||!canManageMaterial(item,'edit'))return;showModal(`<label>자료 제목</label><input id="editMaterialTitle" value="${esc(item.title)}"><label>분류</label><select id="editMaterialCategory">${Object.entries(MATERIAL_CATEGORIES).map(([key,label])=>`<option value="${key}" ${item.category===key?'selected':''}>${label}</option>`).join('')}</select><label>자료 설명</label><textarea id="editMaterialNote">${esc(item.note||'')}</textarea><label>현재 파일</label><p class="smallText">${esc(item.file.name)}</p>${canManageMaterial(item,'replace')?'<label>파일 교체 (선택)</label><input type="file" id="replaceMaterialFile">':''}<button class="primary" id="saveMaterialEdit" style="margin-top:18px">수정 저장</button>`,'자료 수정');$('saveMaterialEdit').onclick=async()=>{if(!canManageMaterial(item,'edit'))return;let title=$('editMaterialTitle').value.trim();if(!title)return notify('자료 제목을 입력하세요');let category=$('editMaterialCategory').value,note=$('editMaterialNote').value;let file=null,button=$('saveMaterialEdit');button.disabled=true;activeMaterialUploads++;try{if(canManageMaterial(item,'replace')&&$('replaceMaterialFile')?.files?.length){let result=await uploadFiles('replaceMaterialFile');if(!result.length){button.disabled=false;return}file=result[0]}item.previousVersions=item.previousVersions||[];item.previousVersions.push({title:item.title,category:item.category,note:item.note,file:JSON.parse(JSON.stringify(item.file)),at:item.updatedAt||item.at});Object.assign(item,{title,category,note,updatedAt:now()});if(file)item.file=file;save();$('modalLayer')?.remove();render();notify('자료를 수정했습니다')}catch(e){button.disabled=false;notify('수정 내용을 저장하지 못했습니다')}finally{activeMaterialUploads--}}}
 function deleteMaterial(id){let item=(S.materials||[]).find(x=>x.id===id&&!x.deletedAt);if(!item||!canManageMaterial(item,'delete')||!confirmWorkCenterDelete(item.title||'자료실 항목'))return;item.deletedAt=now();lastDeletedMaterial=item.id;save();render();notify('자료실 목록에서 삭제했습니다')}
 function undoMaterialDelete(){let item=(S.materials||[]).find(x=>x.id===lastDeletedMaterial);if(!item||!canManageMaterial(item,'delete'))return;delete item.deletedAt;lastDeletedMaterial=null;save();render();notify('자료를 복구했습니다')}
@@ -3600,7 +3615,7 @@ function archiveCategory(row){
 async function listNativeDriveFolder(folder,token,filter=''){
   const rows=[];
   const q=new URLSearchParams({q:"'"+folder+"' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'"+filter,
-    fields:'nextPageToken,files(id,name,mimeType,createdTime,modifiedTime,owners(displayName),appProperties,capabilities(canDownload,canModifyContent,canRename,canTrash))',pageSize:'1000',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+    fields:'nextPageToken,files(id,name,description,mimeType,createdTime,modifiedTime,owners(displayName),appProperties,capabilities(canDownload,canModifyContent,canRename,canTrash))',pageSize:'1000',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
   do{
     const page=await (await employeeDriveRequest(driveFileApi+'?'+q,token)).json();
     rows.push(...(page.files||[]).filter(file=>safeDriveId(file.id)));
@@ -3649,8 +3664,9 @@ async function readNativeDriveRows(menu,token,account,category,getLedger=archive
     if(id){if(!linked.has(id))linked.set(id,[]);linked.get(id).push(file);}
   }
   const scoped=ledger.filter(row=>archiveCategory(row)===category);
+  const folderFiles=new Map(files.map(file=>[file.driveId,file]));
   const ids=new Set(scoped.map(row=>row.id));
-  const rows=[...scoped.map(row=>({...row,category,modifiedTime:row.modified||row.created_at,attachments:linked.get(row.id)||[]})),
+  const rows=[...scoped.map(row=>({...row,category,modifiedTime:row.modified||row.created_at,attachments:linked.get(row.id)||[],folderFiles})),
     ...files.filter(file=>!ids.has(file.appProperties?.wdArchiveId))];
   return {rows,incomplete:results.some(result=>result.status==='rejected')};
 }
@@ -3823,14 +3839,24 @@ async function downloadNativeArchive(row,file,token){
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-async function updateArchiveDriveFile(file,token,update){
+function archiveControl(action,label){
+  const paths={edit:'M4 16.5 15.6 4.9l3.5 3.5L7.5 20H4z M13.6 6.9l3.5 3.5',download:'M12 3v12m-5-5 5 5 5-5 M4 16v4h16v-4',close:'m6 6 12 12 M18 6 6 18',delete:'M4 7h16 M9 7V4h6v3 M7 7l1 13h8l1-13 M10 10v7m4-7v7'};
+  return '<span class="wc-archive-action-icon">'+phoneIcon(paths[action])+'</span><span class="wc-archive-action-label">'+label+'</span>';
+}
+async function updateArchiveDriveFile(file,token,update,replacement){
   if(!safeDriveId(file?.driveId))throw new Error('파일을 다시 선택해 주세요.');
-  const replace=update instanceof File;
-  const base=replace?'https://www.googleapis.com/upload/drive/v3/files':driveFileApi;
-  const query=replace?'uploadType=media&supportsAllDrives=true&fields=id':'supportsAllDrives=true&fields=id,name,trashed';
+  const media=update instanceof File?update:replacement;
+  let body=media||JSON.stringify(update),type=media?(media.type||'application/octet-stream'):'application/json';
+  let query='supportsAllDrives=true&fields=id,name,trashed';
+  if(media&&!(update instanceof File)){
+    const boundary='archive_'+crypto.randomUUID();
+    body=new Blob(['--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',JSON.stringify(update),'\r\n--'+boundary+'\r\nContent-Type: '+type+'\r\n\r\n',media,'\r\n--'+boundary+'--\r\n']);
+    type='multipart/related; boundary='+boundary;
+    query+='&uploadType=multipart';
+  }else if(media)query+='&uploadType=media';
+  const base=media?'https://www.googleapis.com/upload/drive/v3/files':driveFileApi;
   const response=await fetch(base+'/'+file.driveId+'?'+query,{
-    method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':replace?(update.type||'application/octet-stream'):'application/json'},
-    body:replace?update:JSON.stringify(update),signal:AbortSignal.timeout(replace?120000:14000)
+    method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':type},body,signal:AbortSignal.timeout(media?120000:14000)
   });
   const saved=await response.json().catch(()=>null);
   if(!response.ok||saved?.id!==file.driveId||(update.trashed&&!saved.trashed))throw new Error('Drive 변경을 확인하지 못했어요.');
@@ -3846,8 +3872,8 @@ async function updateArchiveLedger(row,token,update){
   const changed=await response.json().catch(()=>null);
   if(!response.ok||changed?.[0]?.id!==row.id)throw new Error('변경을 확인하지 못했어요. 새로고침 후 다시 시도해 주세요.');
 }
-function openArchiveAction(action,row,file,perform,archive=false){
-  const label=archiveActionLabels[action],driveOnly=!!row.driveId;
+function openArchiveAction(action,row,file,perform,archive=false,options={}){
+  const label=archive&&action==='replace'?'수정':archiveActionLabels[action],driveOnly=!!row.driveId;
   const parts=archive&&action==='edit'?archiveDisplay(row):null;
   const kindField=parts?`<label for="archiveEditKind">소분류</label><select id="archiveEditKind">${[...archiveSubcategories,...(parts.kind==='미분류'?['미분류']:[])].map(kind=>`<option ${kind===parts.kind?'selected':''}>${kind}</option>`).join('')}</select>`:'';
   let fields;
@@ -3855,14 +3881,44 @@ function openArchiveAction(action,row,file,perform,archive=false){
     ${driveOnly?'':`<label for="archiveActionBody">본문</label><textarea id="archiveActionBody" rows="8" maxlength="80000">${esc(row.content||'')}</textarea>`}`;
   else if(action==='replace')fields=`<p class="smallText">${esc(file.title)}의 파일 내용만 교체합니다. 기존 이름과 링크는 유지됩니다.</p><label for="archiveActionFile">새 파일</label><input id="archiveActionFile" type="file" required>`;
   else fields=`<p><strong>${esc(row.title)}</strong></p><p>삭제하시겠습니까?</p><p>${driveOnly?'이 파일을 Google Drive 휴지통으로 이동합니다.':'이 항목을 작업결과 보관에서 삭제합니다. 연결된 Drive 파일은 보관됩니다.'}</p>`;
+  if(action==='edit'&&options.description)fields+=`<label for="archiveDescription">자료 설명</label><textarea id="archiveDescription" rows="3">${esc(row.description||'')}</textarea>`;
+  if(action==='edit'&&options.readText)fields+='<label for="archiveFileText">파일 본문</label><textarea id="archiveFileText" rows="7" disabled></textarea>';
+  if(action==='edit'&&options.documentUrl)fields+=`<p><a href="${esc(options.documentUrl)}" target="_blank" rel="noopener">문서 본문 편집 ↗</a></p>`;
+  if(action==='edit'&&options.replace)fields+=`<label for="archiveActionFile">파일 교체 (선택)</label><p class="smallText">${esc(file.name||file.title)}</p><input id="archiveActionFile" type="file">`;
   showModal(`<form id="archiveActionForm">${fields}<p class="smallText" id="archiveActionStatus" role="status"></p>
     <div class="actions"><button class="${action==='delete'?'danger':'primary'}" id="archiveActionSubmit" type="submit">${label}${action==='edit'?' 저장':''}</button></div></form>`,'자료 '+label);
   const readerDialog=document.querySelector('dialog.wc-archive-dialog[open]');
-  if(readerDialog)readerDialog.append($('modalLayer'));
+  if(readerDialog){
+    readerDialog.append($('modalLayer'));
+    const close=$('closeModal');
+    close.setAttribute('aria-label','닫기');close.title='닫기';close.innerHTML=archiveControl('close','닫기');
+    (document.querySelector('#archiveActionForm input')||close).focus();
+  }
   const form=$('archiveActionForm'),submit=$('archiveActionSubmit'),status=$('archiveActionStatus');
+  const textField=form.querySelector('#archiveFileText'),fileInput=form.querySelector('#archiveActionFile');
+  let originalText,usesCRLF=false;
+  if(textField){
+    const syncText=()=>{textField.disabled=originalText===undefined||!!fileInput?.files.length;};
+    if(fileInput)fileInput.addEventListener('change',syncText);
+    status.textContent='파일 본문을 불러오는 중…';
+    Promise.resolve().then(options.readText).then(blob=>{
+      if(blob.size>1024*1024)throw new Error();
+      return blob.arrayBuffer();
+    }).then(bytes=>{
+      originalText=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
+      if(!form.isConnected)return;
+      usesCRLF=originalText.includes('\r\n')&&!originalText.replaceAll('\r\n','').includes('\n');
+      textField.value=originalText;originalText=textField.value;syncText();status.textContent='';
+    }).catch(()=>{if(form.isConnected)status.textContent='본문을 읽지 못했어요. 파일 교체는 가능해요.';});
+  }
   form.onsubmit=async event=>{
     event.preventDefault();
     if(submit.disabled)return;
+    let replacement=$('archiveActionFile')?.files?.[0];
+    if(!replacement&&textField&&!textField.disabled&&textField.value!==originalText){
+      const contents=usesCRLF?textField.value.replaceAll('\n','\r\n'):textField.value;
+      replacement=new File([contents],file.name||file.title,{type:file.mimeType||'text/plain'});
+    }
     let update=null;
     if(action==='edit'){
       const title=$('archiveActionTitle').value.trim();
@@ -3875,16 +3931,19 @@ function openArchiveAction(action,row,file,perform,archive=false){
         if(!name||name.length>240){status.textContent='제목과 저장 이름 길이(240자 이내)를 확인해 주세요.';return;}
       }
       update=driveOnly?{name}:{title:name,content:$('archiveActionBody').value.trim()};
+      if(options.description&&$('archiveDescription').value!==(row.description||''))update.description=$('archiveDescription').value;
     }else if(action==='replace'){
-      update=$('archiveActionFile').files?.[0];
-      if(!update)return;
+      if(!replacement)return;
+      update=replacement;
+    }
+    if(replacement){
       const previousExtension=(file.name||file.title).match(/\.[^.]+$/)?.[0].toLowerCase();
-      const nextExtension=update.name.match(/\.[^.]+$/)?.[0].toLowerCase();
+      const nextExtension=replacement.name.match(/\.[^.]+$/)?.[0].toLowerCase();
       if(previousExtension&&previousExtension!==nextExtension){status.textContent='같은 확장자의 파일을 선택해 주세요.';return;}
     }
     submit.disabled=true;status.textContent='처리하는 중…';
     try{
-      await perform(update,()=>form.isConnected);
+      await perform(update,()=>form.isConnected,replacement);
       if(form.isConnected)$('modalLayer')?.remove();
     }catch(error){status.textContent=error.message||'변경을 완료하지 못했어요.';submit.disabled=false;}
   };
@@ -3979,14 +4038,15 @@ function paintLibraryTable(list,rows,search,manual,selected,clearReader,choose,k
   if(selected&&!filtered.some(({row})=>row.id===selected))clearReader();
   const sourceCol=manual?'<th scope="col" class="wd101-secondary-col">분류</th>':'';
   list.innerHTML=filtered.length?`<table class="wd98-drive-table"><thead><tr><th scope="col">${manual?'매뉴얼명':globalSearch?'전체 검색 결과':'자료명'} <span>${filtered.length}건</span></th>
-    ${sourceCol}<th scope="col" class="wd101-secondary-col">${manual?'생성자':'등록자'}</th>
+    ${manual?'':'<th scope="col" class="wc-archive-table-kind">유형</th>'}${sourceCol}<th scope="col" class="wd101-secondary-col">${manual?'생성자':'등록자'}</th>
     <th scope="col" class="wd101-secondary-col">${manual?'형식':'등록일'}</th><th scope="col">수정일</th></tr></thead>
     <tbody>${filtered.map(({row,title,kind})=>`<tr class="${row.id===selected?'wd98-selected':''}">
       <td><button type="button" data-native-file="${esc(row.id)}" aria-pressed="${row.id===selected}" title="${esc(row.name||row.title||'')}">${manual?`<span class="wd-manual-entry">${libraryIcon('매뉴얼')}<span>${esc(title)}</span></span>`:`<span class="wd-archive-entry"><span class="wd-archive-kind" data-archive-kind="${esc(kind)}">${libraryIcon(kind)}${esc(kind)}</span><span>${esc(title)}${globalSearch?`<small class="wd-archive-origin">${esc(row.category)}</small>`:''}</span></span>`}</button></td>
+      ${manual?'':`<td class="wc-archive-table-kind">${esc(kind)}</td>`}
       ${manual?`<td class="wd101-secondary-col">${esc(row.category)}</td>`:''}
       <td class="wd101-secondary-col">${esc(row.author||row.owners?.[0]?.displayName||(row.driveId?'Drive':'—'))}</td>
       <td class="wd101-secondary-col">${esc(manual?nativeDriveFileKind(row):String(row.created_at||row.createdTime||'').slice(0,10)||'—')}</td>
-      <td>${esc(String(row.modifiedTime||'').slice(0,10)||'—')}</td></tr>`).join('')}</tbody></table>`:
+      <td>${manual?esc(String(row.modifiedTime||'').slice(0,10)||'—'):`<time datetime="${esc(String(row.modifiedTime||'').slice(0,10))}"><span class="wc-date-long">${esc(String(row.modifiedTime||'').slice(0,10)||'—')}</span><span class="wc-date-short">${esc(String(row.modifiedTime||'').slice(2,10).replaceAll('-','.')||'—')}</span></time>`}</td></tr>`).join('')}</tbody></table>`:
     `<p class="empty">${words.length?'검색 조건에 맞는 자료가 없어요.':'이 분류에 표시할 자료가 없어요.'}</p>`;
   const byId=new Map(filtered.map(({row})=>[row.id,row]));
   list.querySelectorAll('[data-native-file]').forEach(button=>button.onclick=()=>choose(byId.get(button.dataset.nativeFile)));
@@ -4007,7 +4067,7 @@ function openLibraryReader(reader,list,row,onClose,archive=false){
   reader.hidden=false;
     reader.innerHTML=`<header class="wd101-reader-header"><div class="wd101-reader-top">
       <span class="wd101-reader-tag">${esc(row.category)}</span><div class="wd101-reader-actions">
-      <span class="wd101-archive-actions"></span><button class="small wd101-reader-close" type="button" aria-label="상세 닫기">닫기</button>
+      <span class="wd101-archive-actions"></span><button class="small wd101-reader-close" type="button" aria-label="상세 닫기" title="닫기">${archive?archiveControl('close','닫기'):'닫기'}</button>
       </div></div><h2>${esc(archive?archiveDisplay(row).title:row.title)}</h2><p class="wd101-reader-meta">${esc(nativeDriveFileKind(row))} · ${esc(String(row.modifiedTime||'').slice(0,10)||'수정일 미등록')}</p></header>
       <div class="wd96-drive-links" hidden></div><div class="wd96-drive-text" aria-label="자료 미리보기" role="region" tabindex="0"></div>`;
     reader.querySelector('.wd101-reader-close').onclick=()=>{
@@ -4084,7 +4144,11 @@ function bindNativeDrivePage(){
     const canManage=()=>manager()||row.driveId&&verified?.scope===driveWriteScope&&staffCloudGrant?.enabled;
     const available=()=>nativeArchiveActions(row,file,canManage(),filesReady).filter(action=>libraryCan(menu,action));
     const paintActions=()=>{
-      actions.innerHTML=available().map(action=>`<button class="small" type="button" data-archive-action="${action}">${archiveActionLabels[action]}</button>`).join('');
+      const allowed=available();
+      actions.innerHTML=allowed.filter(action=>manual||action!=='replace'||!allowed.includes('edit')).map(action=>{
+        const icon=(!manual&&action==='replace')?'edit':action,label=archiveActionLabels[icon];
+        return `<button class="small" type="button" data-archive-action="${action}" aria-label="${label}" title="${label}">${manual?label:archiveControl(icon,label)}</button>`;
+      }).join('');
       actions.querySelectorAll('[data-archive-action]').forEach(button=>button.onclick=async()=>{
         const action=button.dataset.archiveAction,chosenFile=file;
         if(actionBusy||!stillSelected()||!available().includes(action)||verified.expires<=Date.now())return;
@@ -4095,21 +4159,36 @@ function bindNativeDrivePage(){
           finally{actionBusy=false;button.disabled=false;}
           return;
         }
-        openArchiveAction(action,row,chosenFile,async(update,dialogOpen)=>{
+        let uploaded;
+        const docEditors={'application/vnd.google-apps.document':'document','application/vnd.google-apps.spreadsheet':'spreadsheets','application/vnd.google-apps.presentation':'presentation'};
+        const editor=docEditors[row.mimeType];
+        openArchiveAction(action,row,chosenFile,async(update,dialogOpen,replacement)=>{
           const token=await attendanceHqToken();
-          if(staffCloudGrant)await refreshWorkCenterGrant(menu,action,row.category);
+          if(staffCloudGrant){
+            await refreshWorkCenterGrant(menu,action,row.category);
+            if(action==='edit'&&replacement)await refreshWorkCenterGrant(menu,'replace',row.category);
+          }
           else if(!await verifyAdminWorkspace(token,account))throw hqLoginError();
-          if(!token||!dialogOpen()||!stillSelected()||file!==chosenFile||!available().includes(action)||
+          if(!token||!dialogOpen()||!stillSelected()||file!==chosenFile||!available().includes(action)||(replacement&&!available().includes('replace'))||
             verified.expires<=Date.now())throw new Error('권한과 Drive 연결을 다시 확인해 주세요.');
           if(action==='replace')await updateArchiveDriveFile(chosenFile,verified.token,update);
-          else if(row.driveId)await updateArchiveDriveFile(row,verified.token,update||{trashed:true});
+          else if(row.driveId)await updateArchiveDriveFile(row,verified.token,update||{trashed:true},replacement);
           else{
             if(action==='delete'&&(await archiveAttachmentRows(row.id,token)).some(item=>!String(item.file_path||'').startsWith('gdrive:')))
               throw new Error('이전 저장소 첨부가 연결되어 있어 기존 업무센터에서 삭제해 주세요.');
-            await updateArchiveLedger(row,token,update);
+            if(replacement&&uploaded!==replacement){
+              await updateArchiveDriveFile(chosenFile,verified.token,replacement);
+              uploaded=replacement;
+            }
+            try{await updateArchiveLedger(row,token,update);}
+            catch(error){if(uploaded)throw new Error('파일은 교체됐어요. 제목·본문 저장을 확인해 주세요. '+error.message);throw error;}
+
           }
           if(stillSelected()){clearReader();rows=[];void load();notify(archiveActionLabels[action]+' 완료');}
-        },!manual);
+        },!manual,{replace:!manual&&allowed.includes('replace'),description:!manual&&row.driveId&&row.capabilities?.canModifyContent,
+          readText:!manual&&row.driveId&&allowed.includes('replace')&&/^text\/(?:plain|markdown)\b/i.test(row.mimeType)?async()=>(
+            await employeeDriveRequest(driveFileApi+'/'+row.driveId+'?alt=media&supportsAllDrives=true',verified.token)).blob():null,
+          documentUrl:!manual&&editor&&row.capabilities?.canModifyContent&&libraryCan(menu,'replace')?'https://docs.google.com/'+editor+'/d/'+encodeURIComponent(row.driveId)+'/edit':''});
       });
     };
     paintActions();
@@ -4117,7 +4196,7 @@ function bindNativeDrivePage(){
     const files=[...(row.attachments||[])];
     try{
       const records=await archiveAttachmentRows(row.id,readHqToken());
-      files.push(...archiveDriveAttachments(records));
+      files.push(...archiveDriveAttachments(records).map(item=>row.folderFiles?.get(item.driveId)||item));
       filesReady=!records.some(item=>!String(item.file_path||'').startsWith('gdrive:'));
     }catch{}
     if(!stillSelected())return;
@@ -10208,16 +10287,36 @@ function bindEnrolledLibrary(){
     releaseNativeDrivePreview();selected=row.id;markLibrarySelection(list,selected);line.textContent='';
     openLibraryReader(reader,list,row,()=>{clearReader();markLibrarySelection(list,selected);},!manual);
     const actions=reader.querySelector('.wd101-archive-actions'),body=reader.querySelector('.wd96-drive-text');
-    const actionButton=(action,label,run)=>{const b=button(actions,label,run);b.dataset.archiveAction=action;};
+    const actionButton=(action,label,run)=>{
+      const b=button(actions,label,run);b.dataset.archiveAction=action;
+      if(!manual){b.title=label;b.setAttribute('aria-label',label);b.innerHTML=archiveControl(action==='replace'?'edit':action,label);}
+    };
     if(libraryCan(menu,'download'))actionButton('download','다운로드',async()=>{const blob=await staffDriveCall('download',params,'blob');if(same())downloadCompanyBlob(blob,row.name);});
-    if(row.category!=='정리이전자료'&&libraryCan(menu,'edit'))actionButton('edit','수정',async()=>{if(!manual){
-      openArchiveAction('edit',row,row,async(update,dialogOpen)=>{
-        if(!same()||!dialogOpen()||!libraryCan(menu,'edit'))throw new Error('자료를 다시 선택해 주세요.');
-        await staffDriveCall('rename',{...params,title:update.name});if(same())await refresh();
-      },true);return;
-    }
-    const title=prompt('자료 제목',cleanManualTitle(row.name));if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}});
-    if(row.category!=='정리이전자료'&&libraryCan(menu,'replace'))actionButton('replace','교체',()=>pick('replace',row.id,row.category));
+    const editable=row.category!=='정리이전자료'&&libraryCan(menu,'edit');
+    const replaceable=row.category!=='정리이전자료'&&libraryCan(menu,'replace')&&!row.mimeType?.startsWith('application/vnd.google-apps.');
+    if(!manual&&(editable||replaceable))actionButton(editable?'edit':'replace','수정',()=>{
+      let uploaded;
+      openArchiveAction(editable?'edit':'replace',row,row,async(update,dialogOpen,replacement)=>{
+        const check=()=>same()&&dialogOpen()&&(!editable||libraryCan(menu,'edit'))&&(!replacement||libraryCan(menu,'replace'));
+        if(!check())throw new Error('자료와 수정 권한을 다시 확인해 주세요.');
+        if(replacement&&uploaded!==replacement){
+          if(replacement.size>25*1024*1024)throw new Error('25MB 이하의 파일을 선택해 주세요.');
+          await upload(replacement,'replace',row.id,row.category,row.name);
+          uploaded=replacement;
+        }
+        if(editable&&update.name!==row.name){
+          try{
+            if(!check())throw new Error('자료를 다시 선택해 주세요.');
+            await staffDriveCall('rename',{...params,title:update.name});
+          }catch(error){if(uploaded)throw new Error('파일은 교체됐어요. 제목 저장을 다시 시도해 주세요. '+error.message);throw error;}
+        }
+        if(same())await refresh();
+      },true,{replace:replaceable,readText:replaceable&&/^text\/(?:plain|markdown)\b/i.test(row.mimeType)?()=>staffDriveCall('preview',params,'blob'):null});
+    });
+    if(manual&&editable)actionButton('edit','수정',async()=>{
+      const title=prompt('자료 제목',cleanManualTitle(row.name));if(title?.trim()){await staffDriveCall('rename',{...params,title});if(same())await refresh();}
+    });
+    if(manual&&row.category!=='정리이전자료'&&libraryCan(menu,'replace'))actionButton('replace','교체',()=>pick('replace',row.id,row.category));
     if(row.category!=='정리이전자료'&&libraryCan(menu,'delete'))actionButton('delete','삭제',async()=>{if(confirmWorkCenterDelete(row.name)){await staffDriveCall('remove',params);if(same())await refresh();}});
     body.textContent='미리보기를 불러오는 중…';
     try{
