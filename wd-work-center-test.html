@@ -6353,7 +6353,7 @@ function accountManagementView(readOnly=false){
       ${nativeAdminTabs.accounts.map(([,label],i)=>`<button type="button" id="accountTab${i}" role="tab" aria-controls="accountPanel" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${esc(label)}</button>`).join('')}
     </div><section id="accountPanel" role="tabpanel" aria-labelledby="accountTab0">
       <div class="wd109-toolbar"><label class="wd109-search">계정 검색<input type="search" id="accountSearch" placeholder="계정명·아이디·이메일 검색"></label>
-        <button type="button" id="refreshAccounts">새로고침</button>${readOnly?'':'<button type="button" class="primary" id="addBrandingAccount" hidden>고객 계정 추가</button>'}</div>
+        <button type="button" id="refreshAccounts" ${readOnly?'':'hidden'}>새로고침</button>${readOnly?'':'<button type="button" class="primary" id="addWorkspaceAccount">＋ 계정 추가</button>'}</div>
       <p class="smallText" id="accountStatus" role="status"></p><div class="account-list-scroll" id="accountRows"></div>
     </section></section>`;
 }
@@ -6387,7 +6387,7 @@ async function readAccounts(type,id){
     if(!response.ok)throw new Error('계정 정보를 불러오지 못했어요.');
     const page=await response.json();
     rows.push(...page);
-    if(type!==brandingAccountType||id||page.length<250)return rows;
+    if((type!==brandingAccountType&&type!=='업무계정')||id||page.length<250)return rows;
   }
 }
 
@@ -6409,23 +6409,24 @@ async function updateWorkspaceAccount(detail,changes){
   if(!response.ok||(await response.json())[0]?.id!==detail.id)
     throw new Error('변경을 확인하지 못했어요. 계정 목록을 새로고침해 주세요.');
 }
-async function createWorkspaceBrandingAccount(changes){
+async function createWorkspaceAccount(type,changes){
   const token=await accountAccessToken();
   const userId=currentUser==='manager'?managerHqAccount.uid:hqStaffLoginId;
   if(!userId)throw hqLoginError();
-  const response=await fetch(adminAuthBase+'/rest/v1/'+brandingAccountTable+'?select=id',{
+  const response=await fetch(adminAuthBase+'/rest/v1/'+accountTable(type)+'?select=id',{
     method:'POST',headers:{apikey:adminAuthPublic,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation'},
-    body:JSON.stringify({...changes,user_id:userId,account_type:brandingAccountType}),
+    body:JSON.stringify({...changes,user_id:userId,account_type:type}),
     cache:'no-store',signal:AbortSignal.timeout(12000)
   });
-  if(!response.ok||!(await response.json())[0]?.id)throw new Error('고객 계정 저장을 확인하지 못했어요.');
+  if(!response.ok||!(await response.json())[0]?.id)throw new Error('계정 저장을 확인하지 못했어요.');
 }
 
-function openBrandingAccountAdd(active,onChanged,trigger){
+function openWorkspaceAccountAdd(type,active,onChanged,trigger){
+  const branding=type===brandingAccountType;
   if(!active()||$('modalLayer'))return;
   const layer=showOfficeModal(`<form id="brandingAccountAddForm" class="account-detail account-edit" autocomplete="off">
-    <label>고객명<input name="customer" required maxlength="120"></label>
-    <label>사이트명<input name="site" required maxlength="120"></label>
+    ${branding?'<label>고객명<input name="customer" required maxlength="120"></label>':''}
+    <label>${branding?'사이트명':'계정명'}<input name="site" required maxlength="120"></label>
     <label>아이디 / 이메일<input name="account"></label>
     <label>비밀번호<input name="secret" type="password" autocomplete="new-password"></label>
     <label>로그인 방법<input name="login"></label>
@@ -6433,20 +6434,20 @@ function openBrandingAccountAdd(active,onChanged,trigger){
     <label>메모<textarea name="memo" rows="3"></textarea></label>
     <p id="accountChangeStatus" class="smallText" role="status"></p>
     <div class="actions office-modal-actions"><button type="submit" class="primary">저장</button></div>
-  </form>`,'고객 계정 추가',trigger);
+  </form>`,branding?'고객 계정 추가':'업무계정 추가',trigger);
   const form=$('brandingAccountAddForm'),button=form.querySelector('[type="submit"]'),status=$('accountChangeStatus');
   form.onsubmit=async event=>{
     event.preventDefault();
     if(button.disabled||!active()||!form.isConnected)return;
     const data=new FormData(form),get=name=>String(data.get(name)||'').trim();
     const customer=get('customer'),site=get('site'),memo=get('memo');
-    if(!customer||!site){status.textContent='고객명과 사이트명을 입력해 주세요.';return;}
+    if((branding&&!customer)||!site){status.textContent=branding?'고객명과 사이트명을 입력해 주세요.':'계정명을 입력해 주세요.';return;}
     button.disabled=true;
     try{
-      await createWorkspaceBrandingAccount({customer_name:customer,service_name:site,account_id:get('account'),
+      await createWorkspaceAccount(type,{...(branding?{customer_name:customer}:{}),service_name:site,account_id:get('account'),
         pw:String(data.get('secret')||''),url:get('login'),link_url:get('link'),memo:memo?'\n---\n'+memo:''});
       if(layer.isConnected)layer.remove();
-      if(active()){void onChanged();notify('고객 계정을 등록했어요.');}
+      if(active()){void onChanged();notify(branding?'고객 계정을 등록했어요.':'업무계정을 등록했어요.');}
     }catch(error){if(form.isConnected)status.textContent=error.message;}
     finally{button.disabled=false;}
   };
@@ -6631,8 +6632,12 @@ function bindAccounts(readOnly=false){
   const active=()=>panel.isConnected&&S.nav==='accounts'&&generation===driveConnectGeneration&&
     (!readOnly||embeddedAccountOwner===readHqSession()?.user?.id);
   let rows=[],type=nativeAdminTabs.accounts[0][1],request=0;
-  const add=$('addBrandingAccount'),openGroups=new Set();
-  if(add)add.onclick=()=>openBrandingAccountAdd(()=>active()&&type===brandingAccountType,refresh,add);
+  const add=$('addWorkspaceAccount'),openGroups=new Set();
+  if(add)add.onclick=()=>{
+    const selected=type;
+    if(selected==='업무계정'||selected===brandingAccountType)
+      openWorkspaceAccountAdd(selected,()=>active()&&type===selected,()=>{search.value='';return refresh();},add);
+  };
   const paint=()=>{
     const term=search.value.trim().toLowerCase(),list=rows.filter(row=>[row.service_name,row.account_id,row.customer_name].some(value=>String(value||'').toLowerCase().includes(term)));
     if(type===brandingAccountType){
@@ -6697,7 +6702,11 @@ function bindAccounts(readOnly=false){
   };
   bindWorkspaceTabs(tabs,index=>{
     type=nativeAdminTabs.accounts[index][1];
-    if(add)add.hidden=type!==brandingAccountType;
+    if(add){
+      add.hidden=type!=='업무계정'&&type!==brandingAccountType;
+      add.textContent=type===brandingAccountType?'고객 계정 추가':'＋ 계정 추가';
+      $('refreshAccounts').hidden=type==='업무계정';
+    }
     search.placeholder=type!==brandingAccountType?'계정명·아이디·이메일 검색':'고객명·사이트명·아이디·이메일 검색';
     panel.setAttribute('aria-labelledby',tabs[index].id);search.value='';void refresh();
   });
