@@ -18147,7 +18147,7 @@ body:has(#pg-links.on) #hdr .hdr-chevron {color:#51495b}
 <label class="wd09-bulk-product" data-for="auto" hidden>차량번호<input name="plate" type="text" placeholder="예: 12가3456"/></label>
 </div>
 <div class="wd09-bulk-card-group wd09-bulk-card-payment">
-<label data-for="renewal">갱신 구분<select name="renewalType"><option value="">미확인</option><option>갱신형</option><option>비갱신형</option></select></label>
+<label data-for="renewal">갱신 구분<select name="renewalType"><option value="" disabled>선택</option><option>갱신형</option><option>비갱신형</option></select></label>
 <label data-for="savings" hidden>세부 종류<select name="subtype"><option value="">세부 종류 선택</option><option value="annuity">연금보험</option><option value="whole_life">종신보험</option></select></label>
 <label data-for="policy">납입기간<select name="payPeriod"><option value="">선택</option><option>5년</option><option>7년</option><option>10년</option><option>15년</option><option>20년</option><option>25년</option><option>30년</option><option>전기납</option></select></label>
 <label data-for="policy">보장기간<input name="period" type="text" placeholder="예: 90세"/></label>
@@ -18206,7 +18206,7 @@ body:has(#pg-links.on) #hdr .hdr-chevron {color:#51495b}
 <div class="fld" style="grid-column:1 / -1"><label for="ct-product">상품명</label>
 <input id="ct-product" placeholder="보험 상품명" type="text" oninput="renderContractPdfNames();wd09SyncContractIndemnity()"/></div>
 <div class="fld" id="ct-renewal-type-field"><label for="ct-renewal-type">갱신 구분</label>
-<select id="ct-renewal-type"><option value="">미확인</option><option>갱신형</option><option>비갱신형</option></select></div>
+<select id="ct-renewal-type"><option value="" disabled>선택</option><option>갱신형</option><option>비갱신형</option></select></div>
 <div class="fld" id="ct-insurance-subtype-field" hidden>
 <label for="ct-insurance-subtype">세부 종류</label>
 <select id="ct-insurance-subtype"><option value="">세부 종류 선택</option><option value="annuity">연금보험</option><option value="whole_life">종신보험</option></select></div>
@@ -21557,6 +21557,31 @@ function loadCustomerInsurance(){
     if(_vid===custId&&_UID===uid)renderContractsList(result.ok?'':'error');
   });
 }
+window.wdGuideFiles={
+  customer(id){const c=getCusts().find(x=>String(x.id)===String(id));if(!c)throw Error('고객을 확인해 주세요.');return c;},
+  latest(id){return cstMatLogs(this.customer(id)).filter(x=>x.file_category==='가입후안내 고객페이지').at(-1);},
+  async store(id,blob,name,category){
+    const owner=_UID,c=this.customer(id),file=new File([blob],name,{type:blob.type});
+    const path=await uploadMatAttachment(c,file,name,'materials',blob.type);
+    if(owner!==_UID)throw Error('로그인 계정이 변경되었습니다.');
+    const current=this.customer(id),logs=cstMatLogs(current),now=new Date().toISOString();
+    const rec={id:crypto.randomUUID(),file_category:category,date:customerAttachmentDay(),file_name:name,fileName:name,file_path:path,file_type:blob.type,file_size:blob.size,created:now,updated:now,content:name};
+    const result=await _matSaveLogs(current,[...logs,rec]);if(!result?.ok)throw Error('고객 자료 기록을 저장하지 못했습니다.');
+    return rec;
+  },
+  share(record){const id=record?.file_path?.match(/\/drive\/([\w-]+)\/file\./)?.[1];return id?'https://drive.google.com/file/d/'+id+'/view':'';},
+  async open(id){
+    const c=this.customer(id),rec=this.latest(id);
+    const w=window.open('about:blank','_blank');if(!w)return;w.opener=null;
+    try{
+      if(rec){const blob=await loadCustomerMaterialBlob(rec,c);w.location.replace(URL.createObjectURL(new Blob([blob],{type:'text/html'})));return true;}
+      const d=w.document;d.title='고객 페이지';const m=d.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1';d.head.append(m);
+      d.body.style.cssText='max-width:480px;margin:10vh auto;padding:32px;border-top:6px solid #67518d;background:#faf8fc;color:#29233b;font:18px/1.7 system-ui';
+      const h=d.createElement('h1');h.textContent=c.name+' 고객님';d.body.append(h,'아직 등록된 가입 후 안내서가 없습니다.');
+    }catch(e){w.close();alert(e.message);}
+  },
+  async copy(id){const link=this.share(this.latest(id));if(!link){alert('가입 후 안내서를 먼저 만들어 주세요.');return;}try{await navigator.clipboard.writeText(link);alert('고객 페이지 파일의 Drive 링크를 복사했습니다. 고객의 Drive 열람 권한을 확인해 주세요.');}catch{prompt('고객 페이지 파일 링크',link);}}
+};
 function renderCustomerCard(c){
 wd09RestoreCustomerEditor();
 const profileField=(label,value,kind='')=>'<div class="wd-profile-field">'
@@ -21580,7 +21605,7 @@ document.getElementById('wd09-customer-card-slot').innerHTML=
   '<div class="card" id="cust-info-card">'
   +'<header class="wd-profile-header"><div class="wd-profile-tags">'+ctypeBadge+familyBadge+'</div>'
   +'<div class="wd-profile-heading"><h2 class="wd-profile-name">'+esc(customerName)+' <small>고객님</small></h2>'
-  +'<button type="button" class="btn-sm p" id="wd09-customer-edit-button" onclick="openCustEdit('+c.id+')">✏️ 수정</button></div></header>'
+  +'<button type="button" class="btn-sm p" onclick="wdGuideFiles.open('+c.id+')">고객페이지</button><button type="button" class="btn-sm p" onclick="wdGuideFiles.copy('+c.id+')">링크 복사</button><button type="button" class="btn-sm p" id="wd09-customer-edit-button" onclick="openCustEdit('+c.id+')">✏️ 수정</button></div></header>'
   +'<div id="wd09-customer-card-view"><div class="cust-sec-label">기본정보</div>'
   +'<div class="grid-3" style="margin-bottom:10px;">'+profileField('연락처',cstFormatPhone(c.phone))+profileField('통신사',c.telecom)+rrnField+'</div>'
   +'<div class="wd-family-profile-demographics" style="margin-bottom:10px;">'+profileField('생년월일 (만나이) / 성별',birthGender)+'</div>'
@@ -41584,6 +41609,13 @@ async function wd09OpenAddressSearch(button){
 @media(max-width:600px){#wds2-detail .registration-files .final-carriers{grid-column:1;grid-row:auto}}
 #wds2-detail .contact-options button[aria-pressed=true]:disabled,#wds2-detail fieldset:disabled .contact-options button[aria-pressed=true]{background:#65437f;color:white;opacity:1}
 @media(max-width:600px){#wds2-detail .registration-files:has(.final-carriers){grid-template-columns:minmax(0,1fr)}}
+#wds2-detail .guide-flow{display:grid;gap:12px}
+#wds2-detail .guide-step{background:#fff;border:1px solid #ded8e9;border-left:4px solid #77588e;border-radius:14px;padding:16px}
+#wds2-detail .guide-step[data-done=true]{border-left-color:#42836a;background:#f2f9f5}
+#wds2-detail .guide-step[data-locked=true]{background:#f7f6f8;border-left-color:#ccc7d0}
+#wds2-detail .guide-step h3{margin:0 0 9px}
+#wds2-detail .guide-step textarea{width:100%;min-height:6em}
+#wds2-detail .guide-step a{display:inline-block;padding:8px 12px;border-radius:8px;background:#eee9f3;color:#513967;text-decoration:none}
 #wds2-detail .folder-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid #d4c9df;margin:10px 0}
 #wds2-detail .folder-tabs button{width:auto;flex:none;margin:0;padding:7px 15px;border-radius:9px 9px 0 0;background:#f4f1f6}
 #wds2-detail .folder-tabs button[aria-pressed=true]{background:#664680;color:white}
@@ -42415,7 +42447,7 @@ async function wd09OpenAddressSearch(button){
 <label class="wd09-bulk-product" data-for="auto" hidden>차량번호<input name="plate" type="text" placeholder="예: 12가3456"/></label>
 </div>
 <div class="wd09-bulk-card-group wd09-bulk-card-payment">
-<label data-for="renewal">갱신 구분<select name="renewalType"><option value="">미확인</option><option>갱신형</option><option>비갱신형</option></select></label>
+<label data-for="renewal">갱신 구분<select name="renewalType"><option value="" disabled>선택</option><option>갱신형</option><option>비갱신형</option></select></label>
 <label data-for="savings" hidden>세부 종류<select name="subtype"><option value="">세부 종류 선택</option><option value="annuity">연금보험</option><option value="whole_life">종신보험</option></select></label>
 <label data-for="policy">납입기간<select name="payPeriod"><option value="">선택</option><option>5년</option><option>7년</option><option>10년</option><option>15년</option><option>20년</option><option>25년</option><option>30년</option><option>전기납</option></select></label>
 <label data-for="policy">보장기간<input name="period" type="text" placeholder="예: 90세"/></label>
@@ -44259,7 +44291,7 @@ function pdfField(name,caption,initial=[],client,round=0) {
   };
   input.onchange=()=>acceptFiles(input.files);
   render();
-  if(carrierFiles || summary || name==='currentPdfs'){
+  if(carrierFiles || summary || name==='currentPdfs' || name==='finalReport'){
     const actions=make('div','','sales-round-files');
     actions.append(driveButton(input,'파일 첨부'));
     if(single)actions.append(single);
@@ -44944,8 +44976,7 @@ function decisionPane(client){
   const reportBox=make('div','','registration-file');
   const separateReports=(client.finalReport||[]).filter(doc=>!(doc.title && doc.name===client.confirmedPdf?.name && doc.title===client.confirmedPdf?.title));
   const report=pdfField('finalReport','최종보장분석 결과서',separateReports,client);
-  const reportActions=report.wrap.querySelector('.pdf-inline-actions');
-  reportBox.append(make('h4','3. 최종보장분석 결과서'),report.wrap.querySelector('ul'),...Array.from(reportActions.children),report.wrap.querySelector('[role=status]'),report.wrap);
+  reportBox.append(make('h4','3. 최종보장분석 결과서'),report.wrap);
   const carrierBox=make('div','','registration-file final-carriers');
   files.append(beforeBox,adoptedBox,reportBox,carrierBox);
   const track=make('ol','','decision-track');
@@ -45068,6 +45099,28 @@ function enrollmentGuide(client){
   const section=make('section','','registration-section');
   const create=make('button','가입 후 안내서 만들기'),status=make('p'),links=make('div','','contact-options');
   create.type='button';section.append(make('h3','고객용 가입 후 안내'),create,status,links);
+  const panels=[],steps=['가입 후 안내서 만들기','카톡 안내문 작성','고객 페이지 확인','고객에게 전달'];
+  section.replaceChildren();section.classList.add('guide-flow');
+  const files=window.wdGuideFiles;
+  let progress=client.guidanceDone?4:Math.min(Number(client.guideProgress)||0,3);
+  const note=make('textarea');note.value=client.guidanceNote||client.name+' 고객님, 안녕하세요. 최윤경입니다. 가입하신 보험의 보장 내용과 월 보험료, 증권·약관을 한곳에 정리해 드립니다. 안내서를 살펴보시고 궁금한 점은 편하게 말씀해 주세요.';
+  const copy=make('button','안내문 복사 · 다음 단계'),preview=make('button','고객 페이지 열기'),checked=make('button','페이지 확인 완료'),share=make('button','Drive 파일 링크 복사'),finish=make('button','전달 완료 · 저장');
+  for(const b of [copy,preview,checked,share,finish])b.type='button';
+  for(const [i,title] of steps.entries()){const p=make('section','','guide-step'),h=make('h3',(i+1)+'. '+title);p.append(h);section.append(p);panels.push(p);}
+  panels[0].append(create,status,links);panels[1].append(note,copy);panels[2].append(preview,checked);panels[3].append(share,finish);
+  const feedback=make('p');feedback.setAttribute('role','status');section.append(feedback);
+  let visited=false,busy=false;
+  function paint(){panels.forEach((p,i)=>{p.dataset.done=String(i<progress);p.dataset.locked=String(i>progress);for(const control of p.querySelectorAll('button,textarea'))control.disabled=busy||i>progress;});checked.disabled=busy||progress<2||(!visited&&progress===2);finish.disabled=busy||progress!==3;}
+  async function advance(n){
+    busy=true;paint();try{if(await saveClient(client,{guideProgress:n,guidanceEdit:true,guidanceDone:n===4,guidanceDate:today,guidanceNote:note.value.trim()})){progress=n;syncClient();feedback.textContent=n===4?'고객 전달을 저장했습니다. 영업 완료입니다.':'';}}finally{busy=false;paint();}
+  }
+  note.oninput=()=>{if(progress>=2){progress=1;visited=false;paint();}};
+  copy.onclick=async()=>{if(!note.value.trim())return note.focus();try{await navigator.clipboard.writeText(note.value.trim());await advance(Math.max(progress,2));}catch{note.select();feedback.textContent='복사 권한을 확인해 주세요.';}};
+  preview.onclick=async()=>{try{visited=!!(await files.open(client.id));paint();}catch(e){feedback.textContent=e.message;}};
+  checked.onclick=()=>advance(Math.max(progress,3));
+  share.onclick=()=>files.copy(client.id);
+  finish.onclick=()=>advance(4);
+  paint();
   create.onclick=async()=>{
     create.disabled=true;status.textContent='안내서를 만드는 중입니다.';links.replaceChildren();
     const day=customerAttachmentDay(),base=customerAttachmentPrefix(client)+'_가입후안내서';
@@ -45111,7 +45164,7 @@ function enrollmentGuide(client){
       const page=document.implementation.createHTMLDocument(base);
       const el=(tag,t)=>{const e=page.createElement(tag);e.textContent=t||'';return e;};
       const css=el('style','*{box-sizing:border-box}body{max-width:680px;margin:0 auto;padding:32px 20px;color:#362b40;font:16px/1.65 system-ui,sans-serif}h1{font-size:28px}a{display:inline-block;color:#583c74;padding:8px}article{padding:14px 0;border-bottom:1px solid #ddd}footer{margin-top:32px}iframe{width:100%;height:65vh;border:0}');
-      page.head.append(css);const meta=el('meta');meta.name='viewport';meta.content='width=device-width,initial-scale=1';page.head.append(meta);
+      page.head.append(css);const design=el('style','html{background:#efedf4}body{max-width:480px;min-height:100vh;background:white;margin:auto;padding:0 22px 36px;color:#29233b}h1{margin:0 -22px 22px;padding:48px 24px 36px;font-size:26px;line-height:1.45;color:white;background:linear-gradient(135deg,#272844,#74568b);border-radius:0 0 24px 24px}button,a{border:0;border-radius:12px;padding:13px 16px;margin:3px;background:#eee9f5;color:#503e6a;font:600 15px system-ui;text-decoration:none}button{background:#634778;color:white}h2{margin:32px 0 4px;font-size:21px}p{font-size:14px;color:#625c6b}article{background:#f7f5fa;border:1px solid #e7e1ee;border-radius:14px;padding:17px;margin:10px 0}footer{border-top:1px solid #ddd;padding-top:20px;color:#625571;font-weight:600}');page.head.append(design);const meta=el('meta');meta.name='viewport';meta.content='width=device-width,initial-scale=1';page.head.append(meta);
       page.body.append(el('h1',client.name+' 고객님, 가입 후 안내서입니다.'));
       const data=await new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsDataURL(blob);});
       const view=el('button','안내서 바로 보기'),download=el('a','PDF 다운로드'),frame=el('iframe');frame.title='가입 후 안내서';frame.hidden=true;
@@ -45121,6 +45174,9 @@ function enrollmentGuide(client){
       for(const p of policies){const card=el('article');card.append(el('strong',[p.insurer,p.product].filter(Boolean).join(' · ')),el('div',[p.contractDate||client.decisionDate,p.premium!=null?'월 보험료 '+asWon(p.premium):''].filter(Boolean).join(' | ')));page.body.append(card);}
       const claim=el('a','실손24 바로가기');claim.href='https://www.silson24.or.kr';page.body.append(claim,el('footer','담당 설계사 최윤경 · WD WAVE'),script);
       const html=new Blob(['<!doctype html><meta charset="utf-8">',page.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+      await files.store(client.id,blob,base+'.pdf','가입후안내서');
+      await files.store(client.id,html,base+'.html','가입후안내 고객페이지');
+      visited=false;await advance(1);
       for(const [label,file,ext] of [['안내서 PDF 다운로드',blob,'.pdf'],['고객 페이지 저장',html,'.html'],['고객 페이지 미리보기',html,'']]){
         const a=make('a',label);a.href=URL.createObjectURL(file);if(ext)a.download=base+ext;else{a.target='_blank';a.rel='noopener';}links.append(a);
         $('detail').addEventListener('close',()=>URL.revokeObjectURL(a.href),{once:true});
@@ -45134,13 +45190,7 @@ function stageForm(index) {
   if(index===4){
     const client=selected,form=make('form','','wds2-card-body');
     if(!isSigned(client)){form.append(make('p','계약 체결 후 안내를 기록할 수 있어요.'));return form;}
-    const [label,note]=contactField('안내 내용','textarea',client.guidanceNote||'');
-    const check=make('input');check.type='checkbox';check.checked=!!client.guidanceDone;
-    const done=make('label');done.append(check,' 안내 완료');
-    const save=make('button','안내 기록 저장','wds2-primary');save.type='submit';
-    form.append(enrollmentGuide(client),stageCard('가입 후 안내',label,done,save));
-    form.onsubmit=async e=>{e.preventDefault();if(save.disabled)return;save.disabled=true;
-      try{if(await saveClient(client,{guidanceEdit:true,guidanceNote:note.value.trim(),guidanceDone:check.checked,guidanceDate:today})){syncClient();$('detail-message').textContent='가입 후 안내 기록을 저장했어요.';}}finally{save.disabled=false;}};
+    form.append(enrollmentGuide(client));
     return form;
   }
   if(index===1) return comparisonPane(selected);
