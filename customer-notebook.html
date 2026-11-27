@@ -1,0 +1,20 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>고객관리 수첩</title><!-- wd-customer-notebook-v12 -->
+<style>body{margin:0;background:#eeebf2;font:16px/1.6 system-ui;color:#473654}p{padding:24px}iframe{width:100%;height:100dvh;border:0;display:block}</style><p id="status">고객관리 수첩을 열고 있어요.</p><script>
+(async()=>{
+ const params=new URLSearchParams(location.hash.slice(1));
+ const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+ const url=new URL(params.get('s'));
+ if(!['tiwgzmmizmkbvbyfgmyw.supabase.co','zkgvcxyrrtdnsxukihdv.supabase.co'].includes(url.hostname)||url.protocol!=='https:'||!url.pathname.startsWith('/storage/v1/object/sign/wd-partners-attachments/'))throw Error();
+ const response=await fetch(url,{credentials:'omit',referrerPolicy:'no-referrer'});
+ if(!response.ok)throw Error();
+ const key=await crypto.subtle.importKey('raw',bytes(params.get('k')),'AES-GCM',false,['decrypt']);
+ const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(params.get('i'))},key,await response.arrayBuffer());
+ const doc=new DOMParser().parseFromString(new TextDecoder().decode(clear),'text/html');
+ for(const a of doc.querySelectorAll('a[href^="data:"]')){
+   const b=await (await fetch(a.href)).blob();
+   a.href=URL.createObjectURL(new Blob([b],{type:'application/pdf'}));a.removeAttribute('download');
+ }
+ const frame=document.createElement('iframe');frame.title='고객관리 수첩';frame.sandbox='allow-popups allow-popups-to-escape-sandbox allow-downloads';
+ frame.srcdoc=doc.documentElement.outerHTML;document.body.replaceChildren(frame);
+})().catch(()=>document.getElementById('status').textContent='수첩을 열 수 없어요. 카톡으로 받은 전체 링크를 다시 열거나 담당 설계사에게 새 링크를 요청해 주세요.');
+</script></html>
