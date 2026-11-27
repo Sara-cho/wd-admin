@@ -43143,40 +43143,64 @@ $('add').before(rosterActions);
 rosterActions.append($('add'),removeCustomer);
 
 const onRoster=client=>client.removedFromRoster!==true;
-removeCustomer.onclick=()=>{
- const month=period;
- const clients=plans.get(month).clients.filter(onRoster).slice().sort((a,b)=>a.name.localeCompare(b.name,'ko'));
- if(!clients.length)return;
- modal(monthLabel(month)+' 계획에서 고객 삭제',
-   '<label>고객 검색<input type="search" id="removeSearch" placeholder="이름 또는 초성" autocomplete="off"></label><label>삭제할 고객<select id="removePick" size="4" required></select></label><p id="removeSummary" role="status"></p>',
-   async()=>{
-     const current=plans.get(month),id=$('removePick').value;
-     const selected=current.clients.find(c=>String(c.id)===id && onRoster(c));
-     if(!selected)throw Error('삭제할 고객을 선택해 주세요.');
-     await storePlan(month,{...current,clients:current.clients.map(c=>c===selected?{...c,removedFromRoster:true}:c)});
-     statusLine.textContent=monthLabel(month)+' 영업계획에서 '+selected.name+' 고객을 삭제했어요.';
-   });
- const search=$('removeSearch'),pick=$('removePick');
- function selection(){
-   const chosen=clients.find(c=>String(c.id)===pick.value);
-   $('save').disabled=!chosen;
-   $('removeSummary').textContent=chosen
-     ?chosen.name+' 고객을 이달의 영업진행과 연락 목록에서 삭제합니다. 고객정보·계약·업무기록은 보관됩니다.'
-     :'이달의 영업계획에서 삭제할 고객을 선택해 주세요.';
+const selectedClients=new Set();
+let selectionMonth=null, savingSelection=false;
+const cancelSelection=document.createElement('button');
+cancelSelection.type='button';
+cancelSelection.className='soft';
+cancelSelection.textContent='취소';
+rosterActions.append(cancelSelection);
+const removalStatus=document.createElement('span');
+removalStatus.setAttribute('role','status');
+rosterActions.after(removalStatus);
+
+function updateSelectionControls(){
+ const active=selectionMonth===period;
+ removeCustomer.textContent=active?'선택 삭제 ('+selectedClients.size+')':'고객 삭제';
+ removeCustomer.disabled=savingSelection||(active?!selectedClients.size:!data().items.some(r=>onRoster(rowData.get(r))));
+ cancelSelection.style.display=active?'':'none';
+ cancelSelection.disabled=savingSelection;
+ $('add').style.display=active?'none':'';
+ $('search').style.display=active?'none':'';
+ $('month').disabled=savingSelection;
+}
+function clearSelection(){
+ selectionMonth=null;
+ selectedClients.clear();
+ removalStatus.textContent='';
+}
+cancelSelection.onclick=()=>{clearSelection();draw();removeCustomer.focus();};
+removeCustomer.onclick=async()=>{
+ if(savingSelection)return;
+ if(selectionMonth!==period){
+   clearSelection();selectionMonth=period;draw();
+   $('rows').querySelector('input[type=checkbox]')?.focus();
+   return;
  }
- function filterCustomers(){
-   const matches=clients.filter(c=>matchesName(c.name,search.value.trim()));
-   pick.replaceChildren(...matches.map(c=>{
-     const phone=directory.get(String(c.id))?.phoneLast;
-     return new Option(c.name+(phone?' · '+phone:''),String(c.id));
-   }));
-   pick.selectedIndex=-1;
-   selection();
-   if(!matches.length)$('removeSummary').textContent='검색 결과가 없습니다.';
- }
- $('save').textContent='계획에서 삭제';
- pick.onchange=selection;search.oninput=filterCustomers;filterCustomers();search.focus();
+ if(!selectedClients.size)return;
+ const month=period, current=plans.get(month);
+ const plan={...current,clients:current.clients.map(c=>selectedClients.has(String(c.id))&&onRoster(c)?{...c,removedFromRoster:true}:c)};
+ const count=selectedClients.size;
+ savingSelection=true;draw();
+ try{
+   await storePlan(month,plan);
+   clearSelection();statusLine.textContent=monthLabel(month)+' 영업계획에서 '+count+'명을 삭제했어요.';
+ }catch(error){removalStatus.textContent=error.message||'저장하지 못했어요. 다시 시도해 주세요.';}
+ finally{savingSelection=false;draw();}
 };
+$('rows').addEventListener('click',event=>{
+ if(selectionMonth!==period)return;
+ event.stopImmediatePropagation();
+ const row=event.target.closest('tr[data-i]');
+ if(!row||savingSelection)return;
+ const box=row.querySelector('input[type=checkbox]');
+ if(!box)return;
+ if(event.target!==box)box.checked=!box.checked;
+ const id=String(rowData.get(data().items[Number(row.dataset.i)]).id);
+ if(box.checked)selectedClients.add(id);else selectedClients.delete(id);
+ row.style.backgroundColor=box.checked?'#f1eafa':'';
+ updateSelectionControls();
+},true);
 
 function renderPlan(month,plan){
  plans.set(month,plan);
@@ -43252,7 +43276,8 @@ function priority(r){
 }
 function draw(){
  const d=data(),all=d.items.filter(r=>onRoster(rowData.get(r))),won=all.filter(r=>r[2]==='체결'),sum=actualTotals.get(period)??0,pct=d.goal?Math.round(sum/d.goal*100):0;
- removeCustomer.disabled=!all.length;
+ if(selectionMonth!==null&&selectionMonth!==period)clearSelection();
+ updateSelectionControls();
  tab(view);
  const arc=Math.min(100,pct);
  const gauge=`<svg class="gauge" viewBox="0 0 100 100" role="img" aria-label="목표 달성률 ${pct}%"><defs><linearGradient id="violetArc" x1="0" y1="1" x2="1" y2="0" gradientUnits="objectBoundingBox"><stop stop-color="#a787c7"/><stop offset=".5" stop-color="#8b67b0"/><stop offset="1" stop-color="#503067"/></linearGradient></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#dbd1e5" stroke-width="1.5" stroke-dasharray="1 5"/><circle cx="50" cy="50" r="36" fill="none" stroke="#e2dbe9" stroke-width="7"/><circle cx="50" cy="50" r="36" pathLength="100" fill="none" stroke="url(#violetArc)" stroke-width="${arc?7:0}" stroke-linecap="round" stroke-dasharray="${arc} 100" transform="rotate(-90 50 50)"/><text x="50" y="52" text-anchor="middle" font-size="21" font-weight="750" fill="#412952">${pct}%</text><text x="50" y="65" text-anchor="middle" font-size="9" fill="#716279">달성률</text></svg>`;
@@ -43267,7 +43292,7 @@ function draw(){
  const due=all.filter(r=>priority(r)===0);
  $('callCount').textContent=due.length+'명';
  $('callList').innerHTML=due.map(row=>todayTaskRow(row,d.items.indexOf(row))).join('')||'<p class="empty">선택한 영업월에 오늘 연락할 고객이 없어요.</p>';
- const query=$('search').value.trim().replace(/\s+/g,'');
+ const query=selectionMonth===period?'':$('search').value.trim().replace(/\s+/g,'');
  const entries=query?Object.keys(months).sort().reverse().flatMap(key=>months[key].items
    .map((r,i)=>({key,r,i})).filter(({r})=>onRoster(rowData.get(r)) && matchesName(r[0],query))):
    d.items.map((r,i)=>({key:period,r,i})).filter(({r})=>onRoster(rowData.get(r))).sort((a,b)=>priority(a.r)-priority(b.r)||a.r[4]-b.r[4]);
@@ -43278,8 +43303,9 @@ function draw(){
      const state=stageState(r,i),text=i===1 && state==='active' && r[12]==='review'?'고객확인대기':stateText[state];
      return `<td class="stepcell"><span class="mobilelabel">${stage}</span><span class="rail ${state}" role="img" aria-label="${stage} · ${text}"><span class="node">${state==='ended'?'×':''}</span><span class="state">${['active','signed','ended'].includes(state)?text:''}</span></span></td>`;
    }).join('');
-   const name=`<th scope="row">${query?`<small class="resultmonth">${monthLabel(key)}</small>`:''}<button class="name" data-key="${key}" data-i="${i}">${escapeText(r[0])}</button></th>`;
-   const row=`<tr data-key="${key}" data-i="${i}" class="${r[2]==='종료'?'stopped':''}">${name}${stageCells}</tr>`;
+   const checked=selectedClients.has(String(rowData.get(r).id));
+   const name=selectionMonth===period?`<th scope="row"><span style="display:inline-flex;align-items:center;gap:6px;min-height:32px;cursor:pointer"><input type="checkbox" aria-label="${escapeText(r[0]).replace(/"/g,'&quot;')} 선택" style="width:18px;height:18px;flex:none;accent-color:#694886" ${checked?'checked':''} ${savingSelection?'disabled':''}>${escapeText(r[0])}</span></th>`:`<th scope="row">${query?`<small class="resultmonth">${monthLabel(key)}</small>`:''}<button class="name" data-key="${key}" data-i="${i}">${escapeText(r[0])}</button></th>`;
+   const row=`<tr data-key="${key}" data-i="${i}" style="${selectionMonth===period&&checked?'background-color:#f1eafa':''}" class="${r[2]==='종료'?'stopped':''}">${name}${stageCells}</tr>`;
    return row;
 
  }).join('')||'<tr><td class="empty" colspan="5">표시할 고객이 없어요.</td></tr>';
