@@ -10,7 +10,7 @@
 <meta content="no-cache" http-equiv="Pragma"/>
 <meta content="0" http-equiv="Expires"/>
 <!-- GitHub 표시 제목: 설계사허브 테스트본(261117) -->
-<title>설계사허브 · PC · 태블릿 · 모바일 TEST v27</title>
+<title>설계사허브 · PC · 태블릿 · 모바일 TEST v28</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -43178,15 +43178,20 @@ removeCustomer.onclick=async()=>{
    return;
  }
  if(!selectedClients.size)return;
- const month=period, current=plans.get(month);
- const plan={...current,clients:current.clients.map(c=>selectedClients.has(String(c.id))&&onRoster(c)?{...c,removedFromRoster:true}:c)};
- const count=selectedClients.size;
- savingSelection=true;draw();
- try{
-   await storePlan(month,plan);
-   clearSelection();statusLine.textContent=monthLabel(month)+' 영업계획에서 '+count+'명을 삭제했어요.';
- }catch(error){removalStatus.textContent=error.message||'저장하지 못했어요. 다시 시도해 주세요.';}
- finally{savingSelection=false;draw();}
+ const month=period, ids=new Set(selectedClients);
+ const selected=plans.get(month).clients.filter(c=>ids.has(String(c.id))&&onRoster(c));
+ if(!selected.length)return;
+ modal(monthLabel(month)+' 영업계획에서 '+selected.length+'명 삭제',
+  '<p id="removeNames"></p><p>선택한 고객을 이달 영업진행과 연락 목록에서 제외합니다. 고객정보와 계약·업무기록은 보관됩니다.</p>',
+  async()=>{
+   const current=plans.get(month);
+   const clients=current.clients.map(c=>ids.has(String(c.id))&&onRoster(c)?{...c,removedFromRoster:true}:c);
+   await storePlan(month,{...current,clients});
+   clearSelection();
+   statusLine.textContent=monthLabel(month)+' 영업계획에서 '+selected.length+'명을 삭제했어요.';
+  });
+ $('removeNames').textContent=selected.map(c=>c.name).join(', ');
+ $('save').textContent='삭제';
 };
 $('rows').addEventListener('click',event=>{
  if(selectionMonth!==period)return;
