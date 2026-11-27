@@ -41490,7 +41490,11 @@ async function wd09OpenAddressSearch(button){
   width: 100%;
   min-height: 96px;
   margin: 0;
-  field-sizing: content;
+  field-sizing: fixed;
+  height: 104px;
+  max-height: 104px;
+  overflow-y: auto;
+  resize: none;
 }
 #wds2-detail .sales-round-grid > section {
   border-top: 1px solid #eae6ee;
@@ -41545,6 +41549,12 @@ async function wd09OpenAddressSearch(button){
 }
 #wds2-detail .sales-round-amount { flex: 1 1 210px; min-width: 0; }
 #wds2-detail .sales-round-amount .wds2-premium-summary { margin-top: 6px; background: #f8f8fa; }
+#wds2-detail .sales-round-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr); gap:8px; }
+#wds2-detail .sales-round-actions .sales-round-amount { display:contents; }
+#wds2-detail .sales-round-actions label,#wds2-detail .sales-round-actions .preview-slot { min-width:0; }
+#wds2-detail .sales-round-actions .wds2-premium-summary { display:grid; gap:2px; margin:0; padding:5px 8px; }
+#wds2-detail .sales-round-actions input,#wds2-detail .sales-round-actions button { width:100%; min-width:0; margin:0; }
+#wds2-detail .sales-round-actions button { white-space:normal; word-break:keep-all; padding:6px; }
 #wds2-detail .sales-round-actions .preview-slot:empty { display: none; }
 #wds2-detail .sales-round-content[hidden] { display: none; }
 @media (max-width: 679px) {
@@ -44057,11 +44067,11 @@ function driveButton(input,label='Drive에서 가져오기'){
     const head=make('div','','drive-head'),logo=make('img'),tools=make('div','','drive-head-actions'),scroll=make('div','','drive-scroll');
     logo.src='https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web-64dp/logo_drive_2026_color_2x_web_64dp.png';logo.alt='Google Drive';logo.width=logo.height=28;
     tools.append(local,close);head.append(logo,heading,tools);scroll.append(table,info,more);dialog.append(head,search,scroll);root.append(dialog);
-    const mobilePicker=!!trigger.closest('.salesChildPage')||$('detail').classList.contains('salesChildPage');
+    const mobilePicker=label==='파일 첨부'||!!trigger.closest('.salesChildPage')||$('detail').classList.contains('salesChildPage');
     let stopPositioning=()=>{};
     if(mobilePicker){
       const names={currentPdfs:'보장분석 자료 추가',proposalPdfs:'새 제안서 자료 추가',revisionPdfs:'조율 제안서 자료 추가',finalReport:'최종 보고서 추가'};
-      heading.textContent=names[input.name]||'PDF 자료 추가';
+      heading.textContent=label==='파일 첨부'?'파일 첨부':names[input.name]||'PDF 자료 추가';
       dialog.setAttribute('aria-label',heading.textContent);
       dialog.classList.add('salesFilePopup');
       const card=make('section','','salesFilePopupCard'), titleBar=make('header','','filePopupTitle'),sources=make('div','','filePopupSources');
@@ -44196,16 +44206,12 @@ function pdfField(name,caption,initial=[],client,round=0) {
     }
   };
   input.onchange=()=>acceptFiles(input.files);
-  if(carrierFiles || summary || name==='currentPdfs'){
-    const zone=make('button',carrierFiles?'＋ 가입제안서 PDF 선택':'PDF 선택','sales29-drop');
-    zone.type='button';zone.onclick=()=>input.click();
-    zone.ondragover=e=>e.preventDefault();
-    zone.ondrop=e=>{e.preventDefault();if(!carrierFiles && e.dataTransfer.files.length>1){message.textContent='한 장 비교분석 PDF 한 개를 선택해 주세요.';return;}acceptFiles(e.dataTransfer.files);};
-    wrap.append(zone);
-  }
   render();
   if(carrierFiles || summary || name==='currentPdfs'){
-    const actions=make('div','','sales-round-files');actions.append(wrap.querySelector('.sales29-drop'),driveButton(input,'Drive 선택'));if(single)actions.append(single);wrap.append(actions,list);
+    const actions=make('div','','sales-round-files');
+    actions.append(driveButton(input,'파일 첨부'));
+    if(single)actions.append(single);
+    wrap.append(actions,list);
   }else if(single){
     const buttons=make('div','','pdf-inline-actions');buttons.append(driveButton(input,mobileFiles?'＋ '+({currentPdfs:'보장분석',proposalPdfs:'제안서',revisionPdfs:'조율 자료',finalReport:'보고서'}[name]||'자료')+' 추가':'＋ '+caption+' 추가 · Drive'),single);wrap.append(buttons,list);
   }else wrap.append(driveButton(input,'＋ '+caption+' 추가 · Drive'),list);
