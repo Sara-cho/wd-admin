@@ -41556,6 +41556,14 @@ async function wd09OpenAddressSearch(button){
 #wds2-detail .sales-round-actions input,#wds2-detail .sales-round-actions button { width:100%; min-width:0; margin:0; }
 #wds2-detail .sales-round-actions button { white-space:normal; word-break:keep-all; padding:6px; }
 #wds2-detail .sales-round-actions .preview-slot:empty { display: none; }
+#wds2-detail .folder-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid #d4c9df;margin:10px 0}
+#wds2-detail .folder-tabs button{width:auto;flex:none;margin:0;padding:7px 15px;border-radius:9px 9px 0 0;background:#f4f1f6}
+#wds2-detail .folder-tabs button[aria-pressed=true]{background:#664680;color:white}
+#wds2-detail .file-line{display:flex;align-items:center;gap:8px;min-width:0}
+#wds2-detail .file-line span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wds2-detail .file-line button{flex:none}
+#wds2-detail .wds2-note:empty{display:none}
+#wds2-detail .sales-round-grid .wds2-pdf-list{max-height:160px}
 #wds2-detail .sales-round-content[hidden] { display: none; }
 @media (max-width: 679px) {
   #wds2-detail .sales-baseline-fields { grid-template-columns: minmax(0, 1fr); }
@@ -43967,9 +43975,7 @@ function previewKeys(){
   if(activeTab===3)return ['signingBefore',finalVersion,'finalReport'].filter(key=>previewFiles.get(key)?.file);
   const number=activeTab===2?previewRound:1;
   const summary='summary-'+number;
-  const prefix=(number===1?'proposalPdfs':'revision-'+(number-1))+'-item-';
-  const after=[summary,...[...previewFiles.keys()].filter(key=>key.startsWith(prefix))];
-  return ['currentPdfs',...after].filter(key=>previewFiles.get(key)?.file);
+  return ['currentPdfs',summary].filter(key=>previewFiles.get(key)?.file);
 }
 function refreshPreviewButton(){
   const compare=isProposalComparison();
@@ -43983,7 +43989,7 @@ function refreshPreviewButton(){
 previewButton.onclick=()=>{
   const keys=previewKeys();
   if(!keys.includes('currentPdfs') || keys.length<2){
-    const msg=!keys.includes('currentPdfs')?'컨설팅 전 제안서 PDF를 첨부해 주세요.':'이 회차의 컨설팅 후 제안서 또는 보험사별 가입제안서를 첨부해 주세요.';
+    const msg=!keys.includes('currentPdfs')?'컨설팅 전 제안서 PDF를 첨부해 주세요.':'이 회차의 컨설팅 후 제안서를 첨부해 주세요.';
     window.alert(msg);return;
   }
   if($('pdf-dock').hidden)openPreview(previewButton);
@@ -44216,7 +44222,7 @@ function pdfField(name,caption,initial=[],client,round=0) {
         }
       }catch(error){message.textContent=error.message;return;}
     }
-    message.textContent = pdfs.length<selectedFiles.length ? 'PDF 파일만 추가할 수 있어요.' : (pdfs.length?(caseHost?'저장하면 이 영업 건에 첨부돼요.':'선택한 PDF는 이 시안 창에서만 유지돼요.'):'');
+    message.textContent = pdfs.length<selectedFiles.length ? 'PDF 파일만 추가할 수 있어요.' : '';
     render();
     if(pdfs.length){
       const pick=wrap.querySelector('.sales-drive-trigger') || wrap.closest('.registration-file')?.querySelector('.sales-drive-trigger');
@@ -44453,37 +44459,58 @@ function coordinationPane(client) {
   const form = make('form','','wds2-card-body wds2-stage-compact');
   const toolbar = make('div','','wds2-round-header');
   
-  const add = make('button','＋ 다음 제안 추가');
+  const add = make('button','＋ 다음 조율 제안');
   add.type = 'button';
   toolbar.append(add);
   const body = make('div');
   const rounds = [];
-  const baselineFile=make('p');
+  const baselineFile=make('span');
   const baselineAmount=make('p');
-  const previewBefore=onePdf('currentPdfs','컨설팅 전 PDF 열기');
+  const previewBefore=onePdf('currentPdfs','열기');
   const baselineFields=make('div','','sales-baseline-fields');
-  const fileInfo=make('div');fileInfo.append(baselineFile,previewBefore);
+  const fileInfo=make('div','','file-line');fileInfo.append(baselineFile,previewBefore);
   baselineFields.append(fileInfo,baselineAmount);
   const baseline=stageCard('컨설팅 전 제안서',baselineFields);
   baseline.classList.add('sales-baseline-card');
+  const strip=make('nav','','folder-tabs'),first=make('button','1차'),firstPanel=make('section','','sales-round-content sales-round-card');
+  first.type='button';first.onclick=()=>showRound(-1);strip.append(first);
+  function renderFirst(){
+    firstPanel.replaceChildren(make('h2','1차 제안'));
+    for(const [title,value] of [['제안일',client.proposalDate],['고객 요청',client.proposalRequest],['제안 방향',[client.proposal,client.comparison].filter(Boolean).join(' · ')],['제안 월보험료',client.newPremium!=null?asWon(client.newPremium):'—']]){
+      firstPanel.append(make('strong',title),make('p',value||'—'));
+    }
+    for(const [index,item] of [...(client.summaryPdfs||[]),...(client.proposalPdfs||[])].entries()){
+      const key=index<(client.summaryPdfs||[]).length?'summary-1':'proposalPdfs-item-'+(index-(client.summaryPdfs||[]).length);
+      const line=make('div','','file-line');line.append(make('span',item.name||String(item)));
+      if(previewFiles.get(key)?.file)line.append(onePdf(key,'열기'));firstPanel.append(line);
+    }
+    firstPanel.append(make('div','','preview-slot'));
+  }
+  let currentIndex=0;
   function showRound(index) {
     if(activeTab===2 && !$('pdf-dock').hidden)closePreview();
+    currentIndex=index;
+    firstPanel.hidden=index!==-1;
+    first.setAttribute('aria-pressed',String(index===-1));
+    toolbar.hidden=index!==rounds.length-1 || !!client.result;
+    const delivery=form.querySelector('.round-delivery');if(delivery)delivery.hidden=index!==rounds.length-1;
     previewRound=index+2;
     rounds.forEach((round,position)=>{
       round.panel.hidden = index!==position;
-      round.button.setAttribute('aria-expanded',String(index===position));
+      round.button.setAttribute('aria-pressed',String(index===position));
     });
-    if(activeTab===2)rounds[index].panel.querySelector('.preview-slot').append(previewButton);
+    if(activeTab===2)(index<0?firstPanel:rounds[index].panel).querySelector('.preview-slot').append(previewButton);
     refreshPreviewButton();
   }
   function addRound(record={},focus=false) {
+    record={...record};
     const index = rounds.length;
     const button = make('button','','sales-round-toggle');
     button.type = 'button';
     button.onclick = ()=>showRound(index);
     const panel = make('section','','sales-round-content');
     const [dateLabel,date] = contactField('제안일','date',record.date || formatDay(0));
-    function caption(){button.textContent=(index+2)+'차 제안 · '+date.value;}date.oninput=caption;caption();
+    function caption(){button.textContent=(index+2)+'차';}date.oninput=caption;caption();
     const [requestLabel,request] = contactField('고객 요청','textarea',record.request);
     request.name = 'coordinationRequest';
     const [adjustmentLabel,adjustment] = contactField('제안 방향','textarea',record.adjustment);
@@ -44493,11 +44520,14 @@ function coordinationPane(client) {
     const summary=pdfField('summaryPdf','컨설팅 후 제안서',record.summaryPdfs,client,index+2);
     const proposed=proposalPremiumField(record.newPremium,()=>consultationBeforePremium(client));
     panel.append(proposalRound(index+2,dateLabel,requestLabel,adjustmentLabel,summary.wrap,pdf.wrap,proposed));
-    rounds.push({panel,button,proposed,read:()=>({
+    const status=make('p');panel.append(status);
+    function displayStatus(){status.textContent=[record.replyStatus,record.nextDate && '다음 연락 '+record.nextDate].filter(Boolean).join(' · ');status.hidden=!status.textContent;}
+    displayStatus();
+    rounds.push({panel,button,proposed,record,displayStatus,read:()=>({
       ...record,date:date.value,request:request.value.trim(),adjustment:adjustment.value.trim(),
       newPremium:proposed.read(),summaryPdfs:summary.read(),files:pdf.read()
     })});
-    body.append(button,panel);
+    strip.append(button);body.append(panel);
     showRound(index);
     if(focus) request.focus();
   }
@@ -44505,8 +44535,13 @@ function coordinationPane(client) {
     date:client.coordinationDate,request:client.coordination,adjustment:client.followup,files:client.revisionPdfs
   }];
   for(const record of startingRounds.length?startingRounds:[{}]) addRound(record);
-  add.onclick = ()=>addRound({},true);
-  form.append(baseline,body,toolbar);
+  add.onclick=()=>{
+    const previous=rounds.at(-1);
+    previous.record.nextDate=schedule.value()||previous.record.nextDate;
+    previous.record.replyStatus='다음 조율 제안';
+    previous.displayStatus();addRound({},true);outcome='review';schedule.set('');refresh();
+  };
+  renderFirst();form.append(baseline,strip,firstPanel,body,toolbar);
   const footer=make('section','','proposal-delivery round-delivery');
   const flow=make('div','','proposal-follow-up');
   flow.id='wds2-stage-complete-2';
@@ -44515,8 +44550,8 @@ function coordinationPane(client) {
   const options=make('div','','contact-options');choicesField.append(options);
   const schedule=followUpDate('coordination',client.coordinationNextDate || (client.completed===2?client.date:'') || '');
   const reason=exitReason(client);
-  let outcome=client.coordinationStatus || '';
-  const buttons=[['고객확인대기','review'],['계약확정','confirm'],['영업종료','end']].map(([label,key])=>
+  let outcome=client.coordinationStatus || 'review';
+  const buttons=[['답변 대기','review'],['최종 결정으로','confirm'],['영업종료','end']].map(([label,key])=>
     choiceButton(options,label,key,value=>{outcome=value;refresh();}));
   const submit=make('button','','wds2-primary');submit.type='submit';
   const controls=make('div','','proposal-save-row');controls.append(submit);
@@ -44527,7 +44562,7 @@ function coordinationPane(client) {
     reason.show(active && outcome==='end');
     schedule.field.hidden=outcome==='end';
     buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.value===outcome)));
-    const labels={review:'확인 일정 저장',confirm:'저장하고 최종 결정으로 이동',end:'저장하고 영업 종료'};
+    const labels={review:'답변 대기 · 다음 연락일 저장',confirm:'저장하고 최종 결정으로 이동',end:'저장하고 영업 종료'};
     submit.textContent=active && labels[outcome] || '조율 내용 저장';
   }
   function refreshComparison(){
@@ -44537,8 +44572,7 @@ function coordinationPane(client) {
     const amount=consultationBeforePremium(client);
     baselineAmount.textContent='컨설팅 전 월보험료 '+(Number.isFinite(amount)?asWon(amount):'—');
     rounds.forEach(round=>round.proposed.refresh());
-    const index=rounds.findIndex(round=>!round.panel.hidden);
-    showRound(index);
+    renderFirst();showRound(currentIndex);
   }
   refresh();form.onStageShown=()=>{refresh();refreshComparison();};
   form.onsubmit=async e=>{
@@ -44557,6 +44591,11 @@ function coordinationPane(client) {
     if(next==='review' && !schedule.value()){
       $('detail-message').textContent='다음 연락일을 선택해 주세요.';
       schedule.field.querySelector('button')?.focus();return;
+    }
+    if(active){
+      const latest=rounds.at(-1);
+      latest.record.replyStatus=({review:'답변 대기',confirm:'최종 결정',end:'영업 종료'})[next]||'';
+      latest.record.nextDate=next==='end'?'':schedule.value();latest.displayStatus();
     }
     const values={coordinationRounds:rounds.map(round=>round.read())};
     const prior=salesRecordedRounds(client).length;
@@ -49022,6 +49061,7 @@ function coordinationPane(client) {
     });
   }
   function addRound(record={},focus=false) {
+    record={...record};
     const index = rounds.length;
     const button = make('button',(index+1)+'차 조율');
     button.type = 'button';
