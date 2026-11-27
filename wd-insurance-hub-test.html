@@ -41460,34 +41460,100 @@ async function wd09OpenAddressSearch(button){
 <template id="wd-monthly-board-content"><style>
 .wds2 #wds2-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
 #wds2-detail .wds2-compare-form>*{grid-column:1/-1}
-#wds2-detail .sales-round-card{padding:14px;border-radius:14px;background:#eee1f2;color:#382640;min-width:0}
-#wds2-detail .sales-round-card header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px}
-#wds2-detail .sales-round-card header h2{margin:0;font-size:19px}
-#wds2-detail .sales-round-card header label{display:flex;align-items:center;gap:8px;margin:0}
-#wds2-detail .sales-round-card header input{width:auto;margin:0}
-#wds2-detail .sales-round-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#wds2-detail .sales-round-grid>*,#wds2-detail .sales-round-actions{margin:0;padding:12px;border-radius:9px;min-width:0;background:#fff}
-#wds2-detail .sales-round-grid>label{display:grid;gap:8px;align-content:start;font-weight:700}
-#wds2-detail .sales-round-grid textarea{width:100%;min-height:75px;margin:0}
-#wds2-detail .sales-round-grid h3{margin:0 0 8px;font-size:15px}
-#wds2-detail .sales-round-files{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
-#wds2-detail .sales-round-files button{flex:0 1 auto;width:auto;min-height:36px;padding:5px 9px;margin:0}
-#wds2-detail .sales-round-grid .pdf-filename{min-width:0;overflow-wrap:anywhere}
-#wds2-detail .sales-carrier-file{display:grid;grid-template-columns:minmax(85px,.9fr) minmax(0,1.2fr) auto;align-items:center;gap:6px;flex:1}
-#wds2-detail .sales-carrier-file select{width:100%;margin:0}
-#wds2-detail .sales-round-toggle{display:block;width:100%;margin:8px 0;text-align:left;padding:10px;border:1px solid #dacde0;background:#faf7fc;border-radius:8px;font-weight:700}
-#wds2-detail .sales-round-toggle[aria-expanded=true]{color:#604575;background:#eee1f2}
+#wds2-detail .sales-round-card {
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid #e3dce9;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 2px 8px #2f1d3a05;
+}
+#wds2-detail .sales-round-card header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+}
+#wds2-detail .sales-round-card header h2 { margin: 0; font-size: 19px; }
+#wds2-detail .sales-round-card header label { display: flex; align-items: center; gap: 8px; margin: 0; }
+#wds2-detail .sales-round-card header input { width: auto; margin: 0; }
+#wds2-detail .sales-round-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+#wds2-detail .sales-round-grid > * { min-width: 0; margin: 0; }
+#wds2-detail .sales-round-grid > label { display: grid; gap: 6px; font-weight: 700; }
+#wds2-detail .sales-round-grid textarea {
+  width: 100%;
+  min-height: 96px;
+  margin: 0;
+  field-sizing: content;
+}
+#wds2-detail .sales-round-grid > section {
+  border-top: 1px solid #eae6ee;
+  padding-top: 12px;
+}
+#wds2-detail .sales-round-grid h3 { margin: 0 0 8px; font-size: 15px; }
+#wds2-detail .sales-round-files { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+#wds2-detail .sales-round-files button { flex: 0 1 auto; width: auto; min-height: 36px; padding: 5px 9px; margin: 0; }
+#wds2-detail .sales-round-grid .wds2-pdf-list li {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  background: #f8f8fa;
+}
+#wds2-detail .sales-carrier-file {
+  display: grid;
+  grid-template-columns: minmax(110px, 145px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+#wds2-detail .sales-carrier-file select { width: 100%; margin: 0; }
+#wds2-detail .sales-carrier-file > span {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+#wds2-detail .sales-round-toggle {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid #e3dce9;
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 700;
+}
+#wds2-detail .sales-round-toggle[aria-expanded=true] { border-color: #927ca2; color: #4b345d; }
 #wds2-detail .sales-baseline-card{margin:0 0 10px}
 #wds2-detail .sales-baseline-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:center;gap:10px}
 #wds2-detail .sales-baseline-fields label,#wds2-detail .sales-round-amount label{margin:0}
 #wds2-detail .sales-baseline-fields p{overflow-wrap:anywhere}
-#wds2-detail .sales-round-actions{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-top:10px}
-#wds2-detail .sales-round-amount{flex:1 1 210px;min-width:0}
-#wds2-detail .sales-round-amount .wds2-premium-summary{margin-top:6px}
-#wds2-detail .sales-round-actions .preview-slot:empty{display:none}
-@media(max-width:679px){#wds2-detail .sales-baseline-fields{grid-template-columns:minmax(0,1fr)}}
-#wds2-detail .sales-round-content[hidden]{display:none}
-@media(max-width:679px){#wds2-detail .sales-round-grid{grid-template-columns:minmax(0,1fr)}#wds2-detail .sales-round-grid>label:nth-child(3){grid-row:2}}
+#wds2-detail .sales-round-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eae6ee;
+}
+#wds2-detail .sales-round-amount { flex: 1 1 210px; min-width: 0; }
+#wds2-detail .sales-round-amount .wds2-premium-summary { margin-top: 6px; background: #f8f8fa; }
+#wds2-detail .sales-round-actions .preview-slot:empty { display: none; }
+#wds2-detail .sales-round-content[hidden] { display: none; }
+@media (max-width: 679px) {
+  #wds2-detail .sales-baseline-fields { grid-template-columns: minmax(0, 1fr); }
+  #wds2-detail .sales-round-card { padding: 14px; }
+  #wds2-detail .sales-carrier-file { grid-template-columns: minmax(0, 1fr) auto; }
+  #wds2-detail .sales-carrier-file > span { grid-column: 1 / -1; grid-row: 1; }
+  #wds2-detail .sales-carrier-file select { width: min(100%, 145px); }
+}
 .sales29-drop{width:100%;min-height:44px;border:1px dashed #876f98;border-radius:8px;background:#faf7fc;color:#513766;cursor:pointer}
 .wds2 .pdf-filename select{display:block;width:100%;min-width:0;margin:5px 0}
 </style><style>
@@ -44214,7 +44280,7 @@ function proposalRound(number,dateLabel,request,direction,summary,carriers,premi
   function block(title,field){
     const cell=make('section');cell.append(make('h3',title),field);return cell;
   }
-  grid.append(request,block('컨설팅 후 제안서',summary),direction,block('보험사별 가입제안서',carriers));
+  grid.append(request,direction,block('컨설팅 후 제안서',summary),block('보험사별 가입제안서',carriers));
   const actions=make('div','','sales-round-actions'),previewSlot=make('div','','preview-slot');
   actions.append(premium.field,previewSlot);
   card.append(head,grid,actions);return card;
