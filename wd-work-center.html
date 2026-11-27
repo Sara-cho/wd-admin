@@ -1291,7 +1291,7 @@ html.embedded-talk #root>button:not([hidden]){min-width:42px;min-height:42px;mar
 .wc-tools,.wc-tool-list {display:contents}
 .wc-archive-action-icon,.wc-archive-table-kind,.wc-date-short {display:none}
 .wc-phone-only {display:none!important}
-@media screen and (max-width:760px) {
+@media screen and (max-width:760px), screen and (pointer:coarse) and (max-width:1920px) {
   .app {--wc-plum:#58378b;--wc-line:#e3dbea;--wc-safe:env(safe-area-inset-bottom,0px);display:block}
   .app>.wd92-sidebar {display:none}
   .app .main {min-width:0}
@@ -1386,6 +1386,29 @@ html.embedded-talk #root>button:not([hidden]){min-width:42px;min-height:42px;mar
   .wc-tools #openSticky>svg {display:none}
   #root .wc-tools .wc-tool-list .wc-tool-symbol svg path {fill:none;stroke:currentColor}
   #workspaceTalk.wd109-talk-dock {right:8px;left:8px;top:8px;width:auto;bottom:calc(122px + env(safe-area-inset-bottom))}
+}
+
+@media screen and (min-width:761px) and (max-width:1920px) and (pointer:coarse) {
+  .app .main .content {width:100%;max-width:1160px;margin-inline:auto;padding:20px clamp(20px,3vw,44px) calc(112px + var(--wc-safe))}
+  .app .topbar {padding-inline:clamp(20px,3vw,44px)}
+  .app .wc-phone-bar {max-width:1100px;margin-inline:auto}
+  .app .wc-bottom {padding-inline:max(18px,calc((100vw - 850px)/2));padding-block-start:8px}
+  .wc-bottom button {font-size:13px;gap:4px}
+  .wc-bottom svg {width:22px;height:22px}
+  .wc-phone-menu[open] {width:380px;max-width:90vw}
+  .app .wd67-calendar,.app .wd70-my-plan {padding:16px 20px}
+  .app .wd87-month-grid {gap:5px}
+  .app .wd87-month-grid .wd67-day {min-height:clamp(52px,6.3vh,80px);padding:5px 8px}
+  .app .wd87-home-summary,.app .wd90-attendance-layout>.wd90-attendance-side {margin-top:16px;gap:12px}
+  .wc-home-tabs button {font-size:15px}
+  .wd-archive-page .wd98-drive-table .wd101-secondary-col {display:none}
+  .wd-archive-page .wd98-drive-table :is(td,th):not(:first-child) {font-size:14px}
+  .wd-archive-page .wd98-drive-table .wc-archive-table-kind {width:7em}
+  .wd-archive-page .wd98-drive-table :is(th,td):last-child {width:8em}
+  .wc-archive-dialog {width:min(80vw,840px)}
+  .wc-archive-dialog .wd96-drive-text {max-height:56vh;overflow:auto}
+  #root .wc-tools {right:clamp(18px,3vw,44px)}
+  #workspaceTalk.wd109-talk-dock {left:auto;right:24px;top:auto;bottom:calc(90px + env(safe-area-inset-bottom));width:min(520px,80vw);height:min(640px,75vh)}
 }
 </style>
 </head><body><div id="root"></div><script>
@@ -9873,7 +9896,7 @@ async function commitInstruction(d,plan,sender,profile,id){
   catch{S.tasks=prior;throw new Error(stored.instructionDriveId?'Drive 문서는 저장됐지만 브라우저 목록을 갱신하지 못했어요.':'업무지시를 등록하지 못했어요. 작성한 내용은 남아 있어요.');}
 }
 
-const workPhone = window.matchMedia('(max-width:760px)');
+const workPhone = window.matchMedia('screen and (max-width:760px), screen and (pointer:coarse) and (max-width:1920px)');
 let phoneHomeTab = '출근';
 
 function syncPhoneDrive(){
