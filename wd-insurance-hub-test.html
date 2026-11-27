@@ -21259,7 +21259,7 @@ function salesCaseTimeline(c){
   if(c.contactDate||c.contact)add('연락',c.contactDate,contact);
   else add('연락 예정',c.contactPlannedDate,contact);
   if(c.proposalDate||c.proposal||c.proposalPdfs?.length||c.proposed){
-    add('자료 비교·제안 (1차)',c.proposalDate,[line('제안 방향',c.proposal),line('다음 연락일',c.comparisonNextDate)]);
+    add('자료 비교·제안 (1차)',c.proposalDate,[line('고객 요청',c.proposalRequest),line('제안 방향',c.proposal),line('다음 연락일',c.comparisonNextDate)]);
   }
   if(c.comparisonHistory?.length&&list.at(-1).title.includes('자료 비교·제안'))list.at(-1).history=c.comparisonHistory;
   rounds.forEach((r,i)=>add('제안 조율 ('+(i+2)+'차)',r.date,[line('고객 요청',r.request),line('조정한 내용',r.adjustment),
@@ -41459,6 +41459,27 @@ async function wd09OpenAddressSearch(button){
 </style>
 <template id="wd-monthly-board-content"><style>
 .wds2 #wds2-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#wds2-detail .wds2-compare-form>*{grid-column:1/-1}
+#wds2-detail .sales-round-card{padding:14px;border-radius:14px;background:#eee1f2;color:#382640;min-width:0}
+#wds2-detail .sales-round-card header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+#wds2-detail .sales-round-card header h2{margin:0;font-size:19px}
+#wds2-detail .sales-round-card header label{display:flex;align-items:center;gap:8px;margin:0}
+#wds2-detail .sales-round-card header input{width:auto;margin:0}
+#wds2-detail .sales-round-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#wds2-detail .sales-round-grid>*,#wds2-detail .sales-round-premiums{margin:0;padding:12px;border-radius:9px;min-width:0;background:#fff}
+#wds2-detail .sales-round-grid>label{display:grid;gap:8px;align-content:start;font-weight:700}
+#wds2-detail .sales-round-grid textarea{width:100%;min-height:75px;margin:0}
+#wds2-detail .sales-round-grid h3{margin:0 0 8px;font-size:15px}
+#wds2-detail .sales-round-files{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+#wds2-detail .sales-round-files button{flex:0 1 auto;width:auto;min-height:36px;padding:5px 9px;margin:0}
+#wds2-detail .sales-round-grid .pdf-filename{min-width:0;overflow-wrap:anywhere}
+#wds2-detail .sales-carrier-file{display:grid;grid-template-columns:minmax(85px,.9fr) minmax(0,1.2fr) auto;align-items:center;gap:6px;flex:1}
+#wds2-detail .sales-carrier-file select{width:100%;margin:0}
+#wds2-detail .sales-round-toggle{display:block;width:100%;margin:8px 0;text-align:left;padding:10px;border:1px solid #dacde0;background:#faf7fc;border-radius:8px;font-weight:700}
+#wds2-detail .sales-round-toggle[aria-expanded=true]{color:#604575;background:#eee1f2}
+#wds2-detail .sales-round-premiums summary{cursor:pointer;font-weight:700}
+#wds2-detail .sales-round-content[hidden]{display:none}
+@media(max-width:679px){#wds2-detail .sales-round-grid{grid-template-columns:minmax(0,1fr)}#wds2-detail .sales-round-grid>label:nth-child(3){grid-row:2}}
 .sales29-drop{width:100%;min-height:44px;border:1px dashed #876f98;border-radius:8px;background:#faf7fc;color:#513766;cursor:pointer}
 .wds2 .pdf-filename select{display:block;width:100%;min-width:0;margin:5px 0}
 </style><style>
@@ -43822,7 +43843,7 @@ async function saveClient(client,values){
    const field=comparison?'comparisonHistory':'coordinationHistory';
    const route=comparison?proposalActions[next.proposalStatus]:({review:'고객확인대기',confirm:'계약확정',end:'영업종료'})[next.coordinationStatus];
    const day=comparison?next.comparisonNextDate:next.coordinationNextDate;
-   const context=comparison?next.proposalDate:next.coordinationRounds?.length?next.coordinationRounds.length+'차 조율':'';
+   const context=comparison?next.proposalDate:next.coordinationRounds?.length?(next.coordinationRounds.length+1)+'차 제안':'';
    const entry=[context,route,day && '다음 연락 '+day].filter(Boolean).join(' · ');
    const previousDay=comparison?client.comparisonNextDate:client.coordinationNextDate;
    const history=[...(client[field]?.length?client[field]:previousDay?['다음 연락 '+previousDay]:[])];
@@ -44054,7 +44075,7 @@ function pdfField(name,caption,initial=[],client,round=0) {
         select.value=file.carrier||infer(file.name);
         if(select.value)file.carrier=select.value;
         select.onchange=()=>{file.carrier=select.value;};
-        label.append(select);
+        const filename=make('span',file.name);label.replaceChildren(select,filename);label.classList.add('sales-carrier-file');
         const itemKey=key+'-item-'+index;
         if(file.file){previewFiles.set(itemKey,{...file,title:file.name});label.append(onePdf(itemKey,'열기'));}
       }
@@ -44084,7 +44105,7 @@ function pdfField(name,caption,initial=[],client,round=0) {
         if(carrierFiles){
           for(const file of pdfs)files.push({name:file.name,file,carrier:infer(file.name)});
         }else{
-        const canonical=summary?customerAttachmentPrefix(client)+'_컨설팅후제안서_'+round+'차.pdf':salesPdfName(client,name,round);
+        const canonical=summary?customerAttachmentPrefix(client)+'_컨설팅후제안서_'+round+'차_'+customerAttachmentDay().slice(2).replaceAll('-','')+'.pdf':salesPdfName(client,name,round);
         const renamed=new File([pdfs[0]],canonical,{type:'application/pdf',lastModified:pdfs[0].lastModified});
         const replaces=files[0]?.archived??files[0]?.replaces??initial?.[0]?.archived;
         if(visibleReaders.some(v=>v.key===key))closePreview();
@@ -44101,14 +44122,16 @@ function pdfField(name,caption,initial=[],client,round=0) {
   };
   input.onchange=()=>acceptFiles(input.files);
   if(carrierFiles || summary || name==='currentPdfs'){
-    const zone=make('button',carrierFiles?'가입제안서 PDF 여러 개 선택 · 끌어놓기':(summary?'컨설팅후 제안서 ('+round+'차)':'컨설팅전 제안서')+' PDF 선택','sales29-drop');
+    const zone=make('button',carrierFiles?'＋ 가입제안서 PDF 선택':'PDF 선택','sales29-drop');
     zone.type='button';zone.onclick=()=>input.click();
     zone.ondragover=e=>e.preventDefault();
     zone.ondrop=e=>{e.preventDefault();if(!carrierFiles && e.dataTransfer.files.length>1){message.textContent='한 장 비교분석 PDF 한 개를 선택해 주세요.';return;}acceptFiles(e.dataTransfer.files);};
     wrap.append(zone);
   }
   render();
-  if(single){
+  if(carrierFiles || summary || name==='currentPdfs'){
+    const actions=make('div','','sales-round-files');actions.append(wrap.querySelector('.sales29-drop'),driveButton(input,'Drive 선택'));if(single)actions.append(single);wrap.append(actions,list);
+  }else if(single){
     const buttons=make('div','','pdf-inline-actions');buttons.append(driveButton(input,mobileFiles?'＋ '+({currentPdfs:'보장분석',proposalPdfs:'제안서',revisionPdfs:'조율 자료',finalReport:'보고서'}[name]||'자료')+' 추가':'＋ '+caption+' 추가 · Drive'),single);wrap.append(buttons,list);
   }else wrap.append(driveButton(input,'＋ '+caption+' 추가 · Drive'),list);
   drop.hidden=true;wrap.append(drop);
@@ -44135,6 +44158,17 @@ function afterStageSave(outcome){
   $('stage-'+target).replaceChildren(stageForm(target));
   syncClient();
   showTab(target,true);
+}
+function proposalRound(number,dateLabel,request,direction,summary,carriers){
+  const card=make('section','','sales-round-card');
+  const head=make('header');
+  head.append(make('h2',number+'차 제안'),dateLabel);
+  const grid=make('div','','sales-round-grid');
+  function block(title,field){
+    const cell=make('section');cell.append(make('h3',title),field);return cell;
+  }
+  grid.append(request,block('컨설팅 후 제안서',summary),direction,block('보험사별 가입제안서',carriers));
+  card.append(head,grid);return card;
 }
 function comparisonPane(client) {
   const form = make('form','','wds2-card-body wds2-compare-form');
@@ -44178,18 +44212,18 @@ function comparisonPane(client) {
   direction.setAttribute('aria-label','제안 방향');
   direction.value=[client.proposal,client.comparison].filter(Boolean).join('\n\n');
 
-  const current=stageCard('컨설팅전 제안서',before,currentPdfs.wrap);
-  const summary=pdfField('summaryPdf','컨설팅후 제안서 (1차)',client.summaryPdfs,client,1);
-  const proposal=stageCard('컨설팅후 제안서 (1차)',after,summary.wrap,make('h3','보험사별 가입제안서 (1차)'),proposalPdfs.wrap);
-  for(const card of [current,proposal]) card.className+=' comparison-side';
+  const current=stageCard('컨설팅 전 제안서',currentPdfs.wrap);
+  const summary=pdfField('summaryPdf','컨설팅 후 제안서',client.summaryPdfs,client,1);
   const footer=make('section','','proposal-delivery');
   const reason=exitReason(client);
   const [dayLabel,day]=contactField('제안일','date',client.proposalDate || today);
   day.name='proposalDate';
-  const notes=make('section','','wds2-panel-group proposal-notes');
-  const directionLabel=make('label','제안 방향');
-  directionLabel.append(direction);
-  notes.append(dayLabel,directionLabel);
+  const [requestLabel,request]=contactField('고객 요청','textarea',client.proposalRequest);
+  request.name='proposalRequest';
+  const directionLabel=make('label','제안 방향');directionLabel.append(direction);
+  const proposal=proposalRound(1,dayLabel,requestLabel,directionLabel,summary.wrap,proposalPdfs.wrap);
+  const premiums=make('details','','sales-round-premiums');
+  premiums.append(make('summary','월보험료 비교'),before,after);
   const inherited=()=>client.completed===1 ? client.date || '' : client.contactNextDate || '';
   const schedule=followUpDate('proposal',client.comparisonNextDate ?? inherited());
   const history=make('p','','contact-saved-choice');
@@ -44248,8 +44282,8 @@ function comparisonPane(client) {
   };
   refreshFooter();
   const previewSlot=make('div','','preview-slot comparison-preview');
-  differenceRow.insertBefore(previewSlot,difference);
-  form.append(current,proposal,differenceRow,notes,footer);
+  proposal.append(previewSlot);
+  premiums.append(differenceRow);form.append(current,proposal,premiums,footer);
   async function store(outcome){
     const premium=readPremium();
     if(Number.isNaN(premium)){
@@ -44269,7 +44303,7 @@ function comparisonPane(client) {
     }
     const manualCurrentPremium=baseline==null?readPremium(beforeInput):client.manualCurrentPremium??null;
     if(Number.isNaN(manualCurrentPremium)){$('detail-message').textContent='현재 월보험료를 원 단위로 입력해 주세요.';beforeInput.focus();return;}
-    const values={manualCurrentPremium,newPremium:premium,proposal:direction.value.trim(),comparison:'',
+    const values={proposalRequest:request.value.trim(),manualCurrentPremium,newPremium:premium,proposal:direction.value.trim(),comparison:'',
       currentPdfs:currentPdfs.read(),summaryPdfs:summary.read(),proposalPdfs:proposalPdfs.read(),
       proposalDate:day.value};
     if(!client.result && client.completed<=1){
@@ -44303,11 +44337,10 @@ function comparisonPane(client) {
 function coordinationPane(client) {
   const form = make('form','','wds2-card-body wds2-stage-compact');
   const toolbar = make('div','','wds2-round-header');
-  const choices = make('div','','wds2-round-choices');
-  choices.setAttribute('aria-label','조율 회차');
-  const add = make('button','＋ 조율 추가');
+  
+  const add = make('button','＋ 다음 제안 추가');
   add.type = 'button';
-  toolbar.append(choices,add);
+  toolbar.append(add);
   const body = make('div');
   const rounds = [];
   function showRound(index) {
@@ -44316,43 +44349,38 @@ function coordinationPane(client) {
     refreshPreviewButton();
     rounds.forEach((round,position)=>{
       round.panel.hidden = index!==position;
-      round.button.setAttribute('aria-pressed',String(index===position));
+      round.button.setAttribute('aria-expanded',String(index===position));
     });
   }
   function addRound(record={},focus=false) {
     const index = rounds.length;
-    const button = make('button','제안 조율 ('+(index+2)+'차)');
+    const button = make('button','','sales-round-toggle');
     button.type = 'button';
     button.onclick = ()=>showRound(index);
-    const panel = make('section','','wds2-round-panel wds2-panel-group');
-    const [dateLabel,date] = contactField((index+2)+'차 제안일','date',record.date || formatDay(0));
+    const panel = make('section','','sales-round-content');
+    const [dateLabel,date] = contactField('제안일','date',record.date || formatDay(0));
+    function caption(){button.textContent=(index+2)+'차 제안 · '+date.value;}date.oninput=caption;caption();
     const [requestLabel,request] = contactField('고객 요청','textarea',record.request);
     request.name = 'coordinationRequest';
-    const [adjustmentLabel,adjustment] = contactField('조정한 내용','textarea',record.adjustment);
+    const [adjustmentLabel,adjustment] = contactField('제안 방향','textarea',record.adjustment);
     adjustment.name = 'coordinationAdjustment';
 
     const pdf=pdfField('revisionPdfs','조율 제안서 PDF',record.files,client,index+1);
-    const title=make('div','','wds2-round-title');
-    title.append(make('h2','제안 조율 ('+(index+2)+'차)'),dateLabel);
-    const text = make('div','','wds2-fields wds2-round-notes');
-    text.append(requestLabel,adjustmentLabel);
-    const summary=pdfField('summaryPdf','컨설팅후 제안서 ('+(index+2)+'차)',record.summaryPdfs,client,index+2);
-    panel.append(title,text,summary.wrap,make('h3','보험사별 가입제안서 ('+(index+2)+'차)'),pdf.wrap);
+    const summary=pdfField('summaryPdf','컨설팅 후 제안서',record.summaryPdfs,client,index+2);
+    panel.append(proposalRound(index+2,dateLabel,requestLabel,adjustmentLabel,summary.wrap,pdf.wrap));
     rounds.push({panel,button,read:()=>({
       ...record,date:date.value,request:request.value.trim(),adjustment:adjustment.value.trim(),summaryPdfs:summary.read(),files:pdf.read()
     })});
-    choices.append(button);
-    body.append(panel);
-    choices.hidden=rounds.length<2;
+    body.append(button,panel);
     showRound(index);
     if(focus) request.focus();
   }
   const startingRounds = client.coordinationRounds ?? [{
     date:client.coordinationDate,request:client.coordination,adjustment:client.followup,files:client.revisionPdfs
   }];
-  for(const record of startingRounds) addRound(record);
+  for(const record of startingRounds.length?startingRounds:[{}]) addRound(record);
   add.onclick = ()=>addRound({},true);
-  form.append(toolbar,body);
+  form.append(body,toolbar);
   const footer=make('section','','proposal-delivery round-delivery');
   const flow=make('div','','proposal-follow-up');
   flow.id='wds2-stage-complete-2';
