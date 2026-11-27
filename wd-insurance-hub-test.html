@@ -41466,7 +41466,7 @@ async function wd09OpenAddressSearch(button){
 #wds2-detail .sales-round-card header label{display:flex;align-items:center;gap:8px;margin:0}
 #wds2-detail .sales-round-card header input{width:auto;margin:0}
 #wds2-detail .sales-round-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#wds2-detail .sales-round-grid>*,#wds2-detail .sales-round-premiums{margin:0;padding:12px;border-radius:9px;min-width:0;background:#fff}
+#wds2-detail .sales-round-grid>*,#wds2-detail .sales-round-actions{margin:0;padding:12px;border-radius:9px;min-width:0;background:#fff}
 #wds2-detail .sales-round-grid>label{display:grid;gap:8px;align-content:start;font-weight:700}
 #wds2-detail .sales-round-grid textarea{width:100%;min-height:75px;margin:0}
 #wds2-detail .sales-round-grid h3{margin:0 0 8px;font-size:15px}
@@ -41477,7 +41477,15 @@ async function wd09OpenAddressSearch(button){
 #wds2-detail .sales-carrier-file select{width:100%;margin:0}
 #wds2-detail .sales-round-toggle{display:block;width:100%;margin:8px 0;text-align:left;padding:10px;border:1px solid #dacde0;background:#faf7fc;border-radius:8px;font-weight:700}
 #wds2-detail .sales-round-toggle[aria-expanded=true]{color:#604575;background:#eee1f2}
-#wds2-detail .sales-round-premiums summary{cursor:pointer;font-weight:700}
+#wds2-detail .sales-baseline-card{margin:0 0 10px}
+#wds2-detail .sales-baseline-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:center;gap:10px}
+#wds2-detail .sales-baseline-fields label,#wds2-detail .sales-round-amount label{margin:0}
+#wds2-detail .sales-baseline-fields p{overflow-wrap:anywhere}
+#wds2-detail .sales-round-actions{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-top:10px}
+#wds2-detail .sales-round-amount{flex:1 1 210px;min-width:0}
+#wds2-detail .sales-round-amount .wds2-premium-summary{margin-top:6px}
+#wds2-detail .sales-round-actions .preview-slot:empty{display:none}
+@media(max-width:679px){#wds2-detail .sales-baseline-fields{grid-template-columns:minmax(0,1fr)}}
 #wds2-detail .sales-round-content[hidden]{display:none}
 @media(max-width:679px){#wds2-detail .sales-round-grid{grid-template-columns:minmax(0,1fr)}#wds2-detail .sales-round-grid>label:nth-child(3){grid-row:2}}
 .sales29-drop{width:100%;min-height:44px;border:1px dashed #876f98;border-radius:8px;background:#faf7fc;color:#513766;cursor:pointer}
@@ -41989,7 +41997,6 @@ async function wd09OpenAddressSearch(button){
 @media(min-width:1051px){.wds2 dialog.wds2-detail[data-decision=true][data-preview=true]{--editor-width:min(825px,63vw)}}
 .wds2 .preview-slot{display:flex;justify-content:flex-start}
 .wds2 #wds2-preview-all{color:#553669;border:1px solid #c5b4d1;background:#f4eef8}
-.wds2 .wds2-compare-form>.comparison-preview{grid-column:1/-1}
 .wds2 .wds2-compare-form>.comparison-side{grid-column:auto}
 .wds2 .proposal-route{grid-column:1/-1}
 .wds2 .proposal-follow-up label,.wds2 .contact-pair label{display:grid;gap:7px;align-content:start;margin:0}
@@ -43776,7 +43783,8 @@ function buildClient() {
 function showTab(index,focus = false) {
   if(!$('pdf-dock').hidden)closePreview();
   activeTab = index;
-  const slot=$('stage-'+index).querySelector('.preview-slot');
+  const pane=$('stage-'+index);
+  const slot=index===2 ? pane.querySelector('.sales-round-content:not([hidden]) .preview-slot') : pane.querySelector('.preview-slot');
   (slot || $('preview-home')).append(previewButton);
   $('detail').dataset.decision=String(index===3);
   $('detail').dataset.comparing = String(index===1);
@@ -43869,21 +43877,22 @@ function documentPreview(title){
  return {panel,open,close};
 }
 const previewFiles=new Map();
-let previewRound=1,finalVersion='';
+let previewRound=2,finalVersion='';
+function isProposalComparison(){
+  return activeTab===1 || activeTab===2;
+}
 function previewKeys(){
-  let keys;
-  if(activeTab===3)keys=['signingBefore',finalVersion,'finalReport'];
-  else if(activeTab===2)keys=['summary-'+previewRound,'summary-'+(previewRound+1)];
-  else keys=['currentPdfs','summary-1'];
+  const keys=activeTab===3 ? ['signingBefore',finalVersion,'finalReport']
+    : ['currentPdfs','summary-'+(activeTab===2?previewRound:1)];
   return keys.filter(key=>previewFiles.get(key)?.file);
 }
 function refreshPreviewButton(){
+  const compare=isProposalComparison();
   const b=previewButton;
-  b.hidden=activeTab!==1;
-  const count=previewKeys().length;
-  b.textContent=activeTab===1?'컨설팅 전후 비교하기':'PDF 미리보기';
-  b.disabled=activeTab===1 ? count<2 : !count;
-  b.title=activeTab===1 && count<2?'보장분석 PDF와 제안서 PDF를 첨부해 주세요.':'';
+  b.hidden=!compare;
+  b.disabled=previewKeys().length<2;
+  b.textContent='컨설팅 전과 비교하기';
+  b.title=compare && b.disabled?'컨설팅 전과 이 회차의 제안서 PDF를 첨부해 주세요.':'';
   b.setAttribute('aria-expanded',String(!$('pdf-dock').hidden));
 }
 previewButton.onclick=()=>{
@@ -43910,10 +43919,10 @@ function onePdf(key,label='미리보기'){
 function openPreview(trigger,key){
   closePreview();
   const shown=key?(previewFiles.get(key)?.file?[key]:[]):previewKeys();
-  if(!shown.length || (activeTab===1 && !key && shown.length<2))return;
+  const compare=isProposalComparison()&&!key;
+  if(!shown.length || (compare && shown.length<2))return;
   previewTrigger=trigger;
   const area=$('pdf-panes');
-  const compare=activeTab===1&&!key;
   area.dataset.count=compare?'1':String(shown.length);
   const choices=[],tabs=make('div','','comparison-switch');
   if(compare){tabs.setAttribute('role','group');tabs.setAttribute('aria-label','비교할 자료');area.append(tabs);}
@@ -43956,7 +43965,7 @@ function openPreview(trigger,key){
     section.append(toolbar,reader.panel);area.append(section);
     if(compare){
       section.hidden=true;
-      const button=make('button',id==='currentPdfs'?'컨설팅 전':'컨설팅 후');button.type='button';
+      const button=make('button',id==='currentPdfs'?'컨설팅 전':(activeTab===2?previewRound:1)+'차 제안');button.type='button';
       button.onclick=()=>select(id);tabs.append(button);choices.push({id,button,section,load:display});
     }else void display();
   }
@@ -44056,10 +44065,10 @@ function pdfField(name,caption,initial=[],client,round=0) {
     return matches.length===1?matches[0]:'';
   };
   const key=summary?'summary-'+round:name==='revisionPdfs'?'revision-'+round:name;
-  const title=carrierFiles?'가입제안서 ('+(name==='proposalPdfs'?1:round+1)+'차)':summary?'컨설팅후 제안서 ('+round+'차)':name==='finalReport'?'확정가입보험':name==='currentPdfs'?'컨설팅 전 현재 보험':name==='proposalPdfs'?'가입제안서 (1차)':round+'차 조율 제안서';
+  const title=carrierFiles?'가입제안서 ('+(name==='proposalPdfs'?1:round+1)+'차)':summary?'컨설팅후 제안서 ('+round+'차)':name==='finalReport'?'확정가입보험':name==='currentPdfs'?'컨설팅 전 제안서':name==='proposalPdfs'?'가입제안서 (1차)':round+'차 조율 제안서';
 
   const mobileFiles=matchMedia("(max-width:767px)").matches;
-  const single=!carrierFiles && (summary || mobileFiles || name==='revisionPdfs' || name==='finalReport') ? onePdf(key,mobileFiles?'미리보기':name==='revisionPdfs'?'조율안 미리보기':'미리보기') : null;
+  const single=!carrierFiles && (summary || mobileFiles || name==='currentPdfs' || name==='finalReport') ? onePdf(key,mobileFiles?'미리보기':name==='revisionPdfs'?'조율안 미리보기':'미리보기') : null;
   function render() {
     if(single)single.disabled=!files[0]?.file;
     for(const id of [...previewFiles.keys()])if(id.startsWith(key+'-item-'))previewFiles.delete(id);
@@ -44159,7 +44168,45 @@ function afterStageSave(outcome){
   syncClient();
   showTab(target,true);
 }
-function proposalRound(number,dateLabel,request,direction,summary,carriers){
+function automaticBeforePremium(client){
+  if(caseHost)return caseHost.currentPremium;
+  const records=(sampleInsurance.get(client.id) || []).filter(record=>
+    ['health','savings'].includes(record.purpose) && !record.annual && Number.isFinite(record.premium));
+  return records.length ? records.reduce((sum,record)=>sum+record.premium,0) : null;
+}
+function consultationBeforePremium(client){
+  return client.consultingBeforePremium ?? client.currentPremium ?? automaticBeforePremium(client) ?? client.manualCurrentPremium ?? null;
+}
+function readSalesPremium(input){
+  const raw=input.value.trim();
+  if(!raw)return null;
+  const value=Number(raw.replaceAll(',',''));
+  return /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(raw) && Number.isSafeInteger(value) ? value : NaN;
+}
+function proposalPremiumField(amount,before){
+  const [label,input]=contactField('제안 월보험료 (원)','text',amount==null?'':fmt(amount));
+  input.inputMode='numeric';
+  input.placeholder='금액 입력';
+  const difference=make('output','','wds2-compare-difference');
+  difference.setAttribute('aria-live','polite');
+  const row=make('div','','wds2-premium-summary');
+  row.append(make('span','컨설팅 전 대비'),difference);
+  function refresh(){
+    const current=before(),proposed=readSalesPremium(input);
+    if(!Number.isFinite(current) || !Number.isFinite(proposed)){
+      difference.textContent='—';
+      return;
+    }
+    const delta=proposed-current;
+    difference.textContent=delta===0?'변동 없음':asWon(Math.abs(delta))+(delta>0?' 증가':' 감소');
+  }
+  input.oninput=refresh;
+  input.onblur=()=>{const value=readSalesPremium(input);if(Number.isFinite(value))input.value=fmt(value);};
+  refresh();
+  const field=make('section','','sales-round-amount');field.append(label,row);
+  return {field,input,refresh,read:()=>readSalesPremium(input)};
+}
+function proposalRound(number,dateLabel,request,direction,summary,carriers,premium){
   const card=make('section','','sales-round-card');
   const head=make('header');
   head.append(make('h2',number+'차 제안'),dateLabel);
@@ -44168,51 +44215,32 @@ function proposalRound(number,dateLabel,request,direction,summary,carriers){
     const cell=make('section');cell.append(make('h3',title),field);return cell;
   }
   grid.append(request,block('컨설팅 후 제안서',summary),direction,block('보험사별 가입제안서',carriers));
-  card.append(head,grid);return card;
+  const actions=make('div','','sales-round-actions'),previewSlot=make('div','','preview-slot');
+  actions.append(premium.field,previewSlot);
+  card.append(head,grid,actions);return card;
 }
 function comparisonPane(client) {
   const form = make('form','','wds2-card-body wds2-compare-form');
   const currentPdfs = pdfField('currentPdfs','보장분석 PDF',client.currentPdfs,client);
   const proposalPdfs = pdfField('proposalPdfs','제안서 PDF',client.proposalPdfs,client);
-  const records=(sampleInsurance.get(client.id) || []).filter(r=>
-    ['health','savings'].includes(r.purpose) && !r.annual && Number.isFinite(r.premium));
-  const baseline=caseHost ? caseHost.currentPremium : records.length ? records.reduce((sum,r)=>sum+r.premium,0) : null;
-  const [before,beforeInput]=contactField('현재 월보험료 (원)','text',baseline===null?'':fmt(baseline));
+  const baseline=consultationBeforePremium(client);
+  const [before,beforeInput]=contactField('컨설팅 전 월보험료 (원)','text',baseline==null?'':fmt(baseline));
   beforeInput.name='currentPremium';
-  beforeInput.readOnly=baseline!=null;
+  beforeInput.readOnly=automaticBeforePremium(client)!=null;
   beforeInput.inputMode='numeric';
-  if(baseline==null)beforeInput.value=client.manualCurrentPremium!=null?fmt(client.manualCurrentPremium):'';
   beforeInput.placeholder='현재 월보험료 직접 입력';
-  const [after,afterInput]=contactField('제안 월보험료 (원)','text',client.newPremium?.toLocaleString('ko-KR') ?? '');
-  afterInput.name='newPremium';
-  afterInput.inputMode='numeric';
-  afterInput.placeholder='금액 입력';
-  function readPremium(input=afterInput) {
-    const raw=input.value.trim();
-    if(!raw) return null;
-    const value=Number(raw.replaceAll(',',''));
-    return /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(raw) && Number.isSafeInteger(value) ? value : NaN;
-  }
-  const difference=make('output','','wds2-compare-difference');
-  const differenceRow=make('div','','wds2-premium-summary');
-  differenceRow.append(make('span','월보험료 차이'),difference);
-  afterInput.oninput=()=>{
-    const amount=readPremium();
-    const current=baseline??readPremium(beforeInput);
-    const diff=amount-current;
-    difference.textContent=!Number.isFinite(current) || !Number.isFinite(amount) ? '—' :
-       diff===0 ? '변동 없음' : asWon(Math.abs(diff))+(diff>0?' 증가':' 감소');
-  };
-  beforeInput.oninput=()=>afterInput.oninput();
-  beforeInput.onblur=()=>{const n=readPremium(beforeInput);if(Number.isFinite(n))beforeInput.value=fmt(n);};
-  afterInput.onblur=()=>{const n=readPremium();if(Number.isFinite(n))afterInput.value=fmt(n);};
-  afterInput.oninput();
+  const proposed=proposalPremiumField(client.newPremium,()=>readSalesPremium(beforeInput));
+  proposed.input.name='newPremium';
+  beforeInput.oninput=proposed.refresh;
+  beforeInput.onblur=()=>{const value=readSalesPremium(beforeInput);if(Number.isFinite(value))beforeInput.value=fmt(value);};
   const direction=make('textarea');
   direction.name='proposal';
   direction.setAttribute('aria-label','제안 방향');
   direction.value=[client.proposal,client.comparison].filter(Boolean).join('\n\n');
 
-  const current=stageCard('컨설팅 전 제안서',currentPdfs.wrap);
+  const baselineFields=make('div','','sales-baseline-fields');baselineFields.append(currentPdfs.wrap,before);
+  const current=stageCard('컨설팅 전 제안서',baselineFields);
+  current.classList.add('sales-baseline-card');
   const summary=pdfField('summaryPdf','컨설팅 후 제안서',client.summaryPdfs,client,1);
   const footer=make('section','','proposal-delivery');
   const reason=exitReason(client);
@@ -44221,9 +44249,7 @@ function comparisonPane(client) {
   const [requestLabel,request]=contactField('고객 요청','textarea',client.proposalRequest);
   request.name='proposalRequest';
   const directionLabel=make('label','제안 방향');directionLabel.append(direction);
-  const proposal=proposalRound(1,dayLabel,requestLabel,directionLabel,summary.wrap,proposalPdfs.wrap);
-  const premiums=make('details','','sales-round-premiums');
-  premiums.append(make('summary','월보험료 비교'),before,after);
+  const proposal=proposalRound(1,dayLabel,requestLabel,directionLabel,summary.wrap,proposalPdfs.wrap,proposed);
   const inherited=()=>client.completed===1 ? client.date || '' : client.contactNextDate || '';
   const schedule=followUpDate('proposal',client.comparisonNextDate ?? inherited());
   const history=make('p','','contact-saved-choice');
@@ -44281,14 +44307,12 @@ function comparisonPane(client) {
     refreshFooter();
   };
   refreshFooter();
-  const previewSlot=make('div','','preview-slot comparison-preview');
-  proposal.append(previewSlot);
-  premiums.append(differenceRow);form.append(current,proposal,premiums,footer);
+  form.append(current,proposal,footer);
   async function store(outcome){
-    const premium=readPremium();
+    const premium=proposed.read();
     if(Number.isNaN(premium)){
       $('detail-message').textContent='제안 월보험료를 원 단위로 입력해 주세요.';
-      afterInput.focus();return;
+      proposed.input.focus();return;
     }
     const fromContact=client.completed===0 && Boolean(outcome);
     if(outcome && (client.completed>1 || client.result))return;
@@ -44301,9 +44325,10 @@ function comparisonPane(client) {
       $('detail-message').textContent='다음 연락일을 선택해 주세요.';
       schedule.field.querySelector('button')?.focus();return;
     }
-    const manualCurrentPremium=baseline==null?readPremium(beforeInput):client.manualCurrentPremium??null;
-    if(Number.isNaN(manualCurrentPremium)){$('detail-message').textContent='현재 월보험료를 원 단위로 입력해 주세요.';beforeInput.focus();return;}
-    const values={proposalRequest:request.value.trim(),manualCurrentPremium,newPremium:premium,proposal:direction.value.trim(),comparison:'',
+    const consultingBeforePremium=readSalesPremium(beforeInput);
+    if(Number.isNaN(consultingBeforePremium)){$('detail-message').textContent='현재 월보험료를 원 단위로 입력해 주세요.';beforeInput.focus();return;}
+    const manualCurrentPremium=beforeInput.readOnly?client.manualCurrentPremium??null:consultingBeforePremium;
+    const values={proposalRequest:request.value.trim(),consultingBeforePremium,manualCurrentPremium,newPremium:premium,proposal:direction.value.trim(),comparison:'',
       currentPdfs:currentPdfs.read(),summaryPdfs:summary.read(),proposalPdfs:proposalPdfs.read(),
       proposalDate:day.value};
     if(!client.result && client.completed<=1){
@@ -44343,14 +44368,23 @@ function coordinationPane(client) {
   toolbar.append(add);
   const body = make('div');
   const rounds = [];
+  const baselineFile=make('p');
+  const baselineAmount=make('p');
+  const previewBefore=onePdf('currentPdfs','컨설팅 전 PDF 열기');
+  const baselineFields=make('div','','sales-baseline-fields');
+  const fileInfo=make('div');fileInfo.append(baselineFile,previewBefore);
+  baselineFields.append(fileInfo,baselineAmount);
+  const baseline=stageCard('컨설팅 전 제안서',baselineFields);
+  baseline.classList.add('sales-baseline-card');
   function showRound(index) {
-    previewRound=index+1;
     if(activeTab===2 && !$('pdf-dock').hidden)closePreview();
-    refreshPreviewButton();
+    previewRound=index+2;
     rounds.forEach((round,position)=>{
       round.panel.hidden = index!==position;
       round.button.setAttribute('aria-expanded',String(index===position));
     });
+    if(activeTab===2)rounds[index].panel.querySelector('.preview-slot').append(previewButton);
+    refreshPreviewButton();
   }
   function addRound(record={},focus=false) {
     const index = rounds.length;
@@ -44367,9 +44401,11 @@ function coordinationPane(client) {
 
     const pdf=pdfField('revisionPdfs','조율 제안서 PDF',record.files,client,index+1);
     const summary=pdfField('summaryPdf','컨설팅 후 제안서',record.summaryPdfs,client,index+2);
-    panel.append(proposalRound(index+2,dateLabel,requestLabel,adjustmentLabel,summary.wrap,pdf.wrap));
-    rounds.push({panel,button,read:()=>({
-      ...record,date:date.value,request:request.value.trim(),adjustment:adjustment.value.trim(),summaryPdfs:summary.read(),files:pdf.read()
+    const proposed=proposalPremiumField(record.newPremium,()=>consultationBeforePremium(client));
+    panel.append(proposalRound(index+2,dateLabel,requestLabel,adjustmentLabel,summary.wrap,pdf.wrap,proposed));
+    rounds.push({panel,button,proposed,read:()=>({
+      ...record,date:date.value,request:request.value.trim(),adjustment:adjustment.value.trim(),
+      newPremium:proposed.read(),summaryPdfs:summary.read(),files:pdf.read()
     })});
     body.append(button,panel);
     showRound(index);
@@ -44380,7 +44416,7 @@ function coordinationPane(client) {
   }];
   for(const record of startingRounds.length?startingRounds:[{}]) addRound(record);
   add.onclick = ()=>addRound({},true);
-  form.append(body,toolbar);
+  form.append(baseline,body,toolbar);
   const footer=make('section','','proposal-delivery round-delivery');
   const flow=make('div','','proposal-follow-up');
   flow.id='wds2-stage-complete-2';
@@ -44404,9 +44440,26 @@ function coordinationPane(client) {
     const labels={review:'확인 일정 저장',confirm:'저장하고 최종 결정으로 이동',end:'저장하고 영업 종료'};
     submit.textContent=active && labels[outcome] || '조율 내용 저장';
   }
-  refresh();form.onStageShown=refresh;
+  function refreshComparison(){
+    const file=client.currentPdfs?.[0];
+    baselineFile.textContent=(typeof file==='string'?file:file?.name)||'컨설팅 전 PDF 미첨부';
+    previewBefore.hidden=!previewFiles.get('currentPdfs')?.file;
+    const amount=consultationBeforePremium(client);
+    baselineAmount.textContent='컨설팅 전 월보험료 '+(Number.isFinite(amount)?asWon(amount):'—');
+    rounds.forEach(round=>round.proposed.refresh());
+    const index=rounds.findIndex(round=>!round.panel.hidden);
+    showRound(index);
+  }
+  refresh();form.onStageShown=()=>{refresh();refreshComparison();};
   form.onsubmit=async e=>{
     e.preventDefault();
+    const invalid=rounds.findIndex(round=>Number.isNaN(round.proposed.read()));
+    if(invalid>=0){
+      showRound(invalid);
+      $('detail-message').textContent='제안 월보험료를 원 단위로 입력해 주세요.';
+      rounds[invalid].proposed.input.focus();
+      return;
+    }
     const active=!client.result && client.completed<=2;
     const next=active?outcome:'';
     if(next==='end' && !reason.valid())return;
@@ -44861,7 +44914,7 @@ return function(i,key=period,stage){
      profiles.set(client.id,{year:caseHost.customer.year,kind:caseHost.customer.kind,job:caseHost.customer.job,phone:caseHost.customer.phone});}
    cached.set(r,client);sourceRows.set(client,r);
  }
- closePreview();previewFiles.clear();previewRound=1;finalVersion='';
+ closePreview();previewFiles.clear();previewRound=2;finalVersion='';
  selected=cached.get(r);
  $('detail-message').textContent='';buildClient();
  if(!$('detail').open)pages.openDialog($('detail'));
