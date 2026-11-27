@@ -21559,10 +21559,11 @@ function loadCustomerInsurance(){
 }
 window.wdGuideFiles={
   customer(id){const c=getCusts().find(x=>String(x.id)===String(id));if(!c)throw Error('고객을 확인해 주세요.');return c;},
+  guide(id){return cstMatLogs(this.customer(id)).filter(r=>r.file_category==='가입후안내서').at(-1);},
   latest(id){return cstMatLogs(this.customer(id)).filter(x=>x.file_category==='가입후안내 고객페이지').at(-1);},
   async store(id,blob,name,category){
     const owner=_UID,c=this.customer(id),file=new File([blob],name,{type:blob.type});
-    const path=await uploadMatAttachment(c,file,name,'materials',blob.type);
+    const path=await uploadMatAttachment(c,file,name,blob.type,'materials');
     if(owner!==_UID)throw Error('로그인 계정이 변경되었습니다.');
     const current=this.customer(id),logs=cstMatLogs(current),now=new Date().toISOString();
     const rec={id:crypto.randomUUID(),file_category:category,date:customerAttachmentDay(),file_name:name,fileName:name,file_path:path,file_type:blob.type,file_size:blob.size,created:now,updated:now,content:name};
@@ -21581,37 +21582,63 @@ window.wdGuideFiles={
       const el=(tag,text,parent)=>{const n=d.createElement(tag);n.textContent=text||'';parent?.append(n);return n;};
       const meta=d.createElement('meta');meta.name='viewport';meta.content='width=device-width,initial-scale=1';d.head.append(meta);
       el('style',`*{box-sizing:border-box}html{background:#eeebf2;color:#28233a;font:16px/1.55 system-ui,sans-serif}body{margin:0 auto;max-width:470px;background:#faf9fc;min-height:100vh;padding-bottom:30px}header{color:white;padding:32px 24px 42px;background:radial-gradient(ellipse at 100% 0,#9970af,transparent 58%),linear-gradient(135deg,#352641,#694b84);border-radius:0 0 30px 30px}header small{color:#ecddbf;letter-spacing:.12em}h1{font-size:28px;margin:22px 0 0}header p{margin:4px 0}main{padding:0 16px}nav,article,footer{background:white;border:1px solid #e8e3ed;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 4px 16px #39284709}nav{position:relative;margin-top:-19px;display:flex;justify-content:space-around;gap:6px;flex-wrap:wrap}a,button{display:inline-block;font:600 14px system-ui;color:#563d71;background:#f1edf6;border:0;border-radius:10px;padding:11px 14px;text-decoration:none;cursor:pointer;margin:2px}h2{font-size:19px;margin:24px 4px 9px}h3{margin:3px 0 7px;font-size:18px;overflow-wrap:anywhere}article small,footer small{color:#725d81}article p{margin:5px 0 10px}footer{border-left:4px solid #795a94}footer strong{display:block}`,d.head);
-      const header=el('header','',d.body);el('small','WD WAVE  /  우리동네보험지킴이',header);el('h1',c.name+' 고객님',header);el('p','나의 보험수첩',header);
+      const header=el('header','',d.body);el('small','WD WAVE  /  우리동네보험지킴이',header);el('h1',c.name+' 고객님',header);el('p','고객관리 수첩',header);
       const main=el('main','',d.body),nav=el('nav','',main);
       const anchor=(parent,label,url)=>{const a=el('a',label,parent);a.href=url;a.target='_blank';a.rel='noopener';return a;};
       anchor(nav,'실손24','https://www.silson24.or.kr');
       const logs=cstMatLogs(c);
       for(const cat of ['가입후안내서','최종보장분석 결과서']){
         const rec=logs.filter(x=>x.file_category===cat).at(-1),url=this.share(rec);
-        if(url){const card=el('article','',main);el('small','나의 상담 자료',card);el('h3',cat,card);anchor(card,'PDF 열기',url);}
+        if(url){const card=el('article','',main);el('small','나의 상담 자료',card);el('h3',cat,card);anchor(card,'PDF 열기',url).dataset.docPath=rec.file_path;}
       }
-      el('h2','가입보험 현황',main);
+      el('h2','가입보험 현황',main);el('p','가입보험을 입력한 날짜 기준의 내역입니다. 정확한 계약 내용과 보장 조건은 보험증권과 약관을 확인해 주세요.',main);
       const rows=[...(CONTRACT_CACHE_BY_CUST_ID[id]||[]).map(r=>[r,'contracts']),...cstAutoList(c).map(r=>[r,'auto'])];
       if(!rows.length)el('article','등록된 가입보험이 없습니다.',main);
       for(const [record,src] of rows){
         const card=el('article','',main);el('small',record.insurer||record.company||'보험계약',card);
         el('h3',record.product||(src==='auto'?'자동차보험':'가입보험'),card);
-        const amount=record.fee;
+        const amount=String(record.fee??'').replace(/[,원\s]/g,'');
         if(amount!=null&&amount!=='')el('p','보험료 '+String(amount).replace(/\B(?=(\d{3})+(?!\d))/g,',')+'원',card);
         for(const [kind,label] of [['policy','증권'],['terms','약관']]){
           const doc=customerPolicyMeta(record,src,owner,id,kind);if(!doc)continue;
           let url=this.share({file_path:doc.path});
           if(!url){const blob=await loadCustomerMaterialBlob({file_path:doc.path},c);url=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});}
-          const a=anchor(card,label,url);if(url.startsWith('data:'))a.download=doc.name||label+'.pdf';
+          const a=anchor(card,label,url);a.dataset.docPath=doc.path;if(url.startsWith('data:'))a.download=doc.name||label+'.pdf';
         }
       }
-      const footer=el('footer','',main);el('small','담당 설계사',footer);el('strong','최윤경 · WD WAVE',footer);
-      const html=new Blob(['<!DOCTYPE html><meta charset="utf-8">',d.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+      main.append(nav);const footer=el('footer','',main);el('small','담당 설계사',footer);el('strong','최윤경 · WD WAVE',footer);
+      el('style','header{border-radius:20px;background:radial-gradient(ellipse at top right,#ab7ac4,transparent 65%),linear-gradient(130deg,#38234d,#74518c);padding:34px 24px}body{padding:12px}main{padding:0 4px}nav{margin-top:16px}article a,nav a{color:white;background:#64427e}main>p{font-size:14px;color:#60596b}footer{padding:20px}header small{letter-spacing:.08em}',d.head);const html=new Blob(['<!DOCTYPE html><meta charset="utf-8">',d.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
       let link='';
       const button=el('button','고객페이지 링크 복사',nav);button.type='button';
       button.onclick=async()=>{button.disabled=true;try{
         if(_UID!==owner)throw Error('로그인 계정을 확인해 주세요.');
-        if(!link){const rec=await this.store(id,html,customerAttachmentPrefix(c)+'_고객페이지.html','고객페이지');link=this.share(rec);}
+        if(!link){
+          if(location.protocol!=='https:')throw Error('테스트 사이트에서 고객페이지를 열어 주세요.');
+          const reader=new URL('customer-notebook.html',location.href);
+          const check=await fetch(reader,{cache:'no-store'});
+          if(!check.ok||!(await check.text()).includes('wd-customer-notebook-v12'))throw Error('고객페이지 열람 화면을 먼저 사이트에 반영해 주세요.');
+          const snapshot=d.documentElement.cloneNode(true);
+          snapshot.querySelector('nav button')?.remove();
+          for(const a of snapshot.querySelectorAll('a[data-doc-path]')){
+            const path=a.dataset.docPath;
+            const data=await loadCustomerMaterialBlob({file_path:path},c);
+            a.href=await new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsDataURL(data);});
+            a.removeAttribute('data-doc-path');
+          }
+          const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt']);
+          const iv=crypto.getRandomValues(new Uint8Array(12));
+          const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(snapshot.outerHTML));
+          const bucket=getSbClient().storage.from('wd-partners-attachments');
+          const path=owner+'/'+id+'/materials/'+crypto.randomUUID()+'.bin';
+          if(_UID!==owner)throw Error('로그인 계정이 변경되었습니다.');
+          const put=await bucket.upload(path,new Blob([cipher]),{contentType:'application/octet-stream'});
+          if(put.error)throw Error('고객페이지 저장 실패 · '+put.error.message);
+          const signed=await bucket.createSignedUrl(path,30*86400);
+          if(signed.error)throw Error('고객페이지 링크 발급 실패 · '+signed.error.message);
+          const enc=v=>btoa(String.fromCharCode(...new Uint8Array(v)));
+          reader.hash=new URLSearchParams({s:signed.data.signedUrl,k:enc(await crypto.subtle.exportKey('raw',key)),i:enc(iv)}).toString();
+          link=reader.href;
+        }
         try{await w.navigator.clipboard.writeText(link);button.textContent='링크 복사 완료';}catch{w.prompt('고객페이지 링크를 복사해 주세요.',link);}
       }catch(e){w.alert(e.message);}finally{button.disabled=false;}};
       return true;
@@ -21641,8 +21668,8 @@ const birthGender=(customerBirthDate(c.birth)||c.birth||'-')+(age?' ('+age+')':'
 document.getElementById('wd09-customer-card-slot').innerHTML=
   '<div class="card" id="cust-info-card">'
   +'<header class="wd-profile-header"><div class="wd-profile-tags">'+ctypeBadge+familyBadge+'</div>'
-  +'<div class="wd-profile-heading"><h2 class="wd-profile-name">'+esc(customerName)+' <small>고객님</small></h2>'
-  +'<button type="button" class="btn-sm p" onclick="wdGuideFiles.open('+c.id+')">고객페이지</button><button type="button" class="btn-sm p" id="wd09-customer-edit-button" onclick="openCustEdit('+c.id+')">✏️ 수정</button></div></header>'
+  +'<div class="wd-profile-heading" style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap"><h2 style="flex:1;min-width:0" class="wd-profile-name">'+esc(customerName)+' <small>고객님</small></h2>'
+  +'<button type="button" class="btn-sm p" onclick="wdGuideFiles.open('+c.id+')">고객페이지</button><button type="button" class="btn-sm p" id="wd09-customer-edit-button" style="width:auto;flex:none;white-space:nowrap" onclick="openCustEdit('+c.id+')">✏️ 수정</button></div></header>'
   +'<div id="wd09-customer-card-view"><div class="cust-sec-label">기본정보</div>'
   +'<div class="grid-3" style="margin-bottom:10px;">'+profileField('연락처',cstFormatPhone(c.phone))+profileField('통신사',c.telecom)+rrnField+'</div>'
   +'<div class="wd-family-profile-demographics" style="margin-bottom:10px;">'+profileField('생년월일 (만나이) / 성별',birthGender)+'</div>'
@@ -40693,7 +40720,7 @@ function wd09ArchivePreviewMime(name){
       if(file.size>5*1024*1024){
         const session=await request(uploadUrl+'?uploadType=resumable&supportsAllDrives=true&fields=id',{
           method,body:JSON.stringify(metadata),contentType:'application/json; charset=UTF-8',
-          uploadHeaders:{'X-Upload-Content-Type':mime,'X-Upload-Content-Length':String(file.size)},raw:true
+          raw:true
         });
         const location=session.headers.get('Location');
         const target=location?new URL(location,uploadUrl):null;
@@ -45109,7 +45136,7 @@ function decisionPane(client){
     const amount=policies.reduce((n,policy)=>n+(allAuto || policy.purpose!=='auto'?policy.premium:0),0);
     save.disabled=true;
     try{
-      const values={result:'체결',completed:3,endStage:3,decisionDate:client.decisionDate || today,decisionNote:note.value.trim(),
+      const values={insuranceEntryDate:customerAttachmentDay(),result:'체결',completed:3,endStage:3,decisionDate:client.decisionDate || today,decisionNote:note.value.trim(),
         policies,premium:amount,contractType:allAuto?'자동차보험':'장기보험',confirmedSource:entry?.title || '',adoptedKey:picked,
         confirmedPdf:entry?{...entry}:null,beforeAtSigning:previewFiles.get('signingBefore') || null,
         finalCarrierPdfs:(client.adoptedKey===picked && client.finalCarrierPdfs ? client.finalCarrierPdfs : picked==='summary-1'||picked==='proposalPdfs'?client.proposalPdfs:client.coordinationRounds?.[picked.startsWith('summary-')?Number(picked.slice(8))-2:Number(picked.split('-')[1])-1]?.files)||[],
@@ -45134,13 +45161,19 @@ function decisionPane(client){
 
 function enrollmentGuide(client){
   const section=make('section','','registration-section');
+  let deliveryFile=null,localPage=null;
   const create=make('button','가입 후 안내서 만들기'),status=make('p'),links=make('div','','contact-options');
   create.type='button';section.append(make('h3','고객용 가입 후 안내'),create,status,links);
   const panels=[],steps=['가입 후 안내서 만들기','카톡 안내문 작성','고객 페이지 확인','고객에게 전달'];
   section.replaceChildren();section.classList.add('guide-flow');
   const files=window.wdGuideFiles;
   let progress=client.guidanceDone?4:Math.min(Number(client.guideProgress)||0,3);
-  const note=make('textarea');note.value=client.guidanceNote||client.name+' 고객님, 안녕하세요. 최윤경입니다. 가입하신 보험의 보장 내용과 월 보험료, 증권·약관을 한곳에 정리해 드립니다. 안내서를 살펴보시고 궁금한 점은 편하게 말씀해 주세요.';
+  const entryDate=client.insuranceEntryDate;
+  const dateLine=entryDate?entryDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/,(_,y,m,d)=>y+'년 '+Number(m)+'월 '+Number(d)+'일')+'에 입력한 가입보험 내역':'가입보험 등록 당시 입력된 내역';
+  const basis='이 안내서는 '+dateLine+'을 기준으로 정리했습니다. 정확한 가입 내용은 보험증권에서, 세부 보장 조건과 보험금 지급 기준은 해당 상품의 약관에서 확인해 주세요.';
+  const note=make('textarea');note.value=client.guidanceNote||client.name+"님, 안녕하세요. 최윤경입니다 😊\n\n보험 가입 절차가 모두 마무리되어 고객관리 수첩을 보내드려요. 저를 믿고 함께 준비해 주셔서 정말 감사해요.\n\n수첩에는 이번에 가입하신 보험의 증권과 약관을 모두 담아두었어요. 어떤 보험에 가입하셨는지 궁금할 때나 보험금 청구가 필요할 때 바로 찾아보실 수 있도록 가까이 두고 봐주세요.\n\n보장이 궁금하시거나 청구할 일이 생기면 언제든 편하게 카톡 주세요. 어디서부터 확인하면 좋을지 제가 같이 살펴봐 드릴게요. 앞으로도 필요하실 때 편하게 찾으실 수 있도록 잘 챙겨드릴게요.";
+  function guideLink(){return files.share(files.guide(client.id));}
+
   const copy=make('button','안내문 복사 · 다음 단계'),preview=make('button','고객 페이지 열기'),checked=make('button','페이지 확인 완료'),share=make('button','고객페이지 열어 링크 복사'),finish=make('button','전달 완료 · 저장');
   for(const b of [copy,preview,checked,share,finish])b.type='button';
   for(const [i,title] of steps.entries()){const p=make('section','','guide-step'),h=make('h3',(i+1)+'. '+title);p.append(h);section.append(p);panels.push(p);}
@@ -45152,8 +45185,8 @@ function enrollmentGuide(client){
     busy=true;paint();try{if(await saveClient(client,{guideProgress:n,guidanceEdit:true,guidanceDone:n===4,guidanceDate:today,guidanceNote:note.value.trim()})){progress=n;syncClient();feedback.textContent=n===4?'고객 전달을 저장했습니다. 영업 완료입니다.':'';}}finally{busy=false;paint();}
   }
   note.oninput=()=>{if(progress>=2){progress=1;visited=false;paint();}};
-  copy.onclick=async()=>{if(!note.value.trim())return note.focus();try{await navigator.clipboard.writeText(note.value.trim());await advance(Math.max(progress,2));}catch{note.select();feedback.textContent='복사 권한을 확인해 주세요.';}};
-  preview.onclick=async()=>{try{visited=!!(await files.open(client.id));paint();}catch(e){feedback.textContent=e.message;}};
+  copy.onclick=async()=>{if(!note.value.trim())return note.focus();try{await navigator.clipboard.writeText(note.value.trim());await advance(Math.max(progress,2));}catch{note.select();feedback.textContent='안내문을 선택했습니다. 복사해 주세요.';}};
+  preview.onclick=async()=>{visited=!!(await files.open(client.id));paint();};
   checked.onclick=()=>advance(Math.max(progress,3));
   share.onclick=()=>files.open(client.id);
   finish.onclick=()=>advance(4);
@@ -45211,14 +45244,15 @@ function enrollmentGuide(client){
       for(const p of policies){const card=el('article');card.append(el('strong',[p.insurer,p.product].filter(Boolean).join(' · ')),el('div',[p.contractDate||client.decisionDate,p.premium!=null?'월 보험료 '+asWon(p.premium):''].filter(Boolean).join(' | ')));page.body.append(card);}
       const claim=el('a','실손24 바로가기');claim.href='https://www.silson24.or.kr';page.body.append(claim,el('footer','담당 설계사 최윤경 · WD WAVE'),script);
       const html=new Blob(['<!doctype html><meta charset="utf-8">',page.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
-      await files.store(client.id,blob,base+'.pdf','가입후안내서');
-      await files.store(client.id,html,base+'.html','가입후안내 고객페이지');
-      visited=false;await advance(1);
+      deliveryFile=new File([blob],base+'.pdf',{type:'application/pdf'});
       for(const [label,file,ext] of [['안내서 PDF 다운로드',blob,'.pdf'],['고객 페이지 저장',html,'.html'],['고객 페이지 미리보기',html,'']]){
-        const a=make('a',label);a.href=URL.createObjectURL(file);if(ext)a.download=base+ext;else{a.target='_blank';a.rel='noopener';}links.append(a);
+        const a=make('a',label);a.href=URL.createObjectURL(file);if(ext)a.download=base+ext;else{a.target='_blank';a.rel='noopener';localPage=a.href;}links.append(a);
         $('detail').addEventListener('close',()=>URL.revokeObjectURL(a.href),{once:true});
       }
       status.textContent='등록된 자료 '+docs.length+'개 · 총 '+pdf.getPageCount()+'쪽';
+      visited=false;
+      try{await files.store(client.id,blob,base+'.pdf','가입후안내서');await advance(1);status.textContent+=' · Drive 저장 완료';}
+      catch(e){status.textContent+=' · Drive 저장 미완료. 고객페이지에 연결하려면 다시 저장해 주세요.';}
     }catch(e){status.textContent=e.message;}finally{create.disabled=false;}
   };return section;
 }
