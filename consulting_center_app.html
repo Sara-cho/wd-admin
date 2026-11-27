@@ -2180,6 +2180,7 @@ html.cd35-customer .wrap,html.cd35-customer #ccHeader,html.cd35-customer #ccSide
           <h1>대표님, 오늘 퍼스널브랜딩 업무를<br class="pc-br"> 한눈에 봅니다.</h1>
           <p>고객 계약부터 실제 작업 진행까지 관리합니다.</p>
           <div class="dt">TODAY · <b id="dash-date"></b></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px"><span id="bl-home-status" role="status">Google Drive 연결 확인 중…</span><button class="btn btn-g" type="button" id="bl-home-connect" hidden>Google Drive 연결</button></div>
         </div>
         <a class="pb-visual" href="https://wdwave.kr" target="_blank" rel="noopener noreferrer" aria-label="WD WAVE 퍼스널브랜딩 홈페이지 열기 (새 탭)">
           <div class="cp">
@@ -10602,7 +10603,27 @@ window.openBrandLibrary=function(key){
 };
 el('search').oninput=()=>{const count=draw();if(loaded)el('state').textContent=count?'':'검색 결과가 없습니다.';};
 el('refresh').onclick=refresh;
-el('connect').onclick=async()=>{
+const homeStatus=el('home-status'),homeConnect=el('home-connect');
+let checkingHome=0,connecting=false;
+async function checkHomeDrive(){
+ const current=++checkingHome;
+ try{
+  const auth=await identity();
+  if(current!==checkingHome)return;
+  homeStatus.textContent=auth.owner?'Google Drive 연결됨':'공유 자료는 직원 권한으로 조회합니다.';
+  homeConnect.hidden=true;
+ }catch(e){
+  if(current!==checkingHome)return;
+  homeStatus.textContent=e.needsDrive?'업무매뉴얼과 자료실을 사용하려면 Google Drive를 연결해 주세요.':e.message;
+  homeConnect.hidden=!e.needsDrive;
+ }
+}
+window.addEventListener('pageshow',checkHomeDrive);
+homeConnect.onclick=el('connect').onclick=async()=>{
+ if(connecting)return;
+ connecting=true;
+ ++checkingHome;
+ homeConnect.disabled=el('connect').disabled=true;
  try{
   if(!await accAuth())throw Error('본진 로그인과 브랜딩 자료 접근 권한을 확인해 주세요.');
   if(!window.google?.accounts?.oauth2){await new Promise((ok,bad)=>{const t=document.createElement('script');t.src='https://accounts.google.com/gsi/client';t.onload=ok;t.onerror=()=>bad(Error('Google 연결 모듈을 불러오지 못했어요.'));document.head.append(t);});}
@@ -10617,8 +10638,10 @@ el('connect').onclick=async()=>{
   if(info.user?.emailAddress?.toLowerCase()!=='kfcyk20@gmail.com'||!result.scope?.split(' ').includes(scope))throw Error('회사 Drive 계정과 승인 범위를 확인해 주세요.');
   ownerDrive={uid:after.user.id,sessionId:sid,scope,token:result.access_token,expiresAt:Date.now()+Number(result.expires_in)*1000};
   try{sessionStorage.setItem('wd-company-drive-user-v1:'+after.user.id,JSON.stringify(ownerDrive));}catch{}
-  await refresh();
- }catch(e){el('state').textContent=e.message;}
+  await checkHomeDrive();
+  if(document.getElementById('view-brandlibrary').classList.contains('on'))await refresh();
+ }catch(e){homeStatus.textContent=el('state').textContent=e.message;}
+ finally{connecting=false;homeConnect.disabled=el('connect').disabled=false;}
 };
 function clearPreview(){readerVersion++;el('preview').textContent='';if(blobURL)URL.revokeObjectURL(blobURL);blobURL='';}
 el('reader-close').onclick=()=>el('reader').close();el('reader').onclose=clearPreview;
