@@ -42300,6 +42300,12 @@ async function wd09OpenAddressSearch(button){
 .salesFilePopup .filePopupSources button:first-child{background:#684681;color:white;border-color:#684681}
 .salesFilePopup [hidden]{display:none!important}
 .salesFilePopup .drive-scroll{max-height:36vh;overflow:auto}
+.salesFilePopup .salesFilePopupCard.drive-expanded{width:min(880px,100%);max-width:none}
+.salesFilePopup .drive-expanded .drive-scroll{height:min(58dvh,580px);max-height:none}
+.salesFilePopup .drive-expanded table{width:100%}
+.salesFilePopup .drive-expanded th:last-child,.salesFilePopup .drive-expanded td:last-child{width:9em}
+.comparison-switch{flex-wrap:wrap}
+.comparison-switch button{max-width:100%;overflow-wrap:anywhere}
 #wds2-detail.salesChildPage .pdf-inline-actions,#wds2-detail.salesChildPage .mobileFileActions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;gap:7px}
 #wds2-detail.salesChildPage :is(.pdf-inline-actions,.mobileFileActions)>*{box-sizing:border-box;min-width:0;width:100%;margin:0;min-height:44px;padding:6px 9px;border-radius:10px;font-size:13px;line-height:1.3}
 #wds2-detail.salesChildPage .single-pdf-preview{white-space:nowrap}
@@ -43958,20 +43964,28 @@ function isProposalComparison(){
   return activeTab===1 || activeTab===2;
 }
 function previewKeys(){
-  const keys=activeTab===3 ? ['signingBefore',finalVersion,'finalReport']
-    : ['currentPdfs','summary-'+(activeTab===2?previewRound:1)];
-  return keys.filter(key=>previewFiles.get(key)?.file);
+  if(activeTab===3)return ['signingBefore',finalVersion,'finalReport'].filter(key=>previewFiles.get(key)?.file);
+  const number=activeTab===2?previewRound:1;
+  const summary='summary-'+number;
+  const prefix=(number===1?'proposalPdfs':'revision-'+(number-1))+'-item-';
+  const after=[summary,...[...previewFiles.keys()].filter(key=>key.startsWith(prefix))];
+  return ['currentPdfs',...after].filter(key=>previewFiles.get(key)?.file);
 }
 function refreshPreviewButton(){
   const compare=isProposalComparison();
   const b=previewButton;
   b.hidden=!compare;
-  b.disabled=previewKeys().length<2;
+  b.disabled=false;
   b.textContent='컨설팅 전과 비교하기';
   b.title=compare && b.disabled?'컨설팅 전과 이 회차의 제안서 PDF를 첨부해 주세요.':'';
   b.setAttribute('aria-expanded',String(!$('pdf-dock').hidden));
 }
 previewButton.onclick=()=>{
+  const keys=previewKeys();
+  if(!keys.includes('currentPdfs') || keys.length<2){
+    const msg=!keys.includes('currentPdfs')?'컨설팅 전 제안서 PDF를 첨부해 주세요.':'이 회차의 컨설팅 후 제안서 또는 보험사별 가입제안서를 첨부해 주세요.';
+    window.alert(msg);return;
+  }
   if($('pdf-dock').hidden)openPreview(previewButton);
   else closePreview(true);
 };
@@ -44041,7 +44055,7 @@ function openPreview(trigger,key){
     section.append(toolbar,reader.panel);area.append(section);
     if(compare){
       section.hidden=true;
-      const button=make('button',id==='currentPdfs'?'컨설팅 전':(activeTab===2?previewRound:1)+'차 제안');button.type='button';
+      const button=make('button',id==='currentPdfs'?'컨설팅 전':id.startsWith('summary-')?'컨설팅 후 제안서':previewFiles.get(id).title);button.type='button';
       button.onclick=()=>select(id);tabs.append(button);choices.push({id,button,section,load:display});
     }else void display();
   }
@@ -44079,8 +44093,8 @@ function driveButton(input,label='Drive에서 가져오기'){
       local.textContent='기기에서 PDF 선택';
       titleBar.append(heading,close);sources.append(local,drive);card.append(titleBar,sources,search,scroll);dialog.replaceChildren(card);
       search.hidden=scroll.hidden=true;
-      drive.onclick=()=>{const show=scroll.hidden;search.hidden=scroll.hidden=!show;drive.setAttribute('aria-expanded',String(show));if(show){void load(false);search.focus();}};
-      const anchor=root.host.closest('#app')||root.host;
+      drive.onclick=()=>{const show=scroll.hidden;card.classList.toggle('drive-expanded',show);search.hidden=scroll.hidden=!show;drive.setAttribute('aria-expanded',String(show));if(show){void load(false);search.focus();}};
+      const anchor=document.documentElement;
       function place(){
         if(!dialog.open)return;
         const rect=anchor.getBoundingClientRect(),vp=window.visualViewport;
@@ -44135,12 +44149,7 @@ function pdfField(name,caption,initial=[],client,round=0) {
   const summary=name==='summaryPdf';
   input.multiple=carrierFiles;
   const carriers=[...new Set([...INSURERS_NONLIFE,...INSURERS_LIFE,...AUTO_INSURERS])].filter(v=>v!=='기타').concat('기타');
-  const infer=filename=>{
-    const norm=s=>s.replace(/[\s_-]/g,'').toUpperCase();
-    const matches=carriers.filter(c=>c!=='기타' && norm(filename).includes(norm(c)));
-    return matches.length===1?matches[0]:'';
-  };
-  const key=summary?'summary-'+round:name==='revisionPdfs'?'revision-'+round:name;
+    const key=summary?'summary-'+round:name==='revisionPdfs'?'revision-'+round:name;
   const title=carrierFiles?'가입제안서 ('+(name==='proposalPdfs'?1:round+1)+'차)':summary?'컨설팅후 제안서 ('+round+'차)':name==='finalReport'?'확정가입보험':name==='currentPdfs'?'컨설팅 전 제안서':name==='proposalPdfs'?'가입제안서 (1차)':round+'차 조율 제안서';
 
   const mobileFiles=matchMedia("(max-width:767px)").matches;
@@ -44157,9 +44166,18 @@ function pdfField(name,caption,initial=[],client,round=0) {
         const select=make('select');select.setAttribute('aria-label',file.name+' 보험사');
         const opts=[...carriers];if(file.carrier && !opts.includes(file.carrier))opts.push(file.carrier);
         select.append(new Option('보험사 선택',''),...opts.map(c=>new Option(c,c)));
-        select.value=file.carrier||infer(file.name);
-        if(select.value)file.carrier=select.value;
-        select.onchange=()=>{file.carrier=select.value;};
+        select.value=file.carrier||'';
+        select.required=true;
+        function applyCarrier(){
+          if(!file.carrier)return;
+          file.namingDay ||= customerAttachmentDay().slice(2).replaceAll('-','');
+          const number=name==='proposalPdfs'?1:round+1;
+          const canonical=customerAttachmentPrefix(client)+'_'+number+'차제안_'+file.carrier+'_가입제안서('+file.namingDay+').pdf';
+          file.name=canonical;
+          if(file.file instanceof File && file.file.name!==canonical)file.file=new File([file.file],canonical,{type:'application/pdf',lastModified:file.file.lastModified});
+        }
+        applyCarrier();
+        select.onchange=()=>{file.carrier=select.value;render();list.querySelectorAll('select')[index]?.focus();};
         const filename=make('span',file.name);label.replaceChildren(select,filename);label.classList.add('sales-carrier-file');
         const itemKey=key+'-item-'+index;
         if(file.file){previewFiles.set(itemKey,{...file,title:file.name});label.append(onePdf(itemKey,'열기'));}
@@ -44188,7 +44206,7 @@ function pdfField(name,caption,initial=[],client,round=0) {
     if(pdfs.length){
       try{
         if(carrierFiles){
-          for(const file of pdfs)files.push({name:file.name,file,carrier:infer(file.name)});
+          for(const file of pdfs)files.push({name:file.name,file,carrier:''});
         }else{
         const canonical=summary?customerAttachmentPrefix(client)+'_컨설팅후제안서_'+round+'차_'+customerAttachmentDay().slice(2).replaceAll('-','')+'.pdf':salesPdfName(client,name,round);
         const renamed=new File([pdfs[0]],canonical,{type:'application/pdf',lastModified:pdfs[0].lastModified});
