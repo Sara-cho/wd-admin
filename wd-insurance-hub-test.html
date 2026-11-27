@@ -43298,7 +43298,7 @@ function draw(){
  $('rows').innerHTML=entries.map(({key,r,i})=>{
    const stageCells=stages.map((stage,i)=>{
      const state=stageState(r,i),finished=i===stages.length-1 && state==='done',text=finished?'영업 완료':i===1 && state==='active' && r[12]==='review'?'고객확인대기':stateText[state];
-     return `<td class="stepcell"><span class="mobilelabel">${stage}</span><span class="rail ${state}" role="img" aria-label="${stage} · ${text}"><span class="node">${state==='ended'?'×':''}</span><span class="state">${finished || ['active','signed','ended'].includes(state)?text:''}</span></span></td>`;
+     return `<td class="stepcell"><span class="mobilelabel">${stage}</span><span class="rail ${state}" role="img" aria-label="${stage} · ${text}">${state==='signed'?'':`<span class="node">${state==='ended'?'×':''}</span>`}<span class="state">${finished || ['active','signed','ended'].includes(state)?text:''}</span></span></td>`;
    }).join('');
    const name=pickingMonth===period ? `<th scope="row"><span class="name"><input class="roster-check" type="checkbox" aria-label="영업계획에서 선택" style="width:18px;height:18px;vertical-align:middle;accent-color:#674687" ${pickedIds.has(String(rowData.get(r).id))?'checked':''}> ${escapeText(r[0])}</span></th>` : `<th scope="row">${query?`<small class="resultmonth">${monthLabel(key)}</small>`:''}<button class="name" data-key="${key}" data-i="${i}">${escapeText(r[0])}</button></th>`;
    const row=`<tr data-key="${key}" data-i="${i}" class="${r[2]==='종료'?'stopped':''}">${name}${stageCells}</tr>`;
