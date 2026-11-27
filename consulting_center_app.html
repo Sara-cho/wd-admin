@@ -3243,8 +3243,8 @@ h1,h2,h3{letter-spacing:-.042em}
 <dialog id="pf-editor"><form id="pf-form"><header><h3 id="pf-editor-title"></h3><button type="button" class="btn btn-g" data-pf-close>닫기</button></header><div class="pf-fields"><label>탭<select id="pf-tab"></select></label><label>분류<select id="pf-group"></select></label><label class="wide">사례명<input required maxlength="100" id="pf-title"></label><label class="wide">한 줄 소개<input id="pf-headline" maxlength="200"></label><label class="wide"><span id="pf-service-label"></span><input id="pf-service"></label><label class="wide"><span id="pf-desc-label"></span><textarea id="pf-desc"></textarea></label><label><span id="pf-point-label"></span><textarea id="pf-point"></textarea></label><label><span id="pf-work-label"></span><textarea id="pf-work"></textarea></label><label class="wide">사례 이미지<input id="pf-upload" type="file" multiple accept="image/png,image/jpeg,image/webp"></label><div class="wide" id="pf-thumbs"></div></div><footer><span id="pf-message" role="status">이 브라우저에 저장됩니다.</span><button class="btn btn-p" id="pf-save">저장</button></footer></form></dialog></section>
 <section class="view" id="view-brandlibrary">
 <div class="page-head"><h2 id="bl-title">업무자료실</h2><div class="bl-actions"><button class="btn btn-g" id="bl-refresh">새로고침</button><button class="btn btn-p" id="bl-add">자료 등록</button></div></div>
-<div class="bl-card"><div class="bl-toolbar"><input type="search" id="bl-search" placeholder="제목 또는 파일명 검색" aria-label="제목 또는 파일명 검색"><div id="bl-kinds" aria-label="자료 유형"></div></div>
-<div class="bl-table"><table><thead><tr><th id="bl-first">자료명</th><th>유형</th><th>수정일</th></tr></thead><tbody id="bl-list"></tbody></table></div><div id="bl-state" role="status"></div><button class="btn btn-g" id="bl-connect" hidden>Drive 연결</button></div>
+<div class="bl-toolbar"><input type="search" id="bl-search" placeholder="제목 또는 파일명 검색" aria-label="제목 또는 파일명 검색"></div><div class="bl-layout"><nav id="bl-kinds" aria-label="파일 분류"></nav><div class="bl-card">
+<div class="bl-table"><table><thead><tr><th id="bl-first">자료명</th><th>유형</th><th>수정일</th></tr></thead><tbody id="bl-list"></tbody></table></div><div id="bl-state" role="status"></div><button class="btn btn-g" id="bl-connect" hidden>Drive 연결</button></div></div>
 <dialog id="bl-editor"><form id="bl-form"><h3 id="bl-form-title"></h3><label>제목<input id="bl-name" required maxlength="120"></label><label id="bl-type-wrap">유형<select id="bl-type"><option>파일</option><option>디자인</option><option>고객자료</option></select></label><label>본문<textarea rows="4" id="bl-body"></textarea></label><label>첨부파일<input type="file" id="bl-file"></label><p id="bl-save-msg" role="status"></p><footer><button type="button" id="bl-close" class="btn btn-g">닫기</button><button class="btn btn-p" id="bl-save">Drive에 저장</button></footer></form></dialog>
 <dialog id="bl-reader"><h3 id="bl-reader-name"></h3><div id="bl-preview"></div><footer><button class="btn btn-g" id="bl-reader-close">닫기</button></footer></dialog>
 </section>
@@ -10503,6 +10503,9 @@ async function employeeDriveRequest(url,token){
  const r=await fetch(url,{headers:{Authorization:'Bearer '+token},cache:'no-store'});
  if(!r.ok)throw Error('Drive 연결 또는 폴더 권한을 확인해 주세요.');return r;
 }
+function brandSessionId(session){
+ try{return JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).session_id;}catch{return null;}
+}
 async function identity(){
  if(location.origin!=='https://admin.wdwave.kr'||!window.supabase)throw Error(connectionMessage);
  if(!_accSb)_accSb=supabase.createClient(SB_URL,SB_KEY,{auth:{storageKey:ACC_AUTH_KEY,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
@@ -10512,12 +10515,24 @@ async function identity(){
  if(error||user?.id!==session.user.id)throw Error(connectionMessage);
  const profile=await _accSb.from('wd_staff_profiles').select('staff_role,is_active').eq('user_id',user.id).maybeSingle();
  if(profile.data?.is_active&&profile.data.staff_role==='owner'){
-  let saved=ownerDrive?.uid===user.id?ownerDrive:null;
-  if(!saved)try{saved=JSON.parse(sessionStorage.getItem('wd-company-drive-user-v1:'+user.id));}catch{}
-  if(!saved?.token||saved.expiresAt<=Date.now()+30000)throw Error('Drive 연결을 눌러 퍼스널브랜딩 자료를 불러오세요.');
-  const info=await (await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',saved.token)).json();
-  if(info.user?.emailAddress?.toLowerCase()!=='kfcyk20@gmail.com')throw Error('회사 Drive 계정을 확인해 주세요.');
-  return {owner:true,token:saved.token,hqToken:session.access_token};
+  const scope='https://www.googleapis.com/auth/drive';
+  const load=key=>{try{return JSON.parse(sessionStorage.getItem(key));}catch{return null;}};
+  const sid=brandSessionId(session);
+  const home=load('wd-hq-insurance-home-v1:'+user.id);
+  const shared=load('wd-company-drive-user-v1:'+user.id);
+  const grants=[shared?.scope===scope&&(!shared.sessionId||shared.sessionId===sid)&&shared,
+   sid&&home?.sessionId===sid&&home.scopes?.includes(scope)&&home,
+   ownerDrive?.uid===user.id&&sid&&ownerDrive.sessionId===sid&&ownerDrive];
+  for(const grant of grants){
+   if(!grant?.token||!Number.isFinite(grant.expiresAt)||grant.expiresAt<=Date.now()+30000)continue;
+   const response=await fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',{headers:{Authorization:'Bearer '+grant.token},cache:'no-store',redirect:'error'});
+   if(response.status===401||response.status===403)continue;
+   if(!response.ok)throw Error('Drive 응답을 확인하지 못했어요. 새로고침해 주세요.');
+   const info=await response.json();
+   if(info.user?.emailAddress?.toLowerCase()==='kfcyk20@gmail.com')return {owner:true,token:grant.token,hqToken:session.access_token};
+  }
+  const missing=Error('현재 본진 세션에 유효한 회사 Drive 승인이 없습니다.');
+  missing.needsDrive=true;throw missing;
  }
  return {owner:false,token:session.access_token};
 }
@@ -10537,7 +10552,11 @@ function draw(){
   }
   tr.onclick=()=>read(r);tr.onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();read(r);}};el('list').append(tr);
  }
- for(const b of el('kinds').children)b.setAttribute('aria-pressed',String(b.textContent===kind));
+ for(const b of el('kinds').children){
+  const k=b.dataset.kind;
+  b.setAttribute('aria-pressed',String(k===kind));
+  b.lastElementChild.textContent=loaded?String(rows.filter(r=>(k==='전체'||k===r.kind)&&r.name.toLowerCase().includes(term)).length):'—';
+ }
  return found.length;
 }
 let loaded=false;
@@ -10567,7 +10586,7 @@ async function refresh(){
   const ledgerIds=new Set(ledger.map(r=>r.id));
   rows=data.filter(f=>!ledgerIds.has(f.appProperties?.wdArchiveId)&&safeDriveId(f.id)&&(m!=='manual'||manualTag.test(f.name))).map(f=>({...f,title:f.name.replace(m==='manual'?manualTag:assetTag,''),kind:m==='manual'?'매뉴얼':(f.name.match(assetTag)?.[1]||'파일')})).concat(ledger).sort((a,b)=>String(b.modifiedTime||'').localeCompare(String(a.modifiedTime||'')));
   loaded=true;const count=draw();el('state').textContent=partial?'일부 기존 업무기록을 조회하지 못했습니다.':count?'':'등록된 자료가 없습니다.';
- }catch(e){if(n===generation){el('state').textContent=e.message;el('connect').hidden=location.origin!=='https://admin.wdwave.kr';}}
+ }catch(e){if(n===generation){el('state').textContent=e.message;el('connect').hidden=!e.needsDrive;}}
 }
 window.openBrandLibrary=function(key){
  menu=key==='manual'?'manual':'archive';kind=key==='customer'?'고객자료':'전체';
@@ -10577,7 +10596,7 @@ window.openBrandLibrary=function(key){
  el('first').textContent=menu==='manual'?'매뉴얼명':'자료명';el('add').textContent=menu==='manual'?'+ 매뉴얼 추가':'+ 자료 등록';
  el('search').value='';el('kinds').textContent='';
  if(menu==='archive')for(const k of ['전체','파일','디자인','고객자료']){
-  const b=document.createElement('button');b.textContent=k;b.onclick=()=>{kind=k;draw();if(loaded)el('state').textContent=draw()?'':'해당 자료가 없습니다.';};el('kinds').append(b);
+  const b=document.createElement('button');b.dataset.kind=k;b.textContent=k;b.append(document.createElement('small'));b.onclick=()=>{kind=k;const count=draw();if(loaded)el('state').textContent=count?'':'해당 자료가 없습니다.';};el('kinds').append(b);
  }
  refresh();
 };
@@ -10587,8 +10606,18 @@ el('connect').onclick=async()=>{
  try{
   if(!await accAuth())throw Error('본진 로그인과 브랜딩 자료 접근 권한을 확인해 주세요.');
   if(!window.google?.accounts?.oauth2){await new Promise((ok,bad)=>{const t=document.createElement('script');t.src='https://accounts.google.com/gsi/client';t.onload=ok;t.onerror=()=>bad(Error('Google 연결 모듈을 불러오지 못했어요.'));document.head.append(t);});}
+  const {data:{session:before}}=await _accSb.auth.getSession();
+  const sid=brandSessionId(before);
+  if(!sid)throw Error('본진 로그인을 확인해 주세요.');
   const result=await new Promise((ok,bad)=>google.accounts.oauth2.initTokenClient({client_id:'525415823143-u4i64tanu4i1qs0r8au8u5r8p9ft1351.apps.googleusercontent.com',scope:'https://www.googleapis.com/auth/drive',include_granted_scopes:false,login_hint:'kfcyk20@gmail.com',callback:r=>r.access_token?ok(r):bad(Error('Drive 연결을 완료해 주세요.')),error_callback:()=>bad(Error('Drive 연결을 완료해 주세요.'))}).requestAccessToken());
-  ownerDrive={uid:_accUser.id,token:result.access_token,expiresAt:Date.now()+result.expires_in*1000};await refresh();
+  const {data:{session:after}}=await _accSb.auth.getSession();
+  if(after?.user.id!==before.user.id||brandSessionId(after)!==sid)throw Error('로그인 계정이 변경되었습니다.');
+  const scope='https://www.googleapis.com/auth/drive';
+  const info=await (await employeeDriveRequest('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',result.access_token)).json();
+  if(info.user?.emailAddress?.toLowerCase()!=='kfcyk20@gmail.com'||!result.scope?.split(' ').includes(scope))throw Error('회사 Drive 계정과 승인 범위를 확인해 주세요.');
+  ownerDrive={uid:after.user.id,sessionId:sid,scope,token:result.access_token,expiresAt:Date.now()+Number(result.expires_in)*1000};
+  try{sessionStorage.setItem('wd-company-drive-user-v1:'+after.user.id,JSON.stringify(ownerDrive));}catch{}
+  await refresh();
  }catch(e){el('state').textContent=e.message;}
 };
 function clearPreview(){readerVersion++;el('preview').textContent='';if(blobURL)URL.revokeObjectURL(blobURL);blobURL='';}
@@ -10891,5 +10920,16 @@ for(const id of ['customers','quotes','contracts','brandlibrary']){
  new MutationObserver(label).observe(view,{childList:true,subtree:true});label();
 }
 })();
-</script>
-</body>
+</script><style>
+#view-brandlibrary .bl-toolbar{padding:0 0 16px;justify-content:flex-start;border-bottom:1px solid #dedee8;margin-bottom:16px}
+#view-brandlibrary .bl-toolbar input{width:min(100%,560px);background:white}
+.bl-layout{display:flex;gap:16px;align-items:flex-start}
+.bl-layout>.bl-card{flex:1;min-width:0;overflow:hidden;border-radius:12px}
+.bl-layout #bl-kinds{display:grid;gap:3px;align-content:start;flex:0 0 154px;background:white;border:1px solid #dedee8;border-radius:12px;padding:6px}
+.bl-layout #bl-kinds:empty{display:none}
+.bl-layout #bl-kinds button{display:flex;align-items:center;justify-content:space-between;text-align:left;min-height:44px;background:white;color:#37415b}
+.bl-layout #bl-kinds button[aria-pressed=true]{background:#f0eafa;color:#54349a}
+.bl-layout #bl-kinds small{font:inherit;font-variant-numeric:tabular-nums}
+#bl-state:empty{display:none}
+@media(max-width:600px){.bl-layout{gap:7px}.bl-layout #bl-kinds{flex-basis:84px;padding:3px}.bl-layout #bl-kinds button{font-size:12px;padding:5px;gap:2px}.bl-layout #bl-kinds small{font-size:11px}}
+</style></body>
